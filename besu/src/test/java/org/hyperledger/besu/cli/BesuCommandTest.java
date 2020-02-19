@@ -175,6 +175,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).webSocketConfiguration(eq(DEFAULT_WEB_SOCKET_CONFIGURATION));
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
+    verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());

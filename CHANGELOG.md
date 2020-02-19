@@ -8,6 +8,12 @@ A migration will be performed when starting v1.4 for the first time to reprocess
 and re-create the private state data in the v1.4 format. 
 If you have existing private transactions, see [migration details](docs/Private-Txns-Migration.md).
 
+### Additions and Improvements 
+
+-  Automatic Transaction Log Bloom Filter Caching
+
+Add a new option `--auto-logs-bloom-indexing-enabled` which defaults to true. This performs the equivalent of the `operator generate-log-bloom-cache` CLI task or `admin_generateLogBloomCache` RPC call for each block as it arrives, in addition to caching older logs on first startup.  
+
 ## 1.4.0 RC-1 
 
 ### Additions and Improvements 
