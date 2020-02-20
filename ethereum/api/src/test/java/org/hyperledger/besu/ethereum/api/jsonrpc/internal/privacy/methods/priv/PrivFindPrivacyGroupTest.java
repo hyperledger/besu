@@ -73,6 +73,7 @@ public class PrivFindPrivacyGroupTest {
     privacyGroup.setMembers(Lists.list("member1"));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void findsPrivacyGroupWithValidAddresses() {
     when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
@@ -83,9 +84,9 @@ public class PrivFindPrivacyGroupTest {
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privFindPrivacyGroup.response(request);
-    final PrivacyGroup[] result = (PrivacyGroup[]) response.getResult();
+    final List<PrivacyGroup> result = (List<PrivacyGroup>) response.getResult();
     assertThat(result).hasSize(1);
-    assertThat(result[0]).isEqualToComparingFieldByField(privacyGroup);
+    assertThat(result.get(0)).isEqualToComparingFieldByField(privacyGroup);
     verify(privacyController).findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 

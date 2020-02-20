@@ -31,6 +31,8 @@ public interface PrivateStateStorage {
 
   int getSchemaVersion();
 
+  Optional<Bytes32> getAddDataKey(Bytes32 privacyGroupId);
+
   boolean isEmpty();
 
   Updater updater();
@@ -46,6 +48,8 @@ public interface PrivateStateStorage {
     Updater putPrivacyGroupHeadBlockMap(Bytes32 blockHash, PrivacyGroupHeadBlockMap map);
 
     Updater putDatabaseVersion(int version);
+
+    Updater putAddDataKey(Bytes32 privacyGroupId, Bytes32 addDataKey);
 
     void commit();
 
