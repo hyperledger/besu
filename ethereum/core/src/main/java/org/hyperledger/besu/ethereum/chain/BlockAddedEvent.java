@@ -28,7 +28,7 @@ public class BlockAddedEvent {
   private final List<Transaction> removedTransactions;
   private final EventType eventType;
   private final List<LogWithMetadata> logsWithMetadata;
-  private final Block reorgBlock;
+  private Block commonAncestorWithOldHead;
 
   public enum EventType {
     HEAD_ADVANCED,
@@ -41,14 +41,23 @@ public class BlockAddedEvent {
       final Block block,
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
-      final List<LogWithMetadata> logsWithMetadata,
-      final Block reorgBlock) {
+      final List<LogWithMetadata> logsWithMetadata) {
     this.eventType = eventType;
     this.block = block;
     this.addedTransactions = addedTransactions;
     this.removedTransactions = removedTransactions;
     this.logsWithMetadata = logsWithMetadata;
-    this.reorgBlock = reorgBlock;
+  }
+
+  private BlockAddedEvent(
+      final EventType eventType,
+      final Block block,
+      final List<Transaction> addedTransactions,
+      final List<Transaction> removedTransactions,
+      final List<LogWithMetadata> logsWithMetadata,
+      final Block commonAncestorWithOldHead) {
+    this(eventType, block, addedTransactions, removedTransactions, logsWithMetadata);
+    this.commonAncestorWithOldHead = commonAncestorWithOldHead;
   }
 
   public static BlockAddedEvent createForHeadAdvancement(
@@ -58,8 +67,7 @@ public class BlockAddedEvent {
         block,
         block.getBody().getTransactions(),
         Collections.emptyList(),
-        logsWithMetadata,
-        null);
+        logsWithMetadata);
   }
 
   public static BlockAddedEvent createForChainReorg(
@@ -67,14 +75,14 @@ public class BlockAddedEvent {
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
       final List<LogWithMetadata> logsWithMetadata,
-      final Block reorgBlock) {
+      final Block commonAncestorWithOldHead) {
     return new BlockAddedEvent(
         EventType.CHAIN_REORG,
         block,
         addedTransactions,
         removedTransactions,
         logsWithMetadata,
-        reorgBlock);
+        commonAncestorWithOldHead);
   }
 
   public static BlockAddedEvent createForFork(final Block block) {
@@ -83,8 +91,7 @@ public class BlockAddedEvent {
         block,
         Collections.emptyList(),
         Collections.emptyList(),
-        Collections.emptyList(),
-        null);
+        Collections.emptyList());
   }
 
   public Block getBlock() {
@@ -111,7 +118,7 @@ public class BlockAddedEvent {
     return logsWithMetadata;
   }
 
-  public Block getReorgBlock() {
-    return reorgBlock;
+  public Block getCommonAncestorWithOldHead() {
+    return commonAncestorWithOldHead;
   }
 }

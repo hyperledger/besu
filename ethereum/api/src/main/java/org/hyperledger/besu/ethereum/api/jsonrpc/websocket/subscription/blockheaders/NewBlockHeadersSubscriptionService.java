@@ -26,6 +26,9 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -46,7 +49,7 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
     if (event.isNewCanonicalHead()) {
       if (EventType.CHAIN_REORG.equals(event.getEventType())) {
-        onReorgBlockAdded(event.getReorgBlock(), event.getBlock(), blockchain);
+        onReorgBlockAdded(event.getCommonAncestorWithOldHead(), event.getBlock(), blockchain);
       } else {
         notifySubscribers(event.getBlock().getHash());
       }
@@ -54,16 +57,21 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
   }
 
   private void onReorgBlockAdded(
-      final Block reorgBlock, final Block block, final Blockchain blockchain) {
+      final Block commonAncestorBlock, final Block block, final Blockchain blockchain) {
+    final List<Block> blocks = new ArrayList<>();
     Block blockPtr = block;
-    while (!blockPtr.getHash().equals(reorgBlock.getHash())) {
-      notifySubscribers(blockPtr.getHash());
+
+    while (!blockPtr.getHash().equals(commonAncestorBlock.getHash())) {
+      blocks.add(blockPtr);
 
       blockPtr =
           blockchain
               .getBlockByHash(blockPtr.getHeader().getParentHash())
               .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
     }
+
+    Collections.reverse(blocks);
+    blocks.forEach(b -> notifySubscribers(b.getHash()));
   }
 
   private void notifySubscribers(final Hash newBlockHash) {
