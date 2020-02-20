@@ -8,6 +8,7 @@
 | ---------------- | ---------------- | ---------------- |
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
+| Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | Edward Evans     | EdJoJob          | EdJoJob          |
