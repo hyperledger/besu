@@ -23,6 +23,13 @@ import org.hyperledger.besu.ethereum.core.Gas;
 public class AztlanGasCalculator extends IstanbulGasCalculator {
   private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(400);
   private static final Gas EXTCODE_HASH_COST = Gas.of(400);
+  private static final Gas SLOAD_GAS = Gas.of(200);
+
+  @Override
+  // As per https://eips.ethereum.org/EIPS/eip-1884
+  public Gas getSloadOperationGasCost() {
+    return SLOAD_GAS;
+  }
 
   @Override
   public Gas getBalanceOperationGasCost() {
