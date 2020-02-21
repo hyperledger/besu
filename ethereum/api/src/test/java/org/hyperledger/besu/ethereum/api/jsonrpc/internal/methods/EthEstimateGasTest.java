@@ -83,11 +83,23 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnGasEstimateWhenTransientTransactionProcessorReturnsResult() {
+  public void shouldReturnGasEstimateWhenTransientTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
     mockTransientProcessorResultGasEstimate(1L, true);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnGasEstimateErrorWhenTransientTransactionProcessorReturnsResultFailure() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+    mockTransientProcessorResultGasEstimate(1L, false);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
