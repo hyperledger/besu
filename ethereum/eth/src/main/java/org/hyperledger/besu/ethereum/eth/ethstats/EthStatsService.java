@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import java.math.BigInteger;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -147,6 +148,9 @@ public class EthStatsService<C> {
 
   public void start(final Vertx vertx) {
     Log4j2LoggerProvider provider = new Log4j2LoggerProvider();
+    URI secureEthStatsURI =
+        URI.create(
+            "wss://" + ethStatsParameters.getHost() + ":" + ethStatsParameters.getPort() + "/api");
     URI ethStatsURI =
         URI.create(
             "ws://" + ethStatsParameters.getHost() + ":" + ethStatsParameters.getPort() + "/api");
@@ -155,7 +159,7 @@ public class EthStatsService<C> {
         new EthStatsReporter(
             vertx,
             provider.getLogger("ethstats"),
-            ethStatsURI,
+            Arrays.asList(secureEthStatsURI, ethStatsURI),
             ethStatsParameters.getSecret(),
             "Hyperledger Besu",
             ethStatsParameters.getNode(),
