@@ -21,14 +21,12 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -40,8 +38,8 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -52,8 +50,8 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -103,9 +101,12 @@ public class NewBlockHeadersSubscriptionServiceTest {
   public void shouldSendMessageWhenBlockAddedOnCanonicalChain() {
     final NewBlockHeadersSubscription subscription = createSubscription(false);
     mockSubscriptionManagerNotifyMethod(subscription);
-    final BlockResult expectedNewBlock = expectedBlockWithTransactions(Collections.emptyList());
 
-    simulateAddingBlockOnCanonicalChain();
+    final Block testBlock = appendBlockWithParent(blockchain, blockchain.getChainHeadBlock());
+    simulateAddingBlockOnCanonicalChain(testBlock);
+    final BlockResult expectedNewBlock =
+        blockResultFactory.transactionHash(
+            blockchainQueriesSpy.blockByHashWithTxHashes(testBlock.getHash()).orElse(null));
 
     verify(subscriptionManager)
         .sendMessage(subscriptionIdCaptor.capture(), responseCaptor.capture());
@@ -125,12 +126,17 @@ public class NewBlockHeadersSubscriptionServiceTest {
     final NewBlockHeadersSubscription subscription = createSubscription(false);
     mockSubscriptionManagerNotifyMethod(subscription);
 
-    final Block testBlock = simulateAddingReorgBlock();
+    appendBlockWithParent(blockchain, genesisBlock);
+    final Block forkBlock = appendBlockWithParent(blockchain, genesisBlock);
+    final Block forkBlock1 = appendBlockWithParent(blockchain, forkBlock);
+    final Block forkBlock2 = appendBlockWithParent(blockchain, forkBlock1);
+    simulateAddingReorgBlock(forkBlock2, genesisBlock);
     final BlockResult expectedNewBlock =
         blockResultFactory.transactionHash(
-            blockchainQueriesSpy.blockByHashWithTxHashes(testBlock.getHash()).get());
+            blockchainQueriesSpy.blockByHashWithTxHashes(forkBlock2.getHash()).orElse(null));
 
-    verify(subscriptionManager)
+    verify(subscriptionManager, times(3)).notifySubscribersOnWorkerThread(any(), any(), any());
+    verify(subscriptionManager, times(3))
         .sendMessage(subscriptionIdCaptor.capture(), responseCaptor.capture());
     assertThat(subscriptionIdCaptor.getValue()).isEqualTo(subscription.getSubscriptionId());
     assertThat(responseCaptor.getValue()).usingRecursiveComparison().isEqualTo(expectedNewBlock);
@@ -140,20 +146,24 @@ public class NewBlockHeadersSubscriptionServiceTest {
   public void shouldReturnTxHashesWhenIncludeTransactionsFalse() {
     final NewBlockHeadersSubscription subscription = createSubscription(false);
     mockSubscriptionManagerNotifyMethod(subscription);
-    final List<Hash> txHashList = transactionsWithHashOnly();
-    final BlockResult expectedNewBlock = expectedBlockWithTransactions(txHashList);
+    final List<Transaction> transactions = transactions();
 
-    simulateAddingBlockOnCanonicalChain();
+    final Block testBlock =
+        appendBlockWithParent(blockchain, blockchain.getChainHeadBlock(), transactions);
+    simulateAddingBlockOnCanonicalChain(testBlock);
+    final BlockResult expectedNewBlock =
+        blockResultFactory.transactionHash(
+            blockchainQueriesSpy.blockByHashWithTxHashes(testBlock.getHash()).orElse(null));
 
     verify(subscriptionManager)
         .sendMessage(subscriptionIdCaptor.capture(), responseCaptor.capture());
     assertThat(subscriptionIdCaptor.getValue()).isEqualTo(subscription.getSubscriptionId());
     final Object actualBlock = responseCaptor.getValue();
     assertThat(actualBlock).isInstanceOf(BlockResult.class);
-    assertThat(((BlockResult) actualBlock).getTransactions()).hasSize(txHashList.size());
+    assertThat(((BlockResult) actualBlock).getTransactions()).hasSize(transactions.size());
     assertThat(actualBlock).usingRecursiveComparison().isEqualTo(expectedNewBlock);
 
-    verify(blockchainQueriesSpy, times(1)).blockByHashWithTxHashes(any());
+    verify(blockchainQueriesSpy, times(2)).blockByHashWithTxHashes(any());
     verify(blockchainQueriesSpy, times(0)).blockByHash(any());
   }
 
@@ -161,16 +171,18 @@ public class NewBlockHeadersSubscriptionServiceTest {
   public void shouldReturnCompleteTxWhenParameterTrue() {
     final NewBlockHeadersSubscription subscription = createSubscription(true);
     mockSubscriptionManagerNotifyMethod(subscription);
-    final List<TransactionWithMetadata> txHashList = transactionsWithMetadata();
-    final BlockWithMetadata<TransactionWithMetadata, Hash> testBlockWithMetadata =
-        new BlockWithMetadata<>(
-            blockHeader, txHashList, Collections.emptyList(), blockHeader.getDifficulty(), 0);
-    final BlockResult expectedNewBlock =
-        blockResultFactory.transactionComplete(testBlockWithMetadata);
-    when(blockchainQueriesSpy.blockByHash(testBlockWithMetadata.getHeader().getHash()))
-        .thenReturn(Optional.of(testBlockWithMetadata));
+    final List<TransactionWithMetadata> transactionsWithMetadata = transactionsWithMetadata();
 
-    simulateAddingBlockOnCanonicalChain();
+    List<Transaction> transactions =
+        transactionsWithMetadata.stream()
+            .map(TransactionWithMetadata::getTransaction)
+            .collect(Collectors.toList());
+    final Block testBlock =
+        appendBlockWithParent(blockchain, blockchain.getChainHeadBlock(), transactions);
+    simulateAddingBlockOnCanonicalChain(testBlock);
+    final BlockResult expectedNewBlock =
+        blockResultFactory.transactionComplete(
+            blockchainQueriesSpy.blockByHash(testBlock.getHeader().getHash()).orElse(null));
 
     verify(subscriptionManager)
         .sendMessage(subscriptionIdCaptor.capture(), responseCaptor.capture());
@@ -179,12 +191,13 @@ public class NewBlockHeadersSubscriptionServiceTest {
 
     final Object actualBlock = responseCaptor.getValue();
     assertThat(actualBlock).isInstanceOf(BlockResult.class);
-    assertThat(((BlockResult) actualBlock).getTransactions()).hasSize(txHashList.size());
+    assertThat(((BlockResult) actualBlock).getTransactions())
+        .hasSize(testBlock.getBody().getTransactions().size());
     assertThat(actualBlock).usingRecursiveComparison().isEqualTo(expectedNewBlock);
 
     verify(subscriptionManager, times(1)).sendMessage(any(), any());
     verify(blockchainQueriesSpy, times(0)).blockByHashWithTxHashes(any());
-    verify(blockchainQueriesSpy, times(1)).blockByHash(any());
+    verify(blockchainQueriesSpy, times(2)).blockByHash(any());
   }
 
   @Test
@@ -195,7 +208,8 @@ public class NewBlockHeadersSubscriptionServiceTest {
     final NewBlockHeadersSubscription subscription4 = createSubscription(false);
     mockSubscriptionManagerNotifyMethod(subscription1, subscription2, subscription3, subscription4);
 
-    simulateAddingBlockOnCanonicalChain();
+    simulateAddingBlockOnCanonicalChain(
+        appendBlockWithParent(blockchain, blockchain.getChainHeadBlock()));
 
     verify(subscriptionManager, times(4))
         .sendMessage(subscriptionIdCaptor.capture(), responseCaptor.capture());
@@ -210,16 +224,6 @@ public class NewBlockHeadersSubscriptionServiceTest {
     verify(blockchainQueriesSpy, times(1)).blockByHash(any());
   }
 
-  private BlockResult expectedBlockWithTransactions(final List<Hash> objects) {
-    final BlockWithMetadata<Hash, Hash> testBlockWithMetadata =
-        new BlockWithMetadata<>(blockHeader, objects, Collections.emptyList(), Difficulty.ONE, 1);
-    final BlockResult expectedNewBlock = blockResultFactory.transactionHash(testBlockWithMetadata);
-
-    when(blockchainQueriesSpy.blockByHashWithTxHashes(testBlockWithMetadata.getHeader().getHash()))
-        .thenReturn(Optional.of(testBlockWithMetadata));
-    return expectedNewBlock;
-  }
-
   private void mockSubscriptionManagerNotifyMethod(
       final NewBlockHeadersSubscription... subscriptions) {
     doAnswer(
@@ -232,11 +236,9 @@ public class NewBlockHeadersSubscriptionServiceTest {
         .notifySubscribersOnWorkerThread(any(), any(), any());
   }
 
-  private void simulateAddingBlockOnCanonicalChain() {
-    final BlockBody blockBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
-    final Block testBlock = new Block(blockHeader, blockBody);
+  private void simulateAddingBlockOnCanonicalChain(final Block block) {
     newBlockHeadersSubscriptionService.onBlockAdded(
-        BlockAddedEvent.createForHeadAdvancement(testBlock, Collections.emptyList()),
+        BlockAddedEvent.createForHeadAdvancement(block, Collections.emptyList()),
         blockchainQueriesSpy.getBlockchain());
     verify(blockchainQueriesSpy, times(1)).getBlockchain();
   }
@@ -249,21 +251,16 @@ public class NewBlockHeadersSubscriptionServiceTest {
     verify(blockchainQueriesSpy, times(1)).getBlockchain();
   }
 
-  private Block simulateAddingReorgBlock() {
-    final Block commonAncestorBlock = appendBlockWithParent(blockchain, genesisBlock);
-    final Block testBlock = appendBlockWithParent(blockchain, commonAncestorBlock);
-
+  private void simulateAddingReorgBlock(final Block block, final Block commonAncestorBlock) {
     newBlockHeadersSubscriptionService.onBlockAdded(
         BlockAddedEvent.createForChainReorg(
-            testBlock,
+            block,
             Collections.emptyList(),
             Collections.emptyList(),
             Collections.emptyList(),
-            commonAncestorBlock),
+            commonAncestorBlock.getHash()),
         blockchainQueriesSpy.getBlockchain());
     verify(blockchainQueriesSpy, times(1)).getBlockchain();
-
-    return testBlock;
   }
 
   private List<TransactionWithMetadata> transactionsWithMetadata() {
@@ -276,12 +273,12 @@ public class NewBlockHeadersSubscriptionServiceTest {
     return Lists.newArrayList(t1, t2);
   }
 
-  private List<Hash> transactionsWithHashOnly() {
-    final List<Hash> hashes = new ArrayList<>();
+  private List<Transaction> transactions() {
+    final List<Transaction> transactions = new ArrayList<>();
     for (final TransactionWithMetadata transactionWithMetadata : transactionsWithMetadata()) {
-      hashes.add(transactionWithMetadata.getTransaction().getHash());
+      transactions.add(transactionWithMetadata.getTransaction());
     }
-    return hashes;
+    return transactions;
   }
 
   private NewBlockHeadersSubscription createSubscription(final boolean includeTransactions) {
@@ -289,10 +286,18 @@ public class NewBlockHeadersSubscriptionServiceTest {
   }
 
   private Block appendBlockWithParent(final DefaultBlockchain blockchain, final Block parent) {
+    return appendBlockWithParent(blockchain, parent, Collections.emptyList());
+  }
+
+  private Block appendBlockWithParent(
+      final DefaultBlockchain blockchain,
+      final Block parent,
+      final List<Transaction> transactions) {
     final BlockOptions options =
         new BlockOptions()
             .setBlockNumber(parent.getHeader().getNumber() + 1)
-            .setParentHash(parent.getHash());
+            .setParentHash(parent.getHash())
+            .addTransaction(transactions);
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
     blockchain.appendBlock(newBlock, receipts);

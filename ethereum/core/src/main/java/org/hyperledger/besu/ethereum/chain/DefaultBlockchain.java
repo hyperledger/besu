@@ -403,7 +403,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         removedTransactions,
         Stream.concat(removedLogsWithMetadata.stream(), addedLogsWithMetadata.stream())
             .collect(Collectors.toUnmodifiableList()),
-        currentNewChainWithReceipts.getBlock());
+        currentNewChainWithReceipts.getBlock().getHash());
   }
 
   @Override
