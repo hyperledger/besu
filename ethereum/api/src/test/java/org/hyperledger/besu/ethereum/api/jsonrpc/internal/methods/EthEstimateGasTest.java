@@ -93,7 +93,8 @@ public class EthEstimateGasTest {
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private void mockTransientProcessorResultGasEstimate(final long gasEstimate, final boolean isSuccessful) {
+  private void mockTransientProcessorResultGasEstimate(
+      final long gasEstimate, final boolean isSuccessful) {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.getGasEstimate()).thenReturn(gasEstimate);
     when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
