@@ -73,7 +73,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
         new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
         new PrivGetCode(
             getBlockchainQueries(),
-            getPrivacyParameters(),
+            getPrivacyParameters().getPrivateWorldStateArchive(),
             new PrivateStateRootResolver(getPrivacyParameters().getPrivateStateStorage())));
   }
 }

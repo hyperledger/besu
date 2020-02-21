@@ -14,40 +14,36 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class PrivGetCode implements JsonRpcMethod {
-
-  private static final Logger LOG = getLogger();
+public class PrivGetCode extends AbstractBlockParameterMethod {
 
   private final BlockchainQueries blockchain;
   private final PrivateStateRootResolver privateStateRootResolver;
-  private final PrivacyParameters privacyParameters;
+  private final WorldStateArchive privateWorldStateArchive;
 
   public PrivGetCode(
-      final BlockchainQueries blockchain,
-      final PrivacyParameters privacyParameters,
+      final BlockchainQueries blockchainQueries,
+      final WorldStateArchive privateWorldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver) {
-    this.privacyParameters = privacyParameters;
-    this.blockchain = blockchain;
+    super(blockchainQueries);
+    this.privateWorldStateArchive = privateWorldStateArchive;
+    this.blockchain = blockchainQueries;
     this.privateStateRootResolver = privateStateRootResolver;
   }
 
@@ -57,37 +53,32 @@ public class PrivGetCode implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    LOG.trace("Executing {}", RpcMethod.PRIV_GET_CODE.getMethodName());
+  protected BlockParameter blockParameter(JsonRpcRequestContext request) {
+    return request.getRequiredParameter(2, BlockParameter.class);
+  }
 
-    final Address address =
-        Address.fromHexString(requestContext.getRequiredParameter(0, String.class));
+  @Override
+  protected Object resultByBlockNumber(JsonRpcRequestContext request, long blockNumber) {
+    final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
-    final BlockParameter blockParameter =
-        requestContext.getRequiredParameter(1, BlockParameter.class);
-
-    final String privacyGroupString = requestContext.getRequiredParameter(2, String.class);
-
-    final Bytes32 privacyGroupId = Bytes32.wrap(Bytes.fromBase64String(privacyGroupString));
+    final Address address = Address.fromHexString(request.getRequiredParameter(1, String.class));
 
     final Hash latestStateRoot =
         privateStateRootResolver.resolveLastStateRoot(
-            privacyGroupId,
-            blockParameter.isNumeric() && blockParameter.getNumber().isPresent()
-                ? blockchain
-                    .getBlockchain()
-                    .getBlockByNumber(blockParameter.getNumber().getAsLong())
-                    .orElseThrow()
-                    .getHash()
-                : blockchain.getBlockchain().getChainHeadBlock().getHash());
+            Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)),
+            blockchain.getBlockchain().getBlockByNumber(blockNumber).orElseThrow().getHash());
 
-    return privacyParameters
-        .getPrivateWorldStateArchive()
+    return privateWorldStateArchive
         .get(latestStateRoot)
         .flatMap(
             pws ->
                 Optional.ofNullable(pws.get(address)).map(account -> account.getCode().toString()))
-        .map(c -> new JsonRpcSuccessResponse(requestContext.getRequest().getId(), c))
-        .orElse(new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null));
+        .map(c -> new JsonRpcSuccessResponse(request.getRequest().getId(), c))
+        .orElse(new JsonRpcSuccessResponse(request.getRequest().getId(), null));
+  }
+
+  @Override
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return (JsonRpcResponse) findResultByParamType(requestContext);
   }
 }

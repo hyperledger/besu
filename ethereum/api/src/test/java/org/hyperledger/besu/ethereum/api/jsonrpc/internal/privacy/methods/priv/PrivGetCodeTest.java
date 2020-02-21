@@ -25,13 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.core.*;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
@@ -43,17 +37,13 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PrivGetCodeTest {
-
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final Address sender =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
@@ -109,7 +99,11 @@ public class PrivGetCodeTest {
 
   @Before
   public void before() {
-    method = new PrivGetCode(mockBlockchainQueries, mockPrivacyParameters, mockResolver);
+    method =
+        new PrivGetCode(
+            mockBlockchainQueries,
+            mockPrivacyParameters.getPrivateWorldStateArchive(),
+            mockResolver);
   }
 
   @Test
@@ -145,7 +139,7 @@ public class PrivGetCodeTest {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
-    assertThat(fakeAccountCode.toString())
-        .isEqualTo(((JsonRpcSuccessResponse) response).getResult());
+    assertThat(((JsonRpcSuccessResponse) response).getResult())
+        .isEqualTo(fakeAccountCode.toString());
   }
 }
