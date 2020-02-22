@@ -115,7 +115,10 @@ public class AcceptanceTestBase {
   @After
   public void tearDownAcceptanceTestBase() {
     cluster.close();
+    reportMemory();
+  }
 
+  public void reportMemory() {
     String os = System.getProperty("os.name");
     String[] command = null;
     if (os.contains("Linux")) {
