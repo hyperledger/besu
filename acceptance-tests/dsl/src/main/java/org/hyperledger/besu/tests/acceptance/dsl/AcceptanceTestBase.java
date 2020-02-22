@@ -142,7 +142,7 @@ public class AcceptanceTestBase {
         @Override
         protected void succeeded(final Description description) {
           // if so configured, delete logs of successful tests
-          if (!Boolean.getBoolean("acctests.keepAllLogs")) {
+          if (!Boolean.getBoolean("acctests.keepLogsOfPassingTests")) {
             String pathname =
                 "build/acceptanceTestLogs/"
                     + description.getClassName()

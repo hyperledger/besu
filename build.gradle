@@ -249,7 +249,7 @@ allprojects {
       'test.ethereum.state.eip',
       'root.log.level',
       'evm.log.level',
-      'acctests.keepAllLogs'
+      'acctests.keepLogsOfPassingTests'
     ]
     for (String name : toImport) {
       if (System.getProperty(name) != null) {
