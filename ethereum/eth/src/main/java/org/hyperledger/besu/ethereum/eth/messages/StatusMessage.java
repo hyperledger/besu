@@ -182,15 +182,16 @@ public final class StatusMessage extends AbstractMessageData {
       final Difficulty totalDifficulty = Difficulty.of(in.readUInt256Scalar());
       final Hash bestHash = Hash.wrap(in.readBytes32());
       final Hash genesisHash = Hash.wrap(in.readBytes32());
+      final ForkIdManager.ForkId forkId;
       if (in.nextIsList()) {
-        final ForkIdManager.ForkId forkId = ForkIdManager.ForkId.readFrom(in);
-        in.leaveList();
-        return new EthStatus(
-            protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
+        forkId = ForkIdManager.ForkId.readFrom(in);
+      } else {
+        forkId = null;
       }
       in.leaveList();
 
-      return new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash);
+      return new EthStatus(
+          protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
     }
   }
 }

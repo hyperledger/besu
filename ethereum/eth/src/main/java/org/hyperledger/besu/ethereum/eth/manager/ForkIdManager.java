@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static java.util.Collections.emptyList;
-
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -27,51 +25,27 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class ForkIdManager {
 
+  private final Blockchain blockchain;
   private final Hash genesisHash;
-  private final Long currentHead;
-  private Long forkNext;
-  private final Long highestKnownFork = 0L;
-  private final List<ForkId> forkAndHashList;
+  private final List<Long> forks;
+  private long forkNext;
+  private final long highestKnownFork;
+  private List<ForkId> forkAndHashList;
 
-  public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
-    this.genesisHash = genesisHash;
-    this.currentHead = currentHead;
-    this.forkAndHashList =
-        createForkIds(
-            // If there are two forks at the same block height, we only want to add it once to the
-            // crc checksum
-            forks.stream().distinct().collect(Collectors.toUnmodifiableList()));
+  public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
+    this.blockchain = blockchain;
+    this.genesisHash = blockchain.getGenesisBlock().getHash();
+    // de-dupe and sanitize forks
+    this.forks =
+        forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
+    highestKnownFork = forks.size() > 0 ? forks.get(forks.size() - 1) : 0L;
+    createForkIds();
   };
-
-  static ForkIdManager buildCollection(
-      final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
-    return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
-  };
-
-  @VisibleForTesting
-  public static ForkIdManager buildCollection(final Hash genesisHash, final List<Long> forks) {
-    return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
-  };
-
-  static ForkIdManager buildCollection(final Hash genesisHash) {
-    return new ForkIdManager(genesisHash, emptyList(), Long.MAX_VALUE);
-  };
-
-  // Non-generated entry (for tests)
-  public static ForkId createIdEntry(final String hash, final long next) {
-    return new ForkId(hash, next);
-  }
-
-  // Non-generated entry (for tests)
-  public static ForkId createIdEntry(final String hash, final String next) {
-    return new ForkId(hash, next);
-  }
 
   public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;
@@ -98,11 +72,11 @@ public class ForkIdManager {
    * @param forkId to be validated.
    * @return boolean (peer valid (true) or invalid (false))
    */
-  public boolean peerCheck(final ForkId forkId) {
+  boolean peerCheck(final ForkId forkId) {
     if (forkId == null) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
-    // Run the fork checksum validation ruleset:
+    // Run the fork checksum validation rule set:
     //   1. If local and remote FORK_CSUM matches, connect.
     //        The two nodes are in the same fork state currently. They might know
     //        of differing future forks, but that's not relevant until the fork
@@ -119,7 +93,7 @@ public class ForkIdManager {
     //        information.
     //   4. Reject in all other cases.
     if (isHashKnown(forkId.getHash())) {
-      if (currentHead < forkNext) {
+      if (blockchain.getChainHeadBlockNumber() < forkNext) {
         return true;
       } else {
         if (isForkKnown(forkId.getNext())) {
@@ -153,7 +127,7 @@ public class ForkIdManager {
   }
 
   private boolean isRemoteAwareOfPresent(final Bytes forkHash, final Long nextFork) {
-    for (ForkId j : forkAndHashList) {
+    for (final ForkId j : forkAndHashList) {
       if (forkHash.equals(j.getHash())) {
         if (nextFork.equals(j.getNext())) {
           return true;
@@ -167,9 +141,9 @@ public class ForkIdManager {
     return false;
   }
 
-  private List<ForkId> createForkIds(final List<Long> forks) {
+  private void createForkIds() {
     final CRC32 crc = new CRC32();
-    crc.update(this.genesisHash.toArray());
+    crc.update(genesisHash.toArray());
     final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
     for (final Long fork : forks) {
       updateCrc(crc, fork);
@@ -181,18 +155,14 @@ public class ForkIdManager {
       forkIds.add(new ForkId(forkHashes.get(i), forks.get(i)));
     }
     if (!forks.isEmpty()) {
-      this.forkNext = forkIds.get(forkIds.size() - 1).getNext();
-      forkIds.add(
-          new ForkId(
-              forkHashes.get(forkHashes.size() - 1),
-              currentHead > forkNext ? 0 : forkNext // Use 0 if there are no known next forks
-              ));
+      forkNext = forkIds.get(forkIds.size() - 1).getNext();
+      forkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
-    return forkIds;
+    this.forkAndHashList = forkIds;
   }
 
   private void updateCrc(final CRC32 crc, final Long block) {
-    byte[] byteRepresentationFork = longToBigEndian(block);
+    final byte[] byteRepresentationFork = longToBigEndian(block);
     crc.update(byteRepresentationFork, 0, byteRepresentationFork.length);
   }
 
@@ -205,35 +175,14 @@ public class ForkIdManager {
     final Bytes next;
     Bytes forkIdRLP;
 
-    ForkId(final Bytes hash, final Bytes next) {
+    private ForkId(final Bytes hash, final Bytes next) {
       this.hash = hash;
       this.next = next;
       createForkIdRLP();
     }
 
-    ForkId(final String hash, final String next) {
-      this.hash = padToEightBytes(Bytes.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash));
-      if (next.equals("") || next.equals("0x")) {
-        this.next = Bytes.EMPTY;
-      } else if (next.startsWith("0x")) {
-        long asLong = Long.parseLong(next.replaceFirst("0x", ""), 16);
-        this.next = Bytes.wrap(longToBigEndian(asLong)).trimLeadingZeros();
-      } else {
-        this.next = Bytes.wrap(longToBigEndian(Long.parseLong(next)));
-      }
-      createForkIdRLP();
-    }
-
-    ForkId(final String hash, final long next) {
-      this.hash = Bytes.fromHexString(hash);
-      this.next = Bytes.wrap(longToBigEndian(next));
-      createForkIdRLP();
-    }
-
-    ForkId(final Bytes hash, final long next) {
-      this.hash = hash;
-      this.next = Bytes.wrap(longToBigEndian(next));
-      createForkIdRLP();
+    public ForkId(final Bytes hash, final long next) {
+      this(hash, Bytes.wrap(longToBigEndian(next)).trimLeadingZeros());
     }
 
     public long getNext() {
@@ -245,7 +194,7 @@ public class ForkIdManager {
     }
 
     void createForkIdRLP() {
-      BytesValueRLPOutput out = new BytesValueRLPOutput();
+      final BytesValueRLPOutput out = new BytesValueRLPOutput();
       writeTo(out);
       forkIdRLP = out.encoded();
     }
@@ -260,24 +209,15 @@ public class ForkIdManager {
     public static ForkId readFrom(final RLPInput in) {
       in.enterList();
       final Bytes hash = in.readBytes();
-      final long next = in.readLong();
+      final long next = in.readLongScalar();
       in.leaveList();
       return new ForkId(hash, next);
     }
 
     public List<ForkId> asList() {
-      ArrayList<ForkId> forRLP = new ArrayList<>();
+      final ArrayList<ForkId> forRLP = new ArrayList<>();
       forRLP.add(this);
       return forRLP;
-    }
-
-    private static Bytes padToEightBytes(final Bytes hash) {
-      if (hash.size() < 4) {
-        Bytes padded = Bytes.concatenate(hash, Bytes.fromHexString("0x00"));
-        return padToEightBytes(padded);
-      } else {
-        return hash;
-      }
     }
 
     @Override
@@ -288,8 +228,8 @@ public class ForkIdManager {
     @Override
     public boolean equals(final Object obj) {
       if (obj instanceof ForkId) {
-        ForkId other = (ForkId) obj;
-        long thisNext = next.toLong();
+        final ForkId other = (ForkId) obj;
+        final long thisNext = next.toLong();
         return other.getHash().equals(this.hash) && thisNext == other.getNext();
       }
       return false;
@@ -304,7 +244,7 @@ public class ForkIdManager {
   // next two methods adopted from:
   // https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/Pack.java
   private static byte[] longToBigEndian(final long n) {
-    byte[] bs = new byte[8];
+    final byte[] bs = new byte[8];
     intToBigEndian((int) (n >>> 32), bs, 0);
     intToBigEndian((int) (n & 0xffffffffL), bs, 4);
     return bs;
