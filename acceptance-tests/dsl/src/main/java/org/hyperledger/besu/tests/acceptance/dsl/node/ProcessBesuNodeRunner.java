@@ -265,8 +265,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--key-value-storage");
     params.add("rocksdb");
 
-    // in testing, we don't mind logging on success, but we want max info on failures
-    params.add("--logging=DEBUG");
+    String level = System.getProperty("root.log.level");
+    if (level != null) {
+      params.add("--logging=" + level);
+    }
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
