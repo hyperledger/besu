@@ -53,12 +53,13 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(JsonRpcRequestContext request) {
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(2, BlockParameter.class);
   }
 
   @Override
-  protected Object resultByBlockNumber(JsonRpcRequestContext request, long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
     final Address address = Address.fromHexString(request.getRequiredParameter(1, String.class));
