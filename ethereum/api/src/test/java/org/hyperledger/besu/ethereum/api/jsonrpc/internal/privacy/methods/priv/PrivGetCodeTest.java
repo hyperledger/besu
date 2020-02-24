@@ -104,11 +104,7 @@ public class PrivGetCodeTest {
 
   @Before
   public void before() {
-    method =
-        new PrivGetCode(
-            mockBlockchainQueries,
-            mockPrivateWorldStateArchive,
-            mockResolver);
+    method = new PrivGetCode(mockBlockchainQueries, mockPrivateWorldStateArchive, mockResolver);
   }
 
   @Test
