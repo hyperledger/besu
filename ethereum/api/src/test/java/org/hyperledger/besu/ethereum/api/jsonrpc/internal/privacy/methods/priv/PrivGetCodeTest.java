@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -89,47 +89,37 @@ public class PrivGetCodeTest {
   private PrivGetCode method;
 
   @Mock private BlockchainQueries mockBlockchainQueries;
-  @Mock private PrivacyParameters mockPrivacyParameters;
   @Mock private Blockchain mockBlockchain;
   @Mock private Block mockBlock;
   @Mock private Hash mockHash;
   @Mock private PrivateStateRootResolver mockResolver;
-  @Mock private WorldStateArchive mockArchive;
+  @Mock private WorldStateArchive mockPrivateWorldStateArchive;
   @Mock private WorldState mockWorldState;
   @Mock private Account mockAccount;
 
   private final Hash lastStateRoot =
       Hash.fromHexString("0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
 
-  private final Bytes fakeAccountCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
+  private final Bytes contractAccountCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
 
   @Before
   public void before() {
     method =
         new PrivGetCode(
             mockBlockchainQueries,
-            mockPrivacyParameters.getPrivateWorldStateArchive(),
+            mockPrivateWorldStateArchive,
             mockResolver);
   }
 
   @Test
   public void returnValidCodeWhenCalledOnValidContract() {
-    PrivateTransaction transaction =
+    final PrivateTransaction transaction =
         privateTransactionBuilder.privacyGroupId(privacyGroupId).signAndBuild(KEY_PAIR);
-
-    Address resultantContractAddress =
+    final Address contractAddress =
         Address.privateContractAddress(
             transaction.getSender(), transaction.getNonce(), privacyGroupId);
 
-    when(mockBlockchainQueries.getBlockchain()).thenReturn(mockBlockchain);
-    when(mockBlockchain.getChainHeadBlock()).thenReturn(mockBlock);
-    when(mockBlock.getHash()).thenReturn(mockHash);
-    when(mockResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
-        .thenReturn(lastStateRoot);
-    when(mockPrivacyParameters.getPrivateWorldStateArchive()).thenReturn(mockArchive);
-    when(mockArchive.get(lastStateRoot)).thenReturn(Optional.of(mockWorldState));
-    when(mockWorldState.get(resultantContractAddress)).thenReturn(mockAccount);
-    when(mockAccount.getCode()).thenReturn(fakeAccountCode);
+    mockBlockchainWithContractCode(contractAddress);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -138,7 +128,7 @@ public class PrivGetCodeTest {
                 "priv_getCode",
                 new Object[] {
                   "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=",
-                  resultantContractAddress.toHexString(),
+                  contractAddress.toHexString(),
                   "latest"
                 }));
 
@@ -146,6 +136,17 @@ public class PrivGetCodeTest {
 
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     assertThat(((JsonRpcSuccessResponse) response).getResult())
-        .isEqualTo(fakeAccountCode.toString());
+        .isEqualTo(contractAccountCode.toString());
+  }
+
+  private void mockBlockchainWithContractCode(final Address resultantContractAddress) {
+    when(mockBlockchainQueries.getBlockchain()).thenReturn(mockBlockchain);
+    when(mockBlockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mockBlock));
+    when(mockBlock.getHash()).thenReturn(mockHash);
+    when(mockResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
+        .thenReturn(lastStateRoot);
+    when(mockPrivateWorldStateArchive.get(lastStateRoot)).thenReturn(Optional.of(mockWorldState));
+    when(mockWorldState.get(resultantContractAddress)).thenReturn(mockAccount);
+    when(mockAccount.getCode()).thenReturn(contractAccountCode);
   }
 }
