@@ -67,11 +67,11 @@ public class PivotBlockRetrieverTest {
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain, blockchainSetupUtil.getWorldArchive(), timeout::get);
-    pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
+    pivotBlockRetriever = createPivotBlockRetriever(3, 1);
   }
 
   private PivotBlockRetriever<Void> createPivotBlockRetriever(
-      final int peersToQuery, final long pivotBlockDelta, final int maxRetries) {
+      final int peersToQuery, final long pivotBlockDelta) {
     return pivotBlockRetriever =
         spy(
             new PivotBlockRetriever<>(
@@ -80,8 +80,7 @@ public class PivotBlockRetrieverTest {
                 metricsSystem,
                 PIVOT_BLOCK_NUMBER,
                 peersToQuery,
-                pivotBlockDelta,
-                maxRetries));
+                pivotBlockDelta));
   }
 
   @Test
@@ -107,7 +106,7 @@ public class PivotBlockRetrieverTest {
 
   @Test
   public void shouldIgnorePeersThatDoNotHaveThePivotBlock() {
-    pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
+    pivotBlockRetriever = createPivotBlockRetriever(3, 1);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     final Responder responder =
@@ -208,7 +207,7 @@ public class PivotBlockRetrieverTest {
 
   @Test
   public void shouldQueryBestPeersFirst() {
-    pivotBlockRetriever = createPivotBlockRetriever(2, 1, 1);
+    pivotBlockRetriever = createPivotBlockRetriever(2, 1);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     final Responder responder =
@@ -235,7 +234,7 @@ public class PivotBlockRetrieverTest {
 
   @Test
   public void shouldRecoverFromUnresponsivePeer() {
-    pivotBlockRetriever = createPivotBlockRetriever(2, 1, 1);
+    pivotBlockRetriever = createPivotBlockRetriever(2, 1);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     final Responder responder =
@@ -270,7 +269,7 @@ public class PivotBlockRetrieverTest {
   @Test
   public void shouldRetryWhenPeersDisagreeOnPivot_successfulRetry() {
     final long pivotBlockDelta = 1;
-    pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
+    pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta);
 
     final Responder responderA =
         RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
@@ -301,45 +300,9 @@ public class PivotBlockRetrieverTest {
   }
 
   @Test
-  public void shouldRetryWhenPeersDisagreeOnPivot_exceedMaxRetries() {
-    final long pivotBlockDelta = 1;
-    pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
-
-    final Responder responderA =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
-    final RespondingEthPeer respondingPeerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    final Responder responderB =
-        responderForFakeBlocks(PIVOT_BLOCK_NUMBER, PIVOT_BLOCK_NUMBER - pivotBlockDelta);
-    final RespondingEthPeer respondingPeerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
-    respondingPeerA.respond(responderA);
-    respondingPeerB.respond(responderB);
-
-    // When disagreement is detected, we should push the pivot block back and retry
-    final long newPivotBlock = PIVOT_BLOCK_NUMBER - 1;
-    assertThat(future).isNotCompleted();
-    assertThat(pivotBlockRetriever.pivotBlockNumber).hasValue(newPivotBlock);
-
-    // Another round of invalid responses should lead to failure
-    respondingPeerA.respond(responderA);
-    respondingPeerB.respond(responderB);
-
-    assertThat(future).isCompletedExceptionally();
-    assertThatThrownBy(future::get)
-        .hasRootCauseInstanceOf(FastSyncException.class)
-        .extracting(e -> ((FastSyncException) ExceptionUtils.rootCause(e)).getError())
-        .isEqualTo(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH);
-  }
-
-  @Test
   public void shouldRetryWhenPeersDisagreeOnPivot_pivotInvalidOnRetry() {
     final long pivotBlockDelta = PIVOT_BLOCK_NUMBER + 1;
-    pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
+    pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta);
 
     final Responder responderA =
         RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
