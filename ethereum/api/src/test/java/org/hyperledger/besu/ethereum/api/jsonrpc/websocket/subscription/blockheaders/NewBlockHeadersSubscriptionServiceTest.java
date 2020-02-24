@@ -173,7 +173,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
     mockSubscriptionManagerNotifyMethod(subscription);
     final List<TransactionWithMetadata> transactionsWithMetadata = transactionsWithMetadata();
 
-    List<Transaction> transactions =
+    final List<Transaction> transactions =
         transactionsWithMetadata.stream()
             .map(TransactionWithMetadata::getTransaction)
             .collect(Collectors.toList());
