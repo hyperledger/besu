@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -47,7 +48,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKey
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -83,9 +83,8 @@ public class NewBlockHeadersSubscriptionServiceTest {
       new KeyValueStoragePrefixedKeyBlockchainStorage(
           new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
   private final Block genesisBlock = gen.genesisBlock();
-  private final DefaultBlockchain blockchain =
-      (DefaultBlockchain)
-          DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, new NoOpMetricsSystem());
+  private final MutableBlockchain blockchain =
+      DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, new NoOpMetricsSystem());
 
   @Spy
   private BlockchainQueries blockchainQueriesSpy =
@@ -118,7 +117,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
   public void shouldNotSendMessageWhenBlockAddedIsNotOnCanonicalChain() {
     simulateAddingBlockOnNonCanonicalChain();
 
-    verifyNoMoreInteractions(subscriptionManager);
+    verifyNoInteractions(subscriptionManager);
   }
 
   @Test
@@ -274,23 +273,21 @@ public class NewBlockHeadersSubscriptionServiceTest {
   }
 
   private List<Transaction> transactions() {
-    final List<Transaction> transactions = new ArrayList<>();
-    for (final TransactionWithMetadata transactionWithMetadata : transactionsWithMetadata()) {
-      transactions.add(transactionWithMetadata.getTransaction());
-    }
-    return transactions;
+    return transactionsWithMetadata().stream()
+        .map(TransactionWithMetadata::getTransaction)
+        .collect(Collectors.toList());
   }
 
   private NewBlockHeadersSubscription createSubscription(final boolean includeTransactions) {
     return new NewBlockHeadersSubscription(1L, "conn", includeTransactions);
   }
 
-  private Block appendBlockWithParent(final DefaultBlockchain blockchain, final Block parent) {
+  private Block appendBlockWithParent(final MutableBlockchain blockchain, final Block parent) {
     return appendBlockWithParent(blockchain, parent, Collections.emptyList());
   }
 
   private Block appendBlockWithParent(
-      final DefaultBlockchain blockchain,
+      final MutableBlockchain blockchain,
       final Block parent,
       final List<Transaction> transactions) {
     final BlockOptions options =
