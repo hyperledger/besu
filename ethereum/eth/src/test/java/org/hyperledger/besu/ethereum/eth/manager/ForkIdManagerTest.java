@@ -15,7 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -32,86 +37,123 @@ public class ForkIdManagerTest {
   private final String mainnetGenHash =
       "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
 
+  private Blockchain mockBlockchain(final String genesisHash, final long chainHeight) {
+    final Blockchain mockchain = mock(Blockchain.class);
+    final BlockHeader mockHeader = mock(BlockHeader.class);
+    final Block block = new Block(mockHeader, null);
+    when(mockchain.getGenesisBlock()).thenReturn(block);
+    when(mockchain.getChainHeadBlockNumber()).thenReturn(chainHeight);
+    when(mockHeader.getHash()).thenReturn(Hash.fromHexString(genesisHash));
+    return mockchain;
+  }
+
   @Test
   public void checkItFunctionsWithPresentBehavior() {
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), Collections.emptyList(), null);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 0), Collections.emptyList());
     assertThat(forkIdManager.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
     assertThat(forkIdManager.getLatestForkId()).isNull();
   }
 
   @Test
   public void checkCorrectMainnetForkIdHashesGenerated() {
-    ForkIdManager.ForkId[] checkIds = {
-      ForkIdManager.createIdEntry("0xfc64ec04", 1150000L), // Unsynced
-      ForkIdManager.createIdEntry("0x97c2c34c", 1920000L), // First Homestead block
-      ForkIdManager.createIdEntry("0x91d1f948", 2463000L), // First DAO block
-      ForkIdManager.createIdEntry("0x7a64da13", 2675000L), // First Tangerine block
-      ForkIdManager.createIdEntry("0x3edd5b10", 4370000L), // First Spurious block
-      ForkIdManager.createIdEntry("0xa00bc324", 7280000L), // First Byzantium block
-      ForkIdManager.createIdEntry("0x668db0af", 0L) // Today Petersburg block
+    final ForkIdManager.ForkId[] checkIds = {
+      new ForkIdManager.ForkId(Bytes.fromHexString("0xfc64ec04"), 1150000L), // Unsynced
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0x97c2c34c"), 1920000L), // First Homestead block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0x91d1f948"), 2463000L), // First DAO block
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0x7a64da13"), 2675000L), // First Tangerine block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0x3edd5b10"), 4370000L), // First Spurious block
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0xa00bc324"), 7280000L), // First Byzantium block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0x668db0af"), 0L) // Today Petersburg block
     };
-    List<Long> list = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
-    List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+    final List<Long> list = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager = new ForkIdManager(mockBlockchain(mainnetGenHash, 0), list);
+    final List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
     assertThat(entries).containsExactly(checkIds);
     assertThat(forkIdManager.getLatestForkId()).isNotNull();
-    assertThat(forkIdManager.getLatestForkId().equals(checkIds[6])).isTrue();
+    assertThat(forkIdManager.getLatestForkId()).isEqualTo(checkIds[6]);
   }
 
   @Test
   public void checkCorrectRopstenForkIdHashesGenerated() {
-    Long[] forks = {10L, 1700000L, 4230000L, 4939394L};
-    String genHash = "0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d";
-    ForkIdManager.ForkId[] checkIds = {
-      ForkIdManager.createIdEntry(
-          "0x30c7ddbc", 10L), // Unsynced, last Frontier, Homestead and first Tangerine block
-      ForkIdManager.createIdEntry("0x63760190", 1700000L), // First Spurious block
-      ForkIdManager.createIdEntry("0x3ea159c7", 4230000L), // First Byzantium block
-      ForkIdManager.createIdEntry("0x97b544f3", 4939394L), // First Constantinople block
-      ForkIdManager.createIdEntry("0xd6e2149b", 0L) // Today Petersburg block
+    final Long[] forks = {10L, 1700000L, 4230000L, 4939394L};
+    final String genHash = "0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d";
+    final ForkIdManager.ForkId[] checkIds = {
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0x30c7ddbc"),
+          10L), // Unsynced, last Frontier, Homestead and first Tangerine block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0x63760190"), 1700000L), // First Spurious block
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0x3ea159c7"), 4230000L), // First Byzantium block
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0x97b544f3"), 4939394L), // First Constantinople block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0xd6e2149b"), 0L) // Today Petersburg block
     };
-    List<Long> list = Arrays.asList(forks);
-    ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+    final List<Long> list = Arrays.asList(forks);
+    final ForkIdManager forkIdManager = new ForkIdManager(mockBlockchain(genHash, 0), list);
+    final List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
 
     assertThat(entries).containsExactly(checkIds);
     assertThat(forkIdManager.getLatestForkId()).isNotNull();
-    assertThat(forkIdManager.getLatestForkId().equals(checkIds[4])).isTrue();
+    assertThat(forkIdManager.getLatestForkId()).isEqualTo(checkIds[4]);
   }
 
   @Test
   public void checkCorrectRinkebyForkIdHashesGenerated() {
-    Long[] forks = {1L, 2L, 3L, 1035301L, 3660663L, 4321234L};
-    String genHash = "0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177";
-    ForkIdManager.ForkId[] checkIds = {
-      ForkIdManager.createIdEntry(
-          "0x3b8e0691", 1L), // Unsynced, last Frontier, Homestead and first Tangerine block
-      ForkIdManager.createIdEntry("0x60949295", 2L), // Last Tangerine block
-      ForkIdManager.createIdEntry("0x8bde40dd", 3L), // First Spurious block
-      ForkIdManager.createIdEntry("0xcb3a64bb", 1035301L), // First Byzantium block
-      ForkIdManager.createIdEntry("0x8d748b57", 3660663L), // First Constantinople block
-      ForkIdManager.createIdEntry("0xe49cab14", 4321234L), // First Petersburg block
-      ForkIdManager.createIdEntry("0xafec6b27", 0L) // Today Petersburg block
+    final Long[] forks = {1L, 2L, 3L, 1035301L, 3660663L, 4321234L};
+    final String genHash = "0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177";
+    final ForkIdManager.ForkId[] checkIds = {
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0x3b8e0691"),
+          1L), // Unsynced, last Frontier, Homestead and first Tangerine block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0x60949295"), 2L), // Last Tangerine block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0x8bde40dd"), 3L), // First Spurious block
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0xcb3a64bb"), 1035301L), // First Byzantium block
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0x8d748b57"), 3660663L), // First Constantinople block
+      new ForkIdManager.ForkId(
+          Bytes.fromHexString("0xe49cab14"), 4321234L), // First Petersburg block
+      new ForkIdManager.ForkId(Bytes.fromHexString("0xafec6b27"), 0L) // Today Petersburg block
     };
-    List<Long> list = Arrays.asList(forks);
-    ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+    final List<Long> list = Arrays.asList(forks);
+    final ForkIdManager forkIdManager = new ForkIdManager(mockBlockchain(genHash, 0), list);
+    final List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
 
     assertThat(entries).containsExactly(checkIds);
     assertThat(forkIdManager.getLatestForkId()).isNotNull();
-    assertThat(forkIdManager.getLatestForkId().equals(checkIds[6])).isTrue();
+    assertThat(forkIdManager.getLatestForkId()).isEqualTo(checkIds[6]);
+  }
+
+  @Test
+  public void checkCorrectGoerliForkIdHashesGenerated() {
+    final Long[] forks = {1561651L};
+    final String genHash = "0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a";
+    final ForkIdManager.ForkId[] checkIds = {
+      new ForkIdManager.ForkId(Bytes.fromHexString("0xa3f5ab08"), 1561651L), // Frontier->Petersburg
+      new ForkIdManager.ForkId(Bytes.fromHexString("0xc25efa5c"), 0L) // Istanbul
+    };
+    final List<Long> list = Arrays.asList(forks);
+    final ForkIdManager forkIdManager = new ForkIdManager(mockBlockchain(genHash, 0), list);
+    final List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+
+    assertThat(entries).containsExactly(checkIds);
+    assertThat(forkIdManager.getLatestForkId()).isNotNull();
+    assertThat(forkIdManager.getLatestForkId()).isEqualTo(checkIds[1]);
   }
 
   @Test
   public void check1PetersburgWithRemoteAnnouncingTheSame() {
     // 1 Local is mainnet Petersburg, remote announces the same. No future fork is announced.
     //  {7987396, ID{Hash: 0x668db0af, Next: 0}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0x668db0af"), 0L));
     assertThat(result).isTrue();
     assertThat(forkIdManager.getLatestForkId()).isNotNull();
   }
@@ -121,11 +163,12 @@ public class ForkIdManagerTest {
     // 2 Local is mainnet Petersburg, remote announces the same. Remote also announces a next fork
     // at block 0xffffffff, but that is uncertain.
     //	{7987396, ID{Hash: 0x668db0af, Next: math.MaxUint64}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
-    Boolean result =
-        forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", Long.MAX_VALUE));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(
+            new ForkIdManager.ForkId(Bytes.fromHexString("0x668db0af"), Long.MAX_VALUE));
     assertThat(result).isTrue();
   }
 
@@ -136,10 +179,11 @@ public class ForkIdManagerTest {
     // the fork).
     // In this case we don't know if Petersburg passed yet or not.
     //	{7279999, ID{Hash: 0xa00bc324, Next: 0}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7279999L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc324"), 0L));
     assertThat(result).isTrue();
   }
 
@@ -149,10 +193,12 @@ public class ForkIdManagerTest {
     // announces  also Byzantium, and it's also aware of Petersburg (e.g. updated node before the
     // fork). We don't know if Petersburg passed yet (will pass) or not.
     //	{7279999, ID{Hash: 0xa00bc324, Next: 7280000}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 7280000L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(
+            new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc324"), 7280000L));
     assertThat(result).isTrue();
   }
 
@@ -163,11 +209,12 @@ public class ForkIdManagerTest {
     // Petersburg).
     // As neither forks passed at neither nodes, they may mismatch, but we still connect for now.
     //	{7279999, ID{Hash: 0xa00bc324, Next: math.MaxUint64}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
-    Boolean result =
-        forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", Long.MAX_VALUE));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7279999), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(
+            new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc324"), Long.MAX_VALUE));
     assertThat(result).isTrue();
   }
 
@@ -176,10 +223,12 @@ public class ForkIdManagerTest {
     // 6 Local is mainnet Petersburg, remote announces Byzantium + knowledge about Petersburg.
     // Remote is simply out of sync, accept.
     //	{7987396, ID{Hash: 0x668db0af, Next: 7280000}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 7280000L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(
+            new ForkIdManager.ForkId(Bytes.fromHexString("0x668db0af"), 7280000L));
     assertThat(result).isTrue();
   }
 
@@ -189,10 +238,12 @@ public class ForkIdManagerTest {
     // Remote is definitely out of sync. It may or may not need the Petersburg update, we don't know
     // yet.
     //	{7987396, ID{Hash: 0x3edd5b10, Next: 4370000}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x3edd5b10", 4370000L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(
+            new ForkIdManager.ForkId(Bytes.fromHexString("0x3edd5b10"), 4370000L));
     assertThat(result).isTrue();
   }
 
@@ -200,10 +251,11 @@ public class ForkIdManagerTest {
   public void check8ByzantiumWithRemoteAnnouncingPetersburgLocalOutOfSync() {
     // 8 Local is mainnet Byzantium, remote announces Petersburg. Local is out of sync, accept.
     //	{7279999, ID{Hash: 0x668db0af, Next: 0}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 727999L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0x668db0af"), 0L));
     assertThat(result).isTrue();
   }
 
@@ -212,10 +264,11 @@ public class ForkIdManagerTest {
     // 9 Local is mainnet Spurious, remote announces Byzantium, but is not aware of Petersburg.
     // Local out of sync. Local also knows about a future fork, but that is uncertain yet.
     //	{4369999, ID{Hash: 0xa00bc324, Next: 0}, nil},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 4369999L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 4369999L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc324"), 0L));
     assertThat(result).isTrue();
   }
 
@@ -224,10 +277,11 @@ public class ForkIdManagerTest {
     // 10 Local is mainnet Petersburg. remote announces Byzantium but is not aware of further forks.
     // Remote needs software update.
     //	{7987396, ID{Hash: 0xa00bc324, Next: 0}, ErrRemoteStale},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc324"), 0L));
     assertThat(result).isFalse();
   }
 
@@ -236,10 +290,11 @@ public class ForkIdManagerTest {
     // 11 Local is mainnet Petersburg, and isn't aware of more forks. Remote announces Petersburg +
     // 0xffffffff. Local needs software update, reject.
     //	{7987396, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x5cddc0e1", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0x5cddc0e1"), 0L));
     assertThat(result).isFalse();
   }
 
@@ -248,10 +303,11 @@ public class ForkIdManagerTest {
     // 12 Local is mainnet Byzantium, and is aware of Petersburg. Remote announces Petersburg +
     // 0xffffffff. Local needs software update, reject.
     //	{7279999, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x5cddc0e1", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7279999L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0x5cddc0e1"), 0L));
     assertThat(result).isFalse();
   }
 
@@ -259,62 +315,66 @@ public class ForkIdManagerTest {
   public void check13ByzantiumWithRemoteAnnouncingRinkebyPetersburg() {
     // 13 Local is mainnet Petersburg, remote is Rinkeby Petersburg.
     //	{7987396, ID{Hash: 0xafec6b27, Next: 0}, ErrLocalIncompatibleOrStale},
-    List<Long> forkList = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xafec6b27", 0L));
+    final List<Long> forkList = Arrays.asList(forksMainnet);
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 7987396L), forkList);
+    final Boolean result =
+        forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.fromHexString("0xafec6b27"), 0L));
     assertThat(result).isFalse();
   }
 
   @Test
   public void createAndDecodeRLP() {
-    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xa00bc324", 7280000L);
-    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    final ForkIdManager.ForkId forkIdEntry =
+        new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc324"), 7280000L);
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
-    Bytes bytesValue = out.encoded();
-    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
-    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
-    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+    final Bytes bytesValue = out.encoded();
+    final BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    final ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry).isEqualTo(decodedEntry);
   }
 
   @Test
   public void check1ZeroZeroProperRLPEncoding() {
-    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0", "0x");
-    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    final ForkIdManager.ForkId forkIdEntry =
+        new ForkIdManager.ForkId(Bytes.fromHexString("0x00000000"), 0);
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
-    String str1 = "0xc6840000000080";
-    Bytes bytesValue = out.encoded();
-    assertThat(str1.equals(bytesValue.toString())).isTrue();
-    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
-    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
-    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+    final String str1 = "0xc6840000000080";
+    final Bytes bytesValue = out.encoded();
+    assertThat(str1).isEqualTo(bytesValue.toString());
+    final BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    final ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry).isEqualTo(decodedEntry);
   }
 
   @Test
   public void check2ArbitraryProperRLPEncoding() {
-    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xdeadbeef", "0xBADDCAFE");
-    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    final ForkIdManager.ForkId forkIdEntry =
+        new ForkIdManager.ForkId(Bytes.fromHexString("0xdeadbeef"), 0xbaddcafeL);
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
-    String str1 = "0xca84deadbeef84baddcafe";
-    Bytes bytesValue = out.encoded();
-    assertThat(str1.equals(bytesValue.toString())).isTrue();
-    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
-    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
-    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+    final String str1 = "0xca84deadbeef84baddcafe";
+    final Bytes bytesValue = out.encoded();
+    assertThat(str1).isEqualTo(bytesValue.toString());
+    final BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    final ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry).isEqualTo(decodedEntry);
   }
 
   @Test
   public void check3MaximumsProperRLPEncoding() {
-    ForkIdManager.ForkId forkIdEntry =
-        ForkIdManager.createIdEntry("0xffffffff", Long.parseUnsignedLong("ffffffffffffffff", 16));
-    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    final ForkIdManager.ForkId forkIdEntry =
+        new ForkIdManager.ForkId(Bytes.fromHexString("0xffffffff"), 0xffffffffffffffffL);
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
-    String str1 =
+    final String str1 =
         "0xce84ffffffff88ffffffffffffffff"; // Check value supplied in EIP-2124 spec via GO lang
-    Bytes bytesValue = out.encoded();
-    assertThat(str1.equals(bytesValue.toString())).isTrue();
-    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
-    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
-    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+    final Bytes bytesValue = out.encoded();
+    assertThat(str1).isEqualTo(bytesValue.toString());
+    final BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    final ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry).isEqualTo(decodedEntry);
   }
 }
