@@ -25,12 +25,14 @@ import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -90,14 +92,21 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
+    System.out.println("Setting up database migration test");
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
+    System.out.printf("Root URL: %s\n", rootURL.toString());
     final Path databaseArchive =
         Paths.get(
             DatabaseMigrationAcceptanceTest.class
                 .getResource(String.format("%s/data.zip", dataPath))
                 .toURI());
+    System.out.printf("Database archive path: %s\n", databaseArchive.toString());
     hostDataPath = copyDataDir(rootURL);
+    System.out.println("Listing host data path directory before DB extraction:");
+    ls(hostDataPath);
     unzip(databaseArchive, hostDataPath.toAbsolutePath().toString());
+    System.out.println("Listing host data path directory after DB extraction:");
+    ls(hostDataPath);
     node = besu.createNode(testName, this::configureNode);
     cluster.start(node);
   }
@@ -142,7 +151,9 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     }
 
     try {
+      System.out.println("Creating temp directory");
       final Path tmpDir = Files.createTempDirectory("data");
+      System.out.printf("Temp directory path: %s\n", tmpDir.toString());
       Files.delete(tmpDir);
       final Path toCopy = Paths.get(url.toURI());
       try (final Stream<Path> pathStream = Files.walk(toCopy)) {
@@ -159,6 +170,20 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
       Files.copy(source, dest, REPLACE_EXISTING);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  private static void ls(final Path path) {
+    ls(path.toFile());
+  }
+
+  private static void ls(final File file) {
+    for (File f : Objects.requireNonNull(file.listFiles())) {
+      if (f.isDirectory()) {
+        ls(f);
+      } else if (f.isFile()) {
+        System.out.println(f.getName());
+      }
     }
   }
 }
