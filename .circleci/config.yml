@@ -143,19 +143,14 @@ jobs:
           name: AcceptanceTests
           no_output_timeout: 40m
           command: |
-            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/DatabaseMigrationAcceptanceTest.java" \
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
               | sed 's/.\{5\}$//' \
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon --parallel acceptanceTest --debug $GRADLE_ARGS > ~/project/acceptance-tests.log
-      - store_artifacts:
-          name: Acceptance test artifacts
-          path:  ~/project/acceptance-tests.log
-          destination: acceptance-tests.log
-          when: always
+            ./gradlew --no-daemon --parallel acceptanceTest $GRADLE_ARGS
       - capture_test_results
 
   buildDocker:
@@ -210,43 +205,42 @@ workflows:
   default:
     jobs:
       - assemble
-      #- unitTests:
-          #requires:
-            #- assemble
-      #- referenceTests:
-          #requires:
-            #- assemble
-      #- integrationTests:
-          #requires:
-            #- assemble
+      - unitTests:
+          requires:
+            - assemble
+      - referenceTests:
+          requires:
+            - assemble
+      - integrationTests:
+          requires:
+            - assemble
       - acceptanceTests:
           requires:
             - assemble
-      #- buildDocker:
-          #requires:
-            #- unitTests
-      #- publish:
-          #filters:
-            #branches:
-              #only:
-                #- master
-                #- /^release-.*/
-          #requires:
-            #- integrationTests
-            #- unitTests
-            #- acceptanceTests
-            #- referenceTests
-            #- buildDocker
-      #- publishDocker:
-          #filters:
-            #branches:
-              #only:
-                #- master
-                #- /^release-.*/
-          #requires:
-            #- integrationTests
-            #- unitTests
-            #- acceptanceTests
-            #- referenceTests
-            #- buildDocker
-
+      - buildDocker:
+          requires:
+            - unitTests
+      - publish:
+          filters:
+            branches:
+              only:
+                - master
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
+      - publishDocker:
+          filters:
+            branches:
+              only:
+                - master
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
