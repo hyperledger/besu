@@ -597,7 +597,7 @@ public class RunnerBuilder {
     final NatMethod detectedNatMethod =
         Optional.of(natMethod)
             .filter(not(isEqual(NatMethod.AUTO)))
-            .orElse(NatService.autoDetectNatMethod(new DockerDetector(), new KubernetesDetector()));
+            .orElse(NatService.autoDetectNatMethod(new KubernetesDetector(), new DockerDetector()));
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
