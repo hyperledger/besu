@@ -26,19 +26,26 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import net.lingala.zip4j.ZipFile;
+import org.apache.commons.compress.utils.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -140,9 +147,30 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     testAccount.balanceEquals(Amount.wei(expectedBalance.toBigInteger())).verify(node);
   }
 
-  private static void unzip(final Path zipFile, final String destDirectoryPath) throws IOException {
+  /*private static void unzip(final Path zipFile, final String destDirectoryPath) throws IOException {
     final ZipFile zip = new ZipFile(zipFile.toFile());
     zip.extractAll(destDirectoryPath);
+  }*/
+
+  private static void unzip(final Path path, final String destDirectoryPath) throws IOException {
+    System.out.println("Unzip using IOUtils.");
+    try (ZipFile zipFile = new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        Path entryPath = Paths.get(destDirectoryPath).resolve(entry.getName());
+        if (entry.isDirectory()) {
+          Files.createDirectories(entryPath);
+        } else {
+          Files.createDirectories(entryPath.getParent());
+          try (InputStream in = zipFile.getInputStream(entry)) {
+            try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
+              IOUtils.copy(in, out);
+            }
+          }
+        }
+      }
+    }
   }
 
   private Path copyDataDir(final URL url) {
