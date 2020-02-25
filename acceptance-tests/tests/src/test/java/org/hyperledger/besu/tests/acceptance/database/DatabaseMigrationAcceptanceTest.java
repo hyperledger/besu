@@ -152,25 +152,33 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     zip.extractAll(destDirectoryPath);
   }*/
 
-  private static void unzip(final Path path, final String destDirectory) throws IOException {
-    System.out.println("Unzip using IOUtils.");
-    final Path dest = Paths.get(destDirectory);
-    try (ZipFile zipFile = new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
-      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      while (entries.hasMoreElements()) {
-        final ZipEntry entry = entries.nextElement();
-        final Path entryPath = dest.resolve(entry.getName());
-        if (entry.isDirectory()) {
-          Files.createDirectories(entryPath);
-        } else {
-          Files.createDirectories(entryPath.getParent());
-          try (InputStream in = zipFile.getInputStream(entry)) {
-            try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
-              IOUtils.copy(in, out);
+  private static void unzip(final Path path, final String destDirectory) {
+    try {
+      System.out.println("Unzip using IOUtils.");
+      final Path dest = Paths.get(destDirectory);
+      try (ZipFile zipFile =
+          new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
+        final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+        while (entries.hasMoreElements()) {
+          final ZipEntry entry = entries.nextElement();
+          final Path entryPath = dest.resolve(entry.getName());
+          if (entry.isDirectory()) {
+            Files.createDirectories(entryPath);
+          } else {
+            Files.createDirectories(entryPath.getParent());
+            try (InputStream in = zipFile.getInputStream(entry)) {
+              try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
+                IOUtils.copy(in, out);
+              }
             }
           }
         }
       }
+    } catch (Throwable e) {
+      System.err.println("*******************************");
+      System.err.println(e.getMessage());
+      System.err.println("*******************************");
+      e.printStackTrace();
     }
   }
 
