@@ -55,7 +55,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static Address wrap(final Bytes value) {
     checkArgument(
         value.size() == SIZE,
-        "An account address must be be %s bytes long, got %s",
+        "An account address must be %s bytes long, got %s",
         SIZE,
         value.size());
     return new Address(value);
