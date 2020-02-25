@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.4.1
+- Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
 
 ### Bug Fixes
 
