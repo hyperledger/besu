@@ -152,13 +152,14 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     zip.extractAll(destDirectoryPath);
   }*/
 
-  private static void unzip(final Path path, final String destDirectoryPath) throws IOException {
+  private static void unzip(final Path path, final String destDirectory) throws IOException {
     System.out.println("Unzip using IOUtils.");
+    final Path dest = Paths.get(destDirectory);
     try (ZipFile zipFile = new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        Path entryPath = Paths.get(destDirectoryPath).resolve(entry.getName());
+        final ZipEntry entry = entries.nextElement();
+        final Path entryPath = dest.resolve(entry.getName());
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
