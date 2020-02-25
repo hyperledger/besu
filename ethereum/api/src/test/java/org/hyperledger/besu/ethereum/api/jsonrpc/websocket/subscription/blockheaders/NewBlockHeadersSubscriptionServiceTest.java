@@ -132,13 +132,22 @@ public class NewBlockHeadersSubscriptionServiceTest {
     simulateAddingReorgBlock(forkBlock2, genesisBlock);
     final BlockResult expectedNewBlock =
         blockResultFactory.transactionHash(
+            blockchainQueriesSpy.blockByHashWithTxHashes(forkBlock.getHash()).orElse(null));
+    final BlockResult expectedNewBlock1 =
+        blockResultFactory.transactionHash(
+            blockchainQueriesSpy.blockByHashWithTxHashes(forkBlock1.getHash()).orElse(null));
+    final BlockResult expectedNewBlock2 =
+        blockResultFactory.transactionHash(
             blockchainQueriesSpy.blockByHashWithTxHashes(forkBlock2.getHash()).orElse(null));
 
     verify(subscriptionManager, times(3)).notifySubscribersOnWorkerThread(any(), any(), any());
     verify(subscriptionManager, times(3))
         .sendMessage(subscriptionIdCaptor.capture(), responseCaptor.capture());
     assertThat(subscriptionIdCaptor.getValue()).isEqualTo(subscription.getSubscriptionId());
-    assertThat(responseCaptor.getValue()).usingRecursiveComparison().isEqualTo(expectedNewBlock);
+    List<JsonRpcResult> capturedNewBlocks = responseCaptor.getAllValues();
+    assertThat(capturedNewBlocks.get(0)).usingRecursiveComparison().isEqualTo(expectedNewBlock);
+    assertThat(capturedNewBlocks.get(1)).usingRecursiveComparison().isEqualTo(expectedNewBlock1);
+    assertThat(capturedNewBlocks.get(2)).usingRecursiveComparison().isEqualTo(expectedNewBlock2);
   }
 
   @Test
