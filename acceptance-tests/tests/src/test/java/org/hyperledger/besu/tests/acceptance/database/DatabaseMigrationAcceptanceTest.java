@@ -26,26 +26,20 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.apache.commons.compress.utils.IOUtils;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,7 +92,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void ignore() throws Exception {
     System.out.println("Setting up database migration test");
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
     System.out.printf("Root URL: %s\n", rootURL.toString());
@@ -138,7 +132,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldReturnCorrectBlockHeight() {
+  public void shouldReturnCorrectBlockHeight() throws ZipException {
     blockchain.currentHeight(expectedChainHeight).verify(node);
   }
 
@@ -147,12 +141,12 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     testAccount.balanceEquals(Amount.wei(expectedBalance.toBigInteger())).verify(node);
   }
 
-  /*private static void unzip(final Path zipFile, final String destDirectoryPath) throws IOException {
+  private static void unzip(final Path zipFile, final String destDirectoryPath) throws IOException {
     final ZipFile zip = new ZipFile(zipFile.toFile());
     zip.extractAll(destDirectoryPath);
-  }*/
+  }
 
-  private static void unzip(final Path path, final String destDirectory) throws IOException {
+  /*private static void unzip(final Path path, final String destDirectory) throws IOException {
     System.out.println("Unzip using IOUtils.");
     final Path dest = Paths.get(destDirectory);
     try (ZipFile zipFile = new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
@@ -172,7 +166,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         }
       }
     }
-  }
+  }*/
 
   private Path copyDataDir(final URL url) {
     if (url == null) {
