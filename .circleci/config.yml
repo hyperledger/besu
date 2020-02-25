@@ -150,7 +150,7 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon --parallel acceptanceTest $GRADLE_ARGS > ~/project/acceptance-tests.log
+            ./gradlew --no-daemon --parallel acceptanceTest --debug $GRADLE_ARGS > ~/project/acceptance-tests.log
       - store_artifacts:
           name: Acceptance test artifacts
           path:  ~/project/acceptance-tests.log
