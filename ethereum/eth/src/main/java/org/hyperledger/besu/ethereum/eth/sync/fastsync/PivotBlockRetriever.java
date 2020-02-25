@@ -42,7 +42,8 @@ public class PivotBlockRetriever<C> {
 
   private static final Logger LOG = LogManager.getLogger();
   public static final int MAX_QUERY_RETRIES_PER_PEER = 3;
-  private static final int SUSPICIOUS_NUMBER_OF_PIVOT_BLOCK_RESETS = 5;
+  private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 5;
+  private static final int SUSPICIOUS_NUMBER_OF_RETRIES = 5;
 
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
@@ -50,6 +51,8 @@ public class PivotBlockRetriever<C> {
 
   // The number of peers we need to query to confirm our pivot block
   private final int peersToQuery;
+  // The max times to push the pivot block number back when peers can't agree on a pivot
+  private final int maxPivotBlockResets;
   // How far to push back the pivot block when we retry on pivot disagreement
   private final long pivotBlockNumberResetDelta;
   // The current pivot block number, gets pushed back if peers disagree on the pivot block
@@ -60,13 +63,14 @@ public class PivotBlockRetriever<C> {
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
 
-  public PivotBlockRetriever(
+  PivotBlockRetriever(
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,
       final int peersToQuery,
-      final long pivotBlockNumberResetDelta) {
+      final long pivotBlockNumberResetDelta,
+      final int maxPivotBlockResets) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
@@ -74,6 +78,24 @@ public class PivotBlockRetriever<C> {
     this.pivotBlockNumber = new AtomicLong(pivotBlockNumber);
     this.peersToQuery = peersToQuery;
     this.pivotBlockNumberResetDelta = pivotBlockNumberResetDelta;
+    this.maxPivotBlockResets = maxPivotBlockResets;
+  }
+
+  public PivotBlockRetriever(
+      final ProtocolSchedule<C> protocolSchedule,
+      final EthContext ethContext,
+      final MetricsSystem metricsSystem,
+      final long pivotBlockNumber,
+      final int peersToQuery,
+      final long pivotBlockNumberResetDelta) {
+    this(
+        protocolSchedule,
+        ethContext,
+        metricsSystem,
+        pivotBlockNumber,
+        peersToQuery,
+        pivotBlockNumberResetDelta,
+        DEFAULT_MAX_PIVOT_BLOCK_RESETS);
   }
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader() {
@@ -126,10 +148,14 @@ public class PivotBlockRetriever<C> {
         contestedBlockNumber, contestedBlockNumber - pivotBlockNumberResetDelta)) {
       LOG.info("Received conflicting pivot blocks for {}.", contestedBlockNumber);
 
-      if (confirmationTasks.size() > SUSPICIOUS_NUMBER_OF_PIVOT_BLOCK_RESETS) {
+      final int retryCount = confirmationTasks.size();
+
+      if ((retryCount % SUSPICIOUS_NUMBER_OF_RETRIES) == 0) {
         LOG.warn("Several attempts have been made without finding a pivot block");
       }
-      if (pivotBlockNumber.get() <= BlockHeader.GENESIS_BLOCK_NUMBER) {
+
+      if (retryCount > maxPivotBlockResets
+          || pivotBlockNumber.get() <= BlockHeader.GENESIS_BLOCK_NUMBER) {
         LOG.info("Max retries reached, cancel pivot block download.");
         // Pivot block selection has failed
         result.completeExceptionally(

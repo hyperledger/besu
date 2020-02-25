@@ -124,7 +124,11 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   public void start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
-      blockPropagationManager.start();
+      try {
+        blockPropagationManager.start();
+      } catch (IllegalStateException e) {
+        LOG.info("Attempt to start an already started block propagation manager");
+      }
       if (fastSyncDownloader.isPresent()) {
         fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
       } else {
@@ -162,16 +166,23 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       LOG.error(
           "Fast sync failed ({}), switching to full sync.",
           ((FastSyncException) rootCause).getError());
+      fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
+      startFullSync();
     } else if (error != null) {
-      LOG.error("Fast sync failed, switching to full sync.", error);
+      LOG.error("Fast sync failed, trying to restart.", error);
+      restartFastSync();
     } else {
       LOG.info(
           "Fast sync completed successfully with pivot block {}",
           result.getPivotBlockNumber().getAsLong());
+      fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
+      startFullSync();
     }
-    fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
+  }
 
-    startFullSync();
+  private void restartFastSync() {
+    stop();
+    start();
   }
 
   private void startFullSync() {
