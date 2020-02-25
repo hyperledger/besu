@@ -15,7 +15,6 @@ dependencies {
   testImplementation project(':acceptance-tests:dsl')
   testImplementation project(':enclave')
   testImplementation 'org.awaitility:awaitility'
-  testImplementation 'com.github.docker-java:docker-java'
   testImplementation project(':consensus:clique')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':util')
@@ -42,6 +41,7 @@ dependencies {
   testImplementation 'org.web3j:besu'
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
+  testImplementation 'net.lingala.zip4j:zip4j'
   compile('javax.activation:activation'){
     force = true
   }

@@ -24,23 +24,19 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
-import org.hyperledger.besu.util.PlatformDetector;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.lingala.zip4j.ZipFile;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,109 +46,60 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
-  private static final Logger LOG = LogManager.getLogger();
   private final String testName;
-  private final String dockerImage;
-  private final String dockerImageName;
-  private final String dockerImageTag;
   private final String dataPath;
   private final long expectedChainHeight;
-  private final Address testAddress;
   private final Wei expectedBalance;
   private final Account testAccount;
   private Path hostDataPath;
-  private String hostDataPathForBind;
-
   private BesuNode node;
 
   public DatabaseMigrationAcceptanceTest(
       final String testName,
-      final String dockerImageName,
-      final String dockerImageTag,
       final String dataPath,
       final long expectedChainHeight,
       final Address testAddress,
       final Wei expectedBalance) {
     this.testName = testName;
-    this.dockerImageName = dockerImageName;
-    this.dockerImageTag = dockerImageTag;
-    this.dockerImage = String.format("%s:%s", dockerImageName, dockerImageTag);
     this.dataPath = dataPath;
     this.expectedChainHeight = expectedChainHeight;
-    this.testAddress = testAddress;
     this.expectedBalance = expectedBalance;
-
-    this.testAccount = accounts.createAccount(this.testAddress);
+    this.testAccount = accounts.createAccount(testAddress);
   }
 
   @Parameters(name = "{0}")
   public static Object[][] getParameters() {
     return new Object[][] {
       // First 10 blocks of ropsten
-      /*new Object[] {
-        "version1",
-        0xA,
-        Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x2b5e3af16b1880000")
-      },
-      new Object[] {
-        "version1-orig-metadata",
-        0xA,
-        Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x2b5e3af16b1880000")
-      },*/
       new Object[] {
         "Before versioning was enabled",
-        "docker.io/pegasyseng/pantheon",
-        "1.2.0",
         "version0",
         0xA,
         Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x270801D946C940000")
+        Wei.fromHexString("0x2B5E3AF16B1880000")
       },
       new Object[] {
         "After versioning was enabled ",
-        "docker.io/pegasyseng/pantheon",
-        "1.2.1",
         "version1",
         0xA,
         Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x270801D946C940000")
+        Wei.fromHexString("0x2B5E3AF16B1880000")
       }
     };
   }
 
   @Before
   public void setUp() throws Exception {
-    generateDatabaseFromDocker();
-    Thread.sleep(15000);
-    node = besu.createNode(dataPath, this::configureNode);
+    final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
+    final Path databaseArchive =
+        Paths.get(
+            DatabaseMigrationAcceptanceTest.class
+                .getResource(String.format("%s/data.zip", dataPath))
+                .toURI());
+    hostDataPath = copyDataDir(rootURL);
+    unzip(databaseArchive, hostDataPath.toAbsolutePath().toString());
+    node = besu.createNode(testName, this::configureNode);
     cluster.start(node);
-  }
-
-  private void generateDatabaseFromDocker() throws Exception {
-    LOG.info("Generating database for test case: {}", testName);
-    final DockerBesu docker = DockerBesu.createDockerClient();
-    LOG.info("Pulling docker image: {}", dockerImage);
-    docker.pull(dockerImageName, dockerImageTag);
-    hostDataPath = copyDataDir(dataPath);
-    LOG.info("Host data dir: {}", hostDataPath.toAbsolutePath().toString());
-    ls(hostDataPath);
-    hostDataPathForBind = hostDataPath.toAbsolutePath().toString();
-    if (PlatformDetector.getOSType().equals("osx")) {
-      hostDataPathForBind = "/private".concat(hostDataPathForBind);
-    }
-    LOG.info("Starting Besu import command in docker container: {}", dockerImage);
-    docker.runBesu(
-        dockerImage,
-        hostDataPathForBind,
-        "--logging=debug",
-        "--data-path=/home/besu",
-        String.format("--genesis-file=%s/genesis.json", DockerBesu.containerDataPath),
-        "blocks",
-        "import",
-        String.format("--from=%s/ropsten-10-blocks.bin", DockerBesu.containerDataPath));
-    LOG.info("Besu import command completed.");
   }
 
   private BesuNodeConfigurationBuilder configureNode(
@@ -184,10 +131,14 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     testAccount.balanceEquals(Amount.wei(expectedBalance.toBigInteger())).verify(node);
   }
 
-  private Path copyDataDir(final String path) {
-    final URL url = this.getClass().getResource(path);
+  private static void unzip(final Path zipFile, final String destDirectoryPath) throws IOException {
+    final ZipFile zip = new ZipFile(zipFile.toFile());
+    zip.extractAll(destDirectoryPath);
+  }
+
+  private Path copyDataDir(final URL url) {
     if (url == null) {
-      throw new RuntimeException("Unable to locate resource at: " + path);
+      throw new RuntimeException("Unable to locate resource.");
     }
 
     try {
@@ -208,21 +159,6 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
       Files.copy(source, dest, REPLACE_EXISTING);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
-    }
-  }
-
-  private static void ls(final Path path) throws Exception {
-    LOG.info("ls {}", path.toAbsolutePath().toString());
-    ls(path.toFile());
-  }
-
-  private static void ls(final File file) {
-    for (File f : Objects.requireNonNull(file.listFiles())) {
-      if (f.isDirectory()) {
-        ls(f);
-      } else if (f.isFile()) {
-        System.out.println(f.getName());
-      }
     }
   }
 }
