@@ -26,26 +26,18 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.apache.commons.compress.utils.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -102,18 +94,18 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     System.out.println("Setting up database migration test");
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
     System.out.printf("Root URL: %s\n", rootURL.toString());
-    final Path databaseArchive =
-        Paths.get(
-            DatabaseMigrationAcceptanceTest.class
-                .getResource(String.format("%s/data.zip", dataPath))
-                .toURI());
-    System.out.printf("Database archive path: %s\n", databaseArchive.toString());
-    hostDataPath = copyDataDir(rootURL);
+    /* final Path databaseArchive =
+    Paths.get(
+        DatabaseMigrationAcceptanceTest.class
+            .getResource(String.format("%s/data.zip", dataPath))
+            .toURI());*/
+    // System.out.printf("Database archive path: %s\n", databaseArchive.toString());
+    hostDataPath = copyDataDir(rootURL).resolve("data");
     System.out.println("Listing host data path directory before DB extraction:");
     ls(hostDataPath);
-    unzip(databaseArchive, hostDataPath.toAbsolutePath().toString());
-    System.out.println("Listing host data path directory after DB extraction:");
-    ls(hostDataPath);
+    // unzip(databaseArchive, hostDataPath.toAbsolutePath().toString());
+    // System.out.println("Listing host data path directory after DB extraction:");
+    // ls(hostDataPath);
     node = besu.createNode(testName, this::configureNode);
     cluster.start(node);
   }
@@ -152,7 +144,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     zip.extractAll(destDirectoryPath);
   }*/
 
-  private static void unzip(final Path path, final String destDirectory) throws IOException {
+  /*private static void unzip(final Path path, final String destDirectory) throws IOException {
     System.out.println("Unzip using IOUtils.");
     final Path dest = Paths.get(destDirectory);
     try (ZipFile zipFile = new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
@@ -172,7 +164,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         }
       }
     }
-  }
+  }*/
 
   private Path copyDataDir(final URL url) {
     if (url == null) {
