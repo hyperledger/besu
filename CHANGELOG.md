@@ -5,9 +5,11 @@
 ## 1.4.0
 
 ### Private State Migration 
+
 Hyperledger Besu v1.4 implements a new data structure for private state storage that is not backwards compatible. 
 A migration will be performed when starting v1.4 for the first time to reprocess existing private transactions 
 and re-create the private state data in the v1.4 format. 
+
 If you have existing private transactions, see [migration details](docs/Private-Txns-Migration.md).
 
 ### Additions and Improvements 
@@ -16,11 +18,12 @@ If you have existing private transactions, see [migration details](docs/Private-
 
 * [Multi-tenancy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Multi-Tenancy/) to enable multiple participants to use the same Besu and Orion node. 
 
-* Plugin APIs to enable building of Java plugins to extend Hyperledger Besu. 
+* [Plugin APIs](https://besu.hyperledger.org/en/latest/Concepts/Plugins/) to enable building of Java plugins to extend Hyperledger Besu. 
 
 * Support for additional [NAT methods](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Specifying-NAT/).
 
-* Added `priv_call` which invokes a private contract function locally and does not change the private state.
+* Added [`priv_call`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#priv_call) which invokes 
+a private contract function locally and does not change the private state.
 
 * Besu has moved from an internal Bytes library to the [Apache Tuweni](https://tuweni.apache.org/) Bytes library.  
 This includes using the library in the Plugins API interfaces. [#295](https://github.com/hyperledger/besu/pull/295) and [#215](https://github.com/hyperledger/besu/pull/215)
@@ -30,10 +33,10 @@ This includes using the library in the Plugins API interfaces. [#295](https://gi
 Early access features are available features that are not recommended for production networks and may 
 have unstable interfaces. 
 
-* Reorg compatible privacy to enable private transactions on networks using probabilistic consensus 
-mechanisms. 
+* [Reorg compatible privacy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/#reorg-compatible-privacy) 
+to enable private transactions on networks using consensus mechanisms that fork. 
 
-* Tracing API to obtain detailed information about transaction processing. 
+* [Tracing API](https://besu.hyperledger.org/en/latest/Concepts/Transactions/Trace-Types) to obtain detailed information about transaction processing. 
 
 ### Bug Fixes 
 
@@ -42,8 +45,10 @@ See RC and Beta sections below.
 ### Known Bugs 
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
+The associated error is `Unable to load trie node value for hash`
 
-Workaround -> Don't enable pruning when syncing to mainnet. 
+Workaround -> Don't enable pruning with full sync. If the `MerkleTrieException` occurs with fast sync, delete 
+the database and resync. 
 
 - Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
 
