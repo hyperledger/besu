@@ -29,19 +29,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -104,25 +101,16 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    System.out.println("Setting up database migration test");
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
-    System.out.printf("Root URL: %s\n", rootURL.toString());
     hostDataPath = copyDataDir(rootURL);
-    System.out.printf("Downloading archive from: %s\n", archiveURL);
     final Path databaseArchive = hostDataPath.resolve("data.tar.gz");
     downloadArchive(databaseArchive);
-    System.out.printf("Archive downloaded to: %s\n", databaseArchive.toAbsolutePath().toString());
     /*final Path databaseArchive =
     Paths.get(
         DatabaseMigrationAcceptanceTest.class
             .getResource(String.format("%s/data.tar.gz", dataPath))
-            .toURI());
-    System.out.printf("Database archive path: %s\n", databaseArchive.toString());*/
-    System.out.println("Listing host data path directory before DB extraction:");
-    ls(hostDataPath);
+            .toURI());*/
     extract(databaseArchive, hostDataPath.toAbsolutePath().toString());
-    System.out.println("Listing host data path directory after DB extraction:");
-    ls(hostDataPath);
     node = besu.createNode(testName, this::configureNode);
     cluster.start(node);
   }
@@ -160,70 +148,22 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     testAccount.balanceEquals(Amount.wei(expectedBalance.toBigInteger())).verify(node);
   }
 
-  /*private static void extract(final Path zipFile, final String destDirectoryPath) throws IOException {
-    final ZipFile zip = new ZipFile(zipFile.toFile());
-    zip.extractAll(destDirectoryPath);
-  }*/
-
-  /*private static void extract(final Path path, final String destDirectory) {
-  try {
-    System.out.println("Unzip using IOUtils.");
-    final Path dest = Paths.get(destDirectory);
-    try (ZipFile zipFile =
-        new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
-      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      while (entries.hasMoreElements()) {
-        final ZipEntry entry = entries.nextElement();
-        final Path entryPath = dest.resolve(entry.getName());
+  private static void extract(final Path path, final String destDirectory) throws IOException {
+    try (TarArchiveInputStream fin =
+        new TarArchiveInputStream(
+            new GzipCompressorInputStream(new FileInputStream(path.toAbsolutePath().toString())))) {
+      TarArchiveEntry entry;
+      while ((entry = fin.getNextTarEntry()) != null) {
         if (entry.isDirectory()) {
-          Files.createDirectories(entryPath);
-        } else {
-          Files.createDirectories(entryPath.getParent());
-          try (InputStream in = zipFile.getInputStream(entry)) {
-            try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
-              IOUtils.copy(in, out);
-            }
-          }
+          continue;
         }
-      }
-    }
-  } catch (Throwable e) {
-    System.err.println("*******************************");
-    System.err.println(e.getMessage());
-    System.err.println("*******************************");
-    e.printStackTrace();
-  }*/
-
-  private static void extract(final Path path, final String destDirectory) {
-    try {
-      System.out.println("Extract TAR archive.");
-      System.out.println(path.toString());
-      try (InputStream is = Files.newInputStream(path)) {
-        final String md5 = DigestUtils.md5Hex(is);
-        System.out.printf("Archive MD5 digest = %s\n", md5);
-      }
-      try (TarArchiveInputStream fin =
-          new TarArchiveInputStream(
-              new GzipCompressorInputStream(
-                  new FileInputStream(path.toAbsolutePath().toString())))) {
-        TarArchiveEntry entry;
-        while ((entry = fin.getNextTarEntry()) != null) {
-          if (entry.isDirectory()) {
-            continue;
-          }
-          final File curfile = new File(destDirectory, entry.getName());
-          final File parent = curfile.getParentFile();
-          if (!parent.exists()) {
-            parent.mkdirs();
-          }
-          IOUtils.copy(fin, new FileOutputStream(curfile));
+        final File curfile = new File(destDirectory, entry.getName());
+        final File parent = curfile.getParentFile();
+        if (!parent.exists()) {
+          parent.mkdirs();
         }
+        IOUtils.copy(fin, new FileOutputStream(curfile));
       }
-    } catch (final Throwable e) {
-      System.err.println("*******************************");
-      System.err.println(e.getMessage());
-      System.err.println("*******************************");
-      e.printStackTrace();
     }
   }
 
@@ -233,9 +173,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     }
 
     try {
-      System.out.println("Creating temp directory");
       final Path tmpDir = Files.createTempDirectory("data");
-      System.out.printf("Temp directory path: %s\n", tmpDir.toString());
       Files.delete(tmpDir);
       final Path toCopy = Paths.get(url.toURI());
       try (final Stream<Path> pathStream = Files.walk(toCopy)) {
@@ -252,20 +190,6 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
       Files.copy(source, dest, REPLACE_EXISTING);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
-    }
-  }
-
-  private static void ls(final Path path) {
-    ls(path.toFile());
-  }
-
-  private static void ls(final File file) {
-    for (File f : Objects.requireNonNull(file.listFiles())) {
-      if (f.isDirectory()) {
-        ls(f);
-      } else if (f.isFile()) {
-        System.out.println(f.getName());
-      }
     }
   }
 }
