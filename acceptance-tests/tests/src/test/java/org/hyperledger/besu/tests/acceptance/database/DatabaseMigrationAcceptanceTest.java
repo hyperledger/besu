@@ -123,7 +123,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     final String genesisData = getGenesisConfiguration();
     return nodeBuilder
         .devMode(false)
-        .dataPath(hostDataPath.resolve("data"))
+        .dataPath(hostDataPath)
         .genesisConfigProvider((nodes) -> Optional.of(genesisData))
         .jsonRpcEnabled();
   }
@@ -131,7 +131,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   private String getGenesisConfiguration() {
     try {
       return Resources.toString(
-          hostDataPath.resolve("data").resolve("genesis.json").toUri().toURL(), Charsets.UTF_8);
+          hostDataPath.resolve("genesis.json").toUri().toURL(), Charsets.UTF_8);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
