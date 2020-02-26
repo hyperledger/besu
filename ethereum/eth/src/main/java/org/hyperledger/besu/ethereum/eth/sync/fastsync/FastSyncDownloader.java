@@ -40,7 +40,7 @@ import org.apache.logging.log4j.Logger;
 
 public class FastSyncDownloader<C> {
 
-  private static final long FAST_SYNC_RETRY_DELAY = 5;
+  private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions<C> fastSyncActions;
@@ -96,9 +96,13 @@ public class FastSyncDownloader<C> {
           "Fast sync was unable to download the world state. Retrying with a new pivot block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
-      LOG.error("Encountered an unexpected error during fast sync. Restarting fast sync in " + FAST_SYNC_RETRY_DELAY + " seconds.", error);
+      LOG.error(
+          "Encountered an unexpected error during fast sync. Restarting fast sync in "
+              + FAST_SYNC_RETRY_DELAY
+              + " seconds.",
+          error);
       return fastSyncActions.scheduleFutureTask(
-          () -> start(FastSyncState.EMPTY_SYNC_STATE), Duration.ofSeconds(FAST_SYNC_RETRY_DELAY));
+          () -> start(FastSyncState.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
     }
   }
 
