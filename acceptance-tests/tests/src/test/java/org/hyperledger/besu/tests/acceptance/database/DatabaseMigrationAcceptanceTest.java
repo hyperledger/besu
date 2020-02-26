@@ -26,25 +26,23 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,13 +103,13 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     final Path databaseArchive =
         Paths.get(
             DatabaseMigrationAcceptanceTest.class
-                .getResource(String.format("%s/data.zip", dataPath))
+                .getResource(String.format("%s/data.tar.gz", dataPath))
                 .toURI());
     System.out.printf("Database archive path: %s\n", databaseArchive.toString());
     hostDataPath = copyDataDir(rootURL);
     System.out.println("Listing host data path directory before DB extraction:");
     ls(hostDataPath);
-    unzip(databaseArchive, hostDataPath.toAbsolutePath().toString());
+    extract(databaseArchive, hostDataPath.toAbsolutePath().toString());
     System.out.println("Listing host data path directory after DB extraction:");
     ls(hostDataPath);
     node = besu.createNode(testName, this::configureNode);
@@ -147,34 +145,61 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     testAccount.balanceEquals(Amount.wei(expectedBalance.toBigInteger())).verify(node);
   }
 
-  /*private static void unzip(final Path zipFile, final String destDirectoryPath) throws IOException {
+  /*private static void extract(final Path zipFile, final String destDirectoryPath) throws IOException {
     final ZipFile zip = new ZipFile(zipFile.toFile());
     zip.extractAll(destDirectoryPath);
   }*/
 
-  private static void unzip(final Path path, final String destDirectory) {
-    try {
-      System.out.println("Unzip using IOUtils.");
-      final Path dest = Paths.get(destDirectory);
-      try (ZipFile zipFile =
-          new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
-        final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        while (entries.hasMoreElements()) {
-          final ZipEntry entry = entries.nextElement();
-          final Path entryPath = dest.resolve(entry.getName());
-          if (entry.isDirectory()) {
-            Files.createDirectories(entryPath);
-          } else {
-            Files.createDirectories(entryPath.getParent());
-            try (InputStream in = zipFile.getInputStream(entry)) {
-              try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
-                IOUtils.copy(in, out);
-              }
+  /*private static void extract(final Path path, final String destDirectory) {
+  try {
+    System.out.println("Unzip using IOUtils.");
+    final Path dest = Paths.get(destDirectory);
+    try (ZipFile zipFile =
+        new ZipFile(path.toFile(), ZipFile.OPEN_READ, StandardCharsets.UTF_8)) {
+      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      while (entries.hasMoreElements()) {
+        final ZipEntry entry = entries.nextElement();
+        final Path entryPath = dest.resolve(entry.getName());
+        if (entry.isDirectory()) {
+          Files.createDirectories(entryPath);
+        } else {
+          Files.createDirectories(entryPath.getParent());
+          try (InputStream in = zipFile.getInputStream(entry)) {
+            try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
+              IOUtils.copy(in, out);
             }
           }
         }
       }
-    } catch (Throwable e) {
+    }
+  } catch (Throwable e) {
+    System.err.println("*******************************");
+    System.err.println(e.getMessage());
+    System.err.println("*******************************");
+    e.printStackTrace();
+  }*/
+
+  private static void extract(final Path path, final String destDirectory) {
+    try {
+      System.out.println("Extract TAR archive.");
+      try (TarArchiveInputStream fin =
+          new TarArchiveInputStream(
+              new GzipCompressorInputStream(
+                  new FileInputStream(path.toAbsolutePath().toString())))) {
+        TarArchiveEntry entry;
+        while ((entry = fin.getNextTarEntry()) != null) {
+          if (entry.isDirectory()) {
+            continue;
+          }
+          final File curfile = new File(destDirectory, entry.getName());
+          final File parent = curfile.getParentFile();
+          if (!parent.exists()) {
+            parent.mkdirs();
+          }
+          IOUtils.copy(fin, new FileOutputStream(curfile));
+        }
+      }
+    } catch (final Throwable e) {
       System.err.println("*******************************");
       System.err.println(e.getMessage());
       System.err.println("*******************************");
