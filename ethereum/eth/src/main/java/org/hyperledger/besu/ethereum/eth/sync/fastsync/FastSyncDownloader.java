@@ -30,7 +30,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +42,8 @@ import org.apache.logging.log4j.Logger;
 
 public class FastSyncDownloader<C> {
 
-  private static final int FAST_SYNC_RETRY_DELAY = 5;
+  private static final long FAST_SYNC_RETRY_TIMEOUT = 10;
+  private static final long FAST_SYNC_RETRY_DELAY = 5;
 
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions<C> fastSyncActions;
@@ -107,8 +107,8 @@ public class FastSyncDownloader<C> {
                   FAST_SYNC_RETRY_DELAY,
                   TimeUnit.SECONDS);
       try {
-        return fastSyncCountdown.get();
-      } catch (InterruptedException | ExecutionException e) {
+        return fastSyncCountdown.get(FAST_SYNC_RETRY_TIMEOUT, TimeUnit.SECONDS);
+      } catch (Exception e) {
         LOG.error("Unable to restart fast sync.", error);
         return completedExceptionally(error);
       }
