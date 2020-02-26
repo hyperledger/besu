@@ -151,7 +151,7 @@ public class PivotBlockRetriever<C> {
       final int retryCount = confirmationTasks.size();
 
       if ((retryCount % SUSPICIOUS_NUMBER_OF_RETRIES) == 0) {
-        LOG.warn("Several attempts have been made without finding a pivot block");
+        LOG.warn("{} attempts have failed to find a fast sync pivot block", retryCount);
       }
 
       if (retryCount > maxPivotBlockResets
