@@ -107,7 +107,7 @@ dependencyManagement {
     dependency 'javax.activation:activation:1.1.1'
     dependency 'net.lingala.zip4j:zip4j:2.3.2'
     dependency 'org.apache.commons:commons-compress:1.20'
-
+    dependency 'commons-io:commons-io:2.6'
 
   }
 }

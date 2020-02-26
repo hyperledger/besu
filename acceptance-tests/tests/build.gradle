@@ -43,6 +43,7 @@ dependencies {
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
   testImplementation 'net.lingala.zip4j:zip4j'
   testImplementation 'org.apache.commons:commons-compress'
+  testImplementation 'commons-io:commons-io'
   compile('javax.activation:activation'){
     force = true
   }
