@@ -107,7 +107,6 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     System.out.println("Setting up database migration test");
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
     System.out.printf("Root URL: %s\n", rootURL.toString());
-
     hostDataPath = copyDataDir(rootURL);
     System.out.printf("Downloading archive from: %s\n", archiveURL);
     final Path databaseArchive = hostDataPath.resolve("data.tar.gz");
