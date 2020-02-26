@@ -40,13 +40,33 @@ to enable private transactions on networks using consensus mechanisms that fork.
 
 See RC and Beta sections below. 
 
-### Known Bugs 
+### Known Issues 
+
+#### Fast sync defaulting to full sync 
+
+-  When fast sync cannot find enough valid peers rapidly enough, Besu defaults to full sync. 
+
+Workarounds: 
+1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database, 
+and start again. 
+2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood 
+of encountering the pruning bug. 
+
+A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427) 
+and is planned for inclusion in v1.4.1. 
+
+#### Pruning Bug 
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
 The associated error is `Unable to load trie node value for hash`
 
-Workaround -> Don't enable pruning with full sync. If the `MerkleTrieException` occurs with fast sync, delete 
-the database and resync. 
+Workarounds: 
+1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync. 
+2. If the `MerkleTrieException` occurs, delete the database and resync. 
+
+Investigation of this issue is in progress and a fix is targeted for v1.4.1. 
+
+#### Bootnodes must be validators when using onchain permissioning 
 
 - Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
 
