@@ -19,17 +19,14 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -41,63 +38,53 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class DefaultPrivacyController implements PrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final Enclave enclave;
-  private final PrivateStateStorage privateStateStorage;
-  private final WorldStateArchive privateWorldStateArchive;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateTransactionSimulator privateTransactionSimulator;
+  private final PrivateNonceProvider privateNonceProvider;
 
   public DefaultPrivacyController(
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
-      final PrivateTransactionSimulator privateTransactionSimulator) {
+      final PrivateTransactionSimulator privateTransactionSimulator,
+      final PrivateNonceProvider privateNonceProvider) {
     this(
         privacyParameters.getEnclave(),
-        privacyParameters.getPrivateStateStorage(),
-        privacyParameters.getPrivateWorldStateArchive(),
         new PrivateTransactionValidator(chainId),
         privateMarkerTransactionFactory,
-        privateTransactionSimulator);
+        privateTransactionSimulator,
+        privateNonceProvider);
   }
 
   public DefaultPrivacyController(
       final Enclave enclave,
-      final PrivateStateStorage privateStateStorage,
-      final WorldStateArchive privateWorldStateArchive,
       final PrivateTransactionValidator privateTransactionValidator,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
-      final PrivateTransactionSimulator privateTransactionSimulator) {
+      final PrivateTransactionSimulator privateTransactionSimulator,
+      final PrivateNonceProvider privateNonceProvider) {
     this.enclave = enclave;
-    this.privateStateStorage = privateStateStorage;
-    this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateTransactionValidator = privateTransactionValidator;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
     this.privateTransactionSimulator = privateTransactionSimulator;
+    this.privateNonceProvider = privateNonceProvider;
   }
 
   @Override
-  public SendTransactionResponse sendTransaction(
+  public String sendTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     try {
       LOG.trace("Storing private transaction in enclave");
       final SendResponse sendResponse = sendRequest(privateTransaction, enclavePublicKey);
-      final String enclaveKey = sendResponse.getKey();
-      if (privateTransaction.getPrivacyGroupId().isPresent()) {
-        final String privacyGroupId = privateTransaction.getPrivacyGroupId().get().toBase64String();
-        return new SendTransactionResponse(enclaveKey, privacyGroupId);
-      } else {
-        final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
-        final String privacyGroupId = getPrivacyGroupId(enclaveKey, privateFrom);
-        return new SendTransactionResponse(enclaveKey, privacyGroupId);
-      }
-    } catch (final Exception e) {
+      return sendResponse.getKey();
+    } catch (Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
     }
@@ -137,9 +124,8 @@ public class DefaultPrivacyController implements PrivacyController {
 
   @Override
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
-      final PrivateTransaction privateTransaction,
-      final String privacyGroupId,
-      final String enclavePublicKey) {
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+    final String privacyGroupId = privateTransaction.determinePrivacyGroupId();
     return privateTransactionValidator.validate(
         privateTransaction,
         determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
@@ -178,27 +164,8 @@ public class DefaultPrivacyController implements PrivacyController {
   @Override
   public long determineBesuNonce(
       final Address sender, final String privacyGroupId, final String enclavePublicKey) {
-    return privateStateStorage
-        .getLatestStateRoot(Bytes.fromBase64String(privacyGroupId))
-        .map(
-            lastRootHash ->
-                privateWorldStateArchive
-                    .getMutable(lastRootHash)
-                    .map(
-                        worldState -> {
-                          final Account maybePrivateSender = worldState.get(sender);
-
-                          if (maybePrivateSender != null) {
-                            return maybePrivateSender.getNonce();
-                          }
-                          // account has not interacted in this private state
-                          return Account.DEFAULT_NONCE;
-                        })
-                    // private state does not exist
-                    .orElse(Account.DEFAULT_NONCE))
-        .orElse(
-            // private state does not exist
-            Account.DEFAULT_NONCE);
+    return privateNonceProvider.getNonce(
+        sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
   }
 
   @Override
@@ -232,16 +199,6 @@ public class DefaultPrivacyController implements PrivacyController {
       }
       return enclave.send(
           payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
-    }
-  }
-
-  private String getPrivacyGroupId(final String key, final String privateFrom) {
-    LOG.debug("Getting privacy group for key {} and privateFrom {}", key, privateFrom);
-    try {
-      return enclave.receive(key, privateFrom).getPrivacyGroupId();
-    } catch (final RuntimeException e) {
-      LOG.error("Failed to retrieve private transaction in enclave", e);
-      throw e;
     }
   }
 }

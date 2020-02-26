@@ -91,6 +91,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(Integer.toString(node.getMiningParameters().getStratumPort()));
       params.add("--miner-stratum-host");
       params.add(node.getMiningParameters().getStratumNetworkInterface());
+      params.add("--min-gas-price");
+      params.add(
+          Integer.toString(node.getMiningParameters().getMinTransactionGasPrice().intValue()));
     }
     if (node.getMiningParameters().isStratumMiningEnabled()) {
       params.add("--miner-stratum-enabled");
@@ -100,8 +103,12 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--privacy-enabled");
       params.add("--privacy-url");
       params.add(node.getPrivacyParameters().getEnclaveUri().toString());
-      params.add("--privacy-public-key-file");
-      params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
+      if (node.getPrivacyParameters().isMultiTenancyEnabled()) {
+        params.add("--privacy-multi-tenancy-enabled");
+      } else {
+        params.add("--privacy-public-key-file");
+        params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
+      }
       params.add("--privacy-precompiled-address");
       params.add(String.valueOf(node.getPrivacyParameters().getPrivacyAddress()));
       params.add("--privacy-marker-transaction-signing-key-file");
@@ -249,6 +256,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     params.add("--key-value-storage");
     params.add("rocksdb");
+
+    params.add("--auto-log-bloom-caching-enabled");
+    params.add("false");
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =

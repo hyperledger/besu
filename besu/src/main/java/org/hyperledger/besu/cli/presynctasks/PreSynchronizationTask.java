@@ -12,22 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy;
+package org.hyperledger.besu.cli.presynctasks;
 
-public class SendTransactionResponse {
-  private final String enclaveKey;
-  private final String privacyGroupId;
+import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.controller.BesuController;
 
-  public SendTransactionResponse(final String enclaveKey, final String privacyGroupId) {
-    this.enclaveKey = enclaveKey;
-    this.privacyGroupId = privacyGroupId;
-  }
+/**
+ * All PreSynchronizationTask instances execute after the {@link BesuController} instance in {@link
+ * BesuCommand} is ready and before {@link BesuCommand#startSynchronization()} is called
+ */
+public interface PreSynchronizationTask {
 
-  public String getEnclaveKey() {
-    return enclaveKey;
-  }
-
-  public String getPrivacyGroupId() {
-    return privacyGroupId;
-  }
+  void run(final BesuController<?> besuController);
 }

@@ -51,8 +51,8 @@
     },
     "0060000000000000000000000000000000000000": {
       "comment": "Proxy a call to the address in the first 32 bytes, sending the rest of the input data to this address. Return 32 bytes from sub-call.",
-      "comment": "0x outSize 6020 outOffset 6000 inputSize 60203603 inputToMem(dupSize 80)6020600037 inOffset 6000 val 34 to 600035 gas 5A DELEGATECALL F4 Return 60206000F3",
-      "code": "0x60206000602036038060206000376000346000355AF460206000F3",
+      "comment": "0x outSize 6020 outOffset 6000 inputSize 60203603 inputToMem(dupSize 80)6020600037 inOffset 6000 to 600035 gas 5A DELEGATECALL F4 Return 60206000F3",
+      "code": "0x602060006020360380602060003760006000355AF460206000F3",
       "balance": "0x0"
     },
     "0070000000000000000000000000000000000000": {

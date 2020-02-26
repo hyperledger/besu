@@ -48,6 +48,8 @@ import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.PrunerOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
+import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.KeyLoader;
@@ -211,6 +213,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Property to indicate whether Besu has been launched via docker
   private final boolean isDocker = Boolean.getBoolean("besu.docker");
+
+  private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
+      new PreSynchronizationTaskRunner();
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -761,6 +766,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path privacyMarkerTransactionSigningKeyPath = null;
 
   @Option(
+      names = {"--privacy-enable-database-migration"},
+      description = "Enable private database metadata migration (default: ${DEFAULT-VALUE})")
+  private final Boolean migratePrivateDatabase = false;
+
+  @Option(
       names = {"--target-gas-limit"},
       description =
           "Sets target gas limit per block. If set each blocks gas limit will approach this setting over time if the current gas limit is different.")
@@ -789,6 +799,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identity for the key-value storage to be used.",
       arity = "1")
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
+
+  @Option(
+      names = {"--auto-log-bloom-caching-enabled"},
+      description = "Enable automatic log bloom caching (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean autoLogBloomCachingEnabled = true;
 
   @Option(
       names = {"--override-genesis-config"},
@@ -882,7 +898,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
-      validateOptions().configure().controller().startPlugins().startSynchronization();
+      final BesuCommand controller = validateOptions().configure().controller();
+
+      preSynchronizationTaskRunner.runTasks(controller.besuController);
+
+      controller.startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
@@ -1590,7 +1610,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
 
-    return privacyParametersBuilder.build();
+    final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
+
+    if (isPrivacyEnabled) {
+      preSynchronizationTaskRunner.addTask(
+          new PrivateDatabaseMigrationPreSyncTask(privacyParameters, migratePrivateDatabase));
+    }
+
+    return privacyParameters;
   }
 
   private boolean anyPrivacyApiEnabled() {
@@ -1602,17 +1629,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
     return new PrivacyKeyValueStorageProviderBuilder()
-        .withStorageFactory(
-            (PrivacyKeyValueStorageFactory)
-                storageService
-                    .getByName(name)
-                    .orElseThrow(
-                        () ->
-                            new StorageException(
-                                "No KeyValueStorageFactory found for key: " + name)))
+        .withStorageFactory(privacyKeyValueStorageFactory(name))
         .withCommonConfiguration(pluginCommonConfiguration)
         .withMetricsSystem(getMetricsSystem())
         .build();
+  }
+
+  private PrivacyKeyValueStorageFactory privacyKeyValueStorageFactory(final String name) {
+    return (PrivacyKeyValueStorageFactory)
+        storageService
+            .getByName(name)
+            .orElseThrow(
+                () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
@@ -1695,6 +1723,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .staticNodes(staticNodes)
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
+            .autoLogBloomCaching(autoLogBloomCachingEnabled)
             .build();
 
     addShutdownHook(runner);

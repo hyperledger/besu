@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import java.math.BigInteger;
 import java.util.Random;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
@@ -74,7 +75,8 @@ public class StatusMessageTest {
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
-    final ForkIdManager.ForkId forkId = ForkIdManager.createIdEntry("0xa00bc334", 0L);
+    final ForkIdManager.ForkId forkId =
+        new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
 
     final MessageData msg =
         StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);

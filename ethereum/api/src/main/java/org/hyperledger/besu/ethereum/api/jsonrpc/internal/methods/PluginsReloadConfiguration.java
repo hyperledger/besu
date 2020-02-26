@@ -52,7 +52,7 @@ public class PluginsReloadConfiguration implements JsonRpcMethod {
             "Plugin cannot be reloaded because no plugin has been registered with specified name: {}.",
             pluginName);
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+            requestContext.getRequest().getId(), JsonRpcError.PLUGIN_NOT_FOUND);
       }
       reloadPluginConfig(namedPlugins.get(pluginName));
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());

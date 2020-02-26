@@ -12,26 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
-package org.hyperledger.besu.nat.core;
+public class PrivateStorageMigrationException extends RuntimeException {
 
-import org.hyperledger.besu.nat.NatMethod;
+  private static final String MIGRATION_ERROR_MSG =
+      "Unexpected error during private database migration. Please re-sync your node to avoid data corruption.";
 
-public class AutoDetectionResult {
-
-  private final NatMethod natMethod;
-  private final boolean isDetectedNatMethod;
-
-  public AutoDetectionResult(final NatMethod natMethod, final boolean isDetectedNatMethod) {
-    this.natMethod = natMethod;
-    this.isDetectedNatMethod = isDetectedNatMethod;
+  public PrivateStorageMigrationException(final String message) {
+    super(message);
   }
 
-  public NatMethod getNatMethod() {
-    return natMethod;
+  public PrivateStorageMigrationException() {
+    super(MIGRATION_ERROR_MSG);
   }
 
-  public boolean isDetectedNatMethod() {
-    return isDetectedNatMethod;
+  public PrivateStorageMigrationException(final Throwable th) {
+    super(MIGRATION_ERROR_MSG, th);
   }
 }
