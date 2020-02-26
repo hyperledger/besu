@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -40,6 +41,7 @@ import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -182,6 +184,11 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   private static void extract(final Path path, final String destDirectory) {
     try {
       System.out.println("Extract TAR archive.");
+      System.out.println(path.toString());
+      try (InputStream is = Files.newInputStream(path)) {
+        final String md5 = DigestUtils.md5Hex(is);
+        System.out.printf("Archive MD5 digest = %s\n", md5);
+      }
       try (TarArchiveInputStream fin =
           new TarArchiveInputStream(
               new GzipCompressorInputStream(
