@@ -358,6 +358,7 @@ public class FastSyncDownloaderTest {
     assertThat(result).isCompletedWithValue(secondDownloadPivotBlockHeaderState);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldResetFastSyncStateAndRestartProcessIfANonFastSyncExceptionOccurs() {
     final CompletableFuture<Void> firstWorldStateFuture = new CompletableFuture<>();
