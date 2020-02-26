@@ -20,6 +20,7 @@ import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
@@ -86,9 +87,12 @@ public class FastSyncDownloader<C> {
     trailingPeerRequirements = Optional.empty();
     if (ExceptionUtils.rootCause(error) instanceof FastSyncException) {
       return completedExceptionally(error);
-    } else {
+    } else if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
       LOG.warn(
           "Fast sync was unable to download the world state. Retrying with a new pivot block.");
+      return start(FastSyncState.EMPTY_SYNC_STATE);
+    } else {
+      LOG.error("Encountered an unexpected error during fast sync.  Restarting fast sync.", error);
       return start(FastSyncState.EMPTY_SYNC_STATE);
     }
   }
