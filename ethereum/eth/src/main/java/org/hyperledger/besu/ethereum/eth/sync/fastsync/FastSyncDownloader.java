@@ -30,6 +30,10 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.io.MoreFiles;
@@ -38,6 +42,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FastSyncDownloader<C> {
+
+  private static final int FAST_SYNC_RETRY_DELAY = 5;
+
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions<C> fastSyncActions;
   private final WorldStateDownloader worldStateDownloader;
@@ -92,8 +99,19 @@ public class FastSyncDownloader<C> {
           "Fast sync was unable to download the world state. Retrying with a new pivot block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
-      LOG.error("Encountered an unexpected error during fast sync.  Restarting fast sync.", error);
-      return start(FastSyncState.EMPTY_SYNC_STATE);
+      LOG.error("Encountered an unexpected error during fast sync.  Trying to restart fast sync.");
+      final ScheduledFuture<CompletableFuture<FastSyncState>> fastSyncCountdown =
+          Executors.newSingleThreadScheduledExecutor()
+              .schedule(
+                  () -> start(FastSyncState.EMPTY_SYNC_STATE),
+                  FAST_SYNC_RETRY_DELAY,
+                  TimeUnit.SECONDS);
+      try {
+        return fastSyncCountdown.get();
+      } catch (InterruptedException | ExecutionException e) {
+        LOG.error("Unable to restart fast sync.", error);
+        return completedExceptionally(error);
+      }
     }
   }
 
