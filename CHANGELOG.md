@@ -55,10 +55,11 @@ of encountering the pruning bug.
 A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427) 
 and is planned for inclusion in v1.4.1. 
 
-#### Pruning Bug 
+#### Error full syncing with pruning 
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
-The associated error is `Unable to load trie node value for hash`
+The associated error is `Unable to load trie node value for hash` and is caused by the combination of 
+full sync and pruning. 
 
 Workarounds: 
 1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync. 
