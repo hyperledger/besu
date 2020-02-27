@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface PrivacyController {
 
   String sendTransaction(PrivateTransaction privateTransaction, String enclavePublicKey);
@@ -54,4 +56,7 @@ public interface PrivacyController {
       final String enclavePublicKey,
       final CallParameter callParams,
       final long blockNumber);
+
+  Optional<Bytes> getContractCode(
+      final String privacyGroupId, final Address contractAddress, final long blockNumber);
 }

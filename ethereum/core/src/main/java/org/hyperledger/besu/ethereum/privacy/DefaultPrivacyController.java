@@ -179,6 +179,12 @@ public class DefaultPrivacyController implements PrivacyController {
     return result;
   }
 
+  @Override
+  public Optional<Bytes> getContractCode(
+      final String privacyGroupId, final Address contractAddress, final long blockNumber) {
+    return Optional.empty();
+  }
+
   private SendResponse sendRequest(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();

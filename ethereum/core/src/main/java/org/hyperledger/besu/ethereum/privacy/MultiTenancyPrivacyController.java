@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class MultiTenancyPrivacyController implements PrivacyController {
 
   private final PrivacyController privacyController;
@@ -122,6 +124,12 @@ public class MultiTenancyPrivacyController implements PrivacyController {
     verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
     return privacyController.simulatePrivateTransaction(
         privacyGroupId, enclavePublicKey, callParams, blockNumber);
+  }
+
+  @Override
+  public Optional<Bytes> getContractCode(
+      final String privacyGroupId, final Address contractAddress, final long blockNumber) {
+    return Optional.empty();
   }
 
   private void verifyPrivateFromMatchesEnclavePublicKey(
