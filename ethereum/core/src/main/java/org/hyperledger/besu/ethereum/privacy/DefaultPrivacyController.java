@@ -20,6 +20,7 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
@@ -181,7 +182,7 @@ public class DefaultPrivacyController implements PrivacyController {
 
   @Override
   public Optional<Bytes> getContractCode(
-      final String privacyGroupId, final Address contractAddress, final long blockNumber) {
+      final String privacyGroupId, final Address contractAddress, final Hash blockHash) {
     return Optional.empty();
   }
 

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
@@ -42,6 +44,7 @@ public class PrivGetCodeTest {
   @Mock private PrivacyController privacyController;
   @Mock private BlockchainQueries mockBlockchainQueries;
 
+  private final Hash latestBlockHash = Hash.ZERO;
   private final String privacyGroupId = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private final Address contractAddress =
       Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732");
@@ -63,7 +66,10 @@ public class PrivGetCodeTest {
 
   @Test
   public void returnValidCodeWhenCalledOnValidContract() {
-    when(privacyController.getContractCode(eq(privacyGroupId), eq(contractAddress), anyLong()))
+    when(mockBlockchainQueries.getBlockHashByNumber(anyLong()))
+        .thenReturn(Optional.of(latestBlockHash));
+    when(privacyController.getContractCode(
+            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash)))
         .thenReturn(Optional.of(contractCode));
 
     final JsonRpcResponse response = method.response(privGetCodeRequest);
@@ -73,11 +79,26 @@ public class PrivGetCodeTest {
   }
 
   @Test
-  public void returnEmptyWhenContractDoesNotExist() {
-    when(privacyController.getContractCode(eq(privacyGroupId), eq(contractAddress), anyLong()))
+  public void returnNullWhenContractDoesNotExist() {
+    when(mockBlockchainQueries.getBlockHashByNumber(anyLong()))
+        .thenReturn(Optional.of(latestBlockHash));
+    when(privacyController.getContractCode(
+            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse response = method.response(privGetCodeRequest);
+
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
+  }
+
+  @Test
+  public void returnNullWhenBlockDoesNotExist() {
+    when(mockBlockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = method.response(privGetCodeRequest);
+
+    verifyNoInteractions(privacyController);
 
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();

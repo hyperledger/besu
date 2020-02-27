@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -58,5 +59,5 @@ public interface PrivacyController {
       final long blockNumber);
 
   Optional<Bytes> getContractCode(
-      final String privacyGroupId, final Address contractAddress, final long blockNumber);
+      final String privacyGroupId, final Address contractAddress, final Hash blockHash);
 }

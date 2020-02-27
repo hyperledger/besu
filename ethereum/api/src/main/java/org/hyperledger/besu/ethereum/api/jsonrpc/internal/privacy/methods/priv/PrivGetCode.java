@@ -49,6 +49,9 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final Address address = request.getRequiredParameter(1, Address.class);
 
-    return privacyController.getContractCode(privacyGroupId, address, blockNumber).orElse(null);
+    return getBlockchainQueries()
+        .getBlockHashByNumber(blockNumber)
+        .flatMap(blockHash -> privacyController.getContractCode(privacyGroupId, address, blockHash))
+        .orElse(null);
   }
 }
