@@ -51,9 +51,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
-
-  /* private static final String DB_ARCHIVE_DOWNLOAD_URL =
-  "https://github.com/PegaSysEng/besu-db-migration-test/raw/master/input/test/%s/data.tar.gz";*/
   private final String testName;
   private final String dataPath;
   private final long expectedChainHeight;
@@ -61,7 +58,6 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   private final Account testAccount;
   private Path hostDataPath;
   private BesuNode node;
-  // private final String archiveURL;
 
   public DatabaseMigrationAcceptanceTest(
       final String testName,
@@ -74,7 +70,6 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     this.expectedChainHeight = expectedChainHeight;
     this.expectedBalance = expectedBalance;
     this.testAccount = accounts.createAccount(testAddress);
-    // this.archiveURL = String.format(DB_ARCHIVE_DOWNLOAD_URL, this.dataPath);
   }
 
   @Parameters(name = "{0}")
@@ -102,8 +97,6 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   public void setUp() throws Exception {
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
     hostDataPath = copyDataDir(rootURL);
-    // final Path databaseArchive = hostDataPath.resolve("data.tar.gz");
-    // downloadArchive(databaseArchive);
     final Path databaseArchive =
         Paths.get(
             DatabaseMigrationAcceptanceTest.class
@@ -113,10 +106,6 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     node = besu.createNode(testName, this::configureNode);
     cluster.start(node);
   }
-
-  /*private void downloadArchive(final Path to) throws Exception {
-    FileUtils.copyURLToFile(new URL(archiveURL), to.toFile(), 5000, 10000);
-  }*/
 
   private BesuNodeConfigurationBuilder configureNode(
       final BesuNodeConfigurationBuilder nodeBuilder) {
