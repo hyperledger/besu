@@ -15,13 +15,16 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -43,6 +46,7 @@ public class PrivGetCodeTest {
 
   @Mock private PrivacyController privacyController;
   @Mock private BlockchainQueries mockBlockchainQueries;
+  @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   private final Hash latestBlockHash = Hash.ZERO;
   private final String privacyGroupId = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
@@ -55,7 +59,10 @@ public class PrivGetCodeTest {
 
   @Before
   public void before() {
-    method = new PrivGetCode(mockBlockchainQueries, privacyController);
+    when(enclavePublicKeyProvider.getEnclaveKey(any()))
+        .thenReturn("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+
+    method = new PrivGetCode(mockBlockchainQueries, privacyController, enclavePublicKeyProvider);
     privGetCodeRequest = buildPrivGetCodeRequest();
   }
 
@@ -69,7 +76,7 @@ public class PrivGetCodeTest {
     when(mockBlockchainQueries.getBlockHashByNumber(anyLong()))
         .thenReturn(Optional.of(latestBlockHash));
     when(privacyController.getContractCode(
-            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash)))
+            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash), anyString()))
         .thenReturn(Optional.of(contractCode));
 
     final JsonRpcResponse response = method.response(privGetCodeRequest);
@@ -83,7 +90,7 @@ public class PrivGetCodeTest {
     when(mockBlockchainQueries.getBlockHashByNumber(anyLong()))
         .thenReturn(Optional.of(latestBlockHash));
     when(privacyController.getContractCode(
-            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash)))
+            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash), anyString()))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse response = method.response(privGetCodeRequest);

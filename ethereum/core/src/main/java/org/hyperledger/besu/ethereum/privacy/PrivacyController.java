@@ -59,5 +59,8 @@ public interface PrivacyController {
       final long blockNumber);
 
   Optional<Bytes> getContractCode(
-      final String privacyGroupId, final Address contractAddress, final Hash blockHash);
+      final String privacyGroupId,
+      final Address contractAddress,
+      final Hash blockHash,
+      final String enclavePublicKey);
 }

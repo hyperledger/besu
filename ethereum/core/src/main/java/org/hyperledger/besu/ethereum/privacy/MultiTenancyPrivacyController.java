@@ -129,8 +129,13 @@ public class MultiTenancyPrivacyController implements PrivacyController {
 
   @Override
   public Optional<Bytes> getContractCode(
-      final String privacyGroupId, final Address contractAddress, final Hash blockHash) {
-    return Optional.empty();
+      final String privacyGroupId,
+      final Address contractAddress,
+      final Hash blockHash,
+      final String enclavePublicKey) {
+    verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    return privacyController.getContractCode(
+        privacyGroupId, contractAddress, blockHash, enclavePublicKey);
   }
 
   private void verifyPrivateFromMatchesEnclavePublicKey(

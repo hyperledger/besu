@@ -50,19 +50,22 @@ public class DefaultPrivacyController implements PrivacyController {
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
+  private final PrivateWorldStateReader privateWorldStateReader;
 
   public DefaultPrivacyController(
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
-      final PrivateNonceProvider privateNonceProvider) {
+      final PrivateNonceProvider privateNonceProvider,
+      final PrivateWorldStateReader privateWorldStateReader) {
     this(
         privacyParameters.getEnclave(),
         new PrivateTransactionValidator(chainId),
         privateMarkerTransactionFactory,
         privateTransactionSimulator,
-        privateNonceProvider);
+        privateNonceProvider,
+        privateWorldStateReader);
   }
 
   public DefaultPrivacyController(
@@ -70,12 +73,14 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivateTransactionValidator privateTransactionValidator,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
-      final PrivateNonceProvider privateNonceProvider) {
+      final PrivateNonceProvider privateNonceProvider,
+      final PrivateWorldStateReader privateWorldStateReader) {
     this.enclave = enclave;
     this.privateTransactionValidator = privateTransactionValidator;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
     this.privateTransactionSimulator = privateTransactionSimulator;
     this.privateNonceProvider = privateNonceProvider;
+    this.privateWorldStateReader = privateWorldStateReader;
   }
 
   @Override
@@ -182,8 +187,11 @@ public class DefaultPrivacyController implements PrivacyController {
 
   @Override
   public Optional<Bytes> getContractCode(
-      final String privacyGroupId, final Address contractAddress, final Hash blockHash) {
-    return Optional.empty();
+      final String privacyGroupId,
+      final Address contractAddress,
+      final Hash blockHash,
+      final String enclavePublicKey) {
+    return privateWorldStateReader.getContractCode(privacyGroupId, blockHash, contractAddress);
   }
 
   private SendResponse sendRequest(
