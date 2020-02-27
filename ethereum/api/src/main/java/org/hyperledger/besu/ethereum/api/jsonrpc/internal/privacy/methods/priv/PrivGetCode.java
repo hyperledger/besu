@@ -50,7 +50,8 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected Bytes resultByBlockNumber(final JsonRpcRequestContext request, final long blockNumber) {
+  protected String resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final Address address = request.getRequiredParameter(1, Address.class);
 
@@ -62,6 +63,7 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
             blockHash ->
                 privacyController.getContractCode(
                     privacyGroupId, address, blockHash, enclavePublicKey))
+        .map(Bytes::toString)
         .orElse(null);
   }
 }

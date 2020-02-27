@@ -82,7 +82,8 @@ public class PrivGetCodeTest {
     final JsonRpcResponse response = method.response(privGetCodeRequest);
 
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
-    assertThat(((JsonRpcSuccessResponse) response).getResult()).isEqualTo(contractCode);
+    assertThat(((JsonRpcSuccessResponse) response).getResult())
+        .isEqualTo(contractCode.toHexString());
   }
 
   @Test
