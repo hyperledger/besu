@@ -212,13 +212,13 @@ public class ProtocolScheduleBuilder<C> {
             config.getEvmStackSize(),
             isRevertReasonEnabled));
     addProtocolSpec(
-            protocolSchedule,
-            config.getPhoenixBlockNumber(),
-            ClassicProtocolSpecs.phoenixDefinition(
-                    chainId,
-                    config.getContractSizeLimit(),
-                    config.getEvmStackSize(),
-                    isRevertReasonEnabled));
+        protocolSchedule,
+        config.getPhoenixBlockNumber(),
+        ClassicProtocolSpecs.phoenixDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
@@ -294,6 +294,7 @@ public class ProtocolScheduleBuilder<C> {
             "DefuseDifficultyBomb", config.getDefuseDifficultyBombBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Atlantis", config.getAtlantisBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Agharta", config.getAghartaBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Phoenix", config.getPhoenixBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

@@ -150,13 +150,28 @@ public class ClassicProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> phoenixDefinition(
-          final Optional<BigInteger> chainId,
-          final OptionalInt configContractSizeLimit,
-          final OptionalInt configStackSizeLimit,
-          final boolean enableRevertReason) {
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return aghartaDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
-            .name("Phoenix");
+        .gasCalculator(IstanbulGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new MainnetContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    1))
+        .name("Phoenix");
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(

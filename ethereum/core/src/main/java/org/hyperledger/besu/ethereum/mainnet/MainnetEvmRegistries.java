@@ -278,5 +278,4 @@ abstract class MainnetEvmRegistries {
         new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
         Account.DEFAULT_VERSION);
   }
-
 }
