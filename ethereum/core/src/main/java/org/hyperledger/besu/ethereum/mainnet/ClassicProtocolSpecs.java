@@ -149,6 +149,16 @@ public class ClassicProtocolSpecs {
         .name("Agharta");
   }
 
+  public static ProtocolSpecBuilder<Void> phoenixDefinition(
+          final Optional<BigInteger> chainId,
+          final OptionalInt configContractSizeLimit,
+          final OptionalInt configStackSizeLimit,
+          final boolean enableRevertReason) {
+    return aghartaDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+            .name("Phoenix");
+  }
+
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
