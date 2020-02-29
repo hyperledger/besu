@@ -106,9 +106,9 @@ public class EthEstimateGas implements JsonRpcMethod {
   }
 
   private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, JsonRpcError jsonRpcError) {
+      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(
         request.getRequest().getId(),
-        jsonRpcError == null ? JsonRpcError.INTERNAL_ERROR : jsonRpcError);        
+        jsonRpcError == null ? JsonRpcError.INTERNAL_ERROR : jsonRpcError);
   }
 }
