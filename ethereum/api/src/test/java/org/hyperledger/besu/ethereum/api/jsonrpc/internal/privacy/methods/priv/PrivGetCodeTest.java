@@ -49,6 +49,7 @@ public class PrivGetCodeTest {
   @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   private final Hash latestBlockHash = Hash.ZERO;
+  private final String enclavePublicKey = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final String privacyGroupId = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private final Address contractAddress =
       Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732");
@@ -59,8 +60,7 @@ public class PrivGetCodeTest {
 
   @Before
   public void before() {
-    when(enclavePublicKeyProvider.getEnclaveKey(any()))
-        .thenReturn("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(enclavePublicKey);
 
     method = new PrivGetCode(mockBlockchainQueries, privacyController, enclavePublicKeyProvider);
     privGetCodeRequest = buildPrivGetCodeRequest();
