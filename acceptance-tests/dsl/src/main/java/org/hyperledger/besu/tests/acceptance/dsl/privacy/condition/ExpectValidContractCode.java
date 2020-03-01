@@ -12,22 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.nat;
+package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
-public enum NatMethod {
-  UPNP,
-  MANUAL,
-  DOCKER,
-  KUBERNETES,
-  AUTO,
-  NONE;
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public static NatMethod fromString(final String str) {
-    for (final NatMethod mode : NatMethod.values()) {
-      if (mode.name().equalsIgnoreCase(str)) {
-        return mode;
-      }
-    }
-    return null;
+import java.io.IOException;
+
+import org.web3j.tx.Contract;
+
+public class ExpectValidContractCode implements PrivateContractCondition {
+  @Override
+  public void verify(final Contract contract) throws IOException {
+    assertThat(contract).isNotNull();
+    assertThat(contract.isValid()).isEqualTo(true);
   }
 }

@@ -32,10 +32,12 @@ public class CustomRequestFactory {
 
     public TransactionReceiptWithRevertReason() {}
 
+    @Override
     public void setRevertReason(final String revertReason) {
       this.revertReason = revertReason;
     }
 
+    @Override
     public String getRevertReason() {
       return revertReason;
     }
