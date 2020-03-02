@@ -172,6 +172,9 @@ public class TransactionLogBloomCacher {
     try {
       long blockNumber = blockchain.getChainHeadBlockNumber();
       final File currentFile = calculateCacheFileName(CURRENT, cacheDir);
+      if (!currentFile.exists()) {
+        currentFile.createNewFile();
+      }
       final long segmentNumber = blockNumber / BLOCKS_PER_BLOOM_CACHE;
       try (final OutputStream out = new FileOutputStream(currentFile)) {
         fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, out);
