@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetCodeTransaction;
 
 import java.util.List;
 
@@ -38,5 +40,10 @@ public class PrivacyTransactions {
   public PrivDistributeTransactionTransaction privDistributeTransaction(
       final String signedPrivateTransaction) {
     return new PrivDistributeTransactionTransaction(signedPrivateTransaction);
+  }
+
+  public PrivGetCodeTransaction privGetCode(
+      final String privacyGroupId, final Address contractAddress, final String blockParameter) {
+    return new PrivGetCodeTransaction(privacyGroupId, contractAddress, blockParameter);
   }
 }
