@@ -21,6 +21,7 @@
 | Mark Terry       | mark-terry       | m.terry          |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
+| Stefan Pingel    | pinges           | pinges           |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
