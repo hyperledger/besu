@@ -38,6 +38,7 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -84,6 +85,7 @@ public class DefaultPrivacyControllerTest {
   private Enclave enclave;
   private String enclavePublicKey;
   private PrivateNonceProvider privateNonceProvider;
+  private PrivateWorldStateReader privateWorldStateReader;
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
@@ -136,6 +138,8 @@ public class DefaultPrivacyControllerTest {
     privateNonceProvider = mock(ChainHeadPrivateNonceProvider.class);
     when(privateNonceProvider.getNonce(any(), any())).thenReturn(1L);
 
+    privateWorldStateReader = mock(PrivateWorldStateReader.class);
+
     enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
@@ -149,7 +153,8 @@ public class DefaultPrivacyControllerTest {
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
-            privateNonceProvider);
+            privateNonceProvider,
+            privateWorldStateReader);
     brokenPrivacyController =
         new DefaultPrivacyController(
             brokenMockEnclave(),
@@ -157,7 +162,8 @@ public class DefaultPrivacyControllerTest {
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
-            privateNonceProvider);
+            privateNonceProvider,
+            privateWorldStateReader);
   }
 
   @Test
@@ -371,6 +377,23 @@ public class DefaultPrivacyControllerTest {
         privacyController.simulatePrivateTransaction(
             "Group1", ENCLAVE_PUBLIC_KEY, callParameter, 1);
     assertThat(result.isPresent()).isTrue();
+  }
+
+  @Test
+  public void getContractCodeCallsPrivateWorldStateReader() {
+    final Hash blockHash = Hash.ZERO;
+    final Address contractAddress = Address.ZERO;
+    final Bytes contractCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
+
+    when(privateWorldStateReader.getContractCode(
+            eq(PRIVACY_GROUP_ID), eq(blockHash), eq(contractAddress)))
+        .thenReturn(Optional.of(contractCode));
+
+    assertThat(
+            privacyController.getContractCode(
+                PRIVACY_GROUP_ID, contractAddress, blockHash, ENCLAVE_PUBLIC_KEY))
+        .isPresent()
+        .hasValue(contractCode);
   }
 
   private static PrivateTransaction buildLegacyPrivateTransaction() {

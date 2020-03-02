@@ -17,31 +17,24 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,98 +44,79 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PrivGetCodeTest {
 
-  private final Address sender =
-      Address.fromHexString("0x0000000000000000000000000000000000000003");
-  private static final SECP256K1.KeyPair KEY_PAIR =
-      SECP256K1.KeyPair.create(
-          SECP256K1.PrivateKey.create(
-              new BigInteger(
-                  "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+  @Mock private PrivacyController privacyController;
+  @Mock private BlockchainQueries mockBlockchainQueries;
+  @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  private final Bytes privacyGroupId =
-      Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
-
-  private final PrivateTransaction.Builder privateTransactionBuilder =
-      PrivateTransaction.builder()
-          .nonce(0)
-          .gasPrice(Wei.of(1000))
-          .gasLimit(3000000)
-          .to(null)
-          .value(Wei.ZERO)
-          .payload(
-              Bytes.fromBase64String(
-                  "0x608060405234801561001057600080fd5b5060d08061001f60003960"
-                      + "00f3fe60806040526004361060485763ffffffff7c01000000"
-                      + "00000000000000000000000000000000000000000000000000"
-                      + "60003504166360fe47b18114604d5780636d4ce63c14607557"
-                      + "5b600080fd5b348015605857600080fd5b5060736004803603"
-                      + "6020811015606d57600080fd5b50356099565b005b34801560"
-                      + "8057600080fd5b506087609e565b6040805191825251908190"
-                      + "0360200190f35b600055565b6000549056fea165627a7a7230"
-                      + "5820cb1d0935d14b589300b12fcd0ab849a7e9019c81da24d6"
-                      + "daa4f6b2f003d1b0180029"))
-          .sender(sender)
-          .chainId(BigInteger.valueOf(2018))
-          .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
-          .restriction(Restriction.RESTRICTED);
+  private final Hash latestBlockHash = Hash.ZERO;
+  private final String enclavePublicKey = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private final String privacyGroupId = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
+  private final Address contractAddress =
+      Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732");
+  private final Bytes contractCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
 
   private PrivGetCode method;
-
-  @Mock private BlockchainQueries mockBlockchainQueries;
-  @Mock private Blockchain mockBlockchain;
-  @Mock private Block mockBlock;
-  @Mock private Hash mockHash;
-  @Mock private PrivateStateRootResolver mockResolver;
-  @Mock private WorldStateArchive mockPrivateWorldStateArchive;
-  @Mock private WorldState mockWorldState;
-  @Mock private Account mockAccount;
-
-  private final Hash lastStateRoot =
-      Hash.fromHexString("0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
-
-  private final Bytes contractAccountCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
+  private JsonRpcRequestContext privGetCodeRequest;
 
   @Before
   public void before() {
-    method = new PrivGetCode(mockBlockchainQueries, mockPrivateWorldStateArchive, mockResolver);
+    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(enclavePublicKey);
+
+    method = new PrivGetCode(mockBlockchainQueries, privacyController, enclavePublicKeyProvider);
+    privGetCodeRequest = buildPrivGetCodeRequest();
+  }
+
+  @Test
+  public void methodHasExpectedName() {
+    assertThat(method.getName()).isEqualTo("priv_getCode");
   }
 
   @Test
   public void returnValidCodeWhenCalledOnValidContract() {
-    final PrivateTransaction transaction =
-        privateTransactionBuilder.privacyGroupId(privacyGroupId).signAndBuild(KEY_PAIR);
-    final Address contractAddress =
-        Address.privateContractAddress(
-            transaction.getSender(), transaction.getNonce(), privacyGroupId);
+    when(mockBlockchainQueries.getBlockHashByNumber(anyLong()))
+        .thenReturn(Optional.of(latestBlockHash));
+    when(privacyController.getContractCode(
+            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash), anyString()))
+        .thenReturn(Optional.of(contractCode));
 
-    mockBlockchainWithContractCode(contractAddress);
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "priv_getCode",
-                new Object[] {
-                  "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=",
-                  contractAddress.toHexString(),
-                  "latest"
-                }));
-
-    final JsonRpcResponse response = method.response(request);
+    final JsonRpcResponse response = method.response(privGetCodeRequest);
 
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     assertThat(((JsonRpcSuccessResponse) response).getResult())
-        .isEqualTo(contractAccountCode.toString());
+        .isEqualTo(contractCode.toHexString());
   }
 
-  private void mockBlockchainWithContractCode(final Address resultantContractAddress) {
-    when(mockBlockchainQueries.getBlockchain()).thenReturn(mockBlockchain);
-    when(mockBlockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mockBlock));
-    when(mockBlock.getHash()).thenReturn(mockHash);
-    when(mockResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
-        .thenReturn(lastStateRoot);
-    when(mockPrivateWorldStateArchive.get(lastStateRoot)).thenReturn(Optional.of(mockWorldState));
-    when(mockWorldState.get(resultantContractAddress)).thenReturn(mockAccount);
-    when(mockAccount.getCode()).thenReturn(contractAccountCode);
+  @Test
+  public void returnNullWhenContractDoesNotExist() {
+    when(mockBlockchainQueries.getBlockHashByNumber(anyLong()))
+        .thenReturn(Optional.of(latestBlockHash));
+    when(privacyController.getContractCode(
+            eq(privacyGroupId), eq(contractAddress), eq(latestBlockHash), anyString()))
+        .thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = method.response(privGetCodeRequest);
+
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
+  }
+
+  @Test
+  public void returnNullWhenBlockDoesNotExist() {
+    when(mockBlockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = method.response(privGetCodeRequest);
+
+    verifyNoInteractions(privacyController);
+
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
+  }
+
+  private JsonRpcRequestContext buildPrivGetCodeRequest() {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest(
+            "2.0",
+            "priv_getCode",
+            new Object[] {privacyGroupId, contractAddress.toHexString(), "latest"}));
   }
 }
