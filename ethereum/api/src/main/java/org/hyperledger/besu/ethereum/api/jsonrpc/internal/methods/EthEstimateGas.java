@@ -84,8 +84,10 @@ public class EthEstimateGas implements JsonRpcMethod {
   private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
       final JsonRpcRequestContext request) {
     return result ->
-        new JsonRpcSuccessResponse(
-            request.getRequest().getId(), Quantity.create(result.getGasEstimate()));
+        result.isSuccessful()
+            ? new JsonRpcSuccessResponse(
+                request.getRequest().getId(), Quantity.create(result.getGasEstimate()))
+            : null;
   }
 
   private JsonRpcErrorResponse errorResponse(final JsonRpcRequestContext request) {
