@@ -18,33 +18,25 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-import java.util.Optional;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivGetCode extends AbstractBlockParameterMethod {
 
-  private final BlockchainQueries blockchain;
-  private final PrivateStateRootResolver privateStateRootResolver;
-  private final WorldStateArchive privateWorldStateArchive;
+  private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetCode(
       final BlockchainQueries blockchainQueries,
-      final WorldStateArchive privateWorldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver) {
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     super(blockchainQueries);
-    this.privateWorldStateArchive = privateWorldStateArchive;
-    this.blockchain = blockchainQueries;
-    this.privateStateRootResolver = privateStateRootResolver;
+    this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -58,28 +50,20 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected Object resultByBlockNumber(
+  protected String resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final Address address = request.getRequiredParameter(1, Address.class);
 
-    final Address address = Address.fromHexString(request.getRequiredParameter(1, String.class));
+    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
 
-    final Hash latestStateRoot =
-        privateStateRootResolver.resolveLastStateRoot(
-            Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)),
-            blockchain.getBlockchain().getBlockByNumber(blockNumber).orElseThrow().getHash());
-
-    return privateWorldStateArchive
-        .get(latestStateRoot)
+    return getBlockchainQueries()
+        .getBlockHashByNumber(blockNumber)
         .flatMap(
-            pws ->
-                Optional.ofNullable(pws.get(address)).map(account -> account.getCode().toString()))
-        .map(c -> new JsonRpcSuccessResponse(request.getRequest().getId(), c))
-        .orElse(new JsonRpcSuccessResponse(request.getRequest().getId(), null));
-  }
-
-  @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    return (JsonRpcResponse) findResultByParamType(requestContext);
+            blockHash ->
+                privacyController.getContractCode(
+                    privacyGroupId, address, blockHash, enclavePublicKey))
+        .map(Bytes::toString)
+        .orElse(null);
   }
 }
