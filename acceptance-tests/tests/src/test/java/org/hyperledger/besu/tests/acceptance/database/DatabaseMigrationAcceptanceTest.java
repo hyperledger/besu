@@ -34,10 +34,14 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -54,22 +58,21 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   private final String testName;
   private final String dataPath;
   private final long expectedChainHeight;
-  private final Wei expectedBalance;
-  private final Account testAccount;
   private Path hostDataPath;
   private BesuNode node;
+  private final List<AccountData> testAccounts;
 
   public DatabaseMigrationAcceptanceTest(
       final String testName,
       final String dataPath,
       final long expectedChainHeight,
-      final Address testAddress,
-      final Wei expectedBalance) {
+      final Map<Address, Wei> expectedBalances) {
     this.testName = testName;
     this.dataPath = dataPath;
     this.expectedChainHeight = expectedChainHeight;
-    this.expectedBalance = expectedBalance;
-    this.testAccount = accounts.createAccount(testAddress);
+    testAccounts = new ArrayList<>(expectedBalances.size());
+    expectedBalances.forEach(
+        (address, wei) -> testAccounts.add(new AccountData(accounts.createAccount(address), wei)));
   }
 
   @Parameters(name = "{0}")
@@ -80,15 +83,17 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         "Before versioning was enabled",
         "version0",
         0xA,
-        Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x2B5E3AF16B1880000")
+        ImmutableMap.of(
+            Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
+            Wei.fromHexString("0x2B5E3AF16B1880000"))
       },
       new Object[] {
         "After versioning was enabled ",
         "version1",
         0xA,
-        Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x2B5E3AF16B1880000")
+        ImmutableMap.of(
+            Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
+            Wei.fromHexString("0x2B5E3AF16B1880000"))
       }
     };
   }
@@ -133,7 +138,12 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldReturnCorrectAccountBalance() {
-    testAccount.balanceEquals(Amount.wei(expectedBalance.toBigInteger())).verify(node);
+    testAccounts.forEach(
+        accountData ->
+            accountData
+                .account
+                .balanceEquals(Amount.wei(accountData.expectedBalance.toBigInteger()))
+                .verify(node));
   }
 
   private static void extract(final Path path, final String destDirectory) throws IOException {
@@ -178,6 +188,16 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
       Files.copy(source, dest, REPLACE_EXISTING);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  private static class AccountData {
+    private final Account account;
+    private final Wei expectedBalance;
+
+    private AccountData(final Account account, final Wei expectedBalance) {
+      this.account = account;
+      this.expectedBalance = expectedBalance;
     }
   }
 }
