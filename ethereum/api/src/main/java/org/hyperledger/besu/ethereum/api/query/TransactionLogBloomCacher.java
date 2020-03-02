@@ -170,12 +170,10 @@ public class TransactionLogBloomCacher {
 
   private boolean populateLatestSegment() {
     try {
-      long blockNumber = blockchain.getChainHeadBlockNumber();
       final File currentFile = calculateCacheFileName(CURRENT, cacheDir);
-      if (!currentFile.exists()) {
-        currentFile.createNewFile();
-      }
-      final long segmentNumber = blockNumber / BLOCKS_PER_BLOOM_CACHE;
+
+      final long segmentNumber = blockchain.getChainHeadBlockNumber() / BLOCKS_PER_BLOOM_CACHE;
+      long blockNumber = segmentNumber / BLOCKS_PER_BLOOM_CACHE;
       try (final OutputStream out = new FileOutputStream(currentFile)) {
         fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, out);
       }
@@ -183,6 +181,9 @@ public class TransactionLogBloomCacher {
           && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
         cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
         blockNumber++;
+      }
+      if (!currentFile.exists()) {
+        currentFile.createNewFile();
       }
       Files.move(
           currentFile.toPath(),
