@@ -20,6 +20,7 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
@@ -49,19 +50,22 @@ public class DefaultPrivacyController implements PrivacyController {
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
+  private final PrivateWorldStateReader privateWorldStateReader;
 
   public DefaultPrivacyController(
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
-      final PrivateNonceProvider privateNonceProvider) {
+      final PrivateNonceProvider privateNonceProvider,
+      final PrivateWorldStateReader privateWorldStateReader) {
     this(
         privacyParameters.getEnclave(),
         new PrivateTransactionValidator(chainId),
         privateMarkerTransactionFactory,
         privateTransactionSimulator,
-        privateNonceProvider);
+        privateNonceProvider,
+        privateWorldStateReader);
   }
 
   public DefaultPrivacyController(
@@ -69,12 +73,14 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivateTransactionValidator privateTransactionValidator,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
-      final PrivateNonceProvider privateNonceProvider) {
+      final PrivateNonceProvider privateNonceProvider,
+      final PrivateWorldStateReader privateWorldStateReader) {
     this.enclave = enclave;
     this.privateTransactionValidator = privateTransactionValidator;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
     this.privateTransactionSimulator = privateTransactionSimulator;
     this.privateNonceProvider = privateNonceProvider;
+    this.privateWorldStateReader = privateWorldStateReader;
   }
 
   @Override
@@ -177,6 +183,15 @@ public class DefaultPrivacyController implements PrivacyController {
     final Optional<PrivateTransactionProcessor.Result> result =
         privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
     return result;
+  }
+
+  @Override
+  public Optional<Bytes> getContractCode(
+      final String privacyGroupId,
+      final Address contractAddress,
+      final Hash blockHash,
+      final String enclavePublicKey) {
+    return privateWorldStateReader.getContractCode(privacyGroupId, blockHash, contractAddress);
   }
 
   private SendResponse sendRequest(

@@ -51,6 +51,7 @@ public class PrivacyRequestFactory {
   public static class GetTransactionReceiptResponse extends Response<PrivateTransactionReceipt> {}
 
   public static class GetTransactionCountResponse extends Response<Integer> {
+
     final Integer count;
 
     @JsonCreator
@@ -62,6 +63,8 @@ public class PrivacyRequestFactory {
       return count;
     }
   }
+
+  public static class GetCodeResponse extends Response<String> {}
 
   public Request<?, PrivDistributeTransactionResponse> privDistributeTransaction(
       final String signedPrivateTransaction) {
@@ -166,5 +169,14 @@ public class PrivacyRequestFactory {
         List.of(params),
         web3jService,
         GetTransactionCountResponse.class);
+  }
+
+  public Request<?, GetCodeResponse> privGetCode(
+      final String privacyGroupId, final String contractAddress, final String blockParameter) {
+    return new Request<>(
+        "priv_getCode",
+        List.of(privacyGroupId, contractAddress, blockParameter),
+        web3jService,
+        GetCodeResponse.class);
   }
 }
