@@ -26,6 +26,7 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -354,6 +355,38 @@ public class MultiTenancyPrivacyControllerTest {
                     new CallParameter(
                         Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
                     1))
+        .hasMessage("Privacy group must contain the enclave public key");
+  }
+
+  @Test
+  public void getContractCodeWorksForValidEnclaveKey() {
+    final Bytes contractCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
+    final PrivacyGroup privacyGroupWithEnclavePublicKey =
+        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
+
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
+        .thenReturn(privacyGroupWithEnclavePublicKey);
+    when(privacyController.getContractCode(any(), any(), any(), any()))
+        .thenReturn(Optional.of(contractCode));
+
+    final Optional<Bytes> result =
+        multiTenancyPrivacyController.getContractCode(
+            PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO, ENCLAVE_PUBLIC_KEY1);
+
+    assertThat(result).isPresent().hasValue(contractCode);
+  }
+
+  @Test
+  public void getContractCodeFailsForInvalidEnclaveKey() {
+    final PrivacyGroup privacyGroupWithEnclavePublicKey =
+        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
+        .thenReturn(privacyGroupWithEnclavePublicKey);
+
+    assertThatThrownBy(
+            () ->
+                multiTenancyPrivacyController.getContractCode(
+                    PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO, ENCLAVE_PUBLIC_KEY2))
         .hasMessage("Privacy group must contain the enclave public key");
   }
 }
