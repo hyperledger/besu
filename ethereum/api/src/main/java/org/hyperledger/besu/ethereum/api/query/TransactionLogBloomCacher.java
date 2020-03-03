@@ -56,6 +56,7 @@ public class TransactionLogBloomCacher {
   private final Map<Long, Boolean> cachedSegments;
 
   private final Lock submissionLock = new ReentrantLock();
+  private final Lock populateLastFragmentLock = new ReentrantLock();
 
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
@@ -170,31 +171,36 @@ public class TransactionLogBloomCacher {
 
   private boolean populateLatestSegment() {
     try {
-      final File currentFile = calculateCacheFileName(CURRENT, cacheDir);
+      if (populateLastFragmentLock.tryLock(100, TimeUnit.MILLISECONDS)) {
+        try {
+          final File currentFile = calculateCacheFileName(CURRENT, cacheDir);
 
-      final long segmentNumber = blockchain.getChainHeadBlockNumber() / BLOCKS_PER_BLOOM_CACHE;
-      long blockNumber = segmentNumber / BLOCKS_PER_BLOOM_CACHE;
-      try (final OutputStream out = new FileOutputStream(currentFile)) {
-        fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, out);
+          final long segmentNumber = blockchain.getChainHeadBlockNumber() / BLOCKS_PER_BLOOM_CACHE;
+          long blockNumber = segmentNumber / BLOCKS_PER_BLOOM_CACHE;
+          try (final OutputStream out = new FileOutputStream(currentFile)) {
+            fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, out);
+          }
+          while (blockNumber <= blockchain.getChainHeadBlockNumber()
+              && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
+            cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
+            blockNumber++;
+          }
+          Files.move(
+              currentFile.toPath(),
+              calculateCacheFileName(blockNumber, cacheDir).toPath(),
+              StandardCopyOption.REPLACE_EXISTING,
+              StandardCopyOption.ATOMIC_MOVE);
+          return true;
+        } catch (final IOException e) {
+          LOG.error("Unhandled caching exception.", e);
+        } finally {
+          populateLastFragmentLock.unlock();
+        }
       }
-      while (blockNumber <= blockchain.getChainHeadBlockNumber()
-          && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
-        cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
-        blockNumber++;
-      }
-      if (!currentFile.exists()) {
-        currentFile.createNewFile();
-      }
-      Files.move(
-          currentFile.toPath(),
-          calculateCacheFileName(blockNumber, cacheDir).toPath(),
-          StandardCopyOption.REPLACE_EXISTING,
-          StandardCopyOption.ATOMIC_MOVE);
-      return true;
-    } catch (final IOException e) {
-      LOG.error("Unhandled caching exception.", e);
-      return false;
+    } catch (final InterruptedException e) {
+      // ignore
     }
+    return false;
   }
 
   private void ensurePreviousSegmentsArePresent(final long blockNumber) {
