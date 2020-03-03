@@ -629,9 +629,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
-      description =
-          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
-  private final Level logLevel = LogManager.getRootLogger().getLevel();
+      description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
+  private final Level logLevel = null;
 
   @Option(
       names = {"--miner-enabled"},
@@ -2022,7 +2021,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new BesuExceptionHandler(this::getLogLevel);
   }
 
-  private Level getLogLevel() {
+  @VisibleForTesting
+  Level getLogLevel() {
     return logLevel;
   }
 }
