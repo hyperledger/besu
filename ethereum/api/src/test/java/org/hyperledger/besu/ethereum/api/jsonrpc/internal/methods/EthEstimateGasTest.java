@@ -132,7 +132,7 @@ public class EthEstimateGasTest {
     when(mockTxSimResult.getGasEstimate()).thenReturn(gasEstimate);
   }
 
-  private TransactionSimulatorResult getMockTransactionSimulatorResult(boolean isSuccessful) {
+  private TransactionSimulatorResult getMockTransactionSimulatorResult(final boolean isSuccessful) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
