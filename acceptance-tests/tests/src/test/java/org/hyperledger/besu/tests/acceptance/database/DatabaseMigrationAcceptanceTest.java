@@ -20,7 +20,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
-import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
@@ -29,19 +28,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -66,13 +64,11 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
       final String testName,
       final String dataPath,
       final long expectedChainHeight,
-      final Map<Address, Wei> expectedBalances) {
+      final List<AccountData> testAccounts) {
     this.testName = testName;
     this.dataPath = dataPath;
     this.expectedChainHeight = expectedChainHeight;
-    testAccounts = new ArrayList<>(expectedBalances.size());
-    expectedBalances.forEach(
-        (address, wei) -> testAccounts.add(new AccountData(accounts.createAccount(address), wei)));
+    this.testAccounts = testAccounts;
   }
 
   @Parameters(name = "{0}")
@@ -83,17 +79,21 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         "Before versioning was enabled",
         "version0",
         0xA,
-        ImmutableMap.of(
-            Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-            Wei.fromHexString("0x2B5E3AF16B1880000"))
+        Arrays.asList(
+            new AccountData(
+                "0xd1aeb42885a43b72b518182ef893125814811048",
+                BigInteger.valueOf(0xA),
+                Wei.fromHexString("0x2B5E3AF16B1880000"))),
       },
       new Object[] {
         "After versioning was enabled ",
         "version1",
         0xA,
-        ImmutableMap.of(
-            Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-            Wei.fromHexString("0x2B5E3AF16B1880000"))
+        Arrays.asList(
+            new AccountData(
+                "0xd1aeb42885a43b72b518182ef893125814811048",
+                BigInteger.valueOf(0xA),
+                Wei.fromHexString("0x2B5E3AF16B1880000")))
       }
     };
   }
@@ -140,9 +140,10 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   public void shouldReturnCorrectAccountBalance() {
     testAccounts.forEach(
         accountData ->
-            accountData
-                .account
-                .balanceEquals(Amount.wei(accountData.expectedBalance.toBigInteger()))
+            accounts
+                .createAccount(Address.fromHexString(accountData.accountAddress))
+                .balanceAtBlockEquals(
+                    Amount.wei(accountData.expectedBalance.toBigInteger()), accountData.block)
                 .verify(node));
   }
 
@@ -192,11 +193,13 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   }
 
   private static class AccountData {
-    private final Account account;
+    private final String accountAddress;
+    private final BigInteger block;
     private final Wei expectedBalance;
 
-    private AccountData(final Account account, final Wei expectedBalance) {
-      this.account = account;
+    private AccountData(final String account, final BigInteger block, final Wei expectedBalance) {
+      this.accountAddress = account;
+      this.block = block;
       this.expectedBalance = expectedBalance;
     }
   }

@@ -16,6 +16,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.eth;
 
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 
+import java.math.BigInteger;
+
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 
@@ -39,6 +41,11 @@ public class EthTransactions {
 
   public EthGetBalanceTransaction getBalance(final Account account) {
     return new EthGetBalanceTransaction(account);
+  }
+
+  public EthGetBalanceAtBlockTransaction getBalanceAtBlock(
+      final Account account, final BigInteger block) {
+    return new EthGetBalanceAtBlockTransaction(account, block);
   }
 
   public EthAccountsTransaction accounts() {

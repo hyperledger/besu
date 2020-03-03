@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccountBalance;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccountBalanceAtBlock;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccountBalanceNotChanging;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
@@ -103,6 +104,10 @@ public class Account {
   public Condition balanceEquals(final Amount expectedBalance) {
     return new ExpectAccountBalance(
         eth, this, expectedBalance.getValue(), expectedBalance.getUnit());
+  }
+
+  public Condition balanceAtBlockEquals(final Amount expectedBalance, final BigInteger block) {
+    return new ExpectAccountBalanceAtBlock(eth, this, block, expectedBalance.getValue(), Unit.WEI);
   }
 
   public Condition balanceDoesNotChange(final int startingBalance) {
