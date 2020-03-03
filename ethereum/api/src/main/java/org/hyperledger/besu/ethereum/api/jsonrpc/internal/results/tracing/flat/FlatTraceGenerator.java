@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -55,7 +56,9 @@ public class FlatTraceGenerator {
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
-      final TransactionTrace transactionTrace, final AtomicInteger traceCounter) {
+      final TransactionTrace transactionTrace,
+      final Optional<Block> blockOptional,
+      final AtomicInteger traceCounter) {
     final FlatTrace.Builder firstFlatTraceBuilder = FlatTrace.freshBuilder(transactionTrace);
     final Transaction tx = transactionTrace.getTransaction();
 
@@ -85,6 +88,14 @@ public class FlatTraceGenerator {
           .getResultBuilder()
           .address(smartContractAddress.orElse(null));
     }
+
+    blockOptional.ifPresent(
+        block ->
+            firstFlatTraceBuilder
+                .blockHash(Optional.of(block.getHash().toHexString()))
+                .blockNumber(Optional.of(block.getHeader().getNumber()))
+                .transactionHash(
+                    Optional.of(transactionTrace.getTransaction().getHash().toHexString())));
 
     final List<FlatTrace.Builder> flatTraces = new ArrayList<>();
 
@@ -146,6 +157,17 @@ public class FlatTraceGenerator {
     }
 
     return flatTraces.stream().map(FlatTrace.Builder::build);
+  }
+  /**
+   * Generates a stream of {@link Trace} from the passed {@link TransactionTrace} data.
+   *
+   * @param transactionTrace the {@link TransactionTrace} to use
+   * @param traceCounter the current trace counter value
+   * @return a stream of generated traces {@link Trace}
+   */
+  public static Stream<Trace> generateFromTransactionTrace(
+      final TransactionTrace transactionTrace, final AtomicInteger traceCounter) {
+    return generateFromTransactionTrace(transactionTrace, Optional.empty(), traceCounter);
   }
 
   private static FlatTrace.Context handleCall(
