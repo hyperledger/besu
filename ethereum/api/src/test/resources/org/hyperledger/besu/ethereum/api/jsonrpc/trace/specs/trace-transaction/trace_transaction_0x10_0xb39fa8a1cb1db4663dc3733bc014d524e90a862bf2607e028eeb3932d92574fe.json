@@ -1,0 +1,35 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_transaction",
+    "params": [
+      "0xb39fa8a1cb1db4663dc3733bc014d524e90a862bf2607e028eeb3932d92574fe"
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "action": {
+          "callType": "call",
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xffadea",
+          "input": "0x",
+          "to": "0x00d0000000000000000000000000000000000000",
+          "value": "0x0"
+        },
+        "blockHash": "0x1d1fe689ad2b6a11234261d2cd55b0bf0c4ce26afaf4a1b955c804662e3bd6c7",
+        "blockNumber": 16,
+        "error": "Stack underflow",
+        "subtraces": 0,
+        "traceAddress": [],
+        "transactionHash": "0xb39fa8a1cb1db4663dc3733bc014d524e90a862bf2607e028eeb3932d92574fe",
+        "transactionPosition": 1,
+        "type": "call"
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

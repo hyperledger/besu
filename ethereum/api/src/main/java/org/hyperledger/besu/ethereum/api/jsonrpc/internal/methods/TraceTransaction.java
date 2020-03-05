@@ -21,30 +21,34 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class TraceTransaction implements JsonRpcMethod {
-  private final BlockTracer blockTracer;
+  private final Supplier<BlockTracer> blockTracerSupplier;
 
   private final BlockchainQueries blockchainQueries;
 
   public TraceTransaction(
-      final BlockTracer blockTracerSupplier, final BlockchainQueries blockchainQueries) {
-    this.blockTracer = blockTracerSupplier;
+      final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries blockchainQueries) {
+    this.blockTracerSupplier = blockTracerSupplier;
     this.blockchainQueries = blockchainQueries;
   }
 
@@ -74,7 +78,7 @@ public class TraceTransaction implements JsonRpcMethod {
       return emptyResult();
     }
     final TransactionTrace transactionTrace =
-        blockTracer.trace(block, new DebugOperationTracer(TraceOptions.DEFAULT))
+        blockTracerSupplier.get().trace(block, new DebugOperationTracer(TraceOptions.DEFAULT))
             .map(BlockTrace::getTransactionTraces).orElse(Collections.emptyList()).stream()
             .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
             .findFirst()
@@ -89,7 +93,9 @@ public class TraceTransaction implements JsonRpcMethod {
     final ArrayNode resultArrayNode = mapper.createArrayNode();
 
     FlatTraceGenerator.generateFromTransactionTrace(
-            transactionTrace, Optional.of(block), new AtomicInteger())
+            transactionTrace,
+            new AtomicInteger(),
+            builder -> addApiSpecificFieldsToTrace(builder, transactionTrace, block))
         .forEachOrdered(resultArrayNode::addPOJO);
 
     return resultArrayNode;
@@ -98,5 +104,32 @@ public class TraceTransaction implements JsonRpcMethod {
   private Object emptyResult() {
     final ObjectMapper mapper = new ObjectMapper();
     return mapper.createArrayNode();
+  }
+
+  private void addApiSpecificFieldsToTrace(
+      final FlatTrace.Builder builder, final TransactionTrace transactionTrace, final Block block) {
+    // add block information (hash and number)
+    builder.blockHash(block.getHash().toHexString()).blockNumber(block.getHeader().getNumber());
+    // add transaction information (position and hash)
+    builder
+        .transactionPosition(
+            block.getBody().getTransactions().indexOf(transactionTrace.getTransaction()))
+        .transactionHash(transactionTrace.getTransaction().getHash().toHexString());
+    // add creationMethod for create action
+    Optional.ofNullable(builder.getType())
+        .filter(type -> type.equals("create"))
+        .ifPresent(__ -> addContractCreationMethod(transactionTrace, builder));
+  }
+
+  private void addContractCreationMethod(
+      final TransactionTrace transactionTrace, final FlatTrace.Builder builder) {
+    final String creationMethod =
+        transactionTrace.getTraceFrames().stream()
+            .filter(frame -> "CREATE2".equals(frame.getOpcode()))
+            .findFirst()
+            .map(TraceFrame::getOpcode)
+            .orElse("CREATE")
+            .toLowerCase(Locale.US);
+    builder.getActionBuilder().creationMethod(creationMethod);
   }
 }
