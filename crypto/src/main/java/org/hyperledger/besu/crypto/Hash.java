@@ -27,6 +27,7 @@ public abstract class Hash {
   public static final String KECCAK256_ALG = "KECCAK-256";
 
   private static final String SHA256_ALG = "SHA-256";
+  private static final String SHA3_256_ALG = "SHA3-256";
   private static final String RIPEMD160 = "RIPEMD160";
   private static final String BLAKE2BF_ALG = "BLAKE2BF";
 
@@ -55,6 +56,16 @@ public abstract class Hash {
    */
   public static Bytes32 sha256(final Bytes input) {
     return Bytes32.wrap(digestUsingAlgorithm(input, SHA256_ALG));
+  }
+
+  /**
+   * Digest using SHA3-256.
+   *
+   * @param input The input bytes to produce the digest for.
+   * @return A digest.
+   */
+  public static Bytes32 sha3256(final Bytes input) {
+    return Bytes32.wrap(digestUsingAlgorithm(input, SHA3_256_ALG));
   }
 
   /**

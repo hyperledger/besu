@@ -34,6 +34,11 @@ public class HashTest {
   private static final String outputBlake2bf =
       "bd45dd07a6eac13eec520b6aac885a1a89ea882978ae1a07472cc3e8cd358fd1a4d431c1a7d03f4a2bf746506779a970bfc5477026701076eda181e16acc24bc";
 
+  private static final String cowSha3256 =
+      "fba26f1556b8c7b473d01e3eae218318f752e808407794fc0b6490988a33a82d";
+  private static final String horseSha3256 =
+      "d8137088d21c7c0d69107cd51d1c32440a57aa5c59f73ed7310522ea491000ac";
+
   /** Validate keccak256 hash. */
   @Test
   public void keccak256Hash() {
@@ -49,5 +54,15 @@ public class HashTest {
   public void blake2bfCompression() {
     final Bytes result = Hash.blake2bf(Bytes.wrap(Hex.decode(inputBlake2bf)));
     assertThat(result).isEqualTo(Bytes.fromHexString(outputBlake2bf));
+  }
+
+  /** Validate SHA3-256 hash. */
+  @Test
+  public void sha3256Hash() {
+    final Bytes resultHorse = Hash.sha3256(Bytes.wrap("horse".getBytes(UTF_8)));
+    assertThat(resultHorse).isEqualTo(Bytes.fromHexString(horseSha3256));
+
+    final Bytes resultCow = Hash.sha3256(Bytes.wrap("cow".getBytes(UTF_8)));
+    assertThat(resultCow).isEqualTo(Bytes.fromHexString(cowSha3256));
   }
 }
