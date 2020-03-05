@@ -51,4 +51,10 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
         "trace/specs/replay-trace-transaction/all",
         "trace/specs/replay-trace-transaction/halt-cases");
   }
+
+  @Override
+  protected String sanitizeResultResponse(final String resultResponse) {
+    // just check blockHash presence and not value
+    return resultResponse.replaceAll("\"blockHash\" : \".+?\"", "\"blockHash\" : \"\"");
+  }
 }

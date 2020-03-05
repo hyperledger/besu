@@ -162,13 +162,15 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       final ObjectMapper mapper = new ObjectMapper();
       mapper.configure(INDENT_OUTPUT, true);
       assertThat(
-              mapper
-                  .writerWithDefaultPrettyPrinter()
-                  .writeValueAsString(mapper.readTree(actualResult)))
+              sanitizeResultResponse(
+                  mapper
+                      .writerWithDefaultPrettyPrinter()
+                      .writeValueAsString(mapper.readTree(actualResult))))
           .isEqualTo(
-              mapper
-                  .writerWithDefaultPrettyPrinter()
-                  .writeValueAsString(mapper.readTree(expectedResult)));
+              sanitizeResultResponse(
+                  mapper
+                      .writerWithDefaultPrettyPrinter()
+                      .writeValueAsString(mapper.readTree(expectedResult))));
     }
 
     // Check error
@@ -178,5 +180,9 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       final String actualError = responseBody.get("error").toString();
       assertThat(actualError).isEqualToIgnoringWhitespace(expectedError);
     }
+  }
+
+  protected String sanitizeResultResponse(final String resultResponse) {
+    return resultResponse;
   }
 }
