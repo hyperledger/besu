@@ -44,6 +44,11 @@ public interface PrivacyController {
   Transaction createPrivacyMarkerTransaction(
       String transactionEnclaveKey, PrivateTransaction privateTransaction);
 
+  Transaction createPrivacyMarkerTransaction(
+      String transactionEnclaveKey,
+      PrivateTransaction privateTransaction,
+      Address privacyPrecompileAddress);
+
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       PrivateTransaction privateTransaction, String enclavePublicKey);
 
@@ -58,9 +63,17 @@ public interface PrivacyController {
       final CallParameter callParams,
       final long blockNumber);
 
+  Optional<String> buildAndSendAddPayload(PrivateTransaction privateTransaction, String enclaveKey);
+
+  PrivacyGroup retrievePrivacyGroup(String toBase64String, String enclaveKey);
+
+  List<PrivacyGroup> findOnChainPrivacyGroup(List<String> asList, String enclaveKey);
+
   Optional<Bytes> getContractCode(
       final String privacyGroupId,
       final Address contractAddress,
       final Hash blockHash,
       final String enclavePublicKey);
+
+  List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 }

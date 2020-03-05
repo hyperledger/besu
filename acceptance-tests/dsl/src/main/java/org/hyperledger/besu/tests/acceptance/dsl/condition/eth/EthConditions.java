@@ -18,6 +18,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.miner.MiningStatusCondition;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
+import java.math.BigInteger;
+import java.util.List;
+
 public class EthConditions {
 
   private final EthTransactions transactions;
@@ -67,5 +70,11 @@ public class EthConditions {
 
   public Condition miningStatus(final boolean isMining) {
     return new MiningStatusCondition(transactions.mining(), isMining);
+  }
+
+  public Condition expectNewPendingTransactions(
+      final BigInteger filterId, final List<String> transactionHashes) {
+    return new NewPendingTransactionFilterChangesCondition(
+        transactions.filterChanges(filterId), transactionHashes);
   }
 }

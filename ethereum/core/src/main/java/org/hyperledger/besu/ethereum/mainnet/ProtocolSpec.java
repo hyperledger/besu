@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 /** A protocol specification. */
 public class ProtocolSpec<C> {
@@ -287,5 +288,11 @@ public class ProtocolSpec<C> {
 
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     transactionValidator.setTransactionFilter(transactionFilter);
+  }
+
+  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
+      final WorldStateArchive publicWorldStateArchive) {
+    if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
+      ((PrivacyBlockProcessor) blockProcessor).setPublicWorldStateArchive(publicWorldStateArchive);
   }
 }

@@ -69,6 +69,7 @@ public class PrivacyNode implements AutoCloseable {
   private final OrionTestHarness orion;
   private final BesuNode besu;
   private final Vertx vertx;
+  private final Integer privacyAddress;
 
   public PrivacyNode(final PrivacyNodeConfiguration privacyConfiguration, final Vertx vertx)
       throws IOException {
@@ -77,6 +78,8 @@ public class PrivacyNode implements AutoCloseable {
     this.vertx = vertx;
 
     final BesuNodeConfiguration besuConfig = privacyConfiguration.getBesuConfig();
+
+    privacyAddress = privacyConfiguration.getPrivacyAddress();
 
     this.besu =
         new BesuNode(
@@ -167,6 +170,7 @@ public class PrivacyNode implements AutoCloseable {
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))
+              .setPrivacyAddress(privacyAddress)
               .build();
     } catch (IOException e) {
       throw new RuntimeException();
