@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
@@ -24,6 +25,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -53,7 +56,7 @@ public class EthEstimateGas implements JsonRpcMethod {
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
-      return errorResponse(requestContext);
+      return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
     }
 
     final JsonCallParameter modifiedCallParams =
@@ -62,7 +65,7 @@ public class EthEstimateGas implements JsonRpcMethod {
     return transactionSimulator
         .process(modifiedCallParams, blockHeader.getNumber())
         .map(gasEstimateResponse(requestContext))
-        .orElse(errorResponse(requestContext));
+        .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
   }
 
   private BlockHeader blockHeader() {
@@ -87,10 +90,25 @@ public class EthEstimateGas implements JsonRpcMethod {
         result.isSuccessful()
             ? new JsonRpcSuccessResponse(
                 request.getRequest().getId(), Quantity.create(result.getGasEstimate()))
-            : null;
+            : errorResponse(request, result.getValidationResult());
   }
 
-  private JsonRpcErrorResponse errorResponse(final JsonRpcRequestContext request) {
-    return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request,
+      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+    JsonRpcError jsonRpcError = null;
+    if (validationResult != null) {
+      jsonRpcError =
+          JsonRpcErrorConverter.convertTransactionInvalidReason(
+              validationResult.getInvalidReason());
+    }
+    return errorResponse(request, jsonRpcError);
+  }
+
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
+    return new JsonRpcErrorResponse(
+        request.getRequest().getId(),
+        jsonRpcError == null ? JsonRpcError.INTERNAL_ERROR : jsonRpcError);
   }
 }
