@@ -71,6 +71,12 @@ public class PrivateTransactionSimulator {
   }
 
   public Optional<PrivateTransactionProcessor.Result> process(
+      final String privacyGroupId, final CallParameter callParams) {
+    final BlockHeader header = blockchain.getChainHeadHeader();
+    return process(privacyGroupId, callParams, header);
+  }
+
+  public Optional<PrivateTransactionProcessor.Result> process(
       final String privacyGroupId, final CallParameter callParams, final Hash blockHeaderHash) {
     final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
     return process(privacyGroupId, callParams, header);

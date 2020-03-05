@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -77,5 +78,14 @@ public class MutableProtocolSchedule<C> implements ProtocolSchedule<C> {
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     protocolSpecs.forEach(spec -> spec.getSpec().setTransactionFilter(transactionFilter));
+  }
+
+  @Override
+  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
+      final WorldStateArchive publicWorldStateArchive) {
+    protocolSpecs.forEach(
+        spec ->
+            spec.getSpec()
+                .setPublicWorldStateArchiveForPrivacyBlockProcessor(publicWorldStateArchive));
   }
 }

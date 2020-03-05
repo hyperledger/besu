@@ -126,7 +126,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final BytesValueRLPInput bytesValueRLPInput =
         new BytesValueRLPInput(
             Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())), false);
-    final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
+    final PrivateTransaction privateTransaction =
+        PrivateTransaction.readFrom(bytesValueRLPInput.readAsRlp());
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
     final Bytes32 privacyGroupId =
         Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
@@ -148,6 +149,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privateWorldStateArchive.getMutable(lastRootHash).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
+
     final PrivateTransactionProcessor.Result result =
         privateTransactionProcessor.processTransaction(
             currentBlockchain,
@@ -197,8 +199,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       privateStateUpdater.putTransactionReceipt(
           currentBlockHash, txHash, privateTransactionReceipt);
 
-      // TODO: this map could be passed through from @PrivacyBlockProcessor and saved once at the
-      // end of block processing
       if (!privacyGroupHeadBlockMap.contains(Bytes32.wrap(privacyGroupId), currentBlockHash)) {
         privacyGroupHeadBlockMap.put(Bytes32.wrap(privacyGroupId), currentBlockHash);
         privateStateUpdater.putPrivacyGroupHeadBlockMap(

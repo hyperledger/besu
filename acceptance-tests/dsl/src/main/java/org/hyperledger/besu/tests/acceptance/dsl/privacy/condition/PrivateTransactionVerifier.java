@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -39,6 +40,11 @@ public class PrivateTransactionVerifier {
 
   public ExpectValidPrivacyGroupCreated validPrivacyGroupCreated(final PrivacyGroup expected) {
     return new ExpectValidPrivacyGroupCreated(transactions, expected);
+  }
+
+  public ExpectValidOnChainPrivacyGroupCreated validOnChainPrivacyGroupExists(
+      final PrivacyRequestFactory.OnChainPrivacyGroup expected) {
+    return new ExpectValidOnChainPrivacyGroupCreated(transactions, expected);
   }
 
   public ExpectInternalErrorPrivateTransactionReceipt internalErrorPrivateTransactionReceipt(

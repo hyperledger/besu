@@ -33,8 +33,27 @@ public class PrivacyTransactions {
     return new CreatePrivacyGroupTransaction(name, description, nodes);
   }
 
+  public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
+      final PrivacyNode creator, final PrivacyNode... nodes) {
+    return new CreateOnChainPrivacyGroupTransaction(creator, nodes);
+  }
+
+  public AddToOnChainPrivacyGroupTransaction addToPrivacyGroup(
+      final String privacyGroupId, final PrivacyNode adder, final PrivacyNode... nodes) {
+    return new AddToOnChainPrivacyGroupTransaction(privacyGroupId, adder, nodes);
+  }
+
+  public LockOnChainPrivacyGroupTransaction privxLockPrivacyGroup(
+      final String privacyGroupId, final PrivacyNode locker) {
+    return new LockOnChainPrivacyGroupTransaction(privacyGroupId, locker);
+  }
+
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
     return new FindPrivacyGroupTransaction(nodes);
+  }
+
+  public FindOnChainPrivacyGroupTransaction findOnChainPrivacyGroup(final List<String> nodes) {
+    return new FindOnChainPrivacyGroupTransaction(nodes);
   }
 
   public PrivDistributeTransactionTransaction privDistributeTransaction(
