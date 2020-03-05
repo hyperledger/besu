@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -105,13 +107,37 @@ public class EthEstimateGasTest {
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
+  @Test
+  public void shouldReturnErrorWhenTransactionProcessorReturnsTxInvalidReason() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+    mockTransientProcessorResultTxInvalidReason(
+        TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
+    final TransactionSimulatorResult mockTxSimResult = getMockTransactionSimulatorResult(false);
+    when(mockTxSimResult.getValidationResult()).thenReturn(ValidationResult.invalid(reason));
+  }
+
   private void mockTransientProcessorResultGasEstimate(
       final long gasEstimate, final boolean isSuccessful) {
-    final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
-    when(result.getGasEstimate()).thenReturn(gasEstimate);
+    final TransactionSimulatorResult mockTxSimResult =
+        getMockTransactionSimulatorResult(isSuccessful);
+    when(mockTxSimResult.getGasEstimate()).thenReturn(gasEstimate);
+  }
+
+  private TransactionSimulatorResult getMockTransactionSimulatorResult(final boolean isSuccessful) {
+    final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
-        .thenReturn(Optional.of(result));
-    when(result.isSuccessful()).thenReturn(isSuccessful);
+        .thenReturn(Optional.of(mockTxSimResult));
+    when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
+    return mockTxSimResult;
   }
 
   private JsonCallParameter callParameter() {
