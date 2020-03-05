@@ -141,7 +141,6 @@ public class Action {
     }
 
     public static Builder from(final TransactionTrace trace) {
-      System.out.println(trace);
       return new Builder()
           .from(trace.getTransaction().getSender().toHexString())
           .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
