@@ -154,8 +154,6 @@ public class ClassicProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return aghartaDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
         .gasCalculator(IstanbulGasCalculator::new)
@@ -163,14 +161,6 @@ public class ClassicProtocolSpecs {
             gasCalculator ->
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
-                new MainnetContractCreationProcessor(
-                    gasCalculator,
-                    evm,
-                    true,
-                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
-                    1))
         .name("Phoenix");
   }
 
