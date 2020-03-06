@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -51,6 +52,7 @@ import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
 
 public class PrivacyRequestFactory {
+
   private final SecureRandom secureRandom;
 
   public static class GetPrivacyPrecompileAddressResponse extends Response<Address> {}
@@ -178,9 +180,13 @@ public class PrivacyRequestFactory {
             .send()
             .getTransactionHash();
 
-    return new PollingPrivateTransactionReceiptProcessor(besuClient, 3000, 10)
-        .waitForTransactionReceipt(transactionHash)
-        .getcommitmentHash();
+    final PrivateTransactionReceipt privateTransactionReceipt =
+        new PollingPrivateTransactionReceiptProcessor(besuClient, 3000, 10)
+            .waitForTransactionReceipt(transactionHash);
+
+    assertThat(privateTransactionReceipt.getStatus()).isEqualTo("0x1");
+
+    return privateTransactionReceipt.getcommitmentHash();
   }
 
   public PrivxCreatePrivacyGroupResponse privxCreatePrivacyGroup(
@@ -320,12 +326,14 @@ public class PrivacyRequestFactory {
   }
 
   public static class PrivxFindPrivacyGroupResponse extends Response<List<OnChainPrivacyGroup>> {
+
     public List<OnChainPrivacyGroup> getGroups() {
       return getResult();
     }
   }
 
   public static class OnChainPrivacyGroup {
+
     private final Base64String privacyGroupId;
     private final List<Base64String> members;
     private final String name;
@@ -396,6 +404,7 @@ public class PrivacyRequestFactory {
   }
 
   public static class PrivxCreatePrivacyGroupResponse {
+
     final String privacyGroupId;
     final String transactionHash;
 
