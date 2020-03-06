@@ -134,4 +134,5 @@ task generateTestBlockchain() {
     }
   }
 }
-test.dependsOn(generateTestBlockchain)
+// TODO must be reactivated when we can generate the block.bin file during build
+//test.dependsOn(generateTestBlockchain)

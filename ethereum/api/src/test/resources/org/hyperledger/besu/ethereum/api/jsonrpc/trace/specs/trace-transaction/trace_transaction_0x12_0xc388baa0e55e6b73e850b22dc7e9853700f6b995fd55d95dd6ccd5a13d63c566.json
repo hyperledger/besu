@@ -19,7 +19,7 @@
           "to": "0x0110000000000000000000000000000000000000",
           "value": "0x0"
         },
-        "blockHash": "0x755f18769450ede1ac4b5aa4280cb46088800fba355a7d73b495fc412728ad33",
+        "blockHash": "0x2ed8995e9c4b7c5748d639a7533d5e5d1d06d2e825539447362012977773b89e",
         "blockNumber": 18,
         "error": "Reverted",
         "subtraces": 0,
