@@ -20,6 +20,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.co
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -27,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Enclav
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
@@ -36,6 +39,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -70,6 +75,10 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       final PrivateTransaction privateTransaction =
           PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
 
+      final Optional<String> addPayloadEnclaveKey =
+          privacyController.buildAndSendAddPayload(
+              privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+
       final String enclavePublicKey =
           enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
       final ValidationResult<TransactionInvalidReason> validationResult =
@@ -81,8 +90,34 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
       final String enclaveKey =
           privacyController.sendTransaction(privateTransaction, enclavePublicKey);
-      final Transaction privacyMarkerTransaction =
-          privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
+      final Transaction privacyMarkerTransaction;
+      if (privateTransaction.getPrivacyGroupId().isPresent()) {
+        PrivacyGroup privacyGroup = null;
+        try {
+          privacyGroup =
+              privacyController.retrievePrivacyGroup(
+                  privateTransaction.getPrivacyGroupId().get().toBase64String(),
+                  enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+        } catch (final EnclaveClientException e) {
+          // it is an onchain group
+        }
+        if (privacyGroup == null
+            || !privacyGroup
+                .getMembers()
+                .contains(enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()))) {
+          privacyMarkerTransaction =
+              privacyController.createPrivacyMarkerTransaction(
+                  buildCompoundKey(enclaveKey, addPayloadEnclaveKey),
+                  privateTransaction,
+                  Address.ONCHAIN_PRIVACY);
+        } else {
+          privacyMarkerTransaction =
+              privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
+        }
+      } else {
+        privacyMarkerTransaction =
+            privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
+      }
 
       return transactionPool
           .addLocalTransaction(privacyMarkerTransaction)
@@ -98,5 +133,15 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
+  }
+
+  private String buildCompoundKey(
+      final String enclaveKey, final Optional<String> addPayloadEnclaveKey) {
+    return addPayloadEnclaveKey.isPresent()
+        ? Bytes.concatenate(
+                Bytes.fromBase64String(enclaveKey),
+                Bytes.fromBase64String(addPayloadEnclaveKey.get()))
+            .toBase64String()
+        : enclaveKey;
   }
 }

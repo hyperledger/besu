@@ -38,7 +38,7 @@ public class PrivateTransactionDataFixture {
 
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
-  static Transaction privacyMarkerTransaction(final String transactionKey) {
+  public static Transaction privacyMarkerTransaction(final String transactionKey) {
     return Transaction.builder()
         .nonce(0)
         .gasPrice(Wei.of(1000))
@@ -51,7 +51,7 @@ public class PrivateTransactionDataFixture {
         .signAndBuild(KEY_PAIR);
   }
 
-  static PrivateTransaction privateTransaction(final String privacyGroupId) {
+  public static PrivateTransaction privateTransaction(final String privacyGroupId) {
     return PrivateTransaction.builder()
         .nonce(0)
         .gasPrice(Wei.of(1000))

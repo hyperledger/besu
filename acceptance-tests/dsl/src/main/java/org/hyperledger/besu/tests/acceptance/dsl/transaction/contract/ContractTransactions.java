@@ -26,6 +26,11 @@ public class ContractTransactions {
     return new DeploySmartContractTransaction<>(clazz);
   }
 
+  public <T extends Contract> DeploySmartContractTransaction<T> createSmartContract(
+      final Class<T> clazz, final Object... args) {
+    return new DeploySmartContractTransaction<>(clazz, args);
+  }
+
   public CallSmartContractFunction callSmartContract(
       final String functionName, final String contractAddress) {
     return new CallSmartContractFunction(functionName, contractAddress);

@@ -106,4 +106,20 @@ public class PrivateContractTransactions {
     return new LoadPrivateSmartContractTransaction<>(
         contractAddress, clazz, transactionSigningKey, chainId, privateFrom, privateFor);
   }
+
+  public CallOnChianPermissioningPrivateSmartContractFunction callOnChainPermissioningSmartContract(
+      final String contractAddress,
+      final String encodedFunction,
+      final String transactionSigningKey,
+      final long chainId,
+      final String privateFrom,
+      final String privacyGroupId) {
+    return new CallOnChianPermissioningPrivateSmartContractFunction(
+        contractAddress,
+        encodedFunction,
+        transactionSigningKey,
+        chainId,
+        privateFrom,
+        privacyGroupId);
+  }
 }
