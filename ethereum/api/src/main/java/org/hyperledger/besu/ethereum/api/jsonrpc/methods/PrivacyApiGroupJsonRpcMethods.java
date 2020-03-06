@@ -146,6 +146,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final PrivateMarkerTransactionFactory markerTransactionFactory) {
     final DefaultPrivacyController defaultPrivacyController =
         new DefaultPrivacyController(
+            getBlockchainQueries().getBlockchain(),
             privacyParameters,
             protocolSchedule.getChainId(),
             markerTransactionFactory,

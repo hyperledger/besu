@@ -15,6 +15,8 @@
     <Logger name="org.hyperledger.besu.SubProcessLog" level="INFO" additivity="false">
       <AppenderRef ref="SubProcessConsole" />
     </Logger>
+    <Logger name="net.consensys.orion" level="OFF" additivity="false">
+    </Logger>
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console" />
     </Root>

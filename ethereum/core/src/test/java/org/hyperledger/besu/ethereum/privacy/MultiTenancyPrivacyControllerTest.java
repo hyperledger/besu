@@ -232,7 +232,12 @@ public class MultiTenancyPrivacyControllerTest {
   public void findsPrivacyGroupWhenEnclavePublicKeyInAddresses() {
     final List<String> addresses = List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2);
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY2));
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID,
+            Type.PANTHEON,
+            "",
+            "",
+            List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
     when(privacyController.findPrivacyGroup(addresses, ENCLAVE_PUBLIC_KEY1))
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 

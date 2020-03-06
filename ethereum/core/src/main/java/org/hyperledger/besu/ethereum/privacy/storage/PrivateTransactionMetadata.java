@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Objects;
+
 /** Mined private transaction metadata. */
 public class PrivateTransactionMetadata {
   private final Hash privacyMarkerTransactionHash;
@@ -54,5 +56,19 @@ public class PrivateTransactionMetadata {
 
     input.leaveList();
     return privateTransactionMetadata;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final PrivateTransactionMetadata that = (PrivateTransactionMetadata) o;
+    return privacyMarkerTransactionHash.equals(that.privacyMarkerTransactionHash)
+        && stateRoot.equals(that.stateRoot);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(privacyMarkerTransactionHash, stateRoot);
   }
 }

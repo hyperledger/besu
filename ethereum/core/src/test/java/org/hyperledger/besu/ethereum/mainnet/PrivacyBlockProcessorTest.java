@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Collections;
@@ -39,12 +41,24 @@ public class PrivacyBlockProcessorTest {
   private PrivacyBlockProcessor privacyBlockProcessor;
   private PrivateStateStorage privateStateStorage;
   private AbstractBlockProcessor blockProcessor;
+  private WorldStateArchive privateWorldStateArchive;
+  private Enclave enclave;
+  private ProtocolSchedule<?> protocolSchedule;
 
   @Before
   public void setUp() {
     blockProcessor = mock(AbstractBlockProcessor.class);
     privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
-    this.privacyBlockProcessor = new PrivacyBlockProcessor(blockProcessor, privateStateStorage);
+    privateWorldStateArchive = mock(WorldStateArchive.class);
+    enclave = mock(Enclave.class);
+    protocolSchedule = mock(ProtocolSchedule.class);
+    this.privacyBlockProcessor =
+        new PrivacyBlockProcessor(
+            blockProcessor,
+            protocolSchedule,
+            enclave,
+            privateStateStorage,
+            privateWorldStateArchive);
   }
 
   @Test

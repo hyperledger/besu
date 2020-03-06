@@ -72,4 +72,12 @@ public class EthTransactions {
   public EthMiningTransaction mining() {
     return new EthMiningTransaction();
   }
+
+  public EthNewPendingTransactionFilterTransaction newPendingTransactionsFilter() {
+    return new EthNewPendingTransactionFilterTransaction();
+  }
+
+  public EthFilterChangesTransaction filterChanges(final BigInteger filterId) {
+    return new EthFilterChangesTransaction(filterId);
+  }
 }
