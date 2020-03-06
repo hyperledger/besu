@@ -15,13 +15,16 @@
 package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.ExpectValidOnChainPrivacyGroupCreated;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateOnChainPrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.OnChainPrivacyGroup;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.PrivxCreatePrivacyGroupResponse;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 
@@ -36,9 +39,11 @@ import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.tx.Contract;
 import org.web3j.utils.Base64String;
 
 public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
+
   private static final long POW_CHAIN_ID = 2018;
 
   private PrivacyNode alice;
@@ -69,158 +74,38 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Test
   public void nodeCanCreatePrivacyGroup() {
-    final PrivxCreatePrivacyGroupResponse privxCreatePrivacyGroupResponse =
-        alice.execute(privacyTransactions.createOnChainPrivacyGroup(alice, alice, bob));
-
-    assertThat(privxCreatePrivacyGroupResponse).isNotNull();
-
-    final OnChainPrivacyGroup expectedGroup =
-        new OnChainPrivacyGroup(
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(),
-            Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
-
-    alice.verify(privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroup));
-
-    bob.verify(privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroup));
-
-    final String getParticipantsCallHash =
-        alice.execute(
-            privateContractTransactions.callOnChainPermissioningSmartContract(
-                Address.PRIVACY_PROXY.toHexString(),
-                "0x0b0235be" // get participants method signature
-                    + Bytes.fromBase64String(alice.getEnclaveKey()).toUnprefixedHexString(),
-                alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
-                alice.getEnclaveKey(),
-                privxCreatePrivacyGroupResponse.getPrivacyGroupId()));
-
-    final PrivateTransactionReceipt expectedReceipt =
-        new PrivateTransactionReceipt(
-            null,
-            alice.getAddress().toHexString(),
-            Address.PRIVACY_PROXY.toHexString(),
-            "0x0000000000000000000000000000000000000000000000000000000000000020" // dynamic
-                // array offset
-                + "0000000000000000000000000000000000000000000000000000000000000002" // length
-                // of array
-                + Bytes.fromBase64String(alice.getEnclaveKey()).toUnprefixedHexString() // first
-                // element
-                + Bytes.fromBase64String(bob.getEnclaveKey()).toUnprefixedHexString(), // second
-            // element
-            Collections.emptyList(),
-            null,
-            null,
-            alice.getEnclaveKey(),
-            null,
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(),
-            "0x1",
-            null);
-
-    alice.verify(
-        privateTransactionVerifier.validPrivateTransactionReceipt(
-            getParticipantsCallHash, expectedReceipt));
-
-    bob.verify(
-        privateTransactionVerifier.validPrivateTransactionReceipt(
-            getParticipantsCallHash, expectedReceipt));
+    final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
   }
 
   @Test
   public void deployingMustGiveValidReceipt() {
-    final PrivxCreatePrivacyGroupResponse privxCreatePrivacyGroupResponse =
-        alice.execute(privacyTransactions.createOnChainPrivacyGroup(alice));
+    final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
+    final Contract eventEmitter = deployPrivateContract(privacyGroupId, alice);
+    final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
 
-    final OnChainPrivacyGroup expectedGroup =
-        new OnChainPrivacyGroup(
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(),
-            Base64String.wrapList(alice.getEnclaveKey()));
-
-    alice.verify(privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroup));
-
-    final EventEmitter eventEmitter =
-        alice.execute(
-            privateContractTransactions.createSmartContractWithPrivacyGroupId(
-                EventEmitter.class,
-                alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
-                alice.getEnclaveKey(),
-                privxCreatePrivacyGroupResponse.getPrivacyGroupId()));
-
-    privateContractVerifier
-        .validPrivateContractDeployed(
-            eventEmitter.getContractAddress(), alice.getAddress().toString())
-        .verify(eventEmitter);
+    alice.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
+    bob.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
   }
 
   @Test
   public void canAddParticipantToGroup() {
-    final PrivxCreatePrivacyGroupResponse privxCreatePrivacyGroupResponse =
-        alice.execute(privacyTransactions.createOnChainPrivacyGroup(alice, alice, bob));
+    final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
+    final Contract eventEmitter = deployPrivateContract(privacyGroupId, alice);
+    final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
 
-    assertThat(privxCreatePrivacyGroupResponse).isNotNull();
+    charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(commitmentHash));
 
-    final OnChainPrivacyGroup expectedGroup =
-        new OnChainPrivacyGroup(
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(),
-            Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
+    lockPrivacyGroup(privacyGroupId, alice);
+    addMembersToPrivacyGroup(privacyGroupId, alice, charlie);
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob, charlie);
 
-    alice.verify(privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroup));
-
-    bob.verify(privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroup));
-
-    final EventEmitter eventEmitter =
-        alice.execute(
-            privateContractTransactions.createSmartContractWithPrivacyGroupId(
-                EventEmitter.class,
-                alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
-                alice.getEnclaveKey(),
-                privxCreatePrivacyGroupResponse.getPrivacyGroupId()));
-
-    privateContractVerifier
-        .validPrivateContractDeployed(
-            eventEmitter.getContractAddress(), alice.getAddress().toString())
-        .verify(eventEmitter);
-
-    alice.execute(
-        privacyTransactions.privxLockPrivacyGroup(
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(), alice));
-
-    alice.execute(
-        privacyTransactions.addToPrivacyGroup(
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(), alice, charlie));
-
-    final OnChainPrivacyGroup expectedGroupAfterCharlieIsAdded =
-        new OnChainPrivacyGroup(
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(),
-            Base64String.wrapList(
-                alice.getEnclaveKey(), bob.getEnclaveKey(), charlie.getEnclaveKey()));
-
-    alice.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(
-            expectedGroupAfterCharlieIsAdded));
-
-    bob.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(
-            expectedGroupAfterCharlieIsAdded));
-
-    charlie.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(
-            expectedGroupAfterCharlieIsAdded));
+    charlie.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
   }
 
   @Test
   public void bobCanAddCharlieAfterBeingAddedByAlice() {
-    final PrivxCreatePrivacyGroupResponse privxCreatePrivacyGroupResponse =
-        alice.execute(privacyTransactions.createOnChainPrivacyGroup(alice, alice));
-
-    assertThat(privxCreatePrivacyGroupResponse).isNotNull();
-
-    final String privacyGroupId = privxCreatePrivacyGroupResponse.getPrivacyGroupId();
-    final OnChainPrivacyGroup expectedGroup =
-        new OnChainPrivacyGroup(privacyGroupId, Base64String.wrapList(alice.getEnclaveKey()));
-
-    alice.verify(privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroup));
+    final String privacyGroupId = createOnChainPrivacyGroup(alice);
 
     final EventEmitter eventEmitter =
         alice.execute(
@@ -230,6 +115,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
                 POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 privacyGroupId));
+
     privateContractVerifier
         .validPrivateContractDeployed(
             eventEmitter.getContractAddress(), alice.getAddress().toString())
@@ -240,15 +126,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     alice.execute(privacyTransactions.addToPrivacyGroup(privacyGroupId, alice, bob));
 
-    final OnChainPrivacyGroup expectedGroupAfterBobIsAdded =
-        new OnChainPrivacyGroup(
-            privacyGroupId, Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
-
-    alice.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroupAfterBobIsAdded));
-
-    bob.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(expectedGroupAfterBobIsAdded));
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
 
     bob.execute(privacyTransactions.privxLockPrivacyGroup(privacyGroupId, bob));
 
@@ -269,8 +147,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
                 alice.getEnclaveKey(),
                 privacyGroupId));
 
-    final String bobAddHash =
-        bob.execute(privacyTransactions.addToPrivacyGroup(privacyGroupId, bob, charlie));
+    final String bobAddHash = addMembersToPrivacyGroup(privacyGroupId, bob, charlie);
 
     alice
         .getBesu()
@@ -282,23 +159,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     alice.getBesu().verify(ethConditions.miningStatus(true));
 
-    final OnChainPrivacyGroup expectedGroupAfterCharlieIsAdded =
-        new OnChainPrivacyGroup(
-            privacyGroupId,
-            Base64String.wrapList(
-                alice.getEnclaveKey(), bob.getEnclaveKey(), charlie.getEnclaveKey()));
-
-    alice.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(
-            expectedGroupAfterCharlieIsAdded));
-
-    bob.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(
-            expectedGroupAfterCharlieIsAdded));
-
-    charlie.verify(
-        privateTransactionVerifier.validOnChainPrivacyGroupExists(
-            expectedGroupAfterCharlieIsAdded));
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob, charlie);
 
     final Optional<TransactionReceipt> aliceAddReceipt =
         alice.execute(ethTransactions.getTransactionReceipt(bobAddHash));
@@ -345,7 +206,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
             null,
             alice.getEnclaveKey(),
             null,
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(),
+            privacyGroupId,
             "0x1",
             null);
     charlie.verify(
@@ -384,7 +245,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
             null,
             charlie.getEnclaveKey(),
             null,
-            privxCreatePrivacyGroupResponse.getPrivacyGroupId(),
+            privacyGroupId,
             "0x1",
             null);
 
@@ -399,5 +260,151 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
             aliceStoreHash, expectedStoreReceipt));
+  }
+
+  private Contract deployPrivateContract(final String privacyGroupId, final PrivacyNode sender) {
+    final EventEmitter eventEmitter =
+        sender.execute(
+            privateContractTransactions.createSmartContractWithPrivacyGroupId(
+                EventEmitter.class,
+                sender.getTransactionSigningKey(),
+                POW_CHAIN_ID,
+                sender.getEnclaveKey(),
+                privacyGroupId));
+
+    privateContractVerifier
+        .validPrivateContractDeployed(
+            eventEmitter.getContractAddress(), sender.getAddress().toString())
+        .verify(eventEmitter);
+
+    return eventEmitter;
+  }
+
+  /**
+   * Crete an onchain privacy group. The privacy group id will be randomly generated.
+   *
+   * <p>This method also checks that each node member has successfully processed the transaction and
+   * has the expected list of member for the group.
+   *
+   * @param members the list of members of the privacy group. The first member of the list will be
+   *     the creator of the group.
+   * @return the id of the privacy group
+   */
+  private String createOnChainPrivacyGroup(final PrivacyNode... members) {
+    final PrivacyNode groupCreator = members[0];
+
+    final CreateOnChainPrivacyGroupTransaction createTx =
+        privacyTransactions.createOnChainPrivacyGroup(groupCreator, members);
+
+    final PrivxCreatePrivacyGroupResponse createResponse = groupCreator.execute(createTx);
+    final String privacyGroupId = createResponse.getPrivacyGroupId();
+
+    for (PrivacyNode member : members) {
+      member.verify(onChainPrivacyGroupExists(privacyGroupId, members));
+    }
+
+    final String commitmentHash = calculateAddParticipantPMTHash(privacyGroupId, groupCreator);
+    final PrivateTransactionReceipt expectedReceipt =
+        buildExpectedAddMemberTransactionReceipt(privacyGroupId, groupCreator, members);
+
+    for (PrivacyNode member : members) {
+      member.verify(
+          privateTransactionVerifier.validPrivateTransactionReceipt(
+              commitmentHash, expectedReceipt));
+    }
+
+    return privacyGroupId;
+  }
+
+  private String addMembersToPrivacyGroup(
+      final String privacyGroupId,
+      final PrivacyNode nodeAddingMember,
+      final PrivacyNode... newMembers) {
+    return nodeAddingMember.execute(
+        privacyTransactions.addToPrivacyGroup(privacyGroupId, nodeAddingMember, newMembers));
+  }
+
+  // TODO remove from privacy group method
+
+  private String calculateAddParticipantPMTHash(
+      final String privacyGroupId, final PrivacyNode groupCreator) {
+    return groupCreator.execute(
+        privateContractTransactions.callOnChainPermissioningSmartContract(
+            Address.PRIVACY_PROXY.toHexString(),
+            GET_PARTICIPANTS_METHOD_SIGNATURE
+                + Bytes.fromBase64String(groupCreator.getEnclaveKey()).toUnprefixedHexString(),
+            groupCreator.getTransactionSigningKey(),
+            POW_CHAIN_ID,
+            groupCreator.getEnclaveKey(),
+            privacyGroupId));
+  }
+
+  private PrivateTransactionReceipt buildExpectedAddMemberTransactionReceipt(
+      final String privacyGroupId, final PrivacyNode groupCreator, final PrivacyNode[] members) {
+    final StringBuilder output = new StringBuilder();
+    // hex prefix
+    output.append("0x");
+    // Dynamic array offset
+    output.append("0000000000000000000000000000000000000000000000000000000000000020");
+    // Length of the array (with padded zeros to the left)
+    output.append(Quantity.longToPaddedHex(members.length, 32).substring(2));
+    // Each member enclave key converted from Base64 to bytes
+    for (PrivacyNode member : members) {
+      output.append(Bytes.fromBase64String(member.getEnclaveKey()).toUnprefixedHexString());
+    }
+
+    return new PrivateTransactionReceipt(
+        null,
+        groupCreator.getAddress().toHexString(),
+        Address.PRIVACY_PROXY.toHexString(),
+        output.toString(),
+        Collections.emptyList(),
+        null,
+        null,
+        groupCreator.getEnclaveKey(),
+        null,
+        privacyGroupId,
+        "0x1",
+        null);
+  }
+
+  /**
+   * This method will check if a privacy group with the specified id and list of members exists.
+   * Each one of the members node will be queried to ensure that they all have the same privacy
+   * group in their private state.
+   *
+   * @param privacyGroupId the id of the privacy group
+   * @param members the list of member in the privacy group
+   */
+  private void checkOnChainPrivacyGroupExists(
+      final String privacyGroupId, final PrivacyNode... members) {
+    for (PrivacyNode member : members) {
+      member.verify(onChainPrivacyGroupExists(privacyGroupId, members));
+    }
+  }
+
+  /**
+   * This method will send a transaction to lock the privacy group identified by the specified id.
+   * This also checks if the lock transaction was successful (see {@link
+   * org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory#privxLockPrivacyGroup(PrivacyNode,
+   * Base64String)}
+   *
+   * @return the hash of the lock privacy group transaction
+   */
+  private String lockPrivacyGroup(final String privacyGroupId, final PrivacyNode member) {
+    return member.execute(privacyTransactions.privxLockPrivacyGroup(privacyGroupId, member));
+  }
+
+  private ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(
+      final String privacyGroupId, final PrivacyNode... members) {
+    return privateTransactionVerifier.onChainPrivacyGroupExists(privacyGroupId, members);
+  }
+
+  private String getContractDeploymentCommitmentHash(final Contract contract) {
+    Optional<TransactionReceipt> transactionReceipt = contract.getTransactionReceipt();
+    assertThat(transactionReceipt).isPresent();
+    PrivateTransactionReceipt privateTransactionReceipt =
+        (PrivateTransactionReceipt) transactionReceipt.get();
+    return privateTransactionReceipt.getcommitmentHash();
   }
 }
