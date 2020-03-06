@@ -95,7 +95,7 @@ public class TraceTransaction implements JsonRpcMethod {
     FlatTraceGenerator.generateFromTransactionTrace(
             transactionTrace,
             new AtomicInteger(),
-            builder -> addApiSpecificFieldsToTrace(builder, transactionTrace, block))
+            builder -> addAdditionalContextualInformationToTrace(builder, transactionTrace, block))
         .forEachOrdered(resultArrayNode::addPOJO);
 
     return resultArrayNode;
@@ -106,7 +106,7 @@ public class TraceTransaction implements JsonRpcMethod {
     return mapper.createArrayNode();
   }
 
-  private void addApiSpecificFieldsToTrace(
+  private void addAdditionalContextualInformationToTrace(
       final FlatTrace.Builder builder, final TransactionTrace transactionTrace, final Block block) {
     // add block information (hash and number)
     builder.blockHash(block.getHash().toHexString()).blockNumber(block.getHeader().getNumber());

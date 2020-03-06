@@ -53,7 +53,7 @@ public class FlatTraceGenerator {
    *
    * @param transactionTrace the {@link TransactionTrace} to use
    * @param traceCounter the current trace counter value
-   * @param consumer to use to add additional information to the trace
+   * @param consumer to use to add additional contextual information to the trace
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
