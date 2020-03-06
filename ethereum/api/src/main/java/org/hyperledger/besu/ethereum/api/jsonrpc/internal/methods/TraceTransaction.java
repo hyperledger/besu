@@ -21,20 +21,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collections;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -83,19 +78,16 @@ public class TraceTransaction implements JsonRpcMethod {
             .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
             .findFirst()
             .orElseThrow();
-    return generateTracesFromTransactionTrace(transactionTrace, block);
+    return generateTracesFromTransactionTraceAndBlock(transactionTrace, block);
   }
 
-  private JsonNode generateTracesFromTransactionTrace(
+  private JsonNode generateTracesFromTransactionTraceAndBlock(
       final TransactionTrace transactionTrace, final Block block) {
     final ObjectMapper mapper = new ObjectMapper();
 
     final ArrayNode resultArrayNode = mapper.createArrayNode();
 
-    FlatTraceGenerator.generateFromTransactionTrace(
-            transactionTrace,
-            new AtomicInteger(),
-            builder -> addAdditionalContextualInformationToTrace(builder, transactionTrace, block))
+    FlatTraceGenerator.generateFromTransactionTraceAndBlock(transactionTrace, block)
         .forEachOrdered(resultArrayNode::addPOJO);
 
     return resultArrayNode;
@@ -104,32 +96,5 @@ public class TraceTransaction implements JsonRpcMethod {
   private Object emptyResult() {
     final ObjectMapper mapper = new ObjectMapper();
     return mapper.createArrayNode();
-  }
-
-  private void addAdditionalContextualInformationToTrace(
-      final FlatTrace.Builder builder, final TransactionTrace transactionTrace, final Block block) {
-    // add block information (hash and number)
-    builder.blockHash(block.getHash().toHexString()).blockNumber(block.getHeader().getNumber());
-    // add transaction information (position and hash)
-    builder
-        .transactionPosition(
-            block.getBody().getTransactions().indexOf(transactionTrace.getTransaction()))
-        .transactionHash(transactionTrace.getTransaction().getHash().toHexString());
-    // add creationMethod for create action
-    Optional.ofNullable(builder.getType())
-        .filter(type -> type.equals("create"))
-        .ifPresent(__ -> addContractCreationMethod(transactionTrace, builder));
-  }
-
-  private void addContractCreationMethod(
-      final TransactionTrace transactionTrace, final FlatTrace.Builder builder) {
-    final String creationMethod =
-        transactionTrace.getTraceFrames().stream()
-            .filter(frame -> "CREATE2".equals(frame.getOpcode()))
-            .findFirst()
-            .map(TraceFrame::getOpcode)
-            .orElse("CREATE")
-            .toLowerCase(Locale.US);
-    builder.getActionBuilder().creationMethod(creationMethod);
   }
 }
