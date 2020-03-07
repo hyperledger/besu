@@ -37,4 +37,18 @@ public interface EthHasher {
       System.arraycopy(hash, 0, buffer, 0, hash.length);
     }
   }
+
+  final class Sha3256 implements EthHasher {
+
+    private static final EthHashCacheFactory cacheFactory = new EthHashCacheFactory();
+
+    @Override
+    public void hash(
+        final byte[] buffer, final long nonce, final long number, final byte[] headerHash) {
+      final EthHashCacheFactory.EthHashDescriptor cache = cacheFactory.ethHashCacheFor(number);
+      final byte[] hash =
+          EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
+      System.arraycopy(hash, 0, buffer, 0, hash.length);
+    }
+  }
 }

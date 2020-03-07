@@ -49,6 +49,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
         blockScheduler,
         gasLimitCalculator);
     this.coinbase = miningParams.getCoinbase();
+    this.miningAlgorithm = miningParams.getMiningAlgorithm();
   }
 
   @Override
@@ -67,12 +68,23 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final Subscribers<MinedBlockObserver> observers,
       final Subscribers<EthHashObserver> ethHashObservers,
       final BlockHeader parentHeader) {
+    EthHasher ethHasher = null;
+    switch (this.miningAlgorithm) {
+      case "hashimoto-light":
+        ethHasher = new EthHasher.Light();
+        break;
+      case "sha3-256":
+        ethHasher = new EthHasher.Sha3256();
+        break;
+    }
+
     final EthHashSolver solver =
         new EthHashSolver(
             new RandomNonceGenerator(),
-            new EthHasher.Light(),
+            ethHasher,
             stratumMiningEnabled,
             ethHashObservers);
+
     final Function<BlockHeader, EthHashBlockCreator> blockCreator =
         (header) ->
             new EthHashBlockCreator(

@@ -124,6 +124,22 @@ public final class EthHash {
   }
 
   /**
+   * SHA-3 256 Implementation.
+   *
+   * @param size Dataset size for the given header hash
+   * @param cache EthHash Cache
+   * @param header Truncated BlockHeader hash
+   * @param nonce Nonce to use for hashing
+   * @return A byte array holding MixHash in its first 32 bytes and the EthHash result in the in
+   *     bytes 32 to 63
+   */
+  public static byte[] sha3256(
+      final long size, final int[] cache, final byte[] header, final long nonce) {
+    //TODO: implement actual sha-3 256
+    return hashimoto(header, size, nonce, (target, ind) -> calcDatasetItem(target, cache, ind));
+  }
+
+  /**
    * Calculates a dataset item and writes it to a given buffer.
    *
    * @param buffer Buffer to store dataset item in

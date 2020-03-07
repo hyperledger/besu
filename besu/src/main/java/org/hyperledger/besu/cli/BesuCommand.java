@@ -685,6 +685,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Bytes extraData = DEFAULT_EXTRA_DATA;
 
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // miningAlgorithm requires non-final Strings.
+  @Option( 
+      names = {"--miner-algorithm"}, 
+      paramLabel = "<MINING ALGORITHM>", 
+      description = 
+          "Mining algorithm: hashimoto-light, sha3-256 (default: ${DEFAULT-VALUE})") 
+  private String miningAlgorithm = DEFAULT_MINING_ALGORITHM; 
+
   @Option(
       names = {"--pruning-enabled"},
       description =
@@ -1203,7 +1212,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   iStratumMiningEnabled,
                   stratumNetworkInterface,
                   stratumPort,
-                  stratumExtranonce))
+                  stratumExtranonce,
+                  miningAlgorithm))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
