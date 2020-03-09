@@ -25,10 +25,27 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({
+  "action",
+  "blockHash",
+  "blockNumber",
+  "result",
+  "error",
+  "subtraces",
+  "traceAddress",
+  "transactionHash",
+  "transactionPosition",
+  "type"
+})
 public class FlatTrace implements Trace {
   private final Action action;
   private final Result result;
+  private final Long blockNumber;
+  private final String blockHash;
+  private final Integer transactionPosition;
+  private final String transactionHash;
   private final Optional<String> error;
   private final int subtraces;
   private final List<Integer> traceAddress;
@@ -40,6 +57,10 @@ public class FlatTrace implements Trace {
       final int subtraces,
       final List<Integer> traceAddress,
       final String type,
+      final Long blockNumber,
+      final String blockHash,
+      final Integer transactionPosition,
+      final String transactionHash,
       final Optional<String> error) {
     this(
         actionBuilder != null ? actionBuilder.build() : null,
@@ -47,6 +68,10 @@ public class FlatTrace implements Trace {
         subtraces,
         traceAddress,
         type,
+        blockNumber,
+        blockHash,
+        transactionPosition,
+        transactionHash,
         error);
   }
 
@@ -56,12 +81,20 @@ public class FlatTrace implements Trace {
       final int subtraces,
       final List<Integer> traceAddress,
       final String type,
+      final Long blockNumber,
+      final String blockHash,
+      final Integer transactionPosition,
+      final String transactionHash,
       final Optional<String> error) {
     this.action = action;
     this.result = result;
     this.subtraces = subtraces;
     this.traceAddress = traceAddress;
     this.type = type;
+    this.blockNumber = blockNumber;
+    this.blockHash = blockHash;
+    this.transactionPosition = transactionPosition;
+    this.transactionHash = transactionHash;
     this.error = error;
   }
 
@@ -73,6 +106,26 @@ public class FlatTrace implements Trace {
 
   public Action getAction() {
     return action;
+  }
+
+  @JsonInclude(NON_NULL)
+  public Long getBlockNumber() {
+    return blockNumber;
+  }
+
+  @JsonInclude(NON_NULL)
+  public String getBlockHash() {
+    return blockHash;
+  }
+
+  @JsonInclude(NON_NULL)
+  public String getTransactionHash() {
+    return transactionHash;
+  }
+
+  @JsonInclude(NON_NULL)
+  public Integer getTransactionPosition() {
+    return transactionPosition;
   }
 
   @JsonInclude(NON_NULL)
@@ -159,6 +212,10 @@ public class FlatTrace implements Trace {
     private int subtraces;
     private List<Integer> traceAddress = new ArrayList<>();
     private String type = "call";
+    private Long blockNumber;
+    private String blockHash;
+    private String transactionHash;
+    private Integer transactionPosition;
     private Optional<String> error = Optional.empty();
 
     private Builder() {}
@@ -191,6 +248,26 @@ public class FlatTrace implements Trace {
       return type;
     }
 
+    public Builder blockNumber(final Long blockNumber) {
+      this.blockNumber = blockNumber;
+      return this;
+    }
+
+    public Builder blockHash(final String blockHash) {
+      this.blockHash = blockHash;
+      return this;
+    }
+
+    public Builder transactionHash(final String transactionHash) {
+      this.transactionHash = transactionHash;
+      return this;
+    }
+
+    public Builder transactionPosition(final Integer transactionPosition) {
+      this.transactionPosition = transactionPosition;
+      return this;
+    }
+
     public Builder error(final Optional<String> error) {
       this.error = error;
       return this;
@@ -201,14 +278,24 @@ public class FlatTrace implements Trace {
     }
 
     public FlatTrace build() {
-      return new FlatTrace(actionBuilder, resultBuilder, subtraces, traceAddress, type, error);
+      return new FlatTrace(
+          actionBuilder,
+          resultBuilder,
+          subtraces,
+          traceAddress,
+          type,
+          blockNumber,
+          blockHash,
+          transactionPosition,
+          transactionHash,
+          error);
     }
 
-    Result.Builder getResultBuilder() {
+    public Result.Builder getResultBuilder() {
       return resultBuilder;
     }
 
-    Action.Builder getActionBuilder() {
+    public Action.Builder getActionBuilder() {
       return actionBuilder;
     }
   }

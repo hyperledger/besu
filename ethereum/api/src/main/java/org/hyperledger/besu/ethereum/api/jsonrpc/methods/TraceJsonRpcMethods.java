@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlockTransactions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -50,6 +51,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive());
     return mapOf(
-        new TraceReplayBlockTransactions(() -> new BlockTracer(blockReplay), blockchainQueries));
+        new TraceReplayBlockTransactions(() -> new BlockTracer(blockReplay), blockchainQueries),
+        new TraceTransaction(() -> new BlockTracer(blockReplay), blockchainQueries));
   }
 }
