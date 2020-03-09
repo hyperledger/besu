@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(NON_NULL)
 public class Action {
 
+  private final String creationMethod;
   private final String callType;
   private final String from;
   private final String gas;
@@ -36,6 +37,7 @@ public class Action {
   private final String refundAddress;
 
   private Action(
+      final String creationMethod,
       final String callType,
       final String from,
       final String gas,
@@ -46,6 +48,7 @@ public class Action {
       final String address,
       final String balance,
       final String refundAddress) {
+    this.creationMethod = creationMethod;
     this.callType = callType;
     this.from = from;
     this.gas = gas;
@@ -60,6 +63,10 @@ public class Action {
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public String getCreationMethod() {
+    return creationMethod;
   }
 
   public String getCallType() {
@@ -103,6 +110,7 @@ public class Action {
   }
 
   public static final class Builder {
+    private String creationMethod;
     private String callType;
     private String from;
     private String gas;
@@ -118,6 +126,7 @@ public class Action {
 
     public static Builder of(final Action action) {
       final Builder builder = new Builder();
+      builder.creationMethod = action.creationMethod;
       builder.callType = action.callType;
       builder.from = action.from;
       builder.gas = action.gas;
@@ -136,6 +145,11 @@ public class Action {
           .from(trace.getTransaction().getSender().toHexString())
           .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
           .value(Quantity.create(trace.getTransaction().getValue()));
+    }
+
+    public Builder creationMethod(final String creationMethod) {
+      this.creationMethod = creationMethod;
+      return this;
     }
 
     public Builder callType(final String callType) {
@@ -206,7 +220,17 @@ public class Action {
 
     public Action build() {
       return new Action(
-          callType, from, gas, input, to, init, value, address, balance, refundAddress);
+          creationMethod,
+          callType,
+          from,
+          gas,
+          input,
+          to,
+          init,
+          value,
+          address,
+          balance,
+          refundAddress);
     }
   }
 }

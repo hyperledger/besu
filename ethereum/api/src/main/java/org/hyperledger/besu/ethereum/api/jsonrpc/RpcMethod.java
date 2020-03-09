@@ -114,6 +114,7 @@ public enum RpcMethod {
   PERM_REMOVE_NODES_FROM_WHITELIST("perm_removeNodesFromWhitelist"),
   RPC_MODULES("rpc_modules"),
   TRACE_REPLAY_BLOCK_TRANSACTIONS("trace_replayBlockTransactions"),
+  TRACE_TRANSACTION("trace_transaction"),
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
   WEB3_CLIENT_VERSION("web3_clientVersion"),
