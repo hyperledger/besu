@@ -155,15 +155,12 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     }
 
     if (messageFrame.isPersistingPrivateState()) {
-      final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-          privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).orElseThrow();
 
       persistPrivateState(
           messageFrame.getTransactionHash(),
           currentBlockHash,
           privateTransaction,
           privacyGroupId,
-          privacyGroupHeadBlockMap,
           disposablePrivateState,
           privateWorldStateUpdater,
           result);
@@ -177,7 +174,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Hash currentBlockHash,
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,
-      final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
       final PrivateTransactionProcessor.Result result) {
@@ -210,8 +206,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     privateStateUpdater.putTransactionReceipt(currentBlockHash, txHash, privateTransactionReceipt);
 
-    maybeUpdateGroupHeadBlockMap(
-        privacyGroupId, currentBlockHash, privateStateUpdater, privacyGroupHeadBlockMap);
+    maybeUpdateGroupHeadBlockMap(privacyGroupId, currentBlockHash, privateStateUpdater);
 
     privateStateUpdater.commit();
   }
@@ -219,8 +214,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   void maybeUpdateGroupHeadBlockMap(
       final Bytes32 privacyGroupId,
       final Hash currentBlockHash,
-      final PrivateStateStorage.Updater privateStateUpdater,
-      final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap) {
+      final PrivateStateStorage.Updater privateStateUpdater) {
+
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
+        privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).orElseThrow();
+
     if (!privacyGroupHeadBlockMap.contains(Bytes32.wrap(privacyGroupId), currentBlockHash)) {
       privacyGroupHeadBlockMap.put(Bytes32.wrap(privacyGroupId), currentBlockHash);
       privateStateUpdater.putPrivacyGroupHeadBlockMap(

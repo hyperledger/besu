@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -36,12 +37,12 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -54,31 +55,38 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
 
-  // Dummy signature for transaction simulation.
-  private static final SECP256K1.Signature DUMMY_SIGNATURE =
+  // Dummy signature for transactions to not fail being processed.
+  private static final SECP256K1.Signature FAKE_SIGNATURE =
       SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
 
   private static final Logger LOG = LogManager.getLogger();
 
   public OnChainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    super(
+    this(
         gasCalculator,
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
-        privacyParameters.getPrivateStateStorage(),
-        "OnChainPrivacy");
+        privacyParameters.getPrivateStateStorage());
+  }
+
+  OnChainPrivacyPrecompiledContract(
+      final GasCalculator gasCalculator,
+      final Enclave enclave,
+      final WorldStateArchive worldStateArchive,
+      final PrivateStateStorage privateStateStorage) {
+    super(gasCalculator, enclave, worldStateArchive, privateStateStorage, "OnChainPrivacy");
   }
 
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
-    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
 
     if (isMining(messageFrame)) {
       return Bytes.EMPTY;
     }
 
     final String key = input.slice(0, 32).toBase64String();
+
     final ReceiveResponse receiveResponse;
     try {
       receiveResponse = getReceiveResponse(key);
@@ -108,6 +116,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privateTransaction.getHash(),
         privacyGroupId);
 
+    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
 
     final Hash lastRootHash =
@@ -118,18 +127,24 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
-    if (!canExecuteTransaction(
+    maybeInjectDefaultManagementAndProxy(
+        lastRootHash, disposablePrivateState, privateWorldStateUpdater);
+
+    final Blockchain blockchain = messageFrame.getBlockchain();
+    final WorldUpdater publicWorldState = messageFrame.getWorldState();
+
+    if (!canExecute(
         messageFrame,
+        currentBlockHeader,
         privateTransaction,
         version,
+        publicWorldState,
         privacyGroupId,
+        blockchain,
         disposablePrivateState,
         privateWorldStateUpdater)) {
       return Bytes.EMPTY;
     }
-
-    maybeInjectDefaultManagementAndProxy(
-        lastRootHash, disposablePrivateState, privateWorldStateUpdater);
 
     final PrivateTransactionProcessor.Result result =
         processPrivateTransaction(
@@ -144,49 +159,36 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     }
 
     if (messageFrame.isPersistingPrivateState()) {
-      final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-          privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).orElseThrow();
       persistPrivateState(
           messageFrame.getTransactionHash(),
           currentBlockHash,
           privateTransaction,
           privacyGroupId,
-          privacyGroupHeadBlockMap,
           disposablePrivateState,
           privateWorldStateUpdater,
           result);
-
-      if (privateTransaction
-          .getPayload()
-          .toHexString()
-          .startsWith(OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString())) {
-        final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-        privacyGroupHeadBlockMap.remove(Bytes32.wrap(privacyGroupId));
-        privateStateUpdater.putPrivacyGroupHeadBlockMap(
-            currentBlockHash, new PrivacyGroupHeadBlockMap(privacyGroupHeadBlockMap));
-        privateStateUpdater.commit();
-      }
     }
 
     return result.getOutput();
   }
 
-  boolean canExecuteTransaction(
+  boolean canExecute(
       final MessageFrame messageFrame,
+      final ProcessableBlockHeader currentBlockHeader,
       final PrivateTransaction privateTransaction,
       final Bytes32 version,
+      final WorldUpdater publicWorldState,
       final Bytes32 privacyGroupId,
+      final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
+
     final boolean isAddingParticipant =
         privateTransaction
             .getPayload()
             .toHexString()
             .startsWith(OnChainGroupManagement.ADD_TO_GROUP_METHOD_SIGNATURE.toHexString());
 
-    final WorldUpdater publicWorldState = messageFrame.getWorldState();
-    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
-    final Blockchain blockchain = messageFrame.getBlockchain();
     final boolean isPrivacyGroupLocked =
         isContractLocked(
             messageFrame,
@@ -236,7 +238,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
     final PrivateTransactionProcessor.Result result =
-        callGroupManagementContractMethod(
+        checkCanExecute(
             messageFrame,
             currentBlockHeader,
             publicWorldState,
@@ -248,7 +250,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return result.getOutput().toHexString().endsWith("0");
   }
 
-  protected PrivateTransactionProcessor.Result callGroupManagementContractMethod(
+  protected PrivateTransactionProcessor.Result checkCanExecute(
       final MessageFrame messageFrame,
       final ProcessableBlockHeader currentBlockHeader,
       final WorldUpdater publicWorldState,
@@ -319,7 +321,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     // privateTransactionProcessor.processTransaction(...) commits the state if the process was
     // successful before it returns
     final PrivateTransactionProcessor.Result getVersionResult =
-        callGroupManagementContractMethod(
+        checkCanExecute(
             messageFrame,
             currentBlockHeader,
             publicWorldState,
@@ -359,7 +361,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .payload(payload)
-        .signature(DUMMY_SIGNATURE)
+        .signature(FAKE_SIGNATURE)
         .build();
   }
 }
