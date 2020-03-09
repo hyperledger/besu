@@ -149,19 +149,19 @@ public class ClassicProtocolSpecs {
         .name("Agharta");
   }
 
-  public static ProtocolSpecBuilder<Void> aztlanDefinition(
+  public static ProtocolSpecBuilder<Void> phoenixDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason) {
     return aghartaDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
-        .gasCalculator(AztlanGasCalculator::new)
+        .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
-                MainnetEvmRegistries.aztlan(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .name("Aztlan");
+        .name("Phoenix");
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
