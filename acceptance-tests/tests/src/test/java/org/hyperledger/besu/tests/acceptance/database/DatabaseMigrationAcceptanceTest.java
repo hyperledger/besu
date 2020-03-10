@@ -86,7 +86,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
                 Wei.fromHexString("0x2B5E3AF16B1880000"))),
       },
       new Object[] {
-        "After versioning was enabled ",
+        "After versioning was enabled and using multiple RocksDB columns",
         "version1",
         0xA,
         Arrays.asList(
