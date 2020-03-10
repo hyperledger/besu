@@ -45,9 +45,10 @@ import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
-import org.hyperledger.besu.cli.options.PrunerOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
+import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.KeyLoader;
@@ -93,6 +94,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueSto
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -192,7 +194,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
-  final PrunerOptions prunerOptions = PrunerOptions.create();
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
@@ -211,6 +212,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Property to indicate whether Besu has been launched via docker
   private final boolean isDocker = Boolean.getBoolean("besu.docker");
+
+  private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
+      new PreSynchronizationTaskRunner();
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -525,6 +529,31 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRpcWsAuthenticationEnabled = false;
 
   @Option(
+      names = {"--privacy-tls-enabled"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
+  private final Boolean isPrivacyTlsEnabled = false;
+
+  @Option(
+      names = "--privacy-tls-keystore-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
+  private final Path privacyKeyStoreFile = null;
+
+  @Option(
+      names = "--privacy-tls-keystore-password-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to a file containing the password used to decrypt the keystore.")
+  private final Path privacyKeyStorePasswordFile = null;
+
+  @Option(
+      names = "--privacy-tls-known-enclave-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to a file containing the fingerprints of the authorized privacy enclave.")
+  private final Path privacyTlsKnownEnclaveFile = null;
+
+  @Option(
       names = {"--metrics-enabled"},
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsEnabled = false;
@@ -599,9 +628,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
-      description =
-          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
-  private final Level logLevel = LogManager.getRootLogger().getLevel();
+      description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
+  private final Level logLevel = null;
 
   @Option(
       names = {"--miner-enabled"},
@@ -736,6 +764,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path privacyMarkerTransactionSigningKeyPath = null;
 
   @Option(
+      names = {"--privacy-enable-database-migration"},
+      description = "Enable private database metadata migration (default: ${DEFAULT-VALUE})")
+  private final Boolean migratePrivateDatabase = false;
+
+  @Option(
       names = {"--target-gas-limit"},
       description =
           "Sets target gas limit per block. If set each blocks gas limit will approach this setting over time if the current gas limit is different.")
@@ -766,6 +799,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
   @Option(
+      names = {"--auto-log-bloom-caching-enabled"},
+      description = "Enable automatic log bloom caching (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean autoLogBloomCachingEnabled = true;
+
+  @Option(
       names = {"--override-genesis-config"},
       paramLabel = "NAME=VALUE",
       description = "Overrides configuration values in the genesis file.  Use with care.",
@@ -774,6 +813,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       split = ",")
   private final Map<String, String> genesisConfigOverrides =
       new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+  @Option(
+      names = {"--pruning-blocks-retained"},
+      defaultValue = "1024",
+      paramLabel = "<INTEGER>",
+      description =
+          "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer pruningBlocksRetained = PrunerConfiguration.DEFAULT_PRUNING_BLOCKS_RETAINED;
+
+  @Option(
+      names = {"--pruning-block-confirmations"},
+      defaultValue = "10",
+      paramLabel = "<INTEGER>",
+      description =
+          "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer pruningBlockConfirmations =
+      PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -853,11 +911,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       configureLogging(true);
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
-
       // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
-      validateOptions().configure().controller().startPlugins().startSynchronization();
+      final BesuCommand controller = validateOptions().configure().controller();
+
+      preSynchronizationTaskRunner.runTasks(controller.besuController);
+
+      controller.startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
@@ -934,7 +995,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("P2P Network", networkingOptions)
             .put("Synchronizer", synchronizerOptions)
             .put("TransactionPool", transactionPoolOptions)
-            .put("Pruner", prunerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1167,7 +1227,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .storageProvider(keyStorageProvider(keyValueStorageName))
           .isPruningEnabled(isPruningEnabled())
-          .pruningConfiguration(prunerOptions.toDomainObject())
+          .pruningConfiguration(
+              new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
           .genesisConfigOverrides(genesisConfigOverrides)
           .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
           .requiredBlocks(requiredBlocks);
@@ -1263,6 +1324,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--rpc-http-tls-client-auth-enabled",
         !isRpcHttpTlsClientAuthEnabled,
         asList("--rpc-http-tls-known-clients-file", "--rpc-http-tls-ca-clients-enabled"));
+  }
+
+  private void checkPrivacyTlsOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--privacy-tls-enabled",
+        !isPrivacyTlsEnabled,
+        asList(
+            "--privacy-tls-keystore-file",
+            "--privacy-tls-keystore-password-file",
+            "--privacy-tls-known-enclave-file"));
   }
 
   private Optional<TlsConfiguration> rpcHttpTlsConfiguration() {
@@ -1492,7 +1565,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-url",
             "--privacy-public-key-file",
             "--privacy-precompiled-address",
-            "--privacy-multi-tenancy-enabled"));
+            "--privacy-multi-tenancy-enabled",
+            "--privacy-tls-enabled"));
+
+    checkPrivacyTlsOptionsDependencies();
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (isPrivacyEnabled) {
@@ -1538,6 +1614,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
+      if (isPrivacyTlsEnabled) {
+        privacyParametersBuilder.setPrivacyKeyStoreFile(privacyKeyStoreFile);
+        privacyParametersBuilder.setPrivacyKeyStorePasswordFile(privacyKeyStorePasswordFile);
+        privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(privacyTlsKnownEnclaveFile);
+      }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {
       if (anyPrivacyApiEnabled()) {
@@ -1545,7 +1626,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
 
-    return privacyParametersBuilder.build();
+    final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
+
+    if (isPrivacyEnabled) {
+      preSynchronizationTaskRunner.addTask(
+          new PrivateDatabaseMigrationPreSyncTask(privacyParameters, migratePrivateDatabase));
+    }
+
+    return privacyParameters;
   }
 
   private boolean anyPrivacyApiEnabled() {
@@ -1557,17 +1645,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
     return new PrivacyKeyValueStorageProviderBuilder()
-        .withStorageFactory(
-            (PrivacyKeyValueStorageFactory)
-                storageService
-                    .getByName(name)
-                    .orElseThrow(
-                        () ->
-                            new StorageException(
-                                "No KeyValueStorageFactory found for key: " + name)))
+        .withStorageFactory(privacyKeyValueStorageFactory(name))
         .withCommonConfiguration(pluginCommonConfiguration)
         .withMetricsSystem(getMetricsSystem())
         .build();
+  }
+
+  private PrivacyKeyValueStorageFactory privacyKeyValueStorageFactory(final String name) {
+    return (PrivacyKeyValueStorageFactory)
+        storageService
+            .getByName(name)
+            .orElseThrow(
+                () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
@@ -1650,6 +1739,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .staticNodes(staticNodes)
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
+            .autoLogBloomCaching(autoLogBloomCachingEnabled)
             .build();
 
     addShutdownHook(runner);
@@ -1948,7 +2038,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new BesuExceptionHandler(this::getLogLevel);
   }
 
-  private Level getLogLevel() {
+  @VisibleForTesting
+  Level getLogLevel() {
     return logLevel;
   }
 }

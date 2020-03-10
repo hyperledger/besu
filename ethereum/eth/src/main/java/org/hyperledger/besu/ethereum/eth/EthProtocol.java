@@ -64,6 +64,7 @@ public class EthProtocol implements SubProtocol {
       case EthVersion.V62:
         return 8;
       case EthVersion.V63:
+      case EthVersion.V64:
         return 17;
       default:
         return 0;
@@ -76,6 +77,7 @@ public class EthProtocol implements SubProtocol {
       case EthVersion.V62:
         return eth62Messages.contains(code);
       case EthVersion.V63:
+      case EthVersion.V64:
         return eth63Messages.contains(code);
       default:
         return false;

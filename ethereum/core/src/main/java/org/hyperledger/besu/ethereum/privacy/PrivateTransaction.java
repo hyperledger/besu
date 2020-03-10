@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -415,7 +416,7 @@ public class PrivateTransaction {
    *
    * @return the transaction hash
    */
-  public Hash hash() {
+  public Hash getHash() {
     if (hash == null) {
       final Bytes rlp = RLP.encode(this::writeTo);
       hash = Hash.hash(rlp);
@@ -452,6 +453,21 @@ public class PrivateTransaction {
    */
   public Wei getUpfrontCost() {
     return getUpfrontGasCost().add(getValue());
+  }
+
+  /**
+   * Determines the privacy group id. Either returning the value of privacyGroupId field if it
+   * exists or calculating the EEA privacyGroupId from the privateFrom and privateFor fields.
+   *
+   * @return the privacyGroupId
+   */
+  public String determinePrivacyGroupId() {
+    if (getPrivacyGroupId().isPresent()) {
+      return getPrivacyGroupId().get().toBase64String();
+    } else {
+      final List<Bytes> privateFor = getPrivateFor().orElse(Lists.newArrayList());
+      return PrivacyGroupUtil.calculateEeaPrivacyGroupId(getPrivateFrom(), privateFor);
+    }
   }
 
   private static Bytes32 computeSenderRecoveryHash(

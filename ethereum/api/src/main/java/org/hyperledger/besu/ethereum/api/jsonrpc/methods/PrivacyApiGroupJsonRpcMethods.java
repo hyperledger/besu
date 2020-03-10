@@ -27,10 +27,14 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
+import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
@@ -45,6 +49,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private final ProtocolSchedule<?> protocolSchedule;
   private final TransactionPool transactionPool;
   private final PrivacyParameters privacyParameters;
+  private final PrivateNonceProvider privateNonceProvider;
+  private final PrivateWorldStateReader privateWorldStateReader;
 
   public PrivacyApiGroupJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -55,6 +61,18 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     this.protocolSchedule = protocolSchedule;
     this.transactionPool = transactionPool;
     this.privacyParameters = privacyParameters;
+
+    final PrivateStateRootResolver privateStateRootResolver =
+        new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
+    this.privateNonceProvider =
+        new ChainHeadPrivateNonceProvider(
+            blockchainQueries.getBlockchain(),
+            privateStateRootResolver,
+            privacyParameters.getPrivateWorldStateArchive());
+
+    this.privateWorldStateReader =
+        new PrivateWorldStateReader(
+            privateStateRootResolver, privacyParameters.getPrivateWorldStateArchive());
   }
 
   public BlockchainQueries getBlockchainQueries() {
@@ -128,10 +146,13 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final PrivateMarkerTransactionFactory markerTransactionFactory) {
     final DefaultPrivacyController defaultPrivacyController =
         new DefaultPrivacyController(
+            getBlockchainQueries().getBlockchain(),
             privacyParameters,
             protocolSchedule.getChainId(),
             markerTransactionFactory,
-            createPrivateTransactionSimulator());
+            createPrivateTransactionSimulator(),
+            privateNonceProvider,
+            privateWorldStateReader);
     return privacyParameters.isMultiTenancyEnabled()
         ? new MultiTenancyPrivacyController(
             defaultPrivacyController, privacyParameters.getEnclave())

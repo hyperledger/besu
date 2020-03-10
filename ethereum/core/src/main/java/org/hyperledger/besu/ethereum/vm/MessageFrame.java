@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -41,6 +42,7 @@ import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -225,8 +227,11 @@ public class MessageFrame {
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
-  private final Boolean isPersistingState;
+  private final Boolean isPersistingPrivateState;
   private Optional<Bytes> revertReason;
+
+  // Privacy Execution Environment fields.
+  private final Hash transactionHash;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -234,6 +239,7 @@ public class MessageFrame {
   private Operation currentOperation;
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
+  private Optional<MemoryEntry> maybeUpdatedStorage = Optional.empty();
 
   public static Builder builder() {
     return new Builder();
@@ -261,7 +267,8 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
+      final Hash transactionHash,
       final Optional<Bytes> revertReason,
       final int maxStackSize) {
     this.type = type;
@@ -296,7 +303,8 @@ public class MessageFrame {
     this.isStatic = isStatic;
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
-    this.isPersistingState = isPersistingState;
+    this.isPersistingPrivateState = isPersistingPrivateState;
+    this.transactionHash = transactionHash;
     this.revertReason = revertReason;
   }
 
@@ -535,17 +543,24 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final UInt256 offset, final UInt256 length) {
-    return memory.getBytes(offset, length);
+    return readMemory(offset, length, false);
   }
 
   /**
-   * Write byte to memory
+   * Read bytes in memory.
    *
    * @param offset The offset in memory
-   * @param value The value to set in memory
+   * @param length The length of the bytes to read
+   * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
+   * @return The bytes in the specified range
    */
-  public void writeMemory(final UInt256 offset, final byte value) {
-    writeMemory(offset, value, false);
+  public Bytes readMemory(
+      final UInt256 offset, final UInt256 length, final boolean explicitMemoryRead) {
+    final Bytes value = memory.getBytes(offset, length);
+    if (explicitMemoryRead) {
+      setUpdatedMemory(offset, value);
+    }
+    return value;
   }
 
   /**
@@ -622,7 +637,7 @@ public class MessageFrame {
       final Bytes value,
       final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
-    if (explicitMemoryUpdate) {
+    if (explicitMemoryUpdate && length.toLong() > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
     }
   }
@@ -632,16 +647,27 @@ public class MessageFrame {
     final int srcOff = sourceOffset.fitsInt() ? sourceOffset.intValue() : Integer.MAX_VALUE;
     final int len = length.fitsInt() ? length.intValue() : Integer.MAX_VALUE;
     final int endIndex = srcOff + len;
-    if (srcOff < 0 || endIndex <= 0 || endIndex > value.size()) {
-      return;
+    if (srcOff >= 0 && endIndex > 0) {
+      int srcSize = value.size();
+      if (endIndex > srcSize) {
+        final MutableBytes paddedAnswer = MutableBytes.create(len);
+        if (srcOff < srcSize) {
+          value.slice(srcOff, srcSize - srcOff).copyTo(paddedAnswer, 0);
+        }
+        setUpdatedMemory(offset, paddedAnswer.copy());
+      } else {
+        setUpdatedMemory(offset, value.slice(srcOff, len).copy());
+      }
     }
-    setUpdatedMemory(offset, value.slice(srcOff, len).copy());
   }
 
   private void setUpdatedMemory(final UInt256 offset, final Bytes value) {
     maybeUpdatedMemory = Optional.of(new MemoryEntry(offset, value));
   }
 
+  public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
+    maybeUpdatedStorage = Optional.of(new MemoryEntry(storageAddress, value));
+  }
   /**
    * Accumulate a log.
    *
@@ -936,8 +962,17 @@ public class MessageFrame {
    *
    * @return whether Message calls will be persisted
    */
-  public Boolean isPersistingState() {
-    return isPersistingState;
+  public Boolean isPersistingPrivateState() {
+    return isPersistingPrivateState;
+  }
+
+  /**
+   * Returns the transaction hash of the transaction being processed
+   *
+   * @return the transaction hash of the transaction being processed
+   */
+  public Hash getTransactionHash() {
+    return transactionHash;
   }
 
   public void setCurrentOperation(final Operation currentOperation) {
@@ -952,8 +987,13 @@ public class MessageFrame {
     return maybeUpdatedMemory;
   }
 
+  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+    return maybeUpdatedStorage;
+  }
+
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
+    maybeUpdatedStorage = Optional.empty();
   }
 
   public static class Builder {
@@ -980,7 +1020,8 @@ public class MessageFrame {
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
-    private Boolean isPersistingState = false;
+    private Boolean isPersistingPrivateState = false;
+    private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
 
     public Builder type(final Type type) {
@@ -1094,8 +1135,13 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder isPersistingState(final Boolean isPersistingState) {
-      this.isPersistingState = isPersistingState;
+    public Builder isPersistingPrivateState(final Boolean isPersistingPrivateState) {
+      this.isPersistingPrivateState = isPersistingPrivateState;
+      return this;
+    }
+
+    public Builder transactionHash(final Hash transactionHash) {
+      this.transactionHash = transactionHash;
       return this;
     }
 
@@ -1124,7 +1170,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
-      checkState(isPersistingState != null, "Missing isPersistingState");
+      checkState(isPersistingPrivateState != null, "Missing isPersistingPrivateState");
       checkState(contractAccountVersion != -1, "Missing contractAccountVersion");
     }
 
@@ -1153,7 +1199,8 @@ public class MessageFrame {
           completer,
           miningBeneficiary,
           blockHashLookup,
-          isPersistingState,
+          isPersistingPrivateState,
+          transactionHash,
           reason,
           maxStackSize);
     }

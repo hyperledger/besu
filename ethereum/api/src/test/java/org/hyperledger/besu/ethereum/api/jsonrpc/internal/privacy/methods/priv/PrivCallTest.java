@@ -148,7 +148,6 @@ public class PrivCallTest {
   public void shouldUseCorrectBlockNumberWhenSpecified() {
     final JsonRpcRequestContext request =
         ethCallRequest(privacyGroupId, callParameter(), Quantity.create(13L));
-    when(blockchainQueries.headBlockNumber()).thenReturn(13L);
 
     method.response(request);
 

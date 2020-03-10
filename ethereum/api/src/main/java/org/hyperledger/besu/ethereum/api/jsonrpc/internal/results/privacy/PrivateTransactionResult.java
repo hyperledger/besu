@@ -41,7 +41,7 @@ public abstract class PrivateTransactionResult {
     this.from = tx.getSender().toString();
     this.gas = Quantity.create(tx.getGasLimit());
     this.gasPrice = Quantity.create(tx.getGasPrice());
-    this.hash = tx.hash().toString();
+    this.hash = tx.getHash().toString();
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
     this.to = tx.getTo().map(Address::toHexString).orElse(null);

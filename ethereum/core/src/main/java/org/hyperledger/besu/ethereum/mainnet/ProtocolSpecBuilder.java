@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -281,6 +282,20 @@ public class ProtocolSpecBuilder<T> {
         transactionProcessorBuilder.apply(
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
+    final BlockHeaderValidator<T> blockHeaderValidator =
+        blockHeaderValidatorBuilder.apply(difficultyCalculator);
+    final BlockHeaderValidator<T> ommerHeaderValidator =
+        ommerHeaderValidatorBuilder.apply(difficultyCalculator);
+    final BlockBodyValidator<T> blockBodyValidator =
+        blockBodyValidatorBuilder.apply(protocolSchedule);
+
+    BlockProcessor blockProcessor =
+        blockProcessorBuilder.apply(
+            transactionProcessor,
+            transactionReceiptFactory,
+            blockReward,
+            miningBeneficiaryCalculator,
+            skipZeroBlockRewards);
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor = null;
     if (privacyParameters.isEnabled()) {
@@ -298,21 +313,19 @@ public class ProtocolSpecBuilder<T> {
           (PrivacyPrecompiledContract)
               precompileContractRegistry.get(address, Account.DEFAULT_VERSION);
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
+      final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
+          (OnChainPrivacyPrecompiledContract)
+              precompileContractRegistry.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+      onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
+      blockProcessor =
+          new PrivacyBlockProcessor(
+              blockProcessor,
+              protocolSchedule,
+              privacyParameters.getEnclave(),
+              privacyParameters.getPrivateStateStorage(),
+              privacyParameters.getPrivateWorldStateArchive());
     }
 
-    final BlockHeaderValidator<T> blockHeaderValidator =
-        blockHeaderValidatorBuilder.apply(difficultyCalculator);
-    final BlockHeaderValidator<T> ommerHeaderValidator =
-        ommerHeaderValidatorBuilder.apply(difficultyCalculator);
-    final BlockBodyValidator<T> blockBodyValidator =
-        blockBodyValidatorBuilder.apply(protocolSchedule);
-    final BlockProcessor blockProcessor =
-        blockProcessorBuilder.apply(
-            transactionProcessor,
-            transactionReceiptFactory,
-            blockReward,
-            miningBeneficiaryCalculator,
-            skipZeroBlockRewards);
     final BlockValidator<T> blockValidator =
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter<T> blockImporter = blockImporterBuilder.apply(blockValidator);

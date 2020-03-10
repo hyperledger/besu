@@ -22,4 +22,8 @@ public class PrivateContractVerifier {
       final String contractAddress, final String senderAddress) {
     return new ExpectValidPrivateContractDeployedReceipt(contractAddress, senderAddress);
   }
+
+  public ExpectValidContractCode validContractCodeProvided() {
+    return new ExpectValidContractCode();
+  }
 }

@@ -38,7 +38,8 @@ import com.sun.source.tree.Tree;
 @BugPattern(
     name = "DoNotReturnNullOptionals",
     summary = "Do not return null optionals.",
-    severity = SUGGESTION)
+    severity = SUGGESTION,
+    linkType = BugPattern.LinkType.NONE)
 public class DoNotReturnNullOptionals extends BugChecker implements MethodTreeMatcher {
 
   private static class ReturnNullMatcher implements Matcher<Tree> {

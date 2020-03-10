@@ -45,6 +45,9 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   // Last address that can be generated for a pre-compiled contract
   public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
   public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
+  public static final Address ONCHAIN_PRIVACY = Address.precompiled(PRIVACY - 1);
+  public static final Address PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
+  public static final Address DEFAULT_PRIVACY_MANAGEMENT = Address.precompiled(PRIVACY - 3);
 
   public static final Address ZERO = Address.fromHexString("0x0");
 
@@ -55,7 +58,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static Address wrap(final Bytes value) {
     checkArgument(
         value.size() == SIZE,
-        "An account address must be be %s bytes long, got %s",
+        "An account address must be %s bytes long, got %s",
         SIZE,
         value.size());
     return new Address(value);
