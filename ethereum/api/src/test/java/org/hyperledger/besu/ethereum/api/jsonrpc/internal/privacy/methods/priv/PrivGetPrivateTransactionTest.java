@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
@@ -45,8 +46,12 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
+import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
@@ -196,6 +201,96 @@ public class PrivGetPrivateTransactionTest {
     final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
 
     assertThat(result).isEqualToComparingFieldByField(privateTransactionGroupResult);
+  }
+
+  @Test
+  public void returnsPrivateTransactionOnChain() {
+    when(blockchain.transactionByHash(any(Hash.class)))
+            .thenReturn(Optional.of(returnedTransaction));
+    when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
+    when(justTransaction.getPayload()).thenReturn(ENCLAVE_KEY);
+
+    final PrivateTransaction privateTransaction =
+            privateTransactionBuilder.privacyGroupId(ENCLAVE_KEY).signAndBuild(KEY_PAIR);
+    final PrivateTransactionGroupResult privateTransactionGroupResult =
+            new PrivateTransactionGroupResult(privateTransaction);
+
+    final PrivGetPrivateTransaction privGetPrivateTransaction =
+            new PrivGetPrivateTransaction(
+                    blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+
+    final Object[] params = new Object[] {TRANSACTION_HASH};
+    final JsonRpcRequestContext request =
+            new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
+
+    final VersionedPrivateTransaction versionedPrivateTransaction = new VersionedPrivateTransaction(privateTransaction, Bytes32.ZERO);
+    final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
+    versionedPrivateTransaction.writeTo(bvrlp);
+    when(privacyController.retrieveTransaction(anyString(), any()))
+            .thenReturn(
+                    new ReceiveResponse(
+                            bvrlp.encoded().toBase64String().getBytes(UTF_8),
+                            "",
+                            null));
+
+    final JsonRpcSuccessResponse response =
+            (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
+    final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
+
+    assertThat(result).isEqualToComparingFieldByField(privateTransactionGroupResult);
+  }
+
+  @Test
+  public void returnsPrivateTransactionOnChainFromBlob() {
+    when(blockchain.transactionByHash(any(Hash.class)))
+            .thenReturn(Optional.of(returnedTransaction));
+    when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
+    when(justTransaction.getPayload()).thenReturn(ENCLAVE_KEY);
+    when(justTransaction.getHash()).thenReturn(Hash.ZERO);
+
+    final PrivateTransaction privateTransaction =
+            privateTransactionBuilder.privacyGroupId(ENCLAVE_KEY).signAndBuild(KEY_PAIR);
+    final PrivateTransactionGroupResult privateTransactionGroupResult =
+            new PrivateTransactionGroupResult(privateTransaction);
+
+    final PrivGetPrivateTransaction privGetPrivateTransaction =
+            new PrivGetPrivateTransaction(
+                    blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+
+    final Object[] params = new Object[] {TRANSACTION_HASH};
+    final JsonRpcRequestContext request =
+            new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
+
+    final PrivateTransactionWithMetadata privateTransactionWithMetadata = new PrivateTransactionWithMetadata(privateTransaction, new PrivateTransactionMetadata(Hash.ZERO, Hash.ZERO));
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any(Bytes32.class))).thenReturn(Optional.of(new PrivacyGroupHeadBlockMap(Collections.singletonMap(Bytes32.ZERO, Hash.ZERO))));
+    when(privateStateStorage.getAddDataKey(any(Bytes32.class))).thenReturn(Optional.of(Bytes32.ZERO));
+    when(privacyController.retrieveTransaction(anyString(), any()))
+            .thenThrow(new EnclaveClientException(0, "EnclavePayloadNotFound"));
+
+    when(privacyController.retrieveAddBlob(anyString())).thenReturn(Collections.singletonList(privateTransactionWithMetadata));
+
+    final JsonRpcSuccessResponse response =
+            (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
+    final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
+
+    assertThat(result).isEqualToComparingFieldByField(privateTransactionGroupResult);
+  }
+
+  @Test
+  public void returnNullWhenPrivateMarkerTransactionDoesNotExist() {
+    when(blockchain.transactionByHash(any(Hash.class)))
+            .thenReturn(Optional.empty());
+
+    final PrivGetPrivateTransaction privGetPrivateTransaction =
+            new PrivGetPrivateTransaction(
+                    blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+
+    final Object[] params = new Object[] {TRANSACTION_HASH};
+    final JsonRpcRequestContext request =
+            new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
+    final JsonRpcSuccessResponse response =
+            (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
+    assertThat(response.getResult()).isNull();
   }
 
   @Test
