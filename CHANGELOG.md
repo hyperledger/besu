@@ -2,6 +2,7 @@
 
 ## 1.4.1
 - Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
+- Enhanced estimateGas messages [\#436](https://github.com/hyperledger/besu/pull/436). When a estimateGas request fails a validation check, an improved error message is returned in the response.
 
 ### Bug Fixes
 
