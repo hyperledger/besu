@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -241,6 +242,11 @@ public class EeaSendRawTransactionTest {
     when(privacyController.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
+    when(privacyController.retrievePrivacyGroup(any(String.class), any(String.class)))
+            .thenThrow(new EnclaveClientException(0, ""));
+    when(privacyController.buildAndSendAddPayload(
+            any(PrivateTransaction.class), any(String.class)))
+            .thenReturn(Optional.of(ENCLAVE_PUBLIC_KEY));
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), any(Address.class)))
         .thenReturn(PUBLIC_TRANSACTION);
