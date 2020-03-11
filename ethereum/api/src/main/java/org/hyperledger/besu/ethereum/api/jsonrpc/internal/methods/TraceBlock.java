@@ -84,13 +84,10 @@ public class TraceBlock extends AbstractBlockParameterMethod {
         .get()
         .trace(block, new DebugOperationTracer(TraceOptions.DEFAULT))
         .ifPresent(
-            blockTrace -> {
-              generateTracesFromTransactionTraceAndBlock(
-                      blockTrace.getTransactionTraces(), block, resultArrayNode);
+            blockTrace -> generateTracesFromTransactionTraceAndBlock(
+                    blockTrace.getTransactionTraces(), block, resultArrayNode));
 
-              generateRewardsFromTransactionAndBlock(block, resultArrayNode);
-            });
-
+    generateRewardsFromTransactionAndBlock(block, resultArrayNode);
 
     return resultArrayNode;
   }
