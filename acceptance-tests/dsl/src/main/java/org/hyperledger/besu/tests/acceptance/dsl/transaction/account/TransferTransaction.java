@@ -87,7 +87,8 @@ public class TransferTransaction implements Transaction<Hash> {
             recipient.getAddress(),
             Convert.toWei(transferAmount, transferUnit).toBigIntegerExact());
 
-    return toHexString(TransactionEncoder.signMessage(transaction, sender.web3jCredentials()));
+    return toHexString(
+        TransactionEncoder.signMessage(transaction, sender.web3jCredentialsOrThrow()));
   }
 
   private Optional<BigInteger> getNonce() {

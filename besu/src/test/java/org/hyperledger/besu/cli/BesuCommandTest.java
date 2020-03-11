@@ -87,6 +87,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
@@ -2666,7 +2667,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void pruningParametersAreCaptured() throws Exception {
     parseCommand(
-        "--pruning-enabled", "--Xpruning-blocks-retained=15", "--Xpruning-block-confirmations=4");
+        "--pruning-enabled", "--pruning-blocks-retained=15", "--pruning-block-confirmations=4");
 
     final ArgumentCaptor<PrunerConfiguration> pruningArg =
         ArgumentCaptor.forClass(PrunerConfiguration.class);
@@ -3483,5 +3484,19 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .startsWith("Contents of privacy-public-key-file invalid");
     assertThat(commandErrorOutput.toString()).contains("Illegal base64 character");
+  }
+
+  @Test
+  public void logLevelHasNullAsDefaultValue() {
+    final TestBesuCommand command = parseCommand();
+
+    assertThat(command.getLogLevel()).isNull();
+  }
+
+  @Test
+  public void logLevelIsSetByLoggingOption() {
+    final TestBesuCommand command = parseCommand("--logging", "WARN");
+
+    assertThat(command.getLogLevel()).isEqualTo(Level.WARN);
   }
 }
