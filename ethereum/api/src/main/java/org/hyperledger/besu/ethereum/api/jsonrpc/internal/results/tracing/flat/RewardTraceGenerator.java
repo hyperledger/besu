@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 public class RewardTraceGenerator {
@@ -48,7 +49,7 @@ public class RewardTraceGenerator {
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         protocolSpec.getMiningBeneficiaryCalculator();
-    Wei blockReward = protocolSpec.getBlockReward();
+    final AtomicReference<Wei> blockReward = new AtomicReference<>(protocolSpec.getBlockReward());
 
     // add uncle reward traces
     block
@@ -58,8 +59,9 @@ public class RewardTraceGenerator {
             ommerBlockHeader -> {
               final long distance = blockHeader.getNumber() - ommerBlockHeader.getNumber();
               final Wei ommerReward =
-                  blockReward.subtract(blockReward.multiply(distance).divide(8));
-              blockReward.add(ommerReward);
+                  blockReward.get().subtract(blockReward.get().multiply(distance).divide(8));
+              //add ommer reward to block reward
+              blockReward.set(blockReward.get().add(ommerReward));
               final Action.Builder uncleActionBuilder =
                   Action.builder()
                       .author(
@@ -82,7 +84,7 @@ public class RewardTraceGenerator {
         Action.builder()
             .author(miningBeneficiaryCalculator.calculateBeneficiary(blockHeader).toHexString())
             .rewardType(BLOCK_LABEL)
-            .value(blockReward.toShortHexString());
+            .value(blockReward.get().toShortHexString());
     flatTraces.add(
         0,
         RewardTrace.builder()
