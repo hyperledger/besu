@@ -84,7 +84,8 @@ public class TraceBlock extends AbstractBlockParameterMethod {
         .get()
         .trace(block, new DebugOperationTracer(TraceOptions.DEFAULT))
         .ifPresent(
-            blockTrace -> generateTracesFromTransactionTraceAndBlock(
+            blockTrace ->
+                generateTracesFromTransactionTraceAndBlock(
                     blockTrace.getTransactionTraces(), block, resultArrayNode));
 
     generateRewardsFromTransactionAndBlock(block, resultArrayNode);
@@ -103,7 +104,8 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                 .forEachOrdered(resultArrayNode::addPOJO));
   }
 
-  private void generateRewardsFromTransactionAndBlock(final Block block, final ArrayNode resultArrayNode) {
+  private void generateRewardsFromTransactionAndBlock(
+      final Block block, final ArrayNode resultArrayNode) {
     RewardTraceGenerator.generateFromTransactionTraceAndBlock(protocolSchedule, block)
         .forEachOrdered(resultArrayNode::addPOJO);
   }

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -38,12 +37,11 @@ public class RewardTraceGenerator {
    * Generates a stream of reward {@link Trace} from the passed {@link Block} data.
    *
    * @param protocolSchedule the {@link ProtocolSchedule} to use
-   * @param transactionTraces
    * @param block the current {@link Block} to use
    * @return a stream of generated reward traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTraceAndBlock(
-          final ProtocolSchedule<?> protocolSchedule, final Block block) {
+      final ProtocolSchedule<?> protocolSchedule, final Block block) {
 
     final List<Trace> flatTraces = new ArrayList<>();
 
@@ -52,7 +50,8 @@ public class RewardTraceGenerator {
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         protocolSpec.getMiningBeneficiaryCalculator();
 
-    final AtomicReference<Wei> totalBlockReward = new AtomicReference<>(protocolSpec.getBlockReward());
+    final AtomicReference<Wei> totalBlockReward =
+        new AtomicReference<>(protocolSpec.getBlockReward());
 
     // add uncle reward traces
     block
@@ -60,10 +59,10 @@ public class RewardTraceGenerator {
         .getOmmers()
         .forEach(
             ommerBlockHeader -> {
-
               final long distance = blockHeader.getNumber() - ommerBlockHeader.getNumber();
+              final Wei blockReward = protocolSpec.getBlockReward();
               final Wei ommerReward =
-                      totalBlockReward.get().subtract(protocolSpec.getBlockReward().multiply(distance).divide(8));
+                  blockReward.subtract(blockReward.multiply(distance).divide(8));
               final Action.Builder uncleActionBuilder =
                   Action.builder()
                       .author(
@@ -80,9 +79,8 @@ public class RewardTraceGenerator {
                       .type(REWARD_LABEL)
                       .build());
 
-                //add uncle inclusion reward
-                totalBlockReward.set(protocolSpec.getBlockReward().add(ommerReward).divide(32));
-
+              // add uncle inclusion reward
+              totalBlockReward.set(totalBlockReward.get().add(blockReward.divide(32)));
             });
 
     // add block reward trace
