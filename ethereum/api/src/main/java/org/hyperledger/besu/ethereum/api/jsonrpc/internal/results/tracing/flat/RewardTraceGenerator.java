@@ -40,7 +40,7 @@ public class RewardTraceGenerator {
    * @param block the current {@link Block} to use
    * @return a stream of generated reward traces {@link Trace}
    */
-  public static Stream<Trace> generateFromTransactionTraceAndBlock(
+  public static Stream<Trace> generateFromBlock(
       final ProtocolSchedule<?> protocolSchedule, final Block block) {
 
     final List<Trace> flatTraces = new ArrayList<>();
