@@ -54,6 +54,6 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return mapOf(
         new TraceReplayBlockTransactions(() -> new BlockTracer(blockReplay), blockchainQueries),
         new TraceTransaction(() -> new BlockTracer(blockReplay), blockchainQueries),
-            new TraceBlock(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries));
+        new TraceBlock(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries));
   }
 }

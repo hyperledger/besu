@@ -32,6 +32,13 @@ public class RewardTraceGenerator {
   private static final String BLOCK_LABEL = "block";
   private static final String UNCLE_LABEL = "uncle";
 
+  /**
+   * Generates a stream of reward {@link Trace} from the passed {@link Block} data.
+   *
+   * @param protocolSchedule the {@link ProtocolSchedule} to use
+   * @param block the current {@link Block} to use
+   * @return a stream of generated reward traces {@link Trace}
+   */
   public static Stream<Trace> generateFromBlock(
       final ProtocolSchedule<?> protocolSchedule, final Block block) {
 

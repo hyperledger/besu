@@ -48,8 +48,8 @@ public class RewardTrace extends FlatTrace {
   }
 
   /**
-   * We have to override the FlatTrace method because in the case of a reward the transactionHash
-   * value must be returned even if it is null
+   * We have to override the {@link FlatTrace} method because in the case of a reward the
+   * transactionHash value must be returned even if it is null
    *
    * @return transactionHash
    */
@@ -60,7 +60,7 @@ public class RewardTrace extends FlatTrace {
   }
 
   /**
-   * We have to override the FlatTrace method because in the case of a reward the
+   * We have to override the {@link FlatTrace} method because in the case of a reward the
    * transactionPosition value must be returned even if it is null
    *
    * @return transactionPosition

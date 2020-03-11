@@ -73,7 +73,8 @@ public class TraceBlock extends AbstractBlockParameterMethod {
   }
 
   private Object traceBlock(final Block block) {
-    if (block == null || block.getBody().getTransactions().isEmpty()) {
+
+    if (block == null) {
       return emptyResult();
     }
     final ObjectMapper mapper = new ObjectMapper();
@@ -104,7 +105,6 @@ public class TraceBlock extends AbstractBlockParameterMethod {
   }
 
   private void generateRewardsFromBlock(final Block block, final ArrayNode resultArrayNode) {
-
     RewardTraceGenerator.generateFromBlock(protocolSchedule, block)
         .forEachOrdered(resultArrayNode::addPOJO);
   }
