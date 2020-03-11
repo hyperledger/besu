@@ -243,10 +243,9 @@ public class EeaSendRawTransactionTest {
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
     when(privacyController.retrievePrivacyGroup(any(String.class), any(String.class)))
-            .thenThrow(new EnclaveClientException(0, ""));
-    when(privacyController.buildAndSendAddPayload(
-            any(PrivateTransaction.class), any(String.class)))
-            .thenReturn(Optional.of(ENCLAVE_PUBLIC_KEY));
+        .thenThrow(new EnclaveClientException(0, ""));
+    when(privacyController.buildAndSendAddPayload(any(PrivateTransaction.class), any(String.class)))
+        .thenReturn(Optional.of(ENCLAVE_PUBLIC_KEY));
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), any(Address.class)))
         .thenReturn(PUBLIC_TRANSACTION);

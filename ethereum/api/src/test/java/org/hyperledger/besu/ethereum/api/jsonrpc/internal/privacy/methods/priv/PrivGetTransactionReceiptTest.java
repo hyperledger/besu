@@ -14,11 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_CONTRACT_DEPLOYMENT_ADDRESS;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.generateReceiveResponse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -42,38 +50,36 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+
+import java.util.Collections;
+import java.util.Optional;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_CONTRACT_DEPLOYMENT_ADDRESS;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.generateReceiveResponse;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class PrivGetTransactionReceiptTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
-  private final PrivateTransaction privateContractDeploymentTransactionLegacy = PrivateTransactionDataFixture.privateContractDeploymentTransactionLegacy();
-  private final PrivateTransaction privateContractDeploymentTransactionBesu = PrivateTransactionDataFixture.privateContractDeploymentTransactionBesu();
-  private final Transaction markerTransaction = PrivateTransactionDataFixture.privacyMarkerTransaction();
+  private final PrivateTransaction privateContractDeploymentTransactionLegacy =
+      PrivateTransactionDataFixture.privateContractDeploymentTransactionLegacy();
+  private final PrivateTransaction privateContractDeploymentTransactionBesu =
+      PrivateTransactionDataFixture.privateContractDeploymentTransactionBesu();
+  private final Transaction markerTransaction =
+      PrivateTransactionDataFixture.privacyMarkerTransaction();
 
   private final User user =
-      new JWTUser(new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
+      new JWTUser(
+          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider =
+      (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);
@@ -97,41 +103,57 @@ public class PrivGetTransactionReceiptTest {
     when(privacyParameters.isEnabled()).thenReturn(true);
     when(privacyParameters.getPrivateStateStorage()).thenReturn(privateStateStorage);
     final PrivateTransactionReceipt receipt =
-        new PrivateTransactionReceipt(
-            1, Collections.emptyList(), Bytes.EMPTY, Optional.empty());
+        new PrivateTransactionReceipt(1, Collections.emptyList(), Bytes.EMPTY, Optional.empty());
     when(privateStateStorage.getTransactionReceipt(any(Bytes32.class), any(Bytes32.class)))
         .thenReturn(Optional.of(receipt));
   }
 
   @Test
   public void returnReceiptIfTransactionExists() {
-    final PrivateTransactionReceiptResult expectedResult = privateTransactionReceiptResultFor(privateContractDeploymentTransactionLegacy, markerTransaction);
+    final PrivateTransactionReceiptResult expectedResult =
+        privateTransactionReceiptResultFor(
+            privateContractDeploymentTransactionLegacy, markerTransaction);
 
     when(privacyController.retrieveTransaction(anyString(), anyString()))
-            .thenReturn(PrivateTransactionDataFixture.generateReceiveResponse(privateContractDeploymentTransactionLegacy));
+        .thenReturn(
+            PrivateTransactionDataFixture.generateReceiveResponse(
+                privateContractDeploymentTransactionLegacy));
 
     executeAndVerifyCall(expectedResult, 2);
   }
 
   @Test
   public void returnReceiptForVersionedOnChainTransaction() {
-    final PrivateTransactionReceiptResult expectedResult = privateTransactionReceiptResultFor(privateContractDeploymentTransactionBesu, markerTransaction);
+    final PrivateTransactionReceiptResult expectedResult =
+        privateTransactionReceiptResultFor(
+            privateContractDeploymentTransactionBesu, markerTransaction);
 
     when(privacyController.retrieveTransaction(anyString(), anyString()))
-            .thenReturn(PrivateTransactionDataFixture.generateVersionedReceiveResponse(privateContractDeploymentTransactionBesu));
+        .thenReturn(
+            PrivateTransactionDataFixture.generateVersionedReceiveResponse(
+                privateContractDeploymentTransactionBesu));
 
     executeAndVerifyCall(expectedResult, 1);
   }
 
   @Test
   public void returnReceiptIfTransactionExistsInBlob() {
-    final PrivateTransactionReceiptResult expectedResult = privateTransactionReceiptResultFor(privateContractDeploymentTransactionBesu, markerTransaction);
+    final PrivateTransactionReceiptResult expectedResult =
+        privateTransactionReceiptResultFor(
+            privateContractDeploymentTransactionBesu, markerTransaction);
 
     when(privacyController.retrieveTransaction(anyString(), anyString()))
-            .thenThrow(new EnclaveClientException(0, "EnclavePayloadNotFound"));
-    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any(Bytes32.class))).thenReturn(Optional.of(new PrivacyGroupHeadBlockMap(Collections.singletonMap(Bytes32.ZERO, Hash.ZERO))));
-    when(privateStateStorage.getAddDataKey(any(Bytes32.class))).thenReturn(Optional.of(Bytes32.ZERO));
-    when(privacyController.retrieveAddBlob(anyString())).thenReturn(PrivateTransactionDataFixture.generateAddBlobResponse(privateContractDeploymentTransactionBesu, markerTransaction));
+        .thenThrow(new EnclaveClientException(0, "EnclavePayloadNotFound"));
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any(Bytes32.class)))
+        .thenReturn(
+            Optional.of(
+                new PrivacyGroupHeadBlockMap(Collections.singletonMap(Bytes32.ZERO, Hash.ZERO))));
+    when(privateStateStorage.getAddDataKey(any(Bytes32.class)))
+        .thenReturn(Optional.of(Bytes32.ZERO));
+    when(privacyController.retrieveAddBlob(anyString()))
+        .thenReturn(
+            PrivateTransactionDataFixture.generateAddBlobResponse(
+                privateContractDeploymentTransactionBesu, markerTransaction));
 
     executeAndVerifyCall(expectedResult, 1);
   }
@@ -188,7 +210,7 @@ public class PrivGetTransactionReceiptTest {
   @Test
   public void transactionReceiptContainsRevertReasonWhenInvalidTransactionOccurs() {
     when(privacyController.retrieveTransaction(anyString(), anyString()))
-            .thenReturn(generateReceiveResponse(privateContractDeploymentTransactionLegacy));
+        .thenReturn(generateReceiveResponse(privateContractDeploymentTransactionLegacy));
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(
             1,
@@ -204,8 +226,7 @@ public class PrivGetTransactionReceiptTest {
         new PrivGetTransactionReceipt(
             blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse)
-            privGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
@@ -221,54 +242,67 @@ public class PrivGetTransactionReceiptTest {
     final JsonRpcRequestContext request = createRequestContext();
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-            new PrivGetTransactionReceipt(
-                    blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+        new PrivGetTransactionReceipt(
+            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
     final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));
 
     assertThat(t).isInstanceOf(EnclaveClientException.class);
     assertThat(t.getMessage()).isEqualTo(keysCannotDecryptPayloadMsg);
   }
 
-  private PrivateTransactionReceiptResult privateTransactionReceiptResultFor(final PrivateTransaction privateTransaction, final Transaction markerTransaction) {
+  private PrivateTransactionReceiptResult privateTransactionReceiptResultFor(
+      final PrivateTransaction privateTransaction, final Transaction markerTransaction) {
     return new PrivateTransactionReceiptResult(
-            privateTransaction.getPrivacyGroupId().isPresent() ? Address.privateContractAddress(privateTransaction.getSender(), privateTransaction.getNonce(), privateTransaction.getPrivacyGroupId().get()).toHexString() : VALID_CONTRACT_DEPLOYMENT_ADDRESS.toHexString(),
-            privateTransaction.getSender().toHexString(),
-            null,
-            Collections.emptyList(),
-            Bytes.EMPTY,
-            null,
-            0,
-            0,
-            markerTransaction.getHash(),
-            privateTransaction.getHash(),
-            privateTransaction.getPrivateFrom(),
-            privateTransaction.getPrivateFor().isPresent()? privateTransaction.getPrivateFor().get() : null,
-            privateTransaction.getPrivacyGroupId().isPresent()? privateTransaction.getPrivacyGroupId().get() : null,
-            null,
-            Quantity.create(Bytes.of(1).toUnsignedBigInteger()));
+        privateTransaction.getPrivacyGroupId().isPresent()
+            ? Address.privateContractAddress(
+                    privateTransaction.getSender(),
+                    privateTransaction.getNonce(),
+                    privateTransaction.getPrivacyGroupId().get())
+                .toHexString()
+            : VALID_CONTRACT_DEPLOYMENT_ADDRESS.toHexString(),
+        privateTransaction.getSender().toHexString(),
+        null,
+        Collections.emptyList(),
+        Bytes.EMPTY,
+        null,
+        0,
+        0,
+        markerTransaction.getHash(),
+        privateTransaction.getHash(),
+        privateTransaction.getPrivateFrom(),
+        privateTransaction.getPrivateFor().isPresent()
+            ? privateTransaction.getPrivateFor().get()
+            : null,
+        privateTransaction.getPrivacyGroupId().isPresent()
+            ? privateTransaction.getPrivacyGroupId().get()
+            : null,
+        null,
+        Quantity.create(Bytes.of(1).toUnsignedBigInteger()));
   }
 
-  private void executeAndVerifyCall(final PrivateTransactionReceiptResult expectedResult, final int i) {
+  private void executeAndVerifyCall(
+      final PrivateTransactionReceiptResult expectedResult, final int i) {
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-            new PrivGetTransactionReceipt(
-                    blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+        new PrivGetTransactionReceipt(
+            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
 
     final JsonRpcRequestContext request = createRequestContext();
 
     final JsonRpcSuccessResponse response =
-            (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
-            (PrivateTransactionReceiptResult) response.getResult();
+        (PrivateTransactionReceiptResult) response.getResult();
 
     assertThat(result).isEqualToComparingFieldByField(expectedResult);
     verify(privacyController, times(i))
-            .retrieveTransaction(
-                    markerTransaction.getPayload().toBase64String(), VALID_BASE64_ENCLAVE_KEY.toBase64String());
+        .retrieveTransaction(
+            markerTransaction.getPayload().toBase64String(),
+            VALID_BASE64_ENCLAVE_KEY.toBase64String());
   }
 
   private JsonRpcRequestContext createRequestContext() {
-    final Object[] params = new Object[]{markerTransaction.getHash()};
+    final Object[] params = new Object[] {markerTransaction.getHash()};
     return new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_getTransactionReceipt", params), user);
+        new JsonRpcRequest("1", "priv_getTransactionReceipt", params), user);
   }
 }

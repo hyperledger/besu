@@ -14,10 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
-import org.apache.tuweni.bytes.Bytes32;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -40,29 +44,29 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+
+import java.util.Collections;
+import java.util.Optional;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class PrivGetPrivateTransactionTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
-  private final PrivateTransaction privateContractDeploymentTransactionLegacy = PrivateTransactionDataFixture.privateContractDeploymentTransactionLegacy();
-  private final PrivateTransaction privateContractDeploymentTransactionBesu = PrivateTransactionDataFixture.privateContractDeploymentTransactionBesu();
-  private final Transaction markerTransaction = PrivateTransactionDataFixture.privacyMarkerTransaction();
+  private final PrivateTransaction privateContractDeploymentTransactionLegacy =
+      PrivateTransactionDataFixture.privateContractDeploymentTransactionLegacy();
+  private final PrivateTransaction privateContractDeploymentTransactionBesu =
+      PrivateTransactionDataFixture.privateContractDeploymentTransactionBesu();
+  private final Transaction markerTransaction =
+      PrivateTransactionDataFixture.privacyMarkerTransaction();
 
   private final Enclave enclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
@@ -72,8 +76,10 @@ public class PrivGetPrivateTransactionTest {
   private final PrivacyController privacyController = mock(PrivacyController.class);
 
   private final User user =
-          new JWTUser(new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
+      new JWTUser(
+          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider =
+      (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
   @Before
   public void before() {
@@ -82,7 +88,7 @@ public class PrivGetPrivateTransactionTest {
     when(returnedTransaction.getBlockHash()).thenReturn(Optional.of(Hash.ZERO));
 
     when(blockchain.transactionByHash(any(Hash.class)))
-            .thenReturn(Optional.of(returnedTransaction));
+        .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(markerTransaction);
   }
 
@@ -92,23 +98,27 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionLegacyResult(privateContractDeploymentTransactionLegacy);
 
     when(privacyController.retrieveTransaction(anyString(), any()))
-            .thenReturn(
-                    PrivateTransactionDataFixture.generateReceiveResponse(privateContractDeploymentTransactionLegacy));
+        .thenReturn(
+            PrivateTransactionDataFixture.generateReceiveResponse(
+                privateContractDeploymentTransactionLegacy));
 
     final JsonRpcRequestContext request = createRequestContext();
 
     final PrivateTransactionResult result = makeRequest(request);
 
     assertThat(result).isEqualToComparingFieldByField(privateTransactionLegacyResult);
-    verify(privacyController).retrieveTransaction(markerTransaction.getPayload().toBase64String(), VALID_BASE64_ENCLAVE_KEY.toBase64String());
+    verify(privacyController)
+        .retrieveTransaction(
+            markerTransaction.getPayload().toBase64String(),
+            VALID_BASE64_ENCLAVE_KEY.toBase64String());
   }
 
   protected PrivateTransactionResult makeRequest(final JsonRpcRequestContext request) {
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-            new PrivGetPrivateTransaction(
-                    blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(
+            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
-            (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
+        (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     return (PrivateTransactionResult) response.getResult();
   }
 
@@ -120,8 +130,9 @@ public class PrivGetPrivateTransactionTest {
     final JsonRpcRequestContext request = createRequestContext();
 
     when(privacyController.retrieveTransaction(anyString(), any()))
-            .thenReturn(
-                    PrivateTransactionDataFixture.generateReceiveResponse(privateContractDeploymentTransactionBesu));
+        .thenReturn(
+            PrivateTransactionDataFixture.generateReceiveResponse(
+                privateContractDeploymentTransactionBesu));
 
     final PrivateTransactionResult result = makeRequest(request);
 
@@ -131,11 +142,12 @@ public class PrivGetPrivateTransactionTest {
   @Test
   public void returnsPrivateTransactionOnChain() {
     final PrivateTransactionGroupResult privateTransactionGroupResult =
-            new PrivateTransactionGroupResult(privateContractDeploymentTransactionBesu);
+        new PrivateTransactionGroupResult(privateContractDeploymentTransactionBesu);
 
     when(privacyController.retrieveTransaction(anyString(), any()))
-            .thenReturn(
-                    PrivateTransactionDataFixture.generateVersionedReceiveResponse(privateContractDeploymentTransactionBesu));
+        .thenReturn(
+            PrivateTransactionDataFixture.generateVersionedReceiveResponse(
+                privateContractDeploymentTransactionBesu));
 
     final JsonRpcRequestContext request = createRequestContext();
 
@@ -147,13 +159,20 @@ public class PrivGetPrivateTransactionTest {
   @Test
   public void returnsPrivateTransactionOnChainFromBlob() {
     final PrivateTransactionGroupResult privateTransactionGroupResult =
-            new PrivateTransactionGroupResult(privateContractDeploymentTransactionBesu);
+        new PrivateTransactionGroupResult(privateContractDeploymentTransactionBesu);
 
-    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any(Bytes32.class))).thenReturn(Optional.of(new PrivacyGroupHeadBlockMap(Collections.singletonMap(Bytes32.ZERO, Hash.ZERO))));
-    when(privateStateStorage.getAddDataKey(any(Bytes32.class))).thenReturn(Optional.of(Bytes32.ZERO));
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any(Bytes32.class)))
+        .thenReturn(
+            Optional.of(
+                new PrivacyGroupHeadBlockMap(Collections.singletonMap(Bytes32.ZERO, Hash.ZERO))));
+    when(privateStateStorage.getAddDataKey(any(Bytes32.class)))
+        .thenReturn(Optional.of(Bytes32.ZERO));
     when(privacyController.retrieveTransaction(anyString(), any()))
-            .thenThrow(new EnclaveClientException(0, "EnclavePayloadNotFound"));
-    when(privacyController.retrieveAddBlob(anyString())).thenReturn(PrivateTransactionDataFixture.generateAddBlobResponse(privateContractDeploymentTransactionBesu, markerTransaction));
+        .thenThrow(new EnclaveClientException(0, "EnclavePayloadNotFound"));
+    when(privacyController.retrieveAddBlob(anyString()))
+        .thenReturn(
+            PrivateTransactionDataFixture.generateAddBlobResponse(
+                privateContractDeploymentTransactionBesu, markerTransaction));
 
     final JsonRpcRequestContext request = createRequestContext();
 
@@ -164,16 +183,15 @@ public class PrivGetPrivateTransactionTest {
 
   @Test
   public void returnNullWhenPrivateMarkerTransactionDoesNotExist() {
-    when(blockchain.transactionByHash(any(Hash.class)))
-            .thenReturn(Optional.empty());
+    when(blockchain.transactionByHash(any(Hash.class))).thenReturn(Optional.empty());
 
     final JsonRpcRequestContext request = createRequestContext();
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-            new PrivGetPrivateTransaction(
-                    blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(
+            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
-            (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
+        (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
 
     assertThat(response.getResult()).isNull();
   }
@@ -186,8 +204,8 @@ public class PrivGetPrivateTransactionTest {
         .thenThrow(new EnclaveClientException(500, "enclave failure"));
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-            new PrivGetPrivateTransaction(
-                    blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(
+            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
     final JsonRpcResponse response = privGetPrivateTransaction.response(request);
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
@@ -195,8 +213,8 @@ public class PrivGetPrivateTransactionTest {
   }
 
   private JsonRpcRequestContext createRequestContext() {
-    final Object[] params = new Object[]{markerTransaction.getHash()};
+    final Object[] params = new Object[] {markerTransaction.getHash()};
     return new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_getTransactionReceipt", params), user);
+        new JsonRpcRequest("1", "priv_getTransactionReceipt", params), user);
   }
 }
