@@ -48,14 +48,13 @@ public class RewardTraceGenerator {
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         protocolSpec.getMiningBeneficiaryCalculator();
-    final Wei blockReward = protocolSpec.getBlockReward();
+    Wei blockReward = protocolSpec.getBlockReward();
 
     // add block reward trace
     final Action.Builder blockActionBuilder =
         Action.builder()
             .author(miningBeneficiaryCalculator.calculateBeneficiary(blockHeader).toHexString())
-            .rewardType(BLOCK_LABEL)
-            .value(blockReward.toShortHexString());
+            .rewardType(BLOCK_LABEL);
     flatTraces.add(
         RewardTrace.builder()
             .actionBuilder(blockActionBuilder)
@@ -73,6 +72,7 @@ public class RewardTraceGenerator {
               final long distance = blockHeader.getNumber() - ommerBlockHeader.getNumber();
               final Wei ommerReward =
                   blockReward.subtract(blockReward.multiply(distance).divide(8));
+              blockReward.add(ommerReward);
               final Action.Builder uncleActionBuilder =
                   Action.builder()
                       .author(
@@ -89,6 +89,8 @@ public class RewardTraceGenerator {
                       .type(REWARD_LABEL)
                       .build());
             });
+
+    blockActionBuilder.value(blockReward.toShortHexString());
 
     return flatTraces.stream();
   }
