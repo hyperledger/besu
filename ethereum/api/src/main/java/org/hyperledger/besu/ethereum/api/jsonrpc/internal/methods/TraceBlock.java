@@ -35,6 +35,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class TraceBlock extends AbstractBlockParameterMethod {
+
+  private static final ObjectMapper MAPPER = new ObjectMapper();
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final ProtocolSchedule<?> protocolSchedule;
 
@@ -77,8 +79,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
     if (block == null) {
       return emptyResult();
     }
-    final ObjectMapper mapper = new ObjectMapper();
-    final ArrayNode resultArrayNode = mapper.createArrayNode();
+    final ArrayNode resultArrayNode = MAPPER.createArrayNode();
 
     blockTracerSupplier
         .get()
@@ -110,7 +111,6 @@ public class TraceBlock extends AbstractBlockParameterMethod {
   }
 
   private Object emptyResult() {
-    final ObjectMapper mapper = new ObjectMapper();
-    return mapper.createArrayNode();
+    return MAPPER.createArrayNode();
   }
 }

@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 public class RewardTraceGenerator {
@@ -46,49 +45,48 @@ public class RewardTraceGenerator {
     final List<Trace> flatTraces = new ArrayList<>();
 
     final BlockHeader blockHeader = block.getHeader();
+    final List<BlockHeader> ommers = block.getBody().getOmmers();
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+    final Wei blockReward = protocolSpec.getBlockReward();
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         protocolSpec.getMiningBeneficiaryCalculator();
 
-    final AtomicReference<Wei> totalBlockReward =
-        new AtomicReference<>(protocolSpec.getBlockReward());
+    final Wei coinbaseReward =
+        protocolSpec
+            .getBlockProcessor()
+            .getCoinbaseReward(blockReward, blockHeader.getNumber(), ommers.size());
 
     // add uncle reward traces
-    block
-        .getBody()
-        .getOmmers()
-        .forEach(
-            ommerBlockHeader -> {
-              final long distance = blockHeader.getNumber() - ommerBlockHeader.getNumber();
-              final Wei blockReward = protocolSpec.getBlockReward();
-              final Wei ommerReward =
-                  blockReward.subtract(blockReward.multiply(distance).divide(8));
-              final Action.Builder uncleActionBuilder =
-                  Action.builder()
-                      .author(
-                          miningBeneficiaryCalculator
-                              .calculateBeneficiary(ommerBlockHeader)
-                              .toHexString())
-                      .rewardType(UNCLE_LABEL)
-                      .value(ommerReward.toShortHexString());
-              flatTraces.add(
-                  RewardTrace.builder()
-                      .actionBuilder(uncleActionBuilder)
-                      .blockHash(block.getHash().toHexString())
-                      .blockNumber(blockHeader.getNumber())
-                      .type(REWARD_LABEL)
-                      .build());
-
-              // add uncle inclusion reward
-              totalBlockReward.set(totalBlockReward.get().add(blockReward.divide(32)));
-            });
+    ommers.forEach(
+        ommerBlockHeader -> {
+          final Wei ommerReward =
+              protocolSpec
+                  .getBlockProcessor()
+                  .getOmmerReward(
+                      blockReward, blockHeader.getNumber(), ommerBlockHeader.getNumber());
+          final Action.Builder uncleActionBuilder =
+              Action.builder()
+                  .author(
+                      miningBeneficiaryCalculator
+                          .calculateBeneficiary(ommerBlockHeader)
+                          .toHexString())
+                  .rewardType(UNCLE_LABEL)
+                  .value(ommerReward.toShortHexString());
+          flatTraces.add(
+              RewardTrace.builder()
+                  .actionBuilder(uncleActionBuilder)
+                  .blockHash(block.getHash().toHexString())
+                  .blockNumber(blockHeader.getNumber())
+                  .type(REWARD_LABEL)
+                  .build());
+        });
 
     // add block reward trace
     final Action.Builder blockActionBuilder =
         Action.builder()
             .author(miningBeneficiaryCalculator.calculateBeneficiary(blockHeader).toHexString())
             .rewardType(BLOCK_LABEL)
-            .value(totalBlockReward.get().toShortHexString());
+            .value(coinbaseReward.toShortHexString());
     flatTraces.add(
         0,
         RewardTrace.builder()
