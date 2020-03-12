@@ -70,6 +70,7 @@ public class PrivacyNode implements AutoCloseable {
   private final BesuNode besu;
   private final Vertx vertx;
   private final Integer privacyAddress;
+  private final boolean isOnchainPrivacyEnabled;
 
   public PrivacyNode(final PrivacyNodeConfiguration privacyConfiguration, final Vertx vertx)
       throws IOException {
@@ -80,6 +81,7 @@ public class PrivacyNode implements AutoCloseable {
     final BesuNodeConfiguration besuConfig = privacyConfiguration.getBesuConfig();
 
     privacyAddress = privacyConfiguration.getPrivacyAddress();
+    isOnchainPrivacyEnabled = privacyConfiguration.isOnchainPrivacyGroupEnabled();
 
     this.besu =
         new BesuNode(
@@ -172,6 +174,7 @@ public class PrivacyNode implements AutoCloseable {
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))
               .setPrivacyAddress(privacyAddress)
+              .setOnchainPrivacyGroupsEnabled(isOnchainPrivacyEnabled)
               .build();
     } catch (IOException e) {
       throw new RuntimeException();
