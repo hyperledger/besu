@@ -53,7 +53,7 @@ public class AuthenticationServiceTest {
 
   @Test
   public void
-      authenticationServiceNotCreatedWhenAuthenticationDisabledAndNotCredentialsFileOrPublicKeyFile()
+      authenticationServiceNotCreatedWhenAuthenticationDisabledAndNoCredentialsFileOrPublicKeyFile()
           throws IOException {
     final File publicKeyFile = File.createTempFile("publicKey", "jwt");
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
