@@ -100,6 +100,7 @@ public interface BlockProcessor {
    * Get coinbase reward in ${@link Wei}
    *
    * @param blockReward reward of the block
+   * @param blockNumber number of the block
    * @param numberOfOmmers number of ommers for this block
    * @return coinbase reward
    */
