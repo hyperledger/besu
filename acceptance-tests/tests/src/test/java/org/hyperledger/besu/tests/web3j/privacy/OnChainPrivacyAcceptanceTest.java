@@ -61,13 +61,13 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
     alice =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
+        privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
             "node1", privacyAccountResolver.resolve(0), Address.PRIVACY);
     bob =
-        privacyBesu.createPrivateTransactionEnabledNode(
+        privacyBesu.createOnChainPrivacyGroupEnabledNode(
             "node2", privacyAccountResolver.resolve(1), Address.PRIVACY);
     charlie =
-        privacyBesu.createPrivateTransactionEnabledNode(
+        privacyBesu.createOnChainPrivacyGroupEnabledNode(
             "node3", privacyAccountResolver.resolve(2), Address.PRIVACY);
     privacyCluster.start(alice, bob, charlie);
   }
@@ -261,7 +261,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
         privateTransactionVerifier.validPrivateTransactionReceipt(
             aliceStoreHash, expectedStoreReceipt));
 
-    bob.execute(privacyTransactions.removeFromPrivacyGroup(privacyGroupId, bob, charlie));
+    removeFromPrivacyGroup(privacyGroupId, bob, charlie);
 
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
   }
@@ -328,7 +328,14 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
         privacyTransactions.addToPrivacyGroup(privacyGroupId, nodeAddingMember, newMembers));
   }
 
-  // TODO remove from privacy group method
+  private String removeFromPrivacyGroup(
+      final String privacyGroupId,
+      final PrivacyNode nodeRemovingMember,
+      final PrivacyNode memberBeingRemoved) {
+    return nodeRemovingMember.execute(
+        privacyTransactions.removeFromPrivacyGroup(
+            privacyGroupId, nodeRemovingMember, memberBeingRemoved));
+  }
 
   private String calculateAddParticipantPMTHash(
       final String privacyGroupId, final PrivacyNode groupCreator) {
