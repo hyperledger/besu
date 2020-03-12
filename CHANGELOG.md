@@ -6,7 +6,7 @@
 ### Bug Fixes
 
 - [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
-- Rpc authentication would be enabled even if it was disabled in configuration if a credentials file was specified [\#454](https://github.com/hyperledger/besu/pull/454) 
+- Specifying RPC credentials file should not force RPC Authentication to be enabled [\#454](https://github.com/hyperledger/besu/pull/454) 
 
 
 ## 1.4.0
