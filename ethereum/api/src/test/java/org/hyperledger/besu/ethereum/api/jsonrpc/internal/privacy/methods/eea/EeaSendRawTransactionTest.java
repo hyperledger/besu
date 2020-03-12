@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -106,11 +107,13 @@ public class EeaSendRawTransactionTest {
   @Mock private TransactionPool transactionPool;
   @Mock private EeaSendRawTransaction method;
   @Mock private PrivacyController privacyController;
+  @Mock private PrivacyParameters privacyParameters;
 
   @Before
   public void before() {
     method =
-        new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
+        new EeaSendRawTransaction(
+            transactionPool, privacyController, enclavePublicKeyProvider, false);
   }
 
   @Test
@@ -237,6 +240,10 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void validOnChainTransactionPrivacyGroupIsSentToTransactionPool() {
+    method =
+        new EeaSendRawTransaction(
+            transactionPool, privacyController, enclavePublicKeyProvider, true);
+
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(
@@ -274,6 +281,92 @@ public class EeaSendRawTransactionTest {
         .createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), eq(Address.ONCHAIN_PRIVACY));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
+  }
+
+  @Test
+  public void eeaTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+    method =
+        new EeaSendRawTransaction(
+            transactionPool, privacyController, enclavePublicKeyProvider, true);
+
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenReturn(MOCK_ORION_KEY);
+    when(privacyController.validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class)))
+        .thenReturn(ValidationResult.valid());
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}),
+            user);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void offChainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+    method =
+        new EeaSendRawTransaction(
+            transactionPool, privacyController, enclavePublicKeyProvider, true);
+
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenReturn(MOCK_ORION_KEY);
+    when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
+        .thenReturn(ValidationResult.valid());
+    when(privacyController.retrievePrivacyGroup(any(String.class), any(String.class)))
+        .thenReturn(
+            new PrivacyGroup(
+                "", PrivacyGroup.Type.PANTHEON, "", "", singletonList(ENCLAVE_PUBLIC_KEY)));
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "eea_sendRawTransaction",
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void onChainPrivacyGroupTransactionFailsWhenFeatureIsNotEnabled() {
+    method =
+        new EeaSendRawTransaction(
+            transactionPool, privacyController, enclavePublicKeyProvider, false);
+
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenReturn(MOCK_ORION_KEY);
+    when(privacyController.validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class)))
+        .thenReturn(ValidationResult.valid());
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "eea_sendRawTransaction",
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.ONCHAIN_PRIVACY_GROUP_NOT_ENABLED);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test
