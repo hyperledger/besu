@@ -65,4 +65,9 @@ public class PrivacyTransactions {
       final String privacyGroupId, final Address contractAddress, final String blockParameter) {
     return new PrivGetCodeTransaction(privacyGroupId, contractAddress, blockParameter);
   }
+
+  public RemoveFromOnChainPrivacyGroupTransaction removeFromPrivacyGroup(
+      final String privacyGroupId, final PrivacyNode remover, final PrivacyNode nodeToRemove) {
+    return new RemoveFromOnChainPrivacyGroupTransaction(privacyGroupId, remover, nodeToRemove);
+  }
 }
