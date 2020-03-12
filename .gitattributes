@@ -2,6 +2,9 @@
 *.jar -text
 *.bat -text
 *.pcap binary
+*.zip binary
+*.tar binary
+*.tar.gz binary
 *.blocks binary
 *.eot binary
 *.svg binary

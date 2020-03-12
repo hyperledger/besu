@@ -19,13 +19,21 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 
 public class PrivacyNodeConfiguration {
 
+  private final int privacyAddress;
   private final BesuNodeConfiguration besuConfig;
   private final OrionKeyConfiguration orionConfig;
 
   PrivacyNodeConfiguration(
-      final BesuNodeConfiguration besuConfig, final OrionKeyConfiguration orionConfig) {
+      final int privacyAddress,
+      final BesuNodeConfiguration besuConfig,
+      final OrionKeyConfiguration orionConfig) {
+    this.privacyAddress = privacyAddress;
     this.besuConfig = besuConfig;
     this.orionConfig = orionConfig;
+  }
+
+  public int getPrivacyAddress() {
+    return privacyAddress;
   }
 
   public BesuNodeConfiguration getBesuConfig() {

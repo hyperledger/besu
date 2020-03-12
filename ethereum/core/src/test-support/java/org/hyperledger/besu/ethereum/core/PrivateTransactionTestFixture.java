@@ -34,9 +34,10 @@ public class PrivateTransactionTestFixture {
   private long gasLimit = 5000;
 
   private Optional<Address> to = Optional.empty();
-  private Address sender = Address.fromHexString(String.format("%020x", 1));
 
-  private Wei value = Wei.of(4);
+  private Address sender = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+
+  private Wei value = Wei.of(0);
 
   private Bytes payload = Bytes.EMPTY;
 
@@ -52,7 +53,7 @@ public class PrivateTransactionTestFixture {
 
   private Optional<Bytes> privacyGroupId = Optional.empty();
 
-  private final Restriction restriction = Restriction.RESTRICTED;
+  private Restriction restriction = Restriction.RESTRICTED;
 
   public PrivateTransaction createTransaction(final KeyPair keys) {
     final PrivateTransaction.Builder builder = PrivateTransaction.builder();
@@ -70,7 +71,7 @@ public class PrivateTransactionTestFixture {
     chainId.ifPresent(builder::chainId);
 
     if (privacyGroupId.isPresent()) {
-      this.privacyGroupId(privacyGroupId.get());
+      privacyGroupId.ifPresent(builder::privacyGroupId);
     } else {
       privateFor.ifPresent(builder::privateFor);
     }
@@ -135,6 +136,11 @@ public class PrivateTransactionTestFixture {
 
   public PrivateTransactionTestFixture privacyGroupId(final Bytes privacyGroupId) {
     this.privacyGroupId = Optional.of(privacyGroupId);
+    return this;
+  }
+
+  public PrivateTransactionTestFixture restriction(final Restriction restriction) {
+    this.restriction = restriction;
     return this;
   }
 }

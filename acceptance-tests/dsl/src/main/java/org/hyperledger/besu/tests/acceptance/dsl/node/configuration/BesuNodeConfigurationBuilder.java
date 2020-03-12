@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -21,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -28,6 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +40,7 @@ import java.util.Optional;
 public class BesuNodeConfigurationBuilder {
 
   private String name;
+  private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
       new MiningParametersTestBuilder().enabled(false).build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -54,6 +58,7 @@ public class BesuNodeConfigurationBuilder {
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
+  private Optional<PrivacyParameters> privacyParameters = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -66,8 +71,20 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder dataPath(final Path dataPath) {
+    checkNotNull(dataPath);
+    this.dataPath = Optional.of(dataPath);
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder miningEnabled() {
     this.miningParameters = new MiningParametersTestBuilder().enabled(true).build();
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder miningConfiguration(final MiningParameters miningParameters) {
+    this.miningParameters = miningParameters;
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }
@@ -103,11 +120,10 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder jsonRpcAuthenticationEnabled() throws URISyntaxException {
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(final String authFile)
+      throws URISyntaxException {
     final String authTomlPath =
-        Paths.get(ClassLoader.getSystemResource("authentication/auth.toml").toURI())
-            .toAbsolutePath()
-            .toString();
+        Paths.get(ClassLoader.getSystemResource(authFile).toURI()).toAbsolutePath().toString();
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
@@ -234,9 +250,15 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
+    this.privacyParameters = Optional.ofNullable(privacyParameters);
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
+        dataPath,
         miningParameters,
         jsonRpcConfiguration,
         webSocketConfiguration,
@@ -252,6 +274,7 @@ public class BesuNodeConfigurationBuilder {
         revertReasonEnabled,
         plugins,
         extraCLIOptions,
-        staticNodes);
+        staticNodes,
+        privacyParameters);
   }
 }

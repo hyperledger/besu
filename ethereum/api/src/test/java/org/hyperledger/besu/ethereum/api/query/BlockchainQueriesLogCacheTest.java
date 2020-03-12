@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.api.query;
 
-import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
@@ -76,7 +76,7 @@ public class BlockchainQueriesLogCacheTest {
 
     for (int i = 0; i < 2; i++) {
       final RandomAccessFile file =
-          new RandomAccessFile(cacheDir.newFile("logBloom-" + i + ".index"), "rws");
+          new RandomAccessFile(cacheDir.newFile("logBloom-" + i + ".cache"), "rws");
       writeThreeEntries(testLogsBloomFilter, file);
       file.seek((BLOCKS_PER_BLOOM_CACHE - 3) * LogsBloomFilter.BYTE_SIZE);
       writeThreeEntries(testLogsBloomFilter, file);

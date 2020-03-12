@@ -96,8 +96,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         addPluginVersion(plugin);
       } catch (final Exception e) {
         LOG.error(
-            "Error registering plugin of type {}, start and stop will not be called. \n{}",
-            plugin.getClass(),
+            "Error registering plugin of type "
+                + plugin.getClass().getName()
+                + ", start and stop will not be called.",
             e);
         continue;
       }
@@ -140,8 +141,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         LOG.debug("Started plugin of type {}.", plugin.getClass().getName());
       } catch (final Exception e) {
         LOG.error(
-            "Error starting plugin of type {}, stop will not be called. \n{}",
-            plugin.getClass(),
+            "Error starting plugin of type "
+                + plugin.getClass().getName()
+                + ", stop will not be called.",
             e);
         pluginsIterator.remove();
       }
@@ -164,7 +166,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         plugin.stop();
         LOG.debug("Stopped plugin of type {}.", plugin.getClass().getName());
       } catch (final Exception e) {
-        LOG.error("Error stopping plugin of type {}. \n{}", plugin.getClass(), e);
+        LOG.error("Error stopping plugin of type " + plugin.getClass().getName(), e);
       }
     }
 

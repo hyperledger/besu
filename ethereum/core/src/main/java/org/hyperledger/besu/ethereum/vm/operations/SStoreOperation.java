@@ -62,6 +62,7 @@ public class SStoreOperation extends AbstractOperation {
     frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
     account.setStorageValue(key, value);
+    frame.storageWasUpdated(key, value.toBytes());
   }
 
   @Override

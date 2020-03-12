@@ -14,14 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"cost", "ex", "pc", "sub"})
+@JsonPropertyOrder({"cost", "operation", "ex", "pc", "sub"})
 public class VmOperation {
   private long cost;
+  private String operation;
   // Information concerning the execution of the operation.
   private VmOperationExecutionReport vmOperationExecutionReport;
   private long pc;
@@ -60,6 +64,15 @@ public class VmOperation {
 
   public void setSub(final VmTrace sub) {
     this.sub = sub;
+  }
+
+  @JsonInclude(NON_NULL)
+  public String getOperation() {
+    return operation;
+  }
+
+  public void setOperation(final String operation) {
+    this.operation = operation;
   }
 
   @Override

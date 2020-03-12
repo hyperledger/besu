@@ -14,15 +14,13 @@
  */
 package org.hyperledger.besu.nat;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import org.hyperledger.besu.nat.core.AutoDetectionResult;
 import org.hyperledger.besu.nat.core.NatManager;
-import org.hyperledger.besu.nat.core.NatMethodAutoDetection;
+import org.hyperledger.besu.nat.core.NatMethodDetector;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -185,20 +183,16 @@ public class NatService {
   }
 
   /**
-   * Attempts to automatically detect the Nat method being used by the node.
+   * Attempts to automatically detect the Nat method by applying nat method detectors. Will return
+   * the first one that succeeds in its detection.
    *
-   * @param natMethodAutoDetections list of nat method auto detections
+   * @param natMethodDetectors list of nat method auto detections
    * @return a {@link NatMethod} equal to NONE if no Nat method has been detected automatically.
    */
-  public static NatMethod autoDetectNatMethod(
-      final NatMethodAutoDetection... natMethodAutoDetections) {
-    checkNotNull(natMethodAutoDetections);
-    for (NatMethodAutoDetection autoDetection : natMethodAutoDetections) {
-      final AutoDetectionResult result = autoDetection.shouldBeThisNatMethod();
-      if (result.isDetectedNatMethod()) {
-        return result.getNatMethod();
-      }
-    }
-    return NatMethod.NONE;
+  public static NatMethod autoDetectNatMethod(final NatMethodDetector... natMethodDetectors) {
+    return Arrays.stream(natMethodDetectors)
+        .flatMap(natMethodDetector -> natMethodDetector.detect().stream())
+        .findFirst()
+        .orElse(NatMethod.NONE);
   }
 }

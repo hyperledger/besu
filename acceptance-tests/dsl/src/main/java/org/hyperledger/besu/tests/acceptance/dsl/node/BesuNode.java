@@ -108,6 +108,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public BesuNode(
       final String name,
+      final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
@@ -123,11 +124,12 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean revertReasonEnabled,
       final List<String> plugins,
       final List<String> extraCLIOptions,
-      final List<String> staticNodes)
+      final List<String> staticNodes,
+      final Optional<PrivacyParameters> privacyParameters)
       throws IOException {
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
-    this.homeDirectory = Files.createTempDirectory("acctest");
+    this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
         path -> {
           try {
@@ -161,7 +163,16 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         });
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    privacyParameters.ifPresent(this::setPrivacyParameters);
     LOG.info("Created BesuNode {}", this.toString());
+  }
+
+  private static Path createTmpDataDirectory() {
+    try {
+      return Files.createTempDirectory("acctest");
+    } catch (final IOException e) {
+      throw new RuntimeException("Unable to create temporary data directory", e);
+    }
   }
 
   @Override

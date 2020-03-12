@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -25,10 +26,11 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface PrivacyController {
 
-  SendTransactionResponse sendTransaction(
-      PrivateTransaction privateTransaction, String enclavePublicKey);
+  String sendTransaction(PrivateTransaction privateTransaction, String enclavePublicKey);
 
   ReceiveResponse retrieveTransaction(String enclaveKey, String enclavePublicKey);
 
@@ -42,8 +44,13 @@ public interface PrivacyController {
   Transaction createPrivacyMarkerTransaction(
       String transactionEnclaveKey, PrivateTransaction privateTransaction);
 
+  Transaction createPrivacyMarkerTransaction(
+      String transactionEnclaveKey,
+      PrivateTransaction privateTransaction,
+      Address privacyPrecompileAddress);
+
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
-      PrivateTransaction privateTransaction, String privacyGroupId, String enclavePublicKey);
+      PrivateTransaction privateTransaction, String enclavePublicKey);
 
   long determineEeaNonce(
       String privateFrom, String[] privateFor, Address address, String enclavePublicKey);
@@ -55,4 +62,18 @@ public interface PrivacyController {
       final String enclavePublicKey,
       final CallParameter callParams,
       final long blockNumber);
+
+  Optional<String> buildAndSendAddPayload(PrivateTransaction privateTransaction, String enclaveKey);
+
+  PrivacyGroup retrievePrivacyGroup(String toBase64String, String enclaveKey);
+
+  List<PrivacyGroup> findOnChainPrivacyGroup(List<String> asList, String enclaveKey);
+
+  Optional<Bytes> getContractCode(
+      final String privacyGroupId,
+      final Address contractAddress,
+      final Hash blockHash,
+      final String enclavePublicKey);
+
+  List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 }

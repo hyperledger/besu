@@ -48,8 +48,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,6 +69,7 @@ public class PrivacyNode implements AutoCloseable {
   private final OrionTestHarness orion;
   private final BesuNode besu;
   private final Vertx vertx;
+  private final Integer privacyAddress;
 
   public PrivacyNode(final PrivacyNodeConfiguration privacyConfiguration, final Vertx vertx)
       throws IOException {
@@ -78,9 +79,12 @@ public class PrivacyNode implements AutoCloseable {
 
     final BesuNodeConfiguration besuConfig = privacyConfiguration.getBesuConfig();
 
+    privacyAddress = privacyConfiguration.getPrivacyAddress();
+
     this.besu =
         new BesuNode(
             besuConfig.getName(),
+            besuConfig.getDataPath(),
             besuConfig.getMiningParameters(),
             besuConfig.getJsonRpcConfiguration(),
             besuConfig.getWebSocketConfiguration(),
@@ -96,7 +100,8 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.isRevertReasonEnabled(),
             besuConfig.getPlugins(),
             besuConfig.getExtraCLIOptions(),
-            new ArrayList<>());
+            Collections.emptyList(),
+            besuConfig.getPrivacyParameters());
   }
 
   public void testOrionConnection(final List<PrivacyNode> otherNodes) {
@@ -166,6 +171,7 @@ public class PrivacyNode implements AutoCloseable {
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))
+              .setPrivacyAddress(privacyAddress)
               .build();
     } catch (IOException e) {
       throw new RuntimeException();

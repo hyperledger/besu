@@ -53,9 +53,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -68,7 +65,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   private final Logger LOG = LogManager.getLogger();
   private final Map<String, Runner> besuRunners = new HashMap<>();
-  private ExecutorService nodeExecutor = Executors.newCachedThreadPool();
 
   private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new HashMap<>();
 
@@ -102,9 +98,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void startNode(final BesuNode node) {
-    if (nodeExecutor == null || nodeExecutor.isShutdown()) {
-      nodeExecutor = Executors.newCachedThreadPool();
-    }
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final Path dataDir = node.homeDirectory();
@@ -195,6 +188,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     .map(EnodeURL::fromString)
                     .collect(Collectors.toList()))
             .besuPluginContext(new BesuPluginContextImpl())
+            .autoLogBloomCaching(false)
             .build();
 
     runner.start();
@@ -220,14 +214,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     // iterate over a copy of the set so that besuRunner can be updated when a runner is killed
     new HashSet<>(besuRunners.keySet()).forEach(this::killRunner);
-    try {
-      nodeExecutor.shutdownNow();
-      if (!nodeExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-        throw new IllegalStateException("Failed to shut down node executor");
-      }
-    } catch (final InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override

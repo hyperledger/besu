@@ -87,6 +87,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
@@ -175,6 +176,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).webSocketConfiguration(eq(DEFAULT_WEB_SOCKET_CONFIGURATION));
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
+    verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
@@ -806,7 +808,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void nodekeyOptionMustBeUsed() throws Exception {
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
@@ -827,13 +829,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assumeFalse(isFullInstantiation());
 
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
-
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--node-private-key-file', './specific/key'");
+        .startsWith("Unknown options: '--node-private-key-file', './specific/enclavePrivateKey'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -1392,6 +1393,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "AUTO");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
 
+    parseCommand("--nat-method", "DOCKER");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.DOCKER));
+
+    parseCommand("--nat-method", "KUBERNETES");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.KUBERNETES));
+
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -1404,7 +1411,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, MANUAL, AUTO, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, MANUAL, DOCKER, KUBERNETES, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 
   @Test
@@ -1527,6 +1534,37 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-port",
         "--rpc-http-cors-origins",
         "--rpc-http-api");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyTlsOptionsRequiresTlsToBeEnabled() {
+    when(storageService.getByName("rocksdb-privacy"))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-url",
+        ENCLAVE_URI,
+        "--privacy-public-key-file",
+        configFile.getPath(),
+        "--privacy-tls-keystore-file",
+        "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
+    parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -2629,7 +2667,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void pruningParametersAreCaptured() throws Exception {
     parseCommand(
-        "--pruning-enabled", "--Xpruning-blocks-retained=15", "--Xpruning-block-confirmations=4");
+        "--pruning-enabled", "--pruning-blocks-retained=15", "--pruning-block-confirmations=4");
 
     final ArgumentCaptor<PrunerConfiguration> pruningArg =
         ArgumentCaptor.forClass(PrunerConfiguration.class);
@@ -2842,8 +2880,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void mustUseEnclaveUriAndOptions() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
 
     parseCommand(
@@ -2870,7 +2906,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void privacyOptionsRequiresServiceToBeEnabled() {
 
-    final File file = new File("./specific/public_key");
+    final File file = new File("./specific/enclavePublicKey");
     file.deleteOnExit();
 
     parseCommand(
@@ -2916,9 +2952,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privacyMultiTenancyIsConfiguredWhenConfiguredWithNecessaryOptions() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
-
     parseCommand(
         "--privacy-enabled",
         "--rpc-http-authentication-enabled",
@@ -3029,9 +3062,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assumeFalse(isFullInstantiation());
 
     final Path path = Paths.get(".");
-    parseCommand("--privacy-public-key-file", path.toString());
+    parseCommand("--privacy-public-enclavePrivateKey-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--privacy-public-key-file', '.'");
+        .startsWith("Unknown options: '--privacy-public-enclavePrivateKey-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3451,5 +3484,19 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .startsWith("Contents of privacy-public-key-file invalid");
     assertThat(commandErrorOutput.toString()).contains("Illegal base64 character");
+  }
+
+  @Test
+  public void logLevelHasNullAsDefaultValue() {
+    final TestBesuCommand command = parseCommand();
+
+    assertThat(command.getLogLevel()).isNull();
+  }
+
+  @Test
+  public void logLevelIsSetByLoggingOption() {
+    final TestBesuCommand command = parseCommand("--logging", "WARN");
+
+    assertThat(command.getLogLevel()).isEqualTo(Level.WARN);
   }
 }

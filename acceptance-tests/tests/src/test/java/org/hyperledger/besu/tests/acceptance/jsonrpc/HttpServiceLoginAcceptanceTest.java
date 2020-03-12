@@ -30,6 +30,7 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   private Cluster authenticatedCluster;
   private BesuNode nodeUsingAuthFile;
   private BesuNode nodeUsingJwtPublicKey;
+  private static final String AUTH_FILE = "authentication/auth.toml";
 
   // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
   private static final String TOKEN_ALLOWING_NET_PEER_COUNT =
@@ -42,11 +43,12 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
+
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     authenticatedCluster = new Cluster(clusterConfiguration, net);
 
-    nodeUsingAuthFile = besu.createNodeWithAuthentication("node1");
+    nodeUsingAuthFile = besu.createNodeWithAuthentication("node1", AUTH_FILE);
     nodeUsingJwtPublicKey = besu.createNodeWithAuthenticationUsingJwtPublicKey("node2");
     authenticatedCluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
 

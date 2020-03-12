@@ -138,6 +138,17 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getAghartaBlockNumber();
 
+  /**
+   * Block number for Phoenix fork on Classic networks. Enable the outstanding Ethereum Foundation
+   * Istanbul network protocol upgrades on the Ethereum Classic network in a hard-fork code-named
+   * Phoenix to enable maximum compatibility across these networks.
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1088">https://ecips.ethereumclassic.org/ECIPs/ecip-1088</a>
+   * @return block number of Phoenix fork on Classic networks
+   */
+  OptionalLong getPhoenixBlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
