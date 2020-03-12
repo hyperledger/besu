@@ -14,6 +14,7 @@
 - Fixed a bug to manage concurrent access to cache files [\#438](https://github.com/hyperledger/besu/pull/438)
 - Fixed configuration file bug: `pruning-blocks-retained` now accepts an integer in the config [\#440](https://github.com/hyperledger/besu/pull/440)
 - Specifying RPC credentials file should not force RPC Authentication to be enabled [\#454](https://github.com/hyperledger/besu/pull/454) 
+- Enhanced estimateGas messages [\#436](https://github.com/hyperledger/besu/pull/436). When a estimateGas request fails a validation check, an improved error message is returned in the response.
 
 ### Early Access Features
 
