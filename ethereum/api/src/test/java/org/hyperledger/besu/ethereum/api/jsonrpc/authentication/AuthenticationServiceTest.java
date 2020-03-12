@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +29,7 @@ import org.junit.Test;
 public class AuthenticationServiceTest {
 
   @Test
-  public void authenticationServiceNotCreatedWhenAuthenticationDisabledAndHasCredentialsFile() {
+  public void authenticationServiceNotCreatedWhenRpcAuthenticationDisabledAndHasCredentialsFile() {
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setAuthenticationEnabled(false);
     jsonRpcConfiguration.setAuthenticationCredentialsFile("some/file/path");
@@ -39,7 +40,7 @@ public class AuthenticationServiceTest {
   }
 
   @Test
-  public void authenticationServiceNotCreatedWhenAuthenticationDisabledAndHasPublicKeyFile()
+  public void authenticationServiceNotCreatedWhenRpcAuthenticationDisabledAndHasPublicKeyFile()
       throws IOException {
     final File publicKeyFile = File.createTempFile("publicKey", "jwt");
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -53,7 +54,7 @@ public class AuthenticationServiceTest {
 
   @Test
   public void
-      authenticationServiceNotCreatedWhenAuthenticationDisabledAndNoCredentialsFileOrPublicKeyFile()
+      authenticationServiceNotCreatedWhenRpcAuthenticationDisabledAndNoCredentialsFileOrPublicKeyFile()
           throws IOException {
     final File publicKeyFile = File.createTempFile("publicKey", "jwt");
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -63,6 +64,45 @@ public class AuthenticationServiceTest {
 
     final Optional<AuthenticationService> authenticationService =
         AuthenticationService.create(Vertx.vertx(), jsonRpcConfiguration);
+    assertThat(authenticationService).isEmpty();
+  }
+
+  @Test
+  public void authenticationServiceNotCreatedWhenWsAuthenticationDisabledAndHasCredentialsFile() {
+    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+    webSocketConfiguration.setAuthenticationEnabled(false);
+    webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
+
+    final Optional<AuthenticationService> authenticationService =
+        AuthenticationService.create(Vertx.vertx(), webSocketConfiguration);
+    assertThat(authenticationService).isEmpty();
+  }
+
+  @Test
+  public void authenticationServiceNotCreatedWhenWsAuthenticationDisabledAndHasPublicKeyFile()
+      throws IOException {
+    final File publicKeyFile = File.createTempFile("publicKey", "jwt");
+    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+    webSocketConfiguration.setAuthenticationEnabled(false);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
+
+    final Optional<AuthenticationService> authenticationService =
+        AuthenticationService.create(Vertx.vertx(), webSocketConfiguration);
+    assertThat(authenticationService).isEmpty();
+  }
+
+  @Test
+  public void
+      authenticationServiceNotCreatedWhenWsAuthenticationDisabledAndNoCredentialsFileOrPublicKeyFile()
+          throws IOException {
+    final File publicKeyFile = File.createTempFile("publicKey", "jwt");
+    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+    webSocketConfiguration.setAuthenticationEnabled(false);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
+    webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
+
+    final Optional<AuthenticationService> authenticationService =
+        AuthenticationService.create(Vertx.vertx(), webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 }
