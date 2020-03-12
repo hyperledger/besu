@@ -172,59 +172,15 @@ Workaround -> When using onchain permissioning, ensure bootnodes are also valida
 ### Additions and Improvements 
 
 - Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
-- Added `trace_transaction` JSON RPC API [\#441](https://github.com/hyperledger/besu/pull/441)
-- Removed -X unstable prefix for pruning options (`--pruning-blocks-retained`, `--pruning-block-confirmations`) [\#440](https://github.com/hyperledger/besu/pull/440)
-- Implemented [ECIP-1088](https://ecips.ethereumclassic.org/ECIPs/ecip-1088): Phoenix EVM and Protocol upgrades. [\#434](https://github.com/hyperledger/besu/pull/434)
-
+- Added database migration acceptance tests [\#430](https://github.com/hyperledger/besu/pull/430) .
+- Removed -X unstable prefix for pruning options (`--pruning-blocks-retained`, `--pruning-block-confirmations`) [\#440](https://github.com/hyperledger/besu/pull/440).
 ### Bug Fixes
 
 - [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
 - Fixed a bug to manage concurrent access to cache files [\#438](https://github.com/hyperledger/besu/pull/438)
 - Fixed configuration file bug: `pruning-blocks-retained` now accepts an integer in the config [\#440](https://github.com/hyperledger/besu/pull/440)
 - Specifying RPC credentials file should not force RPC Authentication to be enabled [\#454](https://github.com/hyperledger/besu/pull/454) 
-- Enhanced estimateGas messages [\#436](https://github.com/hyperledger/besu/pull/436). When a estimateGas request fails a validation check, an improved error message is returned in the response.
-
-### Early Access Features
-
-Early access features are available features that are not recommended for production networks and may
-have unstable interfaces.
-
-* [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. 
-  Not being able to to re-add a member to an onchain privacy group is a [known issue](https://github.com/hyperledger/besu/issues/455) 
-  with the add and remove functionality. 
-
-### Known Issues 
-
-#### Fast sync defaulting to full sync
-
--  When fast sync cannot find enough valid peers rapidly enough, Besu defaults to full sync.
-
-Workarounds:
-1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database,
-and start again.
-2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood
-of encountering the pruning bug.
-
-A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427)
-and is planned for inclusion in v1.4.1.
-
-#### Error full syncing with pruning
-
-- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
-The associated error is `Unable to load trie node value for hash` and is caused by the combination of
-full sync and pruning.
-
-Workarounds:
-1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
-2. If the `MerkleTrieException` occurs, delete the database and resync.
-
-Investigation of this issue is in progress and a fix is targeted for v1.4.1.
-
-#### Bootnodes must be validators when using onchain permissioning
-
-- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
-
-Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+- Fixed configuration file bug: `pruning-blocks-retained` now accepts an integer in the config [\#440](https://github.com/hyperledger/besu/pull/440).
 
 ## 1.4.0
 
