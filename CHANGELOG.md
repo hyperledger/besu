@@ -2,10 +2,15 @@
 
 ## 1.4.1
 - Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
+- Added new `trace_transaction` JSON RPC API [\#441](https://github.com/hyperledger/besu/pull/441)
+- Added database migration acceptance tests [\#430](https://github.com/hyperledger/besu/pull/430) .
+- Removed -X unstable prefix for pruning options (`--pruning-blocks-retained`, `--pruning-block-confirmations`) [\#440](https://github.com/hyperledger/besu/pull/440).
 
 ### Bug Fixes
 
 - [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
+- Fixed a bug to manage concurrent access to cache files [\#438](https://github.com/hyperledger/besu/pull/438). 
+- Fixed configuration file bug: `pruning-blocks-retained` now accepts an integer in the config [\#440](https://github.com/hyperledger/besu/pull/440).
 
 ### Early Access Features
 
@@ -17,6 +22,7 @@ have unstable interfaces.
   with the add and remove functionality. 
 
 ### Known Issues 
+- Specifying RPC credentials file should not force RPC Authentication to be enabled [\#454](https://github.com/hyperledger/besu/pull/454) 
 
 ## 1.4.0
 
