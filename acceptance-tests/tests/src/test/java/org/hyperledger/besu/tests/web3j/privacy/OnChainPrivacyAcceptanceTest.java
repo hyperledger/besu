@@ -260,6 +260,10 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
             aliceStoreHash, expectedStoreReceipt));
+
+    bob.execute(privacyTransactions.removeFromPrivacyGroup(privacyGroupId, bob, charlie));
+
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
   }
 
   private Contract deployPrivateContract(final String privacyGroupId, final PrivacyNode sender) {
@@ -401,9 +405,9 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   private String getContractDeploymentCommitmentHash(final Contract contract) {
-    Optional<TransactionReceipt> transactionReceipt = contract.getTransactionReceipt();
+    final Optional<TransactionReceipt> transactionReceipt = contract.getTransactionReceipt();
     assertThat(transactionReceipt).isPresent();
-    PrivateTransactionReceipt privateTransactionReceipt =
+    final PrivateTransactionReceipt privateTransactionReceipt =
         (PrivateTransactionReceipt) transactionReceipt.get();
     return privateTransactionReceipt.getcommitmentHash();
   }
