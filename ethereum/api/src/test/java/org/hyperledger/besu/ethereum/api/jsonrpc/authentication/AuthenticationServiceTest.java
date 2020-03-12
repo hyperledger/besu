@@ -27,6 +27,7 @@ import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class AuthenticationServiceTest {
+  private final Vertx vertx = Vertx.vertx();
 
   @Test
   public void authenticationServiceNotCreatedWhenRpcAuthenticationDisabledAndHasCredentialsFile() {
@@ -35,7 +36,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(Vertx.vertx(), jsonRpcConfiguration);
+        AuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -48,7 +49,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(Vertx.vertx(), jsonRpcConfiguration);
+        AuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -63,7 +64,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(Vertx.vertx(), jsonRpcConfiguration);
+        AuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -74,7 +75,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(Vertx.vertx(), webSocketConfiguration);
+        AuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -87,7 +88,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(Vertx.vertx(), webSocketConfiguration);
+        AuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -102,7 +103,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(Vertx.vertx(), webSocketConfiguration);
+        AuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 }
