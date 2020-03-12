@@ -5,6 +5,7 @@
 ### Additions and Improvements 
 
 - Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
+- Enhanced estimateGas messages [\#436](https://github.com/hyperledger/besu/pull/436). When a estimateGas request fails a validation check, an improved error message is returned in the response.
 - Added `trace_transaction` JSON RPC API [\#441](https://github.com/hyperledger/besu/pull/441)
 - Removed -X unstable prefix for pruning options (`--pruning-blocks-retained`, `--pruning-block-confirmations`) [\#440](https://github.com/hyperledger/besu/pull/440)
 - Implemented [ECIP-1088](https://ecips.ethereumclassic.org/ECIPs/ecip-1088): Phoenix EVM and Protocol upgrades. [\#434](https://github.com/hyperledger/besu/pull/434)
