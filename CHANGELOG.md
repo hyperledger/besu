@@ -7,6 +7,16 @@
 
 - [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
 
+### Early Access Features
+
+Early access features are available features that are not recommended for production networks and may
+have unstable interfaces.
+
+* [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. 
+  Not being able to to re-add a member to an onchain privacy group is a [known issue](https://github.com/hyperledger/besu/issues/455) 
+  with the add and remove functionality. 
+
+### Known Issues 
 
 ## 1.4.0
 
