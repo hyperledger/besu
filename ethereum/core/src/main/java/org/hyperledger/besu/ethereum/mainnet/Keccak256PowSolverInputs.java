@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 Whiteblock Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,16 +18,16 @@ import java.util.Arrays;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class EthHashSolverInputs extends SolverInputs {
+public class Keccak256PowSolverInputs extends SolverInputs {
 
-  public EthHashSolverInputs(
+  public Keccak256PowSolverInputs(
       final UInt256 target, final byte[] prePowHash, final long blockNumber) {
     super(target, prePowHash, blockNumber);
   }
 
   @Override
   public String toString() {
-    return "EthHashSolverInputs{"
+    return "Keccak256PowSolverInputs{"
         + "target="
         + target
         + ", prePowHash="

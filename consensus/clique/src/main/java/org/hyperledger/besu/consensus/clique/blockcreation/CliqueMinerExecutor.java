@@ -41,7 +41,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
-public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, CliqueBlockMiner> {
+public class CliqueMinerExecutor
+    extends AbstractMinerExecutor<CliqueContext, CliqueBlockMiner, EthHashObserver> {
 
   private final Address localAddress;
   private final KeyPair nodeKeys;

@@ -24,6 +24,8 @@ public interface GenesisConfigOptions {
 
   boolean isEthHash();
 
+  boolean isKeccak256Pow();
+
   boolean isIbftLegacy();
 
   boolean isIbft2();
@@ -37,6 +39,8 @@ public interface GenesisConfigOptions {
   CliqueConfigOptions getCliqueConfigOptions();
 
   IbftConfigOptions getIbft2ConfigOptions();
+
+  Keccak256PowConfigOptions getKeccak256PowConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
 

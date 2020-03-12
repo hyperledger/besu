@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 Whiteblock Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
+import org.hyperledger.besu.ethereum.chain.Keccak256PowObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PowSolution;
 
 import java.util.Optional;
 
@@ -29,15 +29,17 @@ import java.util.Optional;
  * Responsible for determining when a block mining operation should be started/stopped, then
  * creating an appropriate miner and starting it running in a thread.
  */
-public class EthHashMiningCoordinator
-    extends AbstractMiningCoordinator<Void, EthHashBlockMiner, EthHashObserver>
+public class Keccak256PowMiningCoordinator
+    extends AbstractMiningCoordinator<Void, Keccak256PowBlockMiner, Keccak256PowObserver>
     implements BlockAddedObserver {
 
-  private final EthHashMinerExecutor executor;
+  private final Keccak256PowMinerExecutor executor;
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
 
-  public EthHashMiningCoordinator(
-      final Blockchain blockchain, final EthHashMinerExecutor executor, final SyncState syncState) {
+  public Keccak256PowMiningCoordinator(
+      final Blockchain blockchain,
+      final Keccak256PowMinerExecutor executor,
+      final SyncState syncState) {
     super(blockchain, executor, syncState);
     this.executor = executor;
   }
@@ -54,7 +56,7 @@ public class EthHashMiningCoordinator
   @Override
   public Optional<Long> hashesPerSecond() {
     final Optional<Long> currentHashesPerSecond =
-        currentRunningMiner.flatMap(EthHashBlockMiner::getHashesPerSecond);
+        currentRunningMiner.flatMap(Keccak256PowBlockMiner::getHashesPerSecond);
 
     if (currentHashesPerSecond.isPresent()) {
       cachedHashesPerSecond = currentHashesPerSecond;
@@ -66,18 +68,17 @@ public class EthHashMiningCoordinator
 
   @Override
   public Optional<EthHashSolverInputs> getWorkDefinition() {
-    return currentRunningMiner.flatMap(EthHashBlockMiner::getWorkDefinition);
+    return currentRunningMiner.flatMap(Keccak256PowBlockMiner::getWorkDefinition);
   }
 
-  @Override
-  public boolean submitWork(final EthHashSolution solution) {
+  public boolean submitWork(final PowSolution solution) {
     synchronized (this) {
       return currentRunningMiner.map(miner -> miner.submitWork(solution)).orElse(false);
     }
   }
 
   @Override
-  protected void haltMiner(final EthHashBlockMiner miner) {
+  protected void haltMiner(final Keccak256PowBlockMiner miner) {
     miner.cancel();
     miner.getHashesPerSecond().ifPresent(val -> cachedHashesPerSecond = Optional.of(val));
   }

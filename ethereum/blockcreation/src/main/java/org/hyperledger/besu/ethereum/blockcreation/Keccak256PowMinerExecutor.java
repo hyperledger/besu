@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 Whiteblock Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,28 +15,27 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
+import org.hyperledger.besu.ethereum.chain.Keccak256PowObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
-import org.hyperledger.besu.ethereum.mainnet.EthHasher;
+import org.hyperledger.besu.ethereum.mainnet.Keccak256PowHasher;
+import org.hyperledger.besu.ethereum.mainnet.Keccak256PowSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.function.Function;
 
-public class EthHashMinerExecutor
-    extends AbstractMinerExecutor<Void, EthHashBlockMiner, EthHashObserver> {
+public class Keccak256PowMinerExecutor
+    extends AbstractMinerExecutor<Void, Keccak256PowBlockMiner, Keccak256PowObserver> {
 
   private volatile Optional<Address> coinbase;
   private boolean stratumMiningEnabled;
-  private final Iterable<Long> nonceGenerator;
 
-  public EthHashMinerExecutor(
+  public Keccak256PowMinerExecutor(
       final ProtocolContext<Void> protocolContext,
       final ProtocolSchedule<Void> protocolSchedule,
       final PendingTransactions pendingTransactions,
@@ -51,31 +50,33 @@ public class EthHashMinerExecutor
         blockScheduler,
         gasLimitCalculator);
     this.coinbase = miningParams.getCoinbase();
-    this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
   }
 
   @Override
-  public Optional<EthHashBlockMiner> startAsyncMining(
+  public Optional<Keccak256PowBlockMiner> startAsyncMining(
       final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<EthHashObserver> ethHashObservers,
+      final Subscribers<Keccak256PowObserver> ethHashObservers,
       final BlockHeader parentHeader) {
-    if (coinbase.isEmpty()) {
+    if (!coinbase.isPresent()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
     }
     return super.startAsyncMining(observers, ethHashObservers, parentHeader);
   }
 
   @Override
-  public EthHashBlockMiner createMiner(
+  public Keccak256PowBlockMiner createMiner(
       final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<EthHashObserver> ethHashObservers,
+      final Subscribers<Keccak256PowObserver> ethHashObservers,
       final BlockHeader parentHeader) {
-    final EthHashSolver solver =
-        new EthHashSolver(
-            nonceGenerator, new EthHasher.Light(), stratumMiningEnabled, ethHashObservers);
-    final Function<BlockHeader, EthHashBlockCreator> blockCreator =
+    final Keccak256PowSolver solver =
+        new Keccak256PowSolver(
+            new RandomNonceGenerator(),
+            new Keccak256PowHasher.Hasher(),
+            stratumMiningEnabled,
+            ethHashObservers);
+    final Function<BlockHeader, Keccak256PowBlockCreator> blockCreator =
         (header) ->
-            new EthHashBlockCreator(
+            new Keccak256PowBlockCreator(
                 coinbase.get(),
                 parent -> extraData,
                 pendingTransactions,
@@ -86,7 +87,7 @@ public class EthHashMinerExecutor
                 minTransactionGasPrice,
                 parentHeader);
 
-    return new EthHashBlockMiner(
+    return new Keccak256PowBlockMiner(
         blockCreator, protocolSchedule, protocolContext, observers, blockScheduler, parentHeader);
   }
 

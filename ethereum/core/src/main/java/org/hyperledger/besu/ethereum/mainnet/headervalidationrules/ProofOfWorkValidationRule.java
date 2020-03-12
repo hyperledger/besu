@@ -34,7 +34,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   private static final BigInteger ETHASH_TARGET_UPPER_BOUND = BigInteger.valueOf(2).pow(256);
 
-  static final EthHasher HASHER = new EthHasher.Light();
+  public static EthHasher HASHER = new EthHasher.Light();
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
@@ -62,16 +62,18 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
       return false;
     }
 
-    final Hash mixedHash =
-        Hash.wrap(Bytes32.leftPad(Bytes.wrap(hashBuffer).slice(0, Bytes32.SIZE)));
-    if (!header.getMixHash().equals(mixedHash)) {
-      LOG.warn(
-          "Invalid block header: header mixed hash {} does not equal calculated mixed hash {}.\n"
-              + "Failing header:\n{}",
-          header.getMixHash(),
-          mixedHash,
-          header);
-      return false;
+    if (HASHER instanceof EthHasher.Light) {
+      final Hash mixedHash =
+          Hash.wrap(Bytes32.leftPad(Bytes.wrap(hashBuffer).slice(0, Bytes32.SIZE)));
+      if (!header.getMixHash().equals(mixedHash)) {
+        LOG.warn(
+            "Invalid block header: header mixed hash {} does not equal calculated mixed hash {}.\n"
+                + "Failing header:\n{}",
+            header.getMixHash(),
+            mixedHash,
+            header);
+        return false;
+      }
     }
 
     return true;
