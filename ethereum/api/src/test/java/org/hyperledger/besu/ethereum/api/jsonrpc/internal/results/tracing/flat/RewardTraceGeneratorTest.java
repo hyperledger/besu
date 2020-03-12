@@ -128,7 +128,7 @@ public class RewardTraceGeneratorTest {
             .type("reward")
             .build();
 
-    List<Trace> traces = traceStream.collect(Collectors.toList());
+    final List<Trace> traces = traceStream.collect(Collectors.toList());
 
     // check block reward
     assertThat(traces.get(0)).usingRecursiveComparison().isEqualTo(blocReward);
@@ -186,7 +186,7 @@ public class RewardTraceGeneratorTest {
             .type("reward")
             .build();
 
-    List<Trace> traces = traceStream.collect(Collectors.toList());
+    final List<Trace> traces = traceStream.collect(Collectors.toList());
 
     // check block reward
     assertThat(traces.get(0)).usingRecursiveComparison().isEqualTo(blocReward);
