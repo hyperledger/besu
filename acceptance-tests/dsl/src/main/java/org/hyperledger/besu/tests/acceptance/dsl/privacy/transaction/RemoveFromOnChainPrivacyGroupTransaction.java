@@ -29,9 +29,9 @@ public class RemoveFromOnChainPrivacyGroupTransaction implements Transaction<Str
   private final String toRemove;
 
   public RemoveFromOnChainPrivacyGroupTransaction(
-      final String privacyGroupId, final PrivacyNode remove, final PrivacyNode toRemove) {
+      final String privacyGroupId, final PrivacyNode remover, final PrivacyNode toRemove) {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
-    this.remover = remove;
+    this.remover = remover;
     this.toRemove = toRemove.getOrion().getDefaultPublicKey();
   }
 
