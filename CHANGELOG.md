@@ -2,12 +2,13 @@
 
 ## 1.4.1
 - Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
+- Added new `trace_transaction` JSON RPC API [\#441](https://github.com/hyperledger/besu/pull/441)
 
 ### Bug Fixes
 
 - [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
 - Specifying RPC credentials file should not force RPC Authentication to be enabled [\#454](https://github.com/hyperledger/besu/pull/454) 
-
+- Fixed a bug to manage concurrent access to cache files [\#438](https://github.com/hyperledger/besu/pull/438). 
 
 ## 1.4.0
 
