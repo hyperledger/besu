@@ -5,6 +5,7 @@
 - Added new `trace_transaction` JSON RPC API [\#441](https://github.com/hyperledger/besu/pull/441)
 - Added database migration acceptance tests [\#430](https://github.com/hyperledger/besu/pull/430) .
 - Removed -X unstable prefix for pruning options (`--pruning-blocks-retained`, `--pruning-block-confirmations`) [\#440](https://github.com/hyperledger/besu/pull/440).
+- Implemented [ECIP-1088](https://ecips.ethereumclassic.org/ECIPs/ecip-1088): Phoenix EVM and Protocol upgrades. [\#434](https://github.com/hyperledger/besu/pull/434)
 
 ### Bug Fixes
 
