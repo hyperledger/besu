@@ -47,8 +47,8 @@ public class PrivateTransactionDataFixture {
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 
-  public static final Bytes VALID_BASE64_ENCLAVE_KEY =
-      Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+  public static final Bytes32 VALID_BASE64_ENCLAVE_KEY =
+      Bytes32.wrap(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
 
   public static final Bytes VALID_CONTRACT_DEPLOYMENT_PAYLOAD =
       Bytes.fromHexString(
@@ -131,6 +131,24 @@ public class PrivateTransactionDataFixture {
         new VersionedPrivateTransaction(privateTransaction, Bytes32.ZERO);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     versionedPrivateTransaction.writeTo(rlpOutput);
+    return new ReceiveResponse(
+        rlpOutput.encoded().toBase64String().getBytes(UTF_8),
+        privateTransaction.getPrivacyGroupId().isPresent()
+            ? privateTransaction.getPrivacyGroupId().get().toBase64String()
+            : "",
+        null);
+  }
+
+  public static ReceiveResponse generateAddToGroupReceiveResponse(
+      final PrivateTransaction privateTransaction, final Transaction markerTransaction) {
+    final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
+        generateAddBlobResponse(privateTransaction, markerTransaction);
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    privateTransactionWithMetadataList.stream()
+        .forEach(
+            privateTransactionWithMetadata -> privateTransactionWithMetadata.writeTo(rlpOutput));
+    rlpOutput.endList();
     return new ReceiveResponse(
         rlpOutput.encoded().toBase64String().getBytes(UTF_8),
         privateTransaction.getPrivacyGroupId().isPresent()

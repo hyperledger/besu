@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -165,8 +166,16 @@ public class MultiTenancyPrivacyController implements PrivacyController {
 
   @Override
   public List<PrivacyGroup> findOnChainPrivacyGroup(
-      final List<String> asList, final String enclaveKey) {
-    return privacyController.findOnChainPrivacyGroup(asList, enclaveKey);
+      final List<String> addresses, final String enclavePublicKey) {
+    if (!addresses.contains(enclavePublicKey)) {
+      throw new MultiTenancyValidationException(
+          "Privacy group addresses must contain the enclave public key");
+    }
+    List<PrivacyGroup> resultantGroups =
+        privacyController.findOnChainPrivacyGroup(addresses, enclavePublicKey);
+    return resultantGroups.stream()
+        .filter(g -> g.getMembers().contains(enclavePublicKey))
+        .collect(Collectors.toList());
   }
 
   @Override
