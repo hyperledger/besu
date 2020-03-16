@@ -44,6 +44,8 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
       "0x0b0235be035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a";
   private static final String RAW_ADD_PARTICIPANT =
       "0xf744b089035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000012a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
+  private static final String RAW_REMOVE_PARTICIPANT =
+      "0x61544c91035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a2a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
   private static final String RAW_LOCK = "0xf83d08ba";
   private static final String RAW_UNLOCK = "0xa69df4b5";
   private static final String RAW_CAN_EXECUTE = "0x78b90337";
@@ -73,6 +75,12 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
                 .addParticipants(
                     firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
                 .encodeFunctionCall());
+    // 0xf744b089
+    assertThat(RAW_REMOVE_PARTICIPANT)
+        .isEqualTo(
+            privacyGroup
+                .removeParticipant(firstParticipant.raw(), secondParticipant.raw())
+                .encodeFunctionCall());
     assertThat(RAW_LOCK).isEqualTo(privacyGroup.lock().encodeFunctionCall());
     assertThat(RAW_UNLOCK).isEqualTo(privacyGroup.unlock().encodeFunctionCall());
     assertThat(RAW_CAN_EXECUTE).isEqualTo(privacyGroup.canExecute().encodeFunctionCall());
@@ -88,6 +96,22 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
     assertThat(participants.size()).isEqualTo(2);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
+  }
+
+  @Test
+  public void canRemoveParticipant() throws Exception {
+    privacyGroup
+        .addParticipants(firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
+        .send();
+    final List<byte[]> participants = privacyGroup.getParticipants(firstParticipant.raw()).send();
+    assertThat(participants.size()).isEqualTo(2);
+    assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
+    assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
+    privacyGroup.removeParticipant(firstParticipant.raw(), secondParticipant.raw()).send();
+    final List<byte[]> participantsAfterRemove =
+        privacyGroup.getParticipants(firstParticipant.raw()).send();
+    assertThat(participantsAfterRemove.size()).isEqualTo(1);
+    assertThat(firstParticipant.raw()).isEqualTo(participantsAfterRemove.get(0));
   }
 
   @Test(expected = TransactionException.class)

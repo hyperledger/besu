@@ -115,7 +115,8 @@ task generateTestBlockchain() {
         "blocks",
         "import",
         "--format=JSON",
-        "--from=$srcFiles/blocks.json"
+        "--from=$srcFiles/blocks.json",
+        "--start-time=1438269971"
       ]
     }
     javaexec {
@@ -134,5 +135,4 @@ task generateTestBlockchain() {
     }
   }
 }
-// TODO must be reactivated when we can generate the block.bin file during build
-//test.dependsOn(generateTestBlockchain)
+test.dependsOn(generateTestBlockchain)

@@ -15,14 +15,17 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_ON_CHAIN_PRIVACY_GROUP_ERROR;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Arrays;
@@ -56,10 +59,21 @@ public class PrivxFindOnChainPrivacyGroup implements JsonRpcMethod {
 
     LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
 
-    final List<PrivacyGroup> response =
-        privacyController.findOnChainPrivacyGroup(
-            Arrays.asList(addresses),
-            enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+    final List<PrivacyGroup> response;
+    try {
+      response =
+          privacyController.findOnChainPrivacyGroup(
+              Arrays.asList(addresses),
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+    } catch (final MultiTenancyValidationException e) {
+      LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), FIND_ON_CHAIN_PRIVACY_GROUP_ERROR);
+    } catch (final Exception e) {
+      LOG.error("Failed to fetch on chain privacy group", e);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), FIND_ON_CHAIN_PRIVACY_GROUP_ERROR);
+    }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }

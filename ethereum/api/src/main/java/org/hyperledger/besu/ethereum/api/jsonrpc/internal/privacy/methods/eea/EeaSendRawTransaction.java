@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConve
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ONCHAIN_PRIVACY_GROUP_NOT_ENABLED;
 
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -51,14 +53,21 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   private final TransactionPool transactionPool;
   private final PrivacyController privacyController;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  /*
+   Temporarily adding this flag to this method to avoid being able to use offchain and onchain
+   privacy groups at the same time. Later on this check will be done in a better place.
+  */
+  private final boolean isOnchainPrivacyGroupEnabled;
 
   public EeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final EnclavePublicKeyProvider enclavePublicKeyProvider,
+      final boolean isOnchainPrivacyGroupsEnabled) {
     this.transactionPool = transactionPool;
     this.privacyController = privacyController;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupsEnabled;
   }
 
   @Override
@@ -74,10 +83,6 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     try {
       final PrivateTransaction privateTransaction =
           PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
-
-      final Optional<String> addPayloadEnclaveKey =
-          privacyController.buildAndSendAddPayload(
-              privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
 
       final String enclavePublicKey =
           enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
@@ -105,16 +110,34 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
             || !privacyGroup
                 .getMembers()
                 .contains(enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()))) {
+
+          if (!isOnchainPrivacyGroupEnabled) {
+            return new JsonRpcErrorResponse(id, ONCHAIN_PRIVACY_GROUP_NOT_ENABLED);
+          }
+
+          final Optional<String> addPayloadEnclaveKey =
+              privacyController.buildAndSendAddPayload(
+                  privateTransaction,
+                  enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+
           privacyMarkerTransaction =
               privacyController.createPrivacyMarkerTransaction(
                   buildCompoundKey(enclaveKey, addPayloadEnclaveKey),
                   privateTransaction,
                   Address.ONCHAIN_PRIVACY);
         } else {
+          if (isOnchainPrivacyGroupEnabled) {
+            return new JsonRpcErrorResponse(id, OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED);
+          }
+
           privacyMarkerTransaction =
               privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
         }
       } else {
+        if (isOnchainPrivacyGroupEnabled) {
+          return new JsonRpcErrorResponse(id, OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED);
+        }
+
         privacyMarkerTransaction =
             privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
       }

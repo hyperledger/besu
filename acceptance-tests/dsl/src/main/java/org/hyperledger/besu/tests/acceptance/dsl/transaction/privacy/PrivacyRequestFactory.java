@@ -152,6 +152,45 @@ public class PrivacyRequestFactory {
         .getTransactionHash();
   }
 
+  public String privxRemoveFromPrivacyGroup(
+      final Base64String privacyGroupId, final PrivacyNode remover, final String toRemove)
+      throws IOException, TransactionException {
+
+    final BigInteger nonce =
+        besuClient
+            .privGetTransactionCount(remover.getAddress().toHexString(), privacyGroupId)
+            .send()
+            .getTransactionCount();
+
+    final Bytes payload =
+        encodeRemoveFromGroupFunctionCall(
+            Bytes.fromBase64String(remover.getEnclaveKey()), Bytes.fromBase64String(toRemove));
+
+    final RawPrivateTransaction privateTransaction =
+        RawPrivateTransaction.createTransaction(
+            nonce,
+            BigInteger.valueOf(1000),
+            BigInteger.valueOf(3000000),
+            Address.PRIVACY_PROXY.toHexString(),
+            payload.toHexString(),
+            Base64String.wrap(remover.getEnclaveKey()),
+            privacyGroupId,
+            org.web3j.utils.Restriction.RESTRICTED);
+
+    return besuClient
+        .eeaSendRawTransaction(
+            Numeric.toHexString(
+                PrivateTransactionEncoder.signMessage(
+                    privateTransaction, Credentials.create(remover.getTransactionSigningKey()))))
+        .send()
+        .getTransactionHash();
+  }
+
+  private Bytes encodeRemoveFromGroupFunctionCall(final Bytes remover, final Bytes toRemove) {
+    return Bytes.concatenate(
+        OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE, remover, toRemove);
+  }
+
   public String privxLockPrivacyGroup(final PrivacyNode locker, final Base64String privacyGroupId)
       throws IOException, TransactionException {
     final BigInteger nonce =
