@@ -18,21 +18,60 @@ package org.hyperledger.besu.ethereum.api.tls;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 public class TlsConfiguration {
+
+  public static final List<String> DEFAULT_TLS_PROTOCOLS = Arrays.asList("TLSv1.2");
+  public static final List<String> JDK_ENABLED_CIPHERSUITES;
+  public static final List<String> JDK_ENABLED_PROTOCOLS;
+
   private final Path keyStorePath;
   private final Supplier<String> keyStorePasswordSupplier;
   private final Optional<TlsClientAuthConfiguration> clientAuthConfiguration;
+  private final Optional<Set<String>> secureTransportProtocols;
+  private final Optional<Set<String>> cipherSuites;
+
+  /* “Adapted from: eclipse-vertx/vert.x DefaultJDKCipherSuite.java” */
+  static {
+    ArrayList<String> protocols = new ArrayList<>();
+    ArrayList<String> ciphersuites = new ArrayList<>();
+    try {
+      SSLContext context = SSLContext.getInstance("TLS");
+      context.init(null, null, null);
+      SSLEngine engine = context.createSSLEngine();
+      Collections.addAll(ciphersuites, engine.getEnabledCipherSuites());
+      Collections.addAll(protocols, engine.getEnabledProtocols());
+    } catch (Throwable e) {
+      ciphersuites = null;
+      protocols = null;
+    }
+
+    JDK_ENABLED_CIPHERSUITES =
+        ciphersuites != null ? Collections.unmodifiableList(ciphersuites) : null;
+    JDK_ENABLED_PROTOCOLS = protocols != null ? Collections.unmodifiableList(protocols) : null;
+  }
 
   private TlsConfiguration(
       final Path keyStorePath,
       final Supplier<String> keyStorePasswordSupplier,
-      final Optional<TlsClientAuthConfiguration> clientAuthConfiguration) {
+      final Optional<TlsClientAuthConfiguration> clientAuthConfiguration,
+      final Optional<Set<String>> secureTransportProtocols,
+      final Optional<Set<String>> cipherSuites) {
     this.keyStorePath = keyStorePath;
     this.keyStorePasswordSupplier = keyStorePasswordSupplier;
     this.clientAuthConfiguration = clientAuthConfiguration;
+    this.secureTransportProtocols = secureTransportProtocols;
+    this.cipherSuites = cipherSuites;
   }
 
   public Path getKeyStorePath() {
@@ -47,10 +86,20 @@ public class TlsConfiguration {
     return clientAuthConfiguration;
   }
 
+  public Optional<Set<String>> getSecureTransportProtocols() {
+    return secureTransportProtocols;
+  }
+
+  public Optional<Set<String>> getCipherSuites() {
+    return cipherSuites;
+  }
+
   public static final class Builder {
     private Path keyStorePath;
     private Supplier<String> keyStorePasswordSupplier;
     private TlsClientAuthConfiguration clientAuthConfiguration;
+    private Set<String> secureTransportProtocols;
+    private Set<String> cipherSuites;
 
     private Builder() {}
 
@@ -74,11 +123,25 @@ public class TlsConfiguration {
       return this;
     }
 
+    public Builder withSecureTransportProtocols(final List<String> secureTransportProtocols) {
+      this.secureTransportProtocols = new HashSet<String>(secureTransportProtocols);
+      return this;
+    }
+
+    public Builder withCipherSuites(final List<String> cipherSuites) {
+      this.cipherSuites = new HashSet<String>(cipherSuites);
+      return this;
+    }
+
     public TlsConfiguration build() {
       requireNonNull(keyStorePath, "Key Store Path must not be null");
       requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
       return new TlsConfiguration(
-          keyStorePath, keyStorePasswordSupplier, Optional.ofNullable(clientAuthConfiguration));
+          keyStorePath,
+          keyStorePasswordSupplier,
+          Optional.ofNullable(clientAuthConfiguration),
+          Optional.ofNullable(secureTransportProtocols),
+          Optional.ofNullable(cipherSuites));
     }
   }
 }
