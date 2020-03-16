@@ -640,6 +640,42 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRpcHttpTlsCAClientsEnabled = false;
 
   @Option(
+      names = {"--rpc-http-tls-protocols"},
+      description = "Comma separated list of TLS protocols to support (default: TLSv1.2)",
+      split = ",",
+      arity = "1..*")
+  void setRpcHttpTlsProtocols(final List<String> values) {
+    try {
+      rpcHttpTlsProtocols =
+          values.stream().filter(value -> !value.isEmpty()).collect(Collectors.toList());
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandLine,
+          "Invalid protocols supplied to '--rpc-http-tls-protocols'. " + e.getMessage());
+    }
+  }
+
+  private List<String> rpcHttpTlsProtocols = TlsConfiguration.DEFAULT_TLS_PROTOCOLS;
+
+  @Option(
+      names = {"--rpc-http-tls-ciphersuites"},
+      description = "Comma separated list of TLS ciphersuites to support",
+      split = ",",
+      arity = "1..*")
+  void setRpcHttpTlsCiphersuites(final List<String> values) {
+    try {
+      rpcHttpTlsCiphersuites =
+          values.stream().filter(value -> !value.isEmpty()).collect(Collectors.toList());
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandLine,
+          "Invalid ciphersuites supplied to '--rpc-http-tls-ciphersuites'. " + e.getMessage());
+    }
+  }
+
+  private List<String> rpcHttpTlsCiphersuites = new ArrayList<>();
+
+  @Option(
       names = {"--rpc-ws-enabled"},
       description = "Set to start the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcWsEnabled = false;
@@ -1928,7 +1964,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
             "--rpc-http-tls-ca-clients-enabled",
-            "--rpc-http-authentication-jwt-algorithm"));
+            "--rpc-http-authentication-jwt-algorithm",
+            "--rpc-http-tls-protocols",
+            "--rpc-http-tls-ciphersuites"));
   }
 
   private void checkRpcTlsOptionsDependencies() {
@@ -1942,7 +1980,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-keystore-password-file",
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
-            "--rpc-http-tls-ca-clients-enabled"));
+            "--rpc-http-tls-ca-clients-enabled",
+            "--rpc-http-tls-protocols",
+            "--rpc-http-tls-ciphersuites"));
   }
 
   private void checkRpcTlsClientAuthOptionsDependencies() {
@@ -1990,12 +2030,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
     }
 
+    rpcHttpTlsProtocols.retainAll(TlsConfiguration.JDK_ENABLED_PROTOCOLS);
+    if (rpcHttpTlsProtocols.isEmpty()) {
+      throw new ParameterException(commandLine, "No valid TLS protocols specified");
+    }
+
+    for (String ciphersuite : rpcHttpTlsCiphersuites) {
+      if (!TlsConfiguration.JDK_ENABLED_CIPHERSUITES.contains(ciphersuite)) {
+        throw new ParameterException(commandLine, "Invalid TLS ciphersuite specified " + ciphersuite);
+      }
+    }
+
+    rpcHttpTlsCiphersuites.retainAll(TlsConfiguration.JDK_ENABLED_CIPHERSUITES);
+
     return Optional.of(
         TlsConfiguration.Builder.aTlsConfiguration()
             .withKeyStorePath(rpcHttpTlsKeyStoreFile)
             .withKeyStorePasswordSupplier(
                 new FileBasedPasswordProvider(rpcHttpTlsKeyStorePasswordFile))
             .withClientAuthConfiguration(rpcHttpTlsClientAuthConfiguration())
+            .withSecureTransportProtocols(rpcHttpTlsProtocols)
+            .withCipherSuites(rpcHttpTlsCiphersuites)
             .build());
   }
 
