@@ -45,7 +45,7 @@ public class AddToOnChainPrivacyGroupTransaction implements Transaction<String> 
   public String execute(final NodeRequests node) {
     try {
       return node.privacy().privxAddToPrivacyGroup(privacyGroupId, adder, addresses);
-    } catch (IOException | TransactionException e) {
+    } catch (final IOException | TransactionException e) {
       throw new RuntimeException(e);
     }
   }
