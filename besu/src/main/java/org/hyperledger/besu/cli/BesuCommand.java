@@ -1223,7 +1223,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   iStratumMiningEnabled,
                   stratumNetworkInterface,
                   stratumPort,
-                  stratumExtranonce))
+                  stratumExtranonce,
+                  Optional.empty()))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
