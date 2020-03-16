@@ -37,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
+import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
@@ -57,6 +58,8 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
       "0x000000000000000000000000f17f52151ebef6c7334fad080c5704d77216b7320000000000000000000000000000000000000000000000000000000000000539";
   private static final String EXPECTED_STORE_EVENT_TOPIC =
       "0xc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5";
+  private static final int VALUE_WHILE_BOB_REMOVED = 1337;
+  private static final int VALUE_WHILE_BOB_MEMBER = 17;
 
   @Before
   public void setUp() throws Exception {
@@ -81,7 +84,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void deployingMustGiveValidReceipt() {
     final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
-    final Contract eventEmitter = deployPrivateContract(privacyGroupId, alice);
+    final Contract eventEmitter = deployEventEmitterContract(privacyGroupId, alice);
     final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
 
     alice.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
@@ -91,7 +94,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void canAddParticipantToGroup() {
     final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
-    final Contract eventEmitter = deployPrivateContract(privacyGroupId, alice);
+    final Contract eventEmitter = deployEventEmitterContract(privacyGroupId, alice);
     final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
 
     charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(commitmentHash));
@@ -101,6 +104,96 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob, charlie);
 
     charlie.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
+  }
+
+  @Test
+  public void aliceCanAddRemoveAddBob() {
+    final String privacyGroupId = createOnChainPrivacyGroup(alice);
+
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice);
+
+    alice.execute(privacyTransactions.privxLockPrivacyGroupAndCheck(privacyGroupId, alice));
+    alice.execute(privacyTransactions.addToPrivacyGroup(privacyGroupId, alice, bob));
+
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
+
+    final EventEmitter eventEmitter = deployEventEmitterContract(privacyGroupId, alice);
+
+    final PrivateTransactionReceipt receiptWhileBobMember =
+        setEventEmitterValue(privacyGroupId, eventEmitter, VALUE_WHILE_BOB_MEMBER);
+
+    checkEmitterValue(alice, privacyGroupId, eventEmitter, VALUE_WHILE_BOB_MEMBER);
+    checkEmitterValue(bob, privacyGroupId, eventEmitter, VALUE_WHILE_BOB_MEMBER);
+
+    alice.execute(privacyTransactions.removeFromPrivacyGroup(privacyGroupId, alice, bob));
+
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice);
+
+    final PrivateTransactionReceipt receiptWhileBobRemoved =
+        setEventEmitterValue(privacyGroupId, eventEmitter, VALUE_WHILE_BOB_REMOVED);
+    checkEmitterValue(alice, privacyGroupId, eventEmitter, VALUE_WHILE_BOB_REMOVED);
+    checkEmitterValue(
+        bob,
+        privacyGroupId,
+        eventEmitter,
+        VALUE_WHILE_BOB_MEMBER); // bob did not get the last transaction
+
+    alice.execute(privacyTransactions.privxLockPrivacyGroupAndCheck(privacyGroupId, alice));
+    alice.execute(privacyTransactions.addToPrivacyGroup(privacyGroupId, alice, bob));
+
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
+
+    checkEmitterValue(alice, privacyGroupId, eventEmitter, VALUE_WHILE_BOB_REMOVED);
+    checkEmitterValue(
+        bob,
+        privacyGroupId,
+        eventEmitter,
+        VALUE_WHILE_BOB_REMOVED); // bob rehydrated the transaction that updated the eventEmitter
+    // value
+
+    PrivateTransactionReceipt receipt =
+        bob.execute(
+            privacyTransactions.getPrivateTransactionReceipt(
+                receiptWhileBobRemoved.getcommitmentHash()));
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    receipt =
+        bob.execute(
+            privacyTransactions.getPrivateTransactionReceipt(
+                receiptWhileBobMember.getcommitmentHash()));
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+  }
+
+  PrivateTransactionReceipt setEventEmitterValue(
+      final String privacyGroupId, final EventEmitter eventEmitter, final int value) {
+    final String aliceStoreHash1 =
+        alice.execute(
+            privateContractTransactions.callOnChainPermissioningSmartContract(
+                eventEmitter.getContractAddress(),
+                eventEmitter.store(BigInteger.valueOf(value)).encodeFunctionCall(),
+                alice.getTransactionSigningKey(),
+                POW_CHAIN_ID,
+                alice.getEnclaveKey(),
+                privacyGroupId));
+
+    final PrivateTransactionReceipt receipt =
+        alice.execute(privacyTransactions.getPrivateTransactionReceipt(aliceStoreHash1));
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+    return receipt;
+  }
+
+  void checkEmitterValue(
+      final PrivacyNode node,
+      final String privacyGroupId,
+      final EventEmitter eventEmitter,
+      final int valueWhileBobMember) {
+    final EthCall response =
+        node.execute(
+            privacyTransactions.privCall(
+                privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()));
+
+    assertThat(new BigInteger(response.getValue().substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(valueWhileBobMember));
   }
 
   @Test
@@ -122,13 +215,13 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
         .verify(eventEmitter);
 
     final String aliceLockHash =
-        alice.execute(privacyTransactions.privxLockPrivacyGroup(privacyGroupId, alice));
+        alice.execute(privacyTransactions.privxLockPrivacyGroupAndCheck(privacyGroupId, alice));
 
     alice.execute(privacyTransactions.addToPrivacyGroup(privacyGroupId, alice, bob));
 
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
 
-    bob.execute(privacyTransactions.privxLockPrivacyGroup(privacyGroupId, bob));
+    bob.execute(privacyTransactions.privxLockPrivacyGroupAndCheck(privacyGroupId, bob));
 
     alice.execute(minerTransactions.minerStop());
 
@@ -266,7 +359,8 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
   }
 
-  private Contract deployPrivateContract(final String privacyGroupId, final PrivacyNode sender) {
+  private EventEmitter deployEventEmitterContract(
+      final String privacyGroupId, final PrivacyNode sender) {
     final EventEmitter eventEmitter =
         sender.execute(
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
@@ -303,7 +397,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivxCreatePrivacyGroupResponse createResponse = groupCreator.execute(createTx);
     final String privacyGroupId = createResponse.getPrivacyGroupId();
 
-    for (PrivacyNode member : members) {
+    for (final PrivacyNode member : members) {
       member.verify(onChainPrivacyGroupExists(privacyGroupId, members));
     }
 
@@ -311,7 +405,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivateTransactionReceipt expectedReceipt =
         buildExpectedAddMemberTransactionReceipt(privacyGroupId, groupCreator, members);
 
-    for (PrivacyNode member : members) {
+    for (final PrivacyNode member : members) {
       member.verify(
           privateTransactionVerifier.validPrivateTransactionReceipt(
               commitmentHash, expectedReceipt));
@@ -360,7 +454,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     // Length of the array (with padded zeros to the left)
     output.append(Quantity.longToPaddedHex(members.length, 32).substring(2));
     // Each member enclave key converted from Base64 to bytes
-    for (PrivacyNode member : members) {
+    for (final PrivacyNode member : members) {
       output.append(Bytes.fromBase64String(member.getEnclaveKey()).toUnprefixedHexString());
     }
 
@@ -389,7 +483,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
    */
   private void checkOnChainPrivacyGroupExists(
       final String privacyGroupId, final PrivacyNode... members) {
-    for (PrivacyNode member : members) {
+    for (final PrivacyNode member : members) {
       member.verify(onChainPrivacyGroupExists(privacyGroupId, members));
     }
   }
@@ -403,7 +497,8 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
    * @return the hash of the lock privacy group transaction
    */
   private String lockPrivacyGroup(final String privacyGroupId, final PrivacyNode member) {
-    return member.execute(privacyTransactions.privxLockPrivacyGroup(privacyGroupId, member));
+    return member.execute(
+        privacyTransactions.privxLockPrivacyGroupAndCheck(privacyGroupId, member));
   }
 
   private ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(

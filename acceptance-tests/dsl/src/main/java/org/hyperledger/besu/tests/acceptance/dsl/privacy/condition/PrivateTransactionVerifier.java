@@ -56,7 +56,7 @@ public class PrivateTransactionVerifier {
   public ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(
       final String privacyGroupId, final PrivacyNode... members) {
 
-    List<Base64String> membersEnclaveKeys =
+    final List<Base64String> membersEnclaveKeys =
         Arrays.stream(members)
             .map(PrivacyNode::getEnclaveKey)
             .map(Base64String::wrap)

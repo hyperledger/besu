@@ -20,24 +20,33 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyBlockProcessor implements BlockProcessor {
+
+  private static final Logger LOG = LogManager.getLogger();
+
   private final BlockProcessor blockProcessor;
   private final ProtocolSchedule<?> protocolSchedule;
   private final Enclave enclave;
@@ -69,11 +78,25 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    final PrivacyGroupHeadBlockMap preProcessPrivacyGroupHeadBlockMap =
+
+    maybeRehydrate(blockchain, blockHeader, transactions);
+
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         new PrivacyGroupHeadBlockMap(
             privateStateStorage
                 .getPrivacyGroupHeadBlockMap(blockHeader.getParentHash())
                 .orElse(PrivacyGroupHeadBlockMap.EMPTY));
+    privateStateStorage
+        .updater()
+        .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockMap)
+        .commit();
+    return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
+  }
+
+  void maybeRehydrate(
+      final Blockchain blockchain,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions) {
     transactions.stream()
         .filter(
             t ->
@@ -95,7 +118,17 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                             .getPrivateTransaction()
                             .getPrivacyGroupId()
                             .get());
-                if (!preProcessPrivacyGroupHeadBlockMap.containsKey(privacyGroupId)) {
+
+                final List<PrivateTransactionWithMetadata> actualList =
+                    createActualList(
+                        blockHeader, privateTransactionWithMetadataList, privacyGroupId);
+
+                if (actualList.size() > 0) {
+                  LOG.info(
+                      "Rehydrating privacy group {}, number of transactions to be rehydrated is {} out of a total number of {} transactions.",
+                      privacyGroupId.toString(),
+                      actualList.size(),
+                      privateTransactionWithMetadataList.size());
                   final PrivateStateRehydration privateStateRehydration =
                       new PrivateStateRehydration(
                           privateStateStorage,
@@ -103,23 +136,79 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                           protocolSchedule,
                           publicWorldStateArchive,
                           privateWorldStateArchive);
-                  privateStateRehydration.rehydrate(privateTransactionWithMetadataList);
+                  privateStateRehydration.rehydrate(actualList);
                   privateStateStorage.updater().putAddDataKey(privacyGroupId, addKey).commit();
                 }
               } catch (final EnclaveClientException e) {
-                // we were not being added
+                // we were not being added because we have not found the add blob
               }
             });
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-        new PrivacyGroupHeadBlockMap(
+  }
+
+  private List<PrivateTransactionWithMetadata> createActualList(
+      final BlockHeader blockHeader,
+      final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList,
+      final Bytes32 privacyGroupId) {
+    // if we are the member adding another member we do not have to rehydrate
+    // if we have been removed from the group at some point we only need to rehydrate from where we
+    // were removed
+    // if we are a new member we need to rehydrate the complete state
+
+    List<PrivateTransactionWithMetadata> actualList = privateTransactionWithMetadataList;
+
+    final Optional<PrivacyGroupHeadBlockMap> maybePrivacyGroupHeadBlockMap =
+        privateStateStorage.getPrivacyGroupHeadBlockMap(blockHeader.getParentHash());
+    if (maybePrivacyGroupHeadBlockMap.isPresent()) {
+      final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap = maybePrivacyGroupHeadBlockMap.get();
+      final Hash lastBlockWithTx = privacyGroupHeadBlockMap.get(privacyGroupId);
+      if (lastBlockWithTx != null) {
+        // we are or have been a member of the privacy group
+        final PrivateBlockMetadata nodeLatestBlockMetadata =
             privateStateStorage
-                .getPrivacyGroupHeadBlockMap(blockHeader.getParentHash())
-                .orElse(PrivacyGroupHeadBlockMap.EMPTY));
-    privateStateStorage
-        .updater()
-        .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockMap)
-        .commit();
-    return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
+                .getPrivateBlockMetadata(lastBlockWithTx, privacyGroupId)
+                .orElseThrow();
+        final List<PrivateTransactionMetadata> nodeLatestPrivateTxMetadataList =
+            nodeLatestBlockMetadata.getPrivateTransactionMetadataList();
+        final Hash nodeLatestStateRoot =
+            nodeLatestPrivateTxMetadataList
+                .get(nodeLatestPrivateTxMetadataList.size() - 1)
+                .getStateRoot();
+        final Hash latestStateRootFromRehydrationList =
+            privateTransactionWithMetadataList
+                .get(privateTransactionWithMetadataList.size() - 1)
+                .getPrivateTransactionMetadata()
+                .getStateRoot();
+        if (nodeLatestStateRoot.equals(latestStateRootFromRehydrationList)) {
+          // we are already on the latest state root, which means that we are the member adding a
+          // new member
+          actualList = Collections.emptyList();
+        } else {
+          // we are being added, but do not have to rehydrate all private transactions
+          final Hash nodeLatestPrivacyMarkerTransactionHash =
+              nodeLatestPrivateTxMetadataList
+                  .get(nodeLatestPrivateTxMetadataList.size() - 1)
+                  .getPrivacyMarkerTransactionHash();
+          for (int i = 0; i < privateTransactionWithMetadataList.size(); i++) {
+            if (!privateTransactionWithMetadataList
+                .get(i)
+                .getPrivateTransactionMetadata()
+                .getPrivacyMarkerTransactionHash()
+                .equals(nodeLatestPrivacyMarkerTransactionHash)) {
+              continue;
+            }
+            if (privateTransactionWithMetadataList.size() - 1 == i) {
+              actualList = Collections.emptyList(); // nothing needs to be re-hydrated
+            } else {
+              actualList =
+                  privateTransactionWithMetadataList.subList(
+                      i + 1, privateTransactionWithMetadataList.size());
+            }
+            break;
+          }
+        }
+      }
+    }
+    return actualList;
   }
 
   private List<PrivateTransactionWithMetadata> deserializeAddToGroupPayload(
