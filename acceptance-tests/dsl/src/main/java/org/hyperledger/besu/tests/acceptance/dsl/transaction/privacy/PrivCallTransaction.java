@@ -55,7 +55,7 @@ public class PrivCallTransaction implements Transaction<EthCall> {
               .privCall(privacyGroupId, contract, encoded, blockNumberLatestPending)
               .send();
       assertThat(response).as("check response is not null").isNotNull();
-      assertThat(response.getResult()).as("check code in response isn't null").isNotNull();
+      assertThat(response.getResult()).as("check result in response isn't null").isNotNull();
       return response;
     } catch (final IOException e) {
       throw new RuntimeException(e);

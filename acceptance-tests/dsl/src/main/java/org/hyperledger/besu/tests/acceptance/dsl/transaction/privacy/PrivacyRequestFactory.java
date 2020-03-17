@@ -370,13 +370,13 @@ public class PrivacyRequestFactory {
 
   public Request<?, EthCall> privCall(
       final String privacyGroupId,
-      final Contract eventEmitter,
+      final Contract contract,
       final String encoded,
       final String blockNumberLatestPending) {
 
     final org.web3j.protocol.core.methods.request.Transaction transaction =
         org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(
-            null, eventEmitter.getContractAddress(), encoded);
+            null, contract.getContractAddress(), encoded);
 
     return new Request<>(
         "priv_call",

@@ -124,7 +124,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                         blockHeader, privateTransactionWithMetadataList, privacyGroupId);
 
                 if (actualList.size() > 0) {
-                  LOG.info(
+                  LOG.debug(
                       "Rehydrating privacy group {}, number of transactions to be rehydrated is {} out of a total number of {} transactions.",
                       privacyGroupId.toString(),
                       actualList.size(),
