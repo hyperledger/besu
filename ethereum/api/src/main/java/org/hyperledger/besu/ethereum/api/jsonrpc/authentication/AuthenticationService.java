@@ -93,9 +93,7 @@ public class AuthenticationService {
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
       final File authenticationPublicKeyFile) {
-    if (!authenticationEnabled
-        && authenticationCredentialsFile == null
-        && authenticationPublicKeyFile == null) {
+    if (!authenticationEnabled) {
       return Optional.empty();
     }
 
