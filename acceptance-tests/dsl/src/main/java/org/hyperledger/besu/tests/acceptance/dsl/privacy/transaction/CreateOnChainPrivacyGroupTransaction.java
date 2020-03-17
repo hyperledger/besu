@@ -42,7 +42,7 @@ public class CreateOnChainPrivacyGroupTransaction
   public PrivxCreatePrivacyGroupResponse execute(final NodeRequests node) {
     try {
       return node.privacy().privxCreatePrivacyGroup(creator, addresses);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }
