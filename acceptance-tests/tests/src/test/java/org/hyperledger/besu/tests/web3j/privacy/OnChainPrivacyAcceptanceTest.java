@@ -266,6 +266,37 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
   }
 
+  @Test
+  public void addMembersToTwoGroupsInTheSameBlock() throws InterruptedException {
+    final String privacyGroupId1 = createOnChainPrivacyGroup(alice);
+    final String privacyGroupId2 = createOnChainPrivacyGroup(bob);
+    checkOnChainPrivacyGroupExists(privacyGroupId1, alice);
+    checkOnChainPrivacyGroupExists(privacyGroupId2, bob);
+
+    lockPrivacyGroup(privacyGroupId1, alice);
+    lockPrivacyGroup(privacyGroupId2, bob);
+
+    final BigInteger pendingTransactionFilterId =
+        alice.execute(ethTransactions.newPendingTransactionsFilter());
+
+    alice.execute(minerTransactions.minerStop());
+    alice.getBesu().verify(ethConditions.miningStatus(false));
+
+    final String aliceAddHash = addMembersToPrivacyGroup(privacyGroupId1, alice, charlie);
+    final String bobAddHash = addMembersToPrivacyGroup(privacyGroupId2, bob, alice);
+
+    alice
+        .getBesu()
+        .verify(
+            ethConditions.expectNewPendingTransactions(
+                pendingTransactionFilterId, Arrays.asList(aliceAddHash, bobAddHash)));
+
+    alice.execute(minerTransactions.minerStart());
+
+    checkOnChainPrivacyGroupExists(privacyGroupId1, alice, charlie);
+    checkOnChainPrivacyGroupExists(privacyGroupId2, bob, alice);
+  }
+
   private Contract deployPrivateContract(final String privacyGroupId, final PrivacyNode sender) {
     final EventEmitter eventEmitter =
         sender.execute(
@@ -303,7 +334,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivxCreatePrivacyGroupResponse createResponse = groupCreator.execute(createTx);
     final String privacyGroupId = createResponse.getPrivacyGroupId();
 
-    for (PrivacyNode member : members) {
+    for (final PrivacyNode member : members) {
       member.verify(onChainPrivacyGroupExists(privacyGroupId, members));
     }
 
@@ -311,7 +342,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivateTransactionReceipt expectedReceipt =
         buildExpectedAddMemberTransactionReceipt(privacyGroupId, groupCreator, members);
 
-    for (PrivacyNode member : members) {
+    for (final PrivacyNode member : members) {
       member.verify(
           privateTransactionVerifier.validPrivateTransactionReceipt(
               commitmentHash, expectedReceipt));
