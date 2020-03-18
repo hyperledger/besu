@@ -17,9 +17,12 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivCallTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetCodeTransaction;
 
 import java.util.List;
+
+import org.web3j.tx.Contract;
 
 public class PrivacyTransactions {
 
@@ -43,7 +46,7 @@ public class PrivacyTransactions {
     return new AddToOnChainPrivacyGroupTransaction(privacyGroupId, adder, nodes);
   }
 
-  public LockOnChainPrivacyGroupTransaction privxLockPrivacyGroup(
+  public LockOnChainPrivacyGroupTransaction privxLockPrivacyGroupAndCheck(
       final String privacyGroupId, final PrivacyNode locker) {
     return new LockOnChainPrivacyGroupTransaction(privacyGroupId, locker);
   }
@@ -59,6 +62,11 @@ public class PrivacyTransactions {
   public PrivDistributeTransactionTransaction privDistributeTransaction(
       final String signedPrivateTransaction) {
     return new PrivDistributeTransactionTransaction(signedPrivateTransaction);
+  }
+
+  public PrivCallTransaction privCall(
+      final String privacyGroupId, final Contract contract, final String encoded) {
+    return new PrivCallTransaction(privacyGroupId, contract, encoded);
   }
 
   public PrivGetCodeTransaction privGetCode(
