@@ -150,7 +150,8 @@ public class BlockHeaderBuilder {
         gasLimit,
         gasUsed,
         timestamp,
-        extraData);
+        extraData,
+        baseFee);
   }
 
   private void validateBlockHeader() {

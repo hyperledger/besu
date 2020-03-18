@@ -53,6 +53,7 @@ public class BlockHeader extends SealableBlockHeader
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
+      final long baseFee,
       final Hash mixHash,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions) {
@@ -69,7 +70,8 @@ public class BlockHeader extends SealableBlockHeader
         gasLimit,
         gasUsed,
         timestamp,
-        extraData);
+        extraData,
+        baseFee);
     this.mixHash = mixHash;
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
@@ -164,6 +166,7 @@ public class BlockHeader extends SealableBlockHeader
             input.readLongScalar(),
             input.readLongScalar(),
             input.readBytes(),
+            input.readLongScalar(),
             Hash.wrap(input.readBytes32()),
             input.readLong(),
             blockHeaderFunctions);
@@ -206,6 +209,7 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("gasUsed=").append(gasUsed).append(", ");
     sb.append("timestamp=").append(timestamp).append(", ");
     sb.append("extraData=").append(extraData).append(", ");
+    sb.append("baseFee=").append(baseFee).append(", ");
     sb.append("mixHash=").append(mixHash).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
@@ -229,6 +233,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getGasUsed(),
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
+        pluginBlockHeader.getBaseFee(),
         Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);

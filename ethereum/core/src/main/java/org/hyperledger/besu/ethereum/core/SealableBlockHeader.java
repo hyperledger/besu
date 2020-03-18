@@ -31,6 +31,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   protected final long gasUsed;
 
   protected final Bytes extraData;
+  protected final long baseFee;
 
   protected SealableBlockHeader(
       final Hash parentHash,
@@ -45,7 +46,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long gasLimit,
       final long gasUsed,
       final long timestamp,
-      final Bytes extraData) {
+      final Bytes extraData,
+      final long baseFee) {
     super(parentHash, coinbase, difficulty, number, gasLimit, timestamp);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
@@ -54,6 +56,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
+    this.baseFee = baseFee;
   }
 
   /**
@@ -117,5 +120,14 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Bytes getExtraData() {
     return extraData;
+  }
+
+  /**
+   * Returns the basefee of the block.
+   *
+   * @return the raw bytes of the extra data field
+   */
+  public long getBaseFee() {
+    return baseFee;
   }
 }
