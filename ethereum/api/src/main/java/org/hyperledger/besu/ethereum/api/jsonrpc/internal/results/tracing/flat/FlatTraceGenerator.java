@@ -167,7 +167,7 @@ public class FlatTraceGenerator {
     return generateFromTransactionTrace(
         transactionTrace,
         traceCounter,
-        builder -> addContractCreationMethodToFlatTrace(transactionTrace, builder));
+        builder -> addContractCreationMethodToTrace(transactionTrace, builder));
   }
 
   /**
@@ -432,10 +432,10 @@ public class FlatTraceGenerator {
             block.getBody().getTransactions().indexOf(transactionTrace.getTransaction()))
         .transactionHash(transactionTrace.getTransaction().getHash().toHexString());
 
-    addContractCreationMethodToFlatTrace(transactionTrace, builder);
+    addContractCreationMethodToTrace(transactionTrace, builder);
   }
 
-  private static void addContractCreationMethodToFlatTrace(
+  private static void addContractCreationMethodToTrace(
       final TransactionTrace transactionTrace, final FlatTrace.Builder builder) {
 
     // add creationMethod for create action
