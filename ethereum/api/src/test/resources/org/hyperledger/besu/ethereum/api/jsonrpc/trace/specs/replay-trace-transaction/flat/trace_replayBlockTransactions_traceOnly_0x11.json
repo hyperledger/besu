@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "trace_replayBlockTransactions",
     "params": [
-      "0x3",
+      "0x11",
       [
         "trace"
       ]
@@ -14,28 +14,28 @@
     "jsonrpc": "2.0",
     "result": [
       {
-        "output": "0x600035ff",
+        "output": "0x",
         "stateDiff": null,
         "trace": [
           {
             "action": {
-              "creationMethod": "create",
-              "from": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
-              "gas": "0xff300e",
-              "init": "0x6004600c60003960046000f3600035ff",
+              "callType": "call",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0xffadea",
+              "input": "0x",
+              "to": "0x00f0000000000000000000000000000000000000",
               "value": "0x0"
             },
             "result": {
-              "address": "0xf12b5dd4ead5f743c6baa640b0216200e89b60da",
-              "code": "0x600035ff",
-              "gasUsed": "0x338"
+              "gasUsed": "0xf",
+              "output": "0x"
             },
             "subtraces": 0,
             "traceAddress": [],
-            "type": "create"
+            "type": "call"
           }
         ],
-        "transactionHash": "0x8d5477f0aae852c3e9487b0f8e7b9ecf9ccdf23d7934d4b4b7eff40c271031e5",
+        "transactionHash": "0x93d974a14c784be231a7b580a6476a330e5d6f9ddfef70a6b5cacd9f91a1e495",
         "vmTrace": null
       }
     ],

@@ -164,7 +164,10 @@ public class FlatTraceGenerator {
    */
   public static Stream<Trace> generateFromTransactionTrace(
       final TransactionTrace transactionTrace, final AtomicInteger traceCounter) {
-    return generateFromTransactionTrace(transactionTrace, traceCounter, __ -> {});
+    return generateFromTransactionTrace(
+        transactionTrace,
+        traceCounter,
+        builder -> addContractCreationMethodToFlatTrace(transactionTrace, builder));
   }
 
   /**
@@ -428,21 +431,26 @@ public class FlatTraceGenerator {
         .transactionPosition(
             block.getBody().getTransactions().indexOf(transactionTrace.getTransaction()))
         .transactionHash(transactionTrace.getTransaction().getHash().toHexString());
-    // add creationMethod for create action
-    Optional.ofNullable(builder.getType())
-        .filter(type -> type.equals("create"))
-        .ifPresent(__ -> addContractCreationMethodToFlatTrace(transactionTrace, builder));
+
+    addContractCreationMethodToFlatTrace(transactionTrace, builder);
   }
 
   private static void addContractCreationMethodToFlatTrace(
       final TransactionTrace transactionTrace, final FlatTrace.Builder builder) {
-    final String creationMethod =
-        transactionTrace.getTraceFrames().stream()
-            .filter(frame -> "CREATE2".equals(frame.getOpcode()))
-            .findFirst()
-            .map(TraceFrame::getOpcode)
-            .orElse("CREATE")
-            .toLowerCase(Locale.US);
-    builder.getActionBuilder().creationMethod(creationMethod);
+
+    // add creationMethod for create action
+    Optional.ofNullable(builder.getType())
+        .filter(type -> type.equals("create"))
+        .ifPresent(
+            __ -> {
+              final String creationMethod =
+                  transactionTrace.getTraceFrames().stream()
+                      .filter(frame -> "CREATE2".equals(frame.getOpcode()))
+                      .findFirst()
+                      .map(TraceFrame::getOpcode)
+                      .orElse("CREATE")
+                      .toLowerCase(Locale.US);
+              builder.getActionBuilder().creationMethod(creationMethod);
+            });
   }
 }
