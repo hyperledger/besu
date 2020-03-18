@@ -23,12 +23,14 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
 public class BesuNodeConfiguration {
 
   private final String name;
+  private final Optional<Path> dataPath;
   private final MiningParameters miningParameters;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -47,8 +49,9 @@ public class BesuNodeConfiguration {
   private final List<String> staticNodes;
   private final Optional<PrivacyParameters> privacyParameters;
 
-  public BesuNodeConfiguration(
+  BesuNodeConfiguration(
       final String name,
+      final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
@@ -73,6 +76,7 @@ public class BesuNodeConfiguration {
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.keyFilePath = keyFilePath;
+    this.dataPath = dataPath;
     this.devMode = devMode;
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
@@ -112,6 +116,10 @@ public class BesuNodeConfiguration {
 
   public Optional<String> getKeyFilePath() {
     return keyFilePath;
+  }
+
+  public Optional<Path> getDataPath() {
+    return dataPath;
   }
 
   public boolean isDevMode() {

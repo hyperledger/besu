@@ -34,7 +34,8 @@ public class PrivateTransactionTestFixture {
   private long gasLimit = 5000;
 
   private Optional<Address> to = Optional.empty();
-  private Address sender = Address.fromHexString(String.format("%020x", 1));
+
+  private Address sender = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
 
   private Wei value = Wei.of(0);
 
@@ -70,7 +71,7 @@ public class PrivateTransactionTestFixture {
     chainId.ifPresent(builder::chainId);
 
     if (privacyGroupId.isPresent()) {
-      this.privacyGroupId(privacyGroupId.get());
+      privacyGroupId.ifPresent(builder::privacyGroupId);
     } else {
       privateFor.ifPresent(builder::privateFor);
     }

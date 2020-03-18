@@ -17,9 +17,6 @@ dependencyManagement {
   dependencies {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
     dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.10.1'
-
-    dependency 'com.github.docker-java:docker-java:3.0.14'
-
     dependency 'com.github.tomakehurst:wiremock-jre8:2.25.1'
 
     dependency 'com.google.auto.service:auto-service:1.0-rc6'
@@ -107,5 +104,9 @@ dependencyManagement {
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'
+    dependency 'javax.activation:activation:1.1.1'
+    dependency 'org.apache.commons:commons-compress:1.20'
+    dependency 'commons-io:commons-io:2.6'
+
   }
 }

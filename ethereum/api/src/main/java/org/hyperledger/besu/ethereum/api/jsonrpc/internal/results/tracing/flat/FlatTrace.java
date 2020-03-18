@@ -51,7 +51,7 @@ public class FlatTrace implements Trace {
   private final List<Integer> traceAddress;
   private final String type;
 
-  private FlatTrace(
+  protected FlatTrace(
       final Action.Builder actionBuilder,
       final Result.Builder resultBuilder,
       final int subtraces,
@@ -75,7 +75,7 @@ public class FlatTrace implements Trace {
         error);
   }
 
-  private FlatTrace(
+  protected FlatTrace(
       final Action action,
       final Result result,
       final int subtraces,
@@ -205,7 +205,7 @@ public class FlatTrace implements Trace {
     }
   }
 
-  public static final class Builder {
+  public static class Builder {
 
     private Action.Builder actionBuilder;
     private Result.Builder resultBuilder;
@@ -218,7 +218,7 @@ public class FlatTrace implements Trace {
     private Integer transactionPosition;
     private Optional<String> error = Optional.empty();
 
-    private Builder() {}
+    protected Builder() {}
 
     Builder resultBuilder(final Result.Builder resultBuilder) {
       this.resultBuilder = resultBuilder;
@@ -230,10 +230,6 @@ public class FlatTrace implements Trace {
       return this;
     }
 
-    public int getSubtraces() {
-      return subtraces;
-    }
-
     public Builder traceAddress(final List<Integer> traceAddress) {
       this.traceAddress = traceAddress;
       return this;
@@ -242,10 +238,6 @@ public class FlatTrace implements Trace {
     public Builder type(final String type) {
       this.type = type;
       return this;
-    }
-
-    public String getType() {
-      return type;
     }
 
     public Builder blockNumber(final Long blockNumber) {
@@ -271,6 +263,38 @@ public class FlatTrace implements Trace {
     public Builder error(final Optional<String> error) {
       this.error = error;
       return this;
+    }
+
+    public String getType() {
+      return type;
+    }
+
+    public int getSubtraces() {
+      return subtraces;
+    }
+
+    public List<Integer> getTraceAddress() {
+      return traceAddress;
+    }
+
+    public Long getBlockNumber() {
+      return blockNumber;
+    }
+
+    public String getBlockHash() {
+      return blockHash;
+    }
+
+    public String getTransactionHash() {
+      return transactionHash;
+    }
+
+    public Integer getTransactionPosition() {
+      return transactionPosition;
+    }
+
+    public Optional<String> getError() {
+      return error;
     }
 
     void incSubTraces() {

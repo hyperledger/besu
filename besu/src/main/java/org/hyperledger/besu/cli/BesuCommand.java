@@ -769,6 +769,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean migratePrivateDatabase = false;
 
   @Option(
+      names = {"--privacy-onchain-groups-enabled"},
+      description = "Enable onchain privacy groups (default: ${DEFAULT-VALUE})")
+  private final Boolean isOnchainPrivacyGroupEnabled = false;
+
+  @Option(
       names = {"--target-gas-limit"},
       description =
           "Sets target gas limit per block. If set each blocks gas limit will approach this setting over time if the current gas limit is different.")
@@ -1218,7 +1223,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   iStratumMiningEnabled,
                   stratumNetworkInterface,
                   stratumPort,
-                  stratumExtranonce))
+                  stratumExtranonce,
+                  Optional.empty()))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
@@ -1591,6 +1597,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
+      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile() != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {

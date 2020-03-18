@@ -109,4 +109,41 @@ public class PrivacyNodeFactory {
             new OrionKeyConfiguration(
                 privacyAccount.getEnclaveKeyPath(), privacyAccount.getEnclavePrivateKeyPath())));
   }
+
+  public PrivacyNode createOnChainPrivacyGroupEnabledMinerNode(
+      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      throws IOException {
+    return create(
+        new PrivacyNodeConfiguration(
+            privacyAddress,
+            true,
+            new BesuNodeConfigurationBuilder()
+                .name(name)
+                .miningEnabled()
+                .jsonRpcEnabled()
+                .webSocketEnabled()
+                .enablePrivateTransactions()
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
+                .build(),
+            new OrionKeyConfiguration(
+                privacyAccount.getEnclaveKeyPath(), privacyAccount.getEnclavePrivateKeyPath())));
+  }
+
+  public PrivacyNode createOnChainPrivacyGroupEnabledNode(
+      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      throws IOException {
+    return create(
+        new PrivacyNodeConfiguration(
+            privacyAddress,
+            true,
+            new BesuNodeConfigurationBuilder()
+                .name(name)
+                .jsonRpcEnabled()
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
+                .enablePrivateTransactions()
+                .webSocketEnabled()
+                .build(),
+            new OrionKeyConfiguration(
+                privacyAccount.getEnclaveKeyPath(), privacyAccount.getEnclavePrivateKeyPath())));
+  }
 }

@@ -46,6 +46,10 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    return mapOf(new PrivxFindOnChainPrivacyGroup(privacyController, enclavePublicKeyProvider));
+    if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+      return mapOf(new PrivxFindOnChainPrivacyGroup(privacyController, enclavePublicKeyProvider));
+    } else {
+      return Map.of();
+    }
   }
 }

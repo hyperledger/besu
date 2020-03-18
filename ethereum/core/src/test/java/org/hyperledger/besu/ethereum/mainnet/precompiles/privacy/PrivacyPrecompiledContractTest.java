@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -133,8 +133,7 @@ public class PrivacyPrecompiledContractTest {
     contract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
     BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    PrivateTransactionDataFixture.privateTransaction(PAYLOAD_TEST_PRIVACY_GROUP_ID)
-        .writeTo(bytesValueRLPOutput);
+    PrivateTransactionDataFixture.privateTransactionBesu().writeTo(bytesValueRLPOutput);
 
     final ReceiveResponse response =
         new ReceiveResponse(
