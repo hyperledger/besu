@@ -2,15 +2,15 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559FeeManager;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class EIP1559BlockHeaderValidationRule<C> implements AttachedBlockHeaderValidationRule<C> {
+public class EIP1559BlockHeaderGasPriceValidationRule<C> implements AttachedBlockHeaderValidationRule<C> {
   private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
-  private final EIP1559FeeManager eip1559 = new EIP1559FeeManager();
+  private final EIP1559Manager eip1559 = new EIP1559Manager();
 
   @Override
   public boolean validate(
