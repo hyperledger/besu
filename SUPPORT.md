@@ -2,10 +2,10 @@
 
 Welcome to the Besu repository! The following links are a set of guidelines for contributing to this repo and its packages. These are mostly guidelines, not rules. Use your best judgement, and feel free to propose changes to this document in a pull request. Contributions come in the form of code submissions, writing documentation, raising issues, helping others in chat, and any other actions that help develop Besu.
 
-### LF / Jira Accounts
+### LF/Github Accounts
 
-Having the following accounts is necessary for obtaining support for Besu.  
-* If you want to raise an issue, you can login to your [Atlassian account here](https://id.atlassian.com/).   
+Having Linux Foundation and Github accounts is necessary for obtaining support for Besu through the rocket chat, wiki and issue management.  
+* If you want to raise an issue, you can do so [on the github issue tab](https://github.com/hyperledger/besu/issues).   
 * Our Rocket Chat requires a [Linux Foundation (LF) account].
 * The Hyperlegder wiki also requires a [Linux Foundation (LF) account] in order to edit pages.
 
