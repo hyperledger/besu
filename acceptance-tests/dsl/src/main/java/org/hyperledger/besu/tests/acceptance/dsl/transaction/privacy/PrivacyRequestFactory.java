@@ -30,6 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroup
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -38,15 +39,18 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.abi.datatypes.Type;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
+import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
 import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.protocol.exceptions.TransactionException;
+import org.web3j.tx.Contract;
 import org.web3j.tx.response.PollingPrivateTransactionReceiptProcessor;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
@@ -362,6 +366,23 @@ public class PrivacyRequestFactory {
         List.of(privacyGroupId, contractAddress, blockParameter),
         web3jService,
         GetCodeResponse.class);
+  }
+
+  public Request<?, EthCall> privCall(
+      final String privacyGroupId,
+      final Contract contract,
+      final String encoded,
+      final String blockNumberLatestPending) {
+
+    final org.web3j.protocol.core.methods.request.Transaction transaction =
+        org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(
+            null, contract.getContractAddress(), encoded);
+
+    return new Request<>(
+        "priv_call",
+        Arrays.asList(privacyGroupId, transaction, blockNumberLatestPending),
+        web3jService,
+        EthCall.class);
   }
 
   public static class PrivxFindPrivacyGroupResponse extends Response<List<OnChainPrivacyGroup>> {

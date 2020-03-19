@@ -1,0 +1,125 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x10",
+      [
+        "stateDiff"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x1a055690da50fa528",
+                "to": "0x1a055690e940f9816"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xffffffffffffffffffffffffffffffffffa5f1f3d",
+                "to": "0xfffffffffffffffffffffffffffffffff0b5f2c4f"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0xf",
+                "to": "0x10"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [],
+        "transactionHash": "0x6aed559a5dcf73efa132d8182585c40fdc6ef3b99a7629d80ffd4a62cb3db622",
+        "vmTrace": null
+      },
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x1a055690e940f9816",
+                "to": "0x1a055690f830f8b04"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xfffffffffffffffffffffffffffffffff0b5f2c4f",
+                "to": "0xffffffffffffffffffffffffffffffffe1c5f3961"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0x10",
+                "to": "0x11"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [],
+        "transactionHash": "0xb39fa8a1cb1db4663dc3733bc014d524e90a862bf2607e028eeb3932d92574fe",
+        "vmTrace": null
+      },
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x1a055690f830f8b04",
+                "to": "0x1a0556910720f7df2"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xffffffffffffffffffffffffffffffffe1c5f3961",
+                "to": "0xffffffffffffffffffffffffffffffffd2d5f4673"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0x11",
+                "to": "0x12"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [],
+        "transactionHash": "0x11a725053a6ece79d8de11cb75dd1f09c40dcd109a1c63573e847ad4f456a296",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}
