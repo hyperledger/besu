@@ -44,6 +44,7 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
     return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
+        "trace/specs/trace-block",
         "trace/specs/trace-transaction",
         "trace/specs/replay-trace-transaction/flat",
         "trace/specs/replay-trace-transaction/vm-trace",

@@ -20,8 +20,24 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(NON_NULL)
+@JsonPropertyOrder({
+  "creationMethod",
+  "callType",
+  "from",
+  "gas",
+  "input",
+  "to",
+  "init",
+  "author",
+  "rewardType",
+  "value",
+  "address",
+  "balance",
+  "refundAddress",
+})
 public class Action {
 
   private final String creationMethod;
@@ -35,6 +51,8 @@ public class Action {
   private final String address;
   private final String balance;
   private final String refundAddress;
+  private final String author;
+  private final String rewardType;
 
   private Action(
       final String creationMethod,
@@ -47,7 +65,9 @@ public class Action {
       final String value,
       final String address,
       final String balance,
-      final String refundAddress) {
+      final String refundAddress,
+      final String author,
+      final String rewardType) {
     this.creationMethod = creationMethod;
     this.callType = callType;
     this.from = from;
@@ -59,6 +79,8 @@ public class Action {
     this.address = address;
     this.balance = balance;
     this.refundAddress = refundAddress;
+    this.author = author;
+    this.rewardType = rewardType;
   }
 
   public static Builder builder() {
@@ -109,6 +131,14 @@ public class Action {
     return refundAddress;
   }
 
+  public String getAuthor() {
+    return author;
+  }
+
+  public String getRewardType() {
+    return rewardType;
+  }
+
   public static final class Builder {
     private String creationMethod;
     private String callType;
@@ -121,6 +151,8 @@ public class Action {
     private String address;
     private String balance;
     private String refundAddress;
+    private String author;
+    private String rewardType;
 
     private Builder() {}
 
@@ -137,6 +169,8 @@ public class Action {
       builder.address = action.address;
       builder.refundAddress = action.refundAddress;
       builder.balance = action.balance;
+      builder.author = action.author;
+      builder.rewardType = action.rewardType;
       return builder;
     }
 
@@ -185,6 +219,16 @@ public class Action {
       return this;
     }
 
+    public Builder author(final String author) {
+      this.author = author;
+      return this;
+    }
+
+    public Builder rewardType(final String rewardType) {
+      this.rewardType = rewardType;
+      return this;
+    }
+
     public String getTo() {
       return to;
     }
@@ -230,7 +274,9 @@ public class Action {
           value,
           address,
           balance,
-          refundAddress);
+          refundAddress,
+          author,
+          rewardType);
     }
   }
 }
