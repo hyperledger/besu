@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.api.cache.TracingCacheManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
@@ -51,6 +52,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<StateDiffGenerator> stateDiffGenerator =
       Suppliers.memoize(StateDiffGenerator::new);
+  private final Optional<TracingCacheManager> tracingCacheManager =
+      TracingCacheManager.getInstance();
 
   public TraceReplayBlockTransactions(
       final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries queries) {
@@ -92,10 +95,10 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     }
     // TODO: generate options based on traceTypeParameter
     final TraceOptions traceOptions = TraceOptions.DEFAULT;
-
-    return blockTracerSupplier
-        .get()
-        .trace(block, new DebugOperationTracer(traceOptions))
+    return tracingCacheManager
+        .flatMap(
+            tracingCacheManager -> tracingCacheManager.blockTraceAt(block.getHeader().getNumber()))
+        .or(() -> blockTracerSupplier.get().trace(block, new DebugOperationTracer(traceOptions)))
         .map(BlockTrace::getTransactionTraces)
         .map((traces) -> generateTracesFromTransactionTrace(traces, traceTypeParameter))
         .orElse(null);

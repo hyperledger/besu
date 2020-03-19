@@ -67,10 +67,13 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.api.cache.TracingCacheManager;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
@@ -1055,13 +1058,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private BesuCommand startPlugins() {
-    besuPluginContext.addService(
-        BesuEvents.class,
+    final BesuEventsImpl besuEvents =
         new BesuEventsImpl(
             besuController.getProtocolContext().getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
-            besuController.getSyncState()));
+            besuController.getSyncState());
+    final TracingCacheManager tracingCacheManager =
+        new TracingCacheManager(
+            new BlockTracer(
+                new BlockReplay(
+                    besuController.getProtocolSchedule(),
+                    besuController.getProtocolContext().getBlockchain(),
+                    besuController.getProtocolContext().getWorldStateArchive())));
+    TracingCacheManager.setInstance(Optional.of(tracingCacheManager));
+    besuEvents.addBlockPropagatedListener(tracingCacheManager::onNewBlock);
+    besuPluginContext.addService(BesuEvents.class, besuEvents);
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
