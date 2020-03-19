@@ -442,15 +442,15 @@ public class FlatTraceGenerator {
     Optional.ofNullable(builder.getType())
         .filter(type -> type.equals("create"))
         .ifPresent(
-            __ -> {
-              final String creationMethod =
-                  transactionTrace.getTraceFrames().stream()
-                      .filter(frame -> "CREATE2".equals(frame.getOpcode()))
-                      .findFirst()
-                      .map(TraceFrame::getOpcode)
-                      .orElse("CREATE")
-                      .toLowerCase(Locale.US);
-              builder.getActionBuilder().creationMethod(creationMethod);
-            });
+            __ ->
+                builder
+                    .getActionBuilder()
+                    .creationMethod(
+                        transactionTrace.getTraceFrames().stream()
+                            .filter(frame -> "CREATE2".equals(frame.getOpcode()))
+                            .findFirst()
+                            .map(TraceFrame::getOpcode)
+                            .orElse("CREATE")
+                            .toLowerCase(Locale.US)));
   }
 }
