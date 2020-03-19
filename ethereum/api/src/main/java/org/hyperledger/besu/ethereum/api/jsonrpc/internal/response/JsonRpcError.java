@@ -115,7 +115,6 @@ public enum JsonRpcError {
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in private transaction yet."),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
-  PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD(-50100, "priv_call is only supported on chain head."),
   PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Privacy group does not exist."),
   ONCHAIN_PRIVACY_GROUP_NOT_ENABLED(-50100, "Onchain privacy groups not enabled."),
   OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED(
