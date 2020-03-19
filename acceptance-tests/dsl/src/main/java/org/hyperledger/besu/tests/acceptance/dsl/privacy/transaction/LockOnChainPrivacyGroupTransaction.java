@@ -36,7 +36,7 @@ public class LockOnChainPrivacyGroupTransaction implements Transaction<String> {
   public String execute(final NodeRequests node) {
     try {
       return node.privacy().privxLockPrivacyGroup(locker, privacyGroupId);
-    } catch (IOException | TransactionException e) {
+    } catch (final IOException | TransactionException e) {
       throw new RuntimeException(e);
     }
   }
