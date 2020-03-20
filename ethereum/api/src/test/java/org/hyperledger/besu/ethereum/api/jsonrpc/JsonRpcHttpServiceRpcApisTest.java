@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.BesuContext;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -212,8 +213,13 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    tracingCacheManager,
-                    besuContext));
+                    false,
+                    new BesuContext() {
+                      @Override
+                      public <T> Optional<T> getService(Class<T> serviceType) {
+                        return Optional.empty();
+                      }
+                    }));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -307,8 +313,13 @@ public class JsonRpcHttpServiceRpcApisTest {
                     metricsConfiguration,
                     natService,
                     new HashMap<>(),
-                    tracingCacheManager,
-                    besuContext));
+                    false,
+                    new BesuContext() {
+                      @Override
+                      public <T> Optional<T> getService(Class<T> serviceType) {
+                        return Optional.empty();
+                      }
+                    }));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
