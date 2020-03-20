@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.BesuContext;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -137,8 +138,13 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     Collections.emptyMap(),
-                    tracingCacheManager,
-                    besuContext));
+                    false,
+                    new BesuContext() {
+                      @Override
+                      public <T> Optional<T> getService(Class<T> serviceType) {
+                        return Optional.empty();
+                      }
+                    }));
 
     System.setProperty("javax.net.ssl.trustStore", CLIENT_AS_CA_CERT.getKeyStoreFile().toString());
     System.setProperty(

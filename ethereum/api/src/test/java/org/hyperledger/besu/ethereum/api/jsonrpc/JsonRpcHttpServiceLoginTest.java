@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.BesuContext;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -145,8 +146,13 @@ public class JsonRpcHttpServiceLoginTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    tracingCacheManager,
-                    besuContext));
+                    false,
+                    new BesuContext() {
+                      @Override
+                      public <T> Optional<T> getService(Class<T> serviceType) {
+                        return Optional.empty();
+                      }
+                    }));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();
