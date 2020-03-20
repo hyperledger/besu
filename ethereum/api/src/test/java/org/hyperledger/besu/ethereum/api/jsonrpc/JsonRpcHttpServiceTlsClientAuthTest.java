@@ -141,7 +141,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     false,
                     new BesuContext() {
                       @Override
-                      public <T> Optional<T> getService(Class<T> serviceType) {
+                      public <T> Optional<T> getService(final Class<T> serviceType) {
                         return Optional.empty();
                       }
                     }));
