@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
@@ -67,7 +68,9 @@ public class JsonRpcMethodsFactory {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
-      final Map<String, BesuPlugin> namedPlugins) {
+      final Map<String, BesuPlugin> namedPlugins,
+      final boolean tracingCacheEnabled,
+      final BesuContext besuContext) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -109,7 +112,8 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
               // TRACE Methods (Disabled while under development)
-              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
+              new TraceJsonRpcMethods(
+                  blockchainQueries, protocolSchedule, tracingCacheEnabled, besuContext),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

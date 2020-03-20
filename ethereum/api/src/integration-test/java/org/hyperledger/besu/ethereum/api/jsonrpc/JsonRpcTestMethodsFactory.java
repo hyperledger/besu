@@ -130,6 +130,8 @@ public class JsonRpcTestMethodsFactory {
             webSocketConfiguration,
             metricsConfiguration,
             natService,
-            new HashMap<>());
+            new HashMap<>(),
+            tracingCacheManager,
+            besuContext);
   }
 }

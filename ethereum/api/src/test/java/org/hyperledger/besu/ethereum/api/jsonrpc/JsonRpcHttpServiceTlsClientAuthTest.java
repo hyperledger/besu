@@ -136,7 +136,9 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    Collections.emptyMap()));
+                    Collections.emptyMap(),
+                    tracingCacheManager,
+                    besuContext));
 
     System.setProperty("javax.net.ssl.trustStore", CLIENT_AS_CA_CERT.getKeyStoreFile().toString());
     System.setProperty(

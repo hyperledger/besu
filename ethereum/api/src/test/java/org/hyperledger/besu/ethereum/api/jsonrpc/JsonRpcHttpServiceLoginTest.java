@@ -144,7 +144,9 @@ public class JsonRpcHttpServiceLoginTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    new HashMap<>()));
+                    new HashMap<>(),
+                    tracingCacheManager,
+                    besuContext));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();

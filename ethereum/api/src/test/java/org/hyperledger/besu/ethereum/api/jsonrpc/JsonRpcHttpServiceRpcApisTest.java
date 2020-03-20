@@ -211,7 +211,9 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    new HashMap<>()));
+                    new HashMap<>(),
+                    tracingCacheManager,
+                    besuContext));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -304,7 +306,9 @@ public class JsonRpcHttpServiceRpcApisTest {
                     webSocketConfiguration,
                     metricsConfiguration,
                     natService,
-                    new HashMap<>()));
+                    new HashMap<>(),
+                    tracingCacheManager,
+                    besuContext));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

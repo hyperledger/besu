@@ -163,7 +163,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(WebSocketConfiguration.class),
             mock(MetricsConfiguration.class),
             natService,
-            new HashMap<>());
+            new HashMap<>(),
+            tracingCacheManager,
+            besuContext);
   }
 
   protected void startService() throws Exception {

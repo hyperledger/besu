@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.api.cache.TracingCacheManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -24,18 +25,28 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.BesuContext;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule<?> protocolSchedule;
+  private final boolean tracingCacheEnabled;
+  private final BesuContext besuContext;
 
   TraceJsonRpcMethods(
-      final BlockchainQueries blockchainQueries, final ProtocolSchedule<?> protocolSchedule) {
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule<?> protocolSchedule,
+      final boolean tracingCacheEnabled,
+      final BesuContext besuContext) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
+    this.tracingCacheEnabled = tracingCacheEnabled;
+    this.besuContext = besuContext;
   }
 
   @Override
@@ -51,9 +62,15 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
             protocolSchedule,
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive());
+    final Supplier<BlockTracer> blockTracerSupplier = () -> new BlockTracer(blockReplay);
     return mapOf(
-        new TraceReplayBlockTransactions(() -> new BlockTracer(blockReplay), blockchainQueries),
-        new TraceTransaction(() -> new BlockTracer(blockReplay), blockchainQueries),
-        new TraceBlock(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries));
+        new TraceReplayBlockTransactions(
+            blockTracerSupplier,
+            blockchainQueries,
+            tracingCacheEnabled
+                ? Optional.of(new TracingCacheManager(blockTracerSupplier, besuContext))
+                : Optional.empty()),
+        new TraceTransaction(blockTracerSupplier, blockchainQueries),
+        new TraceBlock(blockTracerSupplier, protocolSchedule, blockchainQueries));
   }
 }

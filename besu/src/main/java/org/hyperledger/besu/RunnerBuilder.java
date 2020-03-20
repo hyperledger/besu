@@ -97,6 +97,7 @@ import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
 import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
 import org.hyperledger.besu.nat.manual.ManualNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -151,6 +152,7 @@ public class RunnerBuilder {
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
+  private boolean tracingCacheEnabled = false;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -279,6 +281,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder autoLogBloomCaching(final boolean autoLogBloomCaching) {
     this.autoLogBloomCaching = autoLogBloomCaching;
+    return this;
+  }
+
+  public RunnerBuilder tracingCacheEnabled(final boolean tracingCacheEnabled) {
+    this.tracingCacheEnabled = tracingCacheEnabled;
     return this;
   }
 
@@ -448,7 +455,9 @@ public class RunnerBuilder {
               webSocketConfiguration,
               metricsConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins());
+              besuPluginContext.getNamedPlugins(),
+              tracingCacheEnabled,
+              besuPluginContext);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -507,7 +516,9 @@ public class RunnerBuilder {
               webSocketConfiguration,
               metricsConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins());
+              besuPluginContext.getNamedPlugins(),
+              tracingCacheEnabled,
+              besuPluginContext);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
@@ -653,7 +664,9 @@ public class RunnerBuilder {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
-      final Map<String, BesuPlugin> namedPlugins) {
+      final Map<String, BesuPlugin> namedPlugins,
+      final boolean tracingCacheEnabled,
+      final BesuContext besuContext) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -677,7 +690,9 @@ public class RunnerBuilder {
                 webSocketConfiguration,
                 metricsConfiguration,
                 natService,
-                namedPlugins);
+                namedPlugins,
+                tracingCacheEnabled,
+                besuContext);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

@@ -9,9 +9,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,12 +25,11 @@ public class TracingCacheManager {
   private static final Logger LOG = LogManager.getLogger();
   private static final int CACHE_SIZE = 1000;
   private static final String CACHE_NAME = "block-trace-cache";
-  private final BlockTracer tracer;
+  private final Supplier<BlockTracer> tracer;
   private final DebugOperationTracer debugOperationTracer;
-  private Cache<Long, BlockTrace> blockTraceCache;
-  private static Optional<TracingCacheManager> instance = Optional.empty();
+  private final Cache<Long, BlockTrace> blockTraceCache;
 
-  public TracingCacheManager(final BlockTracer tracer) {
+  public TracingCacheManager(final Supplier<BlockTracer> tracer, final BesuContext besuContext) {
     this.tracer = tracer;
     debugOperationTracer = new DebugOperationTracer(TraceOptions.DEFAULT);
     try (CacheManager cacheManager =
@@ -38,11 +40,15 @@ public class TracingCacheManager {
             .build(true)) {
       blockTraceCache = cacheManager.getCache(CACHE_NAME, Long.class, BlockTrace.class);
     }
+    besuContext
+        .getService(BesuEvents.class)
+        .ifPresent(besuEvents -> besuEvents.addBlockPropagatedListener(this::onNewBlock));
   }
 
   public void onNewBlock(final PropagatedBlockContext blockContext) {
     LOG.info("New block detected, starting to cache tracing data.");
     tracer
+        .get()
         .trace(Hash.fromPlugin(blockContext.getBlockHeader().getBlockHash()), debugOperationTracer)
         .ifPresent(
             blockTrace ->
@@ -56,13 +62,5 @@ public class TracingCacheManager {
         blockNumber,
         blockTraceCache.containsKey(blockNumber));
     return Optional.ofNullable(blockTraceCache.get(blockNumber));
-  }
-
-  public static Optional<TracingCacheManager> getInstance() {
-    return instance;
-  }
-
-  public static void setInstance(final Optional<TracingCacheManager> instance) {
-    TracingCacheManager.instance = instance;
   }
 }

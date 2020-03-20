@@ -52,13 +52,15 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<StateDiffGenerator> stateDiffGenerator =
       Suppliers.memoize(StateDiffGenerator::new);
-  private final Optional<TracingCacheManager> tracingCacheManager =
-      TracingCacheManager.getInstance();
+  private final Optional<TracingCacheManager> tracingCacheManager;
 
   public TraceReplayBlockTransactions(
-      final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries queries) {
+      final Supplier<BlockTracer> blockTracerSupplier,
+      final BlockchainQueries queries,
+      final Optional<TracingCacheManager> tracingCacheManager) {
     super(queries);
     this.blockTracerSupplier = blockTracerSupplier;
+    this.tracingCacheManager = tracingCacheManager;
   }
 
   @Override
@@ -81,12 +83,24 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       // Nothing to trace for the genesis block
       return emptyResult();
     }
+    return tracingCacheManager
+        .flatMap(tracingCacheManager -> tracingCacheManager.blockTraceAt(blockNumber))
+        .map(blockTrace -> traceBlock(blockTrace, traceTypeParameter))
+        .orElse(
+            getBlockchainQueries()
+                .getBlockchain()
+                .getBlockByNumber(blockNumber)
+                .map((block) -> traceBlock(block, traceTypeParameter))
+                .orElse(null));
+  }
 
-    return getBlockchainQueries()
-        .getBlockchain()
-        .getBlockByNumber(blockNumber)
-        .map((block) -> traceBlock(block, traceTypeParameter))
-        .orElse(null);
+  private Object traceBlock(
+      final BlockTrace blockTrace, final TraceTypeParameter traceTypeParameter) {
+    if (blockTrace == null) {
+      return emptyResult();
+    }
+    return generateTracesFromTransactionTrace(
+        blockTrace.getTransactionTraces(), traceTypeParameter);
   }
 
   private Object traceBlock(final Block block, final TraceTypeParameter traceTypeParameter) {

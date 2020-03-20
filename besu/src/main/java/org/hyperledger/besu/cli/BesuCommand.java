@@ -14,21 +14,20 @@
  */
 package org.hyperledger.besu.cli;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
-import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
-import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
-import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
-import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
-import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Resources;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.metrics.MetricsOptions;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
@@ -67,13 +66,10 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.ethereum.api.cache.TracingCacheManager;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
@@ -125,6 +121,12 @@ import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.PositiveNumber;
+import picocli.CommandLine;
+import picocli.CommandLine.AbstractParseResultHandler;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.ExecutionException;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
 
 import java.io.File;
 import java.io.IOException;
@@ -148,26 +150,20 @@ import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.json.DecodeException;
-import io.vertx.core.metrics.MetricsOptions;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
-import picocli.CommandLine;
-import picocli.CommandLine.AbstractParseResultHandler;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.ExecutionException;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
+import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
+import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
+import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
+import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
@@ -841,6 +837,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
+  @Option(
+      names = {"--tracing-cache-enabled"},
+      description = "Enable cache optimization for tracing API (default: ${DEFAULT-VALUE})")
+  private final Boolean tracingCacheEnabled = false;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1064,15 +1065,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState());
-    final TracingCacheManager tracingCacheManager =
-        new TracingCacheManager(
-            new BlockTracer(
-                new BlockReplay(
-                    besuController.getProtocolSchedule(),
-                    besuController.getProtocolContext().getBlockchain(),
-                    besuController.getProtocolContext().getWorldStateArchive())));
-    TracingCacheManager.setInstance(Optional.of(tracingCacheManager));
-    besuEvents.addBlockPropagatedListener(tracingCacheManager::onNewBlock);
     besuPluginContext.addService(BesuEvents.class, besuEvents);
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
@@ -1759,6 +1751,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
+            .tracingCacheEnabled(tracingCacheEnabled)
             .build();
 
     addShutdownHook(runner);
