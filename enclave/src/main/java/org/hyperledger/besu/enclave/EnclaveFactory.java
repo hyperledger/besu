@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.enclave;
 
-import com.google.common.io.Files;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.io.IOException;
@@ -24,11 +23,11 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
+import com.google.common.io.Files;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.PfxOptions;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
-
 
 public class EnclaveFactory {
 
@@ -114,7 +113,8 @@ public class EnclaveFactory {
   }
 
   static String readSecretFromFile(final Path path) throws IOException {
-    final String password = Files.asCharSource(path.toFile(), StandardCharsets.UTF_8).readFirstLine();
+    final String password =
+        Files.asCharSource(path.toFile(), StandardCharsets.UTF_8).readFirstLine();
     if (password == null || password.isEmpty()) {
       throw new InvalidConfigurationException("Keystore password file is empty: " + path);
     }
