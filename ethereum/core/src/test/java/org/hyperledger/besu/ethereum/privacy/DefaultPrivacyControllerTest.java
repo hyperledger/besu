@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -130,7 +131,7 @@ public class DefaultPrivacyControllerTest {
 
   private PrivateTransactionValidator mockPrivateTransactionValidator() {
     final PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
-    when(validator.validate(any(), any())).thenReturn(ValidationResult.valid());
+    when(validator.validate(any(), any(), anyBoolean())).thenReturn(ValidationResult.valid());
     return validator;
   }
 
@@ -264,7 +265,7 @@ public class DefaultPrivacyControllerTest {
 
   @Test
   public void validateTransactionWithTooLowNonceReturnsError() {
-    when(privateTransactionValidator.validate(any(), any()))
+    when(privateTransactionValidator.validate(any(), any(), anyBoolean()))
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
@@ -275,7 +276,7 @@ public class DefaultPrivacyControllerTest {
 
   @Test
   public void validateTransactionWithIncorrectNonceReturnsError() {
-    when(privateTransactionValidator.validate(any(), any()))
+    when(privateTransactionValidator.validate(any(), any(), anyBoolean()))
         .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
