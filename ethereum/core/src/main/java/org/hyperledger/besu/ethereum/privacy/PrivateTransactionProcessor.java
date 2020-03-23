@@ -196,7 +196,7 @@ public class PrivateTransactionProcessor {
             : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
     final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-        privateTransactionValidator.validate(transaction, sender.getNonce());
+        privateTransactionValidator.validate(transaction, sender.getNonce(), false);
     if (!validationResult.isValid()) {
       return Result.invalid(validationResult);
     }

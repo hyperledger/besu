@@ -130,7 +130,7 @@ public class DefaultPrivacyControllerTest {
 
   private PrivateTransactionValidator mockPrivateTransactionValidator() {
     final PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
-    when(validator.validate(any(), any())).thenReturn(ValidationResult.valid());
+    when(validator.validate(any(), any(), false)).thenReturn(ValidationResult.valid());
     return validator;
   }
 
@@ -264,7 +264,7 @@ public class DefaultPrivacyControllerTest {
 
   @Test
   public void validateTransactionWithTooLowNonceReturnsError() {
-    when(privateTransactionValidator.validate(any(), any()))
+    when(privateTransactionValidator.validate(any(), any(), false))
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
@@ -275,7 +275,7 @@ public class DefaultPrivacyControllerTest {
 
   @Test
   public void validateTransactionWithIncorrectNonceReturnsError() {
-    when(privateTransactionValidator.validate(any(), any()))
+    when(privateTransactionValidator.validate(any(), any(), false))
         .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
