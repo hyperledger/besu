@@ -35,7 +35,9 @@ public class PrivateTransactionValidator {
   }
 
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validate(
-          final PrivateTransaction transaction, final Long accountNonce, final boolean allowFutureNonces) {
+      final PrivateTransaction transaction,
+      final Long accountNonce,
+      final boolean allowFutureNonces) {
     LOG.debug("Validating private transaction fields of {}", transaction.getHash());
     final ValidationResult<TransactionInvalidReason> privateFieldsValidationResult =
         validatePrivateTransactionFields(transaction);

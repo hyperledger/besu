@@ -55,14 +55,14 @@ public class PrivateTransactionValidatorTest {
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
-    validationResult =
-            validator.validate(privateTransactionWithNonce(1L), 2L, true);
+    validationResult = validator.validate(privateTransactionWithNonce(1L), 2L, true);
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
   }
 
   @Test
-  public void transactionWithNonceGreaterThanAccountNonceShouldReturnIncorrectNonceErrorWhenFutureNoncesNotAllowed() {
+  public void
+      transactionWithNonceGreaterThanAccountNonceShouldReturnIncorrectNonceErrorWhenFutureNoncesNotAllowed() {
     final ValidationResult<TransactionInvalidReason> validationResult =
         validator.validate(privateTransactionWithNonce(3L), 2L, false);
 
@@ -70,22 +70,23 @@ public class PrivateTransactionValidatorTest {
   }
 
   @Test
-  public void transactionWithNonceGreaterThanAccountNonceShouldReturnValidTransactionWhenFutureNoncesAllowed() {
+  public void
+      transactionWithNonceGreaterThanAccountNonceShouldReturnValidTransactionWhenFutureNoncesAllowed() {
     final ValidationResult<TransactionInvalidReason> validationResult =
-            validator.validate(privateTransactionWithNonce(3L), 2L, true);
+        validator.validate(privateTransactionWithNonce(3L), 2L, true);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
   }
 
   @Test
-  public void transactionWithNonceMatchingThanAccountNonceShouldAlwaysReturnValidTransactionResult() {
+  public void
+      transactionWithNonceMatchingThanAccountNonceShouldAlwaysReturnValidTransactionResult() {
     ValidationResult<TransactionInvalidReason> validationResult =
         validator.validate(privateTransactionWithNonce(1L), 1L, false);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
 
-    validationResult =
-            validator.validate(privateTransactionWithNonce(1L), 1L, true);
+    validationResult = validator.validate(privateTransactionWithNonce(1L), 1L, true);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
   }
