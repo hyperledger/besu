@@ -44,6 +44,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTran
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
@@ -52,9 +53,18 @@ import java.util.concurrent.Executors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.junit.After;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 public class AcceptanceTestBase {
+  static {
+    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
+  }
+
   private static final Logger LOG = LogManager.getLogger();
 
   protected final Accounts accounts;
@@ -112,6 +122,8 @@ public class AcceptanceTestBase {
     permissionedNodeBuilder = new PermissionedNodeBuilder();
   }
 
+  @Rule public final TestName name = new TestName();
+
   @After
   public void tearDownAcceptanceTestBase() {
     cluster.close();
@@ -156,4 +168,46 @@ public class AcceptanceTestBase {
       LOG.info("Don't know how to report memory for OS {}", os);
     }
   }
+
+  @Rule
+  public TestWatcher log_eraser =
+      new TestWatcher() {
+
+        @Override
+        protected void starting(final Description description) {
+          ThreadContext.put("test", description.getMethodName());
+          ThreadContext.put("class", description.getClassName());
+
+          final String errorMessage = "Uncaught exception in thread \"{}\"";
+          Thread.currentThread()
+              .setUncaughtExceptionHandler(
+                  (thread, error) -> LOG.error(errorMessage, thread.getName(), error));
+          Thread.setDefaultUncaughtExceptionHandler(
+              (thread, error) -> LOG.error(errorMessage, thread.getName(), error));
+        }
+
+        @Override
+        protected void failed(final Throwable e, final Description description) {
+          // add the result at the end of the log so it is self-sufficient
+          LOG.error(
+              "==========================================================================================");
+          LOG.error("Test failed. Reported Throwable at the point of failure:", e);
+        }
+
+        @Override
+        protected void succeeded(final Description description) {
+          // if so configured, delete logs of successful tests
+          if (!Boolean.getBoolean("acctests.keepLogsOfPassingTests")) {
+            String pathname =
+                "build/acceptanceTestLogs/"
+                    + description.getClassName()
+                    + "."
+                    + description.getMethodName()
+                    + ".log";
+            LOG.info("Test successful, deleting log at {}", pathname);
+            File file = new File(pathname);
+            file.delete();
+          }
+        }
+      };
 }
