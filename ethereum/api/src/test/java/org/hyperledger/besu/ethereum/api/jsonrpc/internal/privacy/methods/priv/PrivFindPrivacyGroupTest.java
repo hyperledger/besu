@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,7 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class PrivFindPrivacyGroupTest {
-  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final String ENCLAVE_PUBLIC_KEY = VALID_BASE64_ENCLAVE_KEY.toBase64String();
   private static final List<String> ADDRESSES =
       List.of(
           "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
@@ -65,7 +66,7 @@ public class PrivFindPrivacyGroupTest {
     when(privacyParameters.isEnabled()).thenReturn(true);
     request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_deletePrivacyGroup", new Object[] {ADDRESSES}), user);
+            new JsonRpcRequest("1", "priv_findPrivacyGroup", new Object[] {ADDRESSES}), user);
     privacyGroup = new PrivacyGroup();
     privacyGroup.setName("privacyGroup");
     privacyGroup.setDescription("privacyGroup desc");
@@ -73,6 +74,7 @@ public class PrivFindPrivacyGroupTest {
     privacyGroup.setMembers(Lists.list("member1"));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void findsPrivacyGroupWithValidAddresses() {
     when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
@@ -83,9 +85,9 @@ public class PrivFindPrivacyGroupTest {
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privFindPrivacyGroup.response(request);
-    final PrivacyGroup[] result = (PrivacyGroup[]) response.getResult();
+    final List<PrivacyGroup> result = (List<PrivacyGroup>) response.getResult();
     assertThat(result).hasSize(1);
-    assertThat(result[0]).isEqualToComparingFieldByField(privacyGroup);
+    assertThat(result.get(0)).isEqualToComparingFieldByField(privacyGroup);
     verify(privacyController).findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 
@@ -114,5 +116,6 @@ public class PrivFindPrivacyGroupTest {
             request.getRequest().getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
     final JsonRpcResponse response = privFindPrivacyGroup.response(request);
     assertThat(response).isEqualTo(expectedResponse);
+    verify(privacyController).findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 }

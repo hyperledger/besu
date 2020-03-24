@@ -40,6 +40,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX =
       Bytes.of("PGHEADMAP".getBytes(UTF_8));
   private static final Bytes LEGACY_STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
+  private static final Bytes ADD_DATA_KEY = Bytes.of("ADDKEY".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -66,6 +67,11 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Bytes32 blockHash) {
     return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX)
         .map(b -> PrivacyGroupHeadBlockMap.readFrom(new BytesValueRLPInput(b, false)));
+  }
+
+  @Override
+  public Optional<Bytes32> getAddDataKey(final Bytes32 privacyGroupId) {
+    return get(privacyGroupId, ADD_DATA_KEY).map(Bytes32::wrap);
   }
 
   @Override
@@ -141,6 +147,13 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public PrivateStateStorage.Updater putDatabaseVersion(final int version) {
       set(Bytes.EMPTY, DB_VERSION_KEY, Bytes.ofUnsignedInt(version));
+      return this;
+    }
+
+    @Override
+    public PrivateStateStorage.Updater putAddDataKey(
+        final Bytes32 privacyGroupId, final Bytes32 addDataKey) {
+      set(privacyGroupId, ADD_DATA_KEY, addDataKey);
       return this;
     }
 

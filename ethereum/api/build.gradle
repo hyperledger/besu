@@ -115,7 +115,8 @@ task generateTestBlockchain() {
         "blocks",
         "import",
         "--format=JSON",
-        "--from=$srcFiles/blocks.json"
+        "--from=$srcFiles/blocks.json",
+        "--start-time=1438269971"
       ]
     }
     javaexec {

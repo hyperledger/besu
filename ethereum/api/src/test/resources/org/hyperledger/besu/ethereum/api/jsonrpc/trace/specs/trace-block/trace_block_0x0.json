@@ -1,0 +1,16 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_block",
+    "params": [
+      "0x0"
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [],
+    "id": 415
+  },
+  "statusCode": 200
+}

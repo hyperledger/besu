@@ -236,8 +236,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getAztlanBlockNumber() {
-    return getOptionalLong("aztlanblock");
+  public OptionalLong getPhoenixBlockNumber() {
+    return getOptionalLong("phoenixblock");
   }
 
   @Override

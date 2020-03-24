@@ -1,0 +1,108 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x14",
+      [
+        "trace"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": null,
+        "trace": [
+          {
+            "action": {
+              "callType": "call",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0xffadea",
+              "input": "0x",
+              "to": "0x0130000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "result": {
+              "gasUsed": "0x16c46",
+              "output": "0x"
+            },
+            "subtraces": 1,
+            "traceAddress": [],
+            "type": "call"
+          },
+          {
+            "action": {
+              "creationMethod": "create",
+              "from": "0x0130000000000000000000000000000000000000",
+              "gas": "0xfb3412",
+              "init": "0x600160015560015460025561ffff6000526002601ef3",
+              "value": "0x0"
+            },
+            "result": {
+              "address": "0xaac0627078c038eb3d06e04b57d020fe212be97d",
+              "code": "0xffff",
+              "gasUsed": "0xa10e"
+            },
+            "subtraces": 0,
+            "traceAddress": [
+              0
+            ],
+            "type": "create"
+          }
+        ],
+        "transactionHash": "0xd32c538fd1b3ef854c04ae39925dc9e849b568b92ea388f778b794851ab37f7c",
+        "vmTrace": null
+      },
+      {
+        "output": "0x",
+        "stateDiff": null,
+        "trace": [
+          {
+            "action": {
+              "callType": "call",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0xffadea",
+              "input": "0x",
+              "to": "0x0140000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "result": {
+              "gasUsed": "0x16b87",
+              "output": "0x"
+            },
+            "subtraces": 1,
+            "traceAddress": [],
+            "type": "call"
+          },
+          {
+            "action": {
+              "creationMethod": "create2",
+              "from": "0x0140000000000000000000000000000000000000",
+              "gas": "0xfb3409",
+              "init": "0x600160015560015460025560ff60005360016000f3",
+              "value": "0x0"
+            },
+            "result": {
+              "address": "0x0deea5bd06fb86553643c1e94a2f5aac632b9ec9",
+              "code": "0xff",
+              "gasUsed": "0xa046"
+            },
+            "subtraces": 0,
+            "traceAddress": [
+              0
+            ],
+            "type": "create"
+          }
+        ],
+        "transactionHash": "0xaf151fc10eb21e76efb0bc74da179a674083e420280fb2985f76b0326682864a",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}
