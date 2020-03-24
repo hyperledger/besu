@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 
 import java.time.Clock;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -31,7 +32,7 @@ import java.util.function.IntSupplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class WorldStateDownloader {
+public class WorldStateDownloader implements WorldStateDownloadStatus {
   private static final Logger LOG = LogManager.getLogger();
 
   private final long minMillisBeforeStalling;
@@ -46,6 +47,8 @@ public class WorldStateDownloader {
   private final WorldStateStorage worldStateStorage;
 
   private final AtomicReference<WorldDownloadState> downloadState = new AtomicReference<>();
+
+  private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
 
   public WorldStateDownloader(
       final EthContext ethContext,
@@ -123,6 +126,8 @@ public class WorldStateDownloader {
         newDownloadState.enqueueRequest(NodeDataRequest.createAccountDataRequest(stateRoot));
       }
 
+      maybeCompleteTask =
+          Optional.of(new CompleteTaskStep(worldStateStorage, metricsSystem, taskCollection::size));
       final WorldStateDownloadProcess downloadProcess =
           WorldStateDownloadProcess.builder()
               .hashCountPerRequest(hashCountPerRequest)
@@ -130,8 +135,7 @@ public class WorldStateDownloader {
               .loadLocalDataStep(new LoadLocalDataStep(worldStateStorage, metricsSystem))
               .requestDataStep(new RequestDataStep(ethContext, metricsSystem))
               .persistDataStep(new PersistDataStep(worldStateStorage))
-              .completeTaskStep(
-                  new CompleteTaskStep(worldStateStorage, metricsSystem, taskCollection::size))
+              .completeTaskStep(maybeCompleteTask.get())
               .downloadState(newDownloadState)
               .pivotBlockHeader(header)
               .metricsSystem(metricsSystem)
@@ -150,5 +154,15 @@ public class WorldStateDownloader {
         downloadState.getDownloadFuture().cancel(true);
       }
     }
+  }
+
+  @Override
+  public Optional<Long> getPulledStates() {
+    return maybeCompleteTask.map(CompleteTaskStep::getCompletedRequests);
+  }
+
+  @Override
+  public Optional<Long> getKnownStates() {
+    return maybeCompleteTask.map(task -> task.getCompletedRequests() + task.getPendingRequests());
   }
 }
