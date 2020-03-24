@@ -42,7 +42,8 @@ public class PivotBlockRetriever<C> {
 
   private static final Logger LOG = LogManager.getLogger();
   public static final int MAX_QUERY_RETRIES_PER_PEER = 3;
-  private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 5;
+  private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 50;
+  private static final int SUSPICIOUS_NUMBER_OF_RETRIES = 5;
 
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
@@ -148,6 +149,11 @@ public class PivotBlockRetriever<C> {
       LOG.info("Received conflicting pivot blocks for {}.", contestedBlockNumber);
 
       final int retryCount = confirmationTasks.size();
+
+      if ((retryCount % SUSPICIOUS_NUMBER_OF_RETRIES) == 0) {
+        LOG.warn("{} attempts have failed to find a fast sync pivot block", retryCount);
+      }
+
       if (retryCount > maxPivotBlockResets
           || pivotBlockNumber.get() <= BlockHeader.GENESIS_BLOCK_NUMBER) {
         LOG.info("Max retries reached, cancel pivot block download.");

@@ -18,12 +18,12 @@ import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
-import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.PfxOptions;
@@ -112,8 +112,12 @@ public class EnclaveFactory {
     return new PfxOptions().setPassword(password).setPath(keystoreFile.toString());
   }
 
-  private static String readSecretFromFile(final Path path) throws IOException {
-    final byte[] fileContent = Files.readAllBytes(path);
-    return new String(fileContent, Charsets.UTF_8);
+  static String readSecretFromFile(final Path path) throws IOException {
+    final String password =
+        Files.asCharSource(path.toFile(), StandardCharsets.UTF_8).readFirstLine();
+    if (password == null || password.isEmpty()) {
+      throw new InvalidConfigurationException("Keystore password file is empty: " + path);
+    }
+    return password;
   }
 }

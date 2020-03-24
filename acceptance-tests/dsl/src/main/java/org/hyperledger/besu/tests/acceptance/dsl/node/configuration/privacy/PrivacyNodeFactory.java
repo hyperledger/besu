@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
@@ -41,8 +42,15 @@ public class PrivacyNodeFactory {
 
   public PrivacyNode createPrivateTransactionEnabledMinerNode(
       final String name, final PrivacyAccount privacyAccount) throws IOException {
+    return createPrivateTransactionEnabledMinerNode(name, privacyAccount, Address.PRIVACY);
+  }
+
+  public PrivacyNode createPrivateTransactionEnabledMinerNode(
+      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      throws IOException {
     return create(
         new PrivacyNodeConfiguration(
+            privacyAddress,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -57,8 +65,15 @@ public class PrivacyNodeFactory {
 
   public PrivacyNode createPrivateTransactionEnabledNode(
       final String name, final PrivacyAccount privacyAccount) throws IOException {
+    return createPrivateTransactionEnabledNode(name, privacyAccount, Address.PRIVACY);
+  }
+
+  public PrivacyNode createPrivateTransactionEnabledNode(
+      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      throws IOException {
     return create(
         new PrivacyNodeConfiguration(
+            privacyAddress,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()
@@ -72,8 +87,15 @@ public class PrivacyNodeFactory {
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
       final String name, final PrivacyAccount privacyAccount) throws IOException {
+    return createIbft2NodePrivacyEnabled(name, privacyAccount, Address.PRIVACY);
+  }
+
+  public PrivacyNode createIbft2NodePrivacyEnabled(
+      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      throws IOException {
     return create(
         new PrivacyNodeConfiguration(
+            privacyAddress,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -83,6 +105,43 @@ public class PrivacyNodeFactory {
                 .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
+                .build(),
+            new OrionKeyConfiguration(
+                privacyAccount.getEnclaveKeyPath(), privacyAccount.getEnclavePrivateKeyPath())));
+  }
+
+  public PrivacyNode createOnChainPrivacyGroupEnabledMinerNode(
+      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      throws IOException {
+    return create(
+        new PrivacyNodeConfiguration(
+            privacyAddress,
+            true,
+            new BesuNodeConfigurationBuilder()
+                .name(name)
+                .miningEnabled()
+                .jsonRpcEnabled()
+                .webSocketEnabled()
+                .enablePrivateTransactions()
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
+                .build(),
+            new OrionKeyConfiguration(
+                privacyAccount.getEnclaveKeyPath(), privacyAccount.getEnclavePrivateKeyPath())));
+  }
+
+  public PrivacyNode createOnChainPrivacyGroupEnabledNode(
+      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      throws IOException {
+    return create(
+        new PrivacyNodeConfiguration(
+            privacyAddress,
+            true,
+            new BesuNodeConfigurationBuilder()
+                .name(name)
+                .jsonRpcEnabled()
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
+                .enablePrivateTransactions()
+                .webSocketEnabled()
                 .build(),
             new OrionKeyConfiguration(
                 privacyAccount.getEnclaveKeyPath(), privacyAccount.getEnclavePrivateKeyPath())));

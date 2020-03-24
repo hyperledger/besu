@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -86,6 +87,11 @@ public class FastSyncActions<C> {
     LOG.debug("Waiting for at least {} peers.", syncConfig.getFastSyncMinimumPeerCount());
     return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
         .thenApply(successfulWaitResult -> fastSyncState);
+  }
+
+  public <T> CompletableFuture<T> scheduleFutureTask(
+      final Supplier<CompletableFuture<T>> future, final Duration duration) {
+    return ethContext.getScheduler().scheduleFutureTask(future, duration);
   }
 
   private CompletableFuture<Void> waitForAnyPeer() {

@@ -72,6 +72,7 @@ public class AccountSmartContractPermissioningAllowAccountTransaction implements
             contractAddress.toString(),
             payload.toString());
 
-    return toHexString(TransactionEncoder.signMessage(transaction, sender.web3jCredentials()));
+    return toHexString(
+        TransactionEncoder.signMessage(transaction, sender.web3jCredentialsOrThrow()));
   }
 }

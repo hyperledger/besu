@@ -70,7 +70,32 @@ public class PrivacyTest {
   }
 
   @Test
-  public void privacyPrecompiled() throws IOException, URISyntaxException {
+  public void defaultPrivacy() throws IOException, URISyntaxException {
+    final BesuController<?> besuController = setUpControllerWithPrivacyEnabled(false);
+
+    final PrecompiledContract precompiledContract =
+        getPrecompile(besuController, Address.DEFAULT_PRIVACY);
+
+    assertThat(precompiledContract.getName()).isEqualTo("Privacy");
+  }
+
+  @Test
+  public void onchainEnabledPrivacy() throws IOException, URISyntaxException {
+    final BesuController<?> besuController = setUpControllerWithPrivacyEnabled(true);
+
+    final PrecompiledContract privacyPrecompiledContract =
+        getPrecompile(besuController, Address.DEFAULT_PRIVACY);
+
+    assertThat(privacyPrecompiledContract.getName()).isEqualTo("Privacy");
+
+    final PrecompiledContract onchainPrecompiledContract =
+        getPrecompile(besuController, Address.ONCHAIN_PRIVACY);
+
+    assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnChainPrivacy");
+  }
+
+  private BesuController<?> setUpControllerWithPrivacyEnabled(final boolean onChainEnabled)
+      throws IOException, URISyntaxException {
     final Path dataDir = folder.newFolder().toPath();
     final Path dbDir = dataDir.resolve("database");
     final PrivacyParameters privacyParameters =
@@ -80,33 +105,23 @@ public class PrivacyTest {
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .setEnclaveFactory(new EnclaveFactory(vertx))
+            .setOnchainPrivacyGroupsEnabled(onChainEnabled)
             .build();
-    final BesuController<?> besuController =
-        new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.mainnet())
-            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .storageProvider(new InMemoryStorageProvider())
-            .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKeys(KeyPair.generate())
-            .metricsSystem(new NoOpMetricsSystem())
-            .dataDirectory(dataDir)
-            .clock(TestClock.fixed())
-            .privacyParameters(privacyParameters)
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-            .targetGasLimit(GasLimitCalculator.DEFAULT)
-            .build();
-
-    final Address privacyContractAddress = Address.DEFAULT_PRIVACY;
-    final PrecompiledContract precompiledContract =
-        besuController
-            .getProtocolSchedule()
-            .getByBlockNumber(1)
-            .getPrecompileContractRegistry()
-            .get(privacyContractAddress, Account.DEFAULT_VERSION);
-
-    assertThat(precompiledContract.getName()).isEqualTo("Privacy");
+    return new BesuController.Builder()
+        .fromGenesisConfig(GenesisConfigFile.mainnet())
+        .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .storageProvider(new InMemoryStorageProvider())
+        .networkId(BigInteger.ONE)
+        .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+        .nodeKeys(KeyPair.generate())
+        .metricsSystem(new NoOpMetricsSystem())
+        .dataDirectory(dataDir)
+        .clock(TestClock.fixed())
+        .privacyParameters(privacyParameters)
+        .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+        .targetGasLimit(GasLimitCalculator.DEFAULT)
+        .build();
   }
 
   private PrivacyStorageProvider createKeyValueStorageProvider(
@@ -126,5 +141,14 @@ public class PrivacyTest {
         .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
+  }
+
+  private PrecompiledContract getPrecompile(
+      final BesuController<?> besuController, final Address defaultPrivacy) {
+    return besuController
+        .getProtocolSchedule()
+        .getByBlockNumber(1)
+        .getPrecompileContractRegistry()
+        .get(defaultPrivacy, Account.DEFAULT_VERSION);
   }
 }

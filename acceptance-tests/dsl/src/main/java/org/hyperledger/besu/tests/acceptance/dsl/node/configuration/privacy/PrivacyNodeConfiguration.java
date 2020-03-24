@@ -19,13 +19,35 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 
 public class PrivacyNodeConfiguration {
 
+  private final int privacyAddress;
+  private final boolean isOnchainPrivacyGroupEnabled;
   private final BesuNodeConfiguration besuConfig;
   private final OrionKeyConfiguration orionConfig;
 
   PrivacyNodeConfiguration(
-      final BesuNodeConfiguration besuConfig, final OrionKeyConfiguration orionConfig) {
+      final int privacyAddress,
+      final BesuNodeConfiguration besuConfig,
+      final OrionKeyConfiguration orionConfig) {
+    this(privacyAddress, false, besuConfig, orionConfig);
+  }
+
+  PrivacyNodeConfiguration(
+      final int privacyAddress,
+      final boolean isOnchainPrivacyGroupEnabled,
+      final BesuNodeConfiguration besuConfig,
+      final OrionKeyConfiguration orionConfig) {
+    this.privacyAddress = privacyAddress;
+    this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
     this.besuConfig = besuConfig;
     this.orionConfig = orionConfig;
+  }
+
+  public int getPrivacyAddress() {
+    return privacyAddress;
+  }
+
+  public boolean isOnchainPrivacyGroupEnabled() {
+    return isOnchainPrivacyGroupEnabled;
   }
 
   public BesuNodeConfiguration getBesuConfig() {
