@@ -484,7 +484,7 @@ startScripts {
 
 
 dependencies {
-  implementation project(':besu')
+  compile project(':besu')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
