@@ -362,9 +362,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   }
 
   private void killBesuProcess(final String name, final Process process) {
-    LOG.info("Killing " + name + " process");
+    LOG.info("Killing {} process", name);
 
-    Process p = besuProcesses.remove(name);
+    final Process p = besuProcesses.remove(name);
     if (p == null) {
       LOG.error("Process {} wasn't in our list", name);
     }
@@ -372,14 +372,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     process.destroy();
     try {
       process.waitFor(2, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      LOG.warn("Wait for death of process " + name + " was interrupted", e);
+    } catch (final InterruptedException e) {
+      LOG.warn("Wait for death of process {} was interrupted", name, e);
     }
+
     if (process.isAlive()) {
       LOG.warn("Process {} still alive, destroying forcibly now", name);
       try {
         process.destroyForcibly().waitFor(2, TimeUnit.SECONDS);
-      } catch (Exception e) {
+      } catch (final Exception e) {
         // just die already
       }
       LOG.info("Process exited with code {}", process.exitValue());
