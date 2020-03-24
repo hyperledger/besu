@@ -102,6 +102,8 @@ miner-stratum-port=8008
 
 # Pruning
 pruning-enabled=true
+pruning-blocks-retained=1024
+pruning-block-confirmations=10
 
 # Permissioning
 permissions-nodes-config-file-enabled=false
@@ -120,6 +122,8 @@ privacy-enabled=false
 privacy-multi-tenancy-enabled=true
 privacy-precompiled-address=9
 privacy-marker-transaction-signing-key-file="./signerKey"
+privacy-enable-database-migration=false
+privacy-onchain-groups-enabled=false
 
 # Transaction Pool
 tx-pool-retention-hours=999
@@ -135,3 +139,6 @@ key-value-storage="rocksdb"
 
 # Gas limit
 target-gas-limit=8000000
+
+# transaction log bloom filter caching
+auto-log-bloom-caching-enabled=true

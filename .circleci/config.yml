@@ -244,4 +244,3 @@ workflows:
             - acceptanceTests
             - referenceTests
             - buildDocker
-

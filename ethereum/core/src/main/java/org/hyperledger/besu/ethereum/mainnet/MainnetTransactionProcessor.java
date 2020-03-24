@@ -172,7 +172,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams) {
     LOG.trace("Starting execution of {}", transaction);
 
@@ -246,8 +246,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .isPersistingState(isPersistingState)
+              .isPersistingPrivateState(isPersistingPrivateState)
               .maxStackSize(maxStackSize)
+              .transactionHash(transaction.getHash())
               .build();
 
     } else {
@@ -278,7 +279,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .maxStackSize(maxStackSize)
-              .isPersistingState(isPersistingState)
+              .isPersistingPrivateState(isPersistingPrivateState)
+              .transactionHash(transaction.getHash())
               .build();
     }
 

@@ -213,8 +213,8 @@ public class ProtocolScheduleBuilder<C> {
             isRevertReasonEnabled));
     addProtocolSpec(
         protocolSchedule,
-        config.getAztlanBlockNumber(),
-        ClassicProtocolSpecs.aztlanDefinition(
+        config.getPhoenixBlockNumber(),
+        ClassicProtocolSpecs.phoenixDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
@@ -294,7 +294,7 @@ public class ProtocolScheduleBuilder<C> {
             "DefuseDifficultyBomb", config.getDefuseDifficultyBombBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Atlantis", config.getAtlantisBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Agharta", config.getAghartaBlockNumber(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Aztlan", config.getAztlanBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Phoenix", config.getPhoenixBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 
@@ -58,12 +59,13 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
     LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
 
-    PrivacyGroup[] response;
+    final List<PrivacyGroup> response;
     try {
       response =
-          privacyController.findPrivacyGroup(
-              Arrays.asList(addresses),
-              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+          Arrays.asList(
+              privacyController.findPrivacyGroup(
+                  Arrays.asList(addresses),
+                  enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser())));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(

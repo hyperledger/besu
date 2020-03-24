@@ -39,7 +39,7 @@ public enum GraphQLError {
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(
       -32000, "Signatures with replay protection are not supported"),
 
-  // Provate Transaction Errors
+  // Private Transaction Errors
   PRIVATE_TRANSACTION_FAILED(-32000, "Private transaction failed"),
   PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
   INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect");

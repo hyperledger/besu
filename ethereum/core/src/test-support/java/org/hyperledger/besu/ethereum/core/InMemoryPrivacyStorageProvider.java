@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -52,6 +54,11 @@ public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
   @Override
   public PrivateStateStorage createPrivateStateStorage() {
     return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public LegacyPrivateStateStorage createLegacyPrivateStateStorage() {
+    return new LegacyPrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   @Override

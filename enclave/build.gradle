@@ -14,6 +14,7 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
 
   // integration test dependencies.
   integrationTestImplementation project(':testutil')
