@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -46,18 +45,11 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
         blockValidator.validateAndProcessBlock(
             context, block, headerValidationMode, ommerValidationMode);
 
-    outputs.ifPresent(processingOutputs -> persistState(processingOutputs, block, context));
+    outputs.ifPresent(
+        processingOutputs ->
+            context.getBlockchain().appendBlock(block, processingOutputs.receipts));
 
     return outputs.isPresent();
-  }
-
-  private void persistState(
-      final BlockValidator.BlockProcessingOutputs processingOutputs,
-      final Block block,
-      final ProtocolContext<C> context) {
-    processingOutputs.worldState.persist();
-    final MutableBlockchain blockchain = context.getBlockchain();
-    blockchain.appendBlock(block, processingOutputs.receipts);
   }
 
   @Override
