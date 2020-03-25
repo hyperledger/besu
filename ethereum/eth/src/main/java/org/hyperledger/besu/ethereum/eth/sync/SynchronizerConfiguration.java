@@ -195,6 +195,11 @@ public class SynchronizerConfiguration {
     return fastSyncMinimumPeerCount;
   }
 
+  // TODO - This currently uses the fast sync config. It should have its own.
+  public int getBeamSyncMinimumPeerCount() {
+    return fastSyncMinimumPeerCount;
+  }
+
   public int getWorldStateHashCountPerRequest() {
     return worldStateHashCountPerRequest;
   }
