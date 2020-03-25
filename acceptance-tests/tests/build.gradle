@@ -44,9 +44,6 @@ dependencies {
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'commons-io:commons-io'
-  compile('javax.activation:activation'){
-    force = true
-  }
 
   testCompile "com.github.tomakehurst:wiremock-jre8-standalone:2.25.1"
 }
