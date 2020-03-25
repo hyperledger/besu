@@ -3374,7 +3374,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void requiredBlocksMulpleBlocksTwoArgs() {
+  public void requiredBlocksMultipleBlocksTwoArgs() {
     final long block1 = 8675309L;
     final long block2 = 5551212L;
     final String hash1 = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";

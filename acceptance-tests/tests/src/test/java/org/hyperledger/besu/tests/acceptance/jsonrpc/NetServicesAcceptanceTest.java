@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
+import org.junit.After;
 import org.junit.Test;
 
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
@@ -53,5 +54,10 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
     nodeA.verify(net.netServicesOnlyJsonRpcEnabled());
     nodeB.verify(net.netServicesOnlyJsonRpcEnabled());
+  }
+
+  @After
+  public void closeDown() throws Exception {
+    noDiscoveryCluster.close();
   }
 }
