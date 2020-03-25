@@ -4,11 +4,14 @@
 
 ### Additions and Improvements
 
--
+- Added `pulledStates` and `knownStates` to the EthQL `syncing` query and `eth_syncing` JSON-RPC api [\#565](https://github.com/hyperledger/besu/pull/565)
+- Added automated tests for handling ERC20 contract [\#529](https://github.com/hyperledger/besu/pull/529)
+- Added `trace_block` JSON RPC API [\#449](https://github.com/hyperledger/besu/pull/449)
 
 ### Bug Fixes
 
 - Fixed file parsing behaviour for privacy enclave keystore password file [\#554](https://github.com/hyperledger/besu/pull/554) (thanks to [magooster](https://github.com/magooster))
+- Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522)
 
 ## 1.4.1
 
@@ -1757,7 +1760,7 @@ If using the URL `http://127.0.0.1` to make JSON-RPC calls, use `--host-whitelis
 
 If your application publishes RPC ports, specify the hostnames when starting Besu. For example:  
 
-```json
+```bash
 pantheon --host-whitelist=example.com
 ```
 
