@@ -29,13 +29,23 @@ public class MiningParameters {
   private final String stratumNetworkInterface;
   private final int stratumPort;
   private final String stratumExtranonce;
+  private final Optional<Iterable<Long>> maybeNonceGenerator;
 
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final Bytes extraData,
       final boolean enabled) {
-    this(coinbase, minTransactionGasPrice, extraData, enabled, false, "0.0.0.0", 8008, "080c");
+    this(
+        coinbase,
+        minTransactionGasPrice,
+        extraData,
+        enabled,
+        false,
+        "0.0.0.0",
+        8008,
+        "080c",
+        Optional.empty());
   }
 
   public MiningParameters(
@@ -46,7 +56,8 @@ public class MiningParameters {
       final boolean stratumMiningEnabled,
       final String stratumNetworkInterface,
       final int stratumPort,
-      final String stratumExtranonce) {
+      final String stratumExtranonce,
+      final Optional<Iterable<Long>> maybeNonceGenerator) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
@@ -55,6 +66,7 @@ public class MiningParameters {
     this.stratumNetworkInterface = stratumNetworkInterface;
     this.stratumPort = stratumPort;
     this.stratumExtranonce = stratumExtranonce;
+    this.maybeNonceGenerator = maybeNonceGenerator;
   }
 
   public Optional<Address> getCoinbase() {
@@ -87,6 +99,10 @@ public class MiningParameters {
 
   public String getStratumExtranonce() {
     return stratumExtranonce;
+  }
+
+  public Optional<Iterable<Long>> getNonceGenerator() {
+    return maybeNonceGenerator;
   }
 
   @Override

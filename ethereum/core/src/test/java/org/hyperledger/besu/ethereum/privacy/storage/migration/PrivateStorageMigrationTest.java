@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privacyMarkerTransaction;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
-import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.privacyMarkerTransaction;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -73,7 +73,6 @@ public class PrivateStorageMigrationTest {
   public static final Bytes32 PRIVACY_GROUP_BYTES =
       Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID));
   private static final Address PRIVACY_ADDRESS = Address.DEFAULT_PRIVACY;
-  private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
 
   @Mock private Blockchain blockchain;
   @Mock private ProtocolSchedule<?> protocolSchedule;
@@ -231,7 +230,7 @@ public class PrivateStorageMigrationTest {
   }
 
   private Transaction createPrivacyMarkerTransaction() {
-    final Transaction privacyMarkerTransaction = privacyMarkerTransaction(TRANSACTION_KEY);
+    final Transaction privacyMarkerTransaction = privacyMarkerTransaction();
     mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
     return privacyMarkerTransaction;
   }

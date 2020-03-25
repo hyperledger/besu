@@ -34,7 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class PrivateTransactionReceipt {
 
   @SuppressWarnings("unchecked")
-  public static final PrivateTransactionReceipt EMPTY =
+  public static final PrivateTransactionReceipt FAILED =
       new PrivateTransactionReceipt(
           0, Collections.EMPTY_LIST, Bytes.EMPTY, Optional.ofNullable(null));
 

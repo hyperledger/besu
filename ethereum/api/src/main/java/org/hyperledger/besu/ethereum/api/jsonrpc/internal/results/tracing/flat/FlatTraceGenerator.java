@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -35,6 +36,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,11 +54,16 @@ public class FlatTraceGenerator {
    *
    * @param transactionTrace the {@link TransactionTrace} to use
    * @param traceCounter the current trace counter value
+   * @param consumer to use to add additional contextual information to the trace
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
-      final TransactionTrace transactionTrace, final AtomicInteger traceCounter) {
+      final TransactionTrace transactionTrace,
+      final AtomicInteger traceCounter,
+      final Consumer<FlatTrace.Builder> consumer) {
+
     final FlatTrace.Builder firstFlatTraceBuilder = FlatTrace.freshBuilder(transactionTrace);
+
     final Transaction tx = transactionTrace.getTransaction();
 
     final Optional<String> smartContractCode =
@@ -145,7 +152,39 @@ public class FlatTraceGenerator {
       }
     }
 
-    return flatTraces.stream().map(FlatTrace.Builder::build);
+    return flatTraces.stream().peek(consumer).map(FlatTrace.Builder::build);
+  }
+
+  /**
+   * Generates a stream of {@link Trace} from the passed {@link TransactionTrace} data.
+   *
+   * @param transactionTrace the {@link TransactionTrace} to use
+   * @param traceCounter the current trace counter value
+   * @return a stream of generated traces {@link Trace}
+   */
+  public static Stream<Trace> generateFromTransactionTrace(
+      final TransactionTrace transactionTrace, final AtomicInteger traceCounter) {
+    return generateFromTransactionTrace(
+        transactionTrace,
+        traceCounter,
+        builder -> addContractCreationMethodToTrace(transactionTrace, builder));
+  }
+
+  /**
+   * Generates a stream of {@link Trace} from the passed {@link TransactionTrace} and {@link Block}
+   * data.
+   *
+   * @param transactionTrace the {@link TransactionTrace} to use
+   * @param block the {@link Block} to use
+   * @return a stream of generated traces {@link Trace}
+   */
+  public static Stream<Trace> generateFromTransactionTraceAndBlock(
+      final TransactionTrace transactionTrace, final Block block) {
+    return generateFromTransactionTrace(
+        transactionTrace,
+        new AtomicInteger(),
+        builder ->
+            addAdditionalTransactionInformationToFlatTrace(builder, transactionTrace, block));
   }
 
   private static FlatTrace.Context handleCall(
@@ -278,7 +317,6 @@ public class FlatTraceGenerator {
             .from(smartContractAddress.orElse(callingAddress))
             .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
             .value(Quantity.create(nextTraceFrame.map(TraceFrame::getValue).orElse(Wei.ZERO)));
-
     final FlatTrace.Context currentContext =
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
     currentContext
@@ -382,5 +420,37 @@ public class FlatTraceGenerator {
             contexts.stream()
                 .map(context -> context.getBuilder().getSubtraces())) // , Stream.of(0))
         .collect(Collectors.toList());
+  }
+
+  private static void addAdditionalTransactionInformationToFlatTrace(
+      final FlatTrace.Builder builder, final TransactionTrace transactionTrace, final Block block) {
+    // add block information (hash and number)
+    builder.blockHash(block.getHash().toHexString()).blockNumber(block.getHeader().getNumber());
+    // add transaction information (position and hash)
+    builder
+        .transactionPosition(
+            block.getBody().getTransactions().indexOf(transactionTrace.getTransaction()))
+        .transactionHash(transactionTrace.getTransaction().getHash().toHexString());
+
+    addContractCreationMethodToTrace(transactionTrace, builder);
+  }
+
+  private static void addContractCreationMethodToTrace(
+      final TransactionTrace transactionTrace, final FlatTrace.Builder builder) {
+
+    // add creationMethod for create action
+    Optional.ofNullable(builder.getType())
+        .filter(type -> type.equals("create"))
+        .ifPresent(
+            __ ->
+                builder
+                    .getActionBuilder()
+                    .creationMethod(
+                        transactionTrace.getTraceFrames().stream()
+                            .filter(frame -> "CREATE2".equals(frame.getOpcode()))
+                            .findFirst()
+                            .map(TraceFrame::getOpcode)
+                            .orElse("CREATE")
+                            .toLowerCase(Locale.US)));
   }
 }

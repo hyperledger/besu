@@ -105,6 +105,8 @@ public class JsonRpcMethodsFactory {
               new PermJsonRpcMethods(accountsWhitelistController, nodeWhitelistController),
               new PrivJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
+              new PrivxJsonRpcMethods(
+                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
               // TRACE Methods (Disabled while under development)
               new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),

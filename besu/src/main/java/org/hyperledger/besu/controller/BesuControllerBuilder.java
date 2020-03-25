@@ -219,6 +219,9 @@ public abstract class BesuControllerBuilder<C> {
             this::createConsensusContext);
     validateContext(protocolContext);
 
+    protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
+        protocolContext.getWorldStateArchive());
+
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     Optional<Pruner> maybePruner = Optional.empty();

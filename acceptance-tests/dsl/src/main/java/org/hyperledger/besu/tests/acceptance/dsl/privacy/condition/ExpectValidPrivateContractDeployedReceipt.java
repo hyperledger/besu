@@ -43,6 +43,8 @@ public class ExpectValidPrivateContractDeployedReceipt implements PrivateContrac
     assertThat(receipt.isPresent()).isTrue();
     final TransactionReceipt transactionReceipt = receipt.get();
 
+    assertThat(transactionReceipt.isStatusOK()).isTrue();
+
     // Contract transaction has no 'to' address or contract address
     assertThat(transactionReceipt.getTo()).isNull();
 

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -50,8 +51,17 @@ public class LogsQuery {
           final List<Address> addresses,
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics) {
-    this.addresses = addresses != null ? addresses : emptyList();
-    this.topics = topics != null ? topics : emptyList();
+    // Ordinarily this defensive copy wouldn't be surprising, style wise it should be an immutable
+    // collection. However, the semantics of the Ethereum JSON-RPC APIs ascribe meaning to a null
+    // value in lists for logs queries. We need to proactively put the values into a collection
+    // that won't throw a null pointer exception when checking to see if the list contains null.
+    // List.of(...) is one of the lists that reacts poorly to null member checks and is something
+    // that we should expect to see passed in. So we must copy into a null-tolerant list.
+    this.addresses = addresses != null ? new ArrayList<>(addresses) : emptyList();
+    this.topics =
+        topics != null
+            ? topics.stream().map(ArrayList::new).collect(Collectors.toList())
+            : emptyList();
     this.addressBlooms =
         this.addresses.stream()
             .map(address -> LogsBloomFilter.builder().insertBytes(address).build())

@@ -49,25 +49,44 @@ public class PrivateTransactionValidatorTest {
   }
 
   @Test
-  public void transactionWithNonceLowerThanAccountNonceShouldReturnLowNonceError() {
+  public void transactionWithNonceLowerThanAccountNonceShouldAlwaysReturnLowNonceError() {
     ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithNonce(1L), 2L);
+        validator.validate(privateTransactionWithNonce(1L), 2L, false);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
+
+    validationResult = validator.validate(privateTransactionWithNonce(1L), 2L, true);
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
   }
 
   @Test
-  public void transactionWithNonceGreaterThanAccountNonceShouldReturnIncorrectNonceError() {
-    ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithNonce(3L), 2L);
+  public void
+      transactionWithNonceGreaterThanAccountNonceShouldReturnIncorrectNonceErrorWhenFutureNoncesNotAllowed() {
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithNonce(3L), 2L, false);
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
   }
 
   @Test
-  public void transactionWithNonceMatchingThanAccountNonceShouldReturnValidTransactionResult() {
+  public void
+      transactionWithNonceGreaterThanAccountNonceShouldReturnValidTransactionWhenFutureNoncesAllowed() {
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithNonce(3L), 2L, true);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void
+      transactionWithNonceMatchingThanAccountNonceShouldAlwaysReturnValidTransactionResult() {
     ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithNonce(1L), 1L);
+        validator.validate(privateTransactionWithNonce(1L), 1L, false);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.valid());
+
+    validationResult = validator.validate(privateTransactionWithNonce(1L), 1L, true);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
   }
@@ -76,8 +95,8 @@ public class PrivateTransactionValidatorTest {
   public void transactionWithInvalidChainIdShouldReturnWrongChainId() {
     validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
 
-    ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithChainId(999), 0L);
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithChainId(999), 0L, false);
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(WRONG_CHAIN_ID));
   }
@@ -87,8 +106,8 @@ public class PrivateTransactionValidatorTest {
       transactionWithoutChainIdWithValidatorUsingChainIdShouldReturnReplayProtectedSignaturesNotSupported() {
     validator = new PrivateTransactionValidator(Optional.empty());
 
-    ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithChainId(999), 0L);
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithChainId(999), 0L, false);
 
     assertThat(validationResult)
         .isEqualTo(ValidationResult.invalid(REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED));
@@ -96,12 +115,12 @@ public class PrivateTransactionValidatorTest {
 
   @Test
   public void transactionWithInvalidSignatureShouldReturnInvalidSignature() {
-    PrivateTransaction transactionWithInvalidSignature =
+    final PrivateTransaction transactionWithInvalidSignature =
         Mockito.spy(privateTransactionWithNonce(1L));
     when(transactionWithInvalidSignature.getSender()).thenThrow(new IllegalArgumentException());
 
-    ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(transactionWithInvalidSignature, 1L);
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(transactionWithInvalidSignature, 1L, false);
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_SIGNATURE));
   }
@@ -110,8 +129,8 @@ public class PrivateTransactionValidatorTest {
   public void transactionWithNonZeroValueShouldReturnValueNotZeroError() {
     validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
 
-    ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithValue(1L), 0L);
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithValue(1L), 0L, false);
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_VALUE_NOT_ZERO));
   }
@@ -121,8 +140,8 @@ public class PrivateTransactionValidatorTest {
       transactionWithUnrestrictedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
     validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
 
-    ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithRestriction(Restriction.UNRESTRICTED), 0L);
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithRestriction(Restriction.UNRESTRICTED), 0L, false);
 
     assertThat(validationResult)
         .isEqualTo(ValidationResult.invalid(PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE));
@@ -133,8 +152,8 @@ public class PrivateTransactionValidatorTest {
       transactionWithUnsupportedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
     validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
 
-    ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithRestriction(Restriction.UNSUPPORTED), 0L);
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithRestriction(Restriction.UNSUPPORTED), 0L, false);
 
     assertThat(validationResult)
         .isEqualTo(ValidationResult.invalid(PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE));

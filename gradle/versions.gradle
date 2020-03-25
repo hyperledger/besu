@@ -17,9 +17,6 @@ dependencyManagement {
   dependencies {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
     dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.10.1'
-
-    dependency 'com.github.docker-java:docker-java:3.0.14'
-
     dependency 'com.github.tomakehurst:wiremock-jre8:2.25.1'
 
     dependency 'com.google.auto.service:auto-service:1.0-rc6'
@@ -37,7 +34,11 @@ dependencyManagement {
 
     dependency 'commons-cli:commons-cli:1.4'
 
+    dependency 'commons-io:commons-io:2.6'
+
     dependency 'info.picocli:picocli:4.1.4'
+
+    dependency 'io.kubernetes:client-java:5.0.0'
 
     dependency 'io.pkts:pkts-core:3.0.5'
 
@@ -58,6 +59,7 @@ dependencyManagement {
 
     dependency 'net.consensys:orion:1.5.0-SNAPSHOT'
 
+    dependency 'org.apache.commons:commons-compress:1.20'
     dependency 'org.apache.commons:commons-text:1.8'
 
     dependency 'org.apache.logging.log4j:log4j-api:2.13.0'
@@ -95,10 +97,10 @@ dependencyManagement {
 
     dependency 'org.springframework.security:spring-security-crypto:5.2.1.RELEASE'
 
-    dependency 'org.web3j:abi:4.5.11'
-    dependency 'org.web3j:besu:4.5.11'
-    dependency 'org.web3j:core:4.5.11'
-    dependency 'org.web3j:crypto:4.5.11'
+    dependency 'org.web3j:abi:4.5.15'
+    dependency 'org.web3j:besu:4.5.15'
+    dependency 'org.web3j:core:4.5.15'
+    dependency 'org.web3j:crypto:4.5.15'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
 

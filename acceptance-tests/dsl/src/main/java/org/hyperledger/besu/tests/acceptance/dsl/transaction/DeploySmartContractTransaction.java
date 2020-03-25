@@ -18,6 +18,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -33,26 +36,68 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
       Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
 
   private final Class<T> clazz;
+  private final Object[] args;
 
-  public DeploySmartContractTransaction(final Class<T> clazz) {
+  public DeploySmartContractTransaction(final Class<T> clazz, final Object... args) {
     this.clazz = clazz;
+    this.args = args;
   }
 
   @Override
   public T execute(final NodeRequests node) {
     try {
-      final Method method =
-          clazz.getMethod(
-              "deploy", Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
+      if (args != null && args.length != 0) {
+        final ArrayList<Object> parameterObjects = new ArrayList<>();
+        parameterObjects.addAll(
+            Arrays.asList(node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT));
+        parameterObjects.addAll(Arrays.asList(args));
 
-      final Object invoked =
-          method.invoke(
-              METHOD_IS_STATIC, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+        final Method method =
+            Arrays.stream(clazz.getMethods())
+                .filter(
+                    i ->
+                        i.getName().equals("deploy")
+                            && parameterTypesAreEqual(i.getParameterTypes(), parameterObjects))
+                .findAny()
+                .orElseThrow();
 
-      return cast(invoked).send();
+        final Object invoked = method.invoke(METHOD_IS_STATIC, parameterObjects.toArray());
+
+        return cast(invoked).send();
+      } else {
+        final Method method =
+            clazz.getMethod(
+                "deploy", Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
+
+        final Object invoked =
+            method.invoke(
+                METHOD_IS_STATIC, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+
+        return cast(invoked).send();
+      }
+
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @SuppressWarnings("rawtypes")
+  private boolean parameterTypesAreEqual(
+      final Class<?>[] expectedTypes, final ArrayList<Object> actualObjects) {
+    if (expectedTypes.length != actualObjects.size()) {
+      return false;
+    }
+    final ArrayList<Class> actualTypes =
+        actualObjects.stream()
+            .map(Object::getClass)
+            .collect(Collectors.toCollection(ArrayList::new));
+
+    for (int i = 0; i < expectedTypes.length; i++) {
+      if (!expectedTypes[i].isAssignableFrom(actualTypes.get(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @SuppressWarnings("unchecked")

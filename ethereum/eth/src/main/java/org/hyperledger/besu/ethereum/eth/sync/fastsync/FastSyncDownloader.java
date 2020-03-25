@@ -26,6 +26,7 @@ import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FastSyncDownloader<C> {
+
+  private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
+
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions<C> fastSyncActions;
   private final WorldStateDownloader worldStateDownloader;
@@ -79,17 +83,25 @@ public class FastSyncDownloader<C> {
             .thenApply(this::updateMaxTrailingPeers)
             .thenApply(this::storeState)
             .thenCompose(this::downloadChainAndWorldState),
-        this::handleWorldStateUnavailable);
+        this::handleFailure);
   }
 
-  private CompletableFuture<FastSyncState> handleWorldStateUnavailable(final Throwable error) {
+  private CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
-    if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
+    if (ExceptionUtils.rootCause(error) instanceof FastSyncException) {
+      return CompletableFuture.failedFuture(error);
+    } else if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
       LOG.warn(
           "Fast sync was unable to download the world state. Retrying with a new pivot block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
-      return CompletableFuture.failedFuture(error);
+      LOG.error(
+          "Encountered an unexpected error during fast sync. Restarting fast sync in "
+              + FAST_SYNC_RETRY_DELAY
+              + " seconds.",
+          error);
+      return fastSyncActions.scheduleFutureTask(
+          () -> start(FastSyncState.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
     }
   }
 
@@ -138,7 +150,8 @@ public class FastSyncDownloader<C> {
     // after the stop method had called cancel.
     synchronized (this) {
       if (!running.get()) {
-        return CompletableFuture.failedFuture(new CancellationException("FastSyncDownloader stopped"));
+        return CompletableFuture.failedFuture(
+            new CancellationException("FastSyncDownloader stopped"));
       }
       final CompletableFuture<Void> worldStateFuture =
           worldStateDownloader.run(currentState.getPivotBlockHeader().get());
