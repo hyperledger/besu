@@ -45,12 +45,14 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.awaitility.Awaitility;
 
 public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
-  private final Logger LOG = LogManager.getLogger();
-  private final Logger PROCESS_LOG = LogManager.getLogger("org.hyperledger.besu.SubProcessLog");
+  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger PROCESS_LOG =
+      LogManager.getLogger("org.hyperledger.besu.SubProcessLog");
 
   private final Map<String, Process> besuProcesses = new HashMap<>();
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
@@ -61,6 +63,12 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void startNode(final BesuNode node) {
+
+    if (ThreadContext.containsKey("node")) {
+      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
+    }
+    ThreadContext.put("node", node.getName());
+
     final Path dataDir = node.homeDirectory();
 
     final List<String> params = new ArrayList<>();
@@ -264,6 +272,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
 
+    String level = System.getProperty("root.log.level");
+    if (level != null) {
+      params.add("--logging=" + level);
+    }
+
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
@@ -293,6 +306,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     waitForFile(dataDir, "besu.ports");
     waitForFile(dataDir, "besu.networks");
+
+    ThreadContext.remove("node");
   }
 
   private boolean isNotAliveOrphan(final String name) {
@@ -305,11 +320,16 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
       String line = in.readLine();
       while (line != null) {
-        PROCESS_LOG.info("{}: {}", node.getName(), line);
+        // would be nice to pass up the log level of the incoming log line
+        PROCESS_LOG.info(line);
         line = in.readLine();
       }
     } catch (final IOException e) {
-      LOG.error("Failed to read output from process", e);
+      if (besuProcesses.containsKey(node.getName())) {
+        LOG.error("Failed to read output from process for node " + node.getName(), e);
+      } else {
+        LOG.debug("Stdout from process {} closed", node.getName());
+      }
     }
   }
 
@@ -338,6 +358,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (besuProcesses.containsKey(node.getName())) {
       final Process process = besuProcesses.get(node.getName());
       killBesuProcess(node.getName(), process);
+    } else {
+      LOG.error("There was a request to stop an uknown node: {}", node.getName());
     }
   }
 
