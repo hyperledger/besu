@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.awaitility.Awaitility;
 
 public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
@@ -385,19 +384,28 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   }
 
   private void killBesuProcess(final String name, final Process process) {
-    LOG.info("Killing " + name + " process");
+    LOG.info("Killing {} process", name);
 
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (process.isAlive()) {
-                process.destroy();
-                besuProcesses.remove(name);
-                return false;
-              } else {
-                besuProcesses.remove(name);
-                return true;
-              }
-            });
+    final Process p = besuProcesses.remove(name);
+    if (p == null) {
+      LOG.error("Process {} wasn't in our list", name);
+    }
+
+    process.destroy();
+    try {
+      process.waitFor(2, TimeUnit.SECONDS);
+    } catch (final InterruptedException e) {
+      LOG.warn("Wait for death of process {} was interrupted", name, e);
+    }
+
+    if (process.isAlive()) {
+      LOG.warn("Process {} still alive, destroying forcibly now", name);
+      try {
+        process.destroyForcibly().waitFor(2, TimeUnit.SECONDS);
+      } catch (final Exception e) {
+        // just die already
+      }
+      LOG.info("Process exited with code {}", process.exitValue());
+    }
   }
 }
