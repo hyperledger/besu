@@ -4,7 +4,7 @@
 
 ### Additions and Improvements
 
--
+- Added `pulledStates` and `knownStates` to the EthQL `syncing` query and `eth_syncing` JSON-RPC api [\#565](https://github.com/hyperledger/besu/pull/565)
 
 ### Bug Fixes
 
@@ -1757,7 +1757,7 @@ If using the URL `http://127.0.0.1` to make JSON-RPC calls, use `--host-whitelis
 
 If your application publishes RPC ports, specify the hostnames when starting Besu. For example:  
 
-```json
+```bash
 pantheon --host-whitelist=example.com
 ```
 

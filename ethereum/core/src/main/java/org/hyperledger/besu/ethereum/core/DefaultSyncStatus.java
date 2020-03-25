@@ -15,18 +15,27 @@
 package org.hyperledger.besu.ethereum.core;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public final class DefaultSyncStatus implements org.hyperledger.besu.plugin.data.SyncStatus {
 
   private final long startingBlock;
   private final long currentBlock;
   private final long highestBlock;
+  private final Optional<Long> pulledStates;
+  private final Optional<Long> knownStates;
 
   public DefaultSyncStatus(
-      final long startingBlock, final long currentBlock, final long highestBlock) {
+      final long startingBlock,
+      final long currentBlock,
+      final long highestBlock,
+      final Optional<Long> pulledStates,
+      final Optional<Long> knownStates) {
     this.startingBlock = startingBlock;
     this.currentBlock = currentBlock;
     this.highestBlock = highestBlock;
+    this.pulledStates = pulledStates;
+    this.knownStates = knownStates;
   }
 
   @Override
@@ -42,6 +51,16 @@ public final class DefaultSyncStatus implements org.hyperledger.besu.plugin.data
   @Override
   public long getHighestBlock() {
     return highestBlock;
+  }
+
+  @Override
+  public Optional<Long> getPulledStates() {
+    return pulledStates;
+  }
+
+  @Override
+  public Optional<Long> getKnownStates() {
+    return knownStates;
   }
 
   @Override
