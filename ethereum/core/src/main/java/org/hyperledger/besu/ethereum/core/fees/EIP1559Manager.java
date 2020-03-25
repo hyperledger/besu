@@ -12,8 +12,8 @@ public class EIP1559Manager {
   private final long INITIAL_FORK_BLKNUM = 0L;
   private final long FINAL_FORK_BLKNUM = INITIAL_FORK_BLKNUM + EIP1559_DECAY_RANGE;
 
-  public long computeBaseFee(final long parentBaseFee, final long blockGasUsed) {
-    long delta = blockGasUsed - TARGET_GAS_USED;
+  public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
+    long delta = parentBlockGasUsed - TARGET_GAS_USED;
     if (delta < 0) {
       delta = -delta;
     }
