@@ -170,7 +170,8 @@ public class DefaultPrivacyController implements PrivacyController {
     final String privacyGroupId = privateTransaction.determinePrivacyGroupId();
     return privateTransactionValidator.validate(
         privateTransaction,
-        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
+        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey),
+        true);
   }
 
   @Override
