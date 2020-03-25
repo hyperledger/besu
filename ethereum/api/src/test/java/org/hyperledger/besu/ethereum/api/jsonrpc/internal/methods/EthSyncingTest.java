@@ -71,7 +71,25 @@ public class EthSyncingTest {
   @Test
   public void shouldReturnExpectedValueWhenSyncStatusIsNotEmpty() {
     final JsonRpcRequestContext request = requestWithParams();
-    final SyncStatus expectedSyncStatus = new DefaultSyncStatus(0, 1, 2);
+    final SyncStatus expectedSyncStatus =
+        new DefaultSyncStatus(0, 1, 2, Optional.empty(), Optional.empty());
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), new SyncingResult(expectedSyncStatus));
+    final Optional<SyncStatus> optionalSyncStatus = Optional.of(expectedSyncStatus);
+    when(synchronizer.getSyncStatus()).thenReturn(optionalSyncStatus);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    verify(synchronizer).getSyncStatus();
+    verifyNoMoreInteractions(synchronizer);
+  }
+
+  @Test
+  public void shouldReturnExpectedValueWhenFastSyncStatusIsNotEmpty() {
+    final JsonRpcRequestContext request = requestWithParams();
+    final SyncStatus expectedSyncStatus =
+        new DefaultSyncStatus(0, 1, 2, Optional.of(3L), Optional.of(4L));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             request.getRequest().getId(), new SyncingResult(expectedSyncStatus));

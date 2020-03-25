@@ -1858,7 +1858,8 @@ public class JsonRpcHttpServiceTest {
 
   @Test
   public void ethSyncingResultIsPresent() throws Exception {
-    final SyncStatus testResult = new DefaultSyncStatus(1L, 8L, 7L);
+    final SyncStatus testResult =
+        new DefaultSyncStatus(1L, 8L, 7L, Optional.empty(), Optional.empty());
     when(synchronizer.getSyncStatus()).thenReturn(Optional.of(testResult));
     final String id = "999";
     final RequestBody body =
@@ -1876,6 +1877,34 @@ public class JsonRpcHttpServiceTest {
       assertThat(currentBlock).isEqualTo(8L);
       final long highestBlock = Long.decode(result.getString("highestBlock"));
       assertThat(highestBlock).isEqualTo(7L);
+    }
+  }
+
+  @Test
+  public void ethFastSyncingResultIsPresent() throws Exception {
+    final SyncStatus testResult =
+        new DefaultSyncStatus(1L, 8L, 7L, Optional.of(6L), Optional.of(5L));
+    when(synchronizer.getSyncStatus()).thenReturn(Optional.of(testResult));
+    final String id = "999";
+    final RequestBody body =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"eth_syncing\"}");
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      final String respBody = resp.body().string();
+      final JsonObject json = new JsonObject(respBody);
+      final JsonObject result = json.getJsonObject("result");
+      final long startingBlock = Long.decode(result.getString("startingBlock"));
+      assertThat(startingBlock).isEqualTo(1L);
+      final long currentBlock = Long.decode(result.getString("currentBlock"));
+      assertThat(currentBlock).isEqualTo(8L);
+      final long highestBlock = Long.decode(result.getString("highestBlock"));
+      assertThat(highestBlock).isEqualTo(7L);
+      final long pulledStates = Long.decode(result.getString("pulledStates"));
+      assertThat(pulledStates).isEqualTo(6L);
+      final long knownStates = Long.decode(result.getString("knownStates"));
+      assertThat(knownStates).isEqualTo(5L);
     }
   }
 
