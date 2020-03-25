@@ -15,6 +15,7 @@
 
 * [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. Known issue resolved (see above).
 * [TRACE API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) now includes `trace_block`, `trace_replayBlockTransactions`, and `trace_transaction`. 
+Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522). 
 
 ### Known Issues 
 
