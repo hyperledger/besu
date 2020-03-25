@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.2
+
+### Additions and Improvements
+
+-
+
+### Bug Fixes
+
+- Fixed file parsing behaviour for privacy enclave keystore password file [\#554](https://github.com/hyperledger/besu/pull/554) (thanks to [magooster](https://github.com/magooster))
+
 ## 1.4.1
 
 ### Additions and Improvements 

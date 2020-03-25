@@ -58,12 +58,13 @@ import java.util.stream.Collectors;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
-  private final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
   private final Map<String, Runner> besuRunners = new HashMap<>();
 
   private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new HashMap<>();
@@ -98,6 +99,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void startNode(final BesuNode node) {
+
+    if (ThreadContext.containsKey("node")) {
+      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
+    }
+    ThreadContext.put("node", node.getName());
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final Path dataDir = node.homeDirectory();
@@ -194,6 +200,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     runner.start();
 
     besuRunners.put(node.getName(), runner);
+    ThreadContext.remove("node");
   }
 
   @Override
@@ -231,6 +238,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       } catch (final Exception e) {
         throw new RuntimeException("Error shutting down node " + name, e);
       }
+    } else {
+      LOG.error("There was a request to kill an unknown node: {}", name);
     }
   }
 }
