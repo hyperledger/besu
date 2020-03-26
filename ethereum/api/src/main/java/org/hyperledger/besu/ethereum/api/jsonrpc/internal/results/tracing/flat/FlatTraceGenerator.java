@@ -233,7 +233,8 @@ public class FlatTraceGenerator {
       final Deque<FlatTrace.Context> tracesContexts,
       final FlatTrace.Context currentContext) {
     if (tracesContexts.size() == 1) {
-      currentContext.setGasUsed(computeGasUsed(transactionTrace, currentContext.getGasUsed()));
+      currentContext.setGasUsed(
+          computeGasUsed(transactionTrace, traceFrame, currentContext.getGasUsed()));
     }
     final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
     final Result.Builder resultBuilder = traceFrameBuilder.getResultBuilder();
@@ -391,13 +392,17 @@ public class FlatTraceGenerator {
   }
 
   private static long computeGasUsed(
-      final TransactionTrace transactionTrace, final long fallbackValue) {
+      final TransactionTrace transactionTrace,
+      final TraceFrame traceFrame,
+      final long fallbackValue) {
     final long firstFrameGasRemaining =
         transactionTrace.getTraceFrames().get(0).getGasRemaining().toLong();
     final long gasRemainingAfterTransactionWasProcessed =
         transactionTrace.getResult().getGasRemaining();
     if (firstFrameGasRemaining > gasRemainingAfterTransactionWasProcessed) {
-      return firstFrameGasRemaining - gasRemainingAfterTransactionWasProcessed;
+      return firstFrameGasRemaining
+          - gasRemainingAfterTransactionWasProcessed
+          + traceFrame.getGasRefund().toLong();
     } else {
       return fallbackValue;
     }
