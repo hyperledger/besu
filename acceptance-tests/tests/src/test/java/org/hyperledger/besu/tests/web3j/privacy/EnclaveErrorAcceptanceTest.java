@@ -62,7 +62,8 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                         bob.getEnclaveKey())));
 
     assertThat(throwable)
-        .hasMessageContaining(JsonRpcError.ENCLAVE_NO_MATCHING_PRIVATE_KEY.getMessage());
+        .hasMessageContaining(
+            JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
   }
 
   @Test
