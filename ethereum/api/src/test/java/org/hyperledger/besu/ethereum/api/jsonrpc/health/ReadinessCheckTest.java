@@ -143,6 +143,7 @@ public class ReadinessCheckTest {
   }
 
   private Optional<SyncStatus> createSyncStatus(final int currentBlock, final int highestBlock) {
-    return Optional.of(new DefaultSyncStatus(0, currentBlock, highestBlock));
+    return Optional.of(
+        new DefaultSyncStatus(0, currentBlock, highestBlock, Optional.empty(), Optional.empty()));
   }
 }

@@ -36,7 +36,6 @@ public class CompleteTaskStep {
   private final Counter retriedRequestsCounter;
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
   private final DecimalFormat doubleFormatter = new DecimalFormat("#.##");
-  private double estimatedWorldStateCompletion;
 
   public CompleteTaskStep(
       final WorldStateStorage worldStateStorage,
@@ -80,16 +79,23 @@ public class CompleteTaskStep {
   private void displayWorldStateSyncProgress() {
     LOG.info(
         "Downloaded {} world state nodes. At least {} nodes remaining. Estimated World State completion: {} %.",
-        completedRequestsCounter.get(),
+        getCompletedRequests(),
         worldStatePendingRequestsCurrentSupplier.getAsLong(),
         doubleFormatter.format(computeWorldStateSyncProgress() * 100.0));
   }
 
   public double computeWorldStateSyncProgress() {
-    final double pendingRequests = worldStatePendingRequestsCurrentSupplier.getAsLong();
-    final double completedRequests = completedRequestsCounter.get();
-    estimatedWorldStateCompletion = completedRequests / (completedRequests + pendingRequests);
-    return this.estimatedWorldStateCompletion;
+    final double pendingRequests = getPendingRequests();
+    final double completedRequests = getCompletedRequests();
+    return completedRequests / (completedRequests + pendingRequests);
+  }
+
+  long getCompletedRequests() {
+    return completedRequestsCounter.get();
+  }
+
+  long getPendingRequests() {
+    return worldStatePendingRequestsCurrentSupplier.getAsLong();
   }
 
   private void enqueueChildren(
