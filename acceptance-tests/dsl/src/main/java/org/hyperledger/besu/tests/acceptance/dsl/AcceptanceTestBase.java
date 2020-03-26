@@ -61,9 +61,6 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
 public class AcceptanceTestBase {
-  static {
-    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
-  }
 
   private static final Logger LOG = LogManager.getLogger();
 
