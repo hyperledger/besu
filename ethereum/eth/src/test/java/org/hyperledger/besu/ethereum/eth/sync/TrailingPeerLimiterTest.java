@@ -117,7 +117,7 @@ public class TrailingPeerLimiterTest {
         BlockAddedEvent.createForHeadAdvancement(
             new Block(
                 new BlockHeaderTestFixture().number(500).buildHeader(),
-                new BlockBody(emptyList(), emptyList())),
+                new BlockBody(emptyList(), emptyList(), emptyList())),
             Collections.emptyList());
     trailingPeerLimiter.onBlockAdded(blockAddedEvent, blockchain);
 
@@ -134,7 +134,7 @@ public class TrailingPeerLimiterTest {
         BlockAddedEvent.createForHeadAdvancement(
             new Block(
                 new BlockHeaderTestFixture().number(599).buildHeader(),
-                new BlockBody(emptyList(), emptyList())),
+                new BlockBody(emptyList(), emptyList(), emptyList())),
             Collections.emptyList());
     trailingPeerLimiter.onBlockAdded(blockAddedEvent, blockchain);
 

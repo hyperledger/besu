@@ -94,7 +94,10 @@ public class PrivGetTransactionReceiptTest {
     when(blockchain.getTransactionLocation(nullable(Hash.class)))
         .thenReturn(Optional.of(transactionLocation));
     final BlockBody blockBody =
-        new BlockBody(Collections.singletonList(markerTransaction), Collections.emptyList());
+        new BlockBody(
+            Collections.singletonList(markerTransaction),
+            Collections.emptyList(),
+            Collections.emptyList());
     when(blockchain.getBlockBody(any(Hash.class))).thenReturn(Optional.of(blockBody));
     final BlockHeader mockBlockHeader = mock(BlockHeader.class);
     when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(mockBlockHeader));

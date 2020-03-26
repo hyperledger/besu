@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -78,33 +79,50 @@ public class PrivateTransactionProcessor {
 
     private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
     private final Optional<Bytes> revertReason;
+    private final Hash transactionHash;
 
     public static Result invalid(
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
+        final Hash transactionHash) {
       return new Result(
-          Status.INVALID, new ArrayList<>(), -1, Bytes.EMPTY, validationResult, Optional.empty());
+          Status.INVALID,
+          new ArrayList<>(),
+          -1,
+          Bytes.EMPTY,
+          validationResult,
+          Optional.empty(),
+          transactionHash);
     }
 
     public static Result failed(
         final long gasRemaining,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<Bytes> revertReason) {
+        final Optional<Bytes> revertReason,
+        final Hash transactionHash) {
       return new Result(
           Status.FAILED,
           new ArrayList<>(),
           gasRemaining,
           Bytes.EMPTY,
           validationResult,
-          revertReason);
+          revertReason,
+          transactionHash);
     }
 
     public static Result successful(
         final List<Log> logs,
         final long gasRemaining,
         final Bytes output,
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
+        final Hash transactionHash) {
       return new Result(
-          Status.SUCCESSFUL, logs, gasRemaining, output, validationResult, Optional.empty());
+          Status.SUCCESSFUL,
+          logs,
+          gasRemaining,
+          output,
+          validationResult,
+          Optional.empty(),
+          transactionHash);
     }
 
     Result(
@@ -113,13 +131,15 @@ public class PrivateTransactionProcessor {
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<Bytes> revertReason) {
+        final Optional<Bytes> revertReason,
+        final Hash transactionHash) {
       this.status = status;
       this.logs = logs;
       this.gasRemaining = gasRemaining;
       this.output = output;
       this.validationResult = validationResult;
       this.revertReason = revertReason;
+      this.transactionHash = transactionHash;
     }
 
     @Override
@@ -150,6 +170,11 @@ public class PrivateTransactionProcessor {
     @Override
     public Optional<Bytes> getRevertReason() {
       return revertReason;
+    }
+
+    @Override
+    public Hash getTransactionHash() {
+      return transactionHash;
     }
   }
 
@@ -198,7 +223,7 @@ public class PrivateTransactionProcessor {
     final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
         privateTransactionValidator.validate(transaction, sender.getNonce());
     if (!validationResult.isValid()) {
-      return Result.invalid(validationResult);
+      return Result.invalid(validationResult, transaction.getHash());
     }
 
     final long previousNonce = sender.incrementNonce();
@@ -295,13 +320,18 @@ public class PrivateTransactionProcessor {
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       return Result.successful(
-          initialFrame.getLogs(), 0, initialFrame.getOutputData(), ValidationResult.valid());
+          initialFrame.getLogs(),
+          0,
+          initialFrame.getOutputData(),
+          ValidationResult.valid(),
+          transaction.getHash());
     } else {
       return Result.failed(
           0,
           ValidationResult.invalid(
               TransactionValidator.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
-          initialFrame.getRevertReason());
+          initialFrame.getRevertReason(),
+          transaction.getHash());
     }
   }
 

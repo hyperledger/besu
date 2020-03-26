@@ -53,7 +53,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public final class GenesisState {
 
   private static final BlockBody BODY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
+      new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
   private final Block block;
   private final List<GenesisAccount> genesisAccounts;

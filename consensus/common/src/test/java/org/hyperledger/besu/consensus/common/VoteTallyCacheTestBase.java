@@ -40,7 +40,8 @@ public class VoteTallyCacheTestBase {
   protected Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
     return new Block(
-        headerBuilder.buildHeader(), new BlockBody(Lists.emptyList(), Lists.emptyList()));
+        headerBuilder.buildHeader(),
+        new BlockBody(Lists.emptyList(), Lists.emptyList(), Lists.emptyList()));
   }
 
   protected MutableBlockchain blockChain;

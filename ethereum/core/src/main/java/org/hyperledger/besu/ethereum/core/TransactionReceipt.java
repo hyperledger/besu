@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
  * formats: logs, logs bloom, and cumulative gas used in the block. The TransactionReceiptType
  * attribute is the best way to check which format has been used.
  */
-public class TransactionReceipt {
+public class TransactionReceipt implements org.hyperledger.besu.plugin.data.TransactionReceipt {
 
   private static final int NONEXISTENT = -1;
 
@@ -48,6 +48,7 @@ public class TransactionReceipt {
   private final int status;
   private final TransactionReceiptType transactionReceiptType;
   private final Optional<Bytes> revertReason;
+  private final Hash transactionHash;
 
   /**
    * Creates an instance of a state root-encoded transaction receipt.
@@ -56,19 +57,22 @@ public class TransactionReceipt {
    * @param cumulativeGasUsed the total amount of gas consumed in the block after this transaction
    * @param logs the logs generated within the transaction
    * @param revertReason the revert reason for a failed transaction (if applicable)
+   * @param transactionHash the hash of the transaction
    */
   public TransactionReceipt(
       final Hash stateRoot,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<Bytes> revertReason) {
+      final Optional<Bytes> revertReason,
+      final Hash transactionHash) {
     this(
         stateRoot,
         NONEXISTENT,
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason);
+        revertReason,
+        transactionHash);
   }
 
   private TransactionReceipt(
@@ -76,8 +80,16 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason) {
-    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter, revertReason);
+      final Optional<Bytes> revertReason,
+      final Hash transactionHash) {
+    this(
+        stateRoot,
+        NONEXISTENT,
+        cumulativeGasUsed,
+        logs,
+        bloomFilter,
+        revertReason,
+        transactionHash);
   }
 
   /**
@@ -87,19 +99,22 @@ public class TransactionReceipt {
    * @param cumulativeGasUsed the total amount of gas consumed in the block after this transaction
    * @param logs the logs generated within the transaction
    * @param revertReason the revert reason for a failed transaction (if applicable)
+   * @param transactionHash the hash of the transaction
    */
   public TransactionReceipt(
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<Bytes> revertReason) {
+      final Optional<Bytes> revertReason,
+      final Hash transactionHash) {
     this(
         null,
         status,
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason);
+        revertReason,
+        transactionHash);
   }
 
   private TransactionReceipt(
@@ -107,8 +122,9 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason) {
-    this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
+      final Optional<Bytes> revertReason,
+      final Hash transactionHash) {
+    this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason, transactionHash);
   }
 
   private TransactionReceipt(
@@ -117,7 +133,8 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason) {
+      final Optional<Bytes> revertReason,
+      final Hash transactionHash) {
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
     this.status = status;
@@ -126,6 +143,7 @@ public class TransactionReceipt {
     transactionReceiptType =
         stateRoot == null ? TransactionReceiptType.STATUS : TransactionReceiptType.ROOT;
     this.revertReason = revertReason;
+    this.transactionHash = transactionHash;
   }
 
   /**
@@ -190,6 +208,7 @@ public class TransactionReceipt {
       // TODO consider validating that the logs and bloom filter match.
       final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
       final List<Log> logs = input.readList(Log::readFrom);
+      final Hash transactionHash = Transaction.readFrom(input).getHash();
       final Optional<Bytes> revertReason;
       if (input.isEndOfCurrentList()) {
         revertReason = Optional.empty();
@@ -204,10 +223,12 @@ public class TransactionReceipt {
       // byte for success (0x01) or failure (0x80).
       if (firstElement.raw().size() == 1) {
         final int status = firstElement.readIntScalar();
-        return new TransactionReceipt(status, cumulativeGas, logs, bloomFilter, revertReason);
+        return new TransactionReceipt(
+            status, cumulativeGas, logs, bloomFilter, revertReason, transactionHash);
       } else {
         final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-        return new TransactionReceipt(stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
+        return new TransactionReceipt(
+            stateRoot, cumulativeGas, logs, bloomFilter, revertReason, transactionHash);
       }
     } finally {
       input.leaveList();
@@ -263,6 +284,12 @@ public class TransactionReceipt {
     return transactionReceiptType;
   }
 
+  @Override
+  public Hash getTransactionHash() {
+    return transactionHash;
+  }
+
+  @Override
   public Optional<Bytes> getRevertReason() {
     return revertReason;
   }

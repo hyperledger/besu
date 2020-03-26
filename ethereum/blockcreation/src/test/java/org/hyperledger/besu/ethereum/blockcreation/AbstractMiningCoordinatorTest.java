@@ -42,7 +42,7 @@ public class AbstractMiningCoordinatorTest {
   private static final Block BLOCK =
       new Block(
           new BlockHeaderTestFixture().buildHeader(),
-          new BlockBody(Collections.emptyList(), Collections.emptyList()));
+          new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
   private final Blockchain blockchain = mock(Blockchain.class);
   private final EthHashMinerExecutor minerExecutor = mock(EthHashMinerExecutor.class);
   private final SyncState syncState = mock(SyncState.class);
