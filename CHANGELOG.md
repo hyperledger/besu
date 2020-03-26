@@ -4,14 +4,52 @@
 
 ### Additions and Improvements
 
-- Added `pulledStates` and `knownStates` to the EthQL `syncing` query and `eth_syncing` JSON-RPC api [\#565](https://github.com/hyperledger/besu/pull/565)
-- Added automated tests for handling ERC20 contract [\#529](https://github.com/hyperledger/besu/pull/529)
 - Added `trace_block` JSON RPC API [\#449](https://github.com/hyperledger/besu/pull/449)
+- Added `pulledStates` and `knownStates` to the EthQL `syncing` query and `eth_syncing` JSON-RPC api [\#565](https://github.com/hyperledger/besu/pull/565)
 
 ### Bug Fixes
 
 - Fixed file parsing behaviour for privacy enclave keystore password file [\#554](https://github.com/hyperledger/besu/pull/554) (thanks to [magooster](https://github.com/magooster))
-- Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522)
+- Fixed known issue with being unable to re-add members to onchain privacy groups [\#471](https://github.com/hyperledger/besu/pull/471)
+
+### Updated Early Access Features 
+
+* [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. Known issue resolved (see above).
+* [TRACE API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) now includes `trace_block`, `trace_replayBlockTransactions`, and `trace_transaction`. 
+Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522). 
+
+### Known Issues 
+
+#### Fast sync defaulting to full sync
+
+-  When fast sync cannot find enough valid peers rapidly enough, Besu defaults to full sync.
+
+Workarounds:
+1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database,
+and start again.
+2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood
+of encountering the pruning bug.
+
+A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427)
+is being actively worked on.
+
+#### Error full syncing with pruning
+
+- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
+The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+full sync and pruning.
+
+Workarounds:
+1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
+2. If the `MerkleTrieException` occurs, delete the database and resync.
+
+A fix for this issue is being actively worked on.
+
+#### Bootnodes must be validators when using onchain permissioning
+
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
+
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
 
 ## 1.4.1
 
@@ -1895,4 +1933,3 @@ Specify `*` or `all` for `--host-whitelist` to effectively disable host protecti
  - Added unit tests for `Web3ClientVersion` (PR [#194](https://github.com/PegaSysEng/pantheon/pull/194) with thanks to [@jvirtanen](https://github.com/jvirtanen))
  - Removed RLPUtils from `RawBlockIterator` (PR [#179](https://github.com/PegaSysEng/pantheon/pull/179))
  - Replace the JNI based snappy library with a pure-Java version (PR [#257](https://github.com/PegaSysEng/pantheon/pull/257))
- 
