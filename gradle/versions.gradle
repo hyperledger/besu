@@ -55,7 +55,7 @@ dependencyManagement {
     dependency 'io.vertx:vertx-unit:3.8.0'
     dependency 'io.vertx:vertx-web:3.8.0'
 
-    dependency 'junit:junit:4.12'
+    dependency 'junit:junit:4.13'
 
     dependency 'net.consensys:orion:1.5.0-SNAPSHOT'
 
