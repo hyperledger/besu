@@ -166,7 +166,8 @@ public class BlockHeader extends SealableBlockHeader
             input.readLongScalar(),
             input.readLongScalar(),
             input.readBytes(),
-            input.readLongScalar(),
+            // TODO input.readLongScalar for baseFee field
+            0,
             Hash.wrap(input.readBytes32()),
             input.readLong(),
             blockHeaderFunctions);

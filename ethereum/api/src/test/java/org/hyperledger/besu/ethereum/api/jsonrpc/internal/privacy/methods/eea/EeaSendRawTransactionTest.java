@@ -84,8 +84,6 @@ public class EeaSendRawTransactionTest {
       new Transaction(
           0L,
           Wei.of(1),
-          gasPremium,
-          feeCap,
           21000L,
           Optional.of(
               Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
