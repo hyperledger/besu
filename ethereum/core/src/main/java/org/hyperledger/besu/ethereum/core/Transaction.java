@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.ethereum.rlp.RLPDecodingHelpers.Kind.BYTE_ELEMENT;
+import static org.hyperledger.besu.ethereum.rlp.RLPDecodingHelpers.Kind.SHORT_ELEMENT;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -50,6 +52,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   private final long nonce;
 
   private final Wei gasPrice;
+
+  private final Wei gasPremium;
+
+  private final Wei feeCap;
 
   private final long gasLimit;
 
@@ -91,6 +97,17 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes());
 
+    // if current kind is SHORT_ELEMENT (corresponding to gas premium field) this is an EIP-1559
+    // transaction
+    // if current kind is BYTE_ELEMENT (corresponding to V field) this is a legacy transaction
+    if (SHORT_ELEMENT.equals(input.currentKind())) {
+      builder
+          .gasPremium(Wei.of(input.readUInt256Scalar()))
+          .feeCap(Wei.of(input.readUInt256Scalar()));
+    } else if (!BYTE_ELEMENT.equals(input.currentKind())) {
+      throw new RuntimeException("Invalid transaction format");
+    }
+
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
@@ -118,6 +135,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *
    * @param nonce the nonce
    * @param gasPrice the gas price
+   * @param gasPremium the gas premium
+   * @param feeCap the fee cap
    * @param gasLimit the gas limit
    * @param to the transaction recipient
    * @param value the value being transferred to the recipient
@@ -128,7 +147,47 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   *     it will default to any chain.
+   */
+  public Transaction(
+      final long nonce,
+      final Wei gasPrice,
+      final Wei gasPremium,
+      final Wei feeCap,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final SECP256K1.Signature signature,
+      final Bytes payload,
+      final Address sender,
+      final Optional<BigInteger> chainId) {
+    this.nonce = nonce;
+    this.gasPrice = gasPrice;
+    this.gasPremium = gasPremium;
+    this.feeCap = feeCap;
+    this.gasLimit = gasLimit;
+    this.to = to;
+    this.value = value;
+    this.signature = signature;
+    this.payload = payload;
+    this.sender = sender;
+    this.chainId = chainId;
+  }
+
+  /**
+   * Instantiates a transaction instance.
+   *
+   * @param nonce the nonce
+   * @param gasPrice the gas price
+   * @param gasLimit the gas limit
+   * @param to the transaction recipient
+   * @param value the value being transferred to the recipient
+   * @param signature the signature
+   * @param payload the payload
+   * @param sender the transaction sender
+   * @param chainId the chain id to apply the transaction to
+   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
+   *     otherwise it should contain an address.
+   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    */
   public Transaction(
       final long nonce,
@@ -140,15 +199,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId) {
-    this.nonce = nonce;
-    this.gasPrice = gasPrice;
-    this.gasLimit = gasLimit;
-    this.to = to;
-    this.value = value;
-    this.signature = signature;
-    this.payload = payload;
-    this.sender = sender;
-    this.chainId = chainId;
+    this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId);
   }
 
   /**
@@ -169,6 +220,26 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Wei getGasPrice() {
     return gasPrice;
+  }
+
+  /**
+   * Return the transaction gas premium.
+   *
+   * @return the transaction gas premium
+   */
+  @Override
+  public Wei getGasPremium() {
+    return gasPremium;
+  }
+
+  /**
+   * Return the transaction fee cap.
+   *
+   * @return the transaction fee cap
+   */
+  @Override
+  public Wei getFeeCap() {
+    return feeCap;
   }
 
   /**
@@ -279,7 +350,15 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     if (hashNoSignature == null) {
       hashNoSignature =
           computeSenderRecoveryHash(
-              nonce, gasPrice, gasLimit, to.orElse(null), value, payload, chainId);
+              nonce,
+              gasPrice,
+              gasPremium,
+              feeCap,
+              gasLimit,
+              to.orElse(null),
+              value,
+              payload,
+              chainId);
     }
     return hashNoSignature;
   }
@@ -298,6 +377,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar(getValue());
     out.writeBytes(getPayload());
+    if (gasPremium != null && feeCap != null) {
+      out.writeUInt256Scalar(getGasPremium());
+      out.writeUInt256Scalar(getFeeCap());
+    }
     writeSignature(out);
 
     out.endList();
@@ -376,9 +459,31 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return getUpfrontGasCost().add(getValue());
   }
 
+  /**
+   * Returns whether or not the transaction is a legacy transaction.
+   *
+   * @return true if legacy transaction, false otherwise
+   */
+  @Override
+  public boolean isLegacyTransaction() {
+    return getGasPrice() != null && (getGasPremium() == null && getFeeCap() == null);
+  }
+
+  /**
+   * Returns whether or not the transaction is an EIP-1559 transaction.
+   *
+   * @return true if EIP-1559 transaction, false otherwise
+   */
+  @Override
+  public boolean isEIP1559Transaction() {
+    return getGasPremium() != null && getFeeCap() != null;
+  }
+
   private static Bytes32 computeSenderRecoveryHash(
       final long nonce,
       final Wei gasPrice,
+      final Wei gasPremium,
+      final Wei feeCap,
       final long gasLimit,
       final Address to,
       final Wei value,
@@ -394,6 +499,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               out.writeBytes(to == null ? Bytes.EMPTY : to);
               out.writeUInt256Scalar(value);
               out.writeBytes(payload);
+              if (gasPremium != null && feeCap != null) {
+                out.writeUInt256Scalar(gasPremium);
+                out.writeUInt256Scalar(feeCap);
+              }
               if (chainId.isPresent()) {
                 out.writeBigIntegerScalar(chainId.get());
                 out.writeUInt256Scalar(UInt256.ZERO);
@@ -412,6 +521,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return this.chainId.equals(that.chainId)
         && this.gasLimit == that.gasLimit
         && this.gasPrice.equals(that.gasPrice)
+        && this.gasPremium.equals(that.gasPremium)
+        && this.feeCap.equals(that.feeCap)
         && this.nonce == that.nonce
         && this.payload.equals(that.payload)
         && this.signature.equals(that.signature)
@@ -421,7 +532,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   @Override
   public int hashCode() {
-    return Objects.hash(nonce, gasPrice, gasLimit, to, value, payload, signature, chainId);
+    return Objects.hash(
+        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId);
   }
 
   @Override
@@ -430,6 +542,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append("{");
     sb.append("nonce=").append(getNonce()).append(", ");
     sb.append("gasPrice=").append(getGasPrice()).append(", ");
+    if (getGasPremium() != null && getFeeCap() != null) {
+      sb.append("gasPremium=").append(getGasPremium()).append(", ");
+      sb.append("feeCap=").append(getFeeCap()).append(", ");
+    }
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
     sb.append("value=").append(getValue()).append(", ");
@@ -452,6 +568,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected Wei gasPrice;
 
+    protected Wei gasPremium;
+
+    protected Wei feeCap;
+
     protected long gasLimit = -1L;
 
     protected Address to;
@@ -473,6 +593,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     public Builder gasPrice(final Wei gasPrice) {
       this.gasPrice = gasPrice;
+      return this;
+    }
+
+    public Builder gasPremium(final Wei gasPremium) {
+      this.gasPremium = gasPremium;
+      return this;
+    }
+
+    public Builder feeCap(final Wei feeCap) {
+      this.feeCap = feeCap;
       return this;
     }
 
@@ -515,6 +645,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return new Transaction(
           nonce,
           gasPrice,
+          gasPremium,
+          feeCap,
           gasLimit,
           Optional.ofNullable(to),
           value,
@@ -534,7 +666,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
       final Bytes32 hash =
-          computeSenderRecoveryHash(nonce, gasPrice, gasLimit, to, value, payload, chainId);
+          computeSenderRecoveryHash(
+              nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
       return SECP256K1.sign(hash, keys);
     }
   }

@@ -331,4 +331,11 @@ public interface RLPInput {
     leaveList();
     return res;
   }
+
+  /**
+   * * Returns the kind of the current element.
+   *
+   * @return The kind of the current element
+   */
+  RLPDecodingHelpers.Kind currentKind();
 }

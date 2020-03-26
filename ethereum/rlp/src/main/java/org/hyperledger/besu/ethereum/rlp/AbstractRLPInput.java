@@ -522,4 +522,9 @@ abstract class AbstractRLPInput implements RLPInput {
   public void reset() {
     setTo(0);
   }
+
+  @Override
+  public RLPDecodingHelpers.Kind currentKind() {
+    return currentKind;
+  }
 }
