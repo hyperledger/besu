@@ -250,7 +250,8 @@ public class TestContextBuilder {
 
     final BlockHeader genesisHeader = headerTestFixture.buildHeader();
     return new Block(
-        genesisHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+        genesisHeader,
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
   }
 
   private static ControllerAndState createControllerAndFinalState(

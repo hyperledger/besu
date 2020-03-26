@@ -345,7 +345,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       newTransactions.put(
           blockHash, currentNewChainWithReceipts.getBlock().getBody().getTransactions());
       addAddedLogsWithMetadata(addedLogsWithMetadata, currentNewChainWithReceipts);
-      notifyChainReorgBlockAdded(currentNewChainWithReceipts.getHeader());
+      notifyChainReorgBlockAdded(currentNewChainWithReceipts.getBlock());
       currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
     }
 
@@ -569,7 +569,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     blockAddedObservers.forEach(observer -> observer.onBlockAdded(event, this));
   }
 
-  private void notifyChainReorgBlockAdded(final BlockHeader blockHeader) {
-    blockReorgObservers.forEach(observer -> observer.onBlockAdded(blockHeader, this));
+  private void notifyChainReorgBlockAdded(final Block block) {
+    blockReorgObservers.forEach(observer -> observer.onBlockAdded(block, this));
   }
 }

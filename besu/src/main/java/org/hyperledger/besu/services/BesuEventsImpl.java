@@ -67,6 +67,26 @@ public class BesuEventsImpl implements BesuEvents {
   }
 
   @Override
+  public long addBlockAddedListener(final BlockAddedListener listener) {
+    return blockchain.observeBlockAdded(listener::onBlockAdded);
+  }
+
+  @Override
+  public void removeBlockAddedListener(final long listenerIdentifier) {
+    blockchain.removeObserver(listenerIdentifier);
+  }
+
+  @Override
+  public long addBlockReorgListener(final BlockReorgListener listener) {
+    return blockchain.observeChainReorg(listener::onBlockReorg);
+  }
+
+  @Override
+  public void removeBlockReorgListener(final long listenerIdentifier) {
+    blockchain.removeObserver(listenerIdentifier);
+  }
+
+  @Override
   public long addTransactionAddedListener(final TransactionAddedListener listener) {
     return transactionPool.subscribePendingTransactions(listener::onTransactionAdded);
   }
@@ -109,11 +129,7 @@ public class BesuEventsImpl implements BesuEvents {
             .collect(toUnmodifiableList());
     final List<List<LogTopic>> besuTopics =
         topics.stream()
-            .map(
-                subList ->
-                    subList.stream()
-                        .map(bytes -> LogTopic.wrap(bytes))
-                        .collect(toUnmodifiableList()))
+            .map(subList -> subList.stream().map(LogTopic::wrap).collect(toUnmodifiableList()))
             .collect(toUnmodifiableList());
 
     final LogsQuery logsQuery = new LogsQuery(besuAddresses, besuTopics);

@@ -72,7 +72,7 @@ public class OperationBenchmarkHelper {
                   .number(i)
                   .difficulty(Difficulty.ONE)
                   .buildHeader(),
-              new BlockBody(emptyList(), emptyList())),
+              new BlockBody(emptyList(), emptyList(), emptyList())),
           emptyList());
     }
     final MessageFrame messageFrame =

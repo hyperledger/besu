@@ -24,14 +24,19 @@ import java.util.Objects;
 public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
+      new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
   private final List<Transaction> transactions;
   private final List<BlockHeader> ommers;
+  private final List<TransactionReceipt> transactionReceipts;
 
-  public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
+  public BlockBody(
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final List<TransactionReceipt> transactionReceipts) {
     this.transactions = transactions;
     this.ommers = ommers;
+    this.transactionReceipts = transactionReceipts;
   }
 
   public static BlockBody empty() {
@@ -50,6 +55,12 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return ommers;
   }
 
+  /** @return The list of transaction receipts of the block. */
+  @Override
+  public List<TransactionReceipt> getTransactionReceipts() {
+    return transactionReceipts;
+  }
+
   /**
    * Writes Block to {@link RLPOutput}.
    *
@@ -59,6 +70,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     output.startList();
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
+    output.writeList(getTransactionReceipts(), TransactionReceipt::writeTo);
     output.endList();
   }
 
@@ -69,7 +81,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final BlockBody body =
         new BlockBody(
             input.readList(Transaction::readFrom),
-            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+            input.readList(TransactionReceipt::readFrom));
     input.leaveList();
     return body;
   }
@@ -83,12 +96,14 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       return false;
     }
     final BlockBody other = (BlockBody) obj;
-    return transactions.equals(other.transactions) && ommers.equals(other.ommers);
+    return transactions.equals(other.transactions)
+        && ommers.equals(other.ommers)
+        && transactionReceipts.equals(other.transactionReceipts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers);
+    return Objects.hash(transactions, ommers, transactionReceipts);
   }
 
   @Override
@@ -96,7 +111,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final StringBuilder sb = new StringBuilder();
     sb.append("BlockBody{");
     sb.append("transactions=").append(transactions).append(", ");
-    sb.append("ommers=").append(ommers);
+    sb.append("ommers=").append(ommers).append(", ");
+    sb.append("transactionReceipts=").append(transactionReceipts);
     return sb.append("}").toString();
   }
 }

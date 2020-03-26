@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -244,7 +245,8 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+              input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+              input.readList(TransactionReceipt::readFrom));
       return new Block(header, body);
     }
   }

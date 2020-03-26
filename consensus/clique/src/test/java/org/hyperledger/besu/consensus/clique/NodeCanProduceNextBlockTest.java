@@ -59,7 +59,8 @@ public class NodeCanProduceNextBlockTest {
   private Block createEmptyBlock(final KeyPair blockSigner) {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, blockSigner, validatorList);
-    return new Block(header, new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
+    return new Block(
+        header, new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Lists.newArrayList()));
   }
 
   @Before

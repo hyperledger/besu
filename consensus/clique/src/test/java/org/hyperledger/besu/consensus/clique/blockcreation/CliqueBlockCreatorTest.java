@@ -104,7 +104,7 @@ public class CliqueBlockCreatorTest {
         new Block(
             TestHelpers.createCliqueSignedBlockHeader(
                 headerTestFixture, otherKeyPair, validatorList),
-            new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
+            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Lists.newArrayList()));
     blockchain.appendBlock(emptyBlock, Lists.newArrayList());
   }
 
