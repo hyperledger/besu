@@ -144,7 +144,8 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(extraData);
     out.writeBytes(mixHash);
     out.writeLong(nonce);
-
+    // TODO uncomment this for EIP-1559
+    //out.writeLongScalar(baseFee);
     out.endList();
   }
 
