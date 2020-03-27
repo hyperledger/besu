@@ -24,34 +24,42 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInv
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MultiTenancyPrivacyController implements PrivacyController {
 
   private final PrivacyController privacyController;
   private final Enclave enclave;
+  private final PrivateTransactionValidator privateTransactionValidator;
 
   public MultiTenancyPrivacyController(
-      final PrivacyController privacyController, final Enclave enclave) {
+      final PrivacyController privacyController,
+      final Optional<BigInteger> chainId,
+      final Enclave enclave) {
     this.privacyController = privacyController;
     this.enclave = enclave;
+    privateTransactionValidator = new PrivateTransactionValidator(chainId);
   }
 
   @Override
   public String sendTransaction(
-      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+      final PrivateTransaction privateTransaction,
+      final String enclavePublicKey,
+      final PrivacyGroup privacyGroup) {
     verifyPrivateFromMatchesEnclavePublicKey(
         privateTransaction.getPrivateFrom().toBase64String(), enclavePublicKey);
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       verifyPrivacyGroupContainsEnclavePublicKey(
           privateTransaction.getPrivacyGroupId().get().toBase64String(), enclavePublicKey);
     }
-    return privacyController.sendTransaction(privateTransaction, enclavePublicKey);
+    return privacyController.sendTransaction(privateTransaction, enclavePublicKey, privacyGroup);
   }
 
   @Override
@@ -85,7 +93,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
-    PrivacyGroup[] resultantGroups =
+    final PrivacyGroup[] resultantGroups =
         privacyController.findPrivacyGroup(addresses, enclavePublicKey);
     return Arrays.stream(resultantGroups)
         .filter(g -> g.getMembers().contains(enclavePublicKey))
@@ -111,7 +119,12 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   @Override
   public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
-    return privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
+    final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
+    verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    return privateTransactionValidator.validate(
+        privateTransaction,
+        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey),
+        true);
   }
 
   @Override
@@ -144,19 +157,21 @@ public class MultiTenancyPrivacyController implements PrivacyController {
 
   @Override
   public Optional<String> buildAndSendAddPayload(
-      final PrivateTransaction privateTransaction, final String enclaveKey) {
+      final PrivateTransaction privateTransaction,
+      final Bytes32 privacyGroupId,
+      final String enclaveKey) {
     verifyPrivateFromMatchesEnclavePublicKey(
         privateTransaction.getPrivateFrom().toBase64String(), enclaveKey);
     verifyPrivacyGroupContainsEnclavePublicKey(
         privateTransaction.getPrivacyGroupId().get().toBase64String(), enclaveKey);
-    return privacyController.buildAndSendAddPayload(privateTransaction, enclaveKey);
+    return privacyController.buildAndSendAddPayload(privateTransaction, privacyGroupId, enclaveKey);
   }
 
   @Override
-  public PrivacyGroup retrievePrivacyGroup(
+  public PrivacyGroup retrieveOffChainPrivacyGroup(
       final String privacyGroupId, final String enclavePublicKey) {
     final PrivacyGroup privacyGroup =
-        privacyController.retrievePrivacyGroup(privacyGroupId, enclavePublicKey);
+        privacyController.retrieveOffChainPrivacyGroup(privacyGroupId, enclavePublicKey);
     if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
       throw new MultiTenancyValidationException(
           "Privacy group must contain the enclave public key");
@@ -171,7 +186,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
-    List<PrivacyGroup> resultantGroups =
+    final List<PrivacyGroup> resultantGroups =
         privacyController.findOnChainPrivacyGroup(addresses, enclavePublicKey);
     return resultantGroups.stream()
         .filter(g -> g.getMembers().contains(enclavePublicKey))
@@ -184,6 +199,11 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
+  public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
+    return privacyController.isGroupAdditionTransaction(privateTransaction);
+  }
+
+  @Override
   public Optional<Bytes> getContractCode(
       final String privacyGroupId,
       final Address contractAddress,
@@ -192,6 +212,18 @@ public class MultiTenancyPrivacyController implements PrivacyController {
     verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
     return privacyController.getContractCode(
         privacyGroupId, contractAddress, blockHash, enclavePublicKey);
+  }
+
+  @Override
+  public PrivacyGroup retrieveOnChainPrivacyGroup(
+      final Bytes privacyGroupId, final String enclavePublicKey) {
+    final PrivacyGroup privacyGroup =
+        privacyController.retrieveOnChainPrivacyGroup(privacyGroupId, enclavePublicKey);
+    if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
+      throw new MultiTenancyValidationException(
+          "Privacy group must contain the enclave public key");
+    }
+    return privacyGroup;
   }
 
   private void verifyPrivateFromMatchesEnclavePublicKey(

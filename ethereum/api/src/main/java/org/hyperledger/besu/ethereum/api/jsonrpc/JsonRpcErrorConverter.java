@@ -44,7 +44,7 @@ public class JsonRpcErrorConverter {
       case GAS_PRICE_TOO_LOW:
         return JsonRpcError.GAS_PRICE_TOO_LOW;
       case PRIVACY_GROUP_DOES_NOT_EXIST:
-        return JsonRpcError.PRIVACY_GROUP_DOES_NOT_EXIST;
+        return JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
 
       default:
         return JsonRpcError.INVALID_PARAMS;
