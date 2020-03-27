@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.config;
 
-import com.google.common.collect.ImmutableMap;
-
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+
+import com.google.common.collect.ImmutableMap;
 
 public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
