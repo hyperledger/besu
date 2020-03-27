@@ -206,8 +206,6 @@ public class DefaultPrivacyControllerTest {
   public void sendValidBesuTransaction() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
-    when(enclave.retrievePrivacyGroup(any(String.class))).thenReturn(PANTHEON_PRIVACY_GROUP);
-
     final String enclaveKey =
         privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, PANTHEON_PRIVACY_GROUP);
 
@@ -439,17 +437,6 @@ public class DefaultPrivacyControllerTest {
   @Test
   public void canCreatePrivacyMarkerTransactionForOnChainPrivacy() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
-
-    final BytesValueRLPOutput members = new BytesValueRLPOutput();
-    members.writeList(
-        Arrays.asList(ENCLAVE_PUBLIC_KEY),
-        (member, rlp) -> rlp.writeBytes(Bytes.fromBase64String(member)));
-
-    when(privateTransactionSimulator.process(any(), any(), any(long.class)))
-        .thenReturn(
-            Optional.of(
-                PrivateTransactionProcessor.Result.successful(
-                    LOGS, 0, members.encoded(), ValidationResult.valid())));
 
     final String enclaveKey =
         privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, ON_CHAIN_PRIVACY_GROUP);
