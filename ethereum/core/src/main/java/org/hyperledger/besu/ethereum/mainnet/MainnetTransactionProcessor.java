@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Log;
@@ -173,11 +174,12 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams) {
+      final TransactionValidationParams transactionValidationParams,
+      final Optional<BlockHeader> maybeBlockHeader) {
     LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-        transactionValidator.validate(transaction);
+        transactionValidator.validate(transaction, maybeBlockHeader);
     // Make sure the transaction is intrinsically valid before trying to
     // compare against a sender account (because the transaction may not
     // be signed correctly to extract the sender).

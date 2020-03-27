@@ -45,7 +45,8 @@ public class TransactionTracer {
                   header.getCoinbase(),
                   tracer,
                   new BlockHashLookup(header, blockchain),
-                  false);
+                  false,
+                  Optional.of(header));
           return new TransactionTrace(transaction, result, tracer.getTraceFrames());
         });
   }

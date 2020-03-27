@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559Config;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -51,11 +53,22 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   @Override
-  public ValidationResult<TransactionInvalidReason> validate(final Transaction transaction) {
+  public ValidationResult<TransactionInvalidReason> validate(
+      final Transaction transaction, final Optional<BlockHeader> maybeBlockHeader) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+    if (maybeBlockHeader.isPresent()
+        && maybeBlockHeader.get().getNumber() > EIP1559Config.INITIAL_FORK_BLKNUM) {
+      if (transaction.getGasLimit() > EIP1559Config.PER_TX_GASLIMIT) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
+            String.format(
+                "gas limit %d exceeds per transaction gas limit %d",
+                transaction.getGasLimit(), EIP1559Config.PER_TX_GASLIMIT));
+      }
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);

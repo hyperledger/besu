@@ -43,6 +43,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
@@ -198,13 +199,12 @@ public class TransactionPool implements BlockAddedObserver {
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(
       final Transaction transaction) {
+    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
-        getTransactionValidator().validate(transaction);
+        getTransactionValidator().validate(transaction, Optional.of(chainHeadBlockHeader));
     if (!basicValidationResult.isValid()) {
       return basicValidationResult;
     }
-
-    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     if (transaction.getGasLimit() > chainHeadBlockHeader.getGasLimit()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT,

@@ -186,7 +186,7 @@ public class PrivacyBlockProcessorTest {
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     final TransactionProcessor mockPublicTransactionProcessor = mock(TransactionProcessor.class);
     when(mockPublicTransactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 Collections.emptyList(), 0, Bytes.EMPTY, ValidationResult.valid()));

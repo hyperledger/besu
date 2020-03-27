@@ -126,7 +126,8 @@ public class TransactionSimulator {
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             new BlockHashLookup(header, blockchain),
             false,
-            TransactionValidationParams.transactionSimulator());
+            TransactionValidationParams.transactionSimulator(),
+            Optional.of(header));
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

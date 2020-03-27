@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -162,7 +163,8 @@ public class PrivateGroupRehydrationBlockProcessor {
               miningBeneficiary,
               blockHashLookup,
               false,
-              TransactionValidationParams.processingBlock());
+              TransactionValidationParams.processingBlock(),
+              Optional.of(blockHeader));
       if (result.isInvalid()) {
         return AbstractBlockProcessor.Result.failed();
       }

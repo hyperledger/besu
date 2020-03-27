@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 public class EIP1559Config {
+  // TODO TBD INITIAL_FORK_BLKNUM
+  public static final long INITIAL_FORK_BLKNUM = 0L;
   public static final long BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   public static final long TARGET_GAS_USED = 10000000L;
   public static final long MAX_GAS_EIP1559 = 16000000L;

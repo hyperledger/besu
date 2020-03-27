@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.LogManager;
@@ -146,7 +147,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               miningBeneficiary,
               blockHashLookup,
               true,
-              TransactionValidationParams.processingBlock());
+              TransactionValidationParams.processingBlock(),
+              Optional.of(blockHeader));
       if (result.isInvalid()) {
         return AbstractBlockProcessor.Result.failed();
       }

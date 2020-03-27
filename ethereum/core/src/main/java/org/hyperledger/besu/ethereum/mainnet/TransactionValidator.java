@@ -15,8 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+
+import java.util.Optional;
 
 /** Validates transaction based on some criteria. */
 public interface TransactionValidator {
@@ -25,11 +28,13 @@ public interface TransactionValidator {
    * Asserts whether a transaction is valid.
    *
    * @param transaction the transaction to validate
+   * @param maybeBlockHeader an {@link Optional} wrapping the block header
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
-  ValidationResult<TransactionInvalidReason> validate(Transaction transaction);
+  ValidationResult<TransactionInvalidReason> validate(
+      Transaction transaction, Optional<BlockHeader> maybeBlockHeader);
 
   /**
    * Asserts whether a transaction is valid for the sender accounts current state.
@@ -70,6 +75,7 @@ public interface TransactionValidator {
     EXCEEDS_BLOCK_GAS_LIMIT,
     TX_SENDER_NOT_AUTHORIZED,
     CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE,
+    EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
     // Private Transaction Invalid Reasons
     PRIVATE_TRANSACTION_FAILED,
     PRIVATE_NONCE_TOO_LOW,

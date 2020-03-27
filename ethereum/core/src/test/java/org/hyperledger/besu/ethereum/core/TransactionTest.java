@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.vm.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -109,7 +110,7 @@ public class TransactionTest {
 
       // Test transaction deserialization (will throw an exception if it fails).
       final Transaction transaction = Transaction.readFrom(RLP.input(rlp));
-      if (!transactionValidator(milestone).validate(transaction).isValid()) {
+      if (!transactionValidator(milestone).validate(transaction, Optional.empty()).isValid()) {
         throw new RuntimeException(String.format("Transaction is invalid %s", transaction));
       }
 

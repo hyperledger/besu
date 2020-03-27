@@ -17,13 +17,12 @@ package org.hyperledger.besu.ethereum.core.fees;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.BASEFEE_MAX_CHANGE_DENOMINATOR;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.EIP1559_DECAY_RANGE;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.EIP1559_GAS_INCREMENT_AMOUNT;
+import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.INITIAL_FORK_BLKNUM;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.MAX_GAS_EIP1559;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.TARGET_GAS_USED;
 
 public class EIP1559Manager {
 
-  // TODO TBD INITIAL_FORK_BLKNUM
-  private final long INITIAL_FORK_BLKNUM = 0L;
   private final long FINAL_FORK_BLKNUM = INITIAL_FORK_BLKNUM + EIP1559_DECAY_RANGE;
 
   public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import com.google.common.collect.Lists;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -31,10 +32,9 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
-
-import com.google.common.collect.Lists;
 
 /**
  * Responsible for extracting transactions from PendingTransactions and determining if the
@@ -183,7 +183,8 @@ public class BlockTransactionSelector {
             miningBeneficiary,
             blockHashLookup,
             false,
-            TransactionValidationParams.mining());
+            TransactionValidationParams.mining(),
+            Optional.empty());
 
     if (!result.isInvalid()) {
       worldStateUpdater.commit();

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -131,7 +132,8 @@ public interface TransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams) {
+      final TransactionValidationParams transactionValidationParams,
+      final Optional<BlockHeader> maybeBlockHeader) {
     return processTransaction(
         blockchain,
         worldState,
@@ -141,7 +143,8 @@ public interface TransactionProcessor {
         OperationTracer.NO_TRACING,
         blockHashLookup,
         isPersistingPrivateState,
-        transactionValidationParams);
+        transactionValidationParams,
+        maybeBlockHeader);
   }
 
   /**
@@ -165,7 +168,8 @@ public interface TransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState) {
+      final Boolean isPersistingPrivateState,
+      final Optional<BlockHeader> maybeBlockHeader) {
     return processTransaction(
         blockchain,
         worldState,
@@ -175,7 +179,8 @@ public interface TransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        new TransactionValidationParams.Builder().build());
+        new TransactionValidationParams.Builder().build(),
+        maybeBlockHeader);
   }
 
   Result processTransaction(
@@ -187,5 +192,6 @@ public interface TransactionProcessor {
       OperationTracer operationTracer,
       BlockHashLookup blockHashLookup,
       Boolean isPersistingPrivateState,
-      TransactionValidationParams transactionValidationParams);
+      TransactionValidationParams transactionValidationParams,
+      Optional<BlockHeader> maybeBlockHeader);
 }
