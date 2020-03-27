@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibftlegacy.protocol;
 
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -98,6 +99,12 @@ public class Istanbul64Protocol implements SubProtocol {
         return "GetReceipts";
       case EthPV63.RECEIPTS:
         return "Receipts";
+      case EthPV65.GET_POOLED_TRANSACTIONS:
+        return "GetPooledTransactions";
+      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
+        return "NewPooledTransactionHashes";
+      case EthPV65.POOLED_TRANSACTIONS:
+        return "PooledTransactions";
       case INSTANBUL_MSG:
         return "InstanbulMsg";
       default:

@@ -114,15 +114,14 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
     LOG.info("Operating on IBFT-1.0 network.");
     return new Istanbul64ProtocolManager(
         protocolContext.getBlockchain(),
-        protocolContext.getWorldStateArchive(),
         networkId,
         peerValidators,
         fastSyncEnabled,
         syncConfig.getDownloaderParallelism(),
         syncConfig.getTransactionsParallelism(),
         syncConfig.getComputationParallelism(),
+        syncConfig.getPendingTransactionsParallelism(),
         clock,
-        metricsSystem,
-        ethereumWireProtocolConfiguration);
+        metricsSystem);
   }
 }

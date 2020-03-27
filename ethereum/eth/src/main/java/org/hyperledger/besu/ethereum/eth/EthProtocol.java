@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth;
 
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -32,6 +33,8 @@ public class EthProtocol implements SubProtocol {
   public static final Capability ETH62 = Capability.create(NAME, EthVersion.V62);
   public static final Capability ETH63 = Capability.create(NAME, EthVersion.V63);
   public static final Capability ETH64 = Capability.create(NAME, EthVersion.V64);
+  public static final Capability ETH65 = Capability.create(NAME, EthVersion.V65);
+
   private static final EthProtocol INSTANCE = new EthProtocol();
 
   private static final List<Integer> eth62Messages =
@@ -53,6 +56,16 @@ public class EthProtocol implements SubProtocol {
             EthPV63.GET_NODE_DATA, EthPV63.NODE_DATA, EthPV63.GET_RECEIPTS, EthPV63.RECEIPTS));
   }
 
+  private static final List<Integer> eth65Messages = new ArrayList<>(eth63Messages);
+
+  static {
+    eth65Messages.addAll(
+        Arrays.asList(
+            EthPV65.NEW_POOLED_TRANSACTION_HASHES,
+            EthPV65.GET_POOLED_TRANSACTIONS,
+            EthPV65.POOLED_TRANSACTIONS));
+  }
+
   @Override
   public String getName() {
     return NAME;
@@ -65,6 +78,7 @@ public class EthProtocol implements SubProtocol {
         return 8;
       case EthVersion.V63:
       case EthVersion.V64:
+      case EthVersion.V65:
         return 17;
       default:
         return 0;
@@ -79,6 +93,8 @@ public class EthProtocol implements SubProtocol {
       case EthVersion.V63:
       case EthVersion.V64:
         return eth63Messages.contains(code);
+      case EthVersion.V65:
+        return eth65Messages.contains(code);
       default:
         return false;
     }
@@ -111,6 +127,12 @@ public class EthProtocol implements SubProtocol {
         return "GetReceipts";
       case EthPV63.RECEIPTS:
         return "Receipts";
+      case EthPV65.GET_POOLED_TRANSACTIONS:
+        return "GetPooledTransactions";
+      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
+        return "NewPooledTransactionHashes";
+      case EthPV65.POOLED_TRANSACTIONS:
+        return "PooledTransactions";
       default:
         return INVALID_MESSAGE_NAME;
     }
@@ -124,5 +146,6 @@ public class EthProtocol implements SubProtocol {
     public static final int V62 = 62;
     public static final int V63 = 63;
     public static final int V64 = 64;
+    public static final int V65 = 65;
   }
 }

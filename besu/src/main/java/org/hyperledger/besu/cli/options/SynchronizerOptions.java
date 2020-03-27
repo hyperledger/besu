@@ -42,6 +42,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-transactions-parallelism";
   private static final String COMPUTATION_PARALLELISM_FLAG =
       "--Xsynchronizer-computation-parallelism";
+  private static final String PENDING_TRANSACTIONS_PARALLELISM_FLAG =
+      "--Xsynchronizer-pending-transactions-parallelism";
   private static final String PIVOT_DISTANCE_FROM_HEAD_FLAG =
       "--Xsynchronizer-fast-sync-pivot-distance";
   private static final String FULL_VALIDATION_RATE_FLAG =
@@ -137,6 +139,16 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int transactionsParallelism = SynchronizerConfiguration.DEFAULT_TRANSACTIONS_PARALLELISM;
 
   @CommandLine.Option(
+      names = PENDING_TRANSACTIONS_PARALLELISM_FLAG,
+      hidden = true,
+      defaultValue = "2",
+      paramLabel = "<INTEGER>",
+      description =
+          "Number of threads to commit to pending transactions processing (default: ${DEFAULT-VALUE})")
+  private int pendingTransactionsParallelism =
+      SynchronizerConfiguration.DEFAULT_PENDING_TRANSACTIONS_PARALLELISM;
+
+  @CommandLine.Option(
       names = COMPUTATION_PARALLELISM_FLAG,
       hidden = true,
       paramLabel = "<INTEGER>",
@@ -229,6 +241,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
+    options.pendingTransactionsParallelism = config.getPendingTransactionsParallelism();
     options.fastSyncPivotDistance = config.getFastSyncPivotDistance();
     options.fastSyncFullValidationRate = config.getFastSyncFullValidationRate();
     options.worldStateHashCountPerRequest = config.getWorldStateHashCountPerRequest();
@@ -251,6 +264,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderParallelism(downloaderParallelism);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
+    builder.pendingTransactionsParallelism(pendingTransactionsParallelism);
     builder.fastSyncPivotDistance(fastSyncPivotDistance);
     builder.fastSyncFullValidationRate(fastSyncFullValidationRate);
     builder.worldStateHashCountPerRequest(worldStateHashCountPerRequest);
@@ -282,6 +296,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         OptionParser.format(transactionsParallelism),
         COMPUTATION_PARALLELISM_FLAG,
         OptionParser.format(computationParallelism),
+        PENDING_TRANSACTIONS_PARALLELISM_FLAG,
+        OptionParser.format(pendingTransactionsParallelism),
         PIVOT_DISTANCE_FROM_HEAD_FLAG,
         OptionParser.format(fastSyncPivotDistance),
         FULL_VALIDATION_RATE_FLAG,

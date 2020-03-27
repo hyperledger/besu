@@ -60,7 +60,9 @@ public class SynchronizerOptionsTest
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE + 2)
         .downloaderParallelism(SynchronizerConfiguration.DEFAULT_DOWNLOADER_PARALLELISM + 2)
         .transactionsParallelism(SynchronizerConfiguration.DEFAULT_TRANSACTIONS_PARALLELISM + 2)
-        .computationParallelism(SynchronizerConfiguration.DEFAULT_COMPUTATION_PARALLELISM + 2);
+        .computationParallelism(SynchronizerConfiguration.DEFAULT_COMPUTATION_PARALLELISM + 2)
+        .pendingTransactionsParallelism(
+            SynchronizerConfiguration.DEFAULT_PENDING_TRANSACTIONS_PARALLELISM + 2);
   }
 
   @Override

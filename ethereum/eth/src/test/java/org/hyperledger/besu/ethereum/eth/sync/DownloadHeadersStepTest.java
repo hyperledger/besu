@@ -22,10 +22,12 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -62,8 +64,11 @@ public class DownloadHeadersStepTest {
 
   @Before
   public void setUp() {
-    ethProtocolManager =
-        EthProtocolManagerTestUtil.create(blockchain, protocolContext.getWorldStateArchive());
+    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    ethProtocolManager.bind(
+        protocolContext.getWorldStateArchive(),
+        mock(TransactionPool.class),
+        EthProtocolConfiguration.defaultConfig());
     downloader =
         new DownloadHeadersStep<>(
             protocolSchedule,

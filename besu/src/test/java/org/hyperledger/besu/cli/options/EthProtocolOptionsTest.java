@@ -130,6 +130,9 @@ public class EthProtocolOptionsTest
             PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2))
         .maxGetNodeData(
             PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2))
+        .maxGetPooledTransactions(
+            PositiveNumber.fromInt(
+                EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2))
         .build();
   }
 

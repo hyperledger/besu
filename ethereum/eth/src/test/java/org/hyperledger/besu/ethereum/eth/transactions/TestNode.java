@@ -113,16 +113,15 @@ public class TestNode implements Closeable {
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
             blockchain,
-            worldStateArchive,
             BigInteger.ONE,
             Collections.emptyList(),
             false,
             1,
             1,
             1,
+            1,
             TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.defaultConfig());
+            new NoOpMetricsSystem());
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()
@@ -158,6 +157,9 @@ public class TestNode implements Closeable {
             syncState,
             Wei.ZERO,
             TransactionPoolConfiguration.builder().build());
+
+    ethProtocolManager.bind(
+        worldStateArchive, transactionPool, EthProtocolConfiguration.defaultConfig());
 
     networkRunner.start();
     selfPeer = DefaultPeer.fromEnodeURL(network.getLocalEnode().get());

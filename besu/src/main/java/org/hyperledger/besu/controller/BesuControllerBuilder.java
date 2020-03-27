@@ -249,6 +249,19 @@ public abstract class BesuControllerBuilder<C> {
             protocolContext, fastSyncEnabled, createPeerValidators(protocolSchedule));
     final SyncState syncState =
         new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+    final TransactionPool transactionPool =
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            clock,
+            metricsSystem,
+            syncState,
+            miningParameters.getMinTransactionGasPrice(),
+            transactionPoolConfiguration);
+    ethProtocolManager.bind(
+        protocolContext.getWorldStateArchive(), transactionPool, ethereumWireProtocolConfiguration);
+
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
             syncConfig,
@@ -262,17 +275,6 @@ public abstract class BesuControllerBuilder<C> {
             dataDirectory,
             clock,
             metricsSystem);
-
-    final TransactionPool transactionPool =
-        TransactionPoolFactory.createTransactionPool(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            clock,
-            metricsSystem,
-            syncState,
-            miningParameters.getMinTransactionGasPrice(),
-            transactionPoolConfiguration);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -349,16 +351,15 @@ public abstract class BesuControllerBuilder<C> {
       final List<PeerValidator> peerValidators) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
-        protocolContext.getWorldStateArchive(),
         networkId,
         peerValidators,
         fastSyncEnabled,
         syncConfig.getDownloaderParallelism(),
         syncConfig.getTransactionsParallelism(),
         syncConfig.getComputationParallelism(),
+        syncConfig.getPendingTransactionsParallelism(),
         clock,
         metricsSystem,
-        ethereumWireProtocolConfiguration,
         genesisConfig.getForks());
   }
 

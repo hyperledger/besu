@@ -17,11 +17,9 @@ package org.hyperledger.besu.consensus.ibftlegacy.protocol;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
@@ -33,28 +31,26 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
 
   public Istanbul64ProtocolManager(
       final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
       final BigInteger networkId,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers,
       final int computationWorkers,
+      final int pendingTxWorkers,
       final Clock clock,
-      final MetricsSystem metricsSystem,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
+      final MetricsSystem metricsSystem) {
     super(
         blockchain,
-        worldStateArchive,
         networkId,
         peerValidators,
         fastSyncEnabled,
         syncWorkers,
         txWorkers,
         computationWorkers,
+        pendingTxWorkers,
         clock,
-        metricsSystem,
-        ethereumWireProtocolConfiguration);
+        metricsSystem);
   }
 
   @Override
