@@ -160,5 +160,5 @@ public interface BlockHeader {
    *
    * @return TheBASEFEE of this header.
    */
-  long getBaseFee();
+  Long getBaseFee();
 }

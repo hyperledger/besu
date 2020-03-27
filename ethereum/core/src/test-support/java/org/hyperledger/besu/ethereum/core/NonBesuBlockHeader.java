@@ -112,7 +112,7 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public long getBaseFee() {
-    return 0;
+  public Long getBaseFee() {
+    return null;
   }
 }

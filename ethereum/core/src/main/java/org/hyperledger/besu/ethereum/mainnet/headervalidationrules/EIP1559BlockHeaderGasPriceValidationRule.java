@@ -32,6 +32,9 @@ public class EIP1559BlockHeaderGasPriceValidationRule<C>
       final BlockHeader header,
       final BlockHeader parent,
       final ProtocolContext<C> protocolContext) {
+    if (parent.getBaseFee() == null || header.getBaseFee() == null) {
+      return true;
+    }
     final long baseFee = eip1559.computeBaseFee(parent.getBaseFee(), parent.getGasUsed());
     if (baseFee != header.getBaseFee()) {
       LOG.trace(

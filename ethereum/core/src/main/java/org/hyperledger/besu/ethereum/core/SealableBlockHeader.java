@@ -31,7 +31,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   protected final long gasUsed;
 
   protected final Bytes extraData;
-  protected final long baseFee;
+  protected final Long baseFee;
 
   protected SealableBlockHeader(
       final Hash parentHash,
@@ -47,7 +47,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final long baseFee) {
+      final Long baseFee) {
     super(parentHash, coinbase, difficulty, number, gasLimit, timestamp);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
@@ -127,7 +127,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the raw bytes of the extra data field
    */
-  public long getBaseFee() {
+  public Long getBaseFee() {
     return baseFee;
   }
 }

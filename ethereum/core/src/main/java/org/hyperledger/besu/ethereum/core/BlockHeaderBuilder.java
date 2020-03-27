@@ -52,7 +52,7 @@ public class BlockHeaderBuilder {
 
   private Bytes extraData;
 
-  private long baseFee;
+  private Long baseFee = null;
 
   private Hash mixHash;
 
@@ -309,7 +309,7 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder baseFee(final long baseFee) {
+  public BlockHeaderBuilder baseFee(final Long baseFee) {
     this.baseFee = baseFee;
     return this;
   }
