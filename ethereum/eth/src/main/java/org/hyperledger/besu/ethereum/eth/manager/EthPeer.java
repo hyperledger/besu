@@ -239,7 +239,7 @@ public class EthPeer {
           return false;
         }
         break;
-      case EthPV65.GET_POOLED_TRANSACTIONS:
+      case EthPV65.POOLED_TRANSACTIONS:
         if (pooledTransactionsRequestManager.outstandingRequests() == 0) {
           LOG.warn("Unsolicited pooling transactions received.");
           return false;
