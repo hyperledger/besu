@@ -60,7 +60,7 @@ public class FastDownloaderFactory {
         new FastSyncStateStorage(fastSyncDataDirectory);
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
-    if (!fastSyncState.getPivotBlockHeader().isPresent()
+    if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
@@ -98,6 +98,7 @@ public class FastDownloaderFactory {
             taskCollection,
             fastSyncDataDirectory,
             fastSyncState);
+    syncState.setWorldStateDownloadStatus(worldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }
 
