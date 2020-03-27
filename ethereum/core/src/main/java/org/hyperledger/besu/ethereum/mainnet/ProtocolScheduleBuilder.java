@@ -160,6 +160,17 @@ public class ProtocolScheduleBuilder<C> {
             config.getEvmStackSize(),
             isRevertReasonEnabled));
 
+    // TODO EIP-1559 change for the actual fork name when known
+    addProtocolSpec(
+        protocolSchedule,
+        config.getEIP1559BlockNumber(),
+        MainnetProtocolSpecs.eip1559Definition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled,
+            config));
+
     // specs for classic network
     config
         .getClassicForkBlock()

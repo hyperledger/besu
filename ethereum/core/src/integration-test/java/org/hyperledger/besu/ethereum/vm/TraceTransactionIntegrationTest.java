@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -96,7 +97,8 @@ public class TraceTransactionIntegrationTest {
             genesisBlock.getHeader().getCoinbase(),
             blockHashLookup,
             false,
-            TransactionValidationParams.blockReplay());
+            TransactionValidationParams.blockReplay(),
+            Optional.empty());
     assertThat(result.isSuccessful()).isTrue();
     final Account createdContract =
         createTransactionUpdater.getTouchedAccounts().stream()
@@ -127,7 +129,8 @@ public class TraceTransactionIntegrationTest {
             genesisBlock.getHeader().getCoinbase(),
             tracer,
             blockHashLookup,
-            false);
+            false,
+            Optional.empty());
 
     assertThat(result.isSuccessful()).isTrue();
 
@@ -164,7 +167,8 @@ public class TraceTransactionIntegrationTest {
         genesisBlock.getHeader().getCoinbase(),
         tracer,
         new BlockHashLookup(genesisBlock.getHeader(), blockchain),
-        false);
+        false,
+        Optional.empty());
 
     final int expectedDepth = 0; // Reference impl returned 1. Why the difference?
 

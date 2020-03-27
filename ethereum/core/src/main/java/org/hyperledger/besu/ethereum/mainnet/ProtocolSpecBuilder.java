@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -60,6 +62,8 @@ public class ProtocolSpecBuilder<T> {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
+  private final List<AttachedBlockHeaderValidationRule<T>> additionalBlockHeaderValidationRules =
+      new ArrayList<>();
 
   public ProtocolSpecBuilder<T> gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -109,6 +113,12 @@ public class ProtocolSpecBuilder<T> {
       final Function<DifficultyCalculator<T>, BlockHeaderValidator<T>>
           blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder<T> addBlockHeaderValidatorRule(
+      final AttachedBlockHeaderValidationRule<T> attachedBlockHeaderValidationRule) {
+    additionalBlockHeaderValidationRules.add(attachedBlockHeaderValidationRule);
     return this;
   }
 
@@ -284,6 +294,8 @@ public class ProtocolSpecBuilder<T> {
 
     final BlockHeaderValidator<T> blockHeaderValidator =
         blockHeaderValidatorBuilder.apply(difficultyCalculator);
+    additionalBlockHeaderValidationRules.forEach(blockHeaderValidator::addRule);
+
     final BlockHeaderValidator<T> ommerHeaderValidator =
         ommerHeaderValidatorBuilder.apply(difficultyCalculator);
     final BlockBodyValidator<T> blockBodyValidator =

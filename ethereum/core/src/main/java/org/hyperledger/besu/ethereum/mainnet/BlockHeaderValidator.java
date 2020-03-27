@@ -99,6 +99,10 @@ public class BlockHeaderValidator<C> {
     return parent;
   }
 
+  public void addRule(final AttachedBlockHeaderValidationRule<C> rule) {
+    this.rules.add(new Rule<>(false, rule, rule.includeInLightValidation()));
+  }
+
   private static class Rule<C> {
     private final boolean detachedSupported;
     private final AttachedBlockHeaderValidationRule<C> rule;

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
@@ -25,7 +26,11 @@ import org.apache.logging.log4j.Logger;
 public class EIP1559BlockHeaderGasPriceValidationRule<C>
     implements AttachedBlockHeaderValidationRule<C> {
   private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
-  private final EIP1559Manager eip1559 = new EIP1559Manager();
+  private final EIP1559Manager eip1559;
+
+  public EIP1559BlockHeaderGasPriceValidationRule(final GenesisConfigOptions genesisConfigOptions) {
+    this.eip1559 = new EIP1559Manager(genesisConfigOptions);
+  }
 
   @Override
   public boolean validate(

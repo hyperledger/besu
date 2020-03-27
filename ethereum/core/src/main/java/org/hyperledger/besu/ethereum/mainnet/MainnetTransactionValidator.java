@@ -61,7 +61,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
       return signatureResult;
     }
     if (maybeBlockHeader.isPresent()
-        && maybeBlockHeader.get().getNumber() > EIP1559Config.INITIAL_FORK_BLKNUM) {
+        && maybeBlockHeader.get().getNumber()
+            > EIP1559Config.INITIAL_FORK_BLKNUM.orElse(() -> Long.MAX_VALUE).getAsLong()) {
       if (transaction.getGasLimit() > EIP1559Config.PER_TX_GASLIMIT) {
         return ValidationResult.invalid(
             TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,

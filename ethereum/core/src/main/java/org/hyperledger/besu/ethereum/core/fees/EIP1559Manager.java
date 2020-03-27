@@ -17,13 +17,25 @@ package org.hyperledger.besu.ethereum.core.fees;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.BASEFEE_MAX_CHANGE_DENOMINATOR;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.EIP1559_DECAY_RANGE;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.EIP1559_GAS_INCREMENT_AMOUNT;
-import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.INITIAL_FORK_BLKNUM;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.MAX_GAS_EIP1559;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.TARGET_GAS_USED;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
+
+import java.util.Optional;
+
 public class EIP1559Manager {
 
-  private final long FINAL_FORK_BLKNUM = INITIAL_FORK_BLKNUM + EIP1559_DECAY_RANGE;
+  private final long initialForkBlknum;
+  private final long finalForkBlknum;
+
+  public EIP1559Manager(final GenesisConfigOptions genesisConfigOptions) {
+    // TODO EIP-1559 remove this fake assignment, this is for test only
+    initialForkBlknum = Long.MAX_VALUE - EIP1559_DECAY_RANGE - 2;
+    // initialForkBlknum = genesisConfigOptions.getEIP1559BlockNumber().orElse(0);
+    finalForkBlknum = initialForkBlknum + EIP1559_DECAY_RANGE;
+    EIP1559Config.INITIAL_FORK_BLKNUM = Optional.of(() -> initialForkBlknum);
+  }
 
   public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
     long delta = parentBlockGasUsed - TARGET_GAS_USED;
@@ -40,11 +52,11 @@ public class EIP1559Manager {
   }
 
   public long eip1559GasPool(final long blockNumber) {
-    if (blockNumber >= FINAL_FORK_BLKNUM) {
+    if (blockNumber >= finalForkBlknum) {
       return MAX_GAS_EIP1559;
     }
     return (MAX_GAS_EIP1559 / 2)
-        + ((blockNumber - INITIAL_FORK_BLKNUM) * EIP1559_GAS_INCREMENT_AMOUNT);
+        + ((blockNumber - initialForkBlknum) * EIP1559_GAS_INCREMENT_AMOUNT);
   }
 
   public long legacyGasPool(final long blockNumber) {
