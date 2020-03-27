@@ -19,6 +19,8 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"startingBlock", "currentBlock", "highestBlock"})
@@ -27,12 +29,16 @@ public class SyncingResult implements JsonRpcResult {
   private final String startingBlock;
   private final String currentBlock;
   private final String highestBlock;
+  private final String pullStates;
+  private final String knownStates;
 
   public SyncingResult(final SyncStatus syncStatus) {
 
     this.startingBlock = Quantity.create(syncStatus.getStartingBlock());
     this.currentBlock = Quantity.create(syncStatus.getCurrentBlock());
     this.highestBlock = Quantity.create(syncStatus.getHighestBlock());
+    this.pullStates = syncStatus.getPulledStates().map(Quantity::create).orElse(null);
+    this.knownStates = syncStatus.getKnownStates().map(Quantity::create).orElse(null);
   }
 
   @JsonGetter(value = "startingBlock")
@@ -48,6 +54,18 @@ public class SyncingResult implements JsonRpcResult {
   @JsonGetter(value = "highestBlock")
   public String getHighestBlock() {
     return highestBlock;
+  }
+
+  @JsonInclude(value = Include.NON_NULL)
+  @JsonGetter(value = "pulledStates")
+  public String getPullStates() {
+    return pullStates;
+  }
+
+  @JsonInclude(value = Include.NON_NULL)
+  @JsonGetter(value = "knownStates")
+  public String getKnownStates() {
+    return knownStates;
   }
 
   @Override

@@ -63,7 +63,8 @@ public class SyncingSubscriptionServiceTest {
     final SyncingSubscription subscription =
         new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
     final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
-    final Optional<SyncStatus> syncStatus = Optional.of(new DefaultSyncStatus(0L, 1L, 3L));
+    final Optional<SyncStatus> syncStatus =
+        Optional.of(new DefaultSyncStatus(0L, 1L, 3L, Optional.empty(), Optional.empty()));
     final JsonRpcResult expectedSyncingResult = new SyncingResult(syncStatus.get());
 
     doAnswer(
