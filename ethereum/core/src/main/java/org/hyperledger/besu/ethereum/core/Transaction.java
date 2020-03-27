@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.ethereum.rlp.RLPDecodingHelpers.Kind.BYTE_ELEMENT;
-import static org.hyperledger.besu.ethereum.rlp.RLPDecodingHelpers.Kind.SHORT_ELEMENT;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -97,18 +95,25 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes());
 
-    // if current kind is SHORT_ELEMENT (corresponding to gas premium field) this is an EIP-1559
-    // transaction
-    // if current kind is BYTE_ELEMENT (corresponding to V field) this is a legacy transaction
-    if (SHORT_ELEMENT.equals(input.currentKind())) {
-      builder
-          .gasPremium(Wei.of(input.readUInt256Scalar()))
-          .feeCap(Wei.of(input.readUInt256Scalar()));
-    } else if (!BYTE_ELEMENT.equals(input.currentKind())) {
-      throw new RuntimeException("Invalid transaction format");
+    final Bytes maybeGasPremiumOrV = input.readBytes();
+    final Bytes maybeFeeCapOrR = input.readBytes();
+    final Bytes maybeVOrS = input.readBytes();
+    final BigInteger v, r, s;
+    // if this is the end of the list we are processing a legacy transaction
+    if (input.isEndOfCurrentList()) {
+      v = maybeGasPremiumOrV.toUnsignedBigInteger();
+      r = maybeFeeCapOrR.toUnsignedBigInteger();
+      s = maybeVOrS.toUnsignedBigInteger();
     }
-
-    final BigInteger v = input.readBigIntegerScalar();
+    // otherwise this is an EIP-1559 transaction
+    else {
+      builder
+          .gasPremium(Wei.of(maybeGasPremiumOrV.toBigInteger()))
+          .feeCap(Wei.of(maybeFeeCapOrR.toBigInteger()));
+      v = maybeVOrS.toBigInteger();
+      r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    }
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
     if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
@@ -120,12 +125,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-
     input.leaveList();
-
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();
   }
@@ -520,9 +521,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     final Transaction that = (Transaction) other;
     return this.chainId.equals(that.chainId)
         && this.gasLimit == that.gasLimit
-        && this.gasPrice.equals(that.gasPrice)
-        && this.gasPremium.equals(that.gasPremium)
-        && this.feeCap.equals(that.feeCap)
+        && Objects.equals(this.gasPrice, that.gasPrice)
+        && Objects.equals(this.gasPremium, that.gasPremium)
+        && Objects.equals(this.feeCap, that.feeCap)
         && this.nonce == that.nonce
         && this.payload.equals(that.payload)
         && this.signature.equals(that.signature)
