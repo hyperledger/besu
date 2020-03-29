@@ -590,6 +590,7 @@ public class BlockchainQueries {
         try {
           raf.readFully(bloomBuff);
         } catch (final EOFException e) {
+          results.addAll(matchingLogsUncached(segmentStart + pos, segmentStart + endOffset, query));
           break;
         }
         final LogsBloomFilter logsBloom = new LogsBloomFilter(bytesValue);
