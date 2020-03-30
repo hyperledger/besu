@@ -86,7 +86,7 @@ public class Pruner {
   public void start() {
 
     if (state.compareAndSet(State.IDLE, State.RUNNING)) {
-      LOG.info("Starting Pruner.");
+      LOG.info("Starting Custom Pruner.");
       executorService = executorServiceSupplier.get();
       pruningStrategy.prepare();
       blockAddedObserverId =
