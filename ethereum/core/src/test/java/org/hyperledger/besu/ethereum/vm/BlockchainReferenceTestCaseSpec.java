@@ -170,7 +170,7 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(gasUsed), // gasUsed
           Long.decode(timestamp), // timestamp
           Bytes.fromHexString(extraData), // extraData
-          Long.decode(baseFee), // baseFee
+          baseFee != null ? Long.decode(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexString(nonce).getLong(0),
           new BlockHeaderFunctions() {
