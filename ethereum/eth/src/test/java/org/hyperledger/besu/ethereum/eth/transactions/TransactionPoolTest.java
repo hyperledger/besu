@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.GAS_PRICE_TOO_LOW;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW;
+import static org.hyperledger.besu.ethereum.mainnet.ValidationResult.invalid;
 import static org.hyperledger.besu.ethereum.mainnet.ValidationResult.valid;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -294,8 +295,7 @@ public class TransactionPoolTest {
   @Test
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToInvariantChecks() {
     givenTransactionIsValid(transaction2);
-    when(transactionValidator.validate(transaction1, Optional.empty()))
-        .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
+    givenTransactionIsInvalidOnValidForSender(transaction1, NONCE_TOO_LOW);
 
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
 
@@ -307,10 +307,10 @@ public class TransactionPoolTest {
   @Test
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToStateDependentChecks() {
     givenTransactionIsValid(transaction2);
-    when(transactionValidator.validate(transaction1, Optional.empty())).thenReturn(valid());
+    /*when(transactionValidator.validate(transaction1, Optional.empty())).thenReturn(valid());
     when(transactionValidator.validateForSender(transaction1, null, true))
-        .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
-
+    .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));*/
+    givenTransactionIsInvalidOnValidForSender(transaction1, NONCE_TOO_LOW);
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
 
     assertTransactionNotPending(transaction1);
@@ -594,7 +594,7 @@ public class TransactionPoolTest {
   public void shouldCallValidatorWithExpectedValidationParameters() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidator.validate(transaction1, Optional.empty())).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction1), any())).thenReturn(valid());
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(valid());
 
@@ -656,9 +656,17 @@ public class TransactionPoolTest {
   }
 
   private void givenTransactionIsValid(final Transaction transaction) {
-    when(transactionValidator.validate(transaction, Optional.empty())).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction), any())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
+  }
+
+  private void givenTransactionIsInvalidOnValidForSender(
+      final Transaction transaction, final TransactionInvalidReason reason) {
+    when(transactionValidator.validate(eq(transaction), any())).thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
+        .thenReturn(invalid(reason));
   }
 }

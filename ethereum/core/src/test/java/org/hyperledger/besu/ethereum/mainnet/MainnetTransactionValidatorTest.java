@@ -239,8 +239,8 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
 
-    when(blockHeader.getNumber())
-        .thenReturn(EIP1559Config.INITIAL_FORK_BLKNUM.orElse(() -> Long.MAX_VALUE).getAsLong() + 1);
+    EIP1559Config.INITIAL_FORK_BLKNUM = Optional.of(() -> 0);
+    when(blockHeader.getNumber()).thenReturn(1L);
     assertThat(validator.validate(transaction, Optional.of(blockHeader)))
         .isEqualTo(
             ValidationResult.invalid(
