@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -60,8 +59,7 @@ public final class BlockBodiesMessageTest {
           new BlockBody(
               oneBlock.readList(Transaction::readFrom),
               oneBlock.readList(
-                  rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions())),
-              oneBlock.readList(TransactionReceipt::readFrom)));
+                  rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());

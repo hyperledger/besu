@@ -26,11 +26,8 @@ import java.util.List;
  */
 public interface BlockBody {
   /** @return The list of transactions of the block. */
-  List<? extends Transaction> getTransactions();
+  public List<? extends Transaction> getTransactions();
 
   /** @return The list of ommers of the block. */
-  List<? extends BlockHeader> getOmmers();
-
-  /** @return The list of transaction receipts of the block. */
-  List<? extends TransactionReceipt> getTransactionReceipts();
+  public List<? extends BlockHeader> getOmmers();
 }

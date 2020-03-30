@@ -302,16 +302,8 @@ public class BlockDataGenerator {
       defaultTxs.add(transaction());
       defaultTxs.add(transaction());
     }
-    final List<TransactionReceipt> defaultTxReceipts = new ArrayList<>();
-    if (options.hasTransactionReceipts()) {
-      defaultTxReceipts.add(receipt());
-      defaultTxReceipts.add(receipt());
-    }
 
-    return new BlockBody(
-        options.getTransactions(defaultTxs),
-        ommers,
-        options.getTransactionReceipts(defaultTxReceipts));
+    return new BlockBody(options.getTransactions(defaultTxs), ommers);
   }
 
   private BlockHeader ommer() {
@@ -368,12 +360,12 @@ public class BlockDataGenerator {
 
   public TransactionReceipt receipt(final long cumulativeGasUsed) {
     return new TransactionReceipt(
-        hash(), cumulativeGasUsed, Arrays.asList(log(), log()), Optional.empty(), hash());
+        hash(), cumulativeGasUsed, Arrays.asList(log(), log()), Optional.empty());
   }
 
   public TransactionReceipt receipt(final Bytes revertReason) {
     return new TransactionReceipt(
-        hash(), positiveLong(), Arrays.asList(log(), log()), Optional.of(revertReason), hash());
+        hash(), positiveLong(), Arrays.asList(log(), log()), Optional.of(revertReason));
   }
 
   public TransactionReceipt receipt() {
@@ -381,7 +373,7 @@ public class BlockDataGenerator {
   }
 
   public TransactionReceipt receipt(final List<Log> logs) {
-    return new TransactionReceipt(hash(), positiveLong(), logs, Optional.empty(), hash());
+    return new TransactionReceipt(hash(), positiveLong(), logs, Optional.empty());
   }
 
   public UInt256 storageKey() {
