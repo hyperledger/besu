@@ -36,10 +36,10 @@ public class EIP1559Manager {
   public EIP1559Manager(final GenesisConfigOptions genesisConfigOptions) {
     // TODO EIP-1559 remove this fake assignment, this is for test only
     initialForkBlknum = Long.MAX_VALUE - EIP1559_DECAY_RANGE - 2;
+    // initialForkBlknum = genesisConfigOptions.getEIP1559BlockNumber().orElse(0);
     LOG.debug(
         "Ignoring genesis config options for EIP-1559 fork block: {}",
         genesisConfigOptions.getEIP1559BlockNumber());
-    // initialForkBlknum = genesisConfigOptions.getEIP1559BlockNumber().orElse(0);
     finalForkBlknum = initialForkBlknum + EIP1559_DECAY_RANGE;
     EIP1559Config.INITIAL_FORK_BLKNUM = Optional.of(() -> initialForkBlknum);
   }
