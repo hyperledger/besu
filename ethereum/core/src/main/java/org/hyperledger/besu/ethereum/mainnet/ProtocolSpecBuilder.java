@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -113,6 +114,12 @@ public class ProtocolSpecBuilder<T> {
       final Function<DifficultyCalculator<T>, BlockHeaderValidator<T>>
           blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder<T> addBlockHeaderValidatorRules(
+      final AttachedBlockHeaderValidationRule<T>... attachedBlockHeaderValidationRules) {
+    additionalBlockHeaderValidationRules.addAll(Arrays.asList(attachedBlockHeaderValidationRules));
     return this;
   }
 

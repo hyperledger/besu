@@ -21,10 +21,12 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559Config;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
@@ -42,13 +44,27 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
 
+  private final Optional<EIP1559Manager> eip1559Manager;
+
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId) {
+    this(gasCalculator, checkSignatureMalleability, chainId, OptionalLong.empty());
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final OptionalLong eip1559ForkBlockNumber) {
     this.gasCalculator = gasCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
+    this.eip1559Manager =
+        eip1559ForkBlockNumber.isPresent()
+            ? Optional.of(new EIP1559Manager(eip1559ForkBlockNumber))
+            : Optional.empty();
   }
 
   @Override
@@ -59,7 +75,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     if (!signatureResult.isValid()) {
       return signatureResult;
     }
-    if (blockNumber > EIP1559Config.INITIAL_FORK_BLKNUM.orElse(() -> Long.MAX_VALUE).getAsLong()) {
+    if (eip1559Manager.isPresent() && eip1559Manager.get().isEIP1559(blockNumber)) {
       if (transaction.getGasLimit() > EIP1559Config.PER_TX_GASLIMIT) {
         return ValidationResult.invalid(
             TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,

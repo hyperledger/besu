@@ -29,7 +29,7 @@ public class EIP1559BlockHeaderGasPriceValidationRule<C>
   private final EIP1559Manager eip1559;
 
   public EIP1559BlockHeaderGasPriceValidationRule(final GenesisConfigOptions genesisConfigOptions) {
-    this.eip1559 = new EIP1559Manager(genesisConfigOptions);
+    this.eip1559 = new EIP1559Manager(genesisConfigOptions.getEIP1559BlockNumber());
   }
 
   @Override

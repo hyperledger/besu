@@ -20,9 +20,7 @@ import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.EIP1559_GAS_
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.MAX_GAS_EIP1559;
 import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.TARGET_GAS_USED;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
-
-import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,15 +31,16 @@ public class EIP1559Manager {
   private final long initialForkBlknum;
   private final long finalForkBlknum;
 
-  public EIP1559Manager(final GenesisConfigOptions genesisConfigOptions) {
+  public EIP1559Manager(final OptionalLong forkBlockNumber) {
+    this(forkBlockNumber.orElse(0));
+  }
+
+  public EIP1559Manager(final long forkBlockNumber) {
     // TODO EIP-1559 remove this fake assignment, this is for test only
-    initialForkBlknum = Long.MAX_VALUE - EIP1559_DECAY_RANGE - 2;
-    // initialForkBlknum = genesisConfigOptions.getEIP1559BlockNumber().orElse(0);
-    LOG.debug(
-        "Ignoring genesis config options for EIP-1559 fork block: {}",
-        genesisConfigOptions.getEIP1559BlockNumber());
+    // initialForkBlknum = Long.MAX_VALUE - EIP1559_DECAY_RANGE - 2;
+    initialForkBlknum = forkBlockNumber;
+    LOG.debug("Ignoring genesis config options for EIP-1559 fork block: {}", forkBlockNumber);
     finalForkBlknum = initialForkBlknum + EIP1559_DECAY_RANGE;
-    EIP1559Config.INITIAL_FORK_BLKNUM = Optional.of(() -> initialForkBlknum);
   }
 
   public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
@@ -68,5 +67,13 @@ public class EIP1559Manager {
 
   public long legacyGasPool(final long blockNumber) {
     return MAX_GAS_EIP1559 - eip1559GasPool(blockNumber);
+  }
+
+  public boolean isEIP1559(final long blockNumber) {
+    return blockNumber >= initialForkBlknum;
+  }
+
+  public boolean isEIP1559Finalized(final long blockNumber) {
+    return blockNumber >= finalForkBlknum;
   }
 }

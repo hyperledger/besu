@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -232,14 +233,13 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionIfGasLimitExceedsPerTransactionGasLimit() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), OptionalLong.of(0));
     final Transaction transaction =
         new TransactionTestFixture()
             .gasLimit(EIP1559Config.PER_TX_GASLIMIT + 1)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
 
-    EIP1559Config.INITIAL_FORK_BLKNUM = Optional.of(() -> 0);
     when(blockHeader.getNumber()).thenReturn(1L);
     assertThat(validator.validate(transaction, blockHeader.getNumber()))
         .isEqualTo(

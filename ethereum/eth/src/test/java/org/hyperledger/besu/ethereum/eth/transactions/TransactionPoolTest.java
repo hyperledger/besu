@@ -325,7 +325,7 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any())).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -353,7 +353,7 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any())).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -403,7 +403,7 @@ public class TransactionPoolTest {
     final Transaction transaction2 =
         builder.nonce(1).gasPrice(Wei.of(5)).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any())).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -427,7 +427,7 @@ public class TransactionPoolTest {
     final Transaction transaction2 =
         builder.nonce(1).gasPrice(Wei.of(5)).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any())).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -508,7 +508,7 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any())).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -534,7 +534,7 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any())).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -572,7 +572,7 @@ public class TransactionPoolTest {
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
     final Transaction transactionRemote = builder.nonce(2).createTransaction(KEY_PAIR1);
-    when(transactionValidator.validate(any(Transaction.class), any())).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             any(Transaction.class),
             nullable(Account.class),
@@ -594,7 +594,7 @@ public class TransactionPoolTest {
   public void shouldCallValidatorWithExpectedValidationParameters() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidator.validate(eq(transaction1), any())).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction1), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(valid());
 
@@ -656,7 +656,7 @@ public class TransactionPoolTest {
   }
 
   private void givenTransactionIsValid(final Transaction transaction) {
-    when(transactionValidator.validate(eq(transaction), any())).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -664,7 +664,7 @@ public class TransactionPoolTest {
 
   private void givenTransactionIsInvalidOnValidForSender(
       final Transaction transaction, final TransactionInvalidReason reason) {
-    when(transactionValidator.validate(eq(transaction), any())).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction), anyLong())).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(invalid(reason));

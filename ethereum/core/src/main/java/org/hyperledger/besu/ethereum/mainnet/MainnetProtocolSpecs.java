@@ -335,6 +335,10 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions) {
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator, true, chainId, genesisConfigOptions.getEIP1559BlockNumber()))
         .addBlockHeaderValidatorRule(
             new EIP1559BlockHeaderGasPriceValidationRule<>(genesisConfigOptions))
         .name("EIP-1559");
