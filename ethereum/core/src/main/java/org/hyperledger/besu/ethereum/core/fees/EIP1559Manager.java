@@ -76,4 +76,12 @@ public class EIP1559Manager {
   public boolean isEIP1559Finalized(final long blockNumber) {
     return blockNumber >= finalForkBlknum;
   }
+
+  public boolean isForkBlock(final long blockNumber) {
+    return initialForkBlknum == blockNumber;
+  }
+
+  public long getForkBlock() {
+    return initialForkBlknum;
+  }
 }

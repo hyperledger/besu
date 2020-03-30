@@ -58,13 +58,24 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final OptionalLong eip1559ForkBlockNumber) {
+    this(
+        gasCalculator,
+        checkSignatureMalleability,
+        chainId,
+        eip1559ForkBlockNumber.isPresent()
+            ? Optional.of(new EIP1559Manager(eip1559ForkBlockNumber))
+            : Optional.empty());
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Optional<EIP1559Manager> eip1559Manager) {
     this.gasCalculator = gasCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
-    this.eip1559Manager =
-        eip1559ForkBlockNumber.isPresent()
-            ? Optional.of(new EIP1559Manager(eip1559ForkBlockNumber))
-            : Optional.empty();
+    this.eip1559Manager = eip1559Manager;
   }
 
   @Override

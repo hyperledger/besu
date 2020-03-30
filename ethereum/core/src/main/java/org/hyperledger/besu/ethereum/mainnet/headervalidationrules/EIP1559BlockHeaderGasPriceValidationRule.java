@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559Config;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
@@ -28,8 +28,8 @@ public class EIP1559BlockHeaderGasPriceValidationRule<C>
   private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
   private final EIP1559Manager eip1559;
 
-  public EIP1559BlockHeaderGasPriceValidationRule(final GenesisConfigOptions genesisConfigOptions) {
-    this.eip1559 = new EIP1559Manager(genesisConfigOptions.getEIP1559BlockNumber());
+  public EIP1559BlockHeaderGasPriceValidationRule(final EIP1559Manager eip1559) {
+    this.eip1559 = eip1559;
   }
 
   @Override
@@ -37,15 +37,25 @@ public class EIP1559BlockHeaderGasPriceValidationRule<C>
       final BlockHeader header,
       final BlockHeader parent,
       final ProtocolContext<C> protocolContext) {
-    if (parent.getBaseFee() == null || header.getBaseFee() == null) {
+    if (!eip1559.isEIP1559(header.getNumber())) {
       return true;
     }
+    if (eip1559.isForkBlock(header.getNumber())) {
+      return EIP1559Config.INITIAL_BASEFEE == header.getBaseFee();
+    }
+
+    if (parent.getBaseFee() == null || header.getBaseFee() == null) {
+      LOG.trace(
+          "Invalid block header: basefee should be specified for parent and current block header");
+    }
+
     final long baseFee = eip1559.computeBaseFee(parent.getBaseFee(), parent.getGasUsed());
     if (baseFee != header.getBaseFee()) {
       LOG.trace(
           "Invalid block header: basefee {} does not equal expected basefee {}",
           header.getBaseFee(),
           baseFee);
+      return false;
     }
     return baseFee == header.getBaseFee()
         && eip1559.isValidBaseFee(parent.getBaseFee(), header.getBaseFee());
