@@ -50,7 +50,7 @@ public class IbftChainObserverTest {
             .parentHash(Hash.EMPTY_LIST_HASH)
             .buildHeader();
 
-    final Block block = new Block(header, new BlockBody(emptyList(), emptyList(), emptyList()));
+    final Block block = new Block(header, new BlockBody(emptyList(), emptyList()));
 
     when(mockBlockAddedEvent.getEventType()).thenReturn(BlockAddedEvent.EventType.HEAD_ADVANCED);
     when(mockBlockAddedEvent.getBlock()).thenReturn(block);

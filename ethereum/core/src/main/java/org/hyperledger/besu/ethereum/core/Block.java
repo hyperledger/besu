@@ -23,7 +23,7 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class Block implements org.hyperledger.besu.plugin.data.Block {
+public class Block {
 
   private final BlockHeader header;
   private final BlockBody body;
@@ -33,12 +33,10 @@ public class Block implements org.hyperledger.besu.plugin.data.Block {
     this.body = body;
   }
 
-  @Override
   public BlockHeader getHeader() {
     return header;
   }
 
-  @Override
   public BlockBody getBody() {
     return body;
   }
@@ -70,10 +68,9 @@ public class Block implements org.hyperledger.besu.plugin.data.Block {
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
-    final List<TransactionReceipt> transactionReceipts = in.readList(TransactionReceipt::readFrom);
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers, transactionReceipts));
+    return new Block(header, new BlockBody(transactions, ommers));
   }
 
   @Override

@@ -186,10 +186,6 @@ public interface Blockchain {
    */
   long observeBlockAdded(BlockAddedObserver observer);
 
-  default long observeBlockAdded(final Consumer<Block> blockAddedObserver) {
-    return observeBlockAdded((event, blockchain) -> blockAddedObserver.accept(event.getBlock()));
-  }
-
   /**
    * Adds an observer that will get called on for every added and removed log when a new block is
    * added.
@@ -220,10 +216,6 @@ public interface Blockchain {
    * @return the observer ID that can be used to remove it later.
    */
   long observeChainReorg(ChainReorgObserver observer);
-
-  default long observeChainReorg(final Consumer<Block> blockReorgObserver) {
-    return observeChainReorg((block, blockchain) -> blockReorgObserver.accept(block));
-  }
 
   /**
    * Removes a previously added {@link ChainReorgObserver}.

@@ -20,7 +20,5 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** A transaction receipt, containing information pertaining a transaction execution. */
 public interface TransactionReceipt {
-  Hash getTransactionHash();
-
   Optional<Bytes> getRevertReason();
 }

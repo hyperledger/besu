@@ -177,10 +177,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
-      return new Block(
-          blockHeader,
-          new BlockBody(
-              transactionResults.getTransactions(), ommers, transactionResults.getReceipts()));
+      return new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
 
     } catch (final CancellationException ex) {
       LOG.trace("Attempt to create block was interrupted.");
