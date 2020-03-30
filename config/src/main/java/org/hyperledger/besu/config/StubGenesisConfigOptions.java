@@ -34,7 +34,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   // TODO EIP-1559 change for the actual fork name when known
-  private OptionalLong eip1559BlockNumber = OptionalLong.empty();
+  private final OptionalLong eip1559BlockNumber = OptionalLong.empty();
   private final OptionalLong classicForkBlock = OptionalLong.empty();
   private final OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private final OptionalLong diehardBlockNumber = OptionalLong.empty();
