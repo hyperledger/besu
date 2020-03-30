@@ -120,6 +120,7 @@ public interface TransactionProcessor {
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
    *     TransactionValidator}
+   * @param maybeBlockHeader an {@link Optional} wrapping the block header
    * @return the transaction result
    * @see TransactionValidator
    * @see TransactionValidationParams
@@ -158,6 +159,7 @@ public interface TransactionProcessor {
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param maybeBlockHeader an {@link Optional} wrapping the block header
    * @return the transaction result
    */
   default Result processTransaction(
