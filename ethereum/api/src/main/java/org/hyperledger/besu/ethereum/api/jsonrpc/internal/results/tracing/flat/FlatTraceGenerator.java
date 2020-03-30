@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
@@ -48,6 +49,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class FlatTraceGenerator {
 
   private static final String ZERO_ADDRESS_STRING = Address.ZERO.toHexString();
+
+  private static final int SUB_GAS_CAP_DIVISOR = 64;
 
   /**
    * Generates a stream of {@link Trace} from the passed {@link TransactionTrace} data.
@@ -144,10 +147,13 @@ public class FlatTraceGenerator {
                 flatTraces,
                 tracesContexts,
                 cumulativeGasCost,
+                traceFrame,
                 nextTraceFrame);
       } else if ("REVERT".equals(opcodeString)) {
         currentContext = handleRevert(tracesContexts, currentContext);
-      } else if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
+      }
+
+      if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
         currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
       }
     }
@@ -304,6 +310,7 @@ public class FlatTraceGenerator {
       final List<FlatTrace.Builder> flatTraces,
       final Deque<FlatTrace.Context> tracesContexts,
       final long cumulativeGasCost,
+      final TraceFrame traceFrame,
       final Optional<TraceFrame> nextTraceFrame) {
     final FlatTrace.Context lastContext = tracesContexts.peekLast();
     final String callingAddress = calculateCallingAddress(lastContext);
@@ -313,13 +320,24 @@ public class FlatTraceGenerator {
             .type("create")
             .traceAddress(calculateTraceAddress(tracesContexts))
             .resultBuilder(Result.builder());
+
     final Action.Builder subTraceActionBuilder =
         Action.builder()
             .from(smartContractAddress.orElse(callingAddress))
-            .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
+            .gas(computeGas(traceFrame, nextTraceFrame).toHexString())
             .value(Quantity.create(nextTraceFrame.map(TraceFrame::getValue).orElse(Wei.ZERO)));
+
+    if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
+      traceFrame
+          .getMaybeCode()
+          .map(Code::getBytes)
+          .map(Bytes::toHexString)
+          .map(subTraceActionBuilder::init);
+    }
+
     final FlatTrace.Context currentContext =
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
+
     currentContext
         .getBuilder()
         .getResultBuilder()
@@ -406,6 +424,20 @@ public class FlatTraceGenerator {
     } else {
       return fallbackValue;
     }
+  }
+
+  private static Gas computeGas(
+      final TraceFrame traceFrame, final Optional<TraceFrame> nextTraceFrame) {
+    if (traceFrame.getGasCost().isPresent()) {
+      final Gas gasNeeded = traceFrame.getGasCost().get();
+      final Gas currentGas = traceFrame.getGasRemaining();
+      if (currentGas.compareTo(gasNeeded) >= 0) {
+        final Gas gasRemaining = currentGas.minus(gasNeeded);
+        return gasRemaining.minus(
+            Gas.of(Math.floorDiv(gasRemaining.toLong(), SUB_GAS_CAP_DIVISOR)));
+      }
+    }
+    return nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO);
   }
 
   private static Address toAddress(final Bytes32 value) {

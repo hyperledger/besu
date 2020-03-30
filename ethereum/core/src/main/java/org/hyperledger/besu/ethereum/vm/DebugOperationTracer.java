@@ -111,6 +111,14 @@ public class DebugOperationTracer implements OperationTracer {
     traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
   }
 
+  @Override
+  public void traceAccountCreationResult(
+      final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
+    if (!traceFrames.isEmpty()) {
+      haltReason.ifPresent(traceFrames.get(traceFrames.size() - 1)::addExceptionalHaltReason);
+    }
+  }
+
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
     if (!options.isStorageEnabled()) {
       return Optional.empty();
