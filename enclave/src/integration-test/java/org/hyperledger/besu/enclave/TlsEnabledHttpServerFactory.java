@@ -34,25 +34,27 @@ import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 
-public class TlsEnabledHttpServerFactory {
+class TlsEnabledHttpServerFactory {
 
   private final Vertx vertx;
   private final List<HttpServer> serversCreated = Lists.newArrayList();
 
-  public TlsEnabledHttpServerFactory() {
+  TlsEnabledHttpServerFactory() {
     this.vertx = Vertx.vertx();
   }
 
-  public void shutdown() {
+  void shutdown() {
     serversCreated.forEach(HttpServer::close);
     vertx.close();
   }
 
-  public HttpServer create(
+  HttpServer create(
       final TlsCertificateDefinition serverCert,
       final TlsCertificateDefinition acceptedClientCerts,
       final Path workDir,
@@ -78,7 +80,7 @@ public class TlsEnabledHttpServerFactory {
       router
           .route(HttpMethod.GET, "/upcheck")
           .produces(HttpHeaderValues.APPLICATION_JSON.toString())
-          .handler(context -> context.response().end("I'm up!"));
+          .handler(TlsEnabledHttpServerFactory::handleRequest);
 
       final HttpServer mockOrionHttpServer = vertx.createHttpServer(web3HttpServerOptions);
 
@@ -89,13 +91,20 @@ public class TlsEnabledHttpServerFactory {
 
       serversCreated.add(mockOrionHttpServer);
       return mockOrionHttpServer;
-    } catch (KeyStoreException
+    } catch (final KeyStoreException
         | NoSuchAlgorithmException
         | CertificateException
         | IOException
         | ExecutionException
         | InterruptedException e) {
       throw new RuntimeException("Failed to construct a TLS Enabled Server", e);
+    }
+  }
+
+  private static void handleRequest(final RoutingContext context) {
+    final HttpServerResponse response = context.response();
+    if (!response.closed()) {
+      response.end("I'm up!");
     }
   }
 }
