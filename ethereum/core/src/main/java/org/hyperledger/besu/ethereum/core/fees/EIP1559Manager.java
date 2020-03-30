@@ -45,9 +45,6 @@ public class EIP1559Manager {
 
   public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
     long delta = parentBlockGasUsed - TARGET_GAS_USED;
-    if (delta < 0) {
-      delta = -delta;
-    }
     return parentBaseFee
         + ((parentBaseFee * delta) / TARGET_GAS_USED / BASEFEE_MAX_CHANGE_DENOMINATOR);
   }
