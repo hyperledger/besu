@@ -77,7 +77,7 @@ public class ProcessableBlockHeader {
    *
    * @return the block number
    */
-  public Long getNumber() {
+  public long getNumber() {
     return number;
   }
 
