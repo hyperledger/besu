@@ -43,7 +43,6 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
@@ -201,7 +200,7 @@ public class TransactionPool implements BlockAddedObserver {
       final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
-        getTransactionValidator().validate(transaction, Optional.of(chainHeadBlockHeader));
+        getTransactionValidator().validate(transaction, chainHeadBlockHeader.getNumber());
     if (!basicValidationResult.isValid()) {
       return basicValidationResult;
     }

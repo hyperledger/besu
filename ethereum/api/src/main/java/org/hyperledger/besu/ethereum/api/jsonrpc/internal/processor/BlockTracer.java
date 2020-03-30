@@ -67,8 +67,7 @@ public class BlockTracer {
               header.getCoinbase(),
               tracer,
               new BlockHashLookup(header, blockchain),
-              false,
-              Optional.of(header));
+              false);
       final List<TraceFrame> traceFrames = tracer.copyTraceFrames();
       tracer.reset();
       return new TransactionTrace(transaction, result, traceFrames);

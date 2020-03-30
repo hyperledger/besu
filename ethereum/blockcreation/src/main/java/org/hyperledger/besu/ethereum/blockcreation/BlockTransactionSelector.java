@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -184,8 +183,7 @@ public class BlockTransactionSelector {
             miningBeneficiary,
             blockHashLookup,
             false,
-            TransactionValidationParams.mining(),
-            Optional.empty());
+            TransactionValidationParams.mining());
 
     if (!result.isInvalid()) {
       worldStateUpdater.commit();

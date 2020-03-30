@@ -163,7 +163,6 @@ public class TransactionTracerTest {
             eq(coinbase),
             eq(tracer),
             any(),
-            any(),
             any()))
         .thenReturn(result);
 

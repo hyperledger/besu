@@ -27,8 +27,6 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -83,8 +81,7 @@ public class MainnetTransactionProcessorTest {
         Address.fromHexString("1"),
         blockHashLookup,
         false,
-        new TransactionValidationParams.Builder().build(),
-        Optional.of(blockHeader));
+        new TransactionValidationParams.Builder().build());
 
     assertThat(txValidationParamCaptor.getValue())
         .isEqualToComparingFieldByField(expectedValidationParams);

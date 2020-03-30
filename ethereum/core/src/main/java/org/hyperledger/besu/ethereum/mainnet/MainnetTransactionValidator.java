@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
@@ -54,15 +53,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   @Override
   public ValidationResult<TransactionInvalidReason> validate(
-      final Transaction transaction, final Optional<BlockHeader> maybeBlockHeader) {
+      final Transaction transaction, final long blockNumber) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
     }
-    if (maybeBlockHeader.isPresent()
-        && maybeBlockHeader.get().getNumber()
-            > EIP1559Config.INITIAL_FORK_BLKNUM.orElse(() -> Long.MAX_VALUE).getAsLong()) {
+    if (blockNumber > EIP1559Config.INITIAL_FORK_BLKNUM.orElse(() -> Long.MAX_VALUE).getAsLong()) {
       if (transaction.getGasLimit() > EIP1559Config.PER_TX_GASLIMIT) {
         return ValidationResult.invalid(
             TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,

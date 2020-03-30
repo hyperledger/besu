@@ -128,7 +128,7 @@ public class BlockTransactionSelectorTest {
     pendingTransactions.addRemoteTransaction(transaction);
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.failed(
                 5, ValidationResult.valid(), Optional.empty()));
@@ -169,7 +169,7 @@ public class BlockTransactionSelectorTest {
     }
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
@@ -181,7 +181,6 @@ public class BlockTransactionSelectorTest {
             any(),
             any(),
             anyBoolean(),
-            any(),
             any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.invalid(
@@ -225,7 +224,7 @@ public class BlockTransactionSelectorTest {
     }
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
@@ -293,7 +292,7 @@ public class BlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
@@ -347,7 +346,7 @@ public class BlockTransactionSelectorTest {
 
     // TransactionProcessor mock assumes all gas in the transaction was used (i.e. gasLimit).
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
@@ -440,7 +439,6 @@ public class BlockTransactionSelectorTest {
             any(),
             any(),
             anyBoolean(),
-            any(),
             any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
@@ -453,7 +451,6 @@ public class BlockTransactionSelectorTest {
             any(),
             any(),
             anyBoolean(),
-            any(),
             any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.invalid(
@@ -486,7 +483,6 @@ public class BlockTransactionSelectorTest {
             any(),
             any(),
             anyBoolean(),
-            any(),
             any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.invalid(

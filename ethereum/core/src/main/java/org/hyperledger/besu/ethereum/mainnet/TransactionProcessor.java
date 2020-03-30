@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -120,7 +119,6 @@ public interface TransactionProcessor {
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
    *     TransactionValidator}
-   * @param maybeBlockHeader an {@link Optional} wrapping the block header
    * @return the transaction result
    * @see TransactionValidator
    * @see TransactionValidationParams
@@ -133,8 +131,7 @@ public interface TransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams,
-      final Optional<BlockHeader> maybeBlockHeader) {
+      final TransactionValidationParams transactionValidationParams) {
     return processTransaction(
         blockchain,
         worldState,
@@ -143,9 +140,7 @@ public interface TransactionProcessor {
         miningBeneficiary,
         OperationTracer.NO_TRACING,
         blockHashLookup,
-        isPersistingPrivateState,
-        transactionValidationParams,
-        maybeBlockHeader);
+        isPersistingPrivateState);
   }
 
   /**
@@ -155,11 +150,10 @@ public interface TransactionProcessor {
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
-   * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
-   * @param maybeBlockHeader an {@link Optional} wrapping the block header
    * @return the transaction result
    */
   default Result processTransaction(
@@ -170,8 +164,7 @@ public interface TransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
-      final Optional<BlockHeader> maybeBlockHeader) {
+      final Boolean isPersistingPrivateState) {
     return processTransaction(
         blockchain,
         worldState,
@@ -181,8 +174,7 @@ public interface TransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        new TransactionValidationParams.Builder().build(),
-        maybeBlockHeader);
+        new TransactionValidationParams.Builder().build());
   }
 
   Result processTransaction(
@@ -194,6 +186,5 @@ public interface TransactionProcessor {
       OperationTracer operationTracer,
       BlockHashLookup blockHashLookup,
       Boolean isPersistingPrivateState,
-      TransactionValidationParams transactionValidationParams,
-      Optional<BlockHeader> maybeBlockHeader);
+      TransactionValidationParams transactionValidationParams);
 }

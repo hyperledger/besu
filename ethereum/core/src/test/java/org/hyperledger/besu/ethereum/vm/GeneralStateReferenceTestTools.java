@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class GeneralStateReferenceTestTools {
   private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
@@ -122,8 +121,7 @@ public class GeneralStateReferenceTestTools {
             blockHeader.getCoinbase(),
             new BlockHashLookup(blockHeader, blockchain),
             false,
-            TransactionValidationParams.processingBlock(),
-            Optional.of(blockHeader));
+            TransactionValidationParams.processingBlock());
     final Account coinbase = worldStateUpdater.getOrCreate(spec.blockHeader().getCoinbase());
     if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.eip())) {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
