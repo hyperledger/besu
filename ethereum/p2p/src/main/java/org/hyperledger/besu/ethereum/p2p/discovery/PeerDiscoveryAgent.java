@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
@@ -70,7 +70,7 @@ public abstract class PeerDiscoveryAgent {
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
   /* The keypair used to sign messages. */
-  protected final SECP256K1.KeyPair keyPair;
+  protected final NodeKey nodeKey;
   private final Bytes id;
   protected final DiscoveryConfiguration config;
 
@@ -84,13 +84,13 @@ public abstract class PeerDiscoveryAgent {
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
   public PeerDiscoveryAgent(
-      final SECP256K1.KeyPair keyPair,
+      final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
-    checkArgument(keyPair != null, "keypair cannot be null");
+    checkArgument(nodeKey != null, "cryptoOps cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
 
     validateConfiguration(config);
@@ -101,9 +101,9 @@ public abstract class PeerDiscoveryAgent {
         config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
 
     this.config = config;
-    this.keyPair = keyPair;
+    this.nodeKey = nodeKey;
 
-    id = keyPair.getPublicKey().getEncodedBytes();
+    id = nodeKey.getPublicKey().getEncodedBytes();
   }
 
   protected abstract TimerUtil createTimer();
@@ -164,7 +164,7 @@ public abstract class PeerDiscoveryAgent {
 
   private PeerDiscoveryController createController(final DiscoveryPeer localNode) {
     return PeerDiscoveryController.builder()
-        .keypair(keyPair)
+        .nodeKey(nodeKey)
         .localPeer(localNode)
         .bootstrapNodes(bootstrapPeers)
         .outboundMessageHandler(this::handleOutgoingPacket)
