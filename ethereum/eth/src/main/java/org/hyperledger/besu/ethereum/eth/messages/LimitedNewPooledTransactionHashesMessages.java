@@ -24,7 +24,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public final class LimitedNewPooledTransactionHashesMessages {
 
-  static final int LIMIT = 1024 * 1024;
   static final int MAX_COUNT = 4096;
 
   private final NewPooledTransactionHashesMessage transactionsMessage;
@@ -41,23 +40,18 @@ public final class LimitedNewPooledTransactionHashesMessages {
       final Iterable<Hash> hashes) {
     final List<Hash> includedTransactions = new ArrayList<>();
     final BytesValueRLPOutput message = new BytesValueRLPOutput();
-    int messageSize = 0;
     int count = 0;
     message.startList();
-    for (final Hash transaction : hashes) {
-      final BytesValueRLPOutput encodedTransaction = new BytesValueRLPOutput();
-      encodedTransaction.writeBytes(transaction);
-      Bytes encodedBytes = encodedTransaction.encoded();
-      // Break if individual transaction size exceeds limit
-      if (encodedBytes.size() > LIMIT && (messageSize != 0)) {
-        break;
-      }
+    for (final Hash txHash : hashes) {
+      final BytesValueRLPOutput encodedHashes = new BytesValueRLPOutput();
+      encodedHashes.writeBytes(txHash);
+      Bytes encodedBytes = encodedHashes.encoded();
+
       message.writeRLPUnsafe(encodedBytes);
-      includedTransactions.add(transaction);
+      includedTransactions.add(txHash);
       // Check if last transaction to add to the message
-      messageSize += encodedBytes.size();
       count++;
-      if (messageSize > LIMIT || count >= MAX_COUNT) {
+      if (count >= MAX_COUNT) {
         break;
       }
     }

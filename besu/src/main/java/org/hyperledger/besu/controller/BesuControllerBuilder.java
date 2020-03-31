@@ -258,7 +258,8 @@ public abstract class BesuControllerBuilder<C> {
             metricsSystem,
             syncState,
             miningParameters.getMinTransactionGasPrice(),
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+                );
     ethProtocolManager.bind(
         protocolContext.getWorldStateArchive(), transactionPool, ethereumWireProtocolConfiguration);
 

@@ -18,6 +18,7 @@ import static java.time.Instant.now;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetPooledTransactionsFromPeerTask;
@@ -32,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.logging.log4j.Logger;
 
@@ -45,13 +47,15 @@ class PendingTransactionsMessageProcessor {
   private final TransactionPool transactionPool;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
+  private final ExecutorService executorService;
 
   PendingTransactionsMessageProcessor(
       final PeerPendingTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final Counter metricsCounter,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final ExecutorService executorService) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.ethContext = ethContext;
@@ -64,6 +68,7 @@ class PendingTransactionsMessageProcessor {
                     "{} expired transaction messages have been skipped.",
                     SKIPPED_MESSAGES_LOGGING_THRESHOLD),
             SKIPPED_MESSAGES_LOGGING_THRESHOLD);
+    this.executorService = executorService;
   }
 
   void processNewPooledTransactionHashesMessage(
@@ -97,7 +102,11 @@ class PendingTransactionsMessageProcessor {
         GetPooledTransactionsFromPeerTask task =
             GetPooledTransactionsFromPeerTask.forHashes(ethContext, messageHashes, metricsSystem);
         task.assignPeer(peer);
-        task.executeTaskTimed();
+        task.runAsync(executorService).thenAccept(result -> {
+          List<Transaction> txs = result.getResult();
+          transactionPool.addRemoteTransactions(txs);
+        });
+
         toRequest.removeAll(messageHashes);
       }
     } catch (final RLPException ex) {

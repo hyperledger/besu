@@ -78,7 +78,9 @@ public class EthProtocol implements SubProtocol {
         return 8;
       case EthVersion.V63:
       case EthVersion.V64:
-      case EthVersion.V65:
+      case EthVersion
+          .V65: // same number of messages in the range, eth65 defines messages in the middle of the
+        // range defined by eth63.
         return 17;
       default:
         return 0;
@@ -119,6 +121,12 @@ public class EthProtocol implements SubProtocol {
         return "BlockBodies";
       case EthPV62.NEW_BLOCK:
         return "NewBlock";
+      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
+        return "NewPooledTransactionHashes";
+      case EthPV65.GET_POOLED_TRANSACTIONS:
+        return "GetPooledTransactions";
+      case EthPV65.POOLED_TRANSACTIONS:
+        return "PooledTransactions";
       case EthPV63.GET_NODE_DATA:
         return "GetNodeData";
       case EthPV63.NODE_DATA:
@@ -127,12 +135,6 @@ public class EthProtocol implements SubProtocol {
         return "GetReceipts";
       case EthPV63.RECEIPTS:
         return "Receipts";
-      case EthPV65.GET_POOLED_TRANSACTIONS:
-        return "GetPooledTransactions";
-      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
-        return "NewPooledTransactionHashes";
-      case EthPV65.POOLED_TRANSACTIONS:
-        return "PooledTransactions";
       default:
         return INVALID_MESSAGE_NAME;
     }

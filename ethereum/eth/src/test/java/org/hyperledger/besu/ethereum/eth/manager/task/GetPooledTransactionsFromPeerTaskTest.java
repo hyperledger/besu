@@ -25,22 +25,21 @@ import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTes
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
-public class GetPooledTransactionsFromPeerTaskTest
-    extends PeerMessageTaskTest<Map<Hash, Transaction>> {
+public class GetPooledTransactionsFromPeerTaskTest extends PeerMessageTaskTest<List<Transaction>> {
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Override
-  protected Map<Hash, Transaction> generateDataToBeRequested() {
+  protected List<Transaction> generateDataToBeRequested() {
 
-    final Map<Hash, Transaction> requestedData = new HashMap<>();
+    final List<Transaction> requestedData = new ArrayList<>();
     SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
     for (int i = 0; i < 3; i++) {
       Transaction tx =
@@ -50,36 +49,39 @@ public class GetPooledTransactionsFromPeerTaskTest
               .chainId(Optional.empty())
               .createTransaction(keyPair);
       assertThat(transactionPool.getPendingTransactions().addLocalTransaction(tx)).isTrue();
-      requestedData.put(tx.getHash(), tx);
+      requestedData.add(tx);
     }
     return requestedData;
   }
 
   @Override
-  protected EthTask<AbstractPeerTask.PeerTaskResult<Map<Hash, Transaction>>> createTask(
-      final Map<Hash, Transaction> requestedData) {
-    final List<Hash> hashes = Lists.newArrayList(requestedData.keySet());
+  protected EthTask<AbstractPeerTask.PeerTaskResult<List<Transaction>>> createTask(
+      final List<Transaction> requestedData) {
+    final List<Hash> hashes =
+        Lists.newArrayList(requestedData).stream()
+            .map(Transaction::getHash)
+            .collect(Collectors.toList());
     return GetPooledTransactionsFromPeerTask.forHashes(ethContext, hashes, metricsSystem);
   }
 
   @Override
   protected void assertPartialResultMatchesExpectation(
-      final Map<Hash, Transaction> requestedData, final Map<Hash, Transaction> partialResponse) {
+      final List<Transaction> requestedData, final List<Transaction> partialResponse) {
     assertThat(partialResponse.size()).isLessThanOrEqualTo(requestedData.size());
     assertThat(partialResponse.size()).isGreaterThan(0);
-    for (Map.Entry<Hash, Transaction> data : partialResponse.entrySet()) {
-      assertThat(requestedData.get(data.getKey())).isEqualTo(data.getValue());
+    for (Transaction data : partialResponse) {
+      assertThat(requestedData).contains(data);
     }
   }
 
   @Override
   protected void assertResultMatchesExpectation(
-      final Map<Hash, Transaction> requestedData,
-      final AbstractPeerTask.PeerTaskResult<Map<Hash, Transaction>> response,
+      final List<Transaction> requestedData,
+      final AbstractPeerTask.PeerTaskResult<List<Transaction>> response,
       final EthPeer respondingPeer) {
     assertThat(response.getResult().size()).isEqualTo(requestedData.size());
-    for (Map.Entry<Hash, Transaction> data : response.getResult().entrySet()) {
-      assertThat(requestedData.get(data.getKey())).isEqualTo(data.getValue());
+    for (Transaction data : response.getResult()) {
+      assertThat(requestedData).contains(data);
     }
   }
 }

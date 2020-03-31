@@ -25,18 +25,20 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
+import java.util.concurrent.ExecutorService;
 
 public class TransactionPoolFactory {
 
   public static TransactionPool createTransactionPool(
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
-      final EthContext ethContext,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
-      final SyncState syncState,
-      final Wei minTransactionGasPrice,
-      final TransactionPoolConfiguration transactionPoolConfiguration) {
+          final ProtocolSchedule<?> protocolSchedule,
+          final ProtocolContext<?> protocolContext,
+          final EthContext ethContext,
+          final Clock clock,
+          final MetricsSystem metricsSystem,
+          final SyncState syncState,
+          final Wei minTransactionGasPrice,
+          final TransactionPoolConfiguration transactionPoolConfiguration,
+          final ExecutorService pendingTransactionWorker) {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -91,7 +93,8 @@ public class TransactionPoolFactory {
                     "pending_transactions_messages_skipped_total",
                     "Total number of pending transactions messages skipped by the processor."),
                 ethContext,
-                metricsSystem),
+                metricsSystem,
+                    pendingTransactionWorker),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     ethContext

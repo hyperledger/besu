@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -27,16 +27,13 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class GetPooledTransactionsFromPeerTask
-    extends AbstractPeerRequestTask<Map<Hash, Transaction>> {
+public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<List<Transaction>> {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -64,12 +61,12 @@ public class GetPooledTransactionsFromPeerTask
   }
 
   @Override
-  protected Optional<Map<Hash, Transaction>> processResponse(
+  protected Optional<List<Transaction>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
       // the data we're requesting.
-      return Optional.of(emptyMap());
+      return Optional.of(emptyList());
     }
     final PooledTransactionsMessage pooledTransactionsMessage =
         PooledTransactionsMessage.readFrom(message);
@@ -81,15 +78,15 @@ public class GetPooledTransactionsFromPeerTask
     return mapNodeDataByHash(tx);
   }
 
-  private Optional<Map<Hash, Transaction>> mapNodeDataByHash(final List<Transaction> transactions) {
-    final Map<Hash, Transaction> txByHash = new HashMap<>();
+  private Optional<List<Transaction>> mapNodeDataByHash(final List<Transaction> transactions) {
+    final List<Transaction> result = new ArrayList<>();
     for (final Transaction tx : transactions) {
       final Hash hash = tx.getHash();
       if (!hashes.contains(hash)) {
         return Optional.empty();
       }
-      txByHash.put(hash, tx);
+      result.add(tx);
     }
-    return Optional.of(txByHash);
+    return Optional.of(result);
   }
 }
