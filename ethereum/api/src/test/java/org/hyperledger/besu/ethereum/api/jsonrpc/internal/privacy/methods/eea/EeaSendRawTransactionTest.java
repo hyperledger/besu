@@ -211,8 +211,8 @@ public class EeaSendRawTransactionTest {
         .thenReturn(ValidationResult.valid());
     when(privacyController.retrieveOffChainPrivacyGroup(any(String.class), any(String.class)))
         .thenReturn(
-            new PrivacyGroup(
-                "", PrivacyGroup.Type.PANTHEON, "", "", singletonList(ENCLAVE_PUBLIC_KEY)));
+                Optional.of(new PrivacyGroup(
+                        "", PrivacyGroup.Type.PANTHEON, "", "", singletonList(ENCLAVE_PUBLIC_KEY))));
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), any(Address.class)))
         .thenReturn(PUBLIC_TRANSACTION);
@@ -256,7 +256,7 @@ public class EeaSendRawTransactionTest {
         .thenReturn(ValidationResult.valid());
     when(privacyController.retrieveOnChainPrivacyGroup(any(Bytes.class), any(String.class)))
         .thenReturn(
-            new PrivacyGroup("", PrivacyGroup.Type.ONCHAIN, "", "", Collections.emptyList()));
+                Optional.of(new PrivacyGroup("", PrivacyGroup.Type.ONCHAIN, "", "", Collections.emptyList())));
     when(privacyController.buildAndSendAddPayload(
             any(PrivateTransaction.class), any(Bytes32.class), any(String.class)))
         .thenReturn(Optional.of(ENCLAVE_PUBLIC_KEY));
@@ -307,7 +307,7 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             request.getRequest().getId(),
-            JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE_WHILE_ON_CHAIN_PRIVACY_IS_ENABLED);
+            JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

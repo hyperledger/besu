@@ -206,7 +206,7 @@ public class DefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
     final String enclaveKey =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, PANTHEON_PRIVACY_GROUP);
+        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.of(PANTHEON_PRIVACY_GROUP));
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
@@ -438,7 +438,7 @@ public class DefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
 
     final String enclaveKey =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, ON_CHAIN_PRIVACY_GROUP);
+        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ON_CHAIN_PRIVACY_GROUP));
 
     final Transaction onChainPrivacyMarkerTransaction =
         privacyController.createPrivacyMarkerTransaction(

@@ -34,7 +34,7 @@ public interface PrivacyController {
   String sendTransaction(
       PrivateTransaction privateTransaction,
       String enclavePublicKey,
-      final PrivacyGroup privacyGroup);
+      Optional<PrivacyGroup> privacyGroup);
 
   ReceiveResponse retrieveTransaction(String enclaveKey, String enclavePublicKey);
 
@@ -70,7 +70,7 @@ public interface PrivacyController {
   Optional<String> buildAndSendAddPayload(
       PrivateTransaction privateTransaction, Bytes32 privacyGroupId, String enclaveKey);
 
-  PrivacyGroup retrieveOffChainPrivacyGroup(String toBase64String, String enclaveKey);
+  Optional<PrivacyGroup> retrieveOffChainPrivacyGroup(String toBase64String, String enclaveKey);
 
   List<PrivacyGroup> findOnChainPrivacyGroup(List<String> asList, String enclaveKey);
 
@@ -80,7 +80,7 @@ public interface PrivacyController {
       final Hash blockHash,
       final String enclavePublicKey);
 
-  PrivacyGroup retrieveOnChainPrivacyGroup(Bytes privacyGroupId, String enclavePublicKey);
+  Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(Bytes privacyGroupId, String enclavePublicKey);
 
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 

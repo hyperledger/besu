@@ -115,12 +115,12 @@ public enum JsonRpcError {
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in private transaction yet."),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
-  OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "OffChain Privacy group does not exist."),
-  ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "OnChain Privacy group does not exist."),
+  OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Offchain Privacy group does not exist."),
+  ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
   ONCHAIN_PRIVACY_GROUP_NOT_ENABLED(-50100, "Onchain privacy groups not enabled."),
   OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED(
       -50100, "Offchain privacy group can't be used with Onchain privacy groups enabled."),
-  PRIVACY_GROUP_ID_NOT_AVAILABLE_WHILE_ON_CHAIN_PRIVACY_IS_ENABLED(
+  PRIVACY_GROUP_ID_NOT_AVAILABLE(
       -50100, "Privacy group id is not available while OnChain privacy groups are enabled"),
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
