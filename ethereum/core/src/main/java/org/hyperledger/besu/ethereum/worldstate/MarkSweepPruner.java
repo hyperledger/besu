@@ -208,10 +208,13 @@ public class MarkSweepPruner {
   }
 
   private void markNodes(final Collection<Bytes32> nodeHashes) {
-    if (!nodeHashes.isEmpty()) {
-      final KeyValueStorageTransaction transaction = markStorage.startTransaction();
-      nodeHashes.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
-      transaction.commit();
+    markedNodesCounter.inc(nodeHashes.size());
+    markLock.lock();
+    try {
+      pendingMarks.addAll(nodeHashes);
+      maybeFlushPendingMarks();
+    } finally {
+      markLock.unlock();
     }
   }
 
