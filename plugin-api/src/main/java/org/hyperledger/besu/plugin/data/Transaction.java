@@ -54,6 +54,21 @@ public interface Transaction {
   Quantity getGasPrice();
 
   /**
+   * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in
+   * EIP-1559.
+   *
+   * @return the quantity of Wei for gas premium.
+   */
+  Quantity getGasPremium();
+
+  /**
+   * A scalar value equal to the number of Wei to be paid in total, as specified in EIP-1559.
+   *
+   * @return the quantity of Wei for fee cap.
+   */
+  Quantity getFeeCap();
+
+  /**
    * A scalar value equal to the maximum amount of gas that should be used in executing this
    * transaction. This is paid up-front, before any computation is done and may not be increased
    * later.
@@ -147,4 +162,18 @@ public interface Transaction {
    * @return the transaction payload
    */
   Bytes getPayload();
+
+  /**
+   * Returns whether or not the transaction is a legacy transaction.
+   *
+   * @return true if legacy transaction, false otherwise
+   */
+  boolean isLegacyTransaction();
+
+  /**
+   * Returns whether or not the transaction is an EIP-1559 transaction.
+   *
+   * @return true if EIP-1559 transaction, false otherwise
+   */
+  boolean isEIP1559Transaction();
 }
