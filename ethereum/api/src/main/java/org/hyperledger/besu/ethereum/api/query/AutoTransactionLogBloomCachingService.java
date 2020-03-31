@@ -58,9 +58,9 @@ public class AutoTransactionLogBloomCachingService {
       chainReorgSubscriptionId =
           OptionalLong.of(
               blockchain.observeChainReorg(
-                  (block, __) ->
+                  (blockWithReceipts, __) ->
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          block.getHeader(), Optional.empty(), true)));
+                          blockWithReceipts.getHeader(), Optional.empty(), true)));
 
       transactionLogBloomCacher
           .getScheduler()

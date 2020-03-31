@@ -506,7 +506,6 @@ public class BlockDataGenerator {
     private Optional<Difficulty> difficulty = Optional.empty();
     private final List<Transaction> transactions = new ArrayList<>();
     private final List<BlockHeader> ommers = new ArrayList<>();
-    private final List<TransactionReceipt> transactionReceipts = new ArrayList<>();
     private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
     private Optional<Hash> receiptsRoot = Optional.empty();
@@ -514,7 +513,6 @@ public class BlockDataGenerator {
     private Optional<LogsBloomFilter> logsBloom = Optional.empty();
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
-    private boolean hasTransactionReceipts = true;
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -526,11 +524,6 @@ public class BlockDataGenerator {
 
     public List<BlockHeader> getOmmers(final List<BlockHeader> defaultValue) {
       return ommers.isEmpty() ? defaultValue : ommers;
-    }
-
-    public List<TransactionReceipt> getTransactionReceipts(
-        final List<TransactionReceipt> defaultValue) {
-      return transactionReceipts.isEmpty() ? defaultValue : transactionReceipts;
     }
 
     public long getBlockNumber(final long defaultValue) {
@@ -577,10 +570,6 @@ public class BlockDataGenerator {
       return hasOmmers;
     }
 
-    public boolean hasTransactionReceipts() {
-      return hasTransactionReceipts;
-    }
-
     public BlockOptions addTransaction(final Transaction... tx) {
       transactions.addAll(Arrays.asList(tx));
       return this;
@@ -593,16 +582,6 @@ public class BlockDataGenerator {
 
     public BlockOptions addTransaction(final Collection<Transaction> txs) {
       return addTransaction(txs.toArray(new Transaction[] {}));
-    }
-
-    public BlockOptions addTransactionReceipts(final TransactionReceipt... transactionReceipt) {
-      transactionReceipts.addAll(Arrays.asList(transactionReceipt));
-      return this;
-    }
-
-    public BlockOptions addTransactionReceipts(
-        final Collection<TransactionReceipt> transactionReceipts) {
-      return addTransactionReceipts(transactionReceipts.toArray(new TransactionReceipt[] {}));
     }
 
     public BlockOptions setBlockNumber(final long blockNumber) {
@@ -657,11 +636,6 @@ public class BlockDataGenerator {
 
     public BlockOptions hasOmmers(final boolean hasOmmers) {
       this.hasOmmers = hasOmmers;
-      return this;
-    }
-
-    public BlockOptions hasTransactionReceipts(final boolean hasTransactionReceipts) {
-      this.hasTransactionReceipts = hasTransactionReceipts;
       return this;
     }
   }
