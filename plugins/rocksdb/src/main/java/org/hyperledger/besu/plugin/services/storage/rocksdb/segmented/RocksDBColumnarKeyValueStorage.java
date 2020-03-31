@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionTransitionValidatorDecorator;
 
 import java.io.Closeable;
@@ -172,9 +173,14 @@ public class RocksDBColumnarKeyValueStorage
       rocksIterator.seekToFirst();
       while (rocksIterator.isValid()) {
         final byte[] key = rocksIterator.key();
-        if (!inUseCheck.test(key)) {
-          removedNodeCounter++;
-          db.delete(segmentHandle, key);
+        SegmentedKeyValueStorageAdapter.lock.lock();
+        try {
+          if (!inUseCheck.test(key)) {
+            removedNodeCounter++;
+            db.delete(segmentHandle, key);
+          }
+        } finally {
+          SegmentedKeyValueStorageAdapter.lock.unlock();
         }
         rocksIterator.next();
       }

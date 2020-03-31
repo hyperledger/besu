@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
@@ -156,8 +157,13 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public void commit() {
-      nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
-      transaction.commit();
+      SegmentedKeyValueStorageAdapter.lock.lock();
+      try {
+        nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
+        transaction.commit();
+      } finally {
+        SegmentedKeyValueStorageAdapter.lock.unlock();
+      }
     }
 
     @Override

@@ -22,10 +22,13 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
+  public static Lock lock = new ReentrantLock();
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
 
