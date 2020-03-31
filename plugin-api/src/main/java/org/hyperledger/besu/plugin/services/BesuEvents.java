@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.Address;
-import org.hyperledger.besu.plugin.data.Block;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -175,9 +175,9 @@ public interface BesuEvents {
     /**
      * Invoked when a new block has been evaluated and validated.
      *
-     * @param block block being added.
+     * @param addedBlockContext block being added.
      */
-    void onBlockAdded(Block block);
+    void onBlockAdded(AddedBlockContext addedBlockContext);
   }
 
   /** The listener interface for receiving new block reorg events. */
@@ -186,9 +186,9 @@ public interface BesuEvents {
     /**
      * Invoked when a reorg block has been evaluated and validated.
      *
-     * @param block block being reorged.
+     * @param addedBlockContext reorg block being added.
      */
-    void onBlockReorg(Block block);
+    void onBlockReorg(AddedBlockContext addedBlockContext);
   }
 
   /** The listener interface for receiving new transaction added events. */

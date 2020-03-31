@@ -12,11 +12,31 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.chain;
+package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import java.util.List;
 
-public interface ChainReorgObserver {
+/** The minimum set of data for a AddedBlockContext. */
+public interface AddedBlockContext {
 
-  void onBlockAdded(BlockWithReceipts block, Blockchain blockchain);
+  /**
+   * A {@link BlockHeader} object.
+   *
+   * @return A {@link BlockHeader}
+   */
+  BlockHeader getBlockHeader();
+
+  /**
+   * A {@link BlockHeader} object.
+   *
+   * @return A {@link BlockHeader}
+   */
+  BlockBody getBlockBody();
+
+  /**
+   * A list of transaction receipts for the added block.
+   *
+   * @return A List of {@link TransactionReceipt}
+   */
+  List<? extends TransactionReceipt> getTransactionReceipts();
 }
