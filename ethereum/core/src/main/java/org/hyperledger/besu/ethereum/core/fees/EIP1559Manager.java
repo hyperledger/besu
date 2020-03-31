@@ -22,11 +22,7 @@ import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.TARGET_GAS_U
 
 import java.util.OptionalLong;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class EIP1559Manager {
-  private static final Logger LOG = LogManager.getLogger();
 
   private final long initialForkBlknum;
   private final long finalForkBlknum;
