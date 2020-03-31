@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -253,7 +254,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
             .supportedCapabilities(Capability.create("eth", 63))
-            .keyPair(SECP256K1.KeyPair.generate())
+            .nodeKey(new BouncyCastleNodeKey(SECP256K1.KeyPair.generate()))
             .vertx(vertx)
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())

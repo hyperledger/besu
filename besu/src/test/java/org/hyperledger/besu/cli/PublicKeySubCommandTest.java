@@ -17,7 +17,8 @@ package org.hyperledger.besu.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.io.File;
@@ -113,11 +114,11 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingPublicKeyExportSubCommandWithoutPathMustWriteKeyToStandardOutput() {
-    final KeyPair keyPair = KeyPair.generate();
+    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
 
-    parseCommand(f -> keyPair, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
+    parseCommand(f -> nodeKey, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
 
-    final String expectedOutputStart = keyPair.getPublicKey().toString();
+    final String expectedOutputStart = nodeKey.getPublicKey().toString();
     assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -126,20 +127,20 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public void callingPublicKeyExportSubCommandWithFilePathMustWritePublicKeyInThisFile()
       throws Exception {
 
-    final KeyPair keyPair = KeyPair.generate();
+    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
 
     final File file = File.createTempFile("public", "key");
 
     parseCommand(
-        f -> keyPair,
+        f -> nodeKey,
         PUBLIC_KEY_SUBCOMMAND_NAME,
         PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
         "--to",
         file.getPath());
 
     assertThat(contentOf(file))
-        .startsWith(keyPair.getPublicKey().toString())
-        .endsWith(keyPair.getPublicKey().toString());
+        .startsWith(nodeKey.getPublicKey().toString())
+        .endsWith(nodeKey.getPublicKey().toString());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -155,12 +156,12 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingPublicKeyExportAddressSubCommandWithoutPathMustWriteAddressToStandardOutput() {
-    final KeyPair keyPair = KeyPair.generate();
+    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
 
     parseCommand(
-        f -> keyPair, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
+        f -> nodeKey, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
 
-    final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
+    final String expectedOutputStart = Util.publicKeyToAddress(nodeKey.getPublicKey()).toString();
     assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -169,20 +170,20 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public void callingPublicKeyExportAddressSubCommandWithFilePathMustWriteAddressInThisFile()
       throws Exception {
 
-    final KeyPair keyPair = KeyPair.generate();
+    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
 
     final File file = File.createTempFile("public", "address");
 
     parseCommand(
-        f -> keyPair,
+        f -> nodeKey,
         PUBLIC_KEY_SUBCOMMAND_NAME,
         PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
         "--to",
         file.getPath());
 
     assertThat(contentOf(file))
-        .startsWith(Util.publicKeyToAddress(keyPair.getPublicKey()).toString())
-        .endsWith(Util.publicKeyToAddress(keyPair.getPublicKey()).toString());
+        .startsWith(Util.publicKeyToAddress(nodeKey.getPublicKey()).toString())
+        .endsWith(Util.publicKeyToAddress(nodeKey.getPublicKey()).toString());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

@@ -22,8 +22,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 
@@ -75,7 +74,7 @@ public class PublicKeySubCommand implements Runnable {
     spec.commandLine().usage(out);
   }
 
-  private Optional<KeyPair> getKeyPair() {
+  private Optional<NodeKey> getNodeKey() {
     try {
       return Optional.of(keyLoader.load(parentCommand.nodePrivateKeyFile()));
     } catch (IOException e) {
@@ -114,10 +113,10 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      parentCommand.getKeyPair().ifPresent(this::outputPublicKey);
+      parentCommand.getNodeKey().ifPresent(this::outputPublicKey);
     }
 
-    private void outputPublicKey(final KeyPair keyPair) {
+    private void outputPublicKey(final NodeKey keyPair) {
       // if we have an output file defined, print to it
       // otherwise print to standard output.
       if (publicKeyExportFile != null) {
@@ -166,10 +165,10 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      parentCommand.getKeyPair().ifPresent(this::outputAddress);
+      parentCommand.getNodeKey().ifPresent(this::outputAddress);
     }
 
-    private void outputAddress(final KeyPair keyPair) {
+    private void outputAddress(final NodeKey keyPair) {
       final Address address = Util.publicKeyToAddress(keyPair.getPublicKey());
 
       // if we have an output file defined, print to it
@@ -190,6 +189,6 @@ public class PublicKeySubCommand implements Runnable {
 
   @FunctionalInterface
   public interface KeyLoader {
-    SECP256K1.KeyPair load(final File keyFile) throws IOException;
+    NodeKey load(final File keyFile) throws IOException;
   }
 }

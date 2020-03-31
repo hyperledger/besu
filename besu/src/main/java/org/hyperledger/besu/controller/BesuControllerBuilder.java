@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.crypto.KeyPairUtil.loadKeyPair;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -58,7 +58,6 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -85,7 +84,7 @@ public abstract class BesuControllerBuilder<C> {
   protected PrivacyParameters privacyParameters;
   protected Path dataDirectory;
   protected Clock clock;
-  KeyPair nodeKeys;
+  NodeKey nodeKey;
   protected boolean isRevertReasonEnabled;
   GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
@@ -126,14 +125,13 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  public BesuControllerBuilder<C> nodePrivateKeyFile(final File nodePrivateKeyFile)
-      throws IOException {
-    this.nodeKeys = loadKeyPair(nodePrivateKeyFile);
+  public BesuControllerBuilder<C> nodePrivateKeyFile(final File nodePrivateKeyFile) {
+    this.nodeKey = loadKeyPair(nodePrivateKeyFile);
     return this;
   }
 
-  public BesuControllerBuilder<C> nodeKeys(final KeyPair nodeKeys) {
-    this.nodeKeys = nodeKeys;
+  public BesuControllerBuilder<C> nodeKeys(final NodeKey nodeKeys) {
+    this.nodeKey = nodeKeys;
     return this;
   }
 
@@ -206,7 +204,7 @@ public abstract class BesuControllerBuilder<C> {
     checkNotNull(dataDirectory, "Missing data directory"); // Why do we need this?
     checkNotNull(clock, "Missing clock");
     checkNotNull(transactionPoolConfiguration, "Missing transaction pool configuration");
-    checkNotNull(nodeKeys, "Missing node keys");
+    checkNotNull(nodeKey, "Missing node keys");
     checkNotNull(storageProvider, "Must supply a storage provider");
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
 
@@ -331,7 +329,7 @@ public abstract class BesuControllerBuilder<C> {
         privacyParameters,
         miningParameters,
         additionalJsonRpcMethodFactory,
-        nodeKeys,
+        nodeKey,
         closeables,
         additionalPluginServices);
   }

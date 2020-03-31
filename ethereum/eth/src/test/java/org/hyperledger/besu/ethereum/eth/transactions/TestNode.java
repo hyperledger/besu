@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -74,7 +76,7 @@ public class TestNode implements Closeable {
   private static final Logger LOG = LogManager.getLogger();
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  protected final SECP256K1.KeyPair kp;
+  protected final NodeKey nodeKey;
   protected final P2PNetwork network;
   protected final Peer selfPeer;
   protected final Map<PeerConnection, DisconnectReason> disconnections = new HashMap<>();
@@ -89,7 +91,7 @@ public class TestNode implements Closeable {
     checkNotNull(discoveryCfg);
 
     final int listenPort = port != null ? port : 0;
-    this.kp = kp != null ? kp : SECP256K1.KeyPair.generate();
+    this.nodeKey = new BouncyCastleNodeKey(kp != null ? kp : SECP256K1.KeyPair.generate());
 
     final NetworkingConfiguration networkingConfiguration =
         NetworkingConfiguration.create()
@@ -157,7 +159,7 @@ public class TestNode implements Closeable {
                 capabilities ->
                     DefaultP2PNetwork.builder()
                         .vertx(vertx)
-                        .keyPair(this.kp)
+                        .nodeKey(nodeKey)
                         .config(networkingConfiguration)
                         .metricsSystem(new NoOpMetricsSystem())
                         .supportedCapabilities(capabilities)
@@ -173,7 +175,7 @@ public class TestNode implements Closeable {
   }
 
   public Bytes id() {
-    return kp.getPublicKey().getEncodedBytes();
+    return nodeKey.getPublicKey().getEncodedBytes();
   }
 
   public static String shortId(final Bytes id) {

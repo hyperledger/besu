@@ -28,7 +28,6 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -57,7 +56,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
   @Override
   protected void prepForBuild() {
-    localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
+    localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final CliqueConfigOptions cliqueConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
@@ -85,7 +84,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             protocolContext,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
-            nodeKeys,
+            nodeKey,
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
@@ -111,7 +110,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   protected ProtocolSchedule<CliqueContext> createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
-        nodeKeys,
+        nodeKey,
         privacyParameters,
         isRevertReasonEnabled);
   }
@@ -127,7 +126,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new CliqueQueryPluginServiceFactory(blockchain, new BouncyCastleNodeKey(nodeKeys));
+    return new CliqueQueryPluginServiceFactory(blockchain, nodeKey);
   }
 
   @Override

@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -114,7 +114,7 @@ public class PrivacyTest {
         .storageProvider(new InMemoryStorageProvider())
         .networkId(BigInteger.ONE)
         .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-        .nodeKeys(KeyPair.generate())
+        .nodeKeys(BouncyCastleNodeKey.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .dataDirectory(dataDir)
         .clock(TestClock.fixed())

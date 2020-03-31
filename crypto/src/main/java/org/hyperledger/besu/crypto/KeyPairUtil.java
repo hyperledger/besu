@@ -42,7 +42,7 @@ public class KeyPairUtil {
     }
   }
 
-  public static SECP256K1.KeyPair loadKeyPairFromResource(final String resourcePath) {
+  public static NodeKey loadKeyPairFromResource(final String resourcePath) {
     final SECP256K1.KeyPair keyPair;
     String keyData = loadResourceFile(resourcePath);
     if (keyData == null || keyData.isEmpty()) {
@@ -52,10 +52,10 @@ public class KeyPairUtil {
     keyPair = SECP256K1.KeyPair.create(privateKey);
 
     LOG.info("Loaded keyPair {} from {}", keyPair.getPublicKey().toString(), resourcePath);
-    return keyPair;
+    return new BouncyCastleNodeKey(keyPair);
   }
 
-  public static SECP256K1.KeyPair loadKeyPair(final File keyFile) {
+  public static NodeKey loadKeyPair(final File keyFile) {
 
     final SECP256K1.KeyPair key;
     if (keyFile.exists()) {
@@ -74,10 +74,10 @@ public class KeyPairUtil {
           key.getPublicKey().toString(),
           keyFile.getAbsolutePath());
     }
-    return key;
+    return new BouncyCastleNodeKey(key);
   }
 
-  public static SECP256K1.KeyPair loadKeyPair(final Path homeDirectory) {
+  public static NodeKey loadKeyPair(final Path homeDirectory) {
     return loadKeyPair(getDefaultKeyFile(homeDirectory));
   }
 

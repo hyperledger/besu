@@ -40,7 +40,7 @@ import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -271,7 +271,7 @@ public abstract class CommandTestAbstract {
   }
 
   protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
-    return parseCommand(f -> KeyPair.generate(), in, args);
+    return parseCommand(f -> BouncyCastleNodeKey.generate(), in, args);
   }
 
   @SuppressWarnings("unchecked")

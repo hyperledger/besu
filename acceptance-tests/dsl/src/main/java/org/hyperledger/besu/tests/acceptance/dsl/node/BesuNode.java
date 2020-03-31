@@ -19,7 +19,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -80,7 +80,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private static final Logger LOG = getLogger();
 
   private final Path homeDirectory;
-  private final KeyPair keyPair;
+  private final NodeKey nodeKey;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
   private final NetworkingConfiguration networkingConfiguration;
@@ -139,7 +139,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
             LOG.error("Could not find key file \"{}\" in resources", path);
           }
         });
-    this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
+    this.nodeKey = KeyPairUtil.loadKeyPair(homeDirectory);
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -196,7 +196,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public String getNodeId() {
-    return keyPair.getPublicKey().toString().substring(2);
+    return nodeKey.getPublicKey().toString().substring(2);
   }
 
   @Override
@@ -455,11 +455,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public Address getAddress() {
-    return Util.publicKeyToAddress(keyPair.getPublicKey());
+    return Util.publicKeyToAddress(nodeKey.getPublicKey());
   }
 
-  public KeyPair keyPair() {
-    return keyPair;
+  public NodeKey nodeKey() {
+    return nodeKey;
   }
 
   public Path homeDirectory() {
@@ -588,7 +588,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return MoreObjects.toStringHelper(this)
         .add("name", name)
         .add("homeDirectory", homeDirectory)
-        .add("keyPair", keyPair)
+        .add("keyPair", nodeKey)
         .add("p2pEnabled", p2pEnabled)
         .add("discoveryEnabled", discoveryEnabled)
         .add("privacyEnabled", privacyParameters.isEnabled())
