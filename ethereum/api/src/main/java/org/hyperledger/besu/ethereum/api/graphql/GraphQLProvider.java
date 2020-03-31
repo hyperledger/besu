@@ -22,6 +22,8 @@ import java.net.URL;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import graphql.GraphQL;
+import graphql.analysis.FieldComplexityEnvironment;
+import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -31,6 +33,8 @@ import graphql.schema.idl.TypeRuntimeWiring;
 
 public class GraphQLProvider {
 
+  public static final int MAX_COMPLEXITY = 200;
+
   private GraphQLProvider() {}
 
   public static GraphQL buildGraphQL(final GraphQLDataFetchers graphQLDataFetchers)
@@ -38,7 +42,11 @@ public class GraphQLProvider {
     final URL url = Resources.getResource("schema.graphqls");
     final String sdl = Resources.toString(url, Charsets.UTF_8);
     final GraphQLSchema graphQLSchema = buildSchema(sdl, graphQLDataFetchers);
-    return GraphQL.newGraphQL(graphQLSchema).build();
+    return GraphQL.newGraphQL(graphQLSchema)
+        .instrumentation(
+            new MaxQueryComplexityInstrumentation(
+                MAX_COMPLEXITY, GraphQLProvider::calculateFieldCost))
+        .build();
   }
 
   private static GraphQLSchema buildSchema(
@@ -73,5 +81,19 @@ public class GraphQLProvider {
                 .dataFetcher(
                     "sendRawTransaction", graphQLDataFetchers.getSendRawTransactionDataFetcher()))
         .build();
+  }
+
+  private static int calculateFieldCost(
+      final FieldComplexityEnvironment environment, final int childComplexity) {
+    final String childTypeName = environment.getParentType().getName();
+    final String fieldName = environment.getField().getName();
+
+    if (childTypeName.equals("Transaction") && fieldName.equals("block")) {
+      return childComplexity + 100;
+    } else if (childTypeName.equals("__Type") && fieldName.equals("fields")) {
+      return childComplexity + 100;
+    } else {
+      return childComplexity + 1;
+    }
   }
 }
