@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public final class LimitedNewPooledTransactionHashesMessages {
 
-  static final int LIMIT = 1048576;
+  static final int LIMIT = 1024 * 1024;
   static final int MAX_COUNT = 4096;
 
   private final NewPooledTransactionHashesMessage transactionsMessage;
