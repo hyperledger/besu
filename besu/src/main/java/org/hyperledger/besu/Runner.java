@@ -108,7 +108,7 @@ public class Runner implements AutoCloseable {
               besuController.getTransactionPool().getPendingTransactions().evictOldTransactions());
       jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
       graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
-      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.start()));
+      websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
