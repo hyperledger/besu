@@ -154,4 +154,11 @@ public interface BlockHeader {
    * @return The Keccak 256-bit hash of this header.
    */
   Hash getBlockHash();
+
+  /**
+   * The BASEFEE of this header.
+   *
+   * @return TheBASEFEE of this header.
+   */
+  Long getBaseFee();
 }

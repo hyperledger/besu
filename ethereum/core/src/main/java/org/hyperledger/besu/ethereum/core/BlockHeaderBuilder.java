@@ -52,6 +52,8 @@ public class BlockHeaderBuilder {
 
   private Bytes extraData;
 
+  private Long baseFee = null;
+
   private Hash mixHash;
 
   private BlockHeaderFunctions blockHeaderFunctions;
@@ -79,6 +81,7 @@ public class BlockHeaderBuilder {
         .gasUsed(header.getGasUsed())
         .timestamp(header.getTimestamp())
         .extraData(header.getExtraData())
+        .baseFee(header.getBaseFee())
         .mixHash(header.getMixHash())
         .nonce(header.getNonce());
   }
@@ -122,6 +125,7 @@ public class BlockHeaderBuilder {
         gasUsed,
         timestamp < 0 ? Instant.now().getEpochSecond() : timestamp,
         extraData,
+        baseFee,
         mixHash,
         nonce.getAsLong(),
         blockHeaderFunctions);
@@ -150,7 +154,8 @@ public class BlockHeaderBuilder {
         gasLimit,
         gasUsed,
         timestamp,
-        extraData);
+        extraData,
+        baseFee);
   }
 
   private void validateBlockHeader() {
@@ -301,6 +306,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder blockHeaderFunctions(final BlockHeaderFunctions blockHeaderFunctions) {
     this.blockHeaderFunctions = blockHeaderFunctions;
+    return this;
+  }
+
+  public BlockHeaderBuilder baseFee(final Long baseFee) {
+    this.baseFee = baseFee;
     return this;
   }
 }
