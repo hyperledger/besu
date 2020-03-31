@@ -72,7 +72,7 @@ public class LocalNodeIsProposerTest {
     expectedTxCommit =
         new Commit(
             createSignedCommitPayload(
-                roundId, expectedProposedBlock, context.getLocalNodeParams().getNodeKeyPair()));
+                roundId, expectedProposedBlock, context.getLocalNodeParams().getnodeKey()));
 
     // Trigger "block timer" to send proposal.
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));

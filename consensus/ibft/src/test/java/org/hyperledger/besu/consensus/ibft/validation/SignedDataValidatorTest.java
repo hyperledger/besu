@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -47,9 +48,12 @@ public class SignedDataValidatorTest {
   private final KeyPair proposerKey = KeyPair.generate();
   private final KeyPair validatorKey = KeyPair.generate();
   private final KeyPair nonValidatorKey = KeyPair.generate();
-  private final MessageFactory proposerMessageFactory = new MessageFactory(proposerKey);
-  private final MessageFactory validatorMessageFactory = new MessageFactory(validatorKey);
-  private final MessageFactory nonValidatorMessageFactory = new MessageFactory(nonValidatorKey);
+  private final MessageFactory proposerMessageFactory =
+      new MessageFactory(new BouncyCastleNodeKey(proposerKey));
+  private final MessageFactory validatorMessageFactory =
+      new MessageFactory(new BouncyCastleNodeKey(validatorKey));
+  private final MessageFactory nonValidatorMessageFactory =
+      new MessageFactory(new BouncyCastleNodeKey(nonValidatorKey));
 
   private final List<Address> validators = Lists.newArrayList();
 

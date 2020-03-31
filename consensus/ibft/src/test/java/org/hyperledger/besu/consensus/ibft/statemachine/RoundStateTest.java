@@ -26,6 +26,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -63,7 +64,7 @@ public class RoundStateTest {
       final KeyPair newKeyPair = KeyPair.generate();
       validatorKeys.add(newKeyPair);
       validators.add(Util.publicKeyToAddress(newKeyPair.getPublicKey()));
-      validatorMessageFactories.add(new MessageFactory(newKeyPair));
+      validatorMessageFactories.add(new MessageFactory(new BouncyCastleNodeKey(newKeyPair)));
     }
     when(block.getHash()).thenReturn(Hash.fromHexStringLenient("1"));
   }

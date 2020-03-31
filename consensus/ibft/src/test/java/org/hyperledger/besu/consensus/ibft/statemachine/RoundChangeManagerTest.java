@@ -31,6 +31,7 @@ import org.hyperledger.besu.consensus.ibft.validation.ProposalBlockConsistencyVa
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangeMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator;
 import org.hyperledger.besu.consensus.ibft.validation.SignedDataValidator;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
@@ -112,7 +113,7 @@ public class RoundChangeManagerTest {
 
   private RoundChange makeRoundChangeMessage(
       final KeyPair key, final ConsensusRoundIdentifier round) {
-    final MessageFactory messageFactory = new MessageFactory(key);
+    final MessageFactory messageFactory = new MessageFactory(new BouncyCastleNodeKey(key));
     return messageFactory.createRoundChange(round, Optional.empty());
   }
 
@@ -122,7 +123,7 @@ public class RoundChangeManagerTest {
       final List<KeyPair> prepareProviders) {
     Preconditions.checkArgument(!prepareProviders.contains(key));
 
-    final MessageFactory messageFactory = new MessageFactory(key);
+    final MessageFactory messageFactory = new MessageFactory(new BouncyCastleNodeKey(key));
 
     final ConsensusRoundIdentifier proposalRound = TestHelpers.createFrom(round, 0, -1);
     final Block block = TestHelpers.createProposalBlock(validators, proposalRound);
@@ -133,7 +134,8 @@ public class RoundChangeManagerTest {
         prepareProviders.stream()
             .map(
                 k -> {
-                  final MessageFactory prepareFactory = new MessageFactory(k);
+                  final MessageFactory prepareFactory =
+                      new MessageFactory(new BouncyCastleNodeKey(k));
                   return prepareFactory.createPrepare(proposalRound, block.getHash());
                 })
             .collect(Collectors.toList());

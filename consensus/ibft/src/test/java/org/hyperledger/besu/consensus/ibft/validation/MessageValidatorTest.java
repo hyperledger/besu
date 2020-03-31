@@ -31,7 +31,8 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
@@ -55,8 +56,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MessageValidatorTest {
 
-  private final KeyPair keyPair = KeyPair.generate();
-  private final MessageFactory messageFactory = new MessageFactory(keyPair);
+  private final NodeKey nodeKey = new BouncyCastleNodeKey(KeyPair.generate());
+  private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
 
   private final SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
@@ -120,7 +121,7 @@ public class MessageValidatorTest {
 
     final Commit commit =
         messageFactory.createCommit(
-            roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), keyPair));
+            roundIdentifier, block.getHash(), nodeKey.sign(block.getHash()));
 
     assertThat(messageValidator.validateProposal(proposal)).isTrue();
     verify(signedDataValidator, times(1)).validateProposal(proposal.getSignedPayload());
