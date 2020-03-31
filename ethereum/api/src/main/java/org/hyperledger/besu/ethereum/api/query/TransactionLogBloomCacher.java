@@ -175,12 +175,14 @@ public class TransactionLogBloomCacher {
         try {
           final File currentFile = calculateCacheFileName(CURRENT, cacheDir);
 
-          final long segmentNumber = blockchain.getChainHeadBlockNumber() / BLOCKS_PER_BLOOM_CACHE;
-          long blockNumber = segmentNumber / BLOCKS_PER_BLOOM_CACHE;
+          final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
+          final long segmentNumber = chainHeadBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+          long blockNumber =
+              Math.min((segmentNumber + 1) * BLOCKS_PER_BLOOM_CACHE - 1, chainHeadBlockNumber);
           try (final OutputStream out = new FileOutputStream(currentFile)) {
             fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, out);
           }
-          while (blockNumber <= blockchain.getChainHeadBlockNumber()
+          while (blockNumber <= chainHeadBlockNumber
               && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
             cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
             blockNumber++;
