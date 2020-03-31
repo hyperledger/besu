@@ -44,9 +44,6 @@ dependencies {
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'commons-io:commons-io'
-  compile('javax.activation:activation'){
-    force = true
-  }
 
   testCompile "com.github.tomakehurst:wiremock-jre8-standalone:2.25.1"
 }
@@ -64,9 +61,20 @@ sourceSets {
 processTestResources.dependsOn(':besu:testJar')
 
 task acceptanceTest(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+
   dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Besu acceptance tests.'
   group = 'verification'
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
 }
