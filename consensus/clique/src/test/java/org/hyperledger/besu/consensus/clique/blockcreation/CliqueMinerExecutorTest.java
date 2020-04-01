@@ -97,6 +97,7 @@ public class CliqueMinerExecutorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             proposerKeyPair,
@@ -134,6 +135,7 @@ public class CliqueMinerExecutorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             proposerKeyPair,
@@ -171,6 +173,7 @@ public class CliqueMinerExecutorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             proposerKeyPair,

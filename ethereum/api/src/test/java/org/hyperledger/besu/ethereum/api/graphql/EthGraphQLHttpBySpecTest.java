@@ -104,6 +104,9 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
 
     specs.add("graphql_pending");
 
+    specs.add("graphql_tooComplex");
+    specs.add("graphql_tooComplexSchema");
+
     return specs;
   }
 
