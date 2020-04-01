@@ -157,9 +157,9 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public void commit() {
+        nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
       SegmentedKeyValueStorageAdapter.lock.lock();
       try {
-        nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
         transaction.commit();
       } finally {
         SegmentedKeyValueStorageAdapter.lock.unlock();
