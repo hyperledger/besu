@@ -137,7 +137,7 @@ public class PendingTransactions {
     return transactionAdded;
   }
 
-  boolean addTransactionHash(final Hash transactionHash) {
+  synchronized boolean addTransactionHash(final Hash transactionHash) {
     boolean hashAdded = newPooledHashes.add(transactionHash);
     if (hashAdded) {
       localTransactionHashesAddedCounter.inc();
@@ -360,7 +360,7 @@ public class PendingTransactions {
     }
   }
 
-  public void tryEvictTransactionHash(final Hash hash) {
+  public synchronized void tryEvictTransactionHash(final Hash hash) {
     newPooledHashes.remove(hash);
   }
 

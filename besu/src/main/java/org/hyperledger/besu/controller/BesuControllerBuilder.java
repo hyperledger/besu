@@ -272,7 +272,6 @@ public abstract class BesuControllerBuilder<C> {
         createEthProtocolManager(
             protocolContext,
             fastSyncEnabled,
-            protocolContext.getWorldStateArchive(),
             transactionPool,
             ethereumWireProtocolConfiguration,
             ethPeers,
@@ -371,7 +370,6 @@ public abstract class BesuControllerBuilder<C> {
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext<C> protocolContext,
       final boolean fastSyncEnabled,
-      final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -382,7 +380,7 @@ public abstract class BesuControllerBuilder<C> {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
-        worldStateArchive,
+        protocolContext.getWorldStateArchive(),
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,

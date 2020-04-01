@@ -120,7 +120,6 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext<IbftContext> protocolContext,
       final boolean fastSyncEnabled,
-      final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -132,7 +131,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
     return new Istanbul64ProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
-        worldStateArchive,
+        protocolContext.getWorldStateArchive(),
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,

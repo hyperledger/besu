@@ -48,6 +48,9 @@ public class Istanbul64Protocol implements SubProtocol {
           EthPV62.GET_BLOCK_BODIES,
           EthPV62.BLOCK_BODIES,
           EthPV62.NEW_BLOCK,
+          EthPV65.NEW_POOLED_TRANSACTION_HASHES,
+          EthPV65.GET_POOLED_TRANSACTIONS,
+          EthPV65.POOLED_TRANSACTIONS,
           EthPV63.GET_NODE_DATA,
           EthPV63.NODE_DATA,
           EthPV63.GET_RECEIPTS,
@@ -91,6 +94,12 @@ public class Istanbul64Protocol implements SubProtocol {
         return "BlockBodies";
       case EthPV62.NEW_BLOCK:
         return "NewBlock";
+      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
+        return "NewPooledTransactionHashes";
+      case EthPV65.GET_POOLED_TRANSACTIONS:
+        return "GetPooledTransactions";
+      case EthPV65.POOLED_TRANSACTIONS:
+        return "PooledTransactions";
       case EthPV63.GET_NODE_DATA:
         return "GetNodeData";
       case EthPV63.NODE_DATA:
@@ -99,12 +108,6 @@ public class Istanbul64Protocol implements SubProtocol {
         return "GetReceipts";
       case EthPV63.RECEIPTS:
         return "Receipts";
-      case EthPV65.GET_POOLED_TRANSACTIONS:
-        return "GetPooledTransactions";
-      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
-        return "NewPooledTransactionHashes";
-      case EthPV65.POOLED_TRANSACTIONS:
-        return "PooledTransactions";
       case INSTANBUL_MSG:
         return "InstanbulMsg";
       default:
