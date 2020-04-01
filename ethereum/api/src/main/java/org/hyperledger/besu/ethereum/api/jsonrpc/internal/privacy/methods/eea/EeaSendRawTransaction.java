@@ -90,8 +90,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
       if (onchainPrivacyGroupsEnabled) {
         if (!maybePrivacyGroupId.isPresent()) {
-          return new JsonRpcErrorResponse(
-              id, JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE);
+          return new JsonRpcErrorResponse(id, JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE);
         }
         maybePrivacyGroup =
             privacyController.retrieveOnChainPrivacyGroup(
@@ -104,8 +103,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         if (maybePrivacyGroupId.isPresent()) {
           maybePrivacyGroup =
               privacyController.retrieveOffChainPrivacyGroup(
-                  maybePrivacyGroupId.get().toBase64String(),
-                  enclavePublicKey);
+                  maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
         }
       }
 
@@ -117,7 +115,8 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       }
 
       final String enclaveKey =
-          privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
+          privacyController.sendTransaction(
+              privateTransaction, enclavePublicKey, maybePrivacyGroup);
 
       if (onchainPrivacyGroupsEnabled) {
         final Bytes privacyGroupId =

@@ -59,7 +59,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       verifyPrivacyGroupContainsEnclavePublicKey(
           privateTransaction.getPrivacyGroupId().get().toBase64String(), enclavePublicKey);
     }
-    return privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
+    return privacyController.sendTransaction(
+        privateTransaction, enclavePublicKey, maybePrivacyGroup);
   }
 
   @Override
@@ -219,7 +220,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       final Bytes privacyGroupId, final String enclavePublicKey) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
         privacyController.retrieveOnChainPrivacyGroup(privacyGroupId, enclavePublicKey);
-    if (maybePrivacyGroup.isPresent() && !maybePrivacyGroup.get().getMembers().contains(enclavePublicKey)) {
+    if (maybePrivacyGroup.isPresent()
+        && !maybePrivacyGroup.get().getMembers().contains(enclavePublicKey)) {
       throw new MultiTenancyValidationException(
           "Privacy group must contain the enclave public key");
     }

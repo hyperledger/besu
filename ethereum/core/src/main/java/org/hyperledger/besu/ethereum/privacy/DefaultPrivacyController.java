@@ -263,8 +263,10 @@ public class DefaultPrivacyController implements PrivacyController {
         .keySet()
         .forEach(
             c -> {
-              final Optional<PrivacyGroup> maybePrivacyGroup = retrieveOnChainPrivacyGroup(c, enclavePublicKey);
-              if (maybePrivacyGroup.isPresent() && maybePrivacyGroup.get().getMembers().containsAll(addresses)) {
+              final Optional<PrivacyGroup> maybePrivacyGroup =
+                  retrieveOnChainPrivacyGroup(c, enclavePublicKey);
+              if (maybePrivacyGroup.isPresent()
+                  && maybePrivacyGroup.get().getMembers().containsAll(addresses)) {
                 privacyGroups.add(maybePrivacyGroup.get());
               }
             });
@@ -286,7 +288,8 @@ public class DefaultPrivacyController implements PrivacyController {
       final RLPInput rlpInput =
           RLP.input(privateTransactionSimulatorResultOptional.get().getOutput());
       if (rlpInput.nextSize() > 0) {
-        return Optional.of(new PrivacyGroup(
+        return Optional.of(
+            new PrivacyGroup(
                 privacyGroupId.toBase64String(), Type.ONCHAIN, "", "", decodeList(rlpInput.raw())));
       } else {
         return Optional.empty();

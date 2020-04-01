@@ -85,8 +85,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
       if (onchainPrivacyGroupsEnabled) {
         if (!maybePrivacyGroupId.isPresent()) {
-          return new JsonRpcErrorResponse(
-              id, JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE);
+          return new JsonRpcErrorResponse(id, JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE);
         }
         mabePrivacyGroup =
             privacyController.retrieveOnChainPrivacyGroup(
@@ -99,8 +98,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
         if (maybePrivacyGroupId.isPresent()) {
           mabePrivacyGroup =
               privacyController.retrieveOffChainPrivacyGroup(
-                  maybePrivacyGroupId.get().toBase64String(),
-                  enclavePublicKey);
+                  maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
         }
       }
 

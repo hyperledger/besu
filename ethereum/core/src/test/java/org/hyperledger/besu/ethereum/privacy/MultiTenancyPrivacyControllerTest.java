@@ -115,7 +115,8 @@ public class MultiTenancyPrivacyControllerTest {
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithEnclavePublicKey));
     assertThat(response).isEqualTo(ENCLAVE_KEY);
     verify(privacyController)
-        .sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithEnclavePublicKey));
+        .sendTransaction(
+            transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithEnclavePublicKey));
     verify(enclave).retrievePrivacyGroup(PRIVACY_GROUP_ID);
   }
 
@@ -172,12 +173,15 @@ public class MultiTenancyPrivacyControllerTest {
     assertThatThrownBy(
             () ->
                 multiTenancyPrivacyController.sendTransaction(
-                    transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithoutEnclavePublicKey)))
+                    transaction,
+                    ENCLAVE_PUBLIC_KEY1,
+                    Optional.of(privacyGroupWithoutEnclavePublicKey)))
         .isInstanceOf(MultiTenancyValidationException.class)
         .hasMessage("Privacy group must contain the enclave public key");
 
     verify(privacyController, never())
-        .sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithoutEnclavePublicKey));
+        .sendTransaction(
+            transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithoutEnclavePublicKey));
   }
 
   @Test
