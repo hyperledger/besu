@@ -104,9 +104,7 @@ public class RocksDBColumnarKeyValueStorage
               .setEnv(
                   Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
 
-      txOptions = new TransactionDBOptions()
-                    .setTransactionLockTimeout(-1)
-      ;
+      txOptions = new TransactionDBOptions().setTransactionLockTimeout(-1);
       final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
       db =
           TransactionDB.open(
