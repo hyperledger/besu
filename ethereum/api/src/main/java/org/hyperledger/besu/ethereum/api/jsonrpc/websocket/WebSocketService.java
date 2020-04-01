@@ -33,6 +33,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
@@ -166,14 +167,15 @@ public class WebSocketService {
           .handler(AuthenticationService::handleDisabledLogin);
     }
 
-    router
-        .route()
-        .handler(
-            http ->
-                http.response()
-                    .setStatusCode(400)
-                    .end("Websocket endpoint can't handle HTTP requests"));
+    router.route().handler(WebSocketService::handleHttpNotSupported);
     return router;
+  }
+
+  private static void handleHttpNotSupported(final RoutingContext http) {
+    final HttpServerResponse response = http.response();
+    if (!response.closed()) {
+      response.setStatusCode(400).end("Websocket endpoint can't handle HTTP requests");
+    }
   }
 
   private Handler<AsyncResult<HttpServer>> startHandler(final CompletableFuture<?> resultFuture) {
@@ -234,11 +236,13 @@ public class WebSocketService {
       if (hasWhitelistedHostnameHeader(Optional.ofNullable(event.request().host()))) {
         event.next();
       } else {
-        event
-            .response()
-            .setStatusCode(403)
-            .putHeader("Content-Type", "application/json; charset=utf-8")
-            .end("{\"message\":\"Host not authorized.\"}");
+        final HttpServerResponse response = event.response();
+        if (!response.closed()) {
+          response
+              .setStatusCode(403)
+              .putHeader("Content-Type", "application/json; charset=utf-8")
+              .end("{\"message\":\"Host not authorized.\"}");
+        }
       }
     };
   }
