@@ -39,8 +39,10 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPr
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -144,18 +146,19 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   private PrivacyController createPrivacyController(
       final PrivateMarkerTransactionFactory markerTransactionFactory) {
+    final Optional<BigInteger> chainId = protocolSchedule.getChainId();
     final DefaultPrivacyController defaultPrivacyController =
         new DefaultPrivacyController(
             getBlockchainQueries().getBlockchain(),
             privacyParameters,
-            protocolSchedule.getChainId(),
+            chainId,
             markerTransactionFactory,
             createPrivateTransactionSimulator(),
             privateNonceProvider,
             privateWorldStateReader);
     return privacyParameters.isMultiTenancyEnabled()
         ? new MultiTenancyPrivacyController(
-            defaultPrivacyController, privacyParameters.getEnclave())
+            defaultPrivacyController, chainId, privacyParameters.getEnclave())
         : defaultPrivacyController;
   }
 
