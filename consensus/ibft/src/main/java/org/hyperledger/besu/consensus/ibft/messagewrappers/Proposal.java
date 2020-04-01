@@ -71,7 +71,7 @@ public class Proposal extends IbftMessage<ProposalPayload> {
   }
 
   public static Proposal decode(final Bytes data) {
-    RLPInput rlpIn = RLP.input(data);
+    final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload = SignedData.readSignedProposalPayloadFrom(rlpIn);
     final Block proposedBlock = Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal());
