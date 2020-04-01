@@ -104,6 +104,8 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
           maybePrivacyGroup =
               privacyController.retrieveOffChainPrivacyGroup(
                   maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
+        } else {
+          maybePrivacyGroup = Optional.empty();
         }
       }
 

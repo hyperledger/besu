@@ -183,7 +183,7 @@ public class DefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
     final String enclaveKey =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, null);
+        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
@@ -265,7 +265,7 @@ public class DefaultPrivacyControllerTest {
         .isThrownBy(
             () ->
                 brokenPrivacyController.sendTransaction(
-                    buildLegacyPrivateTransaction(), ENCLAVE_PUBLIC_KEY, null));
+                    buildLegacyPrivateTransaction(), ENCLAVE_PUBLIC_KEY, Optional.empty()));
   }
 
   @Test

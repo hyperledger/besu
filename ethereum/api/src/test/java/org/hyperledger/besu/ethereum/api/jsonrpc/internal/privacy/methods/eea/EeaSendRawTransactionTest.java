@@ -322,7 +322,7 @@ public class EeaSendRawTransactionTest {
             transactionPool, privacyController, enclavePublicKeyProvider, true);
 
     when(privacyController.retrieveOnChainPrivacyGroup(any(Bytes.class), any(String.class)))
-        .thenReturn(null);
+        .thenReturn(Optional.empty());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
