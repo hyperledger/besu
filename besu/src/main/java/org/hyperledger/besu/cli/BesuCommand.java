@@ -838,6 +838,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
+  // TODO EIP-1559 Add --Xeip1559-enabled
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
