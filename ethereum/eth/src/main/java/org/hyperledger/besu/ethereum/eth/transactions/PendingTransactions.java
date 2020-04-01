@@ -30,6 +30,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,12 +38,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.EvictingQueue;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -55,6 +60,7 @@ public class PendingTransactions {
   private final int maxTransactionRetentionHours;
   private final Clock clock;
 
+  private final Queue<Hash> newPooledHashes;
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
   private final SortedSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
@@ -72,17 +78,20 @@ public class PendingTransactions {
   private final LabelledMetric<Counter> transactionRemovedCounter;
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
+  private final Counter localTransactionHashesAddedCounter;
 
   private final long maxPendingTransactions;
 
   public PendingTransactions(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
+      final int maxPooledTransactionHashes,
       final Clock clock,
       final MetricsSystem metricsSystem) {
     this.maxTransactionRetentionHours = maxTransactionRetentionHours;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
+    this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -91,6 +100,7 @@ public class PendingTransactions {
             "source");
     localTransactionAddedCounter = transactionAddedCounter.labels("local");
     remoteTransactionAddedCounter = transactionAddedCounter.labels("remote");
+    localTransactionHashesAddedCounter = transactionAddedCounter.labels("pool");
 
     transactionRemovedCounter =
         metricsSystem.createLabelledCounter(
@@ -127,7 +137,19 @@ public class PendingTransactions {
     return transactionAdded;
   }
 
-  boolean addLocalTransaction(final Transaction transaction) {
+  boolean addTransactionHash(final Hash transactionHash) {
+    boolean hashAdded;
+    synchronized (newPooledHashes) {
+      hashAdded = newPooledHashes.add(transactionHash);
+    }
+    if (hashAdded) {
+      localTransactionHashesAddedCounter.inc();
+    }
+    return hashAdded;
+  }
+
+  @VisibleForTesting
+  public boolean addLocalTransaction(final Transaction transaction) {
     final boolean transactionAdded =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     if (transactionAdded) {
@@ -220,6 +242,7 @@ public class PendingTransactions {
       }
       prioritizedTransactions.add(transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
+      tryEvictTransactionHash(transactionInfo.getHash());
 
       if (pendingTransactions.size() > maxPendingTransactions) {
         final TransactionInfo toRemove = prioritizedTransactions.last();
@@ -338,6 +361,16 @@ public class PendingTransactions {
         return OptionalLong.of(transactionsForSenderInfo.getTransactionsInfos().lastKey() + 1);
       }
     }
+  }
+
+  public void tryEvictTransactionHash(final Hash hash) {
+    synchronized (newPooledHashes) {
+      newPooledHashes.remove(hash);
+    }
+  }
+
+  public Collection<Hash> getNewPooledHashes() {
+    return newPooledHashes;
   }
 
   /**

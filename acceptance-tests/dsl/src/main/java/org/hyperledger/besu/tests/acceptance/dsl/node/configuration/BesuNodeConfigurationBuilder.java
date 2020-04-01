@@ -120,6 +120,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder jsonRpcTxPool() {
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.TX_POOL);
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(final String authFile)
       throws URISyntaxException {
     final String authTomlPath =

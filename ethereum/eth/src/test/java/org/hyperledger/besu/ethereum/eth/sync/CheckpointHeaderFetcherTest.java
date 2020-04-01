@@ -23,11 +23,13 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -50,6 +52,7 @@ public class CheckpointHeaderFetcherTest {
   private static ProtocolSchedule<Void> protocolSchedule;
   private static ProtocolContext<Void> protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private static TransactionPool transactionPool;
   private EthProtocolManager ethProtocolManager;
   private Responder responder;
   private RespondingEthPeer respondingPeer;
@@ -59,6 +62,7 @@ public class CheckpointHeaderFetcherTest {
     final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
+    transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
   }
@@ -67,9 +71,14 @@ public class CheckpointHeaderFetcherTest {
   public void setUpTest() {
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            blockchain, protocolContext.getWorldStateArchive(), () -> false);
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
     responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     respondingPeer =
         EthProtocolManagerTestUtil.createPeer(
             ethProtocolManager, blockchain.getChainHeadBlockNumber());

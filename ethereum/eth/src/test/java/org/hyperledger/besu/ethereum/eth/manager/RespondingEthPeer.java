@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -24,15 +25,19 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -223,12 +228,24 @@ public class RespondingEthPeer {
     };
   }
 
-  public static Responder blockchainResponder(final Blockchain blockchain) {
-    return blockchainResponder(blockchain, createInMemoryWorldStateArchive());
+  private static TransactionPool createTransactionPool() {
+    return mock(TransactionPool.class);
   }
 
   public static Responder blockchainResponder(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+    return blockchainResponder(blockchain, worldStateArchive, createTransactionPool());
+  }
+
+  public static Responder blockchainResponder(final Blockchain blockchain) {
+    return blockchainResponder(
+        blockchain, createInMemoryWorldStateArchive(), createTransactionPool());
+  }
+
+  public static Responder blockchainResponder(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool) {
     return (cap, msg) -> {
       MessageData response = null;
       switch (msg.getCode()) {
@@ -244,6 +261,8 @@ public class RespondingEthPeer {
         case EthPV63.GET_NODE_DATA:
           response = EthServer.constructGetNodeDataResponse(worldStateArchive, msg, 200);
           break;
+        case EthPV65.GET_POOLED_TRANSACTIONS:
+          response = EthServer.constructGetPooledTransactionsResponse(transactionPool, msg, 200);
       }
       return Optional.ofNullable(response);
     };
@@ -265,11 +284,13 @@ public class RespondingEthPeer {
   public static <C> Responder partialResponder(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
       final ProtocolSchedule<C> protocolSchedule,
       final float portion) {
     checkArgument(portion >= 0.0 && portion <= 1.0, "Portion is in the range [0.0..1.0]");
 
-    final Responder fullResponder = blockchainResponder(blockchain, worldStateArchive);
+    final Responder fullResponder =
+        blockchainResponder(blockchain, worldStateArchive, transactionPool);
     return (cap, msg) -> {
       final Optional<MessageData> maybeResponse = fullResponder.respond(cap, msg);
       if (!maybeResponse.isPresent()) {
@@ -310,6 +331,15 @@ public class RespondingEthPeer {
               originalNodeData.subList(0, (int) (originalNodeData.size() * portion));
           partialResponse = NodeDataMessage.create(partialNodeData);
           break;
+        case EthPV65.GET_POOLED_TRANSACTIONS:
+          final PooledTransactionsMessage pooledTransactionsMessage =
+              PooledTransactionsMessage.readFrom(originalResponse);
+          final List<Transaction> originalPooledTx =
+              Lists.newArrayList(pooledTransactionsMessage.transactions());
+          final List<Transaction> partialPooledTx =
+              originalPooledTx.subList(0, (int) (originalPooledTx.size() * portion));
+          partialResponse = PooledTransactionsMessage.create(partialPooledTx);
+          break;
       }
       return Optional.of(partialResponse);
     };
@@ -330,6 +360,9 @@ public class RespondingEthPeer {
           break;
         case EthPV63.GET_NODE_DATA:
           response = NodeDataMessage.create(Collections.emptyList());
+          break;
+        case EthPV65.GET_POOLED_TRANSACTIONS:
+          response = PooledTransactionsMessage.create(Collections.emptyList());
           break;
       }
       return Optional.ofNullable(response);

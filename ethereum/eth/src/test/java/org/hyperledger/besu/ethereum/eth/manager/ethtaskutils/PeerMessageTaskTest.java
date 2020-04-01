@@ -43,7 +43,11 @@ public abstract class PeerMessageTaskTest<T>
     // Setup a partially responsive peer
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.partialResponder(
-            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 0.5f);
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            protocolSchedule,
+            0.5f);
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
