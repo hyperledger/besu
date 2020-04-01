@@ -39,10 +39,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
-import java.time.Clock;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -78,11 +76,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   public EthProtocolManager(
       final Blockchain blockchain,
       final BigInteger networkId,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
       final ForkIdManager forkIdManager) {
     this.networkId = networkId;
     this.peerValidators = peerValidators;
@@ -95,9 +97,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.forkIdManager = forkIdManager;
 
-    ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
-    ethMessages = new EthMessages();
-    ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    this.ethPeers = ethPeers;
+    this.ethMessages = ethMessages;
+    this.ethContext = ethContext;
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
@@ -105,53 +107,69 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     for (final PeerValidator peerValidator : this.peerValidators) {
       PeerValidatorRunner.runValidator(ethContext, peerValidator);
     }
+
+    // Set up request handlers
+    new EthServer(
+        blockchain,
+        worldStateArchive,
+        transactionPool,
+        ethMessages,
+        ethereumWireProtocolConfiguration);
   }
 
   @VisibleForTesting
   public EthProtocolManager(
       final Blockchain blockchain,
       final BigInteger networkId,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
-      final int syncWorkers,
-      final int txWorkers,
-      final int computationWorkers,
-      final int pendingTxWorkers,
-      final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final EthScheduler scheduler) {
     this(
         blockchain,
         networkId,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
         peerValidators,
         fastSyncEnabled,
-        new EthScheduler(
-            syncWorkers, txWorkers, computationWorkers, pendingTxWorkers, metricsSystem),
-        clock,
-        metricsSystem,
+        scheduler,
         new ForkIdManager(blockchain, Collections.emptyList()));
   }
 
   public EthProtocolManager(
       final Blockchain blockchain,
       final BigInteger networkId,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
-      final int syncWorkers,
-      final int txWorkers,
-      final int computationWorkers,
-      final int pendingTxWorkers,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
+      final EthScheduler scheduler,
       final List<Long> forks) {
     this(
         blockchain,
         networkId,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
         peerValidators,
         fastSyncEnabled,
-        new EthScheduler(
-            syncWorkers, txWorkers, computationWorkers, pendingTxWorkers, metricsSystem),
-        clock,
-        metricsSystem,
+        scheduler,
         new ForkIdManager(blockchain, forks));
   }
 
@@ -174,19 +192,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       supportedCapabilities = fastSyncEnabled ? FAST_SYNC_CAPS : FULL_SYNC_CAPS;
     }
     return supportedCapabilities;
-  }
-
-  public void bind(
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
-    // Set up request handlers
-    new EthServer(
-        blockchain,
-        worldStateArchive,
-        transactionPool,
-        ethMessages,
-        ethereumWireProtocolConfiguration);
   }
 
   @Override

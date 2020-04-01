@@ -66,7 +66,7 @@ public class GenerateLogBloomCache implements Runnable {
     cacheDir.toFile().mkdirs();
     final MutableBlockchain blockchain =
         createBesuController().getProtocolContext().getBlockchain();
-    final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, 1, new NoOpMetricsSystem());
+    final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
     try {
       final long finalBlock = Math.min(blockchain.getChainHeadBlockNumber(), endBlock);
       final TransactionLogBloomCacher cacher =

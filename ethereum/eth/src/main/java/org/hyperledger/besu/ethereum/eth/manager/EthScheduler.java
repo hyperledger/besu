@@ -53,23 +53,15 @@ public class EthScheduler {
   protected final ExecutorService txWorkerExecutor;
   protected final ExecutorService servicesExecutor;
   protected final ExecutorService computationExecutor;
-  protected final ExecutorService pendingTransactionsExecutor;
 
-  private final Collection<CompletableFuture<?>> serviceFutures = new ConcurrentLinkedDeque<>();
+  private final Collection<CompletableFuture<?>> pendingFutures = new ConcurrentLinkedDeque<>();
 
   public EthScheduler(
       final int syncWorkerCount,
       final int txWorkerCount,
       final int computationWorkerCount,
-      final int pendingTransactionsCount,
       final MetricsSystem metricsSystem) {
-    this(
-        syncWorkerCount,
-        txWorkerCount,
-        TX_WORKER_CAPACITY,
-        computationWorkerCount,
-        pendingTransactionsCount,
-        metricsSystem);
+    this(syncWorkerCount, txWorkerCount, TX_WORKER_CAPACITY, computationWorkerCount, metricsSystem);
   }
 
   public EthScheduler(
@@ -77,7 +69,6 @@ public class EthScheduler {
       final int txWorkerCount,
       final int txWorkerQueueSize,
       final int computationWorkerCount,
-      final int pendingTransactionsCount,
       final MetricsSystem metricsSystem) {
     this(
         MonitoredExecutors.newFixedThreadPool(
@@ -94,10 +85,6 @@ public class EthScheduler {
         MonitoredExecutors.newFixedThreadPool(
             EthScheduler.class.getSimpleName() + "-Computation",
             computationWorkerCount,
-            metricsSystem),
-        MonitoredExecutors.newFixedThreadPool(
-            EthScheduler.class.getSimpleName() + "-PendingTransactions",
-            pendingTransactionsCount,
             metricsSystem));
   }
 
@@ -106,14 +93,12 @@ public class EthScheduler {
       final ScheduledExecutorService scheduler,
       final ExecutorService txWorkerExecutor,
       final ExecutorService servicesExecutor,
-      final ExecutorService computationExecutor,
-      final ExecutorService pendingTransactionsExecutor) {
+      final ExecutorService computationExecutor) {
     this.syncWorkerExecutor = syncWorkerExecutor;
     this.scheduler = scheduler;
     this.txWorkerExecutor = txWorkerExecutor;
     this.servicesExecutor = servicesExecutor;
     this.computationExecutor = computationExecutor;
-    this.pendingTransactionsExecutor = pendingTransactionsExecutor;
   }
 
   public <T> CompletableFuture<T> scheduleSyncWorkerTask(
@@ -135,8 +120,11 @@ public class EthScheduler {
     syncWorkerExecutor.execute(command);
   }
 
-  public void schedulePendingTransactionsTask(final Runnable command) {
-    pendingTransactionsExecutor.execute(command);
+  public <T> CompletableFuture<T> scheduleSyncWorkerTask(final EthTask<T> task) {
+    final CompletableFuture<T> syncFuture = task.runAsync(syncWorkerExecutor);
+    pendingFutures.add(syncFuture);
+    syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
+    return syncFuture;
   }
 
   public void scheduleTxWorkerTask(final Runnable command) {
@@ -145,24 +133,20 @@ public class EthScheduler {
 
   public <T> CompletableFuture<T> scheduleServiceTask(final EthTask<T> task) {
     final CompletableFuture<T> serviceFuture = task.runAsync(servicesExecutor);
-    serviceFutures.add(serviceFuture);
-    serviceFuture.whenComplete((r, t) -> serviceFutures.remove(serviceFuture));
+    pendingFutures.add(serviceFuture);
+    serviceFuture.whenComplete((r, t) -> pendingFutures.remove(serviceFuture));
     return serviceFuture;
   }
 
   public CompletableFuture<Void> startPipeline(final Pipeline<?> pipeline) {
     final CompletableFuture<Void> pipelineFuture = pipeline.start(servicesExecutor);
-    serviceFutures.add(pipelineFuture);
-    pipelineFuture.whenComplete((r, t) -> serviceFutures.remove(pipelineFuture));
+    pendingFutures.add(pipelineFuture);
+    pipelineFuture.whenComplete((r, t) -> pendingFutures.remove(pipelineFuture));
     return pipelineFuture;
   }
 
   public <T> CompletableFuture<T> scheduleComputationTask(final Supplier<T> computation) {
     return CompletableFuture.supplyAsync(computation, computationExecutor);
-  }
-
-  public <T> CompletableFuture<T> schedulePendingTransactionsTask(final Supplier<T> computation) {
-    return CompletableFuture.supplyAsync(computation, pendingTransactionsExecutor);
   }
 
   public CompletableFuture<Void> scheduleFutureTask(
@@ -241,7 +225,6 @@ public class EthScheduler {
       scheduler.shutdownNow();
       servicesExecutor.shutdownNow();
       computationExecutor.shutdownNow();
-      pendingTransactionsExecutor.shutdownNow();
       shutdown.countDown();
     } else {
       LOG.trace("Attempted to stop already stopped " + getClass().getSimpleName());
@@ -250,7 +233,7 @@ public class EthScheduler {
 
   public void awaitStop() throws InterruptedException {
     shutdown.await();
-    serviceFutures.forEach(future -> future.cancel(true));
+    pendingFutures.forEach(future -> future.cancel(true));
     if (!syncWorkerExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error("{} worker executor did not shutdown cleanly.", this.getClass().getSimpleName());
     }
@@ -269,11 +252,6 @@ public class EthScheduler {
     if (!computationExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error(
           "{} computation executor did not shutdown cleanly.", this.getClass().getSimpleName());
-    }
-    if (!pendingTransactionsExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
-      LOG.error(
-          "{} pending transactions executor did not shutdown cleanly.",
-          this.getClass().getSimpleName());
     }
     LOG.trace("{} stopped.", this.getClass().getSimpleName());
   }

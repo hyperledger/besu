@@ -65,11 +65,13 @@ public class PivotBlockConfirmerTest {
     transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain, timeout::get);
-    ethProtocolManager.bind(
-        blockchainSetupUtil.getWorldArchive(),
-        transactionPool,
-        EthProtocolConfiguration.defaultConfig());
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            timeout::get,
+            blockchainSetupUtil.getWorldArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
   }
 

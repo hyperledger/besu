@@ -32,7 +32,6 @@ public class EthSchedulerShutdownTest {
   private ExecutorService txWorkerExecutor;
   private ExecutorService servicesExecutor;
   private ExecutorService computationExecutor;
-  private ExecutorService pendingTxExecutor;
 
   @Before
   public void setup() {
@@ -41,14 +40,12 @@ public class EthSchedulerShutdownTest {
     txWorkerExecutor = Executors.newSingleThreadExecutor();
     servicesExecutor = Executors.newSingleThreadExecutor();
     computationExecutor = Executors.newSingleThreadExecutor();
-    pendingTxExecutor = Executors.newSingleThreadExecutor();
     ethScheduler =
         new EthScheduler(
             syncWorkerExecutor,
             scheduledExecutor,
             txWorkerExecutor,
             servicesExecutor,
-            pendingTxExecutor,
             computationExecutor);
   }
 

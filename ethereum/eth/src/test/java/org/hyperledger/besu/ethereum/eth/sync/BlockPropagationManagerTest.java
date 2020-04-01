@@ -93,11 +93,12 @@ public class BlockPropagationManagerTest {
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
             tempProtocolContext.getConsensusState());
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
-    ethProtocolManager.bind(
-        blockchainUtil.getWorldArchive(),
-        blockchainUtil.getTransactionPool(),
-        EthProtocolConfiguration.defaultConfig());
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            blockchainUtil.getWorldArchive(),
+            blockchainUtil.getTransactionPool(),
+            EthProtocolConfiguration.defaultConfig());
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockBroadcaster = mock(BlockBroadcaster.class);

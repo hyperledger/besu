@@ -56,7 +56,7 @@ public class BlockchainQueriesTest {
   @Before
   public void setup() {
     gen = new BlockDataGenerator();
-    scheduler = new EthScheduler(1, 1, 1, 1, 1, new NoOpMetricsSystem());
+    scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
   }
 
   @Test

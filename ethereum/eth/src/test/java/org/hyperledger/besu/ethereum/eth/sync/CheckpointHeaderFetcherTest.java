@@ -69,11 +69,13 @@ public class CheckpointHeaderFetcherTest {
 
   @Before
   public void setUpTest() {
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain, () -> false);
-    ethProtocolManager.bind(
-        protocolContext.getWorldStateArchive(),
-        transactionPool,
-        EthProtocolConfiguration.defaultConfig());
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
     responder =
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool);

@@ -77,9 +77,12 @@ public class DetermineCommonAncestorTaskTest {
     localGenesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = createInMemoryBlockchain(localGenesisBlock);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    ethProtocolManager = EthProtocolManagerTestUtil.create(localBlockchain);
-    ethProtocolManager.bind(
-        worldStateArchive, mock(TransactionPool.class), EthProtocolConfiguration.defaultConfig());
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(
+            localBlockchain,
+            worldStateArchive,
+            mock(TransactionPool.class),
+            EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
     protocolContext = new ProtocolContext<>(localBlockchain, worldStateArchive, null);
   }

@@ -34,7 +34,10 @@ import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSch
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -110,18 +113,41 @@ public class TestNode implements Closeable {
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext<Void> protocolContext =
         new ProtocolContext<>(blockchain, worldStateArchive, null);
+
+    final SyncState syncState = mock(SyncState.class);
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
+    final EthMessages ethMessages = new EthMessages();
+
+    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+
+    final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
+    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+
+    transactionPool =
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            TestClock.fixed(),
+            metricsSystem,
+            syncState,
+            Wei.ZERO,
+            TransactionPoolConfiguration.builder().build());
+
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
             blockchain,
             BigInteger.ONE,
+            worldStateArchive,
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            ethPeers,
+            ethMessages,
+            ethContext,
             Collections.emptyList(),
             false,
-            1,
-            1,
-            1,
-            1,
-            TestClock.fixed(),
-            new NoOpMetricsSystem());
+            scheduler);
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()
@@ -141,25 +167,6 @@ public class TestNode implements Closeable {
     network = networkRunner.getNetwork();
     network.subscribeDisconnect(
         (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
-
-    final EthContext ethContext = ethProtocolManager.ethContext();
-
-    final SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync(anyLong())).thenReturn(true);
-
-    transactionPool =
-        TransactionPoolFactory.createTransactionPool(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            TestClock.fixed(),
-            metricsSystem,
-            syncState,
-            Wei.ZERO,
-            TransactionPoolConfiguration.builder().build());
-
-    ethProtocolManager.bind(
-        worldStateArchive, transactionPool, EthProtocolConfiguration.defaultConfig());
 
     networkRunner.start();
     selfPeer = DefaultPeer.fromEnodeURL(network.getLocalEnode().get());

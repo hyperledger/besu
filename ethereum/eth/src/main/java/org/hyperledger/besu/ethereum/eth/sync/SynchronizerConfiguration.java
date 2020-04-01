@@ -44,7 +44,6 @@ public class SynchronizerConfiguration {
   public static final int DEFAULT_DOWNLOADER_PARALLELISM = 4;
   public static final int DEFAULT_TRANSACTIONS_PARALLELISM = 2;
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
-  public static final int DEFAULT_PENDING_TRANSACTIONS_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
       CachingTaskCollection.DEFAULT_CACHE_SIZE;
 
@@ -71,7 +70,6 @@ public class SynchronizerConfiguration {
   private final int downloaderChainSegmentSize;
   private final int downloaderParallelism;
   private final int transactionsParallelism;
-  private final int pendingTransactionsParallelism;
   private final int computationParallelism;
   private final int maxTrailingPeers;
   private final long worldStateMinMillisBeforeStalling;
@@ -95,7 +93,6 @@ public class SynchronizerConfiguration {
       final int downloaderParallelism,
       final int transactionsParallelism,
       final int computationParallelism,
-      final int pendingTransactionsParallelism,
       final int maxTrailingPeers) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
@@ -114,7 +111,6 @@ public class SynchronizerConfiguration {
     this.downloaderChainSegmentSize = downloaderChainSegmentSize;
     this.downloaderParallelism = downloaderParallelism;
     this.transactionsParallelism = transactionsParallelism;
-    this.pendingTransactionsParallelism = pendingTransactionsParallelism;
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
   }
@@ -180,10 +176,6 @@ public class SynchronizerConfiguration {
     return transactionsParallelism;
   }
 
-  public int getPendingTransactionsParallelism() {
-    return pendingTransactionsParallelism;
-  }
-
   public int getComputationParallelism() {
     return computationParallelism;
   }
@@ -243,7 +235,6 @@ public class SynchronizerConfiguration {
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
     private int transactionsParallelism = DEFAULT_TRANSACTIONS_PARALLELISM;
     private int computationParallelism = DEFAULT_COMPUTATION_PARALLELISM;
-    private int pendingTransactionsParallelism = DEFAULT_PENDING_TRANSACTIONS_PARALLELISM;
     private int fastSyncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
     private float fastSyncFullValidationRate = DEFAULT_FULL_VALIDATION_RATE;
     private int worldStateHashCountPerRequest = DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST;
@@ -323,11 +314,6 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder pendingTransactionsParallelism(final int pendingTransactionsParallelism) {
-      this.pendingTransactionsParallelism = pendingTransactionsParallelism;
-      return this;
-    }
-
     public Builder fastSyncMinimumPeerCount(final int fastSyncMinimumPeerCount) {
       this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
       return this;
@@ -384,7 +370,6 @@ public class SynchronizerConfiguration {
           downloaderParallelism,
           transactionsParallelism,
           computationParallelism,
-          pendingTransactionsParallelism,
           maxTrailingPeers);
     }
   }

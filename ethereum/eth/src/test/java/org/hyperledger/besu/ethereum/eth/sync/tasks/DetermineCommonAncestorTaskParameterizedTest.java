@@ -143,10 +143,11 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(localBlockchain);
-    ethProtocolManager.bind(
-        worldStateArchive, mock(TransactionPool.class), EthProtocolConfiguration.defaultConfig());
-
+        EthProtocolManagerTestUtil.create(
+            localBlockchain,
+            worldStateArchive,
+            mock(TransactionPool.class),
+            EthProtocolConfiguration.defaultConfig());
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
     final RespondingEthPeer respondingEthPeer =

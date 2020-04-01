@@ -20,11 +20,16 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -75,10 +80,12 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            blockchain, () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
-    ethContext = ethProtocolManager.ethContext();
+    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+    final EthMessages ethMessages = new EthMessages();
+    final EthScheduler ethScheduler =
+        new DeterministicEthScheduler(
+            () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
+    ethContext = new EthContext(ethPeers, ethMessages, ethScheduler);
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -90,10 +97,16 @@ public abstract class AbstractMessageTaskTest<T, R> {
             syncState,
             Wei.of(1),
             TransactionPoolConfiguration.builder().build());
-    ethProtocolManager.bind(
-        protocolContext.getWorldStateArchive(),
-        transactionPool,
-        EthProtocolConfiguration.defaultConfig());
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            ethScheduler,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            ethPeers,
+            ethMessages,
+            ethContext);
   }
 
   protected abstract T generateDataToBeRequested();

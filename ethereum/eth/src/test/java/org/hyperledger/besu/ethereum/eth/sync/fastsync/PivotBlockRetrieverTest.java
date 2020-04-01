@@ -68,11 +68,14 @@ public class PivotBlockRetrieverTest {
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
     transactionPool = blockchainSetupUtil.getTransactionPool();
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain, timeout::get);
-    ethProtocolManager.bind(
-        blockchainSetupUtil.getWorldArchive(),
-        transactionPool,
-        EthProtocolConfiguration.defaultConfig());
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            timeout::get,
+            blockchainSetupUtil.getWorldArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
+
     pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
   }
 

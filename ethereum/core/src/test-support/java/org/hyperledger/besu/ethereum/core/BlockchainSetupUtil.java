@@ -126,7 +126,7 @@ public class BlockchainSetupUtil<C> {
         chainResources,
         BlockchainSetupUtil::mainnetProtocolScheduleProvider,
         BlockchainSetupUtil::mainnetProtocolContextProvider,
-        new EthScheduler(1, 1, 1, 1, 1, new NoOpMetricsSystem()));
+        new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
   }
 
   private static ProtocolSchedule<Void> mainnetProtocolScheduleProvider(

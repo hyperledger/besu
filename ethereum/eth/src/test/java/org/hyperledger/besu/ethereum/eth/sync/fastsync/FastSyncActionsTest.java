@@ -66,11 +66,12 @@ public class FastSyncActionsTest {
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(blockchain, () -> timeoutCount.getAndDecrement() > 0);
-    ethProtocolManager.bind(
-        blockchainSetupUtil.getWorldArchive(),
-        blockchainSetupUtil.getTransactionPool(),
-        EthProtocolConfiguration.defaultConfig());
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> timeoutCount.getAndDecrement() > 0,
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getTransactionPool(),
+            EthProtocolConfiguration.defaultConfig());
     fastSyncActions = createFastSyncActions(syncConfig);
   }
 

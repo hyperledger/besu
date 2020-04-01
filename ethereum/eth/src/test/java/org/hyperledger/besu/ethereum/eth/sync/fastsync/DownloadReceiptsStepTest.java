@@ -57,12 +57,14 @@ public class DownloadReceiptsStepTest {
 
   @Before
   public void setUp() {
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
     TransactionPool transactionPool = mock(TransactionPool.class);
-    ethProtocolManager.bind(
-        protocolContext.getWorldStateArchive(),
-        transactionPool,
-        EthProtocolConfiguration.defaultConfig());
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
     downloadReceiptsStep =
         new DownloadReceiptsStep(ethProtocolManager.ethContext(), new NoOpMetricsSystem());
   }

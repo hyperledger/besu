@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -72,10 +71,7 @@ public class FastSyncChainDownloaderTest {
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             localBlockchain, new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
-    ethProtocolManager.bind(
-        localBlockchainSetup.getWorldArchive(),
-        localBlockchainSetup.getTransactionPool(),
-        EthProtocolConfiguration.defaultConfig());
+
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }

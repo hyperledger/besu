@@ -66,11 +66,11 @@ public class FullSyncTargetManagerTest {
         new ProtocolContext<>(localBlockchain, localWorldState, null);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            localBlockchain, new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
-    ethProtocolManager.bind(
-        localWorldState,
-        localBlockchainSetup.getTransactionPool(),
-        EthProtocolConfiguration.defaultConfig());
+            localBlockchain,
+            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
+            localWorldState,
+            localBlockchainSetup.getTransactionPool(),
+            EthProtocolConfiguration.defaultConfig());
     final EthContext ethContext = ethProtocolManager.ethContext();
     localBlockchainSetup.importFirstBlocks(5);
     otherBlockchainSetup.importFirstBlocks(20);

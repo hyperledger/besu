@@ -83,11 +83,11 @@ public class FullSyncChainDownloaderTest {
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            localBlockchain, new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
-    ethProtocolManager.bind(
-        localBlockchainSetup.getWorldArchive(),
-        localBlockchainSetup.getTransactionPool(),
-        EthProtocolConfiguration.defaultConfig());
+            localBlockchain,
+            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
+            localBlockchainSetup.getWorldArchive(),
+            localBlockchainSetup.getTransactionPool(),
+            EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }
