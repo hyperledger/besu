@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -50,6 +51,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -218,6 +220,131 @@ public class BesuEventsImplTest {
   public void newBlockEventUselessUnsubscribesCompletes() {
     serviceImpl.removeBlockPropagatedListener(5);
     serviceImpl.removeBlockPropagatedListener(5L);
+  }
+
+  @Test
+  public void addedBlockEventFiresAfterSubscribe() {
+    final AtomicReference<AddedBlockContext> result = new AtomicReference<>();
+    serviceImpl.addBlockAddedListener(result::set);
+    assertThat(result.get()).isNull();
+
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash()));
+    List<TransactionReceipt> transactionReceipts = gen.receipts(block);
+    blockchain.appendBlock(block, transactionReceipts);
+    assertThat(result.get()).isNotNull();
+    assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
+    assertThat(result.get().getTransactionReceipts()).isEqualTo(transactionReceipts);
+  }
+
+  @Test
+  public void addedBlockEventDoesNotFireAfterUnsubscribe() {
+    final AtomicReference<AddedBlockContext> result = new AtomicReference<>();
+    final long id = serviceImpl.addBlockAddedListener(result::set);
+    assertThat(result.get()).isNull();
+
+    serviceImpl.removeBlockAddedListener(id);
+    result.set(null);
+
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash()));
+    blockchain.appendBlock(block, gen.receipts(block));
+    assertThat(result.get()).isNull();
+  }
+
+  @Test
+  public void additionWithoutSubscriptionsCompletes() {
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash()));
+    blockchain.appendBlock(block, gen.receipts(block));
+  }
+
+  @Test
+  public void addedBlockEventUselessUnsubscribesCompletes() {
+    serviceImpl.removeBlockAddedListener(5);
+    serviceImpl.removeBlockAddedListener(5L);
+  }
+
+  @Test
+  public void reorgedBlockEventFiresAfterSubscribe() {
+    final AtomicReference<AddedBlockContext> result = new AtomicReference<>();
+    serviceImpl.addBlockReorgListener(result::set);
+    assertThat(result.get()).isNull();
+
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash())
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
+    blockchain.appendBlock(block, gen.receipts(block));
+    assertThat(result.get()).isNull();
+
+    final var reorgBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash())
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 2));
+    List<TransactionReceipt> transactionReceipts = gen.receipts(reorgBlock);
+    blockchain.appendBlock(reorgBlock, transactionReceipts);
+    assertThat(result.get()).isNotNull();
+    assertThat(result.get().getBlockHeader()).isEqualTo(reorgBlock.getHeader());
+    assertThat(result.get().getTransactionReceipts()).isEqualTo(transactionReceipts);
+  }
+
+  @Test
+  public void reorgedBlockEventDoesNotFireAfterUnsubscribe() {
+    final AtomicReference<AddedBlockContext> result = new AtomicReference<>();
+    final long id = serviceImpl.addBlockReorgListener(result::set);
+    assertThat(result.get()).isNull();
+
+    serviceImpl.removeBlockReorgListener(id);
+    result.set(null);
+
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash())
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
+    blockchain.appendBlock(block, gen.receipts(block));
+    assertThat(result.get()).isNull();
+
+    final var reorgBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash())
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
+    blockchain.appendBlock(reorgBlock, gen.receipts(reorgBlock));
+    assertThat(result.get()).isNull();
+  }
+
+  @Test
+  public void reorgWithoutSubscriptionsCompletes() {
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash())
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
+    blockchain.appendBlock(block, gen.receipts(block));
+
+    final var reorgBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash())
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
+    List<TransactionReceipt> transactionReceipts = gen.receipts(reorgBlock);
+    blockchain.appendBlock(reorgBlock, transactionReceipts);
+  }
+
+  @Test
+  public void reorgedBlockEventUselessUnsubscribesCompletes() {
+    serviceImpl.removeBlockReorgListener(5);
+    serviceImpl.removeBlockReorgListener(5L);
   }
 
   @Test
