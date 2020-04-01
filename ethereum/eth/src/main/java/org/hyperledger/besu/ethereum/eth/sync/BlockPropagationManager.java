@@ -341,16 +341,23 @@ public class BlockPropagationManager<C> {
                     block.getHash());
               } else {
                 final double timeInS = importTask.getTaskTimeInSec();
+                final String blockHash = block.getHash().toHexString();
+                final String shortHash =
+                    String.format(
+                        "%s..%s",
+                        blockHash.substring(0, 6),
+                        blockHash.substring(blockHash.length() - 4, blockHash.length()));
                 LOG.info(
                     String.format(
-                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs.",
+                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
                         block.getHeader().getNumber(),
                         block.getBody().getTransactions().size(),
                         block.getBody().getOmmers().size(),
                         block.getHeader().getGasUsed(),
                         (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                        block.getHash(),
-                        timeInS));
+                        shortHash,
+                        timeInS,
+                        ethContext.getEthPeers().peerCount()));
               }
             });
   }
