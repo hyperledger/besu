@@ -34,27 +34,37 @@ public class ProtocolScheduleBuilder<C> {
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
+  private final boolean eip1559Enabled;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
       final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final boolean eip1559Enabled) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapter,
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        eip1559Enabled);
   }
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
-    this(config, Optional.empty(), protocolSpecAdapter, privacyParameters, isRevertReasonEnabled);
+      final boolean isRevertReasonEnabled,
+      final boolean eip1559Enabled) {
+    this(
+        config,
+        Optional.empty(),
+        protocolSpecAdapter,
+        privacyParameters,
+        isRevertReasonEnabled,
+        eip1559Enabled);
   }
 
   private ProtocolScheduleBuilder(
@@ -62,12 +72,14 @@ public class ProtocolScheduleBuilder<C> {
       final Optional<BigInteger> defaultChainId,
       final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final boolean eip1559Enabled) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
+    this.eip1559Enabled = eip1559Enabled;
   }
 
   public ProtocolSchedule<C> createProtocolSchedule() {
@@ -159,6 +171,10 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+
+    if (eip1559Enabled) {
+      // TODO EIP-1559 addProtocolSpec for EIP-1559
+    }
 
     // specs for classic network
     config

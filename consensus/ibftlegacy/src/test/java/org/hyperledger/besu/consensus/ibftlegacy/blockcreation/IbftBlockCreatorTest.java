@@ -84,6 +84,7 @@ public class IbftBlockCreatorTest {
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
+            false,
             false);
     final ProtocolContext<IbftContext> protContext =
         new ProtocolContext<>(

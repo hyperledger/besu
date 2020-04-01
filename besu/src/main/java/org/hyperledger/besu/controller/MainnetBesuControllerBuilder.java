@@ -78,6 +78,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        eip1559Enabled);
   }
 }

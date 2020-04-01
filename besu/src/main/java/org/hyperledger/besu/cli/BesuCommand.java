@@ -838,6 +838,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-enabled"},
+      description = "Enable EIP-1559 fee market change (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean eip1559Enabled = false;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1237,7 +1244,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
           .genesisConfigOverrides(genesisConfigOverrides)
           .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
-          .requiredBlocks(requiredBlocks);
+          .requiredBlocks(requiredBlocks)
+          .eip1559Enabled(eip1559Enabled);
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }

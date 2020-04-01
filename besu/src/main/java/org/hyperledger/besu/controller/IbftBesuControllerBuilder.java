@@ -212,7 +212,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     return IbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        eip1559Enabled);
   }
 
   @Override

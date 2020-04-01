@@ -89,6 +89,7 @@ public abstract class BesuControllerBuilder<C> {
   private PrunerConfiguration prunerConfiguration;
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+  protected boolean eip1559Enabled = false;
 
   public BesuControllerBuilder<C> storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -188,6 +189,11 @@ public abstract class BesuControllerBuilder<C> {
 
   public BesuControllerBuilder<C> requiredBlocks(final Map<Long, Hash> requiredBlocks) {
     this.requiredBlocks = requiredBlocks;
+    return this;
+  }
+
+  public BesuControllerBuilder<C> eip1559Enabled(final boolean eip1559Enabled) {
+    this.eip1559Enabled = eip1559Enabled;
     return this;
   }
 
