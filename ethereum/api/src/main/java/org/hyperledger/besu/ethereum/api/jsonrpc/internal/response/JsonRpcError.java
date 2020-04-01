@@ -112,13 +112,21 @@ public enum JsonRpcError {
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
   FIND_ON_CHAIN_PRIVACY_GROUP_ERROR(-50100, "Error finding on-chain privacy group"),
-  VALUE_NOT_ZERO(-50100, "We cannot transfer ether in private transaction yet."),
+  VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
-  PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Privacy group does not exist."),
+  OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Offchain Privacy group does not exist."),
+  ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
   ONCHAIN_PRIVACY_GROUP_NOT_ENABLED(-50100, "Onchain privacy groups not enabled."),
   OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED(
       -50100, "Offchain privacy group can't be used with Onchain privacy groups enabled."),
+  PRIVACY_GROUP_ID_NOT_AVAILABLE(
+      -50100, "Privacy group id is not available while OnChain privacy groups are enabled"),
+  PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
+      -50100, "Private from does not match enclave public key"),
+  PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
+      -50100,
+      "Private Marker Transaction failed due to intrinsic gas exeeding the limit. Gas limit used from the Private Transaction."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 
