@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -24,9 +25,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -54,8 +57,14 @@ public class DownloadReceiptsStepTest {
 
   @Before
   public void setUp() {
+    TransactionPool transactionPool = mock(TransactionPool.class);
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(blockchain, protocolContext.getWorldStateArchive());
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
     downloadReceiptsStep =
         new DownloadReceiptsStep(ethProtocolManager.ethContext(), new NoOpMetricsSystem());
   }

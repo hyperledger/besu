@@ -22,6 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.util.Optional;
 
@@ -40,6 +41,7 @@ public class NodeRequests {
   private final Optional<WebSocketService> websocketService;
   private final LoginRequestFactory login;
   private final MinerRequestFactory miner;
+  private final TxPoolRequestFactory txPool;
 
   public NodeRequests(
       final Web3j netEth,
@@ -50,6 +52,7 @@ public class NodeRequests {
       final PrivacyRequestFactory privacy,
       final CustomRequestFactory custom,
       final MinerRequestFactory miner,
+      final TxPoolRequestFactory txPool,
       final Optional<WebSocketService> websocketService,
       final LoginRequestFactory login) {
     this.netEth = netEth;
@@ -60,6 +63,7 @@ public class NodeRequests {
     this.privacy = privacy;
     this.custom = custom;
     this.miner = miner;
+    this.txPool = txPool;
     this.websocketService = websocketService;
     this.login = login;
   }
@@ -102,6 +106,10 @@ public class NodeRequests {
 
   public MinerRequestFactory miner() {
     return miner;
+  }
+
+  public TxPoolRequestFactory txPool() {
+    return txPool;
   }
 
   public void shutdown() {
