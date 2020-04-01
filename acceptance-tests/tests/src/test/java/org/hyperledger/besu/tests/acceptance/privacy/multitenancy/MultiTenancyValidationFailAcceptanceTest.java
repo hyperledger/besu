@@ -22,9 +22,11 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -96,7 +98,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
     final Transaction<Hash> transaction =
         privacyTransactions.sendRawTransaction(
             getRLPOutput(validSignedPrivateTransaction).encoded().toHexString());
-    node.verify(priv.multiTenancyValidationFail(transaction, ENCLAVE_ERROR));
+    node.verify(
+        priv.multiTenancyValidationFail(
+            transaction, JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
@@ -121,7 +125,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
             getRLPOutput(getValidSignedPrivateTransaction(senderAddress, OTHER_ENCLAVE_PUBLIC_KEY))
                 .encoded()
                 .toHexString());
-    node.verify(priv.multiTenancyValidationFail(transaction, ENCLAVE_ERROR));
+    node.verify(
+        priv.multiTenancyValidationFail(
+            transaction, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
