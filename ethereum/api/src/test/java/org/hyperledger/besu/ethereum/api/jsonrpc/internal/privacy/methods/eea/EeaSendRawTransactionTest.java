@@ -451,7 +451,7 @@ public class EeaSendRawTransactionTest {
   public void transactionWithIntrinsicGasExceedingGasLimitIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
-        JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT);
+        JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
   }
 
   @Test

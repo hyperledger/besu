@@ -160,8 +160,15 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         .addLocalTransaction(privacyMarkerTransaction)
         .either(
             () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-            errorReason ->
-                new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason)));
+            errorReason ->getJsonRpcErrorResponse(id, errorReason));
+  }
+
+  JsonRpcErrorResponse getJsonRpcErrorResponse(
+      final Object id, final TransactionInvalidReason errorReason) {
+    if (errorReason.equals(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT)) {
+      return new JsonRpcErrorResponse(id, JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
+    }
+    return new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason));
   }
 
   private String buildCompoundKey(
