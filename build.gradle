@@ -242,7 +242,9 @@ allprojects {
       '--add-opens',
       'java.base/java.util=ALL-UNNAMED',
       '--add-opens',
-      'java.base/java.util.concurrent=ALL-UNNAMED'
+      'java.base/java.util.concurrent=ALL-UNNAMED',
+      '--add-opens',
+      'java.base/java.util.concurrent.atomic=ALL-UNNAMED'
     ]
     Set toImport = [
       'test.ethereum.include',

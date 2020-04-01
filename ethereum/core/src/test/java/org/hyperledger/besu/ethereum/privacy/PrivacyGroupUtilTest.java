@@ -78,7 +78,8 @@ public class PrivacyGroupUtilTest {
 
   private String privacyGroupId(final String privateFrom, final String... privateFor) {
     return PrivacyGroupUtil.calculateEeaPrivacyGroupId(
-        Bytes.fromBase64String(privateFrom),
-        Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()));
+            Bytes.fromBase64String(privateFrom),
+            Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()))
+        .toBase64String();
   }
 }
