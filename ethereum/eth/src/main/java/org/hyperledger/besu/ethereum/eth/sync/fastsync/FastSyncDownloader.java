@@ -75,7 +75,7 @@ public class FastSyncDownloader<C> {
   }
 
   private CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    LOG.info("Start fast sync.");
+    LOG.info("Starting fast sync.");
     return exceptionallyCompose(
         fastSyncActions
             .waitForSuitablePeers(fastSyncState)
