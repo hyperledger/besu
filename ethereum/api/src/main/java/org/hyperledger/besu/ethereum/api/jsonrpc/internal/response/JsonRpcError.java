@@ -125,9 +125,8 @@ public enum JsonRpcError {
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
-          -50100,
-          "Private Marker Transaction failed due to intrinsic gas exeeding the limit. Gas limit used from the Private Transaction."),
-
+      -50100,
+      "Private Marker Transaction failed due to intrinsic gas exeeding the limit. Gas limit used from the Private Transaction."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 

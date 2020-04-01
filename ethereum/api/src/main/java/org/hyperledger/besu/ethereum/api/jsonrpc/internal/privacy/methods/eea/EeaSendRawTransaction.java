@@ -160,7 +160,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         .addLocalTransaction(privacyMarkerTransaction)
         .either(
             () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-            errorReason ->getJsonRpcErrorResponse(id, errorReason));
+            errorReason -> getJsonRpcErrorResponse(id, errorReason));
   }
 
   JsonRpcErrorResponse getJsonRpcErrorResponse(
