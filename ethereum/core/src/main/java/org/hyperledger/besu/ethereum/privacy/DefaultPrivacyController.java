@@ -459,7 +459,7 @@ public class DefaultPrivacyController implements PrivacyController {
                     Bytes.fromBase64String(enclavePublicKey), GET_VERSION_METHOD_SIGNATURE));
         new VersionedPrivateTransaction(privateTransaction, result).writeTo(rlpOutput);
         final List<String> onChainPrivateFor =
-            resolveOnChainPrivateFor(privateTransaction, maybePrivacyGroup.get());
+            resolveOnChainPrivateFor(privateTransaction, maybePrivacyGroup);
         return enclave.send(
             rlpOutput.encoded().toBase64String(),
             privateTransaction.getPrivateFrom().toBase64String(),
@@ -500,13 +500,13 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   private List<String> resolveOnChainPrivateFor(
-      final PrivateTransaction privateTransaction, final PrivacyGroup privacyGroup) {
+      final PrivateTransaction privateTransaction, final Optional<PrivacyGroup> privacyGroup) {
     final ArrayList<String> privateFor = new ArrayList<>();
     if (isGroupAdditionTransaction(privateTransaction)) {
       privateFor.addAll(getParticipantsFromParameter(privateTransaction.getPayload()));
     }
-    if (privacyGroup != null) {
-      privateFor.addAll(privacyGroup.getMembers());
+    if (privacyGroup.isPresent()) {
+      privateFor.addAll(privacyGroup.get().getMembers());
     }
     return privateFor;
   }
