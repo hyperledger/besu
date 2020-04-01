@@ -13,6 +13,12 @@
 
 dependencies {
   testImplementation project(':acceptance-tests:dsl')
+  testImplementation project(':enclave')
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation project(':consensus:clique')
+  testImplementation project(':ethereum:permissioning')
+  testImplementation project(':util')
+  testImplementation project(':plugin-api')
   testImplementation project(':besu')
   testImplementation project(':consensus:clique')
   implementation project(':crypto')
@@ -20,6 +26,7 @@ dependencies {
   testImplementation project(':ethereum:api')
   testImplementation project(':ethereum:core')
   testImplementation project(':ethereum:rlp')
+  testImplementation project(':privacy-contracts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':plugin-api')
@@ -35,6 +42,8 @@ dependencies {
   testImplementation 'org.web3j:besu'
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
+  testImplementation 'org.apache.commons:commons-compress'
+  testImplementation 'commons-io:commons-io'
 
   testCompile "com.github.tomakehurst:wiremock-jre8-standalone:2.25.1"
 }
@@ -52,9 +61,20 @@ sourceSets {
 processTestResources.dependsOn(':besu:testJar')
 
 task acceptanceTest(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+
   dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Besu acceptance tests.'
   group = 'verification'
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
 }

@@ -93,9 +93,7 @@ public class AuthenticationService {
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
       final File authenticationPublicKeyFile) {
-    if (!authenticationEnabled
-        && authenticationCredentialsFile == null
-        && authenticationPublicKeyFile == null) {
+    if (!authenticationEnabled) {
       return Optional.empty();
     }
 
@@ -195,9 +193,11 @@ public class AuthenticationService {
 
             final JsonObject responseBody = new JsonObject().put("token", token);
             final HttpServerResponse response = routingContext.response();
-            response.setStatusCode(200);
-            response.putHeader("Content-Type", "application/json");
-            response.end(responseBody.encode());
+            if (!response.closed()) {
+              response.setStatusCode(200);
+              response.putHeader("Content-Type", "application/json");
+              response.end(responseBody.encode());
+            }
           }
         });
   }

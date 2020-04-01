@@ -44,7 +44,10 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     return mapOf(
         new EeaSendRawTransaction(
-            getTransactionPool(), privacyController, enclavePublicKeyProvider),
+            getTransactionPool(),
+            privacyController,
+            enclavePublicKeyProvider,
+            getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
         new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider));
   }
 

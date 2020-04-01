@@ -41,7 +41,7 @@ public class AddressTest {
   }
 
   @Test
-  public void accountAddresHashCode() {
+  public void accountAddressHashCode() {
     final Address addr =
         Address.wrap(Bytes.fromHexString("0x0000000000000000000000000000000000101010"));
     final Address addr2 =

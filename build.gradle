@@ -242,13 +242,16 @@ allprojects {
       '--add-opens',
       'java.base/java.util=ALL-UNNAMED',
       '--add-opens',
-      'java.base/java.util.concurrent=ALL-UNNAMED'
+      'java.base/java.util.concurrent=ALL-UNNAMED',
+      '--add-opens',
+      'java.base/java.util.concurrent.atomic=ALL-UNNAMED'
     ]
     Set toImport = [
       'test.ethereum.include',
       'test.ethereum.state.eip',
       'root.log.level',
-      'evm.log.level'
+      'evm.log.level',
+      'acctests.keepLogsOfPassingTests'
     ]
     for (String name : toImport) {
       if (System.getProperty(name) != null) {
@@ -484,7 +487,7 @@ startScripts {
 
 
 dependencies {
-  implementation project(':besu')
+  compile project(':besu')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 

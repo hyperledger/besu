@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -83,5 +84,11 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     delegate.setTransactionFilter(transactionFilter);
+  }
+
+  @Override
+  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
+      final WorldStateArchive publicWorldStateArchive) {
+    delegate.setPublicWorldStateArchiveForPrivacyBlockProcessor(publicWorldStateArchive);
   }
 }

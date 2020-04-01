@@ -118,7 +118,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   @Before
   public void setupTest() throws Exception {
     final Synchronizer synchronizerMock = Mockito.mock(Synchronizer.class);
-    final SyncStatus status = new DefaultSyncStatus(1, 2, 3);
+    final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     Mockito.when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
     final EthHashMiningCoordinator miningCoordinatorMock =

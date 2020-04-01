@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -26,4 +27,7 @@ public interface ProtocolSchedule<C> {
   Optional<BigInteger> getChainId();
 
   void setTransactionFilter(TransactionFilter transactionFilter);
+
+  void setPublicWorldStateArchiveForPrivacyBlockProcessor(
+      WorldStateArchive publicWorldStateArchive);
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.util.List;
 
@@ -80,4 +81,31 @@ public interface BlockProcessor {
       BlockHeader blockHeader,
       List<Transaction> transactions,
       List<BlockHeader> ommers);
+
+  /**
+   * Get ommer reward in ${@link Wei}
+   *
+   * @param blockReward reward of the block
+   * @param blockNumber number of the block
+   * @param ommerBlockNumber number of the block ommer
+   * @return ommer reward
+   */
+  default Wei getOmmerReward(
+      final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
+    final long distance = blockNumber - ommerBlockNumber;
+    return blockReward.subtract(blockReward.multiply(distance).divide(8));
+  }
+
+  /**
+   * Get coinbase reward in ${@link Wei}
+   *
+   * @param blockReward reward of the block
+   * @param blockNumber number of the block
+   * @param numberOfOmmers number of ommers for this block
+   * @return coinbase reward
+   */
+  default Wei getCoinbaseReward(
+      final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+    return blockReward.add(blockReward.multiply(numberOfOmmers).divide(32));
+  }
 }

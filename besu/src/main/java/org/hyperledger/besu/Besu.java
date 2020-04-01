@@ -60,15 +60,19 @@ public final class Besu {
           "vertx.logger-delegate-factory-class-name",
           "io.vertx.core.logging.Log4j2LogDelegateFactory");
     } catch (SecurityException e) {
-      // if the security
       System.out.println(
-          "could not set logging system property as the security manager prevented it.");
+          "Could not set logging system property as the security manager prevented it:"
+              + e.getMessage());
     }
 
     final Logger logger = getLogger();
     Thread.setDefaultUncaughtExceptionHandler(
         (thread, error) ->
             logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+    Thread.currentThread()
+        .setUncaughtExceptionHandler(
+            (thread, error) ->
+                logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
     return logger;
   }
 }

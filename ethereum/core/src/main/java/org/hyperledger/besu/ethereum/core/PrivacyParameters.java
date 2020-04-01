@@ -52,6 +52,7 @@ public class PrivacyParameters {
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateStorage privateStateStorage;
   private boolean multiTenancyEnabled;
+  private boolean onchainPrivacyGroupsEnabled;
 
   public Integer getPrivacyAddress() {
     return privacyAddress;
@@ -141,6 +142,14 @@ public class PrivacyParameters {
     return multiTenancyEnabled;
   }
 
+  public void setOnchainPrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
+    this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
+  }
+
+  public boolean isOnchainPrivacyGroupsEnabled() {
+    return onchainPrivacyGroupsEnabled;
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -148,6 +157,8 @@ public class PrivacyParameters {
         + enabled
         + ", multiTenancyEnabled = "
         + multiTenancyEnabled
+        + ", onchainPrivacyGroupsEnabled = "
+        + onchainPrivacyGroupsEnabled
         + ", enclaveUri='"
         + enclaveUri
         + '\''
@@ -168,6 +179,7 @@ public class PrivacyParameters {
     private Path privacyKeyStoreFile;
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
+    private boolean onchainPrivacyGroupsEnabled;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -219,6 +231,11 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setOnchainPrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
+      this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
+      return this;
+    }
+
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -256,6 +273,7 @@ public class PrivacyParameters {
       config.setEnclaveUri(enclaveUrl);
       config.setPrivacyAddress(privacyAddress);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
+      config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
       return config;
     }
 

@@ -36,7 +36,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceT
   }
 
   @Test
-  public void deployingMustGiveValidReceipt() {
+  public void deployingMustGiveValidReceiptAndCode() throws Exception {
     final String contractAddress = "0x89ce396d0f9f937ddfa71113e29b2081c4869555";
 
     final EventEmitter eventEmitter =
@@ -50,5 +50,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceT
     privateContractVerifier
         .validPrivateContractDeployed(contractAddress, minerNode.getAddress().toString())
         .verify(eventEmitter);
+
+    privateContractVerifier.validContractCodeProvided().verify(eventEmitter);
   }
 }

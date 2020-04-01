@@ -14,10 +14,17 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.OnChainPrivacyGroup;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
+import org.web3j.utils.Base64String;
 
 public class PrivateTransactionVerifier {
 
@@ -32,6 +39,11 @@ public class PrivateTransactionVerifier {
     return new ExpectValidPrivateTransactionReceipt(transactions, transactionHash, receipt);
   }
 
+  public ExpectExistingPrivateTransactionReceipt existingPrivateTransactionReceipt(
+      final String transactionHash) {
+    return new ExpectExistingPrivateTransactionReceipt(transactions, transactionHash);
+  }
+
   public ExpectNoPrivateTransactionReceipt noPrivateTransactionReceipt(
       final String transactionHash) {
     return new ExpectNoPrivateTransactionReceipt(transactions, transactionHash);
@@ -39,6 +51,21 @@ public class PrivateTransactionVerifier {
 
   public ExpectValidPrivacyGroupCreated validPrivacyGroupCreated(final PrivacyGroup expected) {
     return new ExpectValidPrivacyGroupCreated(transactions, expected);
+  }
+
+  public ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(
+      final String privacyGroupId, final PrivacyNode... members) {
+
+    final List<Base64String> membersEnclaveKeys =
+        Arrays.stream(members)
+            .map(PrivacyNode::getEnclaveKey)
+            .map(Base64String::wrap)
+            .collect(Collectors.toList());
+
+    final OnChainPrivacyGroup expectedGroup =
+        new OnChainPrivacyGroup(privacyGroupId, membersEnclaveKeys);
+
+    return new ExpectValidOnChainPrivacyGroupCreated(transactions, expectedGroup);
   }
 
   public ExpectInternalErrorPrivateTransactionReceipt internalErrorPrivateTransactionReceipt(
