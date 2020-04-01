@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -146,8 +147,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
           .addLocalTransaction(privacyMarkerTransaction)
           .either(
               () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-              errorReason ->
-                  new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason)));
+              errorReason -> getJsonRpcErrorResponse(id, errorReason));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(id, ENCLAVE_ERROR);
@@ -156,6 +156,14 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
+  }
+
+  JsonRpcErrorResponse getJsonRpcErrorResponse(
+      final Object id, final TransactionInvalidReason errorReason) {
+    if (errorReason.equals(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT)) {
+      return new JsonRpcErrorResponse(id, JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
+    }
+    return new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason));
   }
 
   private String buildCompoundKey(
