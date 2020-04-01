@@ -81,24 +81,26 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
         return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
 
-      Optional<PrivacyGroup> mabePrivacyGroup = null;
+      Optional<PrivacyGroup> maybePrivacyGroup = null;
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
       if (onchainPrivacyGroupsEnabled) {
         if (!maybePrivacyGroupId.isPresent()) {
           return new JsonRpcErrorResponse(id, JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE);
         }
-        mabePrivacyGroup =
+        maybePrivacyGroup =
             privacyController.retrieveOnChainPrivacyGroup(
                 maybePrivacyGroupId.get(), enclavePublicKey);
-        if (mabePrivacyGroup.isEmpty()
+        if (maybePrivacyGroup.isEmpty()
             && !privacyController.isGroupAdditionTransaction(privateTransaction)) {
           return new JsonRpcErrorResponse(id, JsonRpcError.ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
         }
       } else { // !onchainPirvacyGroupEnabled
         if (maybePrivacyGroupId.isPresent()) {
-          mabePrivacyGroup =
+          maybePrivacyGroup =
               privacyController.retrieveOffChainPrivacyGroup(
                   maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
+        } else {
+          maybePrivacyGroup = Optional.empty();
         }
       }
 
@@ -110,7 +112,8 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       }
 
       final String enclaveKey =
-          privacyController.sendTransaction(privateTransaction, enclavePublicKey, mabePrivacyGroup);
+          privacyController.sendTransaction(
+              privateTransaction, enclavePublicKey, maybePrivacyGroup);
       return new JsonRpcSuccessResponse(id, hexEncodeEnclaveKey(enclaveKey));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
