@@ -233,7 +233,8 @@ public class FilterManagerTest {
         new BlockDataGenerator.BlockOptions().setBlockNumber(blockNumber).setParentHash(parentHash);
     currentBlock = blockGenerator.block(options);
     filterManager.recordBlockEvent(
-        BlockAddedEvent.createForHeadAdvancement(currentBlock, Collections.emptyList()),
+        BlockAddedEvent.createForHeadAdvancement(
+            currentBlock, Collections.emptyList(), Collections.emptyList()),
         blockchainQueries.getBlockchain());
     return currentBlock.getHash();
   }

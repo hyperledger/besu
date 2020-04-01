@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -149,7 +150,9 @@ public class FilterManagerLogFilterTest {
     final Block block = gen.block();
     filterManager.recordBlockEvent(
         BlockAddedEvent.createForHeadAdvancement(
-            block, LogWithMetadata.generate(block, gen.receipts(block), false)),
+            block,
+            LogWithMetadata.generate(block, gen.receipts(block), false),
+            Collections.emptyList()),
         blockchainQueries.getBlockchain());
   }
 

@@ -12,11 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.chain;
+package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import java.util.Optional;
 
-public interface ChainReorgObserver {
+import org.apache.tuweni.bytes.Bytes;
 
-  void onBlockAdded(BlockWithReceipts blockWithReceipts, Blockchain blockchain);
+/** A transaction receipt, containing information pertaining a transaction execution. */
+public interface TransactionReceipt {
+  Optional<Bytes> getRevertReason();
 }

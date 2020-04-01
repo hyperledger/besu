@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
  * formats: logs, logs bloom, and cumulative gas used in the block. The TransactionReceiptType
  * attribute is the best way to check which format has been used.
  */
-public class TransactionReceipt {
+public class TransactionReceipt implements org.hyperledger.besu.plugin.data.TransactionReceipt {
 
   private static final int NONEXISTENT = -1;
 
@@ -263,6 +263,7 @@ public class TransactionReceipt {
     return transactionReceiptType;
   }
 
+  @Override
   public Optional<Bytes> getRevertReason() {
     return revertReason;
   }
