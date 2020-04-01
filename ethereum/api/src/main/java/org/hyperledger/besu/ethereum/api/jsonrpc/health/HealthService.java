@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.health;
 import static java.util.Collections.singletonMap;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
@@ -48,10 +49,12 @@ public final class HealthService {
       statusCode = UNHEALTHY_STATUS_CODE;
       statusText = UNHEALTHY_STATUS_TEXT;
     }
-    routingContext
-        .response()
-        .setStatusCode(statusCode)
-        .end(new JsonObject(singletonMap("status", statusText)).encodePrettily());
+    final HttpServerResponse response = routingContext.response();
+    if (!response.closed()) {
+      response
+          .setStatusCode(statusCode)
+          .end(new JsonObject(singletonMap("status", statusText)).encodePrettily());
+    }
   }
 
   @FunctionalInterface
