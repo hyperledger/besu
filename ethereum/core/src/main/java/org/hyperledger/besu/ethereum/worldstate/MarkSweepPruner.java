@@ -219,7 +219,7 @@ public class MarkSweepPruner {
   }
 
   private void maybeFlushPendingMarks() {
-    if (pendingMarks.size() > operationsPerTransaction) {
+    if (pendingMarks.size() >= operationsPerTransaction) {
       flushPendingMarks();
     }
   }
