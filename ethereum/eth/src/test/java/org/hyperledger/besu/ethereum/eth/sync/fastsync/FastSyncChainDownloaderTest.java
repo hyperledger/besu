@@ -70,9 +70,8 @@ public class FastSyncChainDownloaderTest {
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            localBlockchain,
-            localBlockchainSetup.getWorldArchive(),
-            new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
+            localBlockchain, new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }

@@ -74,7 +74,11 @@ public class RetryingGetNodeDataFromPeerTaskTest extends RetryingMessageTaskTest
     // Respond with partial data.
     respondingPeer.respond(
         RespondingEthPeer.partialResponder(
-            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 0.50f));
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            protocolSchedule,
+            0.50f));
 
     assertThat(future.isDone()).isTrue();
     // Check that it immediately returns the data we got in the response.

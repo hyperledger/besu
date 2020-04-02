@@ -38,7 +38,7 @@ public class ChainHeadTrackerTest {
   private final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
   private final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
   private final EthProtocolManager ethProtocolManager =
-      EthProtocolManagerTestUtil.create(blockchain, blockchainSetupUtil.getWorldArchive());
+      EthProtocolManagerTestUtil.create(blockchain);
   private final RespondingEthPeer respondingPeer =
       RespondingEthPeer.builder()
           .ethProtocolManager(ethProtocolManager)
@@ -62,7 +62,9 @@ public class ChainHeadTrackerTest {
   public void shouldRequestHeaderChainHeadWhenNewPeerConnects() {
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
-            blockchainSetupUtil.getBlockchain(), blockchainSetupUtil.getWorldArchive());
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getTransactionPool());
     chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
@@ -77,7 +79,9 @@ public class ChainHeadTrackerTest {
   public void shouldIgnoreHeadersIfChainHeadHasAlreadyBeenUpdatedWhileWaiting() {
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
-            blockchainSetupUtil.getBlockchain(), blockchainSetupUtil.getWorldArchive());
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getTransactionPool());
     chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
 
     // Change the hash of the current known head
@@ -92,7 +96,9 @@ public class ChainHeadTrackerTest {
   public void shouldCheckTrialingPeerLimits() {
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
-            blockchainSetupUtil.getBlockchain(), blockchainSetupUtil.getWorldArchive());
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getTransactionPool());
     chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
