@@ -72,6 +72,7 @@ public class BlockTransactionSelectorTest {
       new PendingTransactions(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
+          5,
           TestClock.fixed(),
           metricsSystem);
   private final Blockchain blockchain = new TestBlockchain();

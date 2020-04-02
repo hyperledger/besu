@@ -31,7 +31,11 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -242,13 +246,40 @@ public abstract class BesuControllerBuilder<C> {
                     prunerConfiguration));
       }
     }
-
+    final EthPeers ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
+    final EthMessages ethMessages = new EthMessages();
+    final EthScheduler scheduler =
+        new EthScheduler(
+            syncConfig.getDownloaderParallelism(),
+            syncConfig.getTransactionsParallelism(),
+            syncConfig.getComputationParallelism(),
+            metricsSystem);
+    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    final SyncState syncState = new SyncState(blockchain, ethPeers);
     final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
+    final TransactionPool transactionPool =
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            clock,
+            metricsSystem,
+            syncState,
+            miningParameters.getMinTransactionGasPrice(),
+            transactionPoolConfiguration);
+
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
-            protocolContext, fastSyncEnabled, createPeerValidators(protocolSchedule));
-    final SyncState syncState =
-        new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+            protocolContext,
+            fastSyncEnabled,
+            transactionPool,
+            ethereumWireProtocolConfiguration,
+            ethPeers,
+            ethContext,
+            ethMessages,
+            scheduler,
+            createPeerValidators(protocolSchedule));
+
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
             syncConfig,
@@ -262,17 +293,6 @@ public abstract class BesuControllerBuilder<C> {
             dataDirectory,
             clock,
             metricsSystem);
-
-    final TransactionPool transactionPool =
-        TransactionPoolFactory.createTransactionPool(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            clock,
-            metricsSystem,
-            syncState,
-            miningParameters.getMinTransactionGasPrice(),
-            transactionPoolConfiguration);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -343,22 +363,32 @@ public abstract class BesuControllerBuilder<C> {
   protected abstract C createConsensusContext(
       Blockchain blockchain, WorldStateArchive worldStateArchive);
 
+  protected String getSupportedProtocol() {
+    return EthProtocol.NAME;
+  }
+
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext<C> protocolContext,
       final boolean fastSyncEnabled,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthContext ethContext,
+      final EthMessages ethMessages,
+      final EthScheduler scheduler,
       final List<PeerValidator> peerValidators) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
-        protocolContext.getWorldStateArchive(),
         networkId,
+        protocolContext.getWorldStateArchive(),
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
         peerValidators,
         fastSyncEnabled,
-        syncConfig.getDownloaderParallelism(),
-        syncConfig.getTransactionsParallelism(),
-        syncConfig.getComputationParallelism(),
-        clock,
-        metricsSystem,
-        ethereumWireProtocolConfiguration,
+        scheduler,
         genesisConfig.getForks());
   }
 

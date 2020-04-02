@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.util.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -52,6 +54,7 @@ public class BlockchainSetupUtil<C> {
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
   private final WorldStateArchive worldArchive;
+  private final TransactionPool transactionPool;
   private final List<Block> blocks;
   private final EthScheduler scheduler;
   private long maxBlockNumber;
@@ -62,6 +65,7 @@ public class BlockchainSetupUtil<C> {
       final ProtocolContext<C> protocolContext,
       final ProtocolSchedule<C> protocolSchedule,
       final WorldStateArchive worldArchive,
+      final TransactionPool transactionPool,
       final List<Block> blocks,
       final EthScheduler scheduler) {
     this.genesisState = genesisState;
@@ -69,6 +73,7 @@ public class BlockchainSetupUtil<C> {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.worldArchive = worldArchive;
+    this.transactionPool = transactionPool;
     this.blocks = blocks;
     this.scheduler = scheduler;
   }
@@ -150,6 +155,7 @@ public class BlockchainSetupUtil<C> {
       final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
+      final TransactionPool transactionPool = mock(TransactionPool.class);
 
       genesisState.writeStateTo(worldArchive.getMutable());
       final ProtocolContext<T> protocolContext =
@@ -172,6 +178,7 @@ public class BlockchainSetupUtil<C> {
           protocolContext,
           protocolSchedule,
           worldArchive,
+          transactionPool,
           blocks,
           scheduler);
     } catch (final IOException | URISyntaxException ex) {
@@ -207,6 +214,10 @@ public class BlockchainSetupUtil<C> {
 
   public EthScheduler getScheduler() {
     return scheduler;
+  }
+
+  public TransactionPool getTransactionPool() {
+    return transactionPool;
   }
 
   private void importBlocks(final List<Block> blocks) {

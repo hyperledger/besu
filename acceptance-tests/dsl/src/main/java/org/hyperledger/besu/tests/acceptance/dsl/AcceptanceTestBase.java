@@ -26,6 +26,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.login.LoginConditions
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.PermissioningConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.PrivConditions;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.txpool.TxPoolConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.web3.Web3Conditions;
 import org.hyperledger.besu.tests.acceptance.dsl.contract.ContractVerifier;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransact
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
 import java.io.BufferedReader;
@@ -88,6 +90,8 @@ public class AcceptanceTestBase {
   protected final Web3Conditions web3;
   protected final PrivConditions priv;
   protected final PrivacyTransactions privacyTransactions;
+  protected final TxPoolConditions txPoolConditions;
+  protected final TxPoolTransactions txPoolTransactions;
 
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
@@ -115,6 +119,8 @@ public class AcceptanceTestBase {
     admin = new AdminConditions(adminTransactions);
     web3 = new Web3Conditions(new Web3Transactions());
     besu = new BesuNodeFactory();
+    txPoolTransactions = new TxPoolTransactions();
+    txPoolConditions = new TxPoolConditions(txPoolTransactions);
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
     permissionedNodeBuilder = new PermissionedNodeBuilder();
   }
