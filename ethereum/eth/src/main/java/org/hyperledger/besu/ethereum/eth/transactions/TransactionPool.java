@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
@@ -65,27 +67,33 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolSchedule<?> protocolSchedule;
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
+  private final TransactionBatchAddedListener pendingTransactionBatchAddedListener;
   private final SyncState syncState;
   private final Wei minTransactionGasPrice;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
+  private final PeerPendingTransactionTracker peerPendingTransactionTracker;
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
       final ProtocolSchedule<?> protocolSchedule,
       final ProtocolContext<?> protocolContext,
       final TransactionBatchAddedListener transactionBatchAddedListener,
+      final TransactionBatchAddedListener pendingTransactionBatchAddedListener,
       final SyncState syncState,
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
+      final PeerPendingTransactionTracker peerPendingTransactionTracker,
       final Wei minTransactionGasPrice,
       final MetricsSystem metricsSystem) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBatchAddedListener = transactionBatchAddedListener;
+    this.pendingTransactionBatchAddedListener = pendingTransactionBatchAddedListener;
     this.syncState = syncState;
     this.peerTransactionTracker = peerTransactionTracker;
+    this.peerPendingTransactionTracker = peerPendingTransactionTracker;
     this.minTransactionGasPrice = minTransactionGasPrice;
 
     duplicateTransactionCounter =
@@ -103,10 +111,22 @@ public class TransactionPool implements BlockAddedObserver {
     for (final Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
+    final Collection<Hash> hashes = getNewPooledHashes();
+    for (final Hash hash : hashes) {
+      peerPendingTransactionTracker.addToPeerSendQueue(peer, hash);
+    }
   }
 
   public List<Transaction> getLocalTransactions() {
     return pendingTransactions.getLocalTransactions();
+  }
+
+  public Collection<Hash> getNewPooledHashes() {
+    return pendingTransactions.getNewPooledHashes();
+  }
+
+  public boolean addTransactionHashes(final Hash transactionHash) {
+    return pendingTransactions.addTransactionHash(transactionHash);
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
@@ -121,7 +141,9 @@ public class TransactionPool implements BlockAddedObserver {
         () -> {
           final boolean added = pendingTransactions.addLocalTransaction(transaction);
           if (added) {
-            transactionBatchAddedListener.onTransactionsAdded(singletonList(transaction));
+            Collection<Transaction> txs = singletonList(transaction);
+            transactionBatchAddedListener.onTransactionsAdded(txs);
+            pendingTransactionBatchAddedListener.onTransactionsAdded(txs);
           } else {
             duplicateTransactionCounter.labels(LOCAL).inc();
           }
@@ -135,6 +157,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final Set<Transaction> addedTransactions = new HashSet<>();
     for (final Transaction transaction : transactions) {
+      pendingTransactions.tryEvictTransactionHash(transaction.getHash());
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
@@ -224,6 +247,10 @@ public class TransactionPool implements BlockAddedObserver {
                       transaction, senderAccount, TransactionValidationParams.transactionPool());
             })
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
+  }
+
+  public Optional<Transaction> getTransactionByHash(final Hash hash) {
+    return pendingTransactions.getTransactionByHash(hash);
   }
 
   private BlockHeader getChainHeadBlockHeader() {

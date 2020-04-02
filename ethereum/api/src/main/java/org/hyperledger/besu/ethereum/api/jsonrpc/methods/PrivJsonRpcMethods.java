@@ -69,7 +69,10 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               privacyController,
               getPrivacyParameters().getPrivateStateStorage(),
               enclavePublicKeyProvider),
-          new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider),
+          new PrivDistributeRawTransaction(
+              privacyController,
+              enclavePublicKeyProvider,
+              getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
           new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
           new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider));
     } else {
@@ -89,7 +92,10 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               privacyController,
               getPrivacyParameters().getPrivateStateStorage(),
               enclavePublicKeyProvider),
-          new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider),
+          new PrivDistributeRawTransaction(
+              privacyController,
+              enclavePublicKeyProvider,
+              getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
           new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
           new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider));
     }

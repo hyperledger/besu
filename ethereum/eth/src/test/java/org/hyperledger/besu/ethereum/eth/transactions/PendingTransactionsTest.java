@@ -41,6 +41,7 @@ import org.junit.Test;
 public class PendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_TRANSACTION_HASHES = 5;
   private static final KeyPair KEYS1 = KeyPair.generate();
   private static final KeyPair KEYS2 = KeyPair.generate();
   private static final String ADDED_COUNTER = "transactions_added_total";
@@ -55,6 +56,7 @@ public class PendingTransactionsTest {
       new PendingTransactions(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
+          MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem);
   private final Transaction transaction1 = createTransaction(2);
@@ -551,7 +553,11 @@ public class PendingTransactionsTest {
     final int maxTransactionRetentionHours = 1;
     final PendingTransactions transactions =
         new PendingTransactions(
-            maxTransactionRetentionHours, MAX_TRANSACTIONS, clock, metricsSystem);
+            maxTransactionRetentionHours,
+            MAX_TRANSACTIONS,
+            MAX_TRANSACTION_HASHES,
+            clock,
+            metricsSystem);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -569,7 +575,11 @@ public class PendingTransactionsTest {
     final int maxTransactionRetentionHours = 1;
     final PendingTransactions transactions =
         new PendingTransactions(
-            maxTransactionRetentionHours, MAX_TRANSACTIONS, clock, metricsSystem);
+            maxTransactionRetentionHours,
+            MAX_TRANSACTIONS,
+            MAX_TRANSACTION_HASHES,
+            clock,
+            metricsSystem);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -583,7 +593,11 @@ public class PendingTransactionsTest {
     final int maxTransactionRetentionHours = 2;
     final PendingTransactions transactions =
         new PendingTransactions(
-            maxTransactionRetentionHours, MAX_TRANSACTIONS, clock, metricsSystem);
+            maxTransactionRetentionHours,
+            MAX_TRANSACTIONS,
+            MAX_TRANSACTION_HASHES,
+            clock,
+            metricsSystem);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);

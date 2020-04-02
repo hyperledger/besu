@@ -24,16 +24,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyGroupUtil {
 
-  public static String calculateEeaPrivacyGroupId(
+  public static Bytes32 calculateEeaPrivacyGroupId(
       final Bytes privateFrom, final List<Bytes> privateFor) {
     final List<Bytes> privacyGroupIds = new ArrayList<>();
     privacyGroupIds.add(privateFrom);
     privacyGroupIds.addAll(privateFor);
 
-    final List<byte[]> sortedPrivacyGroupIds =
+    final List<byte[]> sortedPublicEnclaveKeys =
         privacyGroupIds.stream()
             .distinct()
             .map(Bytes::toArray)
@@ -42,9 +43,9 @@ public class PrivacyGroupUtil {
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     bytesValueRLPOutput.writeList(
-        sortedPrivacyGroupIds,
-        (privacyGroupId, rlpOutput) -> rlpOutput.writeBytes(Bytes.of(privacyGroupId)));
+        sortedPublicEnclaveKeys,
+        (enclavePublicKey, rlpOutput) -> rlpOutput.writeBytes(Bytes.of(enclavePublicKey)));
 
-    return Hash.keccak256(bytesValueRLPOutput.encoded()).toBase64String();
+    return Hash.keccak256(bytesValueRLPOutput.encoded());
   }
 }

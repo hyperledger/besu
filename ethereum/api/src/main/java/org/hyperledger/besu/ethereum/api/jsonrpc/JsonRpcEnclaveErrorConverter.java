@@ -24,9 +24,9 @@ public class JsonRpcEnclaveErrorConverter {
 
   public static JsonRpcError convertEnclaveInvalidReason(final String reason) {
 
-    List<JsonRpcError> err =
+    final List<JsonRpcError> err =
         Arrays.stream(JsonRpcError.values())
-            .filter(e -> e.getMessage().contains(reason))
+            .filter(e -> e.getMessage().equals(reason))
             .collect(Collectors.toList());
 
     if (err.size() == 1) {

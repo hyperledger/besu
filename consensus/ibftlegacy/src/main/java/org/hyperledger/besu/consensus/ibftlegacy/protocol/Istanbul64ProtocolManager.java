@@ -18,14 +18,17 @@ import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
-import java.time.Clock;
 import java.util.List;
 
 /** This allows for interoperability with Quorum, but shouldn't be used otherwise. */
@@ -33,28 +36,28 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
 
   public Istanbul64ProtocolManager(
       final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
       final BigInteger networkId,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
-      final int syncWorkers,
-      final int txWorkers,
-      final int computationWorkers,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
+      final EthScheduler scheduler) {
     super(
         blockchain,
-        worldStateArchive,
         networkId,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
         peerValidators,
         fastSyncEnabled,
-        syncWorkers,
-        txWorkers,
-        computationWorkers,
-        clock,
-        metricsSystem,
-        ethereumWireProtocolConfiguration);
+        scheduler);
   }
 
   @Override

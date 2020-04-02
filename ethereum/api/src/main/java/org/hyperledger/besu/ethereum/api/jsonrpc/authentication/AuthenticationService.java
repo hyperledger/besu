@@ -193,9 +193,11 @@ public class AuthenticationService {
 
             final JsonObject responseBody = new JsonObject().put("token", token);
             final HttpServerResponse response = routingContext.response();
-            response.setStatusCode(200);
-            response.putHeader("Content-Type", "application/json");
-            response.end(responseBody.encode());
+            if (!response.closed()) {
+              response.setStatusCode(200);
+              response.putHeader("Content-Type", "application/json");
+              response.end(responseBody.encode());
+            }
           }
         });
   }
