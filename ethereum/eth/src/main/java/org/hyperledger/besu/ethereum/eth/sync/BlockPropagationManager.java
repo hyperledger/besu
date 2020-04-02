@@ -358,6 +358,8 @@ public class BlockPropagationManager<C> {
                         shortHash,
                         timeInS,
                         ethContext.getEthPeers().peerCount()));
+                LOG.debug(
+                    "Imported block #%,d with hash %s", block.getHeader().getNumber(), blockHash);
               }
             });
   }
