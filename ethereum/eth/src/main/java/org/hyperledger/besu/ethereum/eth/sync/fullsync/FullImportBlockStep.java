@@ -56,12 +56,12 @@ public class FullImportBlockStep<C> implements Consumer<Block> {
     if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());
     }
+    int peerCount = -1; // ethContext is not available in tests
+    if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
+      peerCount = ethContext.getEthPeers().peerCount();
+    }
     if (blockNumber % 200 == 0) {
-      LOG.info(
-          "Import reached block {} ({}), Peers: {}",
-          blockNumber,
-          shortHash,
-          ethContext.getEthPeers().peerCount());
+      LOG.info("Import reached block {} ({}), Peers: {}", blockNumber, shortHash, peerCount);
     }
   }
 }

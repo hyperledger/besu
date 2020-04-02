@@ -61,11 +61,12 @@ public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>
     }
     final long firstBlock = blocksWithReceipts.get(0).getNumber();
     final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
+    int peerCount = -1; // ethContext is not available in tests
+    if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
+      peerCount = ethContext.getEthPeers().peerCount();
+    }
     LOG.info(
-        "Completed importing chain segment {} to {}, Peers: {}",
-        firstBlock,
-        lastBlock,
-        ethContext.getEthPeers().peerCount());
+        "Completed importing chain segment {} to {}, Peers: {}", firstBlock, lastBlock, peerCount);
   }
 
   private boolean importBlock(final BlockWithReceipts blockWithReceipts) {
