@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 import java.util.function.Supplier;
-
-import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -249,7 +248,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getGasUsed(),
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
-        pluginBlockHeader.getBaseFee(),
+        pluginBlockHeader.getBaseFee().orElse(null),
         Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
