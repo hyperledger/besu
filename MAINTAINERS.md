@@ -29,6 +29,7 @@
 | Danno Ferrin     | shemnon          | shemnon          |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
+| Karim Taam       | matkt            | matkt            |
 
 ## Emeritus Maintainers
 
