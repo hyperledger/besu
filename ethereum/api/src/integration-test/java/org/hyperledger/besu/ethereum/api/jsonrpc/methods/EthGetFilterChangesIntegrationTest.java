@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.PeerPendingTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -73,6 +74,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class EthGetFilterChangesIntegrationTest {
 
   @Mock private TransactionBatchAddedListener batchAddedListener;
+  @Mock private TransactionBatchAddedListener pendingBatchAddedListener;
   private MutableBlockchain blockchain;
   private final String ETH_METHOD = "eth_getFilterChanges";
   private final String JSON_RPC_VERSION = "2.0";
@@ -83,10 +85,12 @@ public class EthGetFilterChangesIntegrationTest {
       new PendingTransactions(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
+          MAX_HASHES,
           TestClock.fixed(),
           metricsSystem);
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_HASHES = 5;
   private static final KeyPair keyPair = KeyPair.generate();
   private final Transaction transaction = createTransaction(1);
   private FilterManager filterManager;
@@ -100,6 +104,8 @@ public class EthGetFilterChangesIntegrationTest {
     final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
 
     PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
+    PeerPendingTransactionTracker peerPendingTransactionTracker =
+        mock(PeerPendingTransactionTracker.class);
     EthContext ethContext = mock(EthContext.class);
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -110,9 +116,11 @@ public class EthGetFilterChangesIntegrationTest {
             executionContext.getProtocolSchedule(),
             protocolContext,
             batchAddedListener,
+            pendingBatchAddedListener,
             syncState,
             ethContext,
             peerTransactionTracker,
+            peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem);
     final BlockchainQueries blockchainQueries =

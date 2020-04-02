@@ -788,6 +788,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
   @Option(
+      names = {"--tx-pool-hashes-max-size"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer pooledTransactionHashesSize =
+      TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
+
+  @Option(
       names = {"--tx-pool-retention-hours"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
@@ -1692,6 +1701,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return transactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
+        .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .build();
   }

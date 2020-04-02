@@ -122,6 +122,7 @@ public class CliqueBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protocolContext,
@@ -153,6 +154,7 @@ public class CliqueBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protocolContext,
@@ -182,6 +184,7 @@ public class CliqueBlockCreatorTest {
             parent -> extraData,
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+                5,
                 5,
                 TestClock.fixed(),
                 metricsSystem),
@@ -215,6 +218,7 @@ public class CliqueBlockCreatorTest {
             parent -> extraData,
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+                5,
                 5,
                 TestClock.fixed(),
                 metricsSystem),

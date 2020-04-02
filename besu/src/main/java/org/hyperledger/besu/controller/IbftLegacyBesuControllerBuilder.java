@@ -31,7 +31,12 @@ import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -107,22 +112,33 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
   }
 
   @Override
+  protected String getSupportedProtocol() {
+    return Istanbul64Protocol.get().getName();
+  }
+
+  @Override
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext<IbftContext> protocolContext,
       final boolean fastSyncEnabled,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthContext ethContext,
+      final EthMessages ethMessages,
+      final EthScheduler scheduler,
       final List<PeerValidator> peerValidators) {
     LOG.info("Operating on IBFT-1.0 network.");
     return new Istanbul64ProtocolManager(
         protocolContext.getBlockchain(),
-        protocolContext.getWorldStateArchive(),
         networkId,
+        protocolContext.getWorldStateArchive(),
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
         peerValidators,
         fastSyncEnabled,
-        syncConfig.getDownloaderParallelism(),
-        syncConfig.getTransactionsParallelism(),
-        syncConfig.getComputationParallelism(),
-        clock,
-        metricsSystem,
-        ethereumWireProtocolConfiguration);
+        scheduler);
   }
 }

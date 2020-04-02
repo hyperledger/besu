@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibftlegacy.protocol;
 
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -47,6 +48,9 @@ public class Istanbul64Protocol implements SubProtocol {
           EthPV62.GET_BLOCK_BODIES,
           EthPV62.BLOCK_BODIES,
           EthPV62.NEW_BLOCK,
+          EthPV65.NEW_POOLED_TRANSACTION_HASHES,
+          EthPV65.GET_POOLED_TRANSACTIONS,
+          EthPV65.POOLED_TRANSACTIONS,
           EthPV63.GET_NODE_DATA,
           EthPV63.NODE_DATA,
           EthPV63.GET_RECEIPTS,
@@ -90,6 +94,12 @@ public class Istanbul64Protocol implements SubProtocol {
         return "BlockBodies";
       case EthPV62.NEW_BLOCK:
         return "NewBlock";
+      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
+        return "NewPooledTransactionHashes";
+      case EthPV65.GET_POOLED_TRANSACTIONS:
+        return "GetPooledTransactions";
+      case EthPV65.POOLED_TRANSACTIONS:
+        return "PooledTransactions";
       case EthPV63.GET_NODE_DATA:
         return "GetNodeData";
       case EthPV63.NODE_DATA:
