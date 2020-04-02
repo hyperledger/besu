@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
