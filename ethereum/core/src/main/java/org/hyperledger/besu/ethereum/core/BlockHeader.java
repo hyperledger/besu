@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 import java.util.function.Supplier;
-
-import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -144,7 +144,7 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(extraData);
     out.writeBytes(mixHash);
     out.writeLong(nonce);
-    if (baseFee != null) {
+    if (ExperimentalEIPs.eip1559Enabled && baseFee != null) {
       out.writeLongScalar(baseFee);
     }
     out.endList();
@@ -168,7 +168,10 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes extraData = input.readBytes();
     final Hash mixHash = Hash.wrap(input.readBytes32());
     final long nonce = input.readLong();
-    final Long baseFee = input.isEndOfCurrentList() ? null : input.readLongScalar();
+    final Long baseFee =
+        ExperimentalEIPs.eip1559Enabled && !input.isEndOfCurrentList()
+            ? input.readLongScalar()
+            : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
