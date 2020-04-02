@@ -12,7 +12,7 @@ https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users
 
 ### Additions and Improvements
 
-- Added `eth65` support [\#608](https://github.com/hyperledger/besu/pull/608)
+- Added `eth/65` support [\#608](https://github.com/hyperledger/besu/pull/608)
 
 ## 1.4.2
 
