@@ -24,11 +24,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockConfirmer.ContestedPivotBlockException;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -51,6 +53,7 @@ public class PivotBlockConfirmerTest {
   private final AtomicBoolean timeout = new AtomicBoolean(false);
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
+  private TransactionPool transactionPool;
   private PivotBlockConfirmer<Void> pivotBlockConfirmer;
   private ProtocolSchedule<Void> protocolSchedule;
 
@@ -59,11 +62,16 @@ public class PivotBlockConfirmerTest {
     final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
+    transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            blockchain, blockchainSetupUtil.getWorldArchive(), timeout::get);
+            blockchain,
+            timeout::get,
+            blockchainSetupUtil.getWorldArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
   }
 
@@ -85,7 +93,8 @@ public class PivotBlockConfirmerTest {
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
@@ -113,7 +122,8 @@ public class PivotBlockConfirmerTest {
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
@@ -145,7 +155,8 @@ public class PivotBlockConfirmerTest {
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
 
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -184,7 +195,8 @@ public class PivotBlockConfirmerTest {
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
 
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -223,7 +235,8 @@ public class PivotBlockConfirmerTest {
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
 
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -264,7 +277,8 @@ public class PivotBlockConfirmerTest {
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
 
     final Responder responderA =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
