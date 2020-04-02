@@ -117,6 +117,7 @@ public class ExecutionContextTestFixture {
                     BigInteger.valueOf(42),
                     Function.identity(),
                     new PrivacyParameters(),
+                    false,
                     false)
                 .createProtocolSchedule();
       }

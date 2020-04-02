@@ -185,6 +185,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.genesisConfigOverrides(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.targetGasLimit(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.eip1559Enabled(anyBoolean())).thenReturn(mockControllerBuilder);
 
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();

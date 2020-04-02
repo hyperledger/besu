@@ -37,7 +37,8 @@ public class IbftProtocolSchedule {
   public static ProtocolSchedule<IbftContext> create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final boolean eip1559Enabled) {
     final IbftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
@@ -46,17 +47,20 @@ public class IbftProtocolSchedule {
             DEFAULT_CHAIN_ID,
             builder -> applyIbftChanges(blockPeriod, builder),
             privacyParameters,
-            isRevertReasonEnabled)
+            isRevertReasonEnabled,
+            eip1559Enabled)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule<IbftContext> create(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final boolean eip1559Enabled) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, eip1559Enabled);
   }
 
   public static ProtocolSchedule<IbftContext> create(final GenesisConfigOptions config) {
-    return create(config, PrivacyParameters.DEFAULT, false);
+    return create(config, PrivacyParameters.DEFAULT, false, false);
   }
 
   private static ProtocolSpecBuilder<IbftContext> applyIbftChanges(

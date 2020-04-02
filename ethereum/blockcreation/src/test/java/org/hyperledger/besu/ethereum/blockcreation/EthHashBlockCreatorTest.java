@@ -70,6 +70,7 @@ public class EthHashBlockCreatorTest {
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
+                        false,
                         false)
                     .createProtocolSchedule())
             .build();
@@ -120,6 +121,7 @@ public class EthHashBlockCreatorTest {
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
+                        false,
                         false)
                     .createProtocolSchedule())
             .build();
@@ -165,6 +167,7 @@ public class EthHashBlockCreatorTest {
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
+                        false,
                         false)
                     .createProtocolSchedule())
             .build();
@@ -226,6 +229,7 @@ public class EthHashBlockCreatorTest {
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
+                        false,
                         false)
                     .createProtocolSchedule())
             .build();
