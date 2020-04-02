@@ -101,6 +101,7 @@ public class IbftBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protContext,
