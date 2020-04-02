@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -59,14 +61,20 @@ public interface Transaction {
    *
    * @return the quantity of Wei for gas premium.
    */
-  Quantity getGasPremium();
+  @Unstable
+  default Optional<Quantity> getGasPremium() {
+    return Optional.empty();
+  }
 
   /**
    * A scalar value equal to the number of Wei to be paid in total, as specified in EIP-1559.
    *
    * @return the quantity of Wei for fee cap.
    */
-  Quantity getFeeCap();
+  @Unstable
+  default Optional<Quantity> getFeeCap() {
+    return Optional.empty();
+  }
 
   /**
    * A scalar value equal to the maximum amount of gas that should be used in executing this
