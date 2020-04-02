@@ -3552,11 +3552,4 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(ExperimentalEIPs.eip1559Enabled).isFalse();
   }
-
-  @Test
-  public void assertThatExperimentalEIPsAreDisabledByDefault() {
-    parseCommand("--logging", "WARN");
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(ExperimentalEIPs.eip1559Enabled).isFalse();
-  }
 }
