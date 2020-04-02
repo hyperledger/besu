@@ -142,20 +142,7 @@ public class AcceptanceTestBase {
           new ProcessBuilder(command).redirectErrorStream(true).redirectInput(Redirect.INHERIT);
       try {
         final Process memInfoProcess = processBuilder.start();
-        outputProcessorExecutor.execute(
-            () -> {
-              try (final BufferedReader in =
-                  new BufferedReader(
-                      new InputStreamReader(memInfoProcess.getInputStream(), UTF_8))) {
-                String line = in.readLine();
-                while (line != null) {
-                  LOG.info(line);
-                  line = in.readLine();
-                }
-              } catch (final IOException e) {
-                LOG.warn("Failed to read output from memory information process: ", e);
-              }
-            });
+        outputProcessorExecutor.execute(() -> printOutput(memInfoProcess));
         memInfoProcess.waitFor();
         LOG.debug("Memory info process exited with code {}", memInfoProcess.exitValue());
       } catch (final Exception e) {
@@ -163,6 +150,19 @@ public class AcceptanceTestBase {
       }
     } else {
       LOG.info("Don't know how to report memory for OS {}", os);
+    }
+  }
+
+  private void printOutput(final Process process) {
+    try (final BufferedReader in =
+        new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
+      String line = in.readLine();
+      while (line != null) {
+        LOG.info(line);
+        line = in.readLine();
+      }
+    } catch (final IOException e) {
+      LOG.warn("Failed to read output from memory information process: ", e);
     }
   }
 
