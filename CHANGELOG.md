@@ -10,6 +10,10 @@ or earlier, please read the following and take the appropriate steps:
 
 https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
 
+### Additions and Improvements
+
+- Added `eth/65` support [\#608](https://github.com/hyperledger/besu/pull/608)
+
 ## 1.4.2
 
 ### Additions and Improvements
