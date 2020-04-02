@@ -43,6 +43,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -3536,5 +3537,26 @@ public class BesuCommandTest extends CommandTestAbstract {
     final TestBesuCommand command = parseCommand("--logging", "WARN");
 
     assertThat(command.getLogLevel()).isEqualTo(Level.WARN);
+  }
+
+  @Test
+  public void assertThatEnablingExperimentalEIPsWorks() {
+    parseCommand("--Xeip1559-enabled=true");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(ExperimentalEIPs.eip1559Enabled).isTrue();
+  }
+
+  @Test
+  public void assertThatDisablingExperimentalEIPsWorks() {
+    parseCommand("--Xeip1559-enabled=false");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(ExperimentalEIPs.eip1559Enabled).isFalse();
+  }
+
+  @Test
+  public void assertThatExperimentalEIPsAreDisabledByDefault() {
+    parseCommand("--logging", "WARN");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(ExperimentalEIPs.eip1559Enabled).isFalse();
   }
 }
