@@ -51,7 +51,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class IbftQueryServiceImplTest {
 
   @Mock private Blockchain blockchain;
-  
+
   private final List<NodeKey> validatorKeys =
       Lists.newArrayList(BouncyCastleNodeKey.generate(), BouncyCastleNodeKey.generate());
 
