@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -181,6 +182,7 @@ public class PrivateTransactionProcessor {
       final WorldUpdater publicWorldState,
       final WorldUpdater privateWorldState,
       final ProcessableBlockHeader blockHeader,
+      final Hash pmtHash,
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -248,7 +250,7 @@ public class PrivateTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .maxStackSize(maxStackSize)
-              .transactionHash(transaction.getHash())
+              .transactionHash(pmtHash)
               .build();
 
     } else {
@@ -279,7 +281,7 @@ public class PrivateTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .maxStackSize(maxStackSize)
-              .transactionHash(transaction.getHash())
+              .transactionHash(pmtHash)
               .build();
     }
 

@@ -194,7 +194,7 @@ public class PrivacyBlockProcessorTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             PrivateTransactionProcessor.Result.successful(
                 Collections.emptyList(), 0, Bytes.EMPTY, ValidationResult.valid()));
