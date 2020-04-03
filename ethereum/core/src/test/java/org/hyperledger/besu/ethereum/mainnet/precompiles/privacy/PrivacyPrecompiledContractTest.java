@@ -63,13 +63,15 @@ import org.junit.rules.TemporaryFolder;
 public class PrivacyPrecompiledContractTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
-  private final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
+  private final String PAYLOAD_TEST_PRIVACY_GROUP_ID =
+      "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
   private final String DEFAULT_OUTPUT = "0x01";
   private final String actual = "Test String";
   private final Bytes key = Bytes.wrap(actual.getBytes(UTF_8));
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   private final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
-  private final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
+  private final PrivateStateStorage.Updater storageUpdater =
+      mock(PrivateStateStorage.Updater.class);
   private final Enclave enclave = mock(Enclave.class);
 
   private MessageFrame messageFrame;
@@ -132,7 +134,8 @@ public class PrivacyPrecompiledContractTest {
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
 
-    precompiledContract =new PrivacyPrecompiledContract(
+    precompiledContract =
+        new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
     precompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
   }
@@ -172,9 +175,9 @@ public class PrivacyPrecompiledContractTest {
 
     precompiledContract.compute(key, messageFrame);
 
-
-    verify(storageUpdater).putTransactionReceipt(eq(expectedBlockHash), eq(expectedPmtHash), any(
-        PrivateTransactionReceipt.class));
+    verify(storageUpdater)
+        .putTransactionReceipt(
+            eq(expectedBlockHash), eq(expectedPmtHash), any(PrivateTransactionReceipt.class));
   }
 
   private void mockEnclaveWithPrivateTransaction() {
