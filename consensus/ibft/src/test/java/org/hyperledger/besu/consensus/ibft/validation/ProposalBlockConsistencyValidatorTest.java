@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collections;
@@ -65,8 +64,8 @@ public class ProposalBlockConsistencyValidatorTest {
             IbftBlockHeaderFunctions.forCommittedSeal());
 
     assertThat(
-        consistencyChecker.validateProposalMatchesBlock(
-            proposalMsg.getSignedPayload(), misMatchedBlock))
+            consistencyChecker.validateProposalMatchesBlock(
+                proposalMsg.getSignedPayload(), misMatchedBlock))
         .isFalse();
   }
 
@@ -77,7 +76,7 @@ public class ProposalBlockConsistencyValidatorTest {
         proposerMessageFactory.createProposal(futureRound, block, Optional.empty());
 
     assertThat(
-        consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
+            consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
         .isFalse();
   }
 
@@ -88,7 +87,7 @@ public class ProposalBlockConsistencyValidatorTest {
         proposerMessageFactory.createProposal(futureHeight, block, Optional.empty());
 
     assertThat(
-        consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
+            consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
         .isFalse();
   }
 }
