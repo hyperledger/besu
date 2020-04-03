@@ -483,12 +483,6 @@ public class FastSyncDownloaderTest {
     Assertions.assertThat(downloader.calculateTrailingPeerRequirements()).isEmpty();
   }
 
-  private <T> CompletableFuture<T> CompletableFuture.failedFuture(final Throwable error) {
-    final CompletableFuture<T> result = new CompletableFuture<>();
-    result.completeExceptionally(error);
-    return result;
-  }
-
   private <T> void assertCompletedExceptionally(
       final CompletableFuture<T> future, final FastSyncError expectedError) {
     assertThat(future).isCompletedExceptionally();
