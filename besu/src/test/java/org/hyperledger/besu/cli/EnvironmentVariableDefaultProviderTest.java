@@ -24,7 +24,6 @@ import java.util.Map;
 import org.junit.Test;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
-import picocli.CommandLine.Model.PositionalParamSpec.Builder;
 
 public class EnvironmentVariableDefaultProviderTest {
 
@@ -82,7 +81,7 @@ public class EnvironmentVariableDefaultProviderTest {
   @Test
   public void shouldReturnNullForPositionalParameter() {
     environment.put("BESU_KEY", "abc");
-    final Builder positional = PositionalParamSpec.builder().descriptionKey("key");
+    final PositionalParamSpec.Builder positional = PositionalParamSpec.builder().descriptionKey("key");
     assertThat(provider.defaultValue(positional.build())).isNull();
   }
 }
