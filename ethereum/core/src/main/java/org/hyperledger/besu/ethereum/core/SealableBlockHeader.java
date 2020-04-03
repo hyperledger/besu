@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** A block header capable of being sealed. */
@@ -127,7 +129,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the raw bytes of the extra data field
    */
-  public Long getBaseFee() {
-    return baseFee;
+  public Optional<Long> getBaseFee() {
+    return Optional.ofNullable(baseFee);
   }
 }

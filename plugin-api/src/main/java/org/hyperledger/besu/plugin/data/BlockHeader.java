@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -160,5 +164,8 @@ public interface BlockHeader {
    *
    * @return TheBASEFEE of this header.
    */
-  Long getBaseFee();
+  @Unstable
+  default Optional<Long> getBaseFee() {
+    return Optional.empty();
+  }
 }
