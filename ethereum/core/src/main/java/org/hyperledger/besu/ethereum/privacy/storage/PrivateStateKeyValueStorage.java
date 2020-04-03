@@ -50,8 +50,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public Optional<PrivateTransactionReceipt> getTransactionReceipt(
-      final Bytes32 blockHash, final Bytes32 txHash) {
-    final Bytes blockHashTxHash = Bytes.concatenate(blockHash, txHash);
+      final Bytes32 blockHash, final Bytes32 pmtHash) {
+    final Bytes blockHashTxHash = Bytes.concatenate(blockHash, pmtHash);
     return get(blockHashTxHash, TX_RECEIPT_SUFFIX)
         .map(b -> PrivateTransactionReceipt.readFrom(new BytesValueRLPInput(b, false)));
   }

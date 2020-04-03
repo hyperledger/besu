@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 
@@ -159,6 +160,10 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+
+    if (ExperimentalEIPs.eip1559Enabled) {
+      // TODO EIP-1559 addProtocolSpec for EIP-1559
+    }
 
     // specs for classic network
     config

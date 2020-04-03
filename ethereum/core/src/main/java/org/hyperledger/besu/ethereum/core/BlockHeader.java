@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -53,6 +54,7 @@ public class BlockHeader extends SealableBlockHeader
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
+      final Long baseFee,
       final Hash mixHash,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions) {
@@ -69,7 +71,8 @@ public class BlockHeader extends SealableBlockHeader
         gasLimit,
         gasUsed,
         timestamp,
-        extraData);
+        extraData,
+        baseFee);
     this.mixHash = mixHash;
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
@@ -142,33 +145,53 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(extraData);
     out.writeBytes(mixHash);
     out.writeLong(nonce);
-
+    if (ExperimentalEIPs.eip1559Enabled && baseFee != null) {
+      out.writeLongScalar(baseFee);
+    }
     out.endList();
   }
 
   public static BlockHeader readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     input.enterList();
-    final BlockHeader blockHeader =
-        new BlockHeader(
-            Hash.wrap(input.readBytes32()),
-            Hash.wrap(input.readBytes32()),
-            Address.readFrom(input),
-            Hash.wrap(input.readBytes32()),
-            Hash.wrap(input.readBytes32()),
-            Hash.wrap(input.readBytes32()),
-            LogsBloomFilter.readFrom(input),
-            Difficulty.of(input.readUInt256Scalar()),
-            input.readLongScalar(),
-            input.readLongScalar(),
-            input.readLongScalar(),
-            input.readLongScalar(),
-            input.readBytes(),
-            Hash.wrap(input.readBytes32()),
-            input.readLong(),
-            blockHeaderFunctions);
+    final Hash parentHash = Hash.wrap(input.readBytes32());
+    final Hash ommersHash = Hash.wrap(input.readBytes32());
+    final Address coinbase = Address.readFrom(input);
+    final Hash stateRoot = Hash.wrap(input.readBytes32());
+    final Hash transactionsRoot = Hash.wrap(input.readBytes32());
+    final Hash receiptsRoot = Hash.wrap(input.readBytes32());
+    final LogsBloomFilter logsBloom = LogsBloomFilter.readFrom(input);
+    final Difficulty difficulty = Difficulty.of(input.readUInt256Scalar());
+    final long number = input.readLongScalar();
+    final long gasLimit = input.readLongScalar();
+    final long gasUsed = input.readLongScalar();
+    final long timestamp = input.readLongScalar();
+    final Bytes extraData = input.readBytes();
+    final Hash mixHash = Hash.wrap(input.readBytes32());
+    final long nonce = input.readLong();
+    final Long baseFee =
+        ExperimentalEIPs.eip1559Enabled && !input.isEndOfCurrentList()
+            ? input.readLongScalar()
+            : null;
     input.leaveList();
-    return blockHeader;
+    return new BlockHeader(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        baseFee,
+        mixHash,
+        nonce,
+        blockHeaderFunctions);
   }
 
   @Override
@@ -206,6 +229,7 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("gasUsed=").append(gasUsed).append(", ");
     sb.append("timestamp=").append(timestamp).append(", ");
     sb.append("extraData=").append(extraData).append(", ");
+    sb.append("baseFee=").append(baseFee).append(", ");
     sb.append("mixHash=").append(mixHash).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
@@ -229,6 +253,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getGasUsed(),
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
+        pluginBlockHeader.getBaseFee().orElse(null),
         Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);

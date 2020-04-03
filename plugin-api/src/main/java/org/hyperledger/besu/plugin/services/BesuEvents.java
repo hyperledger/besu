@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
@@ -56,6 +57,36 @@ public interface BesuEvents {
    * @param listenerIdentifier The id that was returned from addBlockAddedListener;
    */
   void removeBlockPropagatedListener(long listenerIdentifier);
+
+  /**
+   * Add a listener watching for new blocks added.
+   *
+   * @param blockAddedListener The listener that will accept the Block object as the event.
+   * @return an id to be used as an identifier when de-registering the event.
+   */
+  long addBlockAddedListener(BlockAddedListener blockAddedListener);
+
+  /**
+   * Remove the block added listener from besu notifications.
+   *
+   * @param listenerIdentifier The id that was returned from addBlockAddedListener;
+   */
+  void removeBlockAddedListener(long listenerIdentifier);
+
+  /**
+   * Add a listener watching for new reorg blocks added.
+   *
+   * @param blockReorgListener The listener that will accept the reorg Block object as the event.
+   * @return an id to be used as an identifier when de-registering the event.
+   */
+  long addBlockReorgListener(BlockReorgListener blockReorgListener);
+
+  /**
+   * Remove the block reorg listener from besu notifications.
+   *
+   * @param listenerIdentifier The id that was returned from addBlockReorgListener;
+   */
+  void removeBlockReorgListener(long listenerIdentifier);
 
   /**
    * Add a listener watching new transactions added to the node.
@@ -136,6 +167,28 @@ public interface BesuEvents {
      * @param propagatedBlockContext block being propagated.
      */
     void onBlockPropagated(PropagatedBlockContext propagatedBlockContext);
+  }
+
+  /** The listener interface for receiving new block added events. */
+  interface BlockAddedListener {
+
+    /**
+     * Invoked when a new block has been evaluated and validated.
+     *
+     * @param addedBlockContext block being added.
+     */
+    void onBlockAdded(AddedBlockContext addedBlockContext);
+  }
+
+  /** The listener interface for receiving new block reorg events. */
+  interface BlockReorgListener {
+
+    /**
+     * Invoked when a reorg block has been evaluated and validated.
+     *
+     * @param addedBlockContext reorg block being added.
+     */
+    void onBlockReorg(AddedBlockContext addedBlockContext);
   }
 
   /** The listener interface for receiving new transaction added events. */
