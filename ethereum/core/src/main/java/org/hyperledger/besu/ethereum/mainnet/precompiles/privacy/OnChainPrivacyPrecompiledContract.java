@@ -85,6 +85,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return Bytes.EMPTY;
     }
 
+    final Hash pmtHash = messageFrame.getTransactionHash();
+
     final String key = input.slice(0, 32).toBase64String();
 
     final ReceiveResponse receiveResponse;
@@ -111,10 +113,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     final Bytes32 privacyGroupId = Bytes32.wrap(maybeGroupId.get());
 
-    LOG.debug(
-        "Processing private transaction {} in privacy group {}",
-        privateTransaction.getHash(),
-        privacyGroupId);
+    LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
@@ -153,14 +152,14 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     if (result.isInvalid() || !result.isSuccessful()) {
       LOG.error(
           "Failed to process private transaction {}: {}",
-          privateTransaction.getHash(),
+          pmtHash,
           result.getValidationResult().getErrorMessage());
       return Bytes.EMPTY;
     }
 
     if (messageFrame.isPersistingPrivateState()) {
       persistPrivateState(
-          messageFrame.getTransactionHash(),
+          pmtHash,
           currentBlockHash,
           privateTransaction,
           privacyGroupId,
@@ -272,6 +271,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         publicWorldState,
         canExecuteUpdater,
         currentBlockHeader,
+        messageFrame.getTransactionHash(),
         buildSimulationTransaction(
             privacyGroupId, privateWorldStateUpdater, canExecuteMethodSignature),
         messageFrame.getMiningBeneficiary(),

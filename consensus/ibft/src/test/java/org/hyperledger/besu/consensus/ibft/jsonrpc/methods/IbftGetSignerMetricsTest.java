@@ -130,16 +130,16 @@ public class IbftGetSignerMetricsTest {
 
     final List<SignerMetricResult> signerMetricResultList = new ArrayList<>();
 
-    // sign a first block with keypairs number 1
+    // sign a first block with nodekey number 1
     final SignerMetricResult signerMetricResultFirstNodeKeys = generateBlock(startBlock);
     signerMetricResultList.add(signerMetricResultFirstNodeKeys);
-    // sign a second block with keypairs number 2
+    // sign a second block with nodekey number 2
     final SignerMetricResult signerMetricResultSecondNodeKeys = generateBlock(startBlock + 1);
     signerMetricResultList.add(signerMetricResultSecondNodeKeys);
-    // sign a third block with keypairs number 3
+    // sign a third block with nodekey number 3
     final SignerMetricResult signerMetricResultThirdNodeKeys = generateBlock(startBlock + 2);
     signerMetricResultList.add(signerMetricResultThirdNodeKeys);
-    // sign the last block with the keypairs number 1
+    // sign the last block with the nodekey number 1
     generateBlock(startBlock + 3);
     signerMetricResultFirstNodeKeys.setLastProposedBlockNumber(startBlock + 3);
     signerMetricResultFirstNodeKeys.incrementeNbBlock();

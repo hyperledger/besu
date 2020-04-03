@@ -44,8 +44,8 @@ public class RoundChangeArtifactsTest {
   @Before
   public void setup() {
     for (int i = 0; i < 4; i++) {
-      final NodeKey keyPair = BouncyCastleNodeKey.generate();
-      final MessageFactory messageFactory = new MessageFactory(keyPair);
+      final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+      final MessageFactory messageFactory = new MessageFactory(nodeKey);
       messageFactories.add(messageFactory);
     }
   }

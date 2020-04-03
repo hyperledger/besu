@@ -52,7 +52,7 @@ public class IbftCommitSealsValidationRuleTest {
 
     final List<Address> committerAddresses =
         committerNodeKeys.stream()
-            .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
+            .map(nodeKey -> Util.publicKeyToAddress(nodeKey.getPublicKey()))
             .sorted()
             .collect(Collectors.toList());
 

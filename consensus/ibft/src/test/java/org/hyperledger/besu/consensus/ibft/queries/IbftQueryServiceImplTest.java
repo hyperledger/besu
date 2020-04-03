@@ -131,7 +131,7 @@ public class IbftQueryServiceImplTest {
 
     final List<Address> signers =
         signingKeys.stream()
-            .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
+            .map(nodeKey -> Util.publicKeyToAddress(nodeKey.getPublicKey()))
             .collect(Collectors.toList());
 
     assertThat(service.getSignersFrom(blockHeader)).containsExactlyElementsOf(signers);

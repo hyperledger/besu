@@ -17,6 +17,10 @@ package org.hyperledger.besu.consensus.ibft.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
@@ -28,19 +32,13 @@ import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.ibft.support.ValidatorPeer;
 import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -98,11 +96,11 @@ public class SpuriousBehaviourTest {
 
   @Test
   public void nonValidatorsCannotTriggerResponses() {
-    final KeyPair nonValidatorKeys = KeyPair.generate();
+    final NodeKey nonValidatorNodeKey = BouncyCastleNodeKey.generate();
     final NodeParams nonValidatorParams =
         new NodeParams(
-            Util.publicKeyToAddress(nonValidatorKeys.getPublicKey()),
-            new BouncyCastleNodeKey(nonValidatorKeys));
+            Util.publicKeyToAddress(nonValidatorNodeKey.getPublicKey()),
+            nonValidatorNodeKey);
 
     final ValidatorPeer nonvalidator =
         new ValidatorPeer(

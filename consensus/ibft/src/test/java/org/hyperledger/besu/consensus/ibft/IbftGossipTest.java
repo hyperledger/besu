@@ -54,8 +54,8 @@ public class IbftGossipTest {
 
   private <P extends IbftMessage<?>> void assertRebroadcastToAllExceptSignerAndSender(
       final Function<NodeKey, P> createPayload, final Function<P, MessageData> createMessageData) {
-    final NodeKey keypair = BouncyCastleNodeKey.generate();
-    final P payload = createPayload.apply(keypair);
+    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final P payload = createPayload.apply(nodeKey);
     final MessageData messageData = createMessageData.apply(payload);
     final Message message = new DefaultMessage(peerConnection, messageData);
 

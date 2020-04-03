@@ -54,9 +54,9 @@ public class NetworkLayout {
     final TreeMap<Address, NodeParams> addressKeyMap = new TreeMap<>();
 
     for (int i = 0; i < validatorCount; i++) {
-      final NodeKey newKeyPair = BouncyCastleNodeKey.generate();
-      final Address nodeAddress = Util.publicKeyToAddress(newKeyPair.getPublicKey());
-      addressKeyMap.put(nodeAddress, new NodeParams(nodeAddress, newKeyPair));
+      final NodeKey newNodeKey = BouncyCastleNodeKey.generate();
+      final Address nodeAddress = Util.publicKeyToAddress(newNodeKey.getPublicKey());
+      addressKeyMap.put(nodeAddress, new NodeParams(nodeAddress, newNodeKey));
     }
 
     return addressKeyMap;
