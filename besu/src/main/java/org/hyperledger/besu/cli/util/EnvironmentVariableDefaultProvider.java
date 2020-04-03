@@ -36,6 +36,10 @@ public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider
 
   @Override
   public String defaultValue(final ArgSpec argSpec) {
+    if (!argSpec.isOption()) {
+      return null; // skip default for positional params
+    }
+
     return envVarNames((OptionSpec) argSpec)
         .map(environment::get)
         .filter(Objects::nonNull)
