@@ -48,6 +48,7 @@ public class BlockUtils {
         block.getGasUsed().longValue(),
         block.getTimestamp().longValue(),
         Bytes.fromHexString(block.getExtraData()),
+        null,
         mixHash,
         block.getNonce().longValue(),
         blockHeaderFunctions);

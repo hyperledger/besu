@@ -54,6 +54,7 @@ public class BlockHeaderMock extends BlockHeader {
         0L,
         Long.decode(timestamp),
         Bytes.EMPTY,
+        0L,
         Hash.ZERO,
         0L,
         new MainnetBlockHeaderFunctions());
