@@ -81,7 +81,8 @@ public class EnvironmentVariableDefaultProviderTest {
   @Test
   public void shouldReturnNullForPositionalParameter() {
     environment.put("BESU_KEY", "abc");
-    final PositionalParamSpec.Builder positional = PositionalParamSpec.builder().descriptionKey("key");
+    final PositionalParamSpec.Builder positional =
+        PositionalParamSpec.builder().descriptionKey("key");
     assertThat(provider.defaultValue(positional.build())).isNull();
   }
 }
