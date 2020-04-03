@@ -37,7 +37,7 @@ public class FutureUtilsTest {
 
   @Test
   public void shouldCreateExceptionallyCompletedFuture() {
-    final CompletableFuture<Void> future = FutureUtils.completedExceptionally(ERROR);
+    final CompletableFuture<Void> future = CompletableFuture.failedFuture(ERROR);
     assertCompletedExceptionally(future, ERROR);
   }
 
