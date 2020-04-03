@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.BASEFEE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.COINBASE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.DIFFICULTY;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.EXTRA_DATA;
@@ -91,6 +92,7 @@ public class JsonRpcResponseUtils {
     final long gasUsed = unsignedLong(values.get(GAS_USED));
     final long timestamp = unsignedLong(values.get(TIMESTAMP));
     final long nonce = unsignedLong(values.get(NONCE));
+    final Long baseFee = values.containsKey(BASEFEE) ? unsignedLong(values.get(BASEFEE)) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
 
@@ -111,6 +113,7 @@ public class JsonRpcResponseUtils {
             gasUsed,
             timestamp,
             extraData,
+            baseFee,
             mixHash,
             nonce,
             blockHeaderFunctions);

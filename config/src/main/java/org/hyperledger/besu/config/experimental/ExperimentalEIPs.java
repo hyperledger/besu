@@ -12,11 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.chain;
+package org.hyperledger.besu.config.experimental;
 
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import picocli.CommandLine.Option;
 
-public interface ChainReorgObserver {
-
-  void onBlockAdded(BlockWithReceipts blockWithReceipts, Blockchain blockchain);
+/**
+ * Flags defined in those class must be used with cautious, and strictly reserved to experimental
+ * EIPs.
+ */
+public class ExperimentalEIPs {
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-enabled"},
+      description = "Enable experimental EIP-1559 fee market change (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  public static boolean eip1559Enabled = false;
 }

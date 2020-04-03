@@ -63,6 +63,7 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -913,6 +914,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
     handleStandaloneCommand()
+        .enableExperimentalEIPs()
         .addSubCommands(resultHandler, in)
         .registerConverters()
         .handleUnstableOptions()
@@ -957,6 +959,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isFullInstantiation()) {
       commandLine.addMixin("standaloneCommands", standaloneCommands);
     }
+    return this;
+  }
+
+  private BesuCommand enableExperimentalEIPs() {
+    // Usage of static command line flags is strictly reserved for experimental EIPs
+    commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
     return this;
   }
 
