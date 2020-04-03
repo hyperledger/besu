@@ -22,6 +22,7 @@ public class EIP1559 {
 
   private final long initialForkBlknum;
   private final long finalForkBlknum;
+  private final FeeMarket feeMarket = FeeMarket.eip1559();
 
   public EIP1559(final OptionalLong forkBlockNumber) {
     this(forkBlockNumber.orElse(0));
@@ -29,36 +30,36 @@ public class EIP1559 {
 
   public EIP1559(final long forkBlockNumber) {
     initialForkBlknum = forkBlockNumber;
-    finalForkBlknum = initialForkBlknum + FeeMarket.eip1559DecayRange();
+    finalForkBlknum = initialForkBlknum + feeMarket.getDecayRange();
   }
 
   public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
     guardActivation();
-    long delta = parentBlockGasUsed - FeeMarket.eip1559TargetGasUsed();
+    long delta = parentBlockGasUsed - feeMarket.getTargetGasUsed();
     return parentBaseFee
         + ((parentBaseFee * delta)
-            / FeeMarket.eip1559TargetGasUsed()
-            / FeeMarket.eip1559BasefeeMaxChangeDenominator());
+            / feeMarket.getTargetGasUsed()
+            / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
   public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {
     guardActivation();
     return Math.abs(baseFee - parentBaseFee)
-        <= Math.max(1, parentBaseFee / FeeMarket.eip1559BasefeeMaxChangeDenominator());
+        <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
   public long eip1559GasPool(final long blockNumber) {
     guardActivation();
     if (blockNumber >= finalForkBlknum) {
-      return FeeMarket.eip1559MaxGas();
+      return feeMarket.getMaxGas();
     }
-    return (FeeMarket.eip1559MaxGas() / 2)
-        + ((blockNumber - initialForkBlknum) * FeeMarket.eip1559GasIncrementAmount());
+    return (feeMarket.getMaxGas() / 2)
+        + ((blockNumber - initialForkBlknum) * feeMarket.getGasIncrementAmount());
   }
 
   public long legacyGasPool(final long blockNumber) {
     guardActivation();
-    return FeeMarket.eip1559MaxGas() - eip1559GasPool(blockNumber);
+    return feeMarket.getMaxGas() - eip1559GasPool(blockNumber);
   }
 
   public boolean isEIP1559(final long blockNumber) {

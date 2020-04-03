@@ -15,31 +15,21 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 public interface FeeMarket {
-  static long eip1559BasefeeMaxChangeDenominator() {
-    return 8L;
-  }
+  long getBasefeeMaxChangeDenominator();
 
-  static long eip1559TargetGasUsed() {
-    return 10000000L;
-  }
+  long getTargetGasUsed();
 
-  static long eip1559MaxGas() {
-    return 16000000L;
-  }
+  long getMaxGas();
 
-  static long eip1559DecayRange() {
-    return eip1559MaxGas() / 20L;
-  }
+  long getDecayRange();
 
-  static long eip1559GasIncrementAmount() {
-    return (eip1559MaxGas() / 2) / eip1559DecayRange();
-  }
+  long getGasIncrementAmount();
 
-  static long eip1559InitialBasefee() {
-    return 1000000000L;
-  }
+  long getInitialBasefee();
 
-  static long eip1559PerTxGaslimit() {
-    return 8000000L;
+  long getPerTxGaslimit();
+
+  static FeeMarket eip1559() {
+    return new FeeMarketConfig(8L, 10000000L, 16000000L, 800000L, 10L, 1000000000L, 8000000L);
   }
 }
