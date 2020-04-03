@@ -12,25 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
+package org.hyperledger.besu.ethereum.core.fees;
 
-public enum JsonRpcResponseKey {
-  COINBASE,
-  DIFFICULTY,
-  EXTRA_DATA,
-  GAS_LIMIT,
-  GAS_USED,
-  LOGS_BLOOM,
-  MIX_HASH,
-  NONCE,
-  NUMBER,
-  OMMERS_HASH,
-  PARENT_HASH,
-  RECEIPTS_ROOT,
-  SIZE,
-  STATE_ROOT,
-  TIMESTAMP,
-  TOTAL_DIFFICULTY,
-  TRANSACTION_ROOT,
-  BASEFEE
+public interface FeeMarket {
+  long getBasefeeMaxChangeDenominator();
+
+  long getTargetGasUsed();
+
+  long getMaxGas();
+
+  long getDecayRange();
+
+  long getGasIncrementAmount();
+
+  long getInitialBasefee();
+
+  long getPerTxGaslimit();
+
+  static FeeMarket eip1559() {
+    return new FeeMarketConfig(8L, 10000000L, 16000000L, 800000L, 10L, 1000000000L, 8000000L);
+  }
 }
