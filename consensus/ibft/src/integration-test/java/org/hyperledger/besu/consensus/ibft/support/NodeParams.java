@@ -30,7 +30,7 @@ public class NodeParams {
     return address;
   }
 
-  public NodeKey getnodeKey() {
+  public NodeKey getNodeKey() {
     return nodeKey;
   }
 }

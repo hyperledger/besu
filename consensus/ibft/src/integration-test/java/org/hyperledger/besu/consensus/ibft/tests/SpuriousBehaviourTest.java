@@ -75,7 +75,7 @@ public class SpuriousBehaviourTest {
     expectedCommit =
         new Commit(
             createSignedCommitPayload(
-                roundId, proposedBlock, context.getLocalNodeParams().getnodeKey()));
+                roundId, proposedBlock, context.getLocalNodeParams().getNodeKey()));
   }
 
   @Test
@@ -106,7 +106,7 @@ public class SpuriousBehaviourTest {
     final ValidatorPeer nonvalidator =
         new ValidatorPeer(
             nonValidatorParams,
-            new MessageFactory(nonValidatorParams.getnodeKey()),
+            new MessageFactory(nonValidatorParams.getNodeKey()),
             context.getEventMultiplexer());
 
     nonvalidator.injectProposal(new ConsensusRoundIdentifier(1, 0), proposedBlock);

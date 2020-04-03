@@ -62,7 +62,7 @@ public class ValidatorPeer {
       final NodeParams nodeParams,
       final MessageFactory messageFactory,
       final EventMultiplexer localEventMultiplexer) {
-    this.nodeKey = nodeParams.getnodeKey();
+    this.nodeKey = nodeParams.getNodeKey();
     this.nodeAddress = nodeParams.getAddress();
     this.messageFactory = messageFactory;
     final Bytes nodeId = nodeKey.getPublicKey().getEncodedBytes();

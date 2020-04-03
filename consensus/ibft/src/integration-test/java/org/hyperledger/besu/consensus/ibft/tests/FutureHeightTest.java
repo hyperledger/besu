@@ -99,7 +99,7 @@ public class FutureHeightTest {
     final Commit expectedCommitMessage =
         new Commit(
             createSignedCommitPayload(
-                futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getnodeKey()));
+                futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getNodeKey()));
 
     peers.verifyMessagesReceived(expectedPrepareMessage, expectedCommitMessage);
     assertThat(context.getCurrentChainHeight()).isEqualTo(2);
@@ -155,7 +155,7 @@ public class FutureHeightTest {
     final Commit expectedCommitMessage =
         new Commit(
             createSignedCommitPayload(
-                roundId, currentHeightBlock, context.getLocalNodeParams().getnodeKey()));
+                roundId, currentHeightBlock, context.getLocalNodeParams().getNodeKey()));
     peers.verifyMessagesReceived(expectedCommitMessage);
   }
 
@@ -212,7 +212,7 @@ public class FutureHeightTest {
     final Commit expectedCommitMessage =
         new Commit(
             createSignedCommitPayload(
-                futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getnodeKey()));
+                futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getNodeKey()));
 
     // Assert ONLY a prepare message was received, not any commits (i.e. futureHeightRoundId
     // messages have not been used.

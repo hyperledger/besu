@@ -106,7 +106,7 @@ public class FutureRoundTest {
         localNodeMessageFactory.createCommit(
             futureRoundId,
             futureBlock.getHash(),
-            context.getLocalNodeParams().getnodeKey().sign(futureBlock.getHash()));
+            context.getLocalNodeParams().getNodeKey().sign(futureBlock.getHash()));
     peers.verifyMessagesReceived(expectedCommit);
 
     // requires 1 more commit and the blockchain will progress

@@ -171,7 +171,7 @@ public class ReceivedFutureProposalTest {
     final Commit expectedCommit =
         new Commit(
             IntegrationTestHelpers.createSignedCommitPayload(
-                nextRoundId, reproposedBlock, context.getLocalNodeParams().getnodeKey()));
+                nextRoundId, reproposedBlock, context.getLocalNodeParams().getNodeKey()));
 
     peers.verifyMessagesReceived(expectedCommit);
   }

@@ -188,7 +188,7 @@ public class TestContextBuilder {
         createControllerAndFinalState(
             blockChain,
             multicaster,
-            networkNodes.getLocalNode().getnodeKey(),
+            networkNodes.getLocalNode().getNodeKey(),
             clock,
             ibftEventQueue,
             gossiper,
@@ -205,7 +205,7 @@ public class TestContextBuilder {
                     nodeParams ->
                         new ValidatorPeer(
                             nodeParams,
-                            new MessageFactory(nodeParams.getnodeKey()),
+                            new MessageFactory(nodeParams.getNodeKey()),
                             controllerAndState.getEventMultiplexer()),
                     (u, v) -> {
                       throw new IllegalStateException(String.format("Duplicate key %s", u));
