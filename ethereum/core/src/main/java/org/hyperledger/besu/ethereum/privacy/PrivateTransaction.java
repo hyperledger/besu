@@ -87,6 +87,8 @@ public class PrivateTransaction {
   protected volatile Address sender;
 
   // Caches the hash used to uniquely identify the transaction.
+  // This field will be removed in 1.5.0
+  @Deprecated(since = "1.4.3")
   protected volatile Hash hash;
 
   public static Builder builder() {
@@ -414,8 +416,11 @@ public class PrivateTransaction {
   /**
    * Returns the transaction hash.
    *
+   * @deprecated All private transactions should be identified by their corresponding PMT hash.
    * @return the transaction hash
    */
+  // This field will be removed in 1.5.0
+  @Deprecated(since = "1.4.3")
   public Hash getHash() {
     if (hash == null) {
       final Bytes rlp = RLP.encode(this::writeTo);

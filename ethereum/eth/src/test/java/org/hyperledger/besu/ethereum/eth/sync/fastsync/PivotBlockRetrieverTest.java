@@ -26,11 +26,13 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -54,6 +56,7 @@ public class PivotBlockRetrieverTest {
   private final AtomicBoolean timeout = new AtomicBoolean(false);
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
+  private TransactionPool transactionPool;
   private PivotBlockRetriever<Void> pivotBlockRetriever;
   private ProtocolSchedule<Void> protocolSchedule;
 
@@ -64,9 +67,15 @@ public class PivotBlockRetrieverTest {
     blockchain = blockchainSetupUtil.getBlockchain();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
+    transactionPool = blockchainSetupUtil.getTransactionPool();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            blockchain, blockchainSetupUtil.getWorldArchive(), timeout::get);
+            blockchain,
+            timeout::get,
+            blockchainSetupUtil.getWorldArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig());
+
     pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
   }
 
@@ -87,7 +96,8 @@ public class PivotBlockRetrieverTest {
   @Test
   public void shouldSucceedWhenAllPeersAgree() {
     final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     final RespondingEthPeer respondingPeerB =
@@ -111,7 +121,8 @@ public class PivotBlockRetrieverTest {
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     final RespondingEthPeer badPeerA = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
@@ -153,7 +164,8 @@ public class PivotBlockRetrieverTest {
   public void shouldIgnorePeersThatAreNotFullyValidated() {
     final PeerValidator peerValidator = mock(PeerValidator.class);
     final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
     final RespondingEthPeer badPeerA =
@@ -212,7 +224,8 @@ public class PivotBlockRetrieverTest {
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
 
     final RespondingEthPeer peerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 1000);
@@ -239,7 +252,8 @@ public class PivotBlockRetrieverTest {
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final Responder emptyResponder = RespondingEthPeer.emptyResponder();
 
     final RespondingEthPeer peerA =
@@ -273,7 +287,8 @@ public class PivotBlockRetrieverTest {
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
 
     final Responder responderA =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
@@ -306,7 +321,8 @@ public class PivotBlockRetrieverTest {
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
 
     final Responder responderA =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
@@ -342,7 +358,8 @@ public class PivotBlockRetrieverTest {
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
 
     final Responder responderA =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 

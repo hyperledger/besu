@@ -16,12 +16,20 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
+import org.junit.Before;
 import org.junit.Test;
 
-public class EIP1559ManagerTest {
+public class EIP1559Test {
 
   private static final long FORK_BLOCK = 783L;
-  private final EIP1559Manager eip1559 = new EIP1559Manager(FORK_BLOCK);
+  private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
+
+  @Before
+  public void setUp() {
+    ExperimentalEIPs.eip1559Enabled = true;
+  }
 
   @Test
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {

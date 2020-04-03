@@ -63,6 +63,7 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -788,6 +789,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
   @Option(
+      names = {"--tx-pool-hashes-max-size"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer pooledTransactionHashesSize =
+      TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
+
+  @Option(
       names = {"--tx-pool-retention-hours"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
@@ -906,6 +916,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
     handleStandaloneCommand()
+        .enableExperimentalEIPs()
         .addSubCommands(resultHandler, in)
         .registerConverters()
         .handleUnstableOptions()
@@ -950,6 +961,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isFullInstantiation()) {
       commandLine.addMixin("standaloneCommands", standaloneCommands);
     }
+    return this;
+  }
+
+  private BesuCommand enableExperimentalEIPs() {
+    // Usage of static command line flags is strictly reserved for experimental EIPs
+    commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
     return this;
   }
 
@@ -1692,6 +1709,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return transactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
+        .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .build();
   }

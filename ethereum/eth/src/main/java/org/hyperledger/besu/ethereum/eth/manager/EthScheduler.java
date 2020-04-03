@@ -54,7 +54,7 @@ public class EthScheduler {
   protected final ExecutorService servicesExecutor;
   protected final ExecutorService computationExecutor;
 
-  private final Collection<CompletableFuture<?>> serviceFutures = new ConcurrentLinkedDeque<>();
+  private final Collection<CompletableFuture<?>> pendingFutures = new ConcurrentLinkedDeque<>();
 
   public EthScheduler(
       final int syncWorkerCount,
@@ -120,21 +120,28 @@ public class EthScheduler {
     syncWorkerExecutor.execute(command);
   }
 
+  public <T> CompletableFuture<T> scheduleSyncWorkerTask(final EthTask<T> task) {
+    final CompletableFuture<T> syncFuture = task.runAsync(syncWorkerExecutor);
+    pendingFutures.add(syncFuture);
+    syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
+    return syncFuture;
+  }
+
   public void scheduleTxWorkerTask(final Runnable command) {
     txWorkerExecutor.execute(command);
   }
 
   public <T> CompletableFuture<T> scheduleServiceTask(final EthTask<T> task) {
     final CompletableFuture<T> serviceFuture = task.runAsync(servicesExecutor);
-    serviceFutures.add(serviceFuture);
-    serviceFuture.whenComplete((r, t) -> serviceFutures.remove(serviceFuture));
+    pendingFutures.add(serviceFuture);
+    serviceFuture.whenComplete((r, t) -> pendingFutures.remove(serviceFuture));
     return serviceFuture;
   }
 
   public CompletableFuture<Void> startPipeline(final Pipeline<?> pipeline) {
     final CompletableFuture<Void> pipelineFuture = pipeline.start(servicesExecutor);
-    serviceFutures.add(pipelineFuture);
-    pipelineFuture.whenComplete((r, t) -> serviceFutures.remove(pipelineFuture));
+    pendingFutures.add(pipelineFuture);
+    pipelineFuture.whenComplete((r, t) -> pendingFutures.remove(pipelineFuture));
     return pipelineFuture;
   }
 
@@ -226,7 +233,7 @@ public class EthScheduler {
 
   public void awaitStop() throws InterruptedException {
     shutdown.await();
-    serviceFutures.forEach(future -> future.cancel(true));
+    pendingFutures.forEach(future -> future.cancel(true));
     if (!syncWorkerExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error("{} worker executor did not shutdown cleanly.", this.getClass().getSimpleName());
     }

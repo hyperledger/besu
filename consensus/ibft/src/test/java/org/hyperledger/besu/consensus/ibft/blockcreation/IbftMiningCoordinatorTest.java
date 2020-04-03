@@ -103,7 +103,8 @@ public class IbftMiningCoordinatorTest {
   @Test
   public void addsNewChainHeadEventWhenNewCanonicalHeadBlockEventReceived() throws Exception {
     BlockAddedEvent headAdvancement =
-        BlockAddedEvent.createForHeadAdvancement(block, Collections.emptyList());
+        BlockAddedEvent.createForHeadAdvancement(
+            block, Collections.emptyList(), Collections.emptyList());
     ibftMiningCoordinator.onBlockAdded(headAdvancement, blockChain);
 
     assertThat(eventQueue.size()).isEqualTo(1);

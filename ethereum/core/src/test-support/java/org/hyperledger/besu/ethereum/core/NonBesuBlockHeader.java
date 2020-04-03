@@ -110,9 +110,4 @@ public class NonBesuBlockHeader implements BlockHeader {
   public Hash getBlockHash() {
     return blockHash;
   }
-
-  @Override
-  public Long getBaseFee() {
-    return null;
-  }
 }

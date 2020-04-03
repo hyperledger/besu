@@ -81,7 +81,7 @@ public class BlockHeaderBuilder {
         .gasUsed(header.getGasUsed())
         .timestamp(header.getTimestamp())
         .extraData(header.getExtraData())
-        .baseFee(header.getBaseFee())
+        .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
         .nonce(header.getNonce());
   }
