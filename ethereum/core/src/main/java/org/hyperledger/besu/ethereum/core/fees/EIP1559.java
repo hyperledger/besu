@@ -16,17 +16,11 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
-import java.util.OptionalLong;
-
 public class EIP1559 {
 
   private final long initialForkBlknum;
   private final long finalForkBlknum;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
-
-  public EIP1559(final OptionalLong forkBlockNumber) {
-    this(forkBlockNumber.orElse(0));
-  }
 
   public EIP1559(final long forkBlockNumber) {
     initialForkBlknum = forkBlockNumber;
