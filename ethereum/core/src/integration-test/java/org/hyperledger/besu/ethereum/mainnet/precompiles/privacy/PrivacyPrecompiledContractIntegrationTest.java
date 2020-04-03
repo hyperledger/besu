@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -96,6 +97,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
+            nullable(Hash.class),
             nullable(PrivateTransaction.class),
             nullable(Address.class),
             nullable(OperationTracer.class),
