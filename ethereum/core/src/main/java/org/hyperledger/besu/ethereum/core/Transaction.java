@@ -86,59 +86,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   public static Transaction readFrom(final RLPInput input) throws RLPException {
-    if (!ExperimentalEIPs.eip1559Enabled) {
-      return readFromLegacy(input);
+    if (ExperimentalEIPs.eip1559Enabled) {
+      return readFromExperimental(input);
     }
     input.enterList();
-
-    final Builder builder =
-        builder()
-            .nonce(input.readLongScalar())
-            .gasPrice(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(Wei.of(input.readUInt256Scalar()))
-            .payload(input.readBytes());
-
-    final Bytes maybeGasPremiumOrV = input.readBytes();
-    final Bytes maybeFeeCapOrR = input.readBytes();
-    final Bytes maybeVOrS = input.readBytes();
-    final BigInteger v, r, s;
-    // if this is the end of the list we are processing a legacy transaction
-    if (input.isEndOfCurrentList()) {
-      v = maybeGasPremiumOrV.toUnsignedBigInteger();
-      r = maybeFeeCapOrR.toUnsignedBigInteger();
-      s = maybeVOrS.toUnsignedBigInteger();
-    }
-    // otherwise this is an EIP-1559 transaction
-    else {
-      builder
-          .gasPremium(Wei.of(maybeGasPremiumOrV.toBigInteger()))
-          .feeCap(Wei.of(maybeFeeCapOrR.toBigInteger()));
-      v = maybeVOrS.toBigInteger();
-      r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-      s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    }
-    final byte recId;
-    Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-    } else {
-      throw new RuntimeException(
-          String.format("An unsupported encoded `v` value of %s was found", v));
-    }
-    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-    input.leaveList();
-    chainId.ifPresent(builder::chainId);
-    return builder.signature(signature).build();
-  }
-
-  public static Transaction readFromLegacy(final RLPInput input) throws RLPException {
-    input.enterList();
-
     final Builder builder =
         builder()
             .nonce(input.readLongScalar())
@@ -170,6 +121,53 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return builder.signature(signature).build();
   }
 
+  public static Transaction readFromExperimental(final RLPInput input) throws RLPException {
+    input.enterList();
+
+    final Builder builder =
+        builder()
+            .nonce(input.readLongScalar())
+            .gasPrice(Wei.of(input.readUInt256Scalar()))
+            .gasLimit(input.readLongScalar())
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes());
+
+    final Bytes maybeGasPremiumOrV = input.readBytes();
+    final Bytes maybeFeeCapOrR = input.readBytes();
+    final Bytes maybeVOrS = input.readBytes();
+    final BigInteger v, r, s;
+    // if this is the end of the list we are processing a legacy transaction
+    if (input.isEndOfCurrentList()) {
+      v = maybeGasPremiumOrV.toUnsignedBigInteger();
+      r = maybeFeeCapOrR.toUnsignedBigInteger();
+      s = maybeVOrS.toUnsignedBigInteger();
+    } else {
+      // otherwise this is an EIP-1559 transaction
+      builder
+          .gasPremium(Wei.of(maybeGasPremiumOrV.toBigInteger()))
+          .feeCap(Wei.of(maybeFeeCapOrR.toBigInteger()));
+      v = maybeVOrS.toBigInteger();
+      r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    }
+    final byte recId;
+    Optional<BigInteger> chainId = Optional.empty();
+    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    } else {
+      throw new RuntimeException(
+          String.format("An unsupported encoded `v` value of %s was found", v));
+    }
+    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+    input.leaveList();
+    chainId.ifPresent(builder::chainId);
+    return builder.signature(signature).build();
+  }
+
   /**
    * Instantiates a transaction instance.
    *
@@ -187,6 +185,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
+   *     it will default to any chain.
    */
   public Transaction(
       final long nonce,
@@ -505,7 +504,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return true if legacy transaction, false otherwise
    */
   @Override
-  public boolean isLegacyTransaction() {
+  public boolean isFrontierTransaction() {
     return getGasPrice() != null && (getGasPremium().isEmpty() && getFeeCap().isEmpty());
   }
 

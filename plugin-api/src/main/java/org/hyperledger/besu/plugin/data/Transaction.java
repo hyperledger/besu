@@ -176,12 +176,18 @@ public interface Transaction {
    *
    * @return true if legacy transaction, false otherwise
    */
-  boolean isLegacyTransaction();
+  @Unstable
+  default boolean isFrontierTransaction() {
+    return true;
+  }
 
   /**
    * Returns whether or not the transaction is an EIP-1559 transaction.
    *
    * @return true if EIP-1559 transaction, false otherwise
    */
-  boolean isEIP1559Transaction();
+  @Unstable
+  default boolean isEIP1559Transaction() {
+    return false;
+  }
 }

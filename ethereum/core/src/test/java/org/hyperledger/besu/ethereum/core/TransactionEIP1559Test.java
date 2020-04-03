@@ -38,7 +38,7 @@ public class TransactionEIP1559Test {
   @Test
   public void givenLegacyTransaction_assertThatRlpEncodingWorks() {
     final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
-    assertThat(legacyTransaction.isLegacyTransaction()).isTrue();
+    assertThat(legacyTransaction.isFrontierTransaction()).isTrue();
     assertThat(legacyTransaction.isEIP1559Transaction()).isFalse();
   }
 
@@ -52,7 +52,7 @@ public class TransactionEIP1559Test {
     legacyTransaction.writeTo(rlpOutput);
     final Transaction eip1559Transaction =
         Transaction.readFrom(new BytesValueRLPInput(rlpOutput.encoded(), false));
-    assertThat(eip1559Transaction.isLegacyTransaction()).isFalse();
+    assertThat(eip1559Transaction.isFrontierTransaction()).isFalse();
     assertThat(eip1559Transaction.isEIP1559Transaction()).isTrue();
     assertThat(eip1559Transaction.getGasPremium()).hasValue(expectedGasPremium);
     assertThat(eip1559Transaction.getFeeCap()).hasValue(expectedFeeCap);
