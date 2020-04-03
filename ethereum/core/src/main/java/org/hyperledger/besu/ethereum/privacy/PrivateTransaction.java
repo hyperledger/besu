@@ -416,7 +416,7 @@ public class PrivateTransaction {
   /**
    * Returns the transaction hash.
    *
-   * @deprecated All private transactions should be identified by their correspondent PMT hash.
+   * @deprecated All private transactions should be identified by their corresponding PMT hash.
    * @return the transaction hash
    */
   // This field will be removed in 1.5.0
