@@ -17,6 +17,10 @@ package org.hyperledger.besu.consensus.ibft.tests;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Optional;
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
@@ -32,14 +36,7 @@ import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.ibft.support.ValidatorPeer;
 import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Block;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -119,8 +116,7 @@ public class GossipTest {
 
   @Test
   public void messageWithUnknownValidatorIsNotGossiped() {
-    final MessageFactory unknownMsgFactory =
-        new MessageFactory(new BouncyCastleNodeKey(KeyPair.generate()));
+    final MessageFactory unknownMsgFactory = new MessageFactory(BouncyCastleNodeKey.generate());
     final Proposal unknownProposal =
         unknownMsgFactory.createProposal(roundId, block, Optional.empty());
 

@@ -56,7 +56,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MessageValidatorTest {
 
-  private final NodeKey nodeKey = new BouncyCastleNodeKey(KeyPair.generate());
+  private final NodeKey nodeKey = BouncyCastleNodeKey.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
 

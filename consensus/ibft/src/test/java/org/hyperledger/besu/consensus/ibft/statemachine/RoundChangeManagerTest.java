@@ -19,6 +19,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
@@ -32,20 +38,12 @@ import org.hyperledger.besu.consensus.ibft.validation.RoundChangeMessageValidato
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator;
 import org.hyperledger.besu.consensus.ibft.validation.SignedDataValidator;
 import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Util;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,10 +51,10 @@ public class RoundChangeManagerTest {
 
   private RoundChangeManager manager;
 
-  private final KeyPair proposerKey = KeyPair.generate();
-  private final KeyPair validator1Key = KeyPair.generate();
-  private final KeyPair validator2Key = KeyPair.generate();
-  private final KeyPair nonValidatorKey = KeyPair.generate();
+  private final NodeKey proposerKey = BouncyCastleNodeKey.generate();
+  private final NodeKey validator1Key = BouncyCastleNodeKey.generate();
+  private final NodeKey validator2Key = BouncyCastleNodeKey.generate();
+  private final NodeKey nonValidatorKey = BouncyCastleNodeKey.generate();
 
   private final ConsensusRoundIdentifier ri1 = new ConsensusRoundIdentifier(2, 1);
   private final ConsensusRoundIdentifier ri2 = new ConsensusRoundIdentifier(2, 2);
@@ -112,15 +110,15 @@ public class RoundChangeManagerTest {
   }
 
   private RoundChange makeRoundChangeMessage(
-      final KeyPair key, final ConsensusRoundIdentifier round) {
-    final MessageFactory messageFactory = new MessageFactory(new BouncyCastleNodeKey(key));
+      final NodeKey key, final ConsensusRoundIdentifier round) {
+    final MessageFactory messageFactory = new MessageFactory(key);
     return messageFactory.createRoundChange(round, Optional.empty());
   }
 
   private RoundChange makeRoundChangeMessageWithPreparedCert(
-      final KeyPair key,
+      final NodeKey key,
       final ConsensusRoundIdentifier round,
-      final List<KeyPair> prepareProviders) {
+      final List<NodeKey> prepareProviders) {
     Preconditions.checkArgument(!prepareProviders.contains(key));
 
     final MessageFactory messageFactory = new MessageFactory(new BouncyCastleNodeKey(key));
@@ -134,8 +132,7 @@ public class RoundChangeManagerTest {
         prepareProviders.stream()
             .map(
                 k -> {
-                  final MessageFactory prepareFactory =
-                      new MessageFactory(new BouncyCastleNodeKey(k));
+                  final MessageFactory prepareFactory = new MessageFactory(k);
                   return prepareFactory.createPrepare(proposalRound, block.getHash());
                 })
             .collect(Collectors.toList());

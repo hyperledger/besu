@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ProposalBlockConsistencyValidatorTest {
 
   private final MessageFactory proposerMessageFactory =
-      new MessageFactory(new BouncyCastleNodeKey(KeyPair.generate()));
+      new MessageFactory(BouncyCastleNodeKey.generate());
   private final long chainHeight = 2;
   private final ConsensusRoundIdentifier roundIdentifier =
       new ConsensusRoundIdentifier(chainHeight, 4);
@@ -65,8 +65,8 @@ public class ProposalBlockConsistencyValidatorTest {
             IbftBlockHeaderFunctions.forCommittedSeal());
 
     assertThat(
-            consistencyChecker.validateProposalMatchesBlock(
-                proposalMsg.getSignedPayload(), misMatchedBlock))
+        consistencyChecker.validateProposalMatchesBlock(
+            proposalMsg.getSignedPayload(), misMatchedBlock))
         .isFalse();
   }
 
@@ -77,7 +77,7 @@ public class ProposalBlockConsistencyValidatorTest {
         proposerMessageFactory.createProposal(futureRound, block, Optional.empty());
 
     assertThat(
-            consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
+        consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
         .isFalse();
   }
 
@@ -88,7 +88,7 @@ public class ProposalBlockConsistencyValidatorTest {
         proposerMessageFactory.createProposal(futureHeight, block, Optional.empty());
 
     assertThat(
-            consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
+        consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
         .isFalse();
   }
 }

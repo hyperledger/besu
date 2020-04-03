@@ -82,8 +82,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftBlockHeightManagerTest {
 
-  private final KeyPair localNodeKeys = KeyPair.generate();
-  private final NodeKey nodeKey = new BouncyCastleNodeKey(localNodeKeys);
+  private final NodeKey nodeKey = BouncyCastleNodeKey.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
 
@@ -121,9 +120,9 @@ public class IbftBlockHeightManagerTest {
   @Before
   public void setup() {
     for (int i = 0; i < 3; i++) {
-      final KeyPair key = KeyPair.generate();
-      validators.add(Util.publicKeyToAddress(key.getPublicKey()));
-      validatorMessageFactory.add(new MessageFactory(new BouncyCastleNodeKey(key)));
+      final BouncyCastleNodeKey nodeKey = BouncyCastleNodeKey.generate();
+      validators.add(Util.publicKeyToAddress(nodeKey.getPublicKey()));
+      validatorMessageFactory.add(new MessageFactory(nodeKey));
     }
 
     buildCreatedBlock();

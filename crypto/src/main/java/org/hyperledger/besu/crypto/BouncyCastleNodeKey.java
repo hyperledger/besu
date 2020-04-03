@@ -28,6 +28,10 @@ public class BouncyCastleNodeKey implements NodeKey {
     this.nodeKeys = nodeKeys;
   }
 
+  public static BouncyCastleNodeKey generate() {
+    return new BouncyCastleNodeKey(KeyPair.generate());
+  }
+
   @Override
   public Signature sign(final Bytes32 dataHash) {
     return SECP256K1.sign(dataHash, nodeKeys);
