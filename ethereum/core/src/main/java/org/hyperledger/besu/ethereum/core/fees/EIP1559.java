@@ -14,12 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.BASEFEE_MAX_CHANGE_DENOMINATOR;
-import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.EIP1559_DECAY_RANGE;
-import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.EIP1559_GAS_INCREMENT_AMOUNT;
-import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.MAX_GAS_EIP1559;
-import static org.hyperledger.besu.ethereum.core.fees.EIP1559Config.TARGET_GAS_USED;
-
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
 import java.util.OptionalLong;
@@ -35,34 +29,36 @@ public class EIP1559 {
 
   public EIP1559(final long forkBlockNumber) {
     initialForkBlknum = forkBlockNumber;
-    finalForkBlknum = initialForkBlknum + EIP1559_DECAY_RANGE;
+    finalForkBlknum = initialForkBlknum + FeeMarket.eip1559DecayRange();
   }
 
   public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
     guardActivation();
-    long delta = parentBlockGasUsed - TARGET_GAS_USED;
+    long delta = parentBlockGasUsed - FeeMarket.eip1559TargetGasUsed();
     return parentBaseFee
-        + ((parentBaseFee * delta) / TARGET_GAS_USED / BASEFEE_MAX_CHANGE_DENOMINATOR);
+        + ((parentBaseFee * delta)
+            / FeeMarket.eip1559TargetGasUsed()
+            / FeeMarket.eip1559BasefeeMaxChangeDenominator());
   }
 
   public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {
     guardActivation();
     return Math.abs(baseFee - parentBaseFee)
-        <= Math.max(1, parentBaseFee / BASEFEE_MAX_CHANGE_DENOMINATOR);
+        <= Math.max(1, parentBaseFee / FeeMarket.eip1559BasefeeMaxChangeDenominator());
   }
 
   public long eip1559GasPool(final long blockNumber) {
     guardActivation();
     if (blockNumber >= finalForkBlknum) {
-      return MAX_GAS_EIP1559;
+      return FeeMarket.eip1559MaxGas();
     }
-    return (MAX_GAS_EIP1559 / 2)
-        + ((blockNumber - initialForkBlknum) * EIP1559_GAS_INCREMENT_AMOUNT);
+    return (FeeMarket.eip1559MaxGas() / 2)
+        + ((blockNumber - initialForkBlknum) * FeeMarket.eip1559GasIncrementAmount());
   }
 
   public long legacyGasPool(final long blockNumber) {
     guardActivation();
-    return MAX_GAS_EIP1559 - eip1559GasPool(blockNumber);
+    return FeeMarket.eip1559MaxGas() - eip1559GasPool(blockNumber);
   }
 
   public boolean isEIP1559(final long blockNumber) {

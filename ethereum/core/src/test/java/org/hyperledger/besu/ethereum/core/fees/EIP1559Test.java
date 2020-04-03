@@ -35,8 +35,8 @@ public class EIP1559Test {
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                EIP1559Config.INITIAL_BASEFEE, EIP1559Config.TARGET_GAS_USED - 1000000L))
-        .isLessThan(EIP1559Config.INITIAL_BASEFEE)
+                FeeMarket.eip1559InitialBasefee(), FeeMarket.eip1559TargetGasUsed() - 1000000L))
+        .isLessThan(FeeMarket.eip1559InitialBasefee())
         .isEqualTo(987500000L);
   }
 
@@ -44,46 +44,46 @@ public class EIP1559Test {
   public void assertThatBaseFeeIncreasesWhenAboveTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                EIP1559Config.INITIAL_BASEFEE, EIP1559Config.TARGET_GAS_USED + 1000000L))
-        .isGreaterThan(EIP1559Config.INITIAL_BASEFEE)
+                FeeMarket.eip1559InitialBasefee(), FeeMarket.eip1559TargetGasUsed() + 1000000L))
+        .isGreaterThan(FeeMarket.eip1559InitialBasefee())
         .isEqualTo(1012500000L);
   }
 
   @Test
   public void assertThatBaseFeeDoesNotChangeWhenAtTargetGasUsed() {
-    assertThat(eip1559.computeBaseFee(EIP1559Config.INITIAL_BASEFEE, EIP1559Config.TARGET_GAS_USED))
-        .isEqualTo(EIP1559Config.INITIAL_BASEFEE);
+    assertThat(
+            eip1559.computeBaseFee(
+                FeeMarket.eip1559InitialBasefee(), FeeMarket.eip1559TargetGasUsed()))
+        .isEqualTo(FeeMarket.eip1559InitialBasefee());
   }
 
   @Test
   public void isValidBaseFee() {
-    assertThat(eip1559.isValidBaseFee(EIP1559Config.INITIAL_BASEFEE, 1012500000L)).isTrue();
+    assertThat(eip1559.isValidBaseFee(FeeMarket.eip1559InitialBasefee(), 1012500000L)).isTrue();
   }
 
   @Test
   public void isNotValidBaseFee() {
     assertThat(
             eip1559.isValidBaseFee(
-                EIP1559Config.INITIAL_BASEFEE, EIP1559Config.INITIAL_BASEFEE * 15L / 10L))
+                FeeMarket.eip1559InitialBasefee(), FeeMarket.eip1559InitialBasefee() * 15L / 10L))
         .isFalse();
   }
 
   @Test
   public void eip1559GasPool() {
     assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1))
-        .isEqualTo(
-            (EIP1559Config.MAX_GAS_EIP1559 / 2) + EIP1559Config.EIP1559_GAS_INCREMENT_AMOUNT);
+        .isEqualTo((FeeMarket.eip1559MaxGas() / 2) + FeeMarket.eip1559GasIncrementAmount());
     assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1) + eip1559.legacyGasPool(FORK_BLOCK + 1))
-        .isEqualTo(EIP1559Config.MAX_GAS_EIP1559);
+        .isEqualTo(FeeMarket.eip1559MaxGas());
   }
 
   @Test
   public void legacyGasPool() {
     assertThat(eip1559.legacyGasPool(FORK_BLOCK + 1))
-        .isEqualTo(
-            (EIP1559Config.MAX_GAS_EIP1559 / 2) - EIP1559Config.EIP1559_GAS_INCREMENT_AMOUNT);
+        .isEqualTo((FeeMarket.eip1559MaxGas() / 2) - FeeMarket.eip1559GasIncrementAmount());
     assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1) + eip1559.legacyGasPool(FORK_BLOCK + 1))
-        .isEqualTo(EIP1559Config.MAX_GAS_EIP1559);
+        .isEqualTo(FeeMarket.eip1559MaxGas());
   }
 
   @Test
@@ -98,12 +98,12 @@ public class EIP1559Test {
 
   @Test
   public void givenBlockAfterEIPFinalized_whenIsEIP1559Finalized_returnsTrue() {
-    assertThat(eip1559.isEIP1559Finalized(FORK_BLOCK + EIP1559Config.EIP1559_DECAY_RANGE)).isTrue();
+    assertThat(eip1559.isEIP1559Finalized(FORK_BLOCK + FeeMarket.eip1559DecayRange())).isTrue();
   }
 
   @Test
   public void givenBlockBeforeEIPFinalized_whenIsEIP1559Finalized_returnsFalse() {
-    assertThat(eip1559.isEIP1559Finalized(FORK_BLOCK + EIP1559Config.EIP1559_DECAY_RANGE - 1))
+    assertThat(eip1559.isEIP1559Finalized(FORK_BLOCK + FeeMarket.eip1559DecayRange() - 1))
         .isFalse();
   }
 
