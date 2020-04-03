@@ -103,7 +103,7 @@ public class TestContext {
   }
 
   public NodeParams getLocalNodeParams() {
-    return new NodeParams(finalState.getLocalAddress(), finalState.getnodeKey());
+    return new NodeParams(finalState.getLocalAddress(), finalState.getNodeKey());
   }
 
   public long getCurrentChainHeight() {

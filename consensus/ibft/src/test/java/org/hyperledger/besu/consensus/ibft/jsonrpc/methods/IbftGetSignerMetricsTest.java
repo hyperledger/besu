@@ -131,18 +131,18 @@ public class IbftGetSignerMetricsTest {
     final List<SignerMetricResult> signerMetricResultList = new ArrayList<>();
 
     // sign a first block with keypairs number 1
-    final SignerMetricResult signerMetricResultFirstKeyPairs = generateBlock(startBlock);
-    signerMetricResultList.add(signerMetricResultFirstKeyPairs);
+    final SignerMetricResult signerMetricResultFirstNodeKeys = generateBlock(startBlock);
+    signerMetricResultList.add(signerMetricResultFirstNodeKeys);
     // sign a second block with keypairs number 2
-    final SignerMetricResult signerMetricResultSecondKeyPairs = generateBlock(startBlock + 1);
-    signerMetricResultList.add(signerMetricResultSecondKeyPairs);
+    final SignerMetricResult signerMetricResultSecondNodeKeys = generateBlock(startBlock + 1);
+    signerMetricResultList.add(signerMetricResultSecondNodeKeys);
     // sign a third block with keypairs number 3
-    final SignerMetricResult signerMetricResultThirdKeyPairs = generateBlock(startBlock + 2);
-    signerMetricResultList.add(signerMetricResultThirdKeyPairs);
+    final SignerMetricResult signerMetricResultThirdNodeKeys = generateBlock(startBlock + 2);
+    signerMetricResultList.add(signerMetricResultThirdNodeKeys);
     // sign the last block with the keypairs number 1
     generateBlock(startBlock + 3);
-    signerMetricResultFirstKeyPairs.setLastProposedBlockNumber(startBlock + 3);
-    signerMetricResultFirstKeyPairs.incrementeNbBlock();
+    signerMetricResultFirstNodeKeys.setLastProposedBlockNumber(startBlock + 3);
+    signerMetricResultFirstNodeKeys.incrementeNbBlock();
 
     final JsonRpcRequestContext request = requestWithParams();
 

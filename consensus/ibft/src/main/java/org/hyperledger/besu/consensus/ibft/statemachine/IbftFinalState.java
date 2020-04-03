@@ -74,7 +74,7 @@ public class IbftFinalState {
     return voteTallyCache.getVoteTallyAtHead().getValidators();
   }
 
-  public NodeKey getnodeKey() {
+  public NodeKey getNodeKey() {
     return nodeKey;
   }
 
