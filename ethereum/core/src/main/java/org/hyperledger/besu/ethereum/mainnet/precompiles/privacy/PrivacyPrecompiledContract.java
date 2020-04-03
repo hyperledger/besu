@@ -200,9 +200,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         new PrivateTransactionReceipt(
             txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
 
-    final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
-
-    privateStateUpdater.putTransactionReceipt(currentBlockHash, txHash, privateTransactionReceipt);
+    privateStateUpdater
+        .putTransactionReceipt(currentBlockHash, commitmentHash, privateTransactionReceipt);
 
     maybeUpdateGroupHeadBlockMap(privacyGroupId, currentBlockHash, privateStateUpdater);
 

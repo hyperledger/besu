@@ -209,8 +209,6 @@ public class PrivateGroupRehydrationBlockProcessor {
         privateStateUpdater,
         privateStateStorage);
 
-    final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
-
     final int txStatus =
         result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
 
@@ -218,7 +216,8 @@ public class PrivateGroupRehydrationBlockProcessor {
         new PrivateTransactionReceipt(
             txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
 
-    privateStateUpdater.putTransactionReceipt(currentBlockHash, txHash, privateTransactionReceipt);
+    privateStateUpdater
+        .putTransactionReceipt(currentBlockHash, commitmentHash, privateTransactionReceipt);
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).get();
     if (!privacyGroupHeadBlockMap.contains(Bytes32.wrap(privacyGroupId), currentBlockHash)) {
