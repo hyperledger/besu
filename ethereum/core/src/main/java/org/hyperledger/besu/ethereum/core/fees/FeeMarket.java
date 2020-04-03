@@ -12,11 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.chain;
+package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+public interface FeeMarket {
+  long getBasefeeMaxChangeDenominator();
 
-public interface ChainReorgObserver {
+  long getTargetGasUsed();
 
-  void onBlockAdded(BlockWithReceipts blockWithReceipts, Blockchain blockchain);
+  long getMaxGas();
+
+  long getDecayRange();
+
+  long getGasIncrementAmount();
+
+  long getInitialBasefee();
+
+  long getPerTxGaslimit();
+
+  static FeeMarket eip1559() {
+    return new FeeMarketConfig(8L, 10000000L, 16000000L, 800000L, 10L, 1000000000L, 8000000L);
+  }
 }
