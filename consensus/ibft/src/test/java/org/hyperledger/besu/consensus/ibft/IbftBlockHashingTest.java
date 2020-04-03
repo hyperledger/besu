@@ -17,13 +17,6 @@ package org.hyperledger.besu.consensus.ibft;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
@@ -37,6 +30,15 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class IbftBlockHashingTest {
