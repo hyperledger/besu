@@ -128,7 +128,7 @@ public class PrivateGroupRehydrationBlockProcessor {
         LOG.debug(
             "Pre-rehydrate root hash: {} for tx {}",
             disposablePrivateState.rootHash(),
-            privateTransaction.getHash());
+            transaction.getHash());
 
         final PrivateTransactionProcessor.Result privateResult =
             privateTransactionProcessor.processTransaction(
@@ -136,6 +136,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 worldStateUpdater.updater(),
                 privateStateUpdater,
                 blockHeader,
+                transaction.getHash(),
                 privateTransaction,
                 miningBeneficiary,
                 OperationTracer.NO_TRACING,

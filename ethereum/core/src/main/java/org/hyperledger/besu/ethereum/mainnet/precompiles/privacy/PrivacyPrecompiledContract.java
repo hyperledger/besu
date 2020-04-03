@@ -109,6 +109,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       return Bytes.EMPTY;
     }
 
+    final Hash pmtHash = messageFrame.getTransactionHash();
+
     final String key = input.toBase64String();
     final ReceiveResponse receiveResponse;
     try {
@@ -127,10 +129,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final Bytes32 privacyGroupId =
         Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
 
-    LOG.debug(
-        "Processing private transaction {} in privacy group {}",
-        privateTransaction.getHash(),
-        privacyGroupId);
+    LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
     final Hash currentBlockHash = ((BlockHeader) messageFrame.getBlockHeader()).getHash();
 
@@ -149,15 +148,14 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     if (result.isInvalid() || !result.isSuccessful()) {
       LOG.error(
           "Failed to process private transaction {}: {}",
-          privateTransaction.getHash(),
+          pmtHash,
           result.getValidationResult().getErrorMessage());
       return Bytes.EMPTY;
     }
 
     if (messageFrame.isPersistingPrivateState()) {
-
       persistPrivateState(
-          messageFrame.getTransactionHash(),
+          pmtHash,
           currentBlockHash,
           privateTransaction,
           privacyGroupId,
@@ -237,6 +235,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         messageFrame.getWorldState(),
         privateWorldStateUpdater,
         messageFrame.getBlockHeader(),
+        messageFrame.getTransactionHash(),
         privateTransaction,
         messageFrame.getMiningBeneficiary(),
         new DebugOperationTracer(TraceOptions.DEFAULT),
