@@ -103,10 +103,15 @@ public class BesuEventsImplTest {
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem());
+
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
-    when(mockEthPeers.streamAvailablePeers()).thenReturn(Stream.empty()).thenReturn(Stream.empty());
+    when(mockEthPeers.streamAvailablePeers())
+        .thenReturn(Stream.empty())
+        .thenReturn(Stream.empty())
+        .thenReturn(Stream.empty())
+        .thenReturn(Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
@@ -118,6 +123,9 @@ public class BesuEventsImplTest {
 
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
     syncState = new SyncState(blockchain, mockEthPeers);
+    TransactionPoolConfiguration txPoolConfig =
+        TransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             mockProtocolSchedule,
@@ -127,7 +135,7 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.builder().txPoolMaxSize(1).build());
+            txPoolConfig);
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }

@@ -20,9 +20,11 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -67,6 +69,7 @@ public class EthPeer {
   private final RequestManager bodiesRequestManager = new RequestManager(this);
   private final RequestManager receiptsRequestManager = new RequestManager(this);
   private final RequestManager nodeDataRequestManager = new RequestManager(this);
+  private final RequestManager pooledTransactionsRequestManager = new RequestManager(this);
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
@@ -154,6 +157,8 @@ public class EthPeer {
         return sendRequest(receiptsRequestManager, messageData);
       case EthPV63.GET_NODE_DATA:
         return sendRequest(nodeDataRequestManager, messageData);
+      case EthPV65.GET_POOLED_TRANSACTIONS:
+        return sendRequest(pooledTransactionsRequestManager, messageData);
       default:
         connection.sendForProtocol(protocolName, messageData);
         return null;
@@ -201,6 +206,12 @@ public class EthPeer {
     return sendRequest(nodeDataRequestManager, message);
   }
 
+  public RequestManager.ResponseStream getPooledTransactions(final List<Hash> hashes)
+      throws PeerNotConnected {
+    final GetPooledTransactionsMessage message = GetPooledTransactionsMessage.create(hashes);
+    return sendRequest(pooledTransactionsRequestManager, message);
+  }
+
   boolean validateReceivedMessage(final EthMessage message) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
     switch (message.getData().getCode()) {
@@ -225,6 +236,12 @@ public class EthPeer {
       case EthPV63.NODE_DATA:
         if (nodeDataRequestManager.outstandingRequests() == 0) {
           LOG.warn("Unsolicited node data received.");
+          return false;
+        }
+        break;
+      case EthPV65.POOLED_TRANSACTIONS:
+        if (pooledTransactionsRequestManager.outstandingRequests() == 0) {
+          LOG.warn("Unsolicited pooling transactions received.");
           return false;
         }
         break;
@@ -258,6 +275,10 @@ public class EthPeer {
         reputation.resetTimeoutCount(EthPV63.GET_NODE_DATA);
         nodeDataRequestManager.dispatchResponse(message);
         break;
+      case EthPV65.POOLED_TRANSACTIONS:
+        reputation.resetTimeoutCount(EthPV65.GET_POOLED_TRANSACTIONS);
+        pooledTransactionsRequestManager.dispatchResponse(message);
+        break;
       default:
         // Nothing to do
     }
@@ -272,6 +293,7 @@ public class EthPeer {
     bodiesRequestManager.close();
     receiptsRequestManager.close();
     nodeDataRequestManager.close();
+    pooledTransactionsRequestManager.close();
   }
 
   public void registerKnownBlock(final Hash hash) {
@@ -344,7 +366,8 @@ public class EthPeer {
     return headersRequestManager.outstandingRequests()
         + bodiesRequestManager.outstandingRequests()
         + receiptsRequestManager.outstandingRequests()
-        + nodeDataRequestManager.outstandingRequests();
+        + nodeDataRequestManager.outstandingRequests()
+        + pooledTransactionsRequestManager.outstandingRequests();
   }
 
   public long getLastRequestTimestamp() {

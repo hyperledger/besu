@@ -39,12 +39,10 @@ public class SyncStateAdapter {
   }
 
   public Optional<Long> getPulledStates() {
-    // currently synchronizer has no this information
-    return Optional.empty();
+    return syncStatus.getPulledStates();
   }
 
   public Optional<Long> getKnownStates() {
-    // currently synchronizer has no this information
-    return Optional.empty();
+    return syncStatus.getKnownStates();
   }
 }

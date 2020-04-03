@@ -67,13 +67,13 @@ public class PrivDistributeRawTransactionTest {
 
   @Before
   public void before() {
-    method = new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider);
+    method = new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider, false);
   }
 
   @Test
   public void validTransactionHashReturnedAfterDistribute() {
     final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any(), any()))
         .thenReturn(enclavePublicKey);
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
@@ -95,14 +95,14 @@ public class PrivDistributeRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privacyController)
-        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
+        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY), any());
     verify(privacyController)
         .validatePrivateTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
-    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any(), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());

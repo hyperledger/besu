@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -111,7 +112,7 @@ public class WorldStateDownloaderTest {
               .build());
 
   final EthProtocolManager ethProtocolManager =
-      EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
+      EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
 
   @After
   public void tearDown() throws Exception {
@@ -576,7 +577,8 @@ public class WorldStateDownloaderTest {
     // Respond to node data requests
     final List<MessageData> sentMessages = new ArrayList<>();
     final RespondingEthPeer.Responder blockChainResponder =
-        RespondingEthPeer.blockchainResponder(mock(Blockchain.class), remoteWorldStateArchive);
+        RespondingEthPeer.blockchainResponder(
+            mock(Blockchain.class), remoteWorldStateArchive, mock(TransactionPool.class));
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.wrapResponderWithCollector(blockChainResponder, sentMessages);
 
@@ -606,7 +608,7 @@ public class WorldStateDownloaderTest {
   @Test
   public void stalledDownloader() {
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
+        EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
 
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
@@ -898,10 +900,15 @@ public class WorldStateDownloaderTest {
       final WorldStateArchive remoteWorldStateArchive,
       final CompletableFuture<?> downloaderFuture) {
     final RespondingEthPeer.Responder fullResponder =
-        RespondingEthPeer.blockchainResponder(mock(Blockchain.class), remoteWorldStateArchive);
+        RespondingEthPeer.blockchainResponder(
+            mock(Blockchain.class), remoteWorldStateArchive, mock(TransactionPool.class));
     final RespondingEthPeer.Responder partialResponder =
         RespondingEthPeer.partialResponder(
-            mock(Blockchain.class), remoteWorldStateArchive, MainnetProtocolSchedule.create(), .5f);
+            mock(Blockchain.class),
+            remoteWorldStateArchive,
+            mock(TransactionPool.class),
+            MainnetProtocolSchedule.create(),
+            .5f);
     final RespondingEthPeer.Responder emptyResponder = RespondingEthPeer.emptyResponder();
 
     // Send a few partial responses

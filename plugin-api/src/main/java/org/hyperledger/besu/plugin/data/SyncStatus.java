@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
+import java.util.Optional;
+
 public interface SyncStatus {
 
   /**
@@ -36,4 +40,26 @@ public interface SyncStatus {
    * @return the height of the highest known block.
    */
   long getHighestBlock();
+
+  /**
+   * PulledStates is the number of state entries fetched so far, or empty if this is not known or
+   * not relevant.
+   *
+   * @return count of pulled states
+   */
+  @Unstable
+  default Optional<Long> getPulledStates() {
+    return Optional.empty();
+  };
+
+  /**
+   * KnownStates is the number of states the node knows of so far, or empty if this is not known or
+   * not relevant.
+   *
+   * @return count of known states
+   */
+  @Unstable
+  default Optional<Long> getKnownStates() {
+    return Optional.empty();
+  };
 }

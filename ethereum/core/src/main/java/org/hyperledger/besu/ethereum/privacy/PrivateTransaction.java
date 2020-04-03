@@ -461,9 +461,9 @@ public class PrivateTransaction {
    *
    * @return the privacyGroupId
    */
-  public String determinePrivacyGroupId() {
+  public Bytes32 determinePrivacyGroupId() {
     if (getPrivacyGroupId().isPresent()) {
-      return getPrivacyGroupId().get().toBase64String();
+      return Bytes32.wrap(getPrivacyGroupId().get());
     } else {
       final List<Bytes> privateFor = getPrivateFor().orElse(Lists.newArrayList());
       return PrivacyGroupUtil.calculateEeaPrivacyGroupId(getPrivateFrom(), privateFor);
