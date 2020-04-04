@@ -38,25 +38,21 @@ public class PrivateTransactionValidator {
       final PrivateTransaction transaction,
       final Long accountNonce,
       final boolean allowFutureNonces) {
-    LOG.debug("Validating private transaction fields of {}", transaction.getHash());
+    LOG.debug("Validating private transaction {}", transaction);
     final ValidationResult<TransactionInvalidReason> privateFieldsValidationResult =
         validatePrivateTransactionFields(transaction);
     if (!privateFieldsValidationResult.isValid()) {
       LOG.debug(
-          "Private Transaction fields are invalid {}, {}",
-          transaction.getHash(),
+          "Private Transaction fields are invalid {}",
           privateFieldsValidationResult.getErrorMessage());
       return privateFieldsValidationResult;
     }
-
-    LOG.debug("Validating the signature of Private Transaction {} ", transaction.getHash());
 
     final ValidationResult<TransactionValidator.TransactionInvalidReason>
         signatureValidationResult = validateTransactionSignature(transaction);
     if (!signatureValidationResult.isValid()) {
       LOG.debug(
-          "Private Transaction {}, failed validation {}, {}",
-          transaction.getHash(),
+          "Private Transaction failed signature validation {}, {}",
           signatureValidationResult.getInvalidReason(),
           signatureValidationResult.getErrorMessage());
       return signatureValidationResult;
