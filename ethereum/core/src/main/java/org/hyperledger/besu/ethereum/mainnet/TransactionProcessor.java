@@ -140,8 +140,7 @@ public interface TransactionProcessor {
         miningBeneficiary,
         OperationTracer.NO_TRACING,
         blockHashLookup,
-        isPersistingPrivateState,
-        transactionValidationParams);
+        isPersistingPrivateState);
   }
 
   /**
@@ -151,8 +150,8 @@ public interface TransactionProcessor {
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
-   * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
