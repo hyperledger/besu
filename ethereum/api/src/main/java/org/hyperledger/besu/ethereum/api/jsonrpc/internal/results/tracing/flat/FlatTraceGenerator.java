@@ -332,7 +332,7 @@ public class FlatTraceGenerator {
       final List<FlatTrace.Builder> flatTraces) {
 
     final Action.Builder actionBuilder = currentContext.getBuilder().getActionBuilder();
-    Gas gasUsed =
+    final Gas gasUsed =
         Gas.fromHexString(actionBuilder.getGas())
             .minus(traceFrame.getGasRemaining())
             .plus(traceFrame.getGasCost().orElse(Gas.ZERO));
