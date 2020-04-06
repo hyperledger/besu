@@ -56,6 +56,7 @@ import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -87,6 +88,10 @@ public class DefaultPrivacyControllerTest {
   private static final ArrayList<Log> LOGS = new ArrayList<>();
   private static final String MOCK_TRANSACTION_SIMULATOR_RESULT_OUTPUT_BYTES_PREFIX =
       "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002";
+  private static final PrivacyGroup PANTHEON_PRIVACY_GROUP =
+      new PrivacyGroup("", Type.PANTHEON, "", "", emptyList());
+  private static final PrivacyGroup ON_CHAIN_PRIVACY_GROUP =
+      new PrivacyGroup("", Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY));
 
   private PrivacyController privacyController;
   private PrivacyController brokenPrivacyController;
@@ -177,7 +182,8 @@ public class DefaultPrivacyControllerTest {
   public void sendsValidLegacyTransaction() {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
-    final String enclaveKey = privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
+    final String enclaveKey =
+        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
@@ -199,10 +205,9 @@ public class DefaultPrivacyControllerTest {
   public void sendValidBesuTransaction() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
-    when(enclave.retrievePrivacyGroup(any(String.class)))
-        .thenReturn(new PrivacyGroup("", Type.PANTHEON, "", "", emptyList()));
-
-    final String enclaveKey = privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
+    final String enclaveKey =
+        privacyController.sendTransaction(
+            transaction, ENCLAVE_PUBLIC_KEY, Optional.of(PANTHEON_PRIVACY_GROUP));
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
@@ -260,7 +265,7 @@ public class DefaultPrivacyControllerTest {
         .isThrownBy(
             () ->
                 brokenPrivacyController.sendTransaction(
-                    buildLegacyPrivateTransaction(), ENCLAVE_PUBLIC_KEY));
+                    buildLegacyPrivateTransaction(), ENCLAVE_PUBLIC_KEY, Optional.empty()));
   }
 
   @Test
@@ -433,7 +438,9 @@ public class DefaultPrivacyControllerTest {
   public void canCreatePrivacyMarkerTransactionForOnChainPrivacy() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
 
-    final String enclaveKey = privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
+    final String enclaveKey =
+        privacyController.sendTransaction(
+            transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ON_CHAIN_PRIVACY_GROUP));
 
     final Transaction onChainPrivacyMarkerTransaction =
         privacyController.createPrivacyMarkerTransaction(

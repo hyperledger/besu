@@ -77,10 +77,13 @@ import org.mockito.ArgumentCaptor;
 public class TransactionPoolTest {
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_TRANSACTION_HASHES = 5;
   private static final KeyPair KEY_PAIR1 = KeyPair.generate();
 
   private final PendingTransactionListener listener = mock(PendingTransactionListener.class);
   private final TransactionPool.TransactionBatchAddedListener batchAddedListener =
+      mock(TransactionPool.TransactionBatchAddedListener.class);
+  private final TransactionPool.TransactionBatchAddedListener pendingBatchAddedListener =
       mock(TransactionPool.TransactionBatchAddedListener.class);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
@@ -97,6 +100,7 @@ public class TransactionPoolTest {
       new PendingTransactions(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
+          MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem);
   private final Transaction transaction1 = createTransaction(1);
@@ -108,6 +112,7 @@ public class TransactionPoolTest {
   private SyncState syncState;
   private EthContext ethContext;
   private PeerTransactionTracker peerTransactionTracker;
+  private PeerPendingTransactionTracker peerPendingTransactionTracker;
 
   @Before
   public void setUp() {
@@ -121,15 +126,18 @@ public class TransactionPoolTest {
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     peerTransactionTracker = mock(PeerTransactionTracker.class);
+    peerPendingTransactionTracker = mock(PeerPendingTransactionTracker.class);
     transactionPool =
         new TransactionPool(
             transactions,
             protocolSchedule,
             protocolContext,
             batchAddedListener,
+            pendingBatchAddedListener,
             syncState,
             ethContext,
             peerTransactionTracker,
+            peerPendingTransactionTracker,
             Wei.of(2),
             metricsSystem);
     blockchain.observeBlockAdded(transactionPool);
@@ -380,9 +388,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
+            pendingBatchAddedListener,
             syncState,
             ethContext,
             peerTransactionTracker,
+            peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem);
 
@@ -391,6 +401,7 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
+    verify(pendingTransactions).tryEvictTransactionHash(transaction1.getHash());
     verifyZeroInteractions(transactionValidator);
     verifyNoMoreInteractions(pendingTransactions);
   }
@@ -497,9 +508,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
+            pendingBatchAddedListener,
             syncState,
             ethContext,
             peerTransactionTracker,
+            peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem);
 
@@ -563,9 +576,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
+            pendingBatchAddedListener,
             syncState,
             ethContext,
             peerTransactionTracker,
+            peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem);
 

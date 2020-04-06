@@ -61,7 +61,7 @@ public class JsonRpcRequestContext {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    JsonRpcRequestContext that = (JsonRpcRequestContext) o;
+    final JsonRpcRequestContext that = (JsonRpcRequestContext) o;
     return Objects.equals(jsonRpcRequest, that.jsonRpcRequest) && Objects.equals(user, that.user);
   }
 

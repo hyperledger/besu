@@ -107,6 +107,7 @@ public class BlockchainQueriesLogCacheTest {
             0,
             0,
             Bytes.EMPTY,
+            null,
             Hash.EMPTY,
             0,
             new MainnetBlockHeaderFunctions());
