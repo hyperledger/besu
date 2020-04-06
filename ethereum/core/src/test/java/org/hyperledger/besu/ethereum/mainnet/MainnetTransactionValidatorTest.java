@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +48,7 @@ public class MainnetTransactionValidatorTest {
   private static final KeyPair senderKeys = KeyPair.generate();
 
   @Mock private GasCalculator gasCalculator;
+  @Mock private BlockHeader blockHeader;
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()
@@ -63,7 +66,7 @@ public class MainnetTransactionValidatorTest {
             .createTransaction(senderKeys);
     when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
 
-    assertThat(validator.validate(transaction))
+    assertThat(validator.validate(transaction, blockHeader.getNumber()))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT));
@@ -73,7 +76,7 @@ public class MainnetTransactionValidatorTest {
   public void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
-    assertThat(validator.validate(basicTransaction))
+    assertThat(validator.validate(basicTransaction, blockHeader.getNumber()))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason
@@ -84,7 +87,7 @@ public class MainnetTransactionValidatorTest {
   public void shouldRejectTransactionWhenTransactionHasIncorrectChainId() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.valueOf(2)));
-    assertThat(validator.validate(basicTransaction))
+    assertThat(validator.validate(basicTransaction, blockHeader.getNumber()))
         .isEqualTo(
             ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID));
   }
@@ -224,6 +227,23 @@ public class MainnetTransactionValidatorTest {
         .isEqualTo(ValidationResult.valid());
 
     verifyZeroInteractions(transactionFilter);
+  }
+
+  @Test
+  public void shouldRejectTransactionIfGasLimitExceedsPerTransactionGasLimit() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), OptionalLong.of(0));
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasLimit(EIP1559Config.PER_TX_GASLIMIT + 1)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+
+    when(blockHeader.getNumber()).thenReturn(1L);
+    assertThat(validator.validate(transaction, blockHeader.getNumber()))
+        .isEqualTo(
+            ValidationResult.invalid(
+                TransactionValidator.TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT));
   }
 
   private Account accountWithNonce(final long nonce) {

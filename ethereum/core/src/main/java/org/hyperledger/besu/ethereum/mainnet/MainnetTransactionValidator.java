@@ -20,10 +20,13 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
@@ -41,21 +44,57 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
 
+  private final Optional<EIP1559> eip1559;
+  private final FeeMarket feeMarket = FeeMarket.eip1559();
+
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId) {
+    this(gasCalculator, checkSignatureMalleability, chainId, OptionalLong.empty());
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final OptionalLong eip1559ForkBlockNumber) {
+    this(
+        gasCalculator,
+        checkSignatureMalleability,
+        chainId,
+        eip1559ForkBlockNumber.isPresent()
+            ? Optional.of(new EIP1559(eip1559ForkBlockNumber.getAsLong()))
+            : Optional.empty());
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Optional<EIP1559> eip1559) {
     this.gasCalculator = gasCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
+    this.eip1559 = eip1559;
   }
 
   @Override
-  public ValidationResult<TransactionInvalidReason> validate(final Transaction transaction) {
+  public ValidationResult<TransactionInvalidReason> validate(
+      final Transaction transaction, final long blockNumber) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+    if (eip1559.isPresent() && eip1559.get().isEIP1559(blockNumber)) {
+      if (transaction.getGasLimit() > feeMarket.getPerTxGaslimit()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
+            String.format(
+                "gas limit %d exceeds per transaction gas limit %d",
+                transaction.getGasLimit(), feeMarket.getPerTxGaslimit()));
+      }
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);

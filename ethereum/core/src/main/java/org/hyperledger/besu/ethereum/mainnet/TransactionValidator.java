@@ -25,11 +25,12 @@ public interface TransactionValidator {
    * Asserts whether a transaction is valid.
    *
    * @param transaction the transaction to validate
+   * @param blockNumber the block number
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
-  ValidationResult<TransactionInvalidReason> validate(Transaction transaction);
+  ValidationResult<TransactionInvalidReason> validate(Transaction transaction, long blockNumber);
 
   /**
    * Asserts whether a transaction is valid for the sender accounts current state.
@@ -70,6 +71,7 @@ public interface TransactionValidator {
     EXCEEDS_BLOCK_GAS_LIMIT,
     TX_SENDER_NOT_AUTHORIZED,
     CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE,
+    EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
     // Private Transaction Invalid Reasons
     PRIVATE_TRANSACTION_FAILED,
     PRIVATE_NONCE_TOO_LOW,
