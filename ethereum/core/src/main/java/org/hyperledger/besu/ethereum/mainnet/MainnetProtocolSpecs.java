@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasLimitValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
@@ -335,8 +335,8 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
-    final EIP1559Manager eip1559Manager =
-        new EIP1559Manager(genesisConfigOptions.getEIP1559BlockNumber());
+    final EIP1559 eip1559Manager =
+        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .transactionValidatorBuilder(

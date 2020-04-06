@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559Config;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -44,7 +44,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
 
-  private final Optional<EIP1559Manager> eip1559Manager;
+  private final Optional<EIP1559> eip1559;
+  private final FeeMarket feeMarket = FeeMarket.eip1559();
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
@@ -63,7 +64,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
         checkSignatureMalleability,
         chainId,
         eip1559ForkBlockNumber.isPresent()
-            ? Optional.of(new EIP1559Manager(eip1559ForkBlockNumber))
+            ? Optional.of(new EIP1559(eip1559ForkBlockNumber.getAsLong()))
             : Optional.empty());
   }
 
@@ -71,11 +72,11 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
-      final Optional<EIP1559Manager> eip1559Manager) {
+      final Optional<EIP1559> eip1559) {
     this.gasCalculator = gasCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
-    this.eip1559Manager = eip1559Manager;
+    this.eip1559 = eip1559;
   }
 
   @Override
@@ -86,13 +87,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
     if (!signatureResult.isValid()) {
       return signatureResult;
     }
-    if (eip1559Manager.isPresent() && eip1559Manager.get().isEIP1559(blockNumber)) {
-      if (transaction.getGasLimit() > EIP1559Config.PER_TX_GASLIMIT) {
+    if (eip1559.isPresent() && eip1559.get().isEIP1559(blockNumber)) {
+      if (transaction.getGasLimit() > feeMarket.getPerTxGaslimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
             String.format(
                 "gas limit %d exceeds per transaction gas limit %d",
-                transaction.getGasLimit(), EIP1559Config.PER_TX_GASLIMIT));
+                transaction.getGasLimit(), feeMarket.getPerTxGaslimit()));
       }
     }
 

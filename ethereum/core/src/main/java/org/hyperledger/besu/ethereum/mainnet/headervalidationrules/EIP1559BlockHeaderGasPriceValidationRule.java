@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559MissingBaseFeeFromBlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
@@ -27,10 +27,10 @@ import org.apache.logging.log4j.Logger;
 public class EIP1559BlockHeaderGasPriceValidationRule<C>
     implements AttachedBlockHeaderValidationRule<C> {
   private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
-  private final EIP1559Manager eip1559;
+  private final EIP1559 eip1559;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
 
-  public EIP1559BlockHeaderGasPriceValidationRule(final EIP1559Manager eip1559) {
+  public EIP1559BlockHeaderGasPriceValidationRule(final EIP1559 eip1559) {
     this.eip1559 = eip1559;
   }
 

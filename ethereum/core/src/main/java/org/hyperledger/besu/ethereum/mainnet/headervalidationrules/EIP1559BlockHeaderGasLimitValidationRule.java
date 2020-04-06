@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559Config;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559Manager;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
@@ -26,9 +26,10 @@ import org.apache.logging.log4j.Logger;
 public class EIP1559BlockHeaderGasLimitValidationRule<C>
     implements AttachedBlockHeaderValidationRule<C> {
   private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
-  private final EIP1559Manager eip1559;
+  private final EIP1559 eip1559;
+  private final FeeMarket feeMarket = FeeMarket.eip1559();
 
-  public EIP1559BlockHeaderGasLimitValidationRule(final EIP1559Manager eip1559) {
+  public EIP1559BlockHeaderGasLimitValidationRule(final EIP1559 eip1559) {
     this.eip1559 = eip1559;
   }
 
@@ -41,17 +42,16 @@ public class EIP1559BlockHeaderGasLimitValidationRule<C>
       return true;
     }
     if (eip1559.isEIP1559Finalized(header.getNumber())
-        && header.getGasLimit() != EIP1559Config.MAX_GAS_EIP1559) {
+        && header.getGasLimit() != feeMarket.getMaxGas()) {
       LOG.trace(
           "Invalid block header: gas limit {} does not equal expected gas limit {}",
           header.getGasLimit(),
-          EIP1559Config.MAX_GAS_EIP1559);
+          feeMarket.getMaxGas());
       return false;
     }
     final long numberOfIncrements = header.getNumber() - eip1559.getForkBlock();
     final long expectedGasLimit =
-        (EIP1559Config.MAX_GAS_EIP1559 / 2)
-            + (numberOfIncrements * EIP1559Config.EIP1559_GAS_INCREMENT_AMOUNT);
+        (feeMarket.getMaxGas() / 2) + (numberOfIncrements * feeMarket.getGasIncrementAmount());
     if (header.getGasLimit() != expectedGasLimit) {
       LOG.trace(
           "Invalid block header: gas limit {} does not equal expected gas limit {}",
