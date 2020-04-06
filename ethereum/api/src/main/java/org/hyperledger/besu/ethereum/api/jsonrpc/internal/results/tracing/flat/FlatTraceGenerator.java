@@ -180,6 +180,7 @@ public class FlatTraceGenerator {
    * @param protocolSchedule the current {@link ProtocolSchedule} to use
    * @param transactionTrace the {@link TransactionTrace} to use
    * @param block the {@link Block} to use
+   * @param traceCounter the current traceCounter
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
@@ -246,8 +247,13 @@ public class FlatTraceGenerator {
             .input(
                 nextTraceFrame.map(TraceFrame::getInputData).map(Bytes::toHexString).orElse(null))
             .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
-            .callType(opcodeString.toLowerCase(Locale.US))
-            .value(Quantity.create(transactionTrace.getTransaction().getValue()));
+            .callType(opcodeString.toLowerCase(Locale.US));
+
+    if (tracesContexts.size() > 1 && traceFrame.getOpcode().equals("CALL")) {
+      subTraceActionBuilder.value("0x0");
+    } else {
+      subTraceActionBuilder.value(Quantity.create(transactionTrace.getTransaction().getValue()));
+    }
 
     nextTraceFrame.ifPresent(
         nextFrame -> {
@@ -281,7 +287,7 @@ public class FlatTraceGenerator {
     currentContext.setGasUsed(
         computeGasUsed(tracesContexts, currentContext, transactionTrace, traceFrame));
 
-    if ("STOP".equals(traceFrame.getOpcode()) && resultBuilder.getGasUsed().equals("0x0")) {
+    if ("STOP".equals(traceFrame.getOpcode()) && resultBuilder.isGasUsedEmpty()) {
       long callStipend =
           protocolSchedule
               .getByBlockNumber(block.getHeader().getNumber())
@@ -389,13 +395,11 @@ public class FlatTraceGenerator {
             .gas(computeGas(traceFrame, nextTraceFrame).toHexString())
             .value(Quantity.create(nextTraceFrame.map(TraceFrame::getValue).orElse(Wei.ZERO)));
 
-    if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
-      traceFrame
-          .getMaybeCode()
-          .map(Code::getBytes)
-          .map(Bytes::toHexString)
-          .map(subTraceActionBuilder::init);
-    }
+    traceFrame
+        .getMaybeCode()
+        .map(Code::getBytes)
+        .map(Bytes::toHexString)
+        .map(subTraceActionBuilder::init);
 
     final FlatTrace.Context currentContext =
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
@@ -433,9 +437,6 @@ public class FlatTraceGenerator {
   private static FlatTrace.Context handleRevert(
       final Deque<FlatTrace.Context> tracesContexts, final FlatTrace.Context currentContext) {
     currentContext.getBuilder().error(Optional.of("Reverted"));
-    if (currentContext.getBuilder().getSubtraces() == 0) {
-      currentContext.getBuilder().getActionBuilder().value("0x0");
-    }
     tracesContexts.removeLast();
     final FlatTrace.Context nextContext = tracesContexts.peekLast();
     if (nextContext != null) {
