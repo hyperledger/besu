@@ -21,10 +21,10 @@ import java.util.function.LongUnaryOperator;
  * Helper static methods to facilitate RLP decoding <b>within this package</b>. Neither this class
  * nor any of its method are meant to be exposed publicly, they are too low level.
  */
-public class RLPDecodingHelpers {
+class RLPDecodingHelpers {
 
   /** The kind of items an RLP item can be. */
-  public enum Kind {
+  enum Kind {
     BYTE_ELEMENT,
     SHORT_ELEMENT,
     LONG_ELEMENT,
