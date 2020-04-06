@@ -114,9 +114,20 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
-    if (!traceFrames.isEmpty()) {
-      haltReason.ifPresent(traceFrames.get(traceFrames.size() - 1)::addExceptionalHaltReason);
-    }
+    haltReason.ifPresent(
+        exceptionalHaltReason -> {
+          if (!traceFrames.isEmpty()) {
+            TraceFrame foundTraceFrame = null;
+            int frameIndex = traceFrames.size() - 1;
+            do {
+              if (!traceFrames.get(frameIndex).getOpcode().equals("RETURN")) {
+                foundTraceFrame = traceFrames.get(frameIndex);
+              }
+              frameIndex--;
+            } while (foundTraceFrame == null);
+            foundTraceFrame.addExceptionalHaltReason(exceptionalHaltReason);
+          }
+        });
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {

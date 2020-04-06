@@ -128,17 +128,15 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         contract.setNonce(initialContractNonce);
         contract.clearStorage();
         frame.setState(MessageFrame.State.CODE_EXECUTING);
-        operationTracer.traceAccountCreationResult(frame, Optional.empty());
       }
     } catch (ModificationNotAllowedException ex) {
       LOG.trace("Contract creation error: illegal modification not allowed from private state");
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-      operationTracer.traceAccountCreationResult(frame, Optional.empty());
     }
   }
 
   @Override
-  protected void codeSuccess(final MessageFrame frame) {
+  protected void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
 
     final Gas depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
@@ -153,6 +151,8 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       if (requireCodeDepositToSucceed) {
         LOG.trace("Contract creation error: insufficient funds for code deposit");
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        operationTracer.traceAccountCreationResult(
+            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       }

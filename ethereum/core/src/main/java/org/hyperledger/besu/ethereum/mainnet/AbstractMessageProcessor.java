@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
  * </tr>
  * <tr>
  * <td>{@link MessageFrame.State#CODE_SUCCESS}</td>
- * <td>{@link AbstractMessageProcessor#codeSuccess(MessageFrame)}</td>
+ * <td>{@link AbstractMessageProcessor#codeSuccess(MessageFrame, OperationTracer)}</td>
  * </tr>
  * <tr>
  * <td>{@link MessageFrame.State#COMPLETED_FAILED}</td>
@@ -81,7 +81,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  protected abstract void codeSuccess(MessageFrame frame);
+  protected abstract void codeSuccess(MessageFrame frame, final OperationTracer operationTracer);
 
   private void clearAccumulatedStateBesidesGasAndOutput(final MessageFrame frame) {
     final Collection<Address> addressesToForceCommit =
@@ -174,7 +174,7 @@ public abstract class AbstractMessageProcessor {
       }
 
       if (frame.getState() == MessageFrame.State.CODE_SUCCESS) {
-        codeSuccess(frame);
+        codeSuccess(frame, operationTracer);
       }
     }
 

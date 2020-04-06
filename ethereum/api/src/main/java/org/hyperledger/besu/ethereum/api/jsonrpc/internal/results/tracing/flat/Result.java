@@ -69,6 +69,10 @@ public class Result {
       return this;
     }
 
+    public String getGasUsed() {
+      return gasUsed;
+    }
+
     public Builder output(final String output) {
       this.output = output;
       return this;
