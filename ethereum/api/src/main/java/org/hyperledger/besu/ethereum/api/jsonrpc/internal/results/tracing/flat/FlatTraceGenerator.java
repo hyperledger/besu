@@ -293,11 +293,7 @@ public class FlatTraceGenerator {
               context ->
                   !tracesContexts.getFirst().equals(context)
                       && !tracesContexts.getLast().equals(context))
-          .forEach(
-              context -> {
-                System.out.println("context " + context.getBuilder().getBlockNumber());
-                context.decGasUsed(callStipend);
-              });
+          .forEach(context -> context.decGasUsed(callStipend));
     }
 
     final Bytes outputData = traceFrame.getOutputData();

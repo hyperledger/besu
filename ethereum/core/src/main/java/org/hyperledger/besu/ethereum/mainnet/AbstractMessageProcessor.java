@@ -80,6 +80,7 @@ public abstract class AbstractMessageProcessor {
    * Gets called when the message frame code executes successfully.
    *
    * @param frame The message frame
+   * @param operationTracer The tracer recording execution
    */
   protected abstract void codeSuccess(MessageFrame frame, final OperationTracer operationTracer);
 
