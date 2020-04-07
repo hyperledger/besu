@@ -21,8 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
@@ -45,10 +44,10 @@ public class PeerDiscoveryTableRefreshTest {
 
   @Test
   public void tableRefreshSingleNode() {
-    final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keypairs);
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
     final DiscoveryPeer localPeer = peers.get(0);
-    final KeyPair localKeyPair = keypairs.get(0);
+    final NodeKey localKeyPair = nodeKeys.get(0);
 
     // Create and start the PeerDiscoveryController
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
@@ -56,7 +55,7 @@ public class PeerDiscoveryTableRefreshTest {
     final PeerDiscoveryController controller =
         spy(
             PeerDiscoveryController.builder()
-                .keypair(localKeyPair)
+                .nodeKey(localKeyPair)
                 .localPeer(localPeer)
                 .peerTable(new PeerTable(localPeer.getId()))
                 .outboundMessageHandler(outboundMessageHandler)
@@ -71,7 +70,7 @@ public class PeerDiscoveryTableRefreshTest {
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
         PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
-    final Packet pingPacket = Packet.create(PacketType.PING, ping, keypairs.get(1));
+    final Packet pingPacket = Packet.create(PacketType.PING, ping, nodeKeys.get(1));
     controller.onMessage(pingPacket, peers.get(1));
 
     // Wait until the controller has added the newly found peer.
@@ -80,7 +79,7 @@ public class PeerDiscoveryTableRefreshTest {
     // Simulate a PONG message from peer 0.
     final PongPacketData pongPacketData =
         PongPacketData.create(localPeer.getEndpoint(), pingPacket.getHash());
-    final Packet pongPacket = Packet.create(PacketType.PONG, pongPacketData, keypairs.get(0));
+    final Packet pongPacket = Packet.create(PacketType.PONG, pongPacketData, nodeKeys.get(0));
 
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     for (int i = 0; i < 5; i++) {
