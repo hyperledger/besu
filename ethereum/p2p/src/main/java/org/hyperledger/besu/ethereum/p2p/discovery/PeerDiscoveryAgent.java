@@ -90,7 +90,7 @@ public abstract class PeerDiscoveryAgent {
       final NatService natService,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
-    checkArgument(nodeKey != null, "cryptoOps cannot be null");
+    checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
 
     validateConfiguration(config);

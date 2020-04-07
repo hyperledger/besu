@@ -691,7 +691,7 @@ public class PeerDiscoveryController {
     }
 
     private void validate() {
-      validateRequiredDependency(nodeKey, "KeyPair");
+      validateRequiredDependency(nodeKey, "nodeKey");
       validateRequiredDependency(localPeer, "LocalPeer");
       validateRequiredDependency(timerUtil, "TimerUtil");
       validateRequiredDependency(workerExecutor, "AsyncExecutor");
