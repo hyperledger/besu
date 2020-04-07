@@ -51,7 +51,7 @@ public class FlatTraceGenerator {
 
   private static final String ZERO_ADDRESS_STRING = Address.ZERO.toHexString();
 
-  private static final int SUB_GAS_CAP_DIVISOR = 64;
+  private static final int EIP_150_DIVISOR = 64;
 
   /**
    * Generates a stream of {@link Trace} from the passed {@link TransactionTrace} data.
@@ -288,7 +288,7 @@ public class FlatTraceGenerator {
         computeGasUsed(tracesContexts, currentContext, transactionTrace, traceFrame));
 
     if ("STOP".equals(traceFrame.getOpcode()) && resultBuilder.isGasUsedEmpty()) {
-      long callStipend =
+      final long callStipend =
           protocolSchedule
               .getByBlockNumber(block.getHeader().getNumber())
               .getGasCalculator()
@@ -518,8 +518,7 @@ public class FlatTraceGenerator {
       final Gas currentGas = traceFrame.getGasRemaining();
       if (currentGas.compareTo(gasNeeded) >= 0) {
         final Gas gasRemaining = currentGas.minus(gasNeeded);
-        return gasRemaining.minus(
-            Gas.of(Math.floorDiv(gasRemaining.toLong(), SUB_GAS_CAP_DIVISOR)));
+        return gasRemaining.minus(Gas.of(Math.floorDiv(gasRemaining.toLong(), EIP_150_DIVISOR)));
       }
     }
     return nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO);
