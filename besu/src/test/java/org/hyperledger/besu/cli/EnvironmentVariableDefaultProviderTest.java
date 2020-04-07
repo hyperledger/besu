@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.junit.Test;
 import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.Model.PositionalParamSpec;
 
 public class EnvironmentVariableDefaultProviderTest {
 
@@ -75,5 +76,13 @@ public class EnvironmentVariableDefaultProviderTest {
     environment.put("PANTHEON_ENV_VAR_SET", "def");
     assertThat(provider.defaultValue(OptionSpec.builder("--env-var", "--env-var-set").build()))
         .isEqualTo("abc");
+  }
+
+  @Test
+  public void shouldReturnNullForPositionalParameter() {
+    environment.put("BESU_KEY", "abc");
+    final PositionalParamSpec.Builder positional =
+        PositionalParamSpec.builder().descriptionKey("key");
+    assertThat(provider.defaultValue(positional.build())).isNull();
   }
 }

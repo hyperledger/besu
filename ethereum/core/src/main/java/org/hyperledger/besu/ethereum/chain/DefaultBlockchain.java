@@ -288,7 +288,8 @@ public class DefaultBlockchain implements MutableBlockchain {
         return BlockAddedEvent.createForHeadAdvancement(
             newBlock,
             LogWithMetadata.generate(
-                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false));
+                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
+            blockWithReceipts.getReceipts());
       } else if (totalDifficulty.compareTo(blockchainStorage.getTotalDifficulty(chainHead).get())
           > 0) {
         // New block represents a chain reorganization
@@ -345,7 +346,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       newTransactions.put(
           blockHash, currentNewChainWithReceipts.getBlock().getBody().getTransactions());
       addAddedLogsWithMetadata(addedLogsWithMetadata, currentNewChainWithReceipts);
-      notifyChainReorgBlockAdded(currentNewChainWithReceipts.getHeader());
+      notifyChainReorgBlockAdded(currentNewChainWithReceipts);
       currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
     }
 
@@ -401,6 +402,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         newChainHeadWithReceipts.getBlock(),
         newTransactions.values().stream().flatMap(Collection::stream).collect(toList()),
         removedTransactions,
+        newChainHeadWithReceipts.getReceipts(),
         Stream.concat(removedLogsWithMetadata.stream(), addedLogsWithMetadata.stream())
             .collect(Collectors.toUnmodifiableList()),
         currentNewChainWithReceipts.getBlock().getHash());
@@ -569,7 +571,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     blockAddedObservers.forEach(observer -> observer.onBlockAdded(event, this));
   }
 
-  private void notifyChainReorgBlockAdded(final BlockHeader blockHeader) {
-    blockReorgObservers.forEach(observer -> observer.onBlockAdded(blockHeader, this));
+  private void notifyChainReorgBlockAdded(final BlockWithReceipts blockWithReceipts) {
+    blockReorgObservers.forEach(observer -> observer.onBlockAdded(blockWithReceipts, this));
   }
 }

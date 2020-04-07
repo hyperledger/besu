@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.FutureUtils;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
@@ -118,7 +117,7 @@ public class RlpxAgent {
 
   public CompletableFuture<Integer> start() {
     if (!started.compareAndSet(false, true)) {
-      return FutureUtils.completedExceptionally(
+      return CompletableFuture.failedFuture(
           new IllegalStateException(
               "Unable to start an already started " + getClass().getSimpleName()));
     }
@@ -141,7 +140,7 @@ public class RlpxAgent {
 
   public CompletableFuture<Void> stop() {
     if (!started.get() || !stopped.compareAndSet(false, true)) {
-      return FutureUtils.completedExceptionally(
+      return CompletableFuture.failedFuture(
           new IllegalStateException("Illegal attempt to stop " + getClass().getSimpleName()));
     }
 
@@ -196,7 +195,7 @@ public class RlpxAgent {
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
     // Check if we're ready to establish connections
     if (!localNode.isReady()) {
-      return FutureUtils.completedExceptionally(
+      return CompletableFuture.failedFuture(
           new IllegalStateException(
               "Cannot connect before "
                   + this.getClass().getSimpleName()
@@ -208,7 +207,7 @@ public class RlpxAgent {
       final String errorMsg =
           "Attempt to connect to peer with no listening port: " + enode.toString();
       LOG.warn(errorMsg);
-      return FutureUtils.completedExceptionally((new IllegalArgumentException(errorMsg)));
+      return CompletableFuture.failedFuture((new IllegalArgumentException(errorMsg)));
     }
 
     // Shortcut checks if we're already connected
@@ -223,12 +222,11 @@ public class RlpxAgent {
               + maxConnections
               + "). Cannot connect to peer: "
               + peer;
-      return FutureUtils.completedExceptionally(new IllegalStateException(errorMsg));
+      return CompletableFuture.failedFuture(new IllegalStateException(errorMsg));
     }
     // Check permissions
     if (!peerPermissions.allowNewOutboundConnectionTo(peer)) {
-      return FutureUtils.completedExceptionally(
-          peerPermissions.newOutboundConnectionException(peer));
+      return CompletableFuture.failedFuture(peerPermissions.newOutboundConnectionException(peer));
     }
 
     // Initiate connection or return existing connection
