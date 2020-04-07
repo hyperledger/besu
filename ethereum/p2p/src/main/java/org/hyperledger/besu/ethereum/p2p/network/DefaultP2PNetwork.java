@@ -17,7 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.network;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -145,7 +146,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    *
    * @param localNode A representation of the local node
    * @param peerDiscoveryAgent The agent responsible for discovering peers on the network.
-   * @param keyPair This node's keypair.
+   * @param nodeKey The node key through which cryptographic operations can be performed
    * @param config The network configuration to use.
    * @param peerPermissions An object that determines whether peers are allowed to connect
    * @param natService The NAT environment manager.
@@ -157,7 +158,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final MutableLocalNode localNode,
       final PeerDiscoveryAgent peerDiscoveryAgent,
       final RlpxAgent rlpxAgent,
-      final SECP256K1.KeyPair keyPair,
+      final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
@@ -171,7 +172,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.natService = natService;
     this.maintainedPeers = maintainedPeers;
 
-    this.nodeId = keyPair.getPublicKey().getEncodedBytes();
+    this.nodeId = nodeKey.getPublicKey().getEncodedBytes();
     this.peerPermissions = peerPermissions;
 
     final int maxPeers = config.getRlpx().getMaxPeers();
@@ -421,7 +422,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           localNode,
           peerDiscoveryAgent,
           rlpxAgent,
-          keyPair,
+          new BouncyCastleNodeKey(keyPair),
           config,
           peerPermissions,
           natService,
@@ -442,7 +443,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx, keyPair, config.getDiscovery(), peerPermissions, natService, metricsSystem);
+          vertx,
+          new BouncyCastleNodeKey(keyPair),
+          config.getDiscovery(),
+          peerPermissions,
+          natService,
+          metricsSystem);
     }
 
     private RlpxAgent createRlpxAgent(

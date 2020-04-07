@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
@@ -48,16 +49,16 @@ public class Packet {
   private final Signature signature;
   private final PublicKey publicKey;
 
-  private Packet(final PacketType type, final PacketData data, final SECP256K1.KeyPair keyPair) {
+  private Packet(final PacketType type, final PacketData data, final NodeKey nodeKey) {
     this.type = type;
     this.data = data;
 
     final Bytes typeBytes = Bytes.of(this.type.getValue());
     final Bytes dataBytes = RLP.encode(this.data::writeTo);
 
-    this.signature = SECP256K1.sign(keccak256(Bytes.wrap(typeBytes, dataBytes)), keyPair);
+    this.signature = nodeKey.sign(keccak256(Bytes.wrap(typeBytes, dataBytes)));
     this.hash = keccak256(Bytes.concatenate(encodeSignature(signature), typeBytes, dataBytes));
-    this.publicKey = keyPair.getPublicKey();
+    this.publicKey = nodeKey.getPublicKey();
   }
 
   private Packet(final PacketType packetType, final PacketData packetData, final Bytes message) {
@@ -87,8 +88,8 @@ public class Packet {
   }
 
   public static Packet create(
-      final PacketType packetType, final PacketData packetData, final SECP256K1.KeyPair keyPair) {
-    return new Packet(packetType, packetData, keyPair);
+      final PacketType packetType, final PacketData packetData, final NodeKey nodeKey) {
+    return new Packet(packetType, packetData, nodeKey);
   }
 
   public static Packet decode(final Buffer message) {
