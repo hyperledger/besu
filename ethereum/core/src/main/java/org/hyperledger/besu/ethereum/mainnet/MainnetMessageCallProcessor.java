@@ -69,7 +69,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
   }
 
   @Override
-  protected void codeSuccess(final MessageFrame frame) {
+  protected void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     LOG.trace(
         "Successful message call of {} to {} (Gas remaining: {})",
         frame.getSenderAddress(),

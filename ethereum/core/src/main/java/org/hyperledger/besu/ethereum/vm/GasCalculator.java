@@ -176,6 +176,8 @@ public interface GasCalculator {
       Wei transferValue,
       Account recipient);
 
+  Gas getAdditionalCallStipend();
+
   /**
    * Returns the amount of gas parent will provide its child CALL.
    *

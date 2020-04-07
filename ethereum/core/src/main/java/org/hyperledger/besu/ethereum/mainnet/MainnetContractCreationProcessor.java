@@ -20,12 +20,14 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.logging.log4j.LogManager;
@@ -119,6 +121,8 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
             "Contract creation error: account as already been created for address {}",
             frame.getContractAddress());
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        operationTracer.traceAccountCreationResult(
+            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         contract.incrementBalance(frame.getValue());
         contract.setNonce(initialContractNonce);
@@ -132,7 +136,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
   }
 
   @Override
-  protected void codeSuccess(final MessageFrame frame) {
+  protected void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
 
     final Gas depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
@@ -147,6 +151,8 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       if (requireCodeDepositToSucceed) {
         LOG.trace("Contract creation error: insufficient funds for code deposit");
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        operationTracer.traceAccountCreationResult(
+            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       }
