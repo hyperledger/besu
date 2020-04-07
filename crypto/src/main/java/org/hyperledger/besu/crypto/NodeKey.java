@@ -12,25 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.support;
+package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
+import org.hyperledger.besu.crypto.SECP256K1.Signature;
 
-public class NodeParams {
-  private final Address address;
-  private final NodeKey nodeKey;
+import org.apache.tuweni.bytes.Bytes32;
 
-  public NodeParams(final Address address, final NodeKey nodeKey) {
-    this.address = address;
-    this.nodeKey = nodeKey;
-  }
+public interface NodeKey {
 
-  public Address getAddress() {
-    return address;
-  }
+  Signature sign(Bytes32 dataHash);
 
-  public NodeKey getNodeKey() {
-    return nodeKey;
-  }
+  PublicKey getPublicKey();
 }

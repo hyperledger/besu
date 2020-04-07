@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.ibft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.time.Clock;
@@ -33,7 +33,7 @@ import java.util.Collection;
 /** This is the full data set, or context, required for many of the aspects of the IBFT workflow. */
 public class IbftFinalState {
   private final VoteTallyCache voteTallyCache;
-  private final KeyPair nodeKeys;
+  private final NodeKey nodeKey;
   private final Address localAddress;
   private final ProposerSelector proposerSelector;
   private final RoundTimer roundTimer;
@@ -45,7 +45,7 @@ public class IbftFinalState {
 
   public IbftFinalState(
       final VoteTallyCache voteTallyCache,
-      final KeyPair nodeKeys,
+      final NodeKey nodeKey,
       final Address localAddress,
       final ProposerSelector proposerSelector,
       final ValidatorMulticaster validatorMulticaster,
@@ -55,7 +55,7 @@ public class IbftFinalState {
       final MessageFactory messageFactory,
       final Clock clock) {
     this.voteTallyCache = voteTallyCache;
-    this.nodeKeys = nodeKeys;
+    this.nodeKey = nodeKey;
     this.localAddress = localAddress;
     this.proposerSelector = proposerSelector;
     this.roundTimer = roundTimer;
@@ -74,8 +74,8 @@ public class IbftFinalState {
     return voteTallyCache.getVoteTallyAtHead().getValidators();
   }
 
-  public KeyPair getNodeKeys() {
-    return nodeKeys;
+  public NodeKey getNodeKey() {
+    return nodeKey;
   }
 
   public Address getLocalAddress() {
