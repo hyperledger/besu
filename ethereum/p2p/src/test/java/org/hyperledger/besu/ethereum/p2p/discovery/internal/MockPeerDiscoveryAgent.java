@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -40,12 +40,12 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   private boolean isRunning = false;
 
   public MockPeerDiscoveryAgent(
-      final KeyPair keyPair,
+      final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService) {
-    super(keyPair, config, peerPermissions, natService, new NoOpMetricsSystem());
+    super(nodeKey, config, peerPermissions, natService, new NoOpMetricsSystem());
     this.agentNetwork = agentNetwork;
   }
 
@@ -128,8 +128,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
     return CompletableFuture.completedFuture(null);
   }
 
-  public KeyPair getKeyPair() {
-    return keyPair;
+  public NodeKey getNodeKey() {
+    return nodeKey;
   }
 
   public static class IncomingPacket {

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.BlockingAsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockTimerUtil;
@@ -44,17 +44,17 @@ public class PeerDiscoveryTimestampsTest {
   @Test
   public void lastSeenAndFirstDiscoveredTimestampsUpdatedOnMessage() {
     // peer[0] => controller // peer[1] => sender
-    final List<KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keypairs);
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
 
     final MockPeerDiscoveryAgent agent = mock(MockPeerDiscoveryAgent.class);
     when(agent.getAdvertisedPeer()).thenReturn(Optional.of(peers.get(0)));
     final DiscoveryPeer localPeer = peers.get(0);
-    final KeyPair localKeyPair = keypairs.get(0);
+    final NodeKey localNodeKey = nodeKeys.get(0);
 
     final PeerDiscoveryController controller =
         PeerDiscoveryController.builder()
-            .keypair(localKeyPair)
+            .nodeKey(localNodeKey)
             .localPeer(localPeer)
             .peerTable(new PeerTable(agent.getAdvertisedPeer().get().getId()))
             .timerUtil(new MockTimerUtil())
@@ -67,7 +67,7 @@ public class PeerDiscoveryTimestampsTest {
 
     final PingPacketData ping =
         PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
-    final Packet packet = Packet.create(PacketType.PING, ping, keypairs.get(1));
+    final Packet packet = Packet.create(PacketType.PING, ping, nodeKeys.get(1));
 
     controller.onMessage(packet, peers.get(1));
 

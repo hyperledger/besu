@@ -92,7 +92,12 @@ public class BesuNodeFactory {
 
   public BesuNode createArchiveNode(final String name) throws IOException {
     return create(
-        new BesuNodeConfigurationBuilder().name(name).jsonRpcEnabled().webSocketEnabled().build());
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcTxPool()
+            .webSocketEnabled()
+            .build());
   }
 
   public BesuNode createNode(

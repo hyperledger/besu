@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -40,7 +39,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -128,7 +126,7 @@ public class PrivateGroupRehydrationBlockProcessor {
         LOG.debug(
             "Pre-rehydrate root hash: {} for tx {}",
             disposablePrivateState.rootHash(),
-            privateTransaction.getHash());
+            transaction.getHash());
 
         final PrivateTransactionProcessor.Result privateResult =
             privateTransactionProcessor.processTransaction(
@@ -136,6 +134,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 worldStateUpdater.updater(),
                 privateStateUpdater,
                 blockHeader,
+                transaction.getHash(),
                 privateTransaction,
                 miningBeneficiary,
                 OperationTracer.NO_TRACING,
@@ -208,8 +207,6 @@ public class PrivateGroupRehydrationBlockProcessor {
         privateStateUpdater,
         privateStateStorage);
 
-    final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
-
     final int txStatus =
         result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
 
@@ -217,7 +214,8 @@ public class PrivateGroupRehydrationBlockProcessor {
         new PrivateTransactionReceipt(
             txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
 
-    privateStateUpdater.putTransactionReceipt(currentBlockHash, txHash, privateTransactionReceipt);
+    privateStateUpdater.putTransactionReceipt(
+        currentBlockHash, commitmentHash, privateTransactionReceipt);
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).get();
     if (!privacyGroupHeadBlockMap.contains(Bytes32.wrap(privacyGroupId), currentBlockHash)) {

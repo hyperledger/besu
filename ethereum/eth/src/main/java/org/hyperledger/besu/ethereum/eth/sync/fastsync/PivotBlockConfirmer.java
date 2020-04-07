@@ -158,7 +158,7 @@ class PivotBlockConfirmer<C> {
   private CompletableFuture<BlockHeader> executePivotQuery(final long blockNumber) {
     if (isCancelled.get() || result.isDone()) {
       // Stop loop if this task is done
-      return FutureUtils.completedExceptionally(new CancellationException());
+      return CompletableFuture.failedFuture(new CancellationException());
     }
 
     final Optional<RetryingGetHeaderFromPeerByNumberTask> query = createPivotQuery(blockNumber);

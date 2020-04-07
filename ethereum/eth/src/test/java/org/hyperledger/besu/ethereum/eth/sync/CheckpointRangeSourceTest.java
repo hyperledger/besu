@@ -19,7 +19,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -95,7 +94,7 @@ public class CheckpointRangeSourceTest {
   public void shouldNotHaveNextWhenNoMoreCheckpointsAvailableAndRetryLimitReached() {
     when(syncTargetChecker.shouldContinueDownloadingFromSyncTarget(any(), any())).thenReturn(true);
     when(checkpointFetcher.getNextCheckpointHeaders(peer, commonAncestor))
-        .thenReturn(completedExceptionally(new TimeoutException()));
+        .thenReturn(CompletableFuture.failedFuture(new TimeoutException()));
 
     for (int i = 1; i <= CHECKPOINT_TIMEOUTS_PERMITTED; i++) {
       assertThat(source).hasNext();
@@ -140,7 +139,7 @@ public class CheckpointRangeSourceTest {
   public void shouldDelayBeforeRetryingRequestForCheckpointHeadersAfterFailure() {
     when(syncTargetChecker.shouldContinueDownloadingFromSyncTarget(any(), any())).thenReturn(true);
     when(checkpointFetcher.getNextCheckpointHeaders(peer, commonAncestor))
-        .thenReturn(completedExceptionally(new RuntimeException("Nope")));
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Nope")));
 
     assertThat(source.next()).isNull();
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, commonAncestor);
@@ -151,10 +150,10 @@ public class CheckpointRangeSourceTest {
   public void shouldResetCheckpointFailureCountWhenMoreCheckpointsReceived() {
     when(syncTargetChecker.shouldContinueDownloadingFromSyncTarget(any(), any())).thenReturn(true);
     when(checkpointFetcher.getNextCheckpointHeaders(any(), any()))
-        .thenReturn(completedExceptionally(new TimeoutException()))
-        .thenReturn(completedExceptionally(new TimeoutException()))
+        .thenReturn(CompletableFuture.failedFuture(new TimeoutException()))
+        .thenReturn(CompletableFuture.failedFuture(new TimeoutException()))
         .thenReturn(completedFuture(singletonList(header(15))))
-        .thenReturn(completedExceptionally(new TimeoutException()));
+        .thenReturn(CompletableFuture.failedFuture(new TimeoutException()));
 
     assertThat(source.next()).isNull(); // Fail
     assertThat(source.next()).isNull(); // Fail
@@ -234,7 +233,7 @@ public class CheckpointRangeSourceTest {
   @Test
   public void shouldSendNewRequestIfRequestForHeadersFails() {
     when(checkpointFetcher.getNextCheckpointHeaders(peer, commonAncestor))
-        .thenReturn(completedExceptionally(new NoAvailablePeersException()))
+        .thenReturn(CompletableFuture.failedFuture(new NoAvailablePeersException()))
         .thenReturn(completedFuture(asList(header(15), header(20))));
 
     // Returns null when the first request fails

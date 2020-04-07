@@ -62,8 +62,7 @@ public class DownloadHeadersStepTest {
 
   @Before
   public void setUp() {
-    ethProtocolManager =
-        EthProtocolManagerTestUtil.create(blockchain, protocolContext.getWorldStateArchive());
+    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
     downloader =
         new DownloadHeadersStep<>(
             protocolSchedule,

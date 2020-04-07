@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.4.3 
+
+### Additions and Improvements
+- Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed 
+in 1.5.0 release. 
+
+### Critical Issue for Privacy Users 
+
+A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4 
+or earlier has been identified. If you have a network with private transaction created using v1.3.4 
+or earlier, please read the following and take the appropriate steps: 
+
+https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
+
+### Additions and Improvements
+
+- Added `eth/65` support [\#608](https://github.com/hyperledger/besu/pull/608)
+
 ## 1.4.2
 
 ### Additions and Improvements

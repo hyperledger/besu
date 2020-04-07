@@ -32,6 +32,8 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -61,8 +63,8 @@ import org.junit.Test;
 
 public class CliqueBlockCreatorTest {
 
-  private final KeyPair proposerKeyPair = KeyPair.generate();
-  private final Address proposerAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
+  private final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+  private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
   private final KeyPair otherKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -80,7 +82,7 @@ public class CliqueBlockCreatorTest {
   public void setup() {
     protocolSchedule =
         CliqueProtocolSchedule.create(
-            GenesisConfigFile.DEFAULT.getConfigOptions(), proposerKeyPair, false);
+            GenesisConfigFile.DEFAULT.getConfigOptions(), proposerNodeKey, false);
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
@@ -122,12 +124,13 @@ public class CliqueBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
-            proposerKeyPair,
+            proposerNodeKey,
             Wei.ZERO,
             blockchain.getChainHeadHeader(),
             epochManager);
@@ -153,12 +156,13 @@ public class CliqueBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
-            proposerKeyPair,
+            proposerNodeKey,
             Wei.ZERO,
             blockchain.getChainHeadHeader(),
             epochManager);
@@ -183,12 +187,13 @@ public class CliqueBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
-            proposerKeyPair,
+            proposerNodeKey,
             Wei.ZERO,
             blockchain.getChainHeadHeader(),
             epochManager);
@@ -216,12 +221,13 @@ public class CliqueBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
-            proposerKeyPair,
+            proposerNodeKey,
             Wei.ZERO,
             blockchain.getChainHeadHeader(),
             epochManager);

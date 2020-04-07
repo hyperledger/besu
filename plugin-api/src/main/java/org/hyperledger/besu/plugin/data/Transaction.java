@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -52,6 +54,27 @@ public interface Transaction {
    * @return the quantity of Wei per gas unit paid.
    */
   Quantity getGasPrice();
+
+  /**
+   * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in
+   * EIP-1559.
+   *
+   * @return the quantity of Wei for gas premium.
+   */
+  @Unstable
+  default Optional<Quantity> getGasPremium() {
+    return Optional.empty();
+  }
+
+  /**
+   * A scalar value equal to the number of Wei to be paid in total, as specified in EIP-1559.
+   *
+   * @return the quantity of Wei for fee cap.
+   */
+  @Unstable
+  default Optional<Quantity> getFeeCap() {
+    return Optional.empty();
+  }
 
   /**
    * A scalar value equal to the maximum amount of gas that should be used in executing this
@@ -147,4 +170,24 @@ public interface Transaction {
    * @return the transaction payload
    */
   Bytes getPayload();
+
+  /**
+   * Returns whether or not the transaction is a legacy transaction.
+   *
+   * @return true if legacy transaction, false otherwise
+   */
+  @Unstable
+  default boolean isFrontierTransaction() {
+    return true;
+  }
+
+  /**
+   * Returns whether or not the transaction is an EIP-1559 transaction.
+   *
+   * @return true if EIP-1559 transaction, false otherwise
+   */
+  @Unstable
+  default boolean isEIP1559Transaction() {
+    return false;
+  }
 }

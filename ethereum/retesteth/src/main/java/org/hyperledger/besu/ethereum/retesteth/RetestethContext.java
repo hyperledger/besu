@@ -163,7 +163,7 @@ public class RetestethContext {
     final EthPeers ethPeers = new EthPeers("reteseth", retestethClock, metricsSystem);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
-    ethScheduler = new EthScheduler(1, 1, 1, metricsSystem);
+    ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, new EthMessages(), ethScheduler);
 
     final TransactionPoolConfiguration transactionPoolConfiguration =

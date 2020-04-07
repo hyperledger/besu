@@ -33,7 +33,7 @@ public class PrivDistributeTransactionTransaction implements Transaction<String>
           .privDistributeTransaction(signedPrivateTransaction)
           .send()
           .getTransactionKey();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }

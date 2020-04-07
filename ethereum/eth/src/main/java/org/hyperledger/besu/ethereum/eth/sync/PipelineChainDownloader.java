@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -134,7 +133,7 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
 
     logDownloadFailure("Chain download failed.", error);
     // Propagate the error out, terminating this chain download.
-    return completedExceptionally(error);
+    return CompletableFuture.failedFuture(error);
   }
 
   private void logDownloadFailure(final String message, final Throwable error) {
@@ -152,7 +151,8 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
 
   private synchronized CompletionStage<Void> startDownloadForSyncTarget(final SyncTarget target) {
     if (cancelled.get()) {
-      return completedExceptionally(new CancellationException("Chain download was cancelled"));
+      return CompletableFuture.failedFuture(
+          new CancellationException("Chain download was cancelled"));
     }
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
     currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);

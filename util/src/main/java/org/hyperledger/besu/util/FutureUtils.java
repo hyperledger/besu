@@ -25,19 +25,6 @@ import java.util.function.Supplier;
 public class FutureUtils {
 
   /**
-   * Creates a {@link CompletableFuture} that is exceptionally completed by <code>error</code>.
-   *
-   * @param error the error to exceptionally complete the future with
-   * @param <T> the type of CompletableFuture
-   * @return a CompletableFuture exceptionally completed by <code>error</code>.
-   */
-  public static <T> CompletableFuture<T> completedExceptionally(final Throwable error) {
-    final CompletableFuture<T> future = new CompletableFuture<>();
-    future.completeExceptionally(error);
-    return future;
-  }
-
-  /**
    * Returns a new CompletionStage that, when the provided stage completes exceptionally, is
    * executed with the provided stage's exception as the argument to the supplied function.
    * Otherwise the returned stage completes successfully with the same value as the provided stage.
