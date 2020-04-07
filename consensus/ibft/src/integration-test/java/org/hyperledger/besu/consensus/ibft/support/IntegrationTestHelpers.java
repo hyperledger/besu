@@ -22,8 +22,7 @@ import org.hyperledger.besu.consensus.ibft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 
@@ -33,16 +32,15 @@ import java.util.stream.Collectors;
 public class IntegrationTestHelpers {
 
   public static SignedData<CommitPayload> createSignedCommitPayload(
-      final ConsensusRoundIdentifier roundId, final Block block, final KeyPair signingKeyPair) {
+      final ConsensusRoundIdentifier roundId, final Block block, final NodeKey nodeKey) {
 
     final IbftExtraData extraData = IbftExtraData.decode(block.getHeader());
 
     final Signature commitSeal =
-        SECP256K1.sign(
-            IbftBlockHashing.calculateDataHashForCommittedSeal(block.getHeader(), extraData),
-            signingKeyPair);
+        nodeKey.sign(
+            IbftBlockHashing.calculateDataHashForCommittedSeal(block.getHeader(), extraData));
 
-    final MessageFactory messageFactory = new MessageFactory(signingKeyPair);
+    final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
     return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
   }

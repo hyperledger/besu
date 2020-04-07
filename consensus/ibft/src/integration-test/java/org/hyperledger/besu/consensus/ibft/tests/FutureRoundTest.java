@@ -25,7 +25,6 @@ import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.time.Clock;
@@ -107,7 +106,7 @@ public class FutureRoundTest {
         localNodeMessageFactory.createCommit(
             futureRoundId,
             futureBlock.getHash(),
-            SECP256K1.sign(futureBlock.getHash(), context.getLocalNodeParams().getNodeKeyPair()));
+            context.getLocalNodeParams().getNodeKey().sign(futureBlock.getHash()));
     peers.verifyMessagesReceived(expectedCommit);
 
     // requires 1 more commit and the blockchain will progress

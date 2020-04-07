@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -28,15 +28,13 @@ public class PoaQueryServiceImpl implements PoaQueryService, PoAMetricsService {
 
   private final BlockInterface blockInterface;
   private final Blockchain blockchain;
-  private final KeyPair localNodeKeypair;
+  private final NodeKey nodeKey;
 
   public PoaQueryServiceImpl(
-      final BlockInterface blockInterface,
-      final Blockchain blockchain,
-      final KeyPair localNodeKeypair) {
+      final BlockInterface blockInterface, final Blockchain blockchain, final NodeKey nodeKey) {
     this.blockInterface = blockInterface;
     this.blockchain = blockchain;
-    this.localNodeKeypair = localNodeKeypair;
+    this.nodeKey = nodeKey;
   }
 
   @Override
@@ -55,6 +53,6 @@ public class PoaQueryServiceImpl implements PoaQueryService, PoAMetricsService {
 
   @Override
   public Address getLocalSignerAddress() {
-    return org.hyperledger.besu.ethereum.core.Address.extract(localNodeKeypair.getPublicKey());
+    return org.hyperledger.besu.ethereum.core.Address.extract(nodeKey.getPublicKey());
   }
 }

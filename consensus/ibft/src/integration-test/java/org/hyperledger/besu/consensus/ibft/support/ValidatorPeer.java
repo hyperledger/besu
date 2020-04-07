@@ -30,8 +30,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -51,7 +50,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class ValidatorPeer {
 
   private final Address nodeAddress;
-  private final KeyPair nodeKeys;
+  private final NodeKey nodeKey;
   private final MessageFactory messageFactory;
   private final PeerConnection peerConnection;
   private final List<MessageData> receivedMessages = Lists.newArrayList();
@@ -63,10 +62,10 @@ public class ValidatorPeer {
       final NodeParams nodeParams,
       final MessageFactory messageFactory,
       final EventMultiplexer localEventMultiplexer) {
-    this.nodeKeys = nodeParams.getNodeKeyPair();
+    this.nodeKey = nodeParams.getNodeKey();
     this.nodeAddress = nodeParams.getAddress();
     this.messageFactory = messageFactory;
-    final Bytes nodeId = nodeKeys.getPublicKey().getEncodedBytes();
+    final Bytes nodeId = nodeKey.getPublicKey().getEncodedBytes();
     this.peerConnection = StubbedPeerConnection.create(nodeId);
     this.localEventMultiplexer = localEventMultiplexer;
   }
@@ -75,8 +74,8 @@ public class ValidatorPeer {
     return nodeAddress;
   }
 
-  public KeyPair getNodeKeys() {
-    return nodeKeys;
+  public NodeKey getnodeKey() {
+    return nodeKey;
   }
 
   public PeerConnection getPeerConnection() {
@@ -97,11 +96,11 @@ public class ValidatorPeer {
   }
 
   public Signature getBlockSignature(final Hash digest) {
-    return SECP256K1.sign(digest, nodeKeys);
+    return nodeKey.sign(digest);
   }
 
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
-    final Signature commitSeal = SECP256K1.sign(digest, nodeKeys);
+    final Signature commitSeal = nodeKey.sign(digest);
 
     return injectCommit(rId, digest, commitSeal);
   }
@@ -151,10 +150,6 @@ public class ValidatorPeer {
 
   public MessageFactory getMessageFactory() {
     return messageFactory;
-  }
-
-  public KeyPair getNodeKeyPair() {
-    return nodeKeys;
   }
 
   public void updateEstimatedChainHeight(final long estimatedChainHeight) {
