@@ -85,7 +85,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             protocolContext,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
-            nodeKeys,
+            new BouncyCastleNodeKey(nodeKeys),
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
@@ -111,7 +111,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   protected ProtocolSchedule<CliqueContext> createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
-        nodeKeys,
+        new BouncyCastleNodeKey(nodeKeys),
         privacyParameters,
         isRevertReasonEnabled);
   }
