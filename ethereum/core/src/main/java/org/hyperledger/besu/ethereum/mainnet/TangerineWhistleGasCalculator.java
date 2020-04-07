@@ -93,7 +93,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
     frame.decrementRemainingGas(gasCap);
 
     if (transfersValue) {
-      return gasCap.plus(additionalCallStipend());
+      return gasCap.plus(getAdditionalCallStipend());
     } else {
       return gasCap;
     }
