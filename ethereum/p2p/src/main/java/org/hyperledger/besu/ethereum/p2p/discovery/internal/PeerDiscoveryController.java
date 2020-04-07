@@ -20,8 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent;
@@ -115,7 +114,7 @@ public class PeerDiscoveryController {
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
-  private final SECP256K1.KeyPair keypair;
+  private final NodeKey nodeKey;
   // The peer representation of this node
   private final DiscoveryPeer localPeer;
   private final OutboundMessageHandler outboundMessageHandler;
@@ -143,7 +142,7 @@ public class PeerDiscoveryController {
   private RecursivePeerRefreshState recursivePeerRefreshState;
 
   private PeerDiscoveryController(
-      final KeyPair keypair,
+      final NodeKey nodeKey,
       final DiscoveryPeer localPeer,
       final PeerTable peerTable,
       final Collection<DiscoveryPeer> bootstrapNodes,
@@ -157,7 +156,7 @@ public class PeerDiscoveryController {
       final Subscribers<PeerBondedObserver> peerBondedObservers,
       final MetricsSystem metricsSystem) {
     this.timerUtil = timerUtil;
-    this.keypair = keypair;
+    this.nodeKey = nodeKey;
     this.localPeer = localPeer;
     this.bootstrapNodes = bootstrapNodes;
     this.peerTable = peerTable;
@@ -489,7 +488,7 @@ public class PeerDiscoveryController {
     // Creating packets is quite expensive because they have to be cryptographically signed
     // So ensure the work is done on a worker thread to avoid blocking the vertx event thread.
     workerExecutor
-        .execute(() -> Packet.create(type, data, keypair))
+        .execute(() -> Packet.create(type, data, nodeKey))
         .thenAccept(handler)
         .exceptionally(
             error -> {
@@ -660,7 +659,7 @@ public class PeerDiscoveryController {
     private Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
     // Required dependencies
-    private KeyPair keypair;
+    private NodeKey nodeKey;
     private DiscoveryPeer localPeer;
     private TimerUtil timerUtil;
     private AsyncExecutor workerExecutor;
@@ -672,11 +671,11 @@ public class PeerDiscoveryController {
       validate();
 
       if (peerTable == null) {
-        peerTable = new PeerTable(this.keypair.getPublicKey().getEncodedBytes(), 16);
+        peerTable = new PeerTable(this.nodeKey.getPublicKey().getEncodedBytes(), 16);
       }
 
       return new PeerDiscoveryController(
-          keypair,
+          nodeKey,
           localPeer,
           peerTable,
           bootstrapNodes,
@@ -692,7 +691,7 @@ public class PeerDiscoveryController {
     }
 
     private void validate() {
-      validateRequiredDependency(keypair, "KeyPair");
+      validateRequiredDependency(nodeKey, "nodeKey");
       validateRequiredDependency(localPeer, "LocalPeer");
       validateRequiredDependency(timerUtil, "TimerUtil");
       validateRequiredDependency(workerExecutor, "AsyncExecutor");
@@ -704,9 +703,9 @@ public class PeerDiscoveryController {
       checkState(object != null, name + " must be configured.");
     }
 
-    public Builder keypair(final KeyPair keypair) {
-      checkNotNull(keypair);
-      this.keypair = keypair;
+    public Builder nodeKey(final NodeKey nodeKey) {
+      checkNotNull(nodeKey);
+      this.nodeKey = nodeKey;
       return this;
     }
 
