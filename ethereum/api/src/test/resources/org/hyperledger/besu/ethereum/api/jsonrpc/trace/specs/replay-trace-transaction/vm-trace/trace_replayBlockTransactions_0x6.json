@@ -60,54 +60,6 @@
             }
           ]
         }
-      },
-      {
-        "output": "0x",
-        "stateDiff": null,
-        "trace": [],
-        "transactionHash": "0xf7277d6dce8aa06c88717967d75be9fb011f8e4b7481951bede259de7082521d",
-        "vmTrace": {
-          "code": "0x600035ff",
-          "ops": [
-            {
-              "cost": 3,
-              "ex": {
-                "mem": null,
-                "push": [
-                  "0x0"
-                ],
-                "store": null,
-                "used": 16756095
-              },
-              "pc": 0,
-              "sub": null
-            },
-            {
-              "cost": 3,
-              "ex": {
-                "mem": null,
-                "push": [
-                  "0x150000000000000000000000000000000000000"
-                ],
-                "store": null,
-                "used": 16756092
-              },
-              "pc": 2,
-              "sub": null
-            },
-            {
-              "cost": 5000,
-              "ex": {
-                "mem": null,
-                "push": [],
-                "store": null,
-                "used": 16751092
-              },
-              "pc": 3,
-              "sub": null
-            }
-          ]
-        }
       }
     ],
     "id": 415

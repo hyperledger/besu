@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "trace_replayBlockTransactions",
     "params": [
-      "0xD",
+      "0x1B",
       [
         "vmTrace"
       ]
@@ -17,19 +17,19 @@
         "output": "0x",
         "stateDiff": null,
         "trace": [],
-        "transactionHash": "0x547c7e2fcdf9f88b03b4f4184d667d6768c669f279785774d0cf42435cab06f1",
+        "transactionHash": "0x728abdc65550943b21eba1eef7bb9c7b594d6f629dda1be4ae01b0f3ffcc6b16",
         "vmTrace": {
-          "code": "0x7f00000000000000000000000000000000000000000000000000000000000000017f000000000000000000000000000000000000000000000000000000000000000152",
+          "code": "0x600035ff",
           "ops": [
             {
               "cost": 3,
               "ex": {
                 "mem": null,
                 "push": [
-                  "0x1"
+                  "0x0"
                 ],
                 "store": null,
-                "used": 16756199
+                "used": 16756095
               },
               "pc": 0,
               "sub": null
@@ -39,26 +39,23 @@
               "ex": {
                 "mem": null,
                 "push": [
-                  "0x1"
+                  "0x150000000000000000000000000000000000000"
                 ],
                 "store": null,
-                "used": 16756196
+                "used": 16756092
               },
-              "pc": 33,
+              "pc": 2,
               "sub": null
             },
             {
-              "cost": 9,
+              "cost": 5000,
               "ex": {
-                "mem": {
-                  "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                  "off": 1
-                },
+                "mem": null,
                 "push": [],
                 "store": null,
-                "used": 16756187
+                "used": 16751092
               },
-              "pc": 66,
+              "pc": 3,
               "sub": null
             }
           ]

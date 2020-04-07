@@ -71,53 +71,6 @@
         "trace": [],
         "transactionHash": "0x91eeabc671e2dd2b1c8ddebb46ba59e8cb3e7d189f80bcc868a9787728c6e59e",
         "vmTrace": null
-      },
-      {
-        "output": "0x",
-        "stateDiff": {
-          "0x0000000000000000000000000000000000000000": {
-            "balance": {
-              "*": {
-                "from": "0x8ac723048d141c20",
-                "to": "0x8ac723048d43b831"
-              }
-            },
-            "code": "=",
-            "nonce": "=",
-            "storage": {}
-          },
-          "0x0150000000000000000000000000000000000000": {
-            "balance": {
-              "-": "0x300"
-            },
-            "code": {
-              "-": "0x600035ff"
-            },
-            "nonce": {
-              "-": "0x0"
-            },
-            "storage": {}
-          },
-          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
-            "balance": {
-              "*": {
-                "from": "0xffffffffffffffffffffffffffffffffffe8aa845",
-                "to": "0xffffffffffffffffffffffffffffffffffe5b0c34"
-              }
-            },
-            "code": "=",
-            "nonce": {
-              "*": {
-                "from": "0x3",
-                "to": "0x4"
-              }
-            },
-            "storage": {}
-          }
-        },
-        "trace": [],
-        "transactionHash": "0xf7277d6dce8aa06c88717967d75be9fb011f8e4b7481951bede259de7082521d",
-        "vmTrace": null
       }
     ],
     "id": 415

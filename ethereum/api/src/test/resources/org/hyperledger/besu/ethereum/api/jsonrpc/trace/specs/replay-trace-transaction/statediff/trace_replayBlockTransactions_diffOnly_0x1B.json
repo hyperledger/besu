@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "trace_replayBlockTransactions",
     "params": [
-      "0x7",
+      "0x1B",
       [
         "stateDiff"
       ]
@@ -14,38 +14,50 @@
     "jsonrpc": "2.0",
     "result": [
       {
-        "output": "0xf000000000000000000000000000000000000000000000000000000000000002",
+        "output": "0x",
         "stateDiff": {
           "0x0000000000000000000000000000000000000000": {
             "balance": {
               "*": {
-                "from": "0xa688906bdbdc1c20",
-                "to": "0xa688906bdc2958b5"
+                "from": "0x2d1a6f3b05ce8a3a4",
+                "to": "0x2d1a6f3b05d183fb5"
               }
             },
             "code": "=",
             "nonce": "=",
             "storage": {}
           },
+          "0x0150000000000000000000000000000000000000": {
+            "balance": {
+              "-": "0x300"
+            },
+            "code": {
+              "-": "0x600035ff"
+            },
+            "nonce": {
+              "-": "0x0"
+            },
+            "storage": {}
+          },
           "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
             "balance": {
               "*": {
-                "from": "0xffffffffffffffffffffffffffffffffffe8aa845",
-                "to": "0xffffffffffffffffffffffffffffffffffe3d6bb0"
+                "from": "0xffffffffffffffffffffffffffffffffd28861949",
+                "to": "0xffffffffffffffffffffffffffffffffd28567d38"
               }
             },
             "code": "=",
             "nonce": {
               "*": {
-                "from": "0x3",
-                "to": "0x4"
+                "from": "0x19",
+                "to": "0x1a"
               }
             },
             "storage": {}
           }
         },
         "trace": [],
-        "transactionHash": "0x47f4d445ea1812cb1ddd3464ab23d2bfc6ed408a8a9db1c497f94e8e06e85286",
+        "transactionHash": "0x728abdc65550943b21eba1eef7bb9c7b594d6f629dda1be4ae01b0f3ffcc6b16",
         "vmTrace": null
       }
     ],
