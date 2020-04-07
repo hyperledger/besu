@@ -171,7 +171,7 @@ public class TransactionSmartContractPermissioningController
     // 0 is false
     if (result.equals(FALSE_RESPONSE)) {
       return false;
-      // 32 bytes of 1's is true
+      // A 32 byte versios of 1 is true
     } else if (result.equals(TRUE_RESPONSE)) {
       return true;
       // Anything else is wrong
