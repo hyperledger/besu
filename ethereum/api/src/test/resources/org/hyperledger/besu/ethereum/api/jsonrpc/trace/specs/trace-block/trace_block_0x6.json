@@ -19,7 +19,7 @@
           "to": "0x0020000000000000000000000000000000000000",
           "value": "0x0"
         },
-        "blockHash": "0x2560e51dc57253c14df2f0b2456c80bdf760d352602695164dc779af2b50e5fb",
+        "blockHash": "0xd0130ee6fa32033aa806291ef843bacfe537b60eed169582a69acc8d23fbacb7",
         "blockNumber": 6,
         "result": {
           "gasUsed": "0x7536",
@@ -37,7 +37,7 @@
           "balance": "0x300",
           "refundAddress": "0x0000000000000999000000000000000000000000"
         },
-        "blockHash": "0x2560e51dc57253c14df2f0b2456c80bdf760d352602695164dc779af2b50e5fb",
+        "blockHash": "0xd0130ee6fa32033aa806291ef843bacfe537b60eed169582a69acc8d23fbacb7",
         "blockNumber": 6,
         "result": null,
         "subtraces": 0,
@@ -50,11 +50,49 @@
       },
       {
         "action": {
+          "callType": "call",
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xffad82",
+          "input": "0x0000000000000000000000000150000000000000",
+          "to": "0x0150000000000000000000000000000000000000",
+          "value": "0x0"
+        },
+        "blockHash": "0xd0130ee6fa32033aa806291ef843bacfe537b60eed169582a69acc8d23fbacb7",
+        "blockNumber": 6,
+        "result": {
+          "gasUsed": "0x138e",
+          "output": "0x"
+        },
+        "subtraces": 1,
+        "traceAddress": [],
+        "transactionHash": "0xf7277d6dce8aa06c88717967d75be9fb011f8e4b7481951bede259de7082521d",
+        "transactionPosition": 1,
+        "type": "call"
+      },
+      {
+        "action": {
+          "address": "0x0150000000000000000000000000000000000000",
+          "balance": "0x300",
+          "refundAddress": "0x0150000000000000000000000000000000000000"
+        },
+        "blockHash": "0xd0130ee6fa32033aa806291ef843bacfe537b60eed169582a69acc8d23fbacb7",
+        "blockNumber": 6,
+        "result": null,
+        "subtraces": 0,
+        "traceAddress": [
+          0
+        ],
+        "transactionHash": "0xf7277d6dce8aa06c88717967d75be9fb011f8e4b7481951bede259de7082521d",
+        "transactionPosition": 1,
+        "type": "suicide"
+      },
+      {
+        "action": {
           "author": "0x0000000000000000000000000000000000000000",
           "rewardType": "block",
           "value": "0x1bc16d674ec80000"
         },
-        "blockHash": "0x2560e51dc57253c14df2f0b2456c80bdf760d352602695164dc779af2b50e5fb",
+        "blockHash": "0xd0130ee6fa32033aa806291ef843bacfe537b60eed169582a69acc8d23fbacb7",
         "blockNumber": 6,
         "result": null,
         "subtraces": 0,

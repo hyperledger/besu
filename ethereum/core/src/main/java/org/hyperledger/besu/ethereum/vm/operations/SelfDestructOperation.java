@@ -55,7 +55,9 @@ public class SelfDestructOperation extends AbstractOperation {
     final MutableAccount recipient =
         frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem())).getMutable();
 
-    recipient.incrementBalance(account.getBalance());
+    if (!account.getAddress().equals(recipient.getAddress())) {
+      recipient.incrementBalance(account.getBalance());
+    }
 
     // add refund in message frame
     frame.addRefund(recipient.getAddress(), account.getBalance());

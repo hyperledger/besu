@@ -145,6 +145,125 @@
             }
           ]
         }
+      },
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x8ac723048d141c20",
+                "to": "0x8ac723048d43b831"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0x0150000000000000000000000000000000000000": {
+            "balance": {
+              "-": "0x300"
+            },
+            "code": {
+              "-": "0x600035ff"
+            },
+            "nonce": {
+              "-": "0x0"
+            },
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xffffffffffffffffffffffffffffffffffe8aa845",
+                "to": "0xffffffffffffffffffffffffffffffffffe5b0c34"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0x3",
+                "to": "0x4"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [
+          {
+            "action": {
+              "callType": "call",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0xffad82",
+              "input": "0x0000000000000000000000000150000000000000",
+              "to": "0x0150000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "result": {
+              "gasUsed": "0x138e",
+              "output": "0x"
+            },
+            "subtraces": 1,
+            "traceAddress": [],
+            "type": "call"
+          },
+          {
+            "action": {
+              "address": "0x0150000000000000000000000000000000000000",
+              "balance": "0x300",
+              "refundAddress": "0x0150000000000000000000000000000000000000"
+            },
+            "result": null,
+            "subtraces": 0,
+            "traceAddress": [
+              0
+            ],
+            "type": "suicide"
+          }
+        ],
+        "transactionHash": "0xf7277d6dce8aa06c88717967d75be9fb011f8e4b7481951bede259de7082521d",
+        "vmTrace": {
+          "code": "0x600035ff",
+          "ops": [
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x0"
+                ],
+                "store": null,
+                "used": 16756095
+              },
+              "pc": 0,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x150000000000000000000000000000000000000"
+                ],
+                "store": null,
+                "used": 16756092
+              },
+              "pc": 2,
+              "sub": null
+            },
+            {
+              "cost": 5000,
+              "ex": {
+                "mem": null,
+                "push": [],
+                "store": null,
+                "used": 16751092
+              },
+              "pc": 3,
+              "sub": null
+            }
+          ]
+        }
       }
     ],
     "id": 415
