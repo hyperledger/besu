@@ -21,8 +21,8 @@ public class Store {
   private final String val;
 
   Store(final String key, final String val) {
-    this.key = handle0x(key);
-    this.val = handle0x(val);
+    this.key = key;
+    this.val = val;
   }
 
   public String getKey() {
@@ -31,10 +31,5 @@ public class Store {
 
   public String getVal() {
     return val;
-  }
-
-  // TODO Remove when https://issues.apache.org/jira/browse/TUWENI-31 is fixed.
-  private static String handle0x(final String input) {
-    return input.equals("0x") ? "0x0" : input;
   }
 }
