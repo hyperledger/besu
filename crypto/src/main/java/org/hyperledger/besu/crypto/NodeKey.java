@@ -12,21 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
+package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
+import org.hyperledger.besu.crypto.SECP256K1.Signature;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
+import org.apache.tuweni.bytes.Bytes32;
 
-@FunctionalInterface
-public interface TraceFormatter {
+public interface NodeKey {
 
-  Stream<Trace> format(
-      ProtocolSchedule<?> protocolSchedule,
-      TransactionTrace transactionTrace,
-      Block block,
-      AtomicInteger traceCounter);
+  Signature sign(Bytes32 dataHash);
+
+  PublicKey getPublicKey();
 }
