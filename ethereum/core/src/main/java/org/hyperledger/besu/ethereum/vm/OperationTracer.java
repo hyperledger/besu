@@ -33,6 +33,9 @@ public interface OperationTracer {
   default void tracePrecompileCall(
       final MessageFrame frame, final Gas gasRequirement, final Bytes output) {};
 
+  default void traceAccountCreationResult(
+      final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
+
   interface ExecuteOperation {
 
     void execute() throws ExceptionalHaltException;
