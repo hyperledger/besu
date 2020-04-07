@@ -146,7 +146,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    *
    * @param localNode A representation of the local node
    * @param peerDiscoveryAgent The agent responsible for discovering peers on the network.
-   * @param nodeKey The key through which cryptographic operations can be performed
+   * @param nodeKey The node key through which cryptographic operations can be performed
    * @param config The network configuration to use.
    * @param peerPermissions An object that determines whether peers are allowed to connect
    * @param natService The NAT environment manager.
