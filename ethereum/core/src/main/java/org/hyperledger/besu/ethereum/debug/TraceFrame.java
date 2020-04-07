@@ -138,6 +138,10 @@ public class TraceFrame {
     return exceptionalHaltReasons;
   }
 
+  public boolean addExceptionalHaltReason(final ExceptionalHaltReason exceptionalHaltReason) {
+    return exceptionalHaltReasons.add(exceptionalHaltReason);
+  }
+
   public Address getRecipient() {
     return recipient;
   }

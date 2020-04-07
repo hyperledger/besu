@@ -118,10 +118,8 @@ public class ECIESEncryptionEngine {
     // Create random iv.
     final byte[] ivb = ECIESHandshaker.random(CIPHER_BLOCK_SIZE).toArray();
 
-    final BouncyCastleNodeKey nodeKey = new BouncyCastleNodeKey(ephKeyPair);
-
     return new ECIESEncryptionEngine(
-        SECP256K1.calculateECIESKeyAgreement(ephKeyPair.getPrivateKey(), nodeKey.getPublicKey()),
+        SECP256K1.calculateECIESKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
         ephKeyPair.getPublicKey(),
         ivb);
   }

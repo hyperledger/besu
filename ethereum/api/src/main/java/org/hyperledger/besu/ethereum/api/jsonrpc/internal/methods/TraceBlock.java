@@ -101,7 +101,8 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
     transactionTraces.forEach(
         transactionTrace ->
-            FlatTraceGenerator.generateFromTransactionTraceAndBlock(transactionTrace, block)
+            FlatTraceGenerator.generateFromTransactionTraceAndBlock(
+                    protocolSchedule, transactionTrace, block)
                 .forEachOrdered(resultArrayNode::addPOJO));
   }
 
