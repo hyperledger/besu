@@ -72,13 +72,16 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
-      LOG.info("No sync target, wait for peers.");
+      LOG.info("No sync target, waiting for peers: {}", ethContext.getEthPeers().peerCount());
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
       if (isSyncTargetReached(bestPeer)) {
         // We're caught up to our best peer, try again when a new peer connects
-        LOG.debug("Caught up to best peer: " + bestPeer.chainState().getEstimatedHeight());
+        LOG.debug(
+            "Caught up to best peer: {}, Peers: {}",
+            bestPeer.chainState().getEstimatedHeight(),
+            ethContext.getEthPeers().peerCount());
         return completedFuture(Optional.empty());
       }
       return completedFuture(maybeBestPeer);

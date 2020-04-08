@@ -109,7 +109,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     }
 
     if (cause instanceof NoAvailablePeersException) {
-      LOG.info("No peers available, wait for peer.");
+      LOG.info("No peers available, waiting for peers: {}", ethContext.getEthPeers().peerCount());
       // Wait for new peer to connect
       final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, metricsSystem);
       executeSubTask(
