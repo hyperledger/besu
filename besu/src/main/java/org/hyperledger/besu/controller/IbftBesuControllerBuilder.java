@@ -51,6 +51,8 @@ import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -117,6 +119,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final IbftExecutors ibftExecutors = IbftExecutors.create(metricsSystem);
 
+    final NodeKey nodeKey = new BouncyCastleNodeKey(nodeKeys);
+
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
             gasLimitCalculator,
@@ -124,7 +128,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             protocolContext,
             protocolSchedule,
             miningParameters,
-            Util.publicKeyToAddress(nodeKeys.getPublicKey()));
+            Util.publicKeyToAddress(nodeKey.getPublicKey()));
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -143,15 +147,15 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     final IbftFinalState finalState =
         new IbftFinalState(
             voteTallyCache,
-            nodeKeys,
-            Util.publicKeyToAddress(nodeKeys.getPublicKey()),
+            nodeKey,
+            Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), ibftExecutors),
             new BlockTimer(
                 ibftEventQueue, ibftConfig.getBlockPeriodSeconds(), ibftExecutors, clock),
             blockCreatorFactory,
-            new MessageFactory(nodeKeys),
+            new MessageFactory(nodeKey),
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
@@ -204,7 +208,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, nodeKeys);
+    final NodeKey nodeKey = new BouncyCastleNodeKey(nodeKeys);
+    return new IbftQueryPluginServiceFactory(blockchain, nodeKey);
   }
 
   @Override

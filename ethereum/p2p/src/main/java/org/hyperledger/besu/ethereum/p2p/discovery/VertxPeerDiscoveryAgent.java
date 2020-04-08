@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
@@ -58,12 +58,12 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   public VertxPeerDiscoveryAgent(
       final Vertx vertx,
-      final KeyPair keyPair,
+      final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem) {
-    super(keyPair, config, peerPermissions, natService, metricsSystem);
+    super(nodeKey, config, peerPermissions, natService, metricsSystem);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
 

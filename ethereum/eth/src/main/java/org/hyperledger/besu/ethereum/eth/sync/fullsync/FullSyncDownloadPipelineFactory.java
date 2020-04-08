@@ -90,7 +90,7 @@ public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
         new DownloadBodiesStep<>(protocolSchedule, ethContext, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
     final FullImportBlockStep<C> importBlockStep =
-        new FullImportBlockStep<>(protocolSchedule, protocolContext);
+        new FullImportBlockStep<>(protocolSchedule, protocolContext, ethContext);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

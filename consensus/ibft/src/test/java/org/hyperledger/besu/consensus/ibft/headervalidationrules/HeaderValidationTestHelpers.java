@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.headervalidationrules;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataFixture;
 import org.hyperledger.besu.consensus.ibft.Vote;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -31,7 +31,7 @@ public class HeaderValidationTestHelpers {
 
   public static BlockHeader createProposedBlockHeader(
       final List<Address> validators,
-      final List<KeyPair> committerKeyPairs,
+      final List<NodeKey> committerNodeKeys,
       final boolean useDifferentRoundNumbersForCommittedSeals) {
     final int BASE_ROUND_NUMBER = 5;
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
@@ -45,7 +45,7 @@ public class HeaderValidationTestHelpers {
             Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
-            committerKeyPairs,
+            committerNodeKeys,
             BASE_ROUND_NUMBER,
             useDifferentRoundNumbersForCommittedSeals);
 
