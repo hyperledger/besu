@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -53,7 +54,8 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
         connectionFuture,
         connectionEventDispatcher,
         metricsSystem);
-    handshaker.prepareInitiator(kp, SECP256K1.PublicKey.create(peer.getId()));
+    handshaker.prepareInitiator(
+        new BouncyCastleNodeKey(kp), SECP256K1.PublicKey.create(peer.getId()));
     this.first = handshaker.firstMessage();
   }
 
