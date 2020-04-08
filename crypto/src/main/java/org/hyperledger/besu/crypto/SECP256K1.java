@@ -431,6 +431,7 @@ public class SECP256K1 {
 
     return Optional.of(PublicKey.create(Bytes.wrapByteBuffer(recoveredKey).slice(1)));
   }
+
   public static class PrivateKey implements java.security.PrivateKey {
     private final Bytes32 encoded;
 
