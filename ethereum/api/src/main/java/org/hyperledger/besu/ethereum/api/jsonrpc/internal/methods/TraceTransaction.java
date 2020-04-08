@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collections;
@@ -40,11 +41,15 @@ public class TraceTransaction implements JsonRpcMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
 
   private final BlockchainQueries blockchainQueries;
+  private final ProtocolSchedule<?> protocolSchedule;
 
   public TraceTransaction(
-      final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries blockchainQueries) {
+      final Supplier<BlockTracer> blockTracerSupplier,
+      final ProtocolSchedule<?> protocolSchedule,
+      final BlockchainQueries blockchainQueries) {
     this.blockTracerSupplier = blockTracerSupplier;
     this.blockchainQueries = blockchainQueries;
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -78,16 +83,19 @@ public class TraceTransaction implements JsonRpcMethod {
             .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
             .findFirst()
             .orElseThrow();
-    return generateTracesFromTransactionTraceAndBlock(transactionTrace, block);
+    return generateTracesFromTransactionTraceAndBlock(protocolSchedule, transactionTrace, block);
   }
 
   private JsonNode generateTracesFromTransactionTraceAndBlock(
-      final TransactionTrace transactionTrace, final Block block) {
+      final ProtocolSchedule<?> protocolSchedule,
+      final TransactionTrace transactionTrace,
+      final Block block) {
     final ObjectMapper mapper = new ObjectMapper();
 
     final ArrayNode resultArrayNode = mapper.createArrayNode();
 
-    FlatTraceGenerator.generateFromTransactionTraceAndBlock(transactionTrace, block)
+    FlatTraceGenerator.generateFromTransactionTraceAndBlock(
+            protocolSchedule, transactionTrace, block)
         .forEachOrdered(resultArrayNode::addPOJO);
 
     return resultArrayNode;

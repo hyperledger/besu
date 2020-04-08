@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -46,6 +47,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueContext> {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private Address localAddress;
@@ -83,7 +85,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             protocolContext,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
-            nodeKeys,
+            new BouncyCastleNodeKey(nodeKeys),
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
@@ -109,7 +111,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   protected ProtocolSchedule<CliqueContext> createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
-        nodeKeys,
+        new BouncyCastleNodeKey(nodeKeys),
         privacyParameters,
         isRevertReasonEnabled);
   }
@@ -125,7 +127,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new CliqueQueryPluginServiceFactory(blockchain, nodeKeys);
+    return new CliqueQueryPluginServiceFactory(blockchain, new BouncyCastleNodeKey(nodeKeys));
   }
 
   @Override

@@ -461,6 +461,32 @@
           "data": "0xa9059cbb0000000000000000000000000a13aa5589f0dd8dd3bd5055b31add5ca0f2f8e400000000000000000000000000000000000000000000003635c9adc5dea00000"
         }
       ]
+    },
+    {
+      "number": "0x1A",
+      "transactions" : [
+        {
+          "comment": "Proxy call to another contract - 1 level deep with gas refund.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x0040000000000000000000000000000000000000",
+          "data": "0x00000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "number": "0x1B",
+      "transactions" : [
+        {
+          "comment": "Self destruct and send contract balance to the same address provided in the to field.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x0150000000000000000000000000000000000000",
+          "data": "0x0000000000000000000000000150000000000000"
+        }
+      ]
     }
   ]
 }

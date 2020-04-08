@@ -140,6 +140,13 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  // TODO EIP-1559 change for the actual fork name when known
+  public void shouldGetEIP1559BlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip1559block", 1000));
+    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();

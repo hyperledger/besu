@@ -33,6 +33,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
+  // TODO EIP-1559 change for the actual fork name when known
+  private final OptionalLong eip1559BlockNumber = OptionalLong.empty();
   private final OptionalLong classicForkBlock = OptionalLong.empty();
   private final OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private final OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -136,6 +138,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  // TODO EIP-1559 change for the actual fork name when known
+  public OptionalLong getEIP1559BlockNumber() {
+    return eip1559BlockNumber;
+  }
+
+  @Override
   public OptionalLong getClassicForkBlock() {
     return classicForkBlock;
   }
@@ -213,6 +221,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
+    // TODO EIP-1559 change for the actual fork name when known
+    getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
