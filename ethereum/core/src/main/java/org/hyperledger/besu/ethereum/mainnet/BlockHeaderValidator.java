@@ -136,6 +136,7 @@ public class BlockHeaderValidator<C> {
 
   public static class Builder<C> {
     private final List<Function<DifficultyCalculator<C>, Rule<C>>> rulesBuilder = new ArrayList<>();
+    private DifficultyCalculator<C> difficultyCalculator;
 
     public Builder<C> addRule(
         final Function<DifficultyCalculator<C>, AttachedBlockHeaderValidationRule<C>> ruleBuilder) {
@@ -164,11 +165,12 @@ public class BlockHeaderValidator<C> {
       return this;
     }
 
-    public BlockHeaderValidator<C> build() {
-      return build(null);
+    public Builder<C> difficultyCalculator(final DifficultyCalculator<C> difficultyCalculator) {
+      this.difficultyCalculator = difficultyCalculator;
+      return this;
     }
 
-    public BlockHeaderValidator<C> build(final DifficultyCalculator<C> difficultyCalculator) {
+    public BlockHeaderValidator<C> build() {
       final List<Rule<C>> rules = new ArrayList<>();
       rulesBuilder.stream()
           .map(ruleBuilder -> ruleBuilder.apply(difficultyCalculator))

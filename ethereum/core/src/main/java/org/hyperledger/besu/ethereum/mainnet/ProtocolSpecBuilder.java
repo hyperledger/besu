@@ -285,10 +285,10 @@ public class ProtocolSpecBuilder<T> {
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
     final BlockHeaderValidator<T> blockHeaderValidator =
-        blockHeaderValidatorBuilder.build(difficultyCalculator);
+        blockHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
 
     final BlockHeaderValidator<T> ommerHeaderValidator =
-        ommerHeaderValidatorBuilder.build(difficultyCalculator);
+        ommerHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
     final BlockBodyValidator<T> blockBodyValidator =
         blockBodyValidatorBuilder.apply(protocolSchedule);
 
