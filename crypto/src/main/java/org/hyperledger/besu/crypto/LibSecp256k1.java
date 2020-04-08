@@ -15,8 +15,6 @@
  */
 package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.crypto.secp256k1.Secp256k1Library;
-
 import java.nio.ByteBuffer;
 
 import com.sun.jna.Callback;
@@ -75,9 +73,6 @@ public interface LibSecp256k1 extends Library {
           INSTANCE.secp256k1_ec_pubkey_serialize(
               context, serializedKey, keySize, pubKey, SECP256K1_EC_UNCOMPRESSED);
           serializedKey.flip();
-          final Secp256k1Library.secp256k1_pubkey parsedKey =
-              new Secp256k1Library.secp256k1_pubkey();
-          final byte[] array = serializedKey.array();
           final secp256k1_ecdsa_recoverable_signature signature =
               new secp256k1_ecdsa_recoverable_signature();
           INSTANCE.secp256k1_ecdsa_sign_recoverable(
@@ -123,18 +118,6 @@ public interface LibSecp256k1 extends Library {
     int apply(
         Pointer nonce32, Pointer msg32, Pointer key32, Pointer algo16, Pointer data, int attempt);
   };
-
-  /** A pointer to a function that applies hash function to a point */
-  public interface secp256k1_ecdh_hash_function extends Callback {
-    /**
-     * @return 1 if a point was successfully hashed. 0 will cause ecdh to fail
-     * @param output (output) pointer to an array to be filled by the function
-     * @param x pointer to a 32-byte x coordinate
-     * @param y pointer to a 32-byte y coordinate
-     * @param data Arbitrary data pointer that is passed through
-     */
-    int apply(Pointer output, Pointer x, Pointer y, Pointer data);
-  }
 
   /**
    * Opaque data structure that holds a parsed and valid public key.
@@ -378,24 +361,4 @@ public interface LibSecp256k1 extends Library {
       final secp256k1_pubkey pubkey,
       final secp256k1_ecdsa_recoverable_signature sig,
       final byte msg32[]);
-
-  /**
-   * Compute an EC Diffie-Hellman secret in constant time
-   *
-   * @return 1 if exponentiation was successful, 0 if scalar was invalid (zero or overflow)
-   * @param ctx pointer to a context object (cannot be NULL)
-   * @param output (output) pointer to an array to be filled by hashfp
-   * @param pubkey a pointer to a secp256k1_pubkey containing an initialized public key
-   * @param privkey a 32-byte scalar with which to multiply the point
-   * @param hashfp pointer to a hash function. If NULL, secp256k1_ecdh_hash_function_sha256 is used
-   *     (in which case, 32 bytes will be written to output)
-   * @param data Arbitrary data pointer that is passed through to hashfp
-   */
-  int secp256k1_ecdh(
-      final PointerByReference ctx,
-      byte[] output,
-      secp256k1_pubkey pubkey,
-      byte[] privkey,
-      secp256k1_ecdh_hash_function hashfp,
-      Pointer data);
 }
