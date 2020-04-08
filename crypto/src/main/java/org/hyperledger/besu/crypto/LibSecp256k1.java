@@ -259,14 +259,14 @@ public interface LibSecp256k1 extends Library {
       final byte msg32[],
       final secp256k1_pubkey pubkey);
 
-  //  /**
-  //   * Compute the public key for a secret key.
-  //   *
-  //   * @return 1 if secret was valid, public key stores, 0 if secret was invalid, try again.
-  //   * @param ctx pointer to a context object, initialized for signing (cannot be NULL)
-  //   * @param pubkey (output) pointer to the created public key (cannot be NULL)
-  //   * @param seckey pointer to a 32-byte private key (cannot be NULL)
-  //   */
+  /**
+   * Compute the public key for a secret key.
+   *
+   * @return 1 if secret was valid, public key stores, 0 if secret was invalid, try again.
+   * @param ctx pointer to a context object, initialized for signing (cannot be NULL)
+   * @param pubkey (output) pointer to the created public key (cannot be NULL)
+   * @param seckey pointer to a 32-byte private key (cannot be NULL)
+   */
   public void secp256k1_ec_pubkey_create(
       final PointerByReference ctx, final secp256k1_pubkey pubkey, final byte seckey[]);
 
@@ -294,7 +294,7 @@ public interface LibSecp256k1 extends Library {
    * @return Returns 1 if randomization successfully updated or nothing to randomize or 0 if an
    *     error occured
    */
-  public int secp256k1_context_randomize(PointerByReference ctx, byte[] seed32);
+  public int secp256k1_context_randomize(final PointerByReference ctx, final byte[] seed32);
 
   /**
    * Parse a compact ECDSA signature (64 bytes + recovery id).
