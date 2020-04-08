@@ -267,7 +267,7 @@ public interface LibSecp256k1 extends Library {
    * @param pubkey (output) pointer to the created public key (cannot be NULL)
    * @param seckey pointer to a 32-byte private key (cannot be NULL)
    */
-  public void secp256k1_ec_pubkey_create(
+  public int secp256k1_ec_pubkey_create(
       final PointerByReference ctx, final secp256k1_pubkey pubkey, final byte seckey[]);
 
   /**
