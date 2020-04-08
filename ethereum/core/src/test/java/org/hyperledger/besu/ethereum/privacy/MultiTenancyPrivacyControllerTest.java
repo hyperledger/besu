@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -417,5 +418,27 @@ public class MultiTenancyPrivacyControllerTest {
                 multiTenancyPrivacyController.getContractCode(
                     PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO, ENCLAVE_PUBLIC_KEY2))
         .hasMessage("Privacy group must contain the enclave public key");
+  }
+
+  @Test
+  public void verifyPrivacyGroupMatchesEnclaveKeySucceeds() {
+    final PrivacyGroup privacyGroup =
+        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID)).thenReturn(privacyGroup);
+
+    multiTenancyPrivacyController.verifyPrivacyGroupContainsEnclavePublicKey(
+        PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
+
+    verify(enclave).retrievePrivacyGroup(eq(PRIVACY_GROUP_ID));
+  }
+
+  @Test(expected = MultiTenancyValidationException.class)
+  public void verifyPrivacyGroupDoesNotMatchEnclaveKeyThrowsException() {
+    final PrivacyGroup privacyGroup =
+        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID)).thenReturn(privacyGroup);
+
+    multiTenancyPrivacyController.verifyPrivacyGroupContainsEnclavePublicKey(
+        PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2);
   }
 }

@@ -73,6 +73,14 @@ public class FilterParameter {
     return blockhash;
   }
 
+  public boolean isValid() {
+    if (!getFromBlock().isLatest() && !getToBlock().isLatest() && getBlockhash() != null) {
+      return false;
+    }
+
+    return true;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
