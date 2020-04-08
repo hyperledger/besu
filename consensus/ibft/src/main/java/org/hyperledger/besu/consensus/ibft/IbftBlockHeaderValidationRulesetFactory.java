@@ -38,7 +38,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
-  public static BlockHeaderValidator<IbftContext> ibftBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder<IbftContext> ibftBlockHeaderValidator(
       final long secondsBetweenBlocks) {
     return new BlockHeaderValidator.Builder<IbftContext>()
         .addRule(new AncestryValidationRule())
@@ -58,7 +58,6 @@ public class IbftBlockHeaderValidationRulesetFactory {
         .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
         .addRule(new IbftValidatorsValidationRule())
         .addRule(new IbftCoinbaseValidationRule())
-        .addRule(new IbftCommitSealsValidationRule())
-        .build();
+        .addRule(new IbftCommitSealsValidationRule());
   }
 }
