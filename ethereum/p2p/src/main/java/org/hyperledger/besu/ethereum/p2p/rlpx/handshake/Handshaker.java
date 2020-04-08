@@ -81,7 +81,7 @@ public interface Handshaker {
    * @param theirPubKey The public key of the node we're handshaking with.
    * @throws IllegalStateException Indicates that preparation had already occured.
    */
-  void prepareInitiator(final NodeKey nodeKey, SECP256K1.PublicKey theirPubKey);
+  void prepareInitiator(NodeKey nodeKey, SECP256K1.PublicKey theirPubKey);
 
   /**
    * This method must be called by the <em>responding side</em> of the handshake to prepare the
@@ -93,7 +93,7 @@ public interface Handshaker {
    * @param nodeKey An object which represents our identity
    * @throws IllegalStateException Indicates that preparation had already occured.
    */
-  void prepareResponder(final NodeKey nodeKey);
+  void prepareResponder(NodeKey nodeKey);
 
   /**
    * Retrieves the first message to dispatch in the handshake ceremony.

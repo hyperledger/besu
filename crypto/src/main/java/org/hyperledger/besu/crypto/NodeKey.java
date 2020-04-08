@@ -26,7 +26,7 @@ public interface NodeKey {
 
   PublicKey getPublicKey();
 
-  Bytes32 calculateKeyAgreement(final PublicKey partyKey);
+  Bytes32 calculateECDHKeyAgreement(PublicKey publicKey);
 
-  Bytes calculateECIESAgreement(final SECP256K1.PublicKey ephPubKey);
+  Bytes calculateECIESKeyAgreement(SECP256K1.PublicKey pubKey);
 }

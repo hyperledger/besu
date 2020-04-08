@@ -124,7 +124,7 @@ public class ECIESHandshaker implements Handshaker {
             Handshaker.HandshakeStatus.PREPARED, Handshaker.HandshakeStatus.IN_PROGRESS),
         "illegal invocation of firstMessage, handshake had already started");
 
-    final Bytes32 staticSharedSecret = nodeKey.calculateKeyAgreement(partyPubKey);
+    final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(partyPubKey);
     if (version4) {
       initiatorMsg =
           InitiatorHandshakeMessageV4.create(
@@ -337,7 +337,7 @@ public class ECIESHandshaker implements Handshaker {
   /** Computes the secrets from the two exchanged messages. */
   void computeSecrets() {
     final NodeKey nodeKey = new BouncyCastleNodeKey(ephKeyPair);
-    final Bytes agreedSecret = nodeKey.calculateKeyAgreement(partyEphPubKey);
+    final Bytes agreedSecret = nodeKey.calculateECDHKeyAgreement(partyEphPubKey);
 
     final Bytes sharedSecret =
         keccak256(

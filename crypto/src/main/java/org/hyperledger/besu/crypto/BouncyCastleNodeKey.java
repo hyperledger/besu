@@ -18,17 +18,8 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 
-import java.math.BigInteger;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.crypto.BasicAgreement;
-import org.bouncycastle.crypto.CipherParameters;
-import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.util.BigIntegers;
 
 public class BouncyCastleNodeKey implements NodeKey {
 
@@ -53,21 +44,12 @@ public class BouncyCastleNodeKey implements NodeKey {
   }
 
   @Override
-  public Bytes32 calculateKeyAgreement(final PublicKey partyKey) {
-    return SECP256K1.calculateKeyAgreement(nodeKeys.getPrivateKey(), partyKey);
+  public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey) {
+    return SECP256K1.calculateECDHKeyAgreement(nodeKeys.getPrivateKey(), publicKey);
   }
 
   @Override
-  public Bytes calculateECIESAgreement(final SECP256K1.PublicKey ephPubKey) {
-    final ECDomainParameters dp = SECP256K1.CURVE;
-
-    final CipherParameters pubParam = new ECPublicKeyParameters(ephPubKey.asEcPoint(), dp);
-    final CipherParameters privParam =
-        new ECPrivateKeyParameters(nodeKeys.getPrivateKey().getD(), dp);
-
-    final BasicAgreement agree = new ECDHBasicAgreement();
-    agree.init(privParam);
-    final BigInteger z = agree.calculateAgreement(pubParam);
-    return Bytes.wrap(BigIntegers.asUnsignedByteArray(agree.getFieldSize(), z));
+  public Bytes calculateECIESKeyAgreement(final SECP256K1.PublicKey pubKey) {
+    return SECP256K1.calculateECIESKeyAgreement(nodeKeys.getPrivateKey(), pubKey);
   }
 }

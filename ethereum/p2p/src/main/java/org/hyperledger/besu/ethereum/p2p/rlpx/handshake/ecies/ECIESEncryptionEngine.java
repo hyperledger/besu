@@ -51,6 +51,7 @@ import org.bouncycastle.util.Pack;
  * the IV.
  */
 public class ECIESEncryptionEngine {
+
   public static final int ENCRYPTION_OVERHEAD = 113;
 
   private static final byte[] IES_DERIVATION = new byte[0];
@@ -75,12 +76,12 @@ public class ECIESEncryptionEngine {
   private final byte[] iv;
 
   private ECIESEncryptionEngine(
-      final Bytes Z, final SECP256K1.PublicKey ephPubKey, final byte[] iv) {
+      final Bytes agreedSecret, final SECP256K1.PublicKey ephPubKey, final byte[] iv) {
     this.ephPubKey = ephPubKey;
     this.iv = iv;
 
     // Initialise the KDF.
-    this.kdf.init(new KDFParameters(Z.toArrayUnsafe(), PARAM.getDerivationV()));
+    this.kdf.init(new KDFParameters(agreedSecret.toArrayUnsafe(), PARAM.getDerivationV()));
   }
 
   /**
@@ -96,9 +97,9 @@ public class ECIESEncryptionEngine {
     final byte[] ivb = iv.toArray();
 
     // Create parameters.
-    final Bytes Z = nodeKey.calculateKeyAgreement(ephPubKey);
+    final Bytes agreedSecret = nodeKey.calculateECDHKeyAgreement(ephPubKey);
 
-    return new ECIESEncryptionEngine(Z, ephPubKey, ivb);
+    return new ECIESEncryptionEngine(agreedSecret, ephPubKey, ivb);
   }
 
   /**
@@ -120,7 +121,9 @@ public class ECIESEncryptionEngine {
     final BouncyCastleNodeKey nodeKey = new BouncyCastleNodeKey(ephKeyPair);
 
     return new ECIESEncryptionEngine(
-        nodeKey.calculateECIESAgreement(pubKey), ephKeyPair.getPublicKey(), ivb);
+        SECP256K1.calculateECIESKeyAgreement(ephKeyPair.getPrivateKey(), nodeKey.getPublicKey()),
+        ephKeyPair.getPublicKey(),
+        ivb);
   }
 
   /**

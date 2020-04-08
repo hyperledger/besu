@@ -59,7 +59,7 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
     final SECP256K1.Signature signature = SECP256K1.Signature.decode(input.readBytes());
     final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(input.readBytes());
     final Bytes32 nonce = input.readBytes32();
-    final Bytes32 staticSharedSecret = nodeKey.calculateKeyAgreement(pubKey);
+    final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(pubKey);
     final SECP256K1.PublicKey ephPubKey =
         SECP256K1.PublicKey.recoverFromSignature(staticSharedSecret.xor(nonce), signature)
             .orElseThrow(() -> new RuntimeException("Could not recover public key from signature"));
