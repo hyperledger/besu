@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 
