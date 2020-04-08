@@ -343,14 +343,15 @@ public class BlockPropagationManager<C> {
                 final double timeInS = importTask.getTaskTimeInSec();
                 LOG.info(
                     String.format(
-                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs.",
+                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
                         block.getHeader().getNumber(),
                         block.getBody().getTransactions().size(),
                         block.getBody().getOmmers().size(),
                         block.getHeader().getGasUsed(),
                         (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                        block.getHash(),
-                        timeInS));
+                        block.getHash().toHexString(),
+                        timeInS,
+                        ethContext.getEthPeers().peerCount()));
               }
             });
   }

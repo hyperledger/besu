@@ -12,7 +12,8 @@ https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users
 
 ### Additions and Improvements
 
-- Added `eth/65` support [\#608](https://github.com/hyperledger/besu/pull/608)
+- Added `eth/65` support. [\#608](https://github.com/hyperledger/besu/pull/608)
+- Added block added and block reorg events. Added revert reason to block added transactions. [\#637](https://github.com/hyperledger/besu/pull/637)
 
 ### Deprecated 
 
