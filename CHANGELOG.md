@@ -7,7 +7,6 @@
 A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4 
 or earlier has been identified. If you have a network with private transaction created using v1.3.4 
 or earlier, please read the following and take the appropriate steps: 
-
 https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
 
 ### Additions and Improvements
@@ -34,26 +33,16 @@ java.util.concurrent.CompletionException: org.hyperledger.besu.plugin.services.e
 ....
 ```
 
-This behaviour has been seen on AWS and Digital Ocean. On AWS, a full restart of the AWS VM is required 
-to restart the fast sync. Fast sync is not currently supported on Digital Ocean. We are 
-investigating options to [add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
+This behaviour has been seen on AWS and Digital Ocean. 
 
-#### Fast sync defaulting to full sync
+Workaround -> On AWS, a full restart of the AWS VM is required to restart the fast sync. 
 
--  When fast sync cannot find enough valid peers rapidly enough, Besu defaults to full sync.
-
-Workarounds:
-1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database,
-and start again.
-2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood
-of encountering the pruning bug.
-
-A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427)
-is being actively worked on.
+Fast sync is not currently supported on Digital Ocean. We are investigating options to 
+[add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
 
 #### Error full syncing with pruning
 
-- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
+- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#580](https://github.com/hyperledger/besu/issues/580)
 The associated error is `Unable to load trie node value for hash` and is caused by the combination of
 full sync and pruning.
 
@@ -63,9 +52,17 @@ Workarounds:
 
 A fix for this issue is being actively worked on.
 
+#### Fast sync reverting to full sync 
+
+In some cases of FastSyncException, fast sync reverts back to a full sync before having reached the 
+pivot block. [\#683](https://github.com/hyperledger/besu/issues/683)
+
+Workaround -> To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your 
+database, and start again.
+
 #### Bootnodes must be validators when using onchain permissioning
 
-- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#528](https://github.com/hyperledger/besu/issues/528)
 
 Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
 
