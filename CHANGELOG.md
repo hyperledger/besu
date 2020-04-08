@@ -5,6 +5,7 @@
 ### Additions and Improvements
 - Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed 
 in 1.5.0 release. 
+- Added block added and block reorg events. Added revert reason to block added transactions. [\#637](https://github.com/hyperledger/besu/pull/637)
 
 ### Critical Issue for Privacy Users 
 

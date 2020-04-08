@@ -17,6 +17,7 @@ package org.hyperledger.besu.crypto;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public interface NodeKey {
@@ -24,4 +25,8 @@ public interface NodeKey {
   Signature sign(Bytes32 dataHash);
 
   PublicKey getPublicKey();
+
+  Bytes32 calculateECDHKeyAgreement(PublicKey publicKey);
+
+  Bytes calculateECIESKeyAgreement(SECP256K1.PublicKey pubKey);
 }
