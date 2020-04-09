@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -526,7 +526,7 @@ public class RlpxAgent {
   }
 
   public static class Builder {
-    private KeyPair keyPair;
+    private NodeKey nodeKey;
     private LocalNode localNode;
     private RlpxConfiguration config;
     private PeerPrivileges peerPrivileges;
@@ -546,7 +546,7 @@ public class RlpxAgent {
       if (connectionInitializer == null) {
         connectionInitializer =
             new NettyConnectionInitializer(
-                keyPair, config, localNode, connectionEvents, metricsSystem);
+                nodeKey, config, localNode, connectionEvents, metricsSystem);
       }
 
       final PeerRlpxPermissions rlpxPermissions =
@@ -563,7 +563,7 @@ public class RlpxAgent {
     }
 
     private void validate() {
-      checkState(keyPair != null, "KeyPair must be configured");
+      checkState(nodeKey != null, "NodeKey must be configured");
       checkState(localNode != null, "LocalNode must be configured");
       checkState(config != null, "RlpxConfiguration must be set");
       checkState(peerPrivileges != null, "PeerPrivileges must be configured");
@@ -571,9 +571,9 @@ public class RlpxAgent {
       checkState(metricsSystem != null, "MetricsSystem must be configured");
     }
 
-    public Builder keyPair(final KeyPair keyPair) {
-      checkNotNull(keyPair);
-      this.keyPair = keyPair;
+    public Builder nodeKey(final NodeKey nodeKey) {
+      checkNotNull(nodeKey);
+      this.nodeKey = nodeKey;
       return this;
     }
 
