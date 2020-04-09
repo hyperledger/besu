@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
@@ -119,9 +120,18 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     if (!ExperimentalEIPs.eip1559Enabled || maybeEip1559.isEmpty()) {
       return transaction;
     }
-    if (!maybeEip1559
-        .get()
-        .isValid(transaction, blockchainQueries.getBlockchain()::getChainHeadBlockNumber)) {
+    final long chainHeadBlockNumber = blockchainQueries.getBlockchain().getChainHeadBlockNumber();
+    final EIP1559 eip1559 = maybeEip1559.get();
+    final AcceptedTransactionTypes acceptedTransactionTypes;
+    if (chainHeadBlockNumber < eip1559.getForkBlock()) {
+      acceptedTransactionTypes = AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
+    } else if (eip1559.isEIP1559Finalized(chainHeadBlockNumber)) {
+      acceptedTransactionTypes = AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
+    } else {
+      acceptedTransactionTypes = AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
+    }
+
+    if (!eip1559.isValidFormat(transaction, acceptedTransactionTypes)) {
       throw new InvalidJsonRpcRequestException("Invalid transaction according to EIP-1559 rules");
     }
     return transaction;

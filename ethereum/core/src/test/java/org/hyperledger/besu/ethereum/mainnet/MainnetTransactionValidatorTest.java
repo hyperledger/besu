@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -48,6 +50,7 @@ public class MainnetTransactionValidatorTest {
   private static final KeyPair senderKeys = KeyPair.generate();
 
   @Mock private GasCalculator gasCalculator;
+  final FeeMarket feeMarket = FeeMarket.eip1559();
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()
@@ -235,16 +238,44 @@ public class MainnetTransactionValidatorTest {
     ExperimentalEIPs.eip1559Enabled = true;
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
-            gasCalculator, false, Optional.empty(), Optional.of(eip1559));
+            gasCalculator,
+            false,
+            Optional.empty(),
+            Optional.of(eip1559),
+            AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS);
     final Transaction transaction =
         new TransactionTestFixture()
-            .gasLimit(eip1559.getFeeMarket().getPerTxGaslimit() + 1)
+            .gasLimit(feeMarket.getPerTxGaslimit() + 1)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     assertThat(validator.validate(transaction))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT));
+    ExperimentalEIPs.eip1559Enabled = false;
+  }
+
+  @Test
+  public void shouldRejectTransactionIfLegacyAfterEIP1559Finalized() {
+    final long forkBlock = 845L;
+    final EIP1559 eip1559 = new EIP1559(forkBlock);
+    ExperimentalEIPs.eip1559Enabled = true;
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            false,
+            Optional.empty(),
+            Optional.of(eip1559),
+            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasLimit(feeMarket.getPerTxGaslimit() + 1)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    assertThat(validator.validate(transaction))
+        .isEqualTo(
+            ValidationResult.invalid(
+                TransactionValidator.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
     ExperimentalEIPs.eip1559Enabled = false;
   }
 

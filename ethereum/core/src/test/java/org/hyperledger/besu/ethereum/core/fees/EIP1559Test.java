@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -125,44 +128,36 @@ public class EIP1559Test {
 
   @Test
   public void givenValidLegacyTransaction_whenBeforeForkBlock_thenReturnsTrue() {
-    assertThat(eip1559.isValid(TransactionFixture.LEGACY, this::beforeEIP1559)).isTrue();
+    assertThat(eip1559.isValidFormat(TransactionFixture.LEGACY, FRONTIER_TRANSACTIONS)).isTrue();
   }
 
   @Test
   public void givenValidLegacyTransaction_whenEIP1559Phase1_thenReturnsTrue() {
-    assertThat(eip1559.isValid(TransactionFixture.LEGACY, this::duringEip1559Phase1)).isTrue();
+    assertThat(
+            eip1559.isValidFormat(TransactionFixture.LEGACY, FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
+        .isTrue();
   }
 
   @Test
   public void givenValidLegacyTransaction_whenEIP1559Finalized_thenReturnsFalse() {
-    assertThat(eip1559.isValid(TransactionFixture.LEGACY, this::afterEIP1559Finalized)).isFalse();
+    assertThat(eip1559.isValidFormat(TransactionFixture.LEGACY, FEE_MARKET_TRANSACTIONS)).isFalse();
   }
 
   @Test
   public void givenValidEIP1559Transaction_whenAfterForkBlock_thenReturnsTrue() {
-    assertThat(eip1559.isValid(TransactionFixture.EIP1559, this::duringEip1559Phase1)).isTrue();
+    assertThat(
+            eip1559.isValidFormat(TransactionFixture.EIP1559, FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
+        .isTrue();
   }
 
   @Test
   public void givenValidEIP1559Transaction_whenEIP1559Finalized_thenReturnsTrue() {
-    assertThat(eip1559.isValid(TransactionFixture.EIP1559, this::afterEIP1559Finalized)).isTrue();
+    assertThat(eip1559.isValidFormat(TransactionFixture.EIP1559, FEE_MARKET_TRANSACTIONS)).isTrue();
   }
 
   @Test
   public void givenValidEIP1559Transaction_whenBeforeFork_thenReturnsFalse() {
-    assertThat(eip1559.isValid(TransactionFixture.EIP1559, this::beforeEIP1559)).isFalse();
-  }
-
-  private long beforeEIP1559() {
-    return FORK_BLOCK - 1;
-  }
-
-  private long duringEip1559Phase1() {
-    return FORK_BLOCK + 1;
-  }
-
-  private long afterEIP1559Finalized() {
-    return FORK_BLOCK + feeMarket.getDecayRange() + 1;
+    assertThat(eip1559.isValidFormat(TransactionFixture.EIP1559, FRONTIER_TRANSACTIONS)).isFalse();
   }
 
   private static class TransactionFixture {

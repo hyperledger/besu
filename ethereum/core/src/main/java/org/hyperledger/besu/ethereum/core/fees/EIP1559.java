@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Transaction;
-
-import java.util.function.LongSupplier;
 
 public class EIP1559 {
 
@@ -80,30 +79,33 @@ public class EIP1559 {
     return initialForkBlknum;
   }
 
-  public boolean isValid(final Transaction transaction, final LongSupplier blockNumberSupplier) {
-    return isValid(transaction, blockNumberSupplier.getAsLong());
-  }
-
-  public boolean isValid(final Transaction transaction, final long blockNumber) {
+  public boolean isValidFormat(
+      final Transaction transaction, final AcceptedTransactionTypes acceptedTransactionTypes) {
     if (transaction == null) {
       return false;
     }
-    if (blockNumber < getForkBlock()) {
-      return transaction.isFrontierTransaction();
-    } else if (isEIP1559Finalized(blockNumber)) {
-      return transaction.isEIP1559Transaction();
-    } else {
-      return transaction.isFrontierTransaction() || transaction.isEIP1559Transaction();
+    switch (acceptedTransactionTypes) {
+      case FRONTIER_TRANSACTIONS:
+        return transaction.isFrontierTransaction();
+      case FEE_MARKET_TRANSITIONAL_TRANSACTIONS:
+        return transaction.isFrontierTransaction() || transaction.isEIP1559Transaction();
+      case FEE_MARKET_TRANSACTIONS:
+        return transaction.isEIP1559Transaction();
+      default:
+        return false;
     }
+  }
+
+  public boolean isValidGasLimit(final Transaction transaction) {
+    if (transaction == null) {
+      return false;
+    }
+    return transaction.getGasLimit() <= feeMarket.getPerTxGaslimit();
   }
 
   private void guardActivation() {
     if (!ExperimentalEIPs.eip1559Enabled) {
       throw new RuntimeException("EIP-1559 is not enabled");
     }
-  }
-
-  public FeeMarket getFeeMarket() {
-    return feeMarket;
   }
 }
