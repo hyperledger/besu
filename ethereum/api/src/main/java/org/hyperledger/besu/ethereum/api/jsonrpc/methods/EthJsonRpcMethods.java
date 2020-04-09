@@ -61,12 +61,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -80,6 +82,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
+  private final Optional<EIP1559> eip1559;
 
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -88,7 +91,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
-      final Set<Capability> supportedCapabilities) {
+      final Set<Capability> supportedCapabilities,
+      final Optional<EIP1559> eip1559) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -96,6 +100,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
+    this.eip1559 = eip1559;
   }
 
   @Override
@@ -139,7 +144,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetFilterLogs(filterManager),
         new EthSyncing(synchronizer),
         new EthGetStorageAt(blockchainQueries),
-        new EthSendRawTransaction(transactionPool),
+        new EthSendRawTransaction(transactionPool, blockchainQueries, eip1559),
         new EthSendTransaction(),
         new EthEstimateGas(
             blockchainQueries,

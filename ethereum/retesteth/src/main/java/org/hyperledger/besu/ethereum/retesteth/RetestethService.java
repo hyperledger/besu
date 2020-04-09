@@ -81,7 +81,11 @@ public class RetestethService {
             new DebugStorageRangeAt(
                 retestethContext::getBlockchainQueries, retestethContext::getBlockReplay, true),
             new TestModifyTimestamp(retestethContext),
-            new EthSendRawTransaction(retestethContext::getTransactionPool, true),
+            new EthSendRawTransaction(
+                retestethContext::getTransactionPool,
+                true,
+                retestethContext.getBlockchainQueries(),
+                Optional.empty()),
             new TestMineBlocks(retestethContext),
             new TestGetLogHash(retestethContext),
             new TestRewindToBlock(retestethContext));

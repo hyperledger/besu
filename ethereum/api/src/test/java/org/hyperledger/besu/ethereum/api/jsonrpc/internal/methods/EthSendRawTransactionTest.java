@@ -25,10 +25,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,12 +45,12 @@ public class EthSendRawTransactionTest {
   private static final String VALID_TRANSACTION =
       "0xf86d0485174876e800830222e0945aae326516b4f8fe08074b7e972e40a713048d62880de0b6b3a7640000801ba05d4e7998757264daab67df2ce6f7e7a0ae36910778a406ca73898c9899a32b9ea0674700d5c3d1d27f2e6b4469957dfd1a1c49bf92383d80717afc84eb05695d5b";
   @Mock private TransactionPool transactionPool;
-
+  @Mock private BlockchainQueries blockchainQueries;
   private EthSendRawTransaction method;
 
   @Before
   public void before() {
-    method = new EthSendRawTransaction(transactionPool);
+    method = new EthSendRawTransaction(transactionPool, blockchainQueries, Optional.empty());
   }
 
   @Test

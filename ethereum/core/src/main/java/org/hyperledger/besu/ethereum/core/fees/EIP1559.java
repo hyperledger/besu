@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.ethereum.core.Transaction;
+
+import java.util.function.LongSupplier;
 
 public class EIP1559 {
 
@@ -74,6 +77,23 @@ public class EIP1559 {
   public long getForkBlock() {
     guardActivation();
     return initialForkBlknum;
+  }
+
+  public boolean isValid(final Transaction transaction, final LongSupplier blockNumberSupplier) {
+    return isValid(transaction, blockNumberSupplier.getAsLong());
+  }
+
+  public boolean isValid(final Transaction transaction, final long blockNumber) {
+    if (transaction == null) {
+      return false;
+    }
+    if (blockNumber < getForkBlock()) {
+      return transaction.isFrontierTransaction();
+    } else if (isEIP1559Finalized(blockNumber)) {
+      return transaction.isEIP1559Transaction();
+    } else {
+      return transaction.isFrontierTransaction() || transaction.isEIP1559Transaction();
+    }
   }
 
   private void guardActivation() {

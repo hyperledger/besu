@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -22,14 +23,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -43,15 +47,25 @@ public class EthSendRawTransaction implements JsonRpcMethod {
   private final boolean sendEmptyHashOnInvalidBlock;
 
   private final Supplier<TransactionPool> transactionPool;
+  private final BlockchainQueries blockchainQueries;
+  private final Optional<EIP1559> maybeEip1559;
 
-  public EthSendRawTransaction(final TransactionPool transactionPool) {
-    this(Suppliers.ofInstance(transactionPool), false);
+  public EthSendRawTransaction(
+      final TransactionPool transactionPool,
+      final BlockchainQueries blockchainQueries,
+      final Optional<EIP1559> maybeEip1559) {
+    this(Suppliers.ofInstance(transactionPool), false, blockchainQueries, maybeEip1559);
   }
 
   public EthSendRawTransaction(
-      final Supplier<TransactionPool> transactionPool, final boolean sendEmptyHashOnInvalidBlock) {
+      final Supplier<TransactionPool> transactionPool,
+      final boolean sendEmptyHashOnInvalidBlock,
+      final BlockchainQueries blockchainQueries,
+      final Optional<EIP1559> maybeEip1559) {
     this.transactionPool = transactionPool;
     this.sendEmptyHashOnInvalidBlock = sendEmptyHashOnInvalidBlock;
+    this.blockchainQueries = blockchainQueries;
+    this.maybeEip1559 = maybeEip1559;
   }
 
   @Override
@@ -69,7 +83,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
 
     final Transaction transaction;
     try {
-      transaction = decodeRawTransaction(rawTransaction);
+      transaction = checkEIP1559(decodeRawTransaction(rawTransaction));
     } catch (final InvalidJsonRpcRequestException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
@@ -98,5 +112,18 @@ public class EthSendRawTransaction implements JsonRpcMethod {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);
     }
+  }
+
+  private Transaction checkEIP1559(final Transaction transaction)
+      throws InvalidJsonRpcRequestException {
+    if (!ExperimentalEIPs.eip1559Enabled || maybeEip1559.isEmpty()) {
+      return transaction;
+    }
+    if (!maybeEip1559
+        .get()
+        .isValid(transaction, blockchainQueries.getBlockchain()::getChainHeadBlockNumber)) {
+      throw new InvalidJsonRpcRequestException("Invalid transaction according to EIP-1559 rules");
+    }
+    return transaction;
   }
 }
