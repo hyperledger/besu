@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -60,7 +59,7 @@ public class CliqueMinerExecutorTest {
   private static final int EPOCH_LENGTH = 10;
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
       GenesisConfigFile.fromConfig("{}").getConfigOptions();
-  private final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+  private final NodeKey proposerNodeKey = NodeKey.generate();
   private final Random random = new Random(21341234L);
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();

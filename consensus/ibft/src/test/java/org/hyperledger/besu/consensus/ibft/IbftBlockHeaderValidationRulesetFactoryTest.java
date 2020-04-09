@@ -19,7 +19,6 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -46,7 +45,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderPasses() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -67,7 +66,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnExtraData() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -88,11 +87,10 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnCoinbaseData() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
-    final Address nonProposerAddress =
-        Util.publicKeyToAddress(BouncyCastleNodeKey.generate().getPublicKey());
+    final Address nonProposerAddress = Util.publicKeyToAddress(NodeKey.generate().getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
 
@@ -114,7 +112,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnNonce() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -135,7 +133,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnTimestamp() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -158,7 +156,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnMixHash() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -181,7 +179,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnOmmers() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -204,7 +202,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnDifficulty() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -227,7 +225,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnAncestor() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -248,7 +246,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnGasUsage() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);
@@ -272,7 +270,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFailsOnGasLimitRange() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKey.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(proposerAddress);

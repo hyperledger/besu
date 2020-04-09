@@ -22,7 +22,6 @@ import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.IbftMessage;
 import org.hyperledger.besu.consensus.ibft.network.MockPeerFactory;
 import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -54,7 +53,7 @@ public class IbftGossipTest {
 
   private <P extends IbftMessage<?>> void assertRebroadcastToAllExceptSignerAndSender(
       final Function<NodeKey, P> createPayload, final Function<P, MessageData> createMessageData) {
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nodeKey = NodeKey.generate();
     final P payload = createPayload.apply(nodeKey);
     final MessageData messageData = createMessageData.apply(payload);
     final Message message = new DefaultMessage(peerConnection, messageData);

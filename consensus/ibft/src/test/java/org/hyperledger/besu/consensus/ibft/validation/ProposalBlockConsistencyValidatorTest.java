@@ -22,7 +22,7 @@ import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collections;
@@ -36,8 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ProposalBlockConsistencyValidatorTest {
 
-  private final MessageFactory proposerMessageFactory =
-      new MessageFactory(BouncyCastleNodeKey.generate());
+  private final MessageFactory proposerMessageFactory = new MessageFactory(NodeKey.generate());
   private final long chainHeight = 2;
   private final ConsensusRoundIdentifier roundIdentifier =
       new ConsensusRoundIdentifier(chainHeight, 4);

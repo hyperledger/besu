@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.ibft.support;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -54,7 +53,7 @@ public class NetworkLayout {
     final TreeMap<Address, NodeParams> addressKeyMap = new TreeMap<>();
 
     for (int i = 0; i < validatorCount; i++) {
-      final NodeKey newNodeKey = BouncyCastleNodeKey.generate();
+      final NodeKey newNodeKey = NodeKey.generate();
       final Address nodeAddress = Util.publicKeyToAddress(newNodeKey.getPublicKey());
       addressKeyMap.put(nodeAddress, new NodeParams(nodeAddress, newNodeKey));
     }

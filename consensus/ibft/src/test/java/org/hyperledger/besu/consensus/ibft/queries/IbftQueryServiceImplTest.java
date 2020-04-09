@@ -22,7 +22,6 @@ import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -53,7 +52,7 @@ public class IbftQueryServiceImplTest {
   @Mock private Blockchain blockchain;
 
   private final List<NodeKey> validatorKeys =
-      Lists.newArrayList(BouncyCastleNodeKey.generate(), BouncyCastleNodeKey.generate());
+      Lists.newArrayList(NodeKey.generate(), NodeKey.generate());
 
   private final List<NodeKey> signingKeys = Lists.newArrayList(validatorKeys.get(0));
   private final int ROUND_NUMBER_IN_BLOCK = 5;

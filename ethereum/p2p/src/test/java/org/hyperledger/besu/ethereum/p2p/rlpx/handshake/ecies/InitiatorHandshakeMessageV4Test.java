@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 
 import java.io.File;
@@ -58,8 +58,7 @@ public final class InitiatorHandshakeMessageV4Test {
   @Test
   public void encodeDecodeRoundtrip() {
     final InitiatorHandshakeMessageV4 initial =
-        InitiatorHandshakeMessageV4.decode(
-            EXAMPLE_MESSAGE, new BouncyCastleNodeKey(EXAMPLE_KEYPAIR));
+        InitiatorHandshakeMessageV4.decode(EXAMPLE_MESSAGE, NodeKey.createFrom(EXAMPLE_KEYPAIR));
     final Bytes encoded = initial.encode();
     Assertions.assertThat(encoded).isEqualTo(EXAMPLE_MESSAGE.slice(0, encoded.size()));
   }

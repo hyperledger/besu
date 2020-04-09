@@ -22,7 +22,6 @@ import static org.hyperledger.besu.consensus.ibft.headervalidationrules.HeaderVa
 
 import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -46,9 +45,7 @@ public class IbftCommitSealsValidationRuleTest {
   @Test
   public void correctlyConstructedHeaderPassesValidation() {
     final List<NodeKey> committerNodeKeys =
-        IntStream.range(0, 2)
-            .mapToObj(i -> BouncyCastleNodeKey.generate())
-            .collect(Collectors.toList());
+        IntStream.range(0, 2).mapToObj(i -> NodeKey.generate()).collect(Collectors.toList());
 
     final List<Address> committerAddresses =
         committerNodeKeys.stream()
@@ -66,7 +63,7 @@ public class IbftCommitSealsValidationRuleTest {
 
   @Test
   public void insufficientCommitSealsFailsValidation() {
-    final NodeKey committerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey committerNodeKey = NodeKey.generate();
     final Address committerAddress =
         Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes()));
 
@@ -85,13 +82,13 @@ public class IbftCommitSealsValidationRuleTest {
 
   @Test
   public void committerNotInValidatorListFailsValidation() {
-    final NodeKey committerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey committerNodeKey = NodeKey.generate();
     final Address committerAddress = Util.publicKeyToAddress(committerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(committerAddress);
 
     // Insert an extraData block with committer seals.
-    final NodeKey nonValidatorNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nonValidatorNodeKey = NodeKey.generate();
 
     final BlockHeader header =
         createProposedBlockHeader(validators, singletonList(nonValidatorNodeKey), false);
@@ -143,7 +140,7 @@ public class IbftCommitSealsValidationRuleTest {
 
   @Test
   public void headerContainsDuplicateSealsFailsValidation() {
-    final NodeKey committerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey committerNodeKey = NodeKey.generate();
     final List<Address> validators =
         singletonList(Util.publicKeyToAddress(committerNodeKey.getPublicKey()));
     final BlockHeader header =
@@ -165,7 +162,7 @@ public class IbftCommitSealsValidationRuleTest {
     final List<NodeKey> committerKeys = Lists.newArrayList();
 
     for (int i = 0; i < validatorCount; i++) { // need -1 to account for proposer
-      final NodeKey committerNodeKey = BouncyCastleNodeKey.generate();
+      final NodeKey committerNodeKey = NodeKey.generate();
       committerKeys.add(committerNodeKey);
       validators.add(Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes())));
     }

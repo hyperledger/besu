@@ -31,7 +31,7 @@ import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.ibft.support.ValidatorPeer;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.time.Clock;
@@ -118,7 +118,7 @@ public class GossipTest {
 
   @Test
   public void messageWithUnknownValidatorIsNotGossiped() {
-    final MessageFactory unknownMsgFactory = new MessageFactory(BouncyCastleNodeKey.generate());
+    final MessageFactory unknownMsgFactory = new MessageFactory(NodeKey.generate());
     final Proposal unknownProposal =
         unknownMsgFactory.createProposal(roundId, block, Optional.empty());
 

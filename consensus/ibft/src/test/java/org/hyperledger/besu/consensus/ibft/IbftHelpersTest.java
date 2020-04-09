@@ -22,7 +22,6 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -86,7 +85,7 @@ public class IbftHelpersTest {
     // sources, it is only responsible for determine which of the list or RoundChange messages
     // contains the newest
     // NOTE: This capability is tested as part of the NewRoundMessageValidationTests.
-    final NodeKey proposerKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerKey = NodeKey.generate();
     final MessageFactory proposerMessageFactory = new MessageFactory(proposerKey);
     final Block proposedBlock = mock(Block.class);
     when(proposedBlock.getHash()).thenReturn(Hash.fromHexStringLenient("1"));
@@ -138,7 +137,7 @@ public class IbftHelpersTest {
 
   @Test
   public void allRoundChangeHaveNoPreparedReturnsEmptyOptional() {
-    final NodeKey proposerKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerKey = NodeKey.generate();
     final MessageFactory proposerMessageFactory = new MessageFactory(proposerKey);
     final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 4);
 
