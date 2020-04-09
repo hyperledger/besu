@@ -69,7 +69,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader = buildBlockHeader(2, proposerKeyPair, validators, parentHeader);
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -92,7 +92,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader = buildBlockHeader(2, proposerKeyPair, validators, null);
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(

@@ -62,9 +62,9 @@ public class IbftProtocolSchedule {
   private static ProtocolSpecBuilder<IbftContext> applyIbftChanges(
       final long secondsBetweenBlocks, final ProtocolSpecBuilder<Void> builder) {
     return builder
-        .<IbftContext>changeConsensusContextType(
-            difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks),
-            difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks),
+        .changeConsensusContextType(
+            ibftBlockHeaderValidator(secondsBetweenBlocks),
+            ibftBlockHeaderValidator(secondsBetweenBlocks),
             MainnetBlockBodyValidator::new,
             MainnetBlockValidator::new,
             MainnetBlockImporter::new,
