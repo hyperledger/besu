@@ -118,7 +118,7 @@ public class ECIESEncryptionEngine {
     final byte[] ivb = ECIESHandshaker.random(CIPHER_BLOCK_SIZE).toArray();
 
     return new ECIESEncryptionEngine(
-        SECP256K1.calculateECIESKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
+        SECP256K1.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
         ephKeyPair.getPublicKey(),
         ivb);
   }

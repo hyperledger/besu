@@ -38,7 +38,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
-  public static BlockHeaderValidator<IbftContext> ibftBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder<IbftContext> ibftBlockHeaderValidator(
       final long secondsBetweenBlocks) {
     return createValidator(secondsBetweenBlocks, true);
   }
@@ -50,12 +50,12 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
-  public static BlockHeaderValidator<IbftContext> ibftProposedBlockValidator(
+  public static BlockHeaderValidator.Builder<IbftContext> ibftProposedBlockValidator(
       final long secondsBetweenBlocks) {
     return createValidator(secondsBetweenBlocks, false);
   }
 
-  private static BlockHeaderValidator<IbftContext> createValidator(
+  private static BlockHeaderValidator.Builder<IbftContext> createValidator(
       final long secondsBetweenBlocks, final boolean validateCommitSeals) {
     return new BlockHeaderValidator.Builder<IbftContext>()
         .addRule(new AncestryValidationRule())
@@ -73,7 +73,6 @@ public class IbftBlockHeaderValidationRulesetFactory {
             new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new VoteValidationRule())
-        .addRule(new IbftExtraDataValidationRule(validateCommitSeals))
-        .build();
+        .addRule(new IbftExtraDataValidationRule(validateCommitSeals));
   }
 }

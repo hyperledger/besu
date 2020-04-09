@@ -37,29 +37,24 @@ public final class MainnetBlockHeaderValidator {
   public static final Bytes CLASSIC_FORK_BLOCK_HEADER =
       Bytes.fromHexString("0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
-  public static BlockHeaderValidator<Void> create(
-      final DifficultyCalculator<Void> difficultyCalculator) {
-    return createValidator(difficultyCalculator).build();
+  public static BlockHeaderValidator.Builder<Void> create() {
+    return createValidator();
   }
 
-  public static BlockHeaderValidator<Void> createDaoValidator(
-      final DifficultyCalculator<Void> difficultyCalculator) {
-    return createValidator(difficultyCalculator)
+  public static BlockHeaderValidator.Builder<Void> createDaoValidator() {
+    return createValidator()
         .addRule(
             new ConstantFieldValidationRule<>(
-                "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA))
-        .build();
+                "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA));
   }
 
-  public static BlockHeaderValidator<Void> createClassicValidator(
-      final DifficultyCalculator<Void> difficultyCalculator) {
-    return createValidator(difficultyCalculator)
+  public static BlockHeaderValidator.Builder<Void> createClassicValidator() {
+    return createValidator()
         .addRule(
             new ConstantFieldValidationRule<>(
                 "hash",
                 h -> h.getNumber() == 1920000 ? h.getBlockHash() : CLASSIC_FORK_BLOCK_HEADER,
-                CLASSIC_FORK_BLOCK_HEADER))
-        .build();
+                CLASSIC_FORK_BLOCK_HEADER));
   }
 
   public static boolean validateHeaderForDaoFork(final BlockHeader header) {
@@ -70,23 +65,20 @@ public final class MainnetBlockHeaderValidator {
     return header.getNumber() != 1_920_000 || header.getHash().equals(CLASSIC_FORK_BLOCK_HEADER);
   }
 
-  static BlockHeaderValidator<Void> createOmmerValidator(
-      final DifficultyCalculator<Void> difficultyCalculator) {
+  static BlockHeaderValidator.Builder<Void> createOmmerValidator() {
     return new BlockHeaderValidator.Builder<Void>()
-        .addRule(new CalculatedDifficultyValidationRule<>(difficultyCalculator))
+        .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule())
-        .build();
+        .addRule(new ProofOfWorkValidationRule());
   }
 
-  private static BlockHeaderValidator.Builder<Void> createValidator(
-      final DifficultyCalculator<Void> difficultyCalculator) {
+  private static BlockHeaderValidator.Builder<Void> createValidator() {
     return new BlockHeaderValidator.Builder<Void>()
-        .addRule(new CalculatedDifficultyValidationRule<>(difficultyCalculator))
+        .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
         .addRule(new GasUsageValidationRule())
