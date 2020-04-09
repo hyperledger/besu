@@ -20,6 +20,7 @@ public class EIP1559 {
 
   private final long initialForkBlknum;
   private final long finalForkBlknum;
+
   private final FeeMarket feeMarket = FeeMarket.eip1559();
 
   public EIP1559(final long forkBlockNumber) {
@@ -80,5 +81,9 @@ public class EIP1559 {
     if (!ExperimentalEIPs.eip1559Enabled) {
       throw new RuntimeException("EIP-1559 is not enabled");
     }
+  }
+
+  public FeeMarket getFeeMarket() {
+    return feeMarket;
   }
 }
