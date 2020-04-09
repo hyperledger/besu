@@ -34,8 +34,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
-import org.bouncycastle.crypto.BasicAgreement;
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.ECDomainParameters;
@@ -50,7 +48,6 @@ import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
-import org.bouncycastle.util.BigIntegers;
 
 /*
  * Adapted from the BitcoinJ ECKey (Apache 2 License) implementation:
@@ -294,18 +291,6 @@ public class SECP256K1 {
     final BigInteger agreed = agreement.calculateAgreement(pubKeyP);
 
     return UInt256.valueOf(agreed).toBytes();
-  }
-
-  public static Bytes calculateECIESKeyAgreement(final PrivateKey privKey, final PublicKey pubKey) {
-    final ECDomainParameters dp = SECP256K1.CURVE;
-
-    final CipherParameters pubParam = new ECPublicKeyParameters(pubKey.asEcPoint(), dp);
-    final CipherParameters privParam = new ECPrivateKeyParameters(privKey.getD(), dp);
-
-    final BasicAgreement agree = new ECDHBasicAgreement();
-    agree.init(privParam);
-    final BigInteger z = agree.calculateAgreement(pubParam);
-    return Bytes.wrap(BigIntegers.asUnsignedByteArray(agree.getFieldSize(), z));
   }
 
   public static class PrivateKey implements java.security.PrivateKey {
