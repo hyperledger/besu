@@ -429,7 +429,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     private void validate() {
-      checkState(nodeKey != null, "nodeKey must be set.");
+      checkState(nodeKey != null, "NodeKey must be set.");
       checkState(config != null, "NetworkingConfiguration must be set.");
       checkState(
           supportedCapabilities != null && supportedCapabilities.size() > 0,

@@ -563,7 +563,7 @@ public class RlpxAgent {
     }
 
     private void validate() {
-      checkState(nodeKey != null, "nodeKey must be configured");
+      checkState(nodeKey != null, "NodeKey must be configured");
       checkState(localNode != null, "LocalNode must be configured");
       checkState(config != null, "RlpxConfiguration must be set");
       checkState(peerPrivileges != null, "PeerPrivileges must be configured");

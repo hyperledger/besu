@@ -85,7 +85,7 @@ public abstract class BesuControllerBuilder<C> {
   protected PrivacyParameters privacyParameters;
   protected Path dataDirectory;
   protected Clock clock;
-  NodeKey nodeKey;
+  protected NodeKey nodeKey;
   protected boolean isRevertReasonEnabled;
   GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
