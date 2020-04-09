@@ -38,7 +38,11 @@ public interface NatManager {
    */
   NatMethod getNatMethod();
 
-  /** Starts the manager or service. */
+  /**
+   * Starts the manager or service.
+   *
+   * @throws NatInitializationException if failure during the initialization
+   */
   void start() throws NatInitializationException;
 
   /** Stops the manager or service. */
