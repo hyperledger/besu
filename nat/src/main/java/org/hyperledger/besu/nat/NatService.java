@@ -140,7 +140,7 @@ public class NatService {
 
   /**
    * Returns a {@link Optional} wrapping the local IP address.
-   *
+   * @param fallbackValue the advertised IP address fallback value
    * @return The local IP address wrapped in a {@link Optional}.
    */
   public String queryLocalIPAddress(final String fallbackValue) throws RuntimeException {
