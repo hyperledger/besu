@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -40,14 +42,24 @@ public class MainnetTransactionValidator implements TransactionValidator {
   private final Optional<BigInteger> chainId;
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
+  private final Optional<EIP1559> maybeEip1559;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId) {
+    this(gasCalculator, checkSignatureMalleability, chainId, Optional.empty());
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Optional<EIP1559> maybeEip1559) {
     this.gasCalculator = gasCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
+    this.maybeEip1559 = maybeEip1559;
   }
 
   @Override
@@ -56,6 +68,16 @@ public class MainnetTransactionValidator implements TransactionValidator {
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+
+    if (ExperimentalEIPs.eip1559Enabled
+        && maybeEip1559.isPresent()
+        && transaction.getGasLimit() > maybeEip1559.get().getFeeMarket().getPerTxGaslimit()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
+          String.format(
+              "transaction gas limit %s exceeds per transaction gas limit %s",
+              transaction.getGasLimit(), maybeEip1559.get().getFeeMarket().getPerTxGaslimit()));
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);
