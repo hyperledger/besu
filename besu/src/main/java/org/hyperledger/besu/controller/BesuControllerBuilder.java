@@ -131,8 +131,8 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  public BesuControllerBuilder<C> nodeKeys(final NodeKey nodeKeys) {
-    this.nodeKey = nodeKeys;
+  public BesuControllerBuilder<C> nodeKey(final NodeKey nodeKey) {
+    this.nodeKey = nodeKey;
     return this;
   }
 

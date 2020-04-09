@@ -85,7 +85,7 @@ public final class RlpBlockExporterTest {
         .storageProvider(new InMemoryStorageProvider())
         .networkId(BigInteger.ONE)
         .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-        .nodeKeys(BouncyCastleNodeKey.generate())
+        .nodeKey(BouncyCastleNodeKey.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
         .dataDirectory(dataDir)

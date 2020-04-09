@@ -422,7 +422,7 @@ public abstract class JsonBlockImporterTest {
                 .minTransactionGasPrice(Wei.ZERO)
                 .enabled(true)
                 .build())
-        .nodeKeys(BouncyCastleNodeKey.generate())
+        .nodeKey(BouncyCastleNodeKey.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
         .dataDirectory(dataDir)

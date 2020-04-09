@@ -165,7 +165,7 @@ public class PrivacyReorgTest {
             .storageProvider(new InMemoryStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKeys(BouncyCastleNodeKey.generate())
+            .nodeKey(BouncyCastleNodeKey.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
