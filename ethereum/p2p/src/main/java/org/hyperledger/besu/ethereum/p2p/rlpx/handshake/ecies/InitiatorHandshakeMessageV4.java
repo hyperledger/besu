@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -49,18 +50,16 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
    * Decodes this message.
    *
    * @param bytes The raw bytes.
-   * @param keyPair Our keypair to calculat ECDH key agreements.
+   * @param nodeKey Abstraction of the local nodes keys and associated cryptographic operations
    * @return The decoded message.
    */
-  public static InitiatorHandshakeMessageV4 decode(
-      final Bytes bytes, final SECP256K1.KeyPair keyPair) {
+  public static InitiatorHandshakeMessageV4 decode(final Bytes bytes, final NodeKey nodeKey) {
     final RLPInput input = new BytesValueRLPInput(bytes, true);
     input.enterList();
     final SECP256K1.Signature signature = SECP256K1.Signature.decode(input.readBytes());
     final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(input.readBytes());
     final Bytes32 nonce = input.readBytes32();
-    final Bytes32 staticSharedSecret =
-        SECP256K1.calculateKeyAgreement(keyPair.getPrivateKey(), pubKey);
+    final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(pubKey);
     final SECP256K1.PublicKey ephPubKey =
         SECP256K1.PublicKey.recoverFromSignature(staticSharedSecret.xor(nonce), signature)
             .orElseThrow(() -> new RuntimeException("Could not recover public key from signature"));

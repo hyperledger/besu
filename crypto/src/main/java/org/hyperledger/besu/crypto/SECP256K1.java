@@ -278,7 +278,7 @@ public class SECP256K1 {
    * @param theirPubKey The public key.
    * @return The agreed secret.
    */
-  public static Bytes32 calculateKeyAgreement(
+  public static Bytes32 calculateECDHKeyAgreement(
       final PrivateKey privKey, final PublicKey theirPubKey) {
     checkArgument(privKey != null, "missing private key");
     checkArgument(theirPubKey != null, "missing remote public key");

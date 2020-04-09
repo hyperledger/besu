@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP155
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.disableEIP1559;
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.enableEIP1559;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 
@@ -28,28 +27,24 @@ import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 public class EIP1559BlockHeaderGasPriceValidationRuleTest {
 
   private static final long FORK_BLOCK = 800L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private EIP1559BlockHeaderGasPriceValidationRule<Void> validationRule;
+  private EIP1559BlockHeaderGasPriceValidationRule validationRule;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
-  @Mock private ProtocolContext<Void> protocolContext;
 
   @Before
   public void setUp() {
-    validationRule = new EIP1559BlockHeaderGasPriceValidationRule<>(eip1559);
+    validationRule = new EIP1559BlockHeaderGasPriceValidationRule(eip1559);
   }
 
   @Test
   public void eipActivationShouldBeGuardedProperly() {
     disableEIP1559();
     assertThatThrownBy(
-            () ->
-                validationRule.validate(
-                    blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null, protocolContext))
+            () -> validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 is not enabled");
   }
@@ -57,9 +52,7 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
   @Test
   public void shouldReturnTrueBeforeFork() {
     enableEIP1559();
-    assertThat(
-            validationRule.validate(
-                blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null, protocolContext))
+    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
         .isTrue();
     disableEIP1559();
   }
@@ -69,9 +62,7 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
     enableEIP1559();
     assertThat(
             validationRule.validate(
-                blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee())),
-                null,
-                protocolContext))
+                blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee())), null))
         .isTrue();
     disableEIP1559();
   }
@@ -81,9 +72,7 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
     enableEIP1559();
     assertThat(
             validationRule.validate(
-                blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee() - 1)),
-                null,
-                protocolContext))
+                blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee() - 1)), null))
         .isFalse();
     disableEIP1559();
   }
@@ -94,8 +83,7 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
     assertThat(
             validationRule.validate(
                 blockHeader(FORK_BLOCK + 2, 0, Optional.empty()),
-                blockHeader(FORK_BLOCK + 1, 0, Optional.empty()),
-                protocolContext))
+                blockHeader(FORK_BLOCK + 1, 0, Optional.empty())))
         .isFalse();
     disableEIP1559();
   }
@@ -106,8 +94,7 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
     assertThat(
             validationRule.validate(
                 blockHeader(FORK_BLOCK + 1, 0, Optional.of(987500000L)),
-                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee())),
-                protocolContext))
+                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee()))))
         .isTrue();
     disableEIP1559();
   }
@@ -118,8 +105,7 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
     assertThat(
             validationRule.validate(
                 blockHeader(FORK_BLOCK + 1, 0, Optional.of(987500001L)),
-                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee())),
-                protocolContext))
+                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee()))))
         .isFalse();
     disableEIP1559();
   }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -33,16 +34,19 @@ public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>
   private final ProtocolContext<C> protocolContext;
   private final ValidationPolicy headerValidationPolicy;
   private final ValidationPolicy ommerValidationPolicy;
+  private final EthContext ethContext;
 
   public FastImportBlocksStep(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final ValidationPolicy headerValidationPolicy,
-      final ValidationPolicy ommerValidationPolicy) {
+      final ValidationPolicy ommerValidationPolicy,
+      final EthContext ethContext) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.headerValidationPolicy = headerValidationPolicy;
     this.ommerValidationPolicy = ommerValidationPolicy;
+    this.ethContext = ethContext;
   }
 
   @Override
@@ -57,7 +61,12 @@ public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>
     }
     final long firstBlock = blocksWithReceipts.get(0).getNumber();
     final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
-    LOG.info("Completed importing chain segment {} to {}", firstBlock, lastBlock);
+    int peerCount = -1; // ethContext is not available in tests
+    if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
+      peerCount = ethContext.getEthPeers().peerCount();
+    }
+    LOG.info(
+        "Completed importing chain segment {} to {}, Peers: {}", firstBlock, lastBlock, peerCount);
   }
 
   private boolean importBlock(final BlockWithReceipts blockWithReceipts) {

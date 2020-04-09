@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
@@ -31,7 +31,7 @@ import io.netty.buffer.ByteBuf;
 final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
 
   public HandshakeHandlerInbound(
-      final SECP256K1.KeyPair kp,
+      final NodeKey nodeKey,
       final List<SubProtocol> subProtocols,
       final LocalNode localNode,
       final CompletableFuture<PeerConnection> connectionFuture,
@@ -44,7 +44,7 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
         connectionFuture,
         connectionEventDispatcher,
         metricsSystem);
-    handshaker.prepareResponder(kp);
+    handshaker.prepareResponder(nodeKey);
   }
 
   @Override

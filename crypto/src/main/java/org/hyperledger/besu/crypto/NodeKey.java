@@ -24,4 +24,6 @@ public interface NodeKey {
   Signature sign(Bytes32 dataHash);
 
   PublicKey getPublicKey();
+
+  Bytes32 calculateECDHKeyAgreement(PublicKey publicKey);
 }

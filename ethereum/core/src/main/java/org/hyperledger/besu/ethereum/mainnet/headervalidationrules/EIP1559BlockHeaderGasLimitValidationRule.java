@@ -14,17 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class EIP1559BlockHeaderGasLimitValidationRule<C>
-    implements AttachedBlockHeaderValidationRule<C> {
+public class EIP1559BlockHeaderGasLimitValidationRule implements DetachedBlockHeaderValidationRule {
   private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
   private final EIP1559 eip1559;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
@@ -34,10 +32,7 @@ public class EIP1559BlockHeaderGasLimitValidationRule<C>
   }
 
   @Override
-  public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<C> protocolContext) {
+  public boolean validate(final BlockHeader header, final BlockHeader parent) {
     if (!eip1559.isEIP1559(header.getNumber())) {
       return true;
     }

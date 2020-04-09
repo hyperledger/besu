@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP155
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.disableEIP1559;
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.enableEIP1559;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 
@@ -28,20 +27,18 @@ import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 public class EIP1559BlockHeaderGasLimitValidationRuleTest {
 
   private static final long FORK_BLOCK = 800L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private EIP1559BlockHeaderGasLimitValidationRule<Void> validationRule;
+  private EIP1559BlockHeaderGasLimitValidationRule validationRule;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
-  @Mock private ProtocolContext<Void> protocolContext;
   private long finalizedForkBlock;
 
   @Before
   public void setUp() {
-    validationRule = new EIP1559BlockHeaderGasLimitValidationRule<>(eip1559);
+    validationRule = new EIP1559BlockHeaderGasLimitValidationRule(eip1559);
     finalizedForkBlock = FORK_BLOCK + feeMarket.getDecayRange();
   }
 
@@ -49,9 +46,7 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
   public void eipActivationShouldBeGuardedProperly() {
     disableEIP1559();
     assertThatThrownBy(
-            () ->
-                validationRule.validate(
-                    blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null, protocolContext))
+            () -> validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 is not enabled");
   }
@@ -59,9 +54,7 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
   @Test
   public void shouldReturnTrueBeforeFork() {
     enableEIP1559();
-    assertThat(
-            validationRule.validate(
-                blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null, protocolContext))
+    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
         .isTrue();
     disableEIP1559();
   }
@@ -72,8 +65,7 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
     assertThat(
             validationRule.validate(
                 blockHeader(finalizedForkBlock + 1, 0, Optional.empty(), feeMarket.getMaxGas()),
-                null,
-                protocolContext))
+                null))
         .isTrue();
     disableEIP1559();
   }
@@ -84,8 +76,7 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
     assertThat(
             validationRule.validate(
                 blockHeader(finalizedForkBlock + 1, 0, Optional.empty(), feeMarket.getMaxGas() - 1),
-                null,
-                protocolContext))
+                null))
         .isFalse();
     disableEIP1559();
   }
@@ -100,8 +91,7 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
                     0,
                     Optional.empty(),
                     (feeMarket.getMaxGas() / 2) + feeMarket.getGasIncrementAmount()),
-                null,
-                protocolContext))
+                null))
         .isTrue();
     disableEIP1559();
   }
@@ -111,9 +101,7 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
     enableEIP1559();
     assertThat(
             validationRule.validate(
-                blockHeader(FORK_BLOCK + 1, 0, Optional.empty(), feeMarket.getMaxGas() - 1),
-                null,
-                protocolContext))
+                blockHeader(FORK_BLOCK + 1, 0, Optional.empty(), feeMarket.getMaxGas() - 1), null))
         .isFalse();
     disableEIP1559();
   }
