@@ -63,8 +63,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   @Override
-  public ValidationResult<TransactionInvalidReason> validate(
-      final Transaction transaction, final long blockNumber) {
+  public ValidationResult<TransactionInvalidReason> validate(final Transaction transaction) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
@@ -73,7 +72,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     if (ExperimentalEIPs.eip1559Enabled
         && maybeEip1559.isPresent()
-        && maybeEip1559.get().isEIP1559(blockNumber)
         && transaction.getGasLimit() > maybeEip1559.get().getFeeMarket().getPerTxGaslimit()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,

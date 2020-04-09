@@ -65,7 +65,7 @@ public class MainnetTransactionValidatorTest {
             .createTransaction(senderKeys);
     when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
 
-    assertThat(validator.validate(transaction, 0))
+    assertThat(validator.validate(transaction))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT));
@@ -75,7 +75,7 @@ public class MainnetTransactionValidatorTest {
   public void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
-    assertThat(validator.validate(basicTransaction, 0))
+    assertThat(validator.validate(basicTransaction))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason
@@ -86,7 +86,7 @@ public class MainnetTransactionValidatorTest {
   public void shouldRejectTransactionWhenTransactionHasIncorrectChainId() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.valueOf(2)));
-    assertThat(validator.validate(basicTransaction, 0))
+    assertThat(validator.validate(basicTransaction))
         .isEqualTo(
             ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID));
   }
@@ -241,7 +241,7 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(eip1559.getFeeMarket().getPerTxGaslimit() + 1)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    assertThat(validator.validate(transaction, forkBlock + 1))
+    assertThat(validator.validate(transaction))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT));

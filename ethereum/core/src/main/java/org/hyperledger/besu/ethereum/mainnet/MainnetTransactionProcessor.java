@@ -177,7 +177,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-        transactionValidator.validate(transaction, blockHeader.getNumber());
+        transactionValidator.validate(transaction);
     // Make sure the transaction is intrinsically valid before trying to
     // compare against a sender account (because the transaction may not
     // be signed correctly to extract the sender).
