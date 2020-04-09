@@ -243,12 +243,9 @@ public class Runner implements AutoCloseable {
           .getLocalEnode()
           .ifPresent(
               enode -> {
-                final String globalIp =
-                    natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
+                final String globalIp = natService.queryExternalIPAddress(enode.getIpAsString());
                 properties.setProperty("global-ip", globalIp);
-
-                final String localIp =
-                    natService.queryLocalIPAddress().orElseGet(enode::getIpAsString);
+                final String localIp = natService.queryLocalIPAddress(enode.getIpAsString());
                 properties.setProperty("local-ip", localIp);
               });
     }

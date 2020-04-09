@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -113,7 +114,7 @@ public final class UpnpNatManagerTest {
   }
 
   @Test
-  public void requestPortForwardThrowsWhenPortIsZero() {
+  public void requestPortForwardThrowsWhenPortIsZero() throws NatInitializationException {
     upnpManager.start();
 
     assertThatThrownBy(
