@@ -142,7 +142,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
   }
 
   private String getIp(final EnodeURL enode) {
-    return natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
+    return natService.queryExternalIPAddress(enode.getIpAsString());
   }
 
   private int getDiscoveryPort(final EnodeURL enode) {

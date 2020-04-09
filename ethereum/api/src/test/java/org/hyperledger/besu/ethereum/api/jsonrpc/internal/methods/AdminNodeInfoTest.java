@@ -138,7 +138,7 @@ public class AdminNodeInfoTest {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
 
-    when(natService.queryExternalIPAddress()).thenReturn(Optional.of("3.4.5.6"));
+    when(natService.queryExternalIPAddress("1.2.3.4")).thenReturn("3.4.5.6");
     when(natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP))
         .thenReturn(
             Optional.of(
