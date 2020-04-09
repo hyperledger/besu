@@ -22,7 +22,6 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
-import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
