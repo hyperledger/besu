@@ -162,7 +162,15 @@ public class ProtocolScheduleBuilder<C> {
             isRevertReasonEnabled));
 
     if (ExperimentalEIPs.eip1559Enabled) {
-      // TODO EIP-1559 addProtocolSpec for EIP-1559
+      addProtocolSpec(
+          protocolSchedule,
+          config.getEIP1559BlockNumber(),
+          MainnetProtocolSpecs.eip1559Definition(
+              chainId,
+              config.getContractSizeLimit(),
+              config.getEvmStackSize(),
+              isRevertReasonEnabled,
+              config));
     }
 
     // specs for classic network

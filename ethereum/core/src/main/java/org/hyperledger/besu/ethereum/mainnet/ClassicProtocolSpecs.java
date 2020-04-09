@@ -32,7 +32,7 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder<Void> classicRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return MainnetProtocolSpecs.homesteadDefinition(contractSizeLimit, configStackSizeLimit)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::createClassicValidator)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 

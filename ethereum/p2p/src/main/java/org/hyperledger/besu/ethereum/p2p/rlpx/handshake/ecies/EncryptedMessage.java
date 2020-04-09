@@ -66,7 +66,7 @@ final class EncryptedMessage {
    * Decrypts the ciphertext using our private key.
    *
    * @param msgBytes The ciphertext.
-   * @param nodeKey Abstraction of this nodes private key & associated crypto operations
+   * @param nodeKey Abstraction of this nodes private key & associated cryptographic operations
    * @return The plaintext.
    * @throws InvalidCipherTextException Thrown if decryption failed.
    */

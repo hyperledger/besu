@@ -1224,40 +1224,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public BesuControllerBuilder<?> getControllerBuilder() {
-    try {
-      addConfigurationService();
-      return controllerBuilderFactory
-          .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
-          .synchronizerConfiguration(buildSyncConfig())
-          .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
-          .dataDirectory(dataDir())
-          .miningParameters(
-              new MiningParameters(
-                  coinbase,
-                  minTransactionGasPrice,
-                  extraData,
-                  isMiningEnabled,
-                  iStratumMiningEnabled,
-                  stratumNetworkInterface,
-                  stratumPort,
-                  stratumExtranonce,
-                  Optional.empty()))
-          .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-          .nodePrivateKeyFile(nodePrivateKeyFile())
-          .metricsSystem(metricsSystem.get())
-          .privacyParameters(privacyParameters())
-          .clock(Clock.systemUTC())
-          .isRevertReasonEnabled(isRevertReasonEnabled)
-          .storageProvider(keyStorageProvider(keyValueStorageName))
-          .isPruningEnabled(isPruningEnabled())
-          .pruningConfiguration(
-              new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
-          .genesisConfigOverrides(genesisConfigOverrides)
-          .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
-          .requiredBlocks(requiredBlocks);
-    } catch (final IOException e) {
-      throw new ExecutionException(this.commandLine, "Invalid path", e);
-    }
+    addConfigurationService();
+    return controllerBuilderFactory
+        .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+        .synchronizerConfiguration(buildSyncConfig())
+        .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
+        .dataDirectory(dataDir())
+        .miningParameters(
+            new MiningParameters(
+                coinbase,
+                minTransactionGasPrice,
+                extraData,
+                isMiningEnabled,
+                iStratumMiningEnabled,
+                stratumNetworkInterface,
+                stratumPort,
+                stratumExtranonce,
+                Optional.empty()))
+        .transactionPoolConfiguration(buildTransactionPoolConfiguration())
+        .nodePrivateKeyFile(nodePrivateKeyFile())
+        .metricsSystem(metricsSystem.get())
+        .privacyParameters(privacyParameters())
+        .clock(Clock.systemUTC())
+        .isRevertReasonEnabled(isRevertReasonEnabled)
+        .storageProvider(keyStorageProvider(keyValueStorageName))
+        .isPruningEnabled(isPruningEnabled())
+        .pruningConfiguration(
+            new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
+        .genesisConfigOverrides(genesisConfigOverrides)
+        .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
+        .requiredBlocks(requiredBlocks);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
