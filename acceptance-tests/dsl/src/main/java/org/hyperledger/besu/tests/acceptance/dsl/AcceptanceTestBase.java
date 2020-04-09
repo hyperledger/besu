@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Blockchain;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.admin.AdminConditions;
@@ -43,7 +45,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTran
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.ProcessBuilder.Redirect;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,9 +63,6 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
 public class AcceptanceTestBase {
-  static {
-    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
-  }
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -87,6 +92,8 @@ public class AcceptanceTestBase {
   protected final PrivacyTransactions privacyTransactions;
   protected final TxPoolConditions txPoolConditions;
   protected final TxPoolTransactions txPoolTransactions;
+
+  private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
   protected AcceptanceTestBase() {
     ethTransactions = new EthTransactions();
@@ -119,6 +126,51 @@ public class AcceptanceTestBase {
   }
 
   @Rule public final TestName name = new TestName();
+
+  @After
+  public void tearDownAcceptanceTestBase() {
+    cluster.close();
+    reportMemory();
+  }
+
+  public void reportMemory() {
+    String os = System.getProperty("os.name");
+    String[] command = null;
+    if (os.contains("Linux")) {
+      command = new String[] {"/usr/bin/top", "-n", "1", "-o", "%MEM", "-b", "-c", "-w", "180"};
+    }
+    if (os.contains("Mac")) {
+      command = new String[] {"/usr/bin/top", "-l", "1", "-o", "mem", "-n", "20"};
+    }
+    if (command != null) {
+      LOG.info("Memory usage at end of test:");
+      final ProcessBuilder processBuilder =
+          new ProcessBuilder(command).redirectErrorStream(true).redirectInput(Redirect.INHERIT);
+      try {
+        final Process memInfoProcess = processBuilder.start();
+        outputProcessorExecutor.execute(() -> printOutput(memInfoProcess));
+        memInfoProcess.waitFor();
+        LOG.debug("Memory info process exited with code {}", memInfoProcess.exitValue());
+      } catch (final Exception e) {
+        LOG.warn("Error running memory information process", e);
+      }
+    } else {
+      LOG.info("Don't know how to report memory for OS {}", os);
+    }
+  }
+
+  private void printOutput(final Process process) {
+    try (final BufferedReader in =
+        new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
+      String line = in.readLine();
+      while (line != null) {
+        LOG.info(line);
+        line = in.readLine();
+      }
+    } catch (final IOException e) {
+      LOG.warn("Failed to read output from memory information process: ", e);
+    }
+  }
 
   @Rule
   public TestWatcher log_eraser =
@@ -161,9 +213,4 @@ public class AcceptanceTestBase {
           }
         }
       };
-
-  @After
-  public void tearDownAcceptanceTestBase() {
-    cluster.close();
-  }
 }
