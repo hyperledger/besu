@@ -22,9 +22,7 @@ import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
@@ -306,8 +304,7 @@ public class RunnerBuilder {
       discoveryConfiguration = DiscoveryConfiguration.create().setActive(false);
     }
 
-    final KeyPair keyPair = besuController.getLocalNodeKeyPair();
-    final NodeKey nodeKey = new BouncyCastleNodeKey(keyPair);
+    final NodeKey nodeKey = besuController.getNodeKey();
 
     final SubProtocolConfiguration subProtocolConfiguration =
         besuController.getSubProtocolConfiguration();
@@ -362,7 +359,7 @@ public class RunnerBuilder {
         (caps) ->
             DefaultP2PNetwork.builder()
                 .vertx(vertx)
-                .keyPair(keyPair)
+                .nodeKey(nodeKey)
                 .config(networkingConfiguration)
                 .peerPermissions(peerPermissions)
                 .metricsSystem(metricsSystem)

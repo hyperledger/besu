@@ -41,4 +41,9 @@ public class BouncyCastleNodeKey implements NodeKey {
   public PublicKey getPublicKey() {
     return nodeKeys.getPublicKey();
   }
+
+  @Override
+  public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey) {
+    return SECP256K1.calculateECDHKeyAgreement(nodeKeys.getPrivateKey(), publicKey);
+  }
 }

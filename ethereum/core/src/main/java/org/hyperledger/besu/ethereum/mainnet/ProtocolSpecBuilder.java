@@ -43,8 +43,8 @@ public class ProtocolSpecBuilder<T> {
   private DifficultyCalculator<T> difficultyCalculator;
   private Function<GasCalculator, EVM> evmBuilder;
   private Function<GasCalculator, TransactionValidator> transactionValidatorBuilder;
-  private Function<DifficultyCalculator<T>, BlockHeaderValidator<T>> blockHeaderValidatorBuilder;
-  private Function<DifficultyCalculator<T>, BlockHeaderValidator<T>> ommerHeaderValidatorBuilder;
+  private BlockHeaderValidator.Builder<T> blockHeaderValidatorBuilder;
+  private BlockHeaderValidator.Builder<T> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule<T>, BlockBodyValidator<T>> blockBodyValidatorBuilder;
   private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
@@ -106,15 +106,13 @@ public class ProtocolSpecBuilder<T> {
   }
 
   public ProtocolSpecBuilder<T> blockHeaderValidatorBuilder(
-      final Function<DifficultyCalculator<T>, BlockHeaderValidator<T>>
-          blockHeaderValidatorBuilder) {
+      final BlockHeaderValidator.Builder<T> blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
     return this;
   }
 
   public ProtocolSpecBuilder<T> ommerHeaderValidatorBuilder(
-      final Function<DifficultyCalculator<T>, BlockHeaderValidator<T>>
-          ommerHeaderValidatorBuilder) {
+      final BlockHeaderValidator.Builder<T> ommerHeaderValidatorBuilder) {
     this.ommerHeaderValidatorBuilder = ommerHeaderValidatorBuilder;
     return this;
   }
@@ -210,8 +208,8 @@ public class ProtocolSpecBuilder<T> {
   }
 
   public <R> ProtocolSpecBuilder<R> changeConsensusContextType(
-      final Function<DifficultyCalculator<R>, BlockHeaderValidator<R>> blockHeaderValidatorBuilder,
-      final Function<DifficultyCalculator<R>, BlockHeaderValidator<R>> ommerHeaderValidatorBuilder,
+      final BlockHeaderValidator.Builder<R> blockHeaderValidatorBuilder,
+      final BlockHeaderValidator.Builder<R> ommerHeaderValidatorBuilder,
       final Function<ProtocolSchedule<R>, BlockBodyValidator<R>> blockBodyValidatorBuilder,
       final BlockValidatorBuilder<R> blockValidatorBuilder,
       final BlockImporterBuilder<R> blockImporterBuilder,
@@ -240,6 +238,10 @@ public class ProtocolSpecBuilder<T> {
         .transactionReceiptFactory(transactionReceiptFactory)
         .miningBeneficiaryCalculator(miningBeneficiaryCalculator)
         .name(name);
+  }
+
+  public BlockHeaderValidator.Builder<T> getBlockHeaderValidatorBuilder() {
+    return blockHeaderValidatorBuilder;
   }
 
   public ProtocolSpec<T> build(final ProtocolSchedule<T> protocolSchedule) {
@@ -283,9 +285,10 @@ public class ProtocolSpecBuilder<T> {
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
     final BlockHeaderValidator<T> blockHeaderValidator =
-        blockHeaderValidatorBuilder.apply(difficultyCalculator);
+        blockHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
+
     final BlockHeaderValidator<T> ommerHeaderValidator =
-        ommerHeaderValidatorBuilder.apply(difficultyCalculator);
+        ommerHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
     final BlockBodyValidator<T> blockBodyValidator =
         blockBodyValidatorBuilder.apply(protocolSchedule);
 

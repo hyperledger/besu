@@ -139,6 +139,8 @@ public class FlatTraceGenerator {
                 tracesContexts,
                 opcodeString.toLowerCase(Locale.US));
 
+      } else if ("CALLDATALOAD".equals(opcodeString)) {
+        if (currentContext != null) currentContext = handleCallDataLoad(currentContext, traceFrame);
       } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
         if (currentContext != null) {
           currentContext =
@@ -247,13 +249,8 @@ public class FlatTraceGenerator {
             .input(
                 nextTraceFrame.map(TraceFrame::getInputData).map(Bytes::toHexString).orElse(null))
             .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
-            .callType(opcodeString.toLowerCase(Locale.US));
-
-    if (tracesContexts.size() > 1 && traceFrame.getOpcode().equals("CALL")) {
-      subTraceActionBuilder.value("0x0");
-    } else {
-      subTraceActionBuilder.value(Quantity.create(transactionTrace.getTransaction().getValue()));
-    }
+            .callType(opcodeString.toLowerCase(Locale.US))
+            .value(Quantity.create(transactionTrace.getTransaction().getValue()));
 
     nextTraceFrame.ifPresent(
         nextFrame -> {
@@ -443,6 +440,19 @@ public class FlatTraceGenerator {
       nextContext.getBuilder().incSubTraces();
     }
     return nextContext;
+  }
+
+  private static FlatTrace.Context handleCallDataLoad(
+      final FlatTrace.Context currentContext, final TraceFrame traceFrame) {
+    if (!traceFrame.getValue().isZero()) {
+      currentContext
+          .getBuilder()
+          .getActionBuilder()
+          .value(traceFrame.getValue().toShortHexString());
+    } else {
+      currentContext.getBuilder().getActionBuilder().value("0x0");
+    }
+    return currentContext;
   }
 
   private static boolean hasRevertInSubCall(

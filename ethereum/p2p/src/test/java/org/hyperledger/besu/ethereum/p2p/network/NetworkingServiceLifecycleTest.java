@@ -18,6 +18,8 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
+import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -37,7 +39,7 @@ import org.junit.Test;
 public class NetworkingServiceLifecycleTest {
 
   private final Vertx vertx = Vertx.vertx();
-  private final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
+  private final NodeKey nodeKey = new BouncyCastleNodeKey(SECP256K1.KeyPair.generate());
   private final NetworkingConfiguration config = configWithRandomPorts();
 
   @After
@@ -93,7 +95,7 @@ public class NetworkingServiceLifecycleTest {
 
   @Test(expected = NullPointerException.class)
   public void createP2PNetwork_NullKeyPair() throws IOException {
-    try (final P2PNetwork broken = builder().config(config).keyPair(null).build()) {
+    try (final P2PNetwork broken = builder().config(config).nodeKey(null).build()) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -154,7 +156,7 @@ public class NetworkingServiceLifecycleTest {
   private DefaultP2PNetwork.Builder builder() {
     return DefaultP2PNetwork.builder()
         .vertx(vertx)
-        .keyPair(keyPair)
+        .nodeKey(nodeKey)
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
