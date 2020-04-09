@@ -114,7 +114,7 @@ public class IbftBlockCreatorTest {
     final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
 
     final BlockHeaderValidator<IbftContext> rules =
-        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0);
+        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0).build();
 
     final boolean validationResult =
         rules.validateHeader(
