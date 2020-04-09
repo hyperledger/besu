@@ -260,7 +260,7 @@ class GenerateBlockchainConfig implements Runnable {
         && outputDirectory.isDirectory()
         && outputDirectory.list() != null
         && outputDirectory.list().length > 0) {
-      throw new IllegalArgumentException("Output directory must be empty.");
+      throw new IllegalArgumentException("Output directory already exists.");
     } else if (!outputDirectory.exists()) {
       Files.createDirectory(outputDirectoryPath);
     }
