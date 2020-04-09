@@ -31,8 +31,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +48,7 @@ public class EthSendRawTransactionTest {
 
   @Before
   public void before() {
-    method = new EthSendRawTransaction(transactionPool, blockchainQueries, Optional.empty());
+    method = new EthSendRawTransaction(transactionPool);
   }
 
   @Test
