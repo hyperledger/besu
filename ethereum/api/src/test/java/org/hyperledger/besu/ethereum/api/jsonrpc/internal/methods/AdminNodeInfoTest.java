@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -83,7 +84,7 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
-
+    when(natService.queryExternalIPAddress(anyString())).thenReturn("1.2.3.4");
     method =
         new AdminNodeInfo(
             "testnet/1.0/this/that",
@@ -138,7 +139,7 @@ public class AdminNodeInfoTest {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
 
-    when(natService.queryExternalIPAddress()).thenReturn(Optional.of("3.4.5.6"));
+    when(natService.queryExternalIPAddress("1.2.3.4")).thenReturn("3.4.5.6");
     when(natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP))
         .thenReturn(
             Optional.of(

@@ -42,7 +42,7 @@ public class BlockHeaderValidationRulesetFactory {
    * @param epochManager an object which determines if a given block is an epoch block.
    * @return the header validator.
    */
-  public static BlockHeaderValidator<CliqueContext> cliqueBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder<CliqueContext> cliqueBlockHeaderValidator(
       final long secondsBetweenBlocks, final EpochManager epochManager) {
 
     return new BlockHeaderValidator.Builder<CliqueContext>()
@@ -59,7 +59,6 @@ public class BlockHeaderValidationRulesetFactory {
         .addRule(new VoteValidationRule())
         .addRule(new CliqueDifficultyValidationRule())
         .addRule(new SignerRateLimitValidationRule())
-        .addRule(new CoinbaseHeaderValidationRule(epochManager))
-        .build();
+        .addRule(new CoinbaseHeaderValidationRule(epochManager));
   }
 }

@@ -50,7 +50,7 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
    * Decodes this message.
    *
    * @param bytes The raw bytes.
-   * @param nodeKey Abstraction of the local nodes keys and associated crypto operations
+   * @param nodeKey Abstraction of the local nodes keys and associated cryptographic operations
    * @return The decoded message.
    */
   public static InitiatorHandshakeMessageV4 decode(final Bytes bytes, final NodeKey nodeKey) {

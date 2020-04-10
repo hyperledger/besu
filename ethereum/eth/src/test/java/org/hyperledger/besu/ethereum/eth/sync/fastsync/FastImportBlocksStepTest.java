@@ -64,7 +64,7 @@ public class FastImportBlocksStepTest {
 
     importBlocksStep =
         new FastImportBlocksStep<>(
-            protocolSchedule, protocolContext, validationPolicy, ommerValidationPolicy);
+            protocolSchedule, protocolContext, validationPolicy, ommerValidationPolicy, null);
   }
 
   @Test

@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -40,14 +43,32 @@ public class MainnetTransactionValidator implements TransactionValidator {
   private final Optional<BigInteger> chainId;
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
+  private final Optional<EIP1559> maybeEip1559;
+  private final AcceptedTransactionTypes acceptedTransactionTypes;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId) {
+    this(
+        gasCalculator,
+        checkSignatureMalleability,
+        chainId,
+        Optional.empty(),
+        AcceptedTransactionTypes.FRONTIER_TRANSACTIONS);
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Optional<EIP1559> maybeEip1559,
+      final AcceptedTransactionTypes acceptedTransactionTypes) {
     this.gasCalculator = gasCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
+    this.maybeEip1559 = maybeEip1559;
+    this.acceptedTransactionTypes = acceptedTransactionTypes;
   }
 
   @Override
@@ -56,6 +77,24 @@ public class MainnetTransactionValidator implements TransactionValidator {
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+
+    if (ExperimentalEIPs.eip1559Enabled && maybeEip1559.isPresent()) {
+      final EIP1559 eip1559 = maybeEip1559.get();
+      if (!eip1559.isValidFormat(transaction, acceptedTransactionTypes)) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+            String.format(
+                "transaction format is invalid, accepted transaction types are %s",
+                acceptedTransactionTypes.toString()));
+      }
+      if (!eip1559.isValidGasLimit(transaction)) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
+            String.format(
+                "transaction gas limit %s exceeds per transaction gas limit",
+                transaction.getGasLimit()));
+      }
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);

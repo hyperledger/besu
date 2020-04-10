@@ -12,18 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.crypto;
+package org.hyperledger.besu.nat.core.exception;
 
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+public class NatInitializationException extends Exception {
 
-import org.apache.tuweni.bytes.Bytes32;
+  public NatInitializationException(final String message) {
+    super(message);
+  }
 
-public interface NodeKey {
-
-  Signature sign(Bytes32 dataHash);
-
-  PublicKey getPublicKey();
-
-  Bytes32 calculateECDHKeyAgreement(PublicKey publicKey);
+  public NatInitializationException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

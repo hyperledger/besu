@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
@@ -336,9 +335,8 @@ public class ECIESHandshaker implements Handshaker {
 
   /** Computes the secrets from the two exchanged messages. */
   void computeSecrets() {
-    final NodeKey nodeKey = new BouncyCastleNodeKey(ephKeyPair);
-    final Bytes agreedSecret = nodeKey.calculateECDHKeyAgreement(partyEphPubKey);
-
+    final Bytes agreedSecret =
+        SECP256K1.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
     final Bytes sharedSecret =
         keccak256(
             concatenate(agreedSecret, keccak256(concatenate(responderNonce, initiatorNonce))));

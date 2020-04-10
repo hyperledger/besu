@@ -20,6 +20,7 @@ import org.hyperledger.besu.nat.core.AbstractNatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -59,12 +60,8 @@ public class KubernetesNatManager extends AbstractNatManager {
   }
 
   @Override
-  protected void doStart() {
+  protected void doStart() throws NatInitializationException {
     LOG.info("Starting kubernetes NAT manager.");
-    update();
-  }
-
-  private void update() {
     try {
       LOG.debug("Trying to update information using Kubernetes client SDK.");
       final String kubeConfigPath =
@@ -72,7 +69,7 @@ public class KubernetesNatManager extends AbstractNatManager {
       LOG.debug(
           "Checking if Kubernetes config file is present on file system: {}.", kubeConfigPath);
       if (!Files.exists(Paths.get(kubeConfigPath))) {
-        throw new IllegalStateException("Cannot locate Kubernetes config file.");
+        throw new NatInitializationException("Cannot locate Kubernetes config file.");
       }
       // loading the out-of-cluster config, a kubeconfig from file-system
       final ApiClient client =
@@ -95,12 +92,13 @@ public class KubernetesNatManager extends AbstractNatManager {
           .ifPresent(this::updateUsingBesuService);
 
     } catch (Exception e) {
-      LOG.warn("Failed update information using Kubernetes client SDK.", e);
+      throw new NatInitializationException(
+          "Failed update information using Kubernetes client SDK.", e);
     }
   }
 
   @VisibleForTesting
-  void updateUsingBesuService(final V1Service service) {
+  void updateUsingBesuService(final V1Service service) throws RuntimeException {
     try {
       LOG.info("Found Besu service: {}", service.getMetadata().getName());
       LOG.info("Setting host IP to: {}.", service.getSpec().getClusterIP());
@@ -129,7 +127,7 @@ public class KubernetesNatManager extends AbstractNatManager {
                 }
               });
     } catch (Exception e) {
-      LOG.warn("Failed update information using pod metadata.", e);
+      throw new RuntimeException("Failed update information using pod metadata.", e);
     }
   }
 
