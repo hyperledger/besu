@@ -276,11 +276,10 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     final BlockBody body = block.getBody();
     final List<Transaction> transactions = body.getTransactions();
     for (final Transaction transaction : transactions) {
-      if (transaction.getGasLimit() > eip1559.getFeeMarket().getPerTxGaslimit()) {
+      if (!eip1559.isValidGasLimit(transaction)) {
         LOG.warn(
-            "Invalid block: transaction gas limit {} exceeds per transaction gas limit {}",
-            transaction.getGasLimit(),
-            eip1559.getFeeMarket().getPerTxGaslimit());
+            "Invalid block: transaction gas limit {} exceeds per transaction gas limit",
+            transaction.getGasLimit());
         return false;
       }
     }
