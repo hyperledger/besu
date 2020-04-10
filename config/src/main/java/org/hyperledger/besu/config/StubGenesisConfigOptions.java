@@ -33,6 +33,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
+  private OptionalLong berlinBlockNumber = OptionalLong.empty();
   // TODO EIP-1559 change for the actual fork name when known
   private final OptionalLong eip1559BlockNumber = OptionalLong.empty();
   private final OptionalLong classicForkBlock = OptionalLong.empty();
@@ -135,6 +136,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getMuirGlacierBlockNumber() {
     return muirGlacierBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getBerlinBlockNumber() {
+    return berlinBlockNumber;
   }
 
   @Override

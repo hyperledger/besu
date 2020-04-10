@@ -162,6 +162,14 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getMuirGlacierBlockNumber(),
+        MainnetProtocolSpecs.berlinDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     if (ExperimentalEIPs.eip1559Enabled) {
       addProtocolSpec(

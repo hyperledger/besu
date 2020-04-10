@@ -330,6 +330,30 @@ public abstract class MainnetProtocolSpecs {
         .name("MuirGlacier");
   }
 
+  static ProtocolSpecBuilder<Void> berlinDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    return muirGlacierDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
+        .name("Berlin");
+  }
+
   // TODO EIP-1559 change for the actual fork name when known
   static ProtocolSpecBuilder<Void> eip1559Definition(
       final Optional<BigInteger> chainId,
