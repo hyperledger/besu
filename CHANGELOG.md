@@ -2,21 +2,70 @@
 
 ## 1.4.3 
 
-### Additions and Improvements
-- Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed 
-in 1.5.0 release. 
-
 ### Critical Issue for Privacy Users 
 
 A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4 
 or earlier has been identified. If you have a network with private transaction created using v1.3.4 
 or earlier, please read the following and take the appropriate steps: 
-
 https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
 
 ### Additions and Improvements
 
-- Added `eth/65` support [\#608](https://github.com/hyperledger/besu/pull/608)
+- Added `eth/65` support. [\#608](https://github.com/hyperledger/besu/pull/608)
+- Added block added and block reorg events. Added revert reason to block added transactions. [\#637](https://github.com/hyperledger/besu/pull/637)
+
+### Deprecated 
+
+- Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed 
+in 1.5.0 release. [\#639](https://github.com/hyperledger/besu/pull/639)
+
+### Known Issues 
+
+#### Fast sync when running Besu on cloud providers  
+
+A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail 
+when running Besu on certain cloud providers. The following errors is displayed repeatedly: 
+
+```
+...
+EthScheduler-Services-1 (importBlock) | ERROR | PipelineChainDownloader | Chain download failed. Restarting after short delay.
+java.util.concurrent.CompletionException: org.hyperledger.besu.plugin.services.exception.StorageException: org.rocksdb.RocksDBException: block checksum mismatch:
+....
+```
+
+This behaviour has been seen on AWS and Digital Ocean. 
+
+Workaround -> On AWS, a full restart of the AWS VM is required to restart the fast sync. 
+
+Fast sync is not currently supported on Digital Ocean. We are investigating options to 
+[add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
+
+#### Error full syncing with pruning
+
+- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#580](https://github.com/hyperledger/besu/issues/580)
+The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+full sync and pruning.
+
+Workarounds:
+1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
+2. If the `MerkleTrieException` occurs, delete the database and resync.
+
+A fix for this issue is being actively worked on.
+
+#### Fast sync reverting to full sync 
+
+In some cases of FastSyncException, fast sync reverts back to a full sync before having reached the 
+pivot block. [\#683](https://github.com/hyperledger/besu/issues/683)
+
+Workaround -> To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your 
+database, and start again.
+
+#### Bootnodes must be validators when using onchain permissioning
+
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#528](https://github.com/hyperledger/besu/issues/528)
+
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+
 
 ## 1.4.2
 

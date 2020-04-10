@@ -142,8 +142,8 @@ public class VmTraceGenerator {
       case "CREATE":
       case "CREATE2":
         if (currentOperation.equals("CALL") || currentOperation.equals("DELEGATECALL")) {
-          findOutputReturnInCall(currentTraceFrame, currentIndex)
-              .map(output -> new Mem(output.toHexString(), 0))
+          findReturnInCall(currentTraceFrame, currentIndex)
+              .map(output -> new Mem(output.getOutputData().toHexString(), 0))
               .ifPresent(report::setMem);
         }
 
@@ -264,8 +264,8 @@ public class VmTraceGenerator {
             entry ->
                 report.setStore(
                     new Store(
-                        entry.getOffset().toShortHexString(),
-                        entry.getValue().toShortHexString())));
+                        entry.getOffset().toBytes().toQuantityHexString(),
+                        entry.getValue().toQuantityHexString())));
   }
 
   /**
@@ -304,12 +304,12 @@ public class VmTraceGenerator {
     return Optional.empty();
   }
 
-  private Optional<Bytes> findOutputReturnInCall(final TraceFrame callFrame, final int callIndex) {
+  private Optional<TraceFrame> findReturnInCall(final TraceFrame callFrame, final int callIndex) {
     for (int i = callIndex; i < transactionTrace.getTraceFrames().size(); i++) {
       if (i + 1 < transactionTrace.getTraceFrames().size()) {
         final TraceFrame next = transactionTrace.getTraceFrames().get(i + 1);
         if (next.getOpcode().equals("RETURN") && next.getDepth() == callFrame.getDepth()) {
-          return Optional.of(next.getOutputData());
+          return Optional.of(next);
         }
       }
     }

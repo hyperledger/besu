@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.FutureUtils;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
@@ -118,7 +117,7 @@ public class RlpxAgent {
 
   public CompletableFuture<Integer> start() {
     if (!started.compareAndSet(false, true)) {
-      return FutureUtils.completedExceptionally(
+      return CompletableFuture.failedFuture(
           new IllegalStateException(
               "Unable to start an already started " + getClass().getSimpleName()));
     }
@@ -141,7 +140,7 @@ public class RlpxAgent {
 
   public CompletableFuture<Void> stop() {
     if (!started.get() || !stopped.compareAndSet(false, true)) {
-      return FutureUtils.completedExceptionally(
+      return CompletableFuture.failedFuture(
           new IllegalStateException("Illegal attempt to stop " + getClass().getSimpleName()));
     }
 
@@ -196,7 +195,7 @@ public class RlpxAgent {
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
     // Check if we're ready to establish connections
     if (!localNode.isReady()) {
-      return FutureUtils.completedExceptionally(
+      return CompletableFuture.failedFuture(
           new IllegalStateException(
               "Cannot connect before "
                   + this.getClass().getSimpleName()
@@ -208,7 +207,7 @@ public class RlpxAgent {
       final String errorMsg =
           "Attempt to connect to peer with no listening port: " + enode.toString();
       LOG.warn(errorMsg);
-      return FutureUtils.completedExceptionally((new IllegalArgumentException(errorMsg)));
+      return CompletableFuture.failedFuture((new IllegalArgumentException(errorMsg)));
     }
 
     // Shortcut checks if we're already connected
@@ -223,12 +222,11 @@ public class RlpxAgent {
               + maxConnections
               + "). Cannot connect to peer: "
               + peer;
-      return FutureUtils.completedExceptionally(new IllegalStateException(errorMsg));
+      return CompletableFuture.failedFuture(new IllegalStateException(errorMsg));
     }
     // Check permissions
     if (!peerPermissions.allowNewOutboundConnectionTo(peer)) {
-      return FutureUtils.completedExceptionally(
-          peerPermissions.newOutboundConnectionException(peer));
+      return CompletableFuture.failedFuture(peerPermissions.newOutboundConnectionException(peer));
     }
 
     // Initiate connection or return existing connection
@@ -528,7 +526,7 @@ public class RlpxAgent {
   }
 
   public static class Builder {
-    private KeyPair keyPair;
+    private NodeKey nodeKey;
     private LocalNode localNode;
     private RlpxConfiguration config;
     private PeerPrivileges peerPrivileges;
@@ -548,7 +546,7 @@ public class RlpxAgent {
       if (connectionInitializer == null) {
         connectionInitializer =
             new NettyConnectionInitializer(
-                keyPair, config, localNode, connectionEvents, metricsSystem);
+                nodeKey, config, localNode, connectionEvents, metricsSystem);
       }
 
       final PeerRlpxPermissions rlpxPermissions =
@@ -565,7 +563,7 @@ public class RlpxAgent {
     }
 
     private void validate() {
-      checkState(keyPair != null, "KeyPair must be configured");
+      checkState(nodeKey != null, "NodeKey must be configured");
       checkState(localNode != null, "LocalNode must be configured");
       checkState(config != null, "RlpxConfiguration must be set");
       checkState(peerPrivileges != null, "PeerPrivileges must be configured");
@@ -573,9 +571,9 @@ public class RlpxAgent {
       checkState(metricsSystem != null, "MetricsSystem must be configured");
     }
 
-    public Builder keyPair(final KeyPair keyPair) {
-      checkNotNull(keyPair);
-      this.keyPair = keyPair;
+    public Builder nodeKey(final NodeKey nodeKey) {
+      checkNotNull(nodeKey);
+      this.nodeKey = nodeKey;
       return this;
     }
 

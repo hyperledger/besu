@@ -132,7 +132,8 @@ public class FastSyncDownloaderTest {
   @Test
   public void shouldAbortIfWaitForSuitablePeersFails() {
     when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE))
-        .thenReturn(completedExceptionally(new FastSyncException(FastSyncError.UNEXPECTED_ERROR)));
+        .thenReturn(
+            CompletableFuture.failedFuture(new FastSyncException(FastSyncError.UNEXPECTED_ERROR)));
 
     final CompletableFuture<FastSyncState> result = downloader.start();
 
@@ -481,12 +482,6 @@ public class FastSyncDownloaderTest {
     assertThat(result).isDone();
 
     Assertions.assertThat(downloader.calculateTrailingPeerRequirements()).isEmpty();
-  }
-
-  private <T> CompletableFuture<T> completedExceptionally(final Throwable error) {
-    final CompletableFuture<T> result = new CompletableFuture<>();
-    result.completeExceptionally(error);
-    return result;
   }
 
   private <T> void assertCompletedExceptionally(

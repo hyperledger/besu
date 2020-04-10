@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 
 import java.math.BigInteger;
@@ -35,6 +36,7 @@ public class ProtocolScheduleBuilder<C> {
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
+  private final FeeMarket feeMarket = FeeMarket.eip1559();
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -162,7 +164,29 @@ public class ProtocolScheduleBuilder<C> {
             isRevertReasonEnabled));
 
     if (ExperimentalEIPs.eip1559Enabled) {
-      // TODO EIP-1559 addProtocolSpec for EIP-1559
+      addProtocolSpec(
+          protocolSchedule,
+          config.getEIP1559BlockNumber(),
+          MainnetProtocolSpecs.eip1559Definition(
+              chainId,
+              config.getContractSizeLimit(),
+              config.getEvmStackSize(),
+              isRevertReasonEnabled,
+              config));
+
+      addProtocolSpec(
+          protocolSchedule,
+          OptionalLong.of(
+              config
+                      .getEIP1559BlockNumber()
+                      .orElseThrow(() -> new RuntimeException("EIP-1559 must be enabled"))
+                  + feeMarket.getDecayRange()),
+          MainnetProtocolSpecs.eip1559FinalizedDefinition(
+              chainId,
+              config.getContractSizeLimit(),
+              config.getEvmStackSize(),
+              isRevertReasonEnabled,
+              config));
     }
 
     // specs for classic network

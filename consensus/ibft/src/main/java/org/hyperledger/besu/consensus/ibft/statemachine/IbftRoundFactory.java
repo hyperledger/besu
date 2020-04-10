@@ -73,7 +73,7 @@ public class IbftRoundFactory {
         protocolContext,
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockImporter(),
         minedBlockObservers,
-        finalState.getNodeKeys(),
+        finalState.getNodeKey(),
         finalState.getMessageFactory(),
         finalState.getTransmitter(),
         finalState.getRoundTimer());

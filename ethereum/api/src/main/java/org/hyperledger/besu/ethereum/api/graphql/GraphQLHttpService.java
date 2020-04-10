@@ -209,8 +209,14 @@ public class GraphQLHttpService {
   }
 
   private boolean hostIsInWhitelist(final String hostHeader) {
-    return config.getHostsWhitelist().stream()
-        .anyMatch(whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()));
+    if (config.getHostsWhitelist().stream()
+        .anyMatch(
+            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+      return true;
+    } else {
+      LOG.trace("Host not in whitelist: '{}'", hostHeader);
+      return false;
+    }
   }
 
   public CompletableFuture<?> stop() {

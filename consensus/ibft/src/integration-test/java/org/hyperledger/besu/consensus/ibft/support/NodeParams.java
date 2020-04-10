@@ -14,23 +14,23 @@
  */
 package org.hyperledger.besu.consensus.ibft.support;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 
 public class NodeParams {
   private final Address address;
-  private final KeyPair nodeKeys;
+  private final NodeKey nodeKey;
 
-  public NodeParams(final Address address, final KeyPair nodeKeys) {
+  public NodeParams(final Address address, final NodeKey nodeKey) {
     this.address = address;
-    this.nodeKeys = nodeKeys;
+    this.nodeKey = nodeKey;
   }
 
   public Address getAddress() {
     return address;
   }
 
-  public KeyPair getNodeKeyPair() {
-    return nodeKeys;
+  public NodeKey getNodeKey() {
+    return nodeKey;
   }
 }

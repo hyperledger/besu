@@ -124,7 +124,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             protocolContext,
             protocolSchedule,
             miningParameters,
-            Util.publicKeyToAddress(nodeKeys.getPublicKey()));
+            Util.publicKeyToAddress(nodeKey.getPublicKey()));
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -143,15 +143,15 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     final IbftFinalState finalState =
         new IbftFinalState(
             voteTallyCache,
-            nodeKeys,
-            Util.publicKeyToAddress(nodeKeys.getPublicKey()),
+            nodeKey,
+            Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), ibftExecutors),
             new BlockTimer(
                 ibftEventQueue, ibftConfig.getBlockPeriodSeconds(), ibftExecutors, clock),
             blockCreatorFactory,
-            new MessageFactory(nodeKeys),
+            new MessageFactory(nodeKey),
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
@@ -204,7 +204,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, nodeKeys);
+    return new IbftQueryPluginServiceFactory(blockchain, nodeKey);
   }
 
   @Override

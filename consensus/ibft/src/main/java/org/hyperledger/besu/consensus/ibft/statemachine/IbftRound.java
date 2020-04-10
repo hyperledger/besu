@@ -29,8 +29,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -55,7 +54,7 @@ public class IbftRound {
   private final IbftBlockCreator blockCreator;
   private final ProtocolContext<IbftContext> protocolContext;
   private final BlockImporter<IbftContext> blockImporter;
-  private final KeyPair nodeKeys;
+  private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
 
@@ -65,7 +64,7 @@ public class IbftRound {
       final ProtocolContext<IbftContext> protocolContext,
       final BlockImporter<IbftContext> blockImporter,
       final Subscribers<MinedBlockObserver> observers,
-      final KeyPair nodeKeys,
+      final NodeKey nodeKey,
       final MessageFactory messageFactory,
       final IbftMessageTransmitter transmitter,
       final RoundTimer roundTimer) {
@@ -74,7 +73,7 @@ public class IbftRound {
     this.protocolContext = protocolContext;
     this.blockImporter = blockImporter;
     this.observers = observers;
-    this.nodeKeys = nodeKeys;
+    this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
 
@@ -229,7 +228,7 @@ public class IbftRound {
     final IbftExtraData extraData = IbftExtraData.decode(proposedHeader);
     final Hash commitHash =
         IbftBlockHashing.calculateDataHashForCommittedSeal(proposedHeader, extraData);
-    return SECP256K1.sign(commitHash, nodeKeys);
+    return nodeKey.sign(commitHash);
   }
 
   private void notifyNewBlockListeners(final Block block) {

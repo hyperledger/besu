@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.clique;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -38,13 +38,13 @@ public class CliqueProtocolSchedule {
 
   public static ProtocolSchedule<CliqueContext> create(
       final GenesisConfigOptions config,
-      final KeyPair nodeKeys,
+      final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
-    final Address localNodeAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
+    final Address localNodeAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
     final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
     return new ProtocolScheduleBuilder<>(
@@ -60,9 +60,9 @@ public class CliqueProtocolSchedule {
 
   public static ProtocolSchedule<CliqueContext> create(
       final GenesisConfigOptions config,
-      final KeyPair nodeKeys,
+      final NodeKey nodeKey,
       final boolean isRevertReasonEnabled) {
-    return create(config, nodeKeys, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+    return create(config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
   private static ProtocolSpecBuilder<CliqueContext> applyCliqueSpecificModifications(
@@ -72,12 +72,10 @@ public class CliqueProtocolSchedule {
       final ProtocolSpecBuilder<Void> specBuilder) {
     return specBuilder
         .changeConsensusContextType(
-            difficultyCalculator ->
-                BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-                    secondsBetweenBlocks, epochManager),
-            difficultyCalculator ->
-                BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-                    secondsBetweenBlocks, epochManager),
+            BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
+                secondsBetweenBlocks, epochManager),
+            BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
+                secondsBetweenBlocks, epochManager),
             MainnetBlockBodyValidator::new,
             MainnetBlockValidator::new,
             MainnetBlockImporter::new,
