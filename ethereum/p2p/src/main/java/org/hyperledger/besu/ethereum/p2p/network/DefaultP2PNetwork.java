@@ -367,7 +367,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     // override advertised host if we detect an external IP address via NAT manager
-    final String advertisedAddress = natService.queryExternalIPAddress().orElse(address);
+    final String advertisedAddress = natService.queryExternalIPAddress(address);
 
     final EnodeURL localEnode =
         EnodeURL.builder()

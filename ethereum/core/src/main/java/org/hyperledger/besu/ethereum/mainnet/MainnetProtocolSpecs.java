@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -342,6 +343,14 @@ public abstract class MainnetProtocolSpecs {
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     final ProtocolSpecBuilder<Void> eip1559ProtocolSpecBuilder =
         muirGlacierDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+            .transactionValidatorBuilder(
+                gasCalculator ->
+                    new MainnetTransactionValidator(
+                        gasCalculator,
+                        true,
+                        chainId,
+                        Optional.of(eip1559),
+                        AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
             .name("EIP-1559");
     final BlockHeaderValidator.Builder<Void> blockHeaderValidatorBuilder =
         eip1559ProtocolSpecBuilder.getBlockHeaderValidatorBuilder();
@@ -349,6 +358,30 @@ public abstract class MainnetProtocolSpecs {
         .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
         .addRule(new EIP1559BlockHeaderGasPriceValidationRule(eip1559));
     return eip1559ProtocolSpecBuilder;
+  }
+
+  // TODO EIP-1559 change for the actual fork name when known
+  static ProtocolSpecBuilder<Void> eip1559FinalizedDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions) {
+    return eip1559Definition(
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Optional.of(
+                        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0))),
+                    AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS));
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
