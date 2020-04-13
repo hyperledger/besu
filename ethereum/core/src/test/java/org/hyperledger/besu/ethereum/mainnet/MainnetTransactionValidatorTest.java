@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -56,6 +57,11 @@ public class MainnetTransactionValidatorTest {
       new TransactionTestFixture()
           .chainId(Optional.of(BigInteger.ONE))
           .createTransaction(senderKeys);
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+  }
 
   @Test
   public void shouldRejectTransactionIfIntrinsicGasExceedsGasLimit() {

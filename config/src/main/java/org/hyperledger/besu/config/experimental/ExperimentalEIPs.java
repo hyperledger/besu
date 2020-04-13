@@ -21,10 +21,13 @@ import picocli.CommandLine.Option;
  * EIPs.
  */
 public class ExperimentalEIPs {
+  // To make it easier for tests to reset the value to default
+  public static final boolean EIP1559_ENABLED_DEFAULT_VALUE = false;
+
   @Option(
       hidden = true,
       names = {"--Xeip1559-enabled"},
       description = "Enable experimental EIP-1559 fee market change (default: ${DEFAULT-VALUE})",
       arity = "1")
-  public static boolean eip1559Enabled = false;
+  public static boolean eip1559Enabled = EIP1559_ENABLED_DEFAULT_VALUE;
 }
