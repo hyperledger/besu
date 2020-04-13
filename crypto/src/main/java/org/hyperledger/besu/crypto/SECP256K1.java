@@ -375,7 +375,7 @@ public class SECP256K1 {
     if (LibSecp256k1.INSTANCE.secp256k1_ecdsa_signature_parse_compact(
             LibSecp256k1.CONTEXT, _signature, signature.encodedBytes().toArrayUnsafe())
         == 0) {
-      return false;
+      throw new IllegalArgumentException("Could not parse signature");
     }
 
     // translate key
@@ -384,7 +384,7 @@ public class SECP256K1 {
     if (LibSecp256k1.INSTANCE.secp256k1_ec_pubkey_parse(
             LibSecp256k1.CONTEXT, _pub, encodedPubKey.toArrayUnsafe(), encodedPubKey.size())
         == 0) {
-      return false;
+      throw new IllegalArgumentException("Could not parse public key");
     }
 
     return LibSecp256k1.INSTANCE.secp256k1_ecdsa_verify(
@@ -405,7 +405,7 @@ public class SECP256K1 {
             encodedSig.slice(0, 64).toArrayUnsafe(),
             encodedSig.get(64))
         == 0) {
-      return Optional.empty();
+      throw new IllegalArgumentException("Could not parse signature");
     }
 
     // recover the key
@@ -413,21 +413,18 @@ public class SECP256K1 {
     if (LibSecp256k1.INSTANCE.secp256k1_ecdsa_recover(
             LibSecp256k1.CONTEXT, newPubKey, parsedSignature, dataHash.toArrayUnsafe())
         == 0) {
-      return Optional.empty();
+      throw new IllegalArgumentException("Could not recover public key");
     }
 
     // parse the key
     final ByteBuffer recoveredKey = ByteBuffer.allocate(65);
     final LongByReference keySize = new LongByReference(recoveredKey.limit());
-    if (LibSecp256k1.INSTANCE.secp256k1_ec_pubkey_serialize(
-            LibSecp256k1.CONTEXT,
-            recoveredKey,
-            keySize,
-            newPubKey,
-            LibSecp256k1.SECP256K1_EC_UNCOMPRESSED)
-        == 0) {
-      return Optional.empty();
-    }
+    LibSecp256k1.INSTANCE.secp256k1_ec_pubkey_serialize(
+        LibSecp256k1.CONTEXT,
+        recoveredKey,
+        keySize,
+        newPubKey,
+        LibSecp256k1.SECP256K1_EC_UNCOMPRESSED);
 
     return Optional.of(PublicKey.create(Bytes.wrapByteBuffer(recoveredKey).slice(1)));
   }
