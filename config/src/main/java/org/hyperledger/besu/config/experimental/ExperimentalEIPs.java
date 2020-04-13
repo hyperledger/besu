@@ -30,4 +30,14 @@ public class ExperimentalEIPs {
       description = "Enable experimental EIP-1559 fee market change (default: ${DEFAULT-VALUE})",
       arity = "1")
   public static boolean eip1559Enabled = EIP1559_ENABLED_DEFAULT_VALUE;
+
+  // To make it easier for tests to reset the value to default
+  public static final boolean BERLIN_ENABLED_DEFAULT_VALUE = false;
+
+  @Option(
+      hidden = true,
+      names = {"--Xberlin-enabled"},
+      description = "Enable non-finalized Berlin features (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  public static boolean berlinEnabled = BERLIN_ENABLED_DEFAULT_VALUE;
 }
