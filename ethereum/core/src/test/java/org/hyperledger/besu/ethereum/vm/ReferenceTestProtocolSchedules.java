@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -55,6 +56,9 @@ public class ReferenceTestProtocolSchedules {
         createSchedule(new StubGenesisConfigOptions().constantinopleFixBlock(0)));
     builder.put("Istanbul", createSchedule(new StubGenesisConfigOptions().istanbulBlock(0)));
     builder.put("MuirGlacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0)));
+    if (ExperimentalEIPs.berlinEnabled) {
+      builder.put("Berlin", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
+    }
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
