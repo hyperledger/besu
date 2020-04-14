@@ -96,9 +96,13 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
               enclaveKey,
               resultTransaction.getBlockHash().get());
     } catch (final EnclaveClientException e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
+      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND.getMessage())) {
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+      } else {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(),
+            JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
+      }
     }
 
     if (privateTransaction.isPresent()) {
@@ -142,7 +146,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
       LOG.trace("Received transaction information");
     } catch (final EnclaveClientException e) {
       Optional<PrivateTransaction> privateTransactionOptional = Optional.empty();
-      if (e.getMessage().equals("EnclavePayloadNotFound")) {
+      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND.getMessage())) {
         privateTransactionOptional = fetchPayloadFromAddBlob(blockHash, pmtTransactionHash);
       }
       if (privateTransactionOptional.isEmpty()) {
