@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 
 import java.util.ArrayDeque;
@@ -66,6 +67,9 @@ public class PrivateTransactionProcessor {
   private final int maxStackSize;
 
   private final int createContractAccountVersion;
+
+  // returnStack introduce on eip2315
+  private final boolean enableReturnStack;
 
   public static class Result implements TransactionProcessor.Result {
 
@@ -165,7 +169,8 @@ public class PrivateTransactionProcessor {
       final boolean clearEmptyAccounts,
       final int maxStackSize,
       final int createContractAccountVersion,
-      final PrivateTransactionValidator privateTransactionValidator) {
+      final PrivateTransactionValidator privateTransactionValidator,
+      final boolean enableReturnStack) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -174,6 +179,7 @@ public class PrivateTransactionProcessor {
     this.maxStackSize = maxStackSize;
     this.createContractAccountVersion = createContractAccountVersion;
     this.privateTransactionValidator = privateTransactionValidator;
+    this.enableReturnStack = enableReturnStack;
   }
 
   @SuppressWarnings("unused")
@@ -216,6 +222,14 @@ public class PrivateTransactionProcessor {
     final WorldUpdater mutablePrivateWorldStateUpdater =
         new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
 
+    // returnStack introduce on eip2315
+    final ReturnStack returnStack;
+    if (enableReturnStack) {
+      returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+    } else {
+      returnStack = new ReturnStack();
+    }
+
     if (transaction.isContractCreation()) {
       final Address privateContractAddress =
           Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
@@ -231,6 +245,7 @@ public class PrivateTransactionProcessor {
           MessageFrame.builder()
               .type(MessageFrame.Type.CONTRACT_CREATION)
               .messageFrameStack(messageFrameStack)
+              .returnStack(returnStack)
               .blockchain(blockchain)
               .worldState(mutablePrivateWorldStateUpdater)
               .address(privateContractAddress)
@@ -261,6 +276,7 @@ public class PrivateTransactionProcessor {
           MessageFrame.builder()
               .type(MessageFrame.Type.MESSAGE_CALL)
               .messageFrameStack(messageFrameStack)
+              .returnStack(returnStack)
               .blockchain(blockchain)
               .worldState(mutablePrivateWorldStateUpdater)
               .address(to)

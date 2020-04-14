@@ -15,7 +15,6 @@
 
 package org.hyperledger.besu.nat.kubernetes;
 
-import io.kubernetes.client.util.Config;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.AbstractNatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;

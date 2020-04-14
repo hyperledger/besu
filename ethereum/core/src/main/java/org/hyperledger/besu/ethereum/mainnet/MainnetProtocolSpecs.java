@@ -107,7 +107,8 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    false))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -122,7 +123,8 @@ public abstract class MainnetProtocolSpecs {
                     false,
                     stackSizeLimit,
                     Account.DEFAULT_VERSION,
-                    new PrivateTransactionValidator(Optional.empty())))
+                    new PrivateTransactionValidator(Optional.empty()),
+                    false))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create())
         .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator.createOmmerValidator())
@@ -232,7 +234,8 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    false))
         .name("SpuriousDragon");
   }
 
@@ -266,7 +269,8 @@ public abstract class MainnetProtocolSpecs {
                     false,
                     stackSizeLimit,
                     Account.DEFAULT_VERSION,
-                    privateTransactionValidator))
+                    privateTransactionValidator,
+                    false))
         .name("Byzantium");
   }
 
@@ -338,6 +342,26 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .gasCalculator(BerlinGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .privateTransactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor,
+                privateTransactionValidator) ->
+                new PrivateTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    false,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION,
+                    privateTransactionValidator,
+                    true))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -350,7 +374,8 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    true))
         .name("Berlin");
   }
 

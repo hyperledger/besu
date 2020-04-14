@@ -62,7 +62,8 @@ public class MainnetTransactionProcessorTest {
             messageCallProcessor,
             false,
             MAX_STACK_SIZE,
-            Account.DEFAULT_VERSION);
+            Account.DEFAULT_VERSION,
+            false);
   }
 
   @Test

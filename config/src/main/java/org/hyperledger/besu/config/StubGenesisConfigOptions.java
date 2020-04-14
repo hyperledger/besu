@@ -227,6 +227,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
+    getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     // TODO EIP-1559 change for the actual fork name when known
     getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -293,6 +294,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions muirGlacierBlock(final long blockNumber) {
     muirGlacierBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions berlinBlock(final long blockNumber) {
+    berlinBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
