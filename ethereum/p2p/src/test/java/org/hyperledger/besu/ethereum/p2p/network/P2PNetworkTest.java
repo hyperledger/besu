@@ -21,8 +21,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -66,7 +66,7 @@ public class P2PNetworkTest {
 
   @Test
   public void handshaking() throws Exception {
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder().nodeKey(nodeKey).build();
         final P2PNetwork connector = builder().build()) {
 
@@ -88,8 +88,8 @@ public class P2PNetworkTest {
 
   @Test
   public void preventMultipleConnections() throws Exception {
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
-    try (final P2PNetwork listener = builder().nodeKey(nodeKey).build();
+    final NodeKey listenNodeKey = NodeKeyUtils.generate();
+    try (final P2PNetwork listener = builder().nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder().build()) {
 
       listener.start();
@@ -121,7 +121,7 @@ public class P2PNetworkTest {
    */
   @Test
   public void limitMaxPeers() throws Exception {
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
     final int maxPeers = 1;
     final NetworkingConfiguration listenerConfig =
         NetworkingConfiguration.create()
@@ -176,17 +176,17 @@ public class P2PNetworkTest {
 
   @Test
   public void rejectPeerWithNoSharedCaps() throws Exception {
-    final NodeKey listenerCryptoOps = BouncyCastleNodeKey.generate();
-    final NodeKey connectorCryptoOps = BouncyCastleNodeKey.generate();
+    final NodeKey listenerNodeKey = NodeKeyUtils.generate();
+    final NodeKey connectorNodeKey = NodeKeyUtils.generate();
 
     final SubProtocol subprotocol1 = subProtocol("eth");
     final Capability cap1 = Capability.create(subprotocol1.getName(), 63);
     final SubProtocol subprotocol2 = subProtocol("oth");
     final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
     try (final P2PNetwork listener =
-            builder().nodeKey(listenerCryptoOps).supportedCapabilities(cap1).build();
+            builder().nodeKey(listenerNodeKey).supportedCapabilities(cap1).build();
         final P2PNetwork connector =
-            builder().nodeKey(connectorCryptoOps).supportedCapabilities(cap2).build()) {
+            builder().nodeKey(connectorNodeKey).supportedCapabilities(cap2).build()) {
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
@@ -331,7 +331,7 @@ public class P2PNetworkTest {
     return DefaultP2PNetwork.builder()
         .vertx(vertx)
         .config(config)
-        .nodeKey(BouncyCastleNodeKey.generate())
+        .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }

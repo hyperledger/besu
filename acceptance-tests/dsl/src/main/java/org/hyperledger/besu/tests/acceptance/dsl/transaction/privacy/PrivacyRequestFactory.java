@@ -64,6 +64,8 @@ public class PrivacyRequestFactory {
   public static class GetPrivateTransactionResponse
       extends Response<PrivateTransactionGroupResponse> {}
 
+  public static class JsonRpcSuccessResponseResponse extends Response<String> {}
+
   public static class CreatePrivacyGroupResponse extends Response<String> {}
 
   public static class DeletePrivacyGroupResponse extends Response<String> {}

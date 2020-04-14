@@ -20,11 +20,13 @@ import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP155
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.disableEIP1559;
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.enableEIP1559;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 
 import java.util.Optional;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,6 +44,11 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
     finalizedForkBlock = FORK_BLOCK + feeMarket.getDecayRange();
   }
 
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+  }
+
   @Test
   public void eipActivationShouldBeGuardedProperly() {
     disableEIP1559();
@@ -56,7 +63,6 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
     enableEIP1559();
     assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
         .isTrue();
-    disableEIP1559();
   }
 
   @Test
@@ -67,7 +73,6 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
                 blockHeader(finalizedForkBlock + 1, 0, Optional.empty(), feeMarket.getMaxGas()),
                 null))
         .isTrue();
-    disableEIP1559();
   }
 
   @Test
@@ -78,7 +83,6 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
                 blockHeader(finalizedForkBlock + 1, 0, Optional.empty(), feeMarket.getMaxGas() - 1),
                 null))
         .isFalse();
-    disableEIP1559();
   }
 
   @Test
@@ -93,7 +97,6 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
                     (feeMarket.getMaxGas() / 2) + feeMarket.getGasIncrementAmount()),
                 null))
         .isTrue();
-    disableEIP1559();
   }
 
   @Test
@@ -103,6 +106,5 @@ public class EIP1559BlockHeaderGasLimitValidationRuleTest {
             validationRule.validate(
                 blockHeader(FORK_BLOCK + 1, 0, Optional.empty(), feeMarket.getMaxGas() - 1), null))
         .isFalse();
-    disableEIP1559();
   }
 }

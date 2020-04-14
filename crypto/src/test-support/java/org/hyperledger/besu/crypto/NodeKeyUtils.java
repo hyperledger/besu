@@ -12,22 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config.experimental;
+package org.hyperledger.besu.crypto;
 
-import picocli.CommandLine.Option;
+public class NodeKeyUtils {
 
-/**
- * Flags defined in those class must be used with cautious, and strictly reserved to experimental
- * EIPs.
- */
-public class ExperimentalEIPs {
-  // To make it easier for tests to reset the value to default
-  public static final boolean EIP1559_ENABLED_DEFAULT_VALUE = false;
+  public static NodeKey createFrom(final SECP256K1.KeyPair keyPair) {
+    return new NodeKey(new BouncyCastleSecurityModule(keyPair));
+  }
 
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-enabled"},
-      description = "Enable experimental EIP-1559 fee market change (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  public static boolean eip1559Enabled = EIP1559_ENABLED_DEFAULT_VALUE;
+  public static NodeKey generate() {
+    return new NodeKey(new BouncyCastleSecurityModule(SECP256K1.KeyPair.generate()));
+  }
 }
