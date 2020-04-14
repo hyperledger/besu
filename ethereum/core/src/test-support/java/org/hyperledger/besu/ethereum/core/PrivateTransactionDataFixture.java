@@ -21,12 +21,15 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -164,5 +167,20 @@ public class PrivateTransactionDataFixture {
             privateTransaction,
             new PrivateTransactionMetadata(markerTransaction.getHash(), Hash.ZERO));
     return Collections.singletonList(privateTransactionWithMetadata);
+  }
+
+  public static PrivateTransactionMetadata generatePrivateTransactionMetadata() {
+    return new PrivateTransactionMetadata(Hash.hash(Bytes32.random()), Hash.hash(Bytes32.random()));
+  }
+
+  public static List<PrivateTransactionMetadata> generatePrivateTransactionMetadataList(
+      final int length) {
+    return IntStream.range(0, length)
+        .mapToObj((i) -> generatePrivateTransactionMetadata())
+        .collect(Collectors.toList());
+  }
+
+  public static PrivateBlockMetadata generatePrivateBlockMetadata(final int numberOfTransactions) {
+    return new PrivateBlockMetadata(generatePrivateTransactionMetadataList(numberOfTransactions));
   }
 }
