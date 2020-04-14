@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.cli.subcommands;
 
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.RequestBody;
+import static org.hyperledger.besu.cli.subcommands.RpcClient.RpcMethod.ETH_SEND_RAW_TRANSACTION;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static org.hyperledger.besu.cli.subcommands.RpcClient.RpcMethod.ETH_SEND_RAW_TRANSACTION;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 
 public class RpcClient {
 
