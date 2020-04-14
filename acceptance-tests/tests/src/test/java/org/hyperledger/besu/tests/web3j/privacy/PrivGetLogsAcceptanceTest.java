@@ -91,7 +91,7 @@ public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   private LogFilterJsonParameter blockRangeLogFilter(
-      final String fromBlock, final String toBlock, String contractAddress) {
+      final String fromBlock, final String toBlock, final String contractAddress) {
     return new LogFilterJsonParameter(
         fromBlock,
         toBlock,
@@ -101,7 +101,7 @@ public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   private LogFilterJsonParameter blockHashLogFilter(
-      final String blockHash, String contractAddress) {
+      final String blockHash, final String contractAddress) {
     return new LogFilterJsonParameter(
         null,
         null,
