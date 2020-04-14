@@ -94,14 +94,10 @@ public class BlockHeaderValidator<C> {
       final BlockHeader header, final ProtocolContext<C> context) {
     final Optional<BlockHeader> parent =
         context.getBlockchain().getBlockHeader(header.getParentHash());
-    if (!parent.isPresent()) {
+    if (parent.isEmpty()) {
       LOG.trace("Invalid block header: cannot determine parent header");
     }
     return parent;
-  }
-
-  public void addRule(final AttachedBlockHeaderValidationRule<C> rule) {
-    this.rules.add(new Rule<>(false, rule, rule.includeInLightValidation()));
   }
 
   private static class Rule<C> {
