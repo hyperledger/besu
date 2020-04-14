@@ -18,27 +18,26 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class NodeKey {
 
-  private final SecurityModule crypto;
+  private final SecurityModule securityModule;
 
-  public NodeKey(final SecurityModule crypto) {
-    this.crypto = crypto;
+  public NodeKey(final SecurityModule securityModule) {
+    this.securityModule = securityModule;
   }
 
   public SECP256K1.Signature sign(final Bytes32 dataHash) {
-    org.hyperledger.besu.crypto.Signature signature = crypto.sign(dataHash);
+    final Signature signature = securityModule.sign(dataHash);
     return SECP256K1.Signature.create(
         signature.getR(), signature.getS(), signature.getRecoveryId());
   }
 
   public PublicKey getPublicKey() {
-    org.hyperledger.besu.crypto.PublicKey pubKey = crypto.getPublicKey();
+    final PublicKey pubKey = securityModule.getPublicKey();
     return PublicKey.create(pubKey.getEncoded());
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
-    PublicKey pubKey = new org.hyperledger.besu.crypto.PublicKey(partyKey.getEncodedBytes());
-
-    return crypto.calculateECDHKeyAgreement(pubKey);
+    final PublicKey pubKey = new PublicKey(partyKey.getEncodedBytes());
+    return securityModule.calculateECDHKeyAgreement(pubKey);
   }
 
   public static NodeKey createFrom(final SECP256K1.KeyPair keyPair) {
