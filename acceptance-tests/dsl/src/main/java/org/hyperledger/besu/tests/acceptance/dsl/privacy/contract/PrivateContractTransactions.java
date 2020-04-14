@@ -80,6 +80,22 @@ public class PrivateContractTransactions {
         contractAddress, encodedFunction, transactionSigningKey, chainId, privateFrom, privateFor);
   }
 
+  public CallPrivateSmartContractFunction callSmartContract(
+      final String contractAddress,
+      final String encodedFunction,
+      final String transactionSigningKey,
+      final long chainId,
+      final String privateFrom,
+      final String privacyGroupId) {
+    return new CallPrivateSmartContractFunction(
+        contractAddress,
+        encodedFunction,
+        transactionSigningKey,
+        chainId,
+        privateFrom,
+        privacyGroupId);
+  }
+
   public <T extends Contract> LoadPrivateSmartContractTransaction<T> loadSmartContract(
       final String contractAddress,
       final Class<T> clazz,
