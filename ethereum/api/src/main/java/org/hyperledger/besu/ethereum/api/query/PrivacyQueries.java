@@ -64,11 +64,11 @@ public class PrivacyQueries {
       return Collections.emptyList();
     }
 
-    final List<PrivateTransactionMetadata> privateTransactionMetadatas =
-        privateWorldStateReader.getPrivateTransactionsMetadata(privacyGroupId, blockHash);
+    final List<PrivateTransactionMetadata> privateTransactionMetadataList =
+        privateWorldStateReader.getPrivateTransactionMetadataList(privacyGroupId, blockHash);
 
-    final List<PrivateTransactionReceipt> privateTransactionReceipts =
-        privateTransactionMetadatas.stream()
+    final List<PrivateTransactionReceipt> privateTransactionReceiptList =
+        privateTransactionMetadataList.stream()
             .map(PrivateTransactionMetadata::getPrivacyMarkerTransactionHash)
             .map(
                 pmtHash -> privateWorldStateReader.getPrivateTransactionReceipt(blockHash, pmtHash))
@@ -78,14 +78,14 @@ public class PrivacyQueries {
     final long number = blockHeader.get().getNumber();
     final boolean removed = !blockchain.blockIsOnCanonicalChain(blockHash);
 
-    return IntStream.range(0, privateTransactionReceipts.size())
+    return IntStream.range(0, privateTransactionReceiptList.size())
         .mapToObj(
             i ->
                 LogWithMetadata.generate(
-                    privateTransactionReceipts.get(i),
+                    privateTransactionReceiptList.get(i),
                     number,
                     blockHash,
-                    privateTransactionMetadatas.get(i).getPrivacyMarkerTransactionHash(),
+                    privateTransactionMetadataList.get(i).getPrivacyMarkerTransactionHash(),
                     i,
                     removed))
         .flatMap(Collection::stream)

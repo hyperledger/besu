@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -87,9 +87,7 @@ public class PrivGetLogsTest {
   public void privacyGroupIdIsRequired() {
     final JsonRpcRequestContext request = privGetLogRequest(null, mock(FilterParameter.class));
 
-    final Throwable thrown = catchThrowable(() -> method.response(request));
-
-    assertThat(thrown)
+    assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("Missing required json rpc parameter at index 0");
   }
@@ -98,9 +96,7 @@ public class PrivGetLogsTest {
   public void filterParameterIsRequired() {
     final JsonRpcRequestContext request = privGetLogRequest(PRIVACY_GROUP_ID, null);
 
-    final Throwable thrown = catchThrowable(() -> method.response(request));
-
-    assertThat(thrown)
+    assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("Missing required json rpc parameter at index 1");
   }
@@ -196,9 +192,9 @@ public class PrivGetLogsTest {
 
     final JsonRpcRequestContext request =
         privGetLogRequestWithUser(PRIVACY_GROUP_ID, filterParameter, user);
-    final Throwable thrown = catchThrowable(() -> method.response(request));
 
-    assertThat(thrown).isInstanceOf(MultiTenancyValidationException.class);
+    assertThatThrownBy(() -> method.response(request))
+        .isInstanceOf(MultiTenancyValidationException.class);
   }
 
   private JsonRpcRequestContext privGetLogRequest(

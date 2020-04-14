@@ -55,7 +55,7 @@ public class PrivateWorldStateReader {
         .flatMap(account -> Optional.ofNullable(account.getCode()));
   }
 
-  public List<PrivateTransactionMetadata> getPrivateTransactionsMetadata(
+  public List<PrivateTransactionMetadata> getPrivateTransactionMetadataList(
       final String privacyGroupId, final Hash blockHash) {
     final Bytes32 privacyGroupIdBytes = Bytes32.wrap(Bytes.fromBase64String(privacyGroupId));
     final Optional<PrivateBlockMetadata> privateBlockMetadata =

@@ -145,7 +145,7 @@ public class PrivateWorldStateReaderTest {
         .thenReturn(Optional.empty());
 
     final List<PrivateTransactionMetadata> privateTransactionsMetadata =
-        privateWorldStateReader.getPrivateTransactionsMetadata(PRIVACY_GROUP_ID, blockHash);
+        privateWorldStateReader.getPrivateTransactionMetadataList(PRIVACY_GROUP_ID, blockHash);
 
     assertThat(privateTransactionsMetadata).isEmpty();
   }
@@ -157,7 +157,7 @@ public class PrivateWorldStateReaderTest {
         .thenReturn(Optional.of(privateBlockMetadata));
 
     final List<PrivateTransactionMetadata> privateTransactionsMetadata =
-        privateWorldStateReader.getPrivateTransactionsMetadata(PRIVACY_GROUP_ID, blockHash);
+        privateWorldStateReader.getPrivateTransactionMetadataList(PRIVACY_GROUP_ID, blockHash);
 
     assertThat(privateTransactionsMetadata)
         .hasSize(3)

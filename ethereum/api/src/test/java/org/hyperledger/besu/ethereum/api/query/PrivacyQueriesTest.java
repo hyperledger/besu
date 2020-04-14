@@ -88,7 +88,7 @@ public class PrivacyQueriesTest {
     final LogsQuery query = new LogsQuery.Builder().build();
 
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
-    when(privateWorldStateReader.getPrivateTransactionsMetadata(PRIVACY_GROUP_ID, blockHash))
+    when(privateWorldStateReader.getPrivateTransactionMetadataList(PRIVACY_GROUP_ID, blockHash))
         .thenReturn(Collections.emptyList());
 
     final List<LogWithMetadata> logs =
@@ -110,7 +110,7 @@ public class PrivacyQueriesTest {
 
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
     when(blockchain.blockIsOnCanonicalChain(blockHash)).thenReturn(true);
-    when(privateWorldStateReader.getPrivateTransactionsMetadata(PRIVACY_GROUP_ID, blockHash))
+    when(privateWorldStateReader.getPrivateTransactionMetadataList(PRIVACY_GROUP_ID, blockHash))
         .thenReturn(transactionMetadataList);
 
     mockReceiptsWithLogsAndTopics(blockHash, transactionMetadataList, null);
@@ -133,7 +133,7 @@ public class PrivacyQueriesTest {
 
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
     when(blockchain.blockIsOnCanonicalChain(blockHash)).thenReturn(true);
-    when(privateWorldStateReader.getPrivateTransactionsMetadata(PRIVACY_GROUP_ID, blockHash))
+    when(privateWorldStateReader.getPrivateTransactionMetadataList(PRIVACY_GROUP_ID, blockHash))
         .thenReturn(transactionMetadataList);
 
     mockReceiptsWithLogsAndTopics(blockHash, transactionMetadataList, matchingTopic);
@@ -177,7 +177,7 @@ public class PrivacyQueriesTest {
               when(blockchain.getBlockHashByNumber(i)).thenReturn(Optional.of(blockHash));
               when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
               when(blockchain.blockIsOnCanonicalChain(blockHash)).thenReturn(true);
-              when(privateWorldStateReader.getPrivateTransactionsMetadata(
+              when(privateWorldStateReader.getPrivateTransactionMetadataList(
                       PRIVACY_GROUP_ID, blockHash))
                   .thenReturn(transactionMetadataList);
 

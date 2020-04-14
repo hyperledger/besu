@@ -59,12 +59,12 @@ public class PrivGetLogs implements JsonRpcMethod {
 
     checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(request, privacyGroupId);
 
-    final LogsQuery query =
-        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
-
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
+
+    final LogsQuery query =
+        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
 
     if (filter.getBlockhash() != null) {
       return new JsonRpcSuccessResponse(
