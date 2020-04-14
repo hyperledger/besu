@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.EeaSendRawTransactionTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivCallTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetCodeTransaction;
 
@@ -77,5 +78,9 @@ public class PrivacyTransactions {
   public RemoveFromOnChainPrivacyGroupTransaction removeFromPrivacyGroup(
       final String privacyGroupId, final PrivacyNode remover, final PrivacyNode nodeToRemove) {
     return new RemoveFromOnChainPrivacyGroupTransaction(privacyGroupId, remover, nodeToRemove);
+  }
+
+  public EeaSendRawTransactionTransaction sendRawTransaction(final String transaction) {
+    return new EeaSendRawTransactionTransaction(transaction);
   }
 }
