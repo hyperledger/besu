@@ -25,9 +25,9 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -145,7 +145,7 @@ public final class RunnerTest {
     final Path dataDirAhead = temp.newFolder().toPath();
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
-    final NodeKey aheadDbNodeKey = new BouncyCastleNodeKey(KeyPairUtil.loadKeyPair(dbAhead));
+    final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
@@ -240,7 +240,7 @@ public final class RunnerTest {
               .dataDirectory(dataDirBehind)
               .networkId(networkId)
               .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-              .nodeKey(BouncyCastleNodeKey.generate())
+              .nodeKey(NodeKeyUtils.generate())
               .storageProvider(new InMemoryStorageProvider())
               .metricsSystem(noOpMetricsSystem)
               .privacyParameters(PrivacyParameters.DEFAULT)

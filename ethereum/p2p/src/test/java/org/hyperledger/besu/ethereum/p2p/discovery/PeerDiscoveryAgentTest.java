@@ -22,8 +22,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -337,7 +337,7 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent();
     final DiscoveryPeer agentPeer = agent.getAdvertisedPeer().get();
 
-    final NodeKey remoteKeyPair = BouncyCastleNodeKey.generate();
+    final NodeKey remoteKeyPair = NodeKeyUtils.generate();
     final String remoteIp = "1.2.3.4";
     final MockPeerDiscoveryAgent remoteAgent =
         helper.createDiscoveryAgent(
