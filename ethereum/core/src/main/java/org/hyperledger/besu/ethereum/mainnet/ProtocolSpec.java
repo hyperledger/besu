@@ -285,14 +285,4 @@ public class ProtocolSpec<C> {
   public GasCalculator getGasCalculator() {
     return gasCalculator;
   }
-
-  public void setTransactionFilter(final TransactionFilter transactionFilter) {
-    transactionValidator.setTransactionFilter(transactionFilter);
-  }
-
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
-    if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
-      ((PrivacyBlockProcessor) blockProcessor).setPublicWorldStateArchive(publicWorldStateArchive);
-  }
 }
