@@ -22,7 +22,6 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -190,6 +189,7 @@ public class PublicKeySubCommand implements Runnable {
 
   @FunctionalInterface
   public interface KeyLoader {
-    SECP256K1.KeyPair load(final File keyFile) throws IOException;
+
+    KeyPair load(final File keyFile) throws IOException;
   }
 }

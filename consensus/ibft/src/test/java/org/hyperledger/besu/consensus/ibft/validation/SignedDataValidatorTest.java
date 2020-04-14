@@ -25,8 +25,8 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -44,9 +44,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SignedDataValidatorTest {
 
-  private final NodeKey proposerKey = BouncyCastleNodeKey.generate();
-  private final NodeKey validatorKey = BouncyCastleNodeKey.generate();
-  private final NodeKey nonValidatorKey = BouncyCastleNodeKey.generate();
+  private final NodeKey proposerKey = NodeKeyUtils.generate();
+  private final NodeKey validatorKey = NodeKeyUtils.generate();
+  private final NodeKey nonValidatorKey = NodeKeyUtils.generate();
   private final MessageFactory proposerMessageFactory = new MessageFactory(proposerKey);
   private final MessageFactory validatorMessageFactory = new MessageFactory(validatorKey);
   private final MessageFactory nonValidatorMessageFactory = new MessageFactory(nonValidatorKey);

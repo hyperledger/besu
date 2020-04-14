@@ -36,8 +36,8 @@ import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -67,7 +67,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftRoundTest {
 
-  private final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+  private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();

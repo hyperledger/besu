@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -43,7 +43,7 @@ public class PeerDiscoveryPacketSedesTest {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
     final Bytes target = Bytes.wrap(r);
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
 
     final FindNeighborsPacketData packetData = FindNeighborsPacketData.create(target);
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, packetData, nodeKey);
@@ -113,7 +113,7 @@ public class PeerDiscoveryPacketSedesTest {
     new Random().nextBytes(r);
     final Bytes target = Bytes.wrap(r);
 
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
 
     final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, nodeKey);

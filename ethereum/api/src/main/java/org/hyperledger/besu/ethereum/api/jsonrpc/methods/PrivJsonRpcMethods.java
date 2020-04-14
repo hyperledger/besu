@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDistributeRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivFindPrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetCode;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetLogs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivacyPrecompileAddress;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
@@ -74,7 +75,12 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               enclavePublicKeyProvider,
               getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
           new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
-          new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider));
+          new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
+          new PrivGetLogs(
+              getBlockchainQueries(),
+              getPrivacyQueries(),
+              privacyController,
+              enclavePublicKeyProvider));
     } else {
       return mapOf(
           new PrivGetTransactionReceipt(
@@ -97,7 +103,12 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               enclavePublicKeyProvider,
               getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
           new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
-          new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider));
+          new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
+          new PrivGetLogs(
+              getBlockchainQueries(),
+              getPrivacyQueries(),
+              privacyController,
+              enclavePublicKeyProvider));
     }
   }
 }
