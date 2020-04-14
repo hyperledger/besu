@@ -411,7 +411,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     out.startList();
 
     out.writeLongScalar(getNonce());
-    out.writeUInt256Scalar(getGasPrice());
+    if (getGasPrice() != null) {
+      out.writeUInt256Scalar(getGasPrice());
+    } else {
+      out.writeNull();
+    }
     out.writeLongScalar(getGasLimit());
     out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar(getValue());
@@ -533,7 +537,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
             out -> {
               out.startList();
               out.writeLongScalar(nonce);
-              out.writeUInt256Scalar(gasPrice);
+              if (gasPrice != null) {
+                out.writeUInt256Scalar(gasPrice);
+              } else {
+                out.writeNull();
+              }
               out.writeLongScalar(gasLimit);
               out.writeBytes(to == null ? Bytes.EMPTY : to);
               out.writeUInt256Scalar(value);
