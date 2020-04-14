@@ -14,33 +14,36 @@
  */
 package org.hyperledger.besu.crypto;
 
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.plugin.services.nodekey.PublicKey;
 import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
 import org.hyperledger.besu.plugin.services.nodekey.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-public class NodeKey {
+public class OldBouncyCastleSecurityModule implements SecurityModule {
 
-  private final SecurityModule securityModule;
+  private final KeyPair nodeKeys;
 
-  public NodeKey(final SecurityModule securityModule) {
-    this.securityModule = securityModule;
+  public OldBouncyCastleSecurityModule(final KeyPair nodeKeys) {
+    this.nodeKeys = nodeKeys;
   }
 
-  public SECP256K1.Signature sign(final Bytes32 dataHash) {
-    final Signature signature = securityModule.sign(dataHash);
-    return SECP256K1.Signature.create(
-        signature.getR(), signature.getS(), signature.getRecoveryId());
+  @Override
+  public Signature sign(final Bytes32 dataHash) {
+    final SECP256K1.Signature signature = SECP256K1.sign(dataHash, nodeKeys);
+    return new Signature(signature.getR(), signature.getS(), signature.getRecId());
   }
 
-  public SECP256K1.PublicKey getPublicKey() {
-    final PublicKey pubKey = securityModule.getPublicKey();
-    return SECP256K1.PublicKey.create(pubKey.getEncoded());
+  @Override
+  public PublicKey getPublicKey() {
+    final SECP256K1.PublicKey pubKey = nodeKeys.getPublicKey();
+    return new PublicKey(pubKey.getEncodedBytes());
   }
 
-  public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
-    final PublicKey pubKey = new PublicKey(partyKey.getEncodedBytes());
-    return securityModule.calculateECDHKeyAgreement(pubKey);
+  @Override
+  public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey) {
+    final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(publicKey.getEncoded());
+    return SECP256K1.calculateECDHKeyAgreement(nodeKeys.getPrivateKey(), pubKey);
   }
 }

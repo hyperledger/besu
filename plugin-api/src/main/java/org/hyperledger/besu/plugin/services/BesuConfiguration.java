@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 /** Generally useful configuration provided by Besu. */
 public interface BesuConfiguration {
@@ -32,4 +33,7 @@ public interface BesuConfiguration {
    * @return location of the data directory in the file system of the client.
    */
   Path getDataPath();
+
+  /** A map of additional configurations which can be used by specific plugin */
+  Map<String, String> getAdditionalConfiguration();
 }

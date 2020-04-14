@@ -12,12 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.crypto;
+package org.hyperledger.besu.plugin.services.nodekey.bouncycastle;
 
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.plugin.services.nodekey.PublicKey;
+import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
+import org.hyperledger.besu.plugin.services.nodekey.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * Implementation of SecurityModule deferring cryptographic operations via SECP256K1 class which
+ * uses BouncyCastle.
+ */
 public class BouncyCastleSecurityModule implements SecurityModule {
 
   private final KeyPair nodeKeys;

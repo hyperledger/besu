@@ -67,6 +67,7 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -107,16 +108,20 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.NodeKeySecurityModuleService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
+import org.hyperledger.besu.plugin.services.nodekey.bouncycastle.NodeKeyBouncyCastlePlugin;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.NodeKeySecurityModuleServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -199,6 +204,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
+  private final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService;
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
@@ -814,6 +820,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
   @Option(
+      names = {"--node-key-provider"},
+      description = "Identity for the Node Key Security Module provider to be used.",
+      arity = "1")
+  private String nodeKeySecurityModuleProviderName = DEFAULT_NODEKEY_SECURITY_MODULE_PROVIDER;
+
+  @Option(
       names = {"--auto-log-bloom-caching-enabled"},
       description = "Enable automatic log bloom caching (default: ${DEFAULT-VALUE})",
       arity = "1")
@@ -880,7 +892,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         controllerBuilderFactory,
         besuPluginContext,
         environment,
-        new StorageServiceImpl());
+        new StorageServiceImpl(),
+        new NodeKeySecurityModuleServiceImpl());
   }
 
   @VisibleForTesting
@@ -893,7 +906,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
-      final StorageServiceImpl storageService) {
+      final StorageServiceImpl storageService,
+      final NodeKeySecurityModuleServiceImpl nodeKeySecurityService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -903,6 +917,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.besuPluginContext = besuPluginContext;
     this.environment = environment;
     this.storageService = storageService;
+    this.nodeKeySecurityModuleService = nodeKeySecurityService;
   }
 
   public void parse(
@@ -1025,11 +1040,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+    besuPluginContext.addService(NodeKeySecurityModuleService.class, nodeKeySecurityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
+    new NodeKeyBouncyCastlePlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
 
@@ -1242,7 +1259,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumExtranonce,
                 Optional.empty()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodePrivateKeyFile(nodePrivateKeyFile())
+        // .nodePrivateKeyFile(nodePrivateKeyFile())
+        .nodeKey(new NodeKey(nodeKeySecurityModuleProvider(nodeKeySecurityModuleProviderName)))
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
@@ -1946,6 +1964,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return nodePrivateKeyFile != null
         ? nodePrivateKeyFile
         : KeyPairUtil.getDefaultKeyFile(dataDir());
+  }
+
+  private SecurityModule nodeKeySecurityModuleProvider(final String name) {
+    final File privateKeyFile = nodePrivateKeyFile();
+    final Map<String, String> additionalConfiguration =
+        new HashMap<>(pluginCommonConfiguration.getAdditionalConfiguration());
+    additionalConfiguration.put("privateKeyFile", privateKeyFile.getPath());
+    final BesuConfigurationImpl besuConfiguration =
+        new BesuConfigurationImpl(
+            pluginCommonConfiguration.getDataPath(),
+            pluginCommonConfiguration.getStoragePath(),
+            additionalConfiguration);
+
+    return nodeKeySecurityModuleService
+        .getByName(name)
+        .orElseThrow(() -> new RuntimeException("Node Key Security Module not found: " + name))
+        .apply(besuConfiguration);
   }
 
   private File privacyPublicKeyFile() {

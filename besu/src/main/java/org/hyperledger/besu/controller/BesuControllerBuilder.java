@@ -18,8 +18,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.crypto.KeyPairUtil.loadKeyPair;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.OldBouncyCastleSecurityModule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -127,7 +127,7 @@ public abstract class BesuControllerBuilder<C> {
   }
 
   public BesuControllerBuilder<C> nodePrivateKeyFile(final File nodePrivateKeyFile) {
-    this.nodeKey = new NodeKey(new BouncyCastleSecurityModule(loadKeyPair(nodePrivateKeyFile)));
+    this.nodeKey = new NodeKey(new OldBouncyCastleSecurityModule(loadKeyPair(nodePrivateKeyFile)));
     return this;
   }
 
