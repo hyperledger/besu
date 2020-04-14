@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroupResponse;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -39,7 +40,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.web3j.abi.datatypes.Type;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
@@ -47,6 +47,7 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthLog;
 import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
 import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.protocol.exceptions.TransactionException;
@@ -385,6 +386,13 @@ public class PrivacyRequestFactory {
         Arrays.asList(privacyGroupId, transaction, blockNumberLatestPending),
         web3jService,
         EthCall.class);
+  }
+
+  public Request<?, EthLog> privGetLogs(
+      final String privacyGroupId, final LogFilterJsonParameter filterParameter) {
+
+    return new Request<>(
+        "priv_getLogs", Arrays.asList(privacyGroupId, filterParameter), web3jService, EthLog.class);
   }
 
   public static class PrivxFindPrivacyGroupResponse extends Response<List<OnChainPrivacyGroup>> {
