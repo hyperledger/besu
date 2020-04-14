@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public class RoundChangeArtifactsTest {
   @Before
   public void setup() {
     for (int i = 0; i < 4; i++) {
-      final NodeKey nodeKey = NodeKey.generate();
+      final NodeKey nodeKey = NodeKeyUtils.generate();
       final MessageFactory messageFactory = new MessageFactory(nodeKey);
       messageFactories.add(messageFactory);
     }

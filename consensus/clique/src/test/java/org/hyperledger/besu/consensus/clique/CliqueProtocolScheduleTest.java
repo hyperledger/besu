@@ -19,6 +19,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -27,7 +28,7 @@ import org.junit.Test;
 
 public class CliqueProtocolScheduleTest {
 
-  private static final NodeKey NODE_KEY = NodeKey.generate();
+  private static final NodeKey NODE_KEY = NodeKeyUtils.generate();
 
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {

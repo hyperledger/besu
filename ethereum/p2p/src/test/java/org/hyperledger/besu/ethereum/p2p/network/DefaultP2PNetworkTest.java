@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -324,7 +325,7 @@ public final class DefaultP2PNetworkTest {
 
   private DefaultP2PNetwork.Builder builder() {
 
-    final NodeKey nodeKey = NodeKey.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
 
     return DefaultP2PNetwork.builder()
         .config(config)

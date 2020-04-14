@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker.HandshakeStatus;
@@ -101,7 +101,7 @@ public class ECIESHandshakeTest {
 
     // Prepare the handshaker to take the initiator role.
     initiator.prepareInitiator(
-        NodeKey.createFrom(Input.initiatorKeyPair), Input.responderKeyPair.getPublicKey());
+        NodeKeyUtils.createFrom(Input.initiatorKeyPair), Input.responderKeyPair.getPublicKey());
 
     // Set the test vectors.
     initiator.setEphKeyPair(Input.initiatorEphKeyPair);
@@ -115,7 +115,7 @@ public class ECIESHandshakeTest {
     final ECIESHandshaker responder = new ECIESHandshaker();
 
     // Prepare the handshaker with the responder's keypair.
-    responder.prepareResponder(NodeKey.createFrom(Input.responderKeyPair));
+    responder.prepareResponder(NodeKeyUtils.createFrom(Input.responderKeyPair));
 
     // Set the test data.
     responder.setEphKeyPair(Input.responderEphKeyPair);
@@ -149,7 +149,7 @@ public class ECIESHandshakeTest {
     final ECIESHandshaker responder = new ECIESHandshaker();
 
     // Prepare the handshaker with the responder's keypair.
-    responder.prepareResponder(NodeKey.createFrom(Input.responderKeyPair));
+    responder.prepareResponder(NodeKeyUtils.createFrom(Input.responderKeyPair));
 
     // Set the test data.
     responder.setEphKeyPair(Input.responderEphKeyPair);
@@ -167,7 +167,7 @@ public class ECIESHandshakeTest {
     // Initiator end of the handshake.
     final ECIESHandshaker initiator = new ECIESHandshaker();
     initiator.prepareInitiator(
-        NodeKey.createFrom(Input.initiatorKeyPair), Input.responderKeyPair.getPublicKey());
+        NodeKeyUtils.createFrom(Input.initiatorKeyPair), Input.responderKeyPair.getPublicKey());
     initiator.firstMessage();
     initiator.setInitiatorMsgEnc(Bytes.wrap(Messages.initiatorMsgEnc));
     initiator.setEphKeyPair(Input.initiatorEphKeyPair);
@@ -175,7 +175,7 @@ public class ECIESHandshakeTest {
 
     // Responder end of the handshake.
     final ECIESHandshaker responder = new ECIESHandshaker();
-    responder.prepareResponder(NodeKey.createFrom(Input.responderKeyPair));
+    responder.prepareResponder(NodeKeyUtils.createFrom(Input.responderKeyPair));
     responder.setEphKeyPair(Input.responderEphKeyPair);
     responder.setResponderNonce(Input.responderNonce);
 

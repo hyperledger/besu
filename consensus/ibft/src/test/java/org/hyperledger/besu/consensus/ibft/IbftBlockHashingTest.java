@@ -18,6 +18,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
@@ -97,7 +98,7 @@ public class IbftBlockHashingTest {
     return IntStream.rangeClosed(1, 4)
         .mapToObj(
             i ->
-                NodeKey.createFrom(
+                NodeKeyUtils.createFrom(
                     (KeyPair.create(PrivateKey.create(UInt256.valueOf(i).toBytes())))))
         .collect(Collectors.toList());
   }

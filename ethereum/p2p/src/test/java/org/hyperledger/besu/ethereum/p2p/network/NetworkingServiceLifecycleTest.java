@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
@@ -37,7 +38,7 @@ import org.junit.Test;
 public class NetworkingServiceLifecycleTest {
 
   private final Vertx vertx = Vertx.vertx();
-  private final NodeKey nodeKey = NodeKey.generate();
+  private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final NetworkingConfiguration config = configWithRandomPorts();
 
   @After

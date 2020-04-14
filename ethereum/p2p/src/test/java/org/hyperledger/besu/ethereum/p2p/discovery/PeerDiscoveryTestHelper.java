@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -48,7 +49,7 @@ public class PeerDiscoveryTestHelper {
   Map<Bytes, MockPeerDiscoveryAgent> agents = new HashMap<>();
 
   public static List<NodeKey> generateNodeKeys(final int count) {
-    return Stream.generate(NodeKey::generate).limit(count).collect(Collectors.toList());
+    return Stream.generate(NodeKeyUtils::generate).limit(count).collect(Collectors.toList());
   }
 
   /**
@@ -66,7 +67,7 @@ public class PeerDiscoveryTestHelper {
   }
 
   public DiscoveryPeer createDiscoveryPeer() {
-    return createDiscoveryPeer(NodeKey.generate());
+    return createDiscoveryPeer(NodeKeyUtils.generate());
   }
 
   public DiscoveryPeer createDiscoveryPeer(final NodeKey nodeKey) {
@@ -188,7 +189,7 @@ public class PeerDiscoveryTestHelper {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
     private String advertisedHost = "127.0.0.1";
     private OptionalInt bindPort = OptionalInt.empty();
-    private NodeKey nodeKey = NodeKey.generate();
+    private NodeKey nodeKey = NodeKeyUtils.generate();
 
     private AgentBuilder(
         final Map<Bytes, MockPeerDiscoveryAgent> agents, final AtomicInteger nextAvailablePort) {

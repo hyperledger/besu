@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -90,7 +91,7 @@ public class TestNode implements Closeable {
     checkNotNull(discoveryCfg);
 
     final int listenPort = port != null ? port : 0;
-    this.nodeKey = kp != null ? NodeKey.createFrom(kp) : NodeKey.generate();
+    this.nodeKey = kp != null ? NodeKeyUtils.createFrom(kp) : NodeKeyUtils.generate();
 
     final NetworkingConfiguration networkingConfiguration =
         NetworkingConfiguration.create()

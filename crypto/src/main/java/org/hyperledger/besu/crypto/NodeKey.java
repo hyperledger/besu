@@ -30,21 +30,13 @@ public class NodeKey {
         signature.getR(), signature.getS(), signature.getRecoveryId());
   }
 
-  public PublicKey getPublicKey() {
+  public SECP256K1.PublicKey getPublicKey() {
     final PublicKey pubKey = securityModule.getPublicKey();
-    return PublicKey.create(pubKey.getEncoded());
+    return SECP256K1.PublicKey.create(pubKey.getEncoded());
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
     final PublicKey pubKey = new PublicKey(partyKey.getEncodedBytes());
     return securityModule.calculateECDHKeyAgreement(pubKey);
-  }
-
-  public static NodeKey createFrom(final SECP256K1.KeyPair keyPair) {
-    return new NodeKey(new BouncyCastleSecurityModule(keyPair));
-  }
-
-  public static NodeKey generate() {
-    return new NodeKey(new BouncyCastleSecurityModule(SECP256K1.KeyPair.generate()));
   }
 }
