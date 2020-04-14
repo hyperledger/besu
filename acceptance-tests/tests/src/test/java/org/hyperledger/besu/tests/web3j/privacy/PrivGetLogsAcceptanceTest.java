@@ -137,7 +137,7 @@ public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
       final String privacyGroupId, final EventEmitter eventEmitterContract, final int value) {
     final String transactionHash =
         node.execute(
-            privateContractTransactions.callSmartContract(
+            privateContractTransactions.callSmartContractWithPrivacyGroupId(
                 eventEmitterContract.getContractAddress(),
                 eventEmitterContract.store(BigInteger.valueOf(value)).encodeFunctionCall(),
                 node.getTransactionSigningKey(),

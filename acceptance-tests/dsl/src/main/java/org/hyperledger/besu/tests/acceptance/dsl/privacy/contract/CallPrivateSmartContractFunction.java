@@ -97,7 +97,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
   public String execute(final NodeRequests node) {
     final Besu besu = node.privacy().getBesuClient();
 
-    PrivateTransactionManager privateTransactionManager;
+    final PrivateTransactionManager privateTransactionManager;
     if (privacyGroupId != null) {
       privateTransactionManager =
           new BesuPrivateTransactionManager(

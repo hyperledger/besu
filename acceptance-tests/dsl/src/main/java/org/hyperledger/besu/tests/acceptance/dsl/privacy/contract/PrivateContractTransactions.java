@@ -80,7 +80,7 @@ public class PrivateContractTransactions {
         contractAddress, encodedFunction, transactionSigningKey, chainId, privateFrom, privateFor);
   }
 
-  public CallPrivateSmartContractFunction callSmartContract(
+  public CallPrivateSmartContractFunction callSmartContractWithPrivacyGroupId(
       final String contractAddress,
       final String encodedFunction,
       final String transactionSigningKey,
