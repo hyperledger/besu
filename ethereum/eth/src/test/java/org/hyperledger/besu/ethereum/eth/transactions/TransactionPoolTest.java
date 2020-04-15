@@ -499,7 +499,7 @@ public class TransactionPoolTest {
     when(peerPendingTransactionTracker.isPeerSupported(peer)).thenReturn(false);
     when(peerPendingTransactionTracker.isPeerSupported(validPeer)).thenReturn(true);
     when(transactionValidator.validate(any())).thenReturn(valid());
-    transactionPool.addLocalTransaction(transaction1);
+    transactionPool.addTransactionHash(transaction1.getHash());
     transactionPool.handleConnect(peer);
     verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer, transaction1.getHash());
     transactionPool.handleConnect(validPeer);

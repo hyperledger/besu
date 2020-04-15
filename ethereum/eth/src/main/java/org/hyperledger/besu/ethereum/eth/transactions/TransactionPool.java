@@ -127,7 +127,7 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.getNewPooledHashes();
   }
 
-  public boolean addTransactionHashes(final Hash transactionHash) {
+  public boolean addTransactionHash(final Hash transactionHash) {
     return pendingTransactions.addTransactionHash(transactionHash);
   }
 
