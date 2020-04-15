@@ -59,6 +59,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'com.squareup.okhttp3:okhttp'
 
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
