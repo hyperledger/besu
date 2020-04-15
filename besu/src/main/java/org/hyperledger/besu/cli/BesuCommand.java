@@ -815,8 +815,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
-      names = {"--node-key-provider"},
-      description = "Identity for the Node Key Security Module provider to be used.",
+      names = {"--security-module-provider"},
+      description = "Identity for the Security Module provider to be used.",
       arity = "1")
   private String nodeKeySecurityModuleProviderName = DEFAULT_NODEKEY_SECURITY_MODULE_PROVIDER;
 

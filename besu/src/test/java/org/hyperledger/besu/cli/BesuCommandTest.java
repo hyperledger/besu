@@ -808,51 +808,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void nodekeyOptionMustBeUsed() throws Exception {
-    final File file = new File("./specific/enclavePrivateKey");
-    file.deleteOnExit();
-
-    parseCommand("--node-private-key-file", file.getPath());
-
-    verify(mockControllerBuilder).dataDirectory(isNotNull());
-    verify(mockControllerBuilder).nodeKey(isNotNull()); // TODO: Re-validate
-    verify(mockControllerBuilder).build();
-
-    assertThat(fileArgumentCaptor.getValue()).isEqualTo(file);
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void nodekeyOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final File file = new File("./specific/enclavePrivateKey");
-    file.deleteOnExit();
-
-    parseCommand("--node-private-key-file", file.getPath());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--node-private-key-file', './specific/enclavePrivateKey'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void nodekeyDefaultedUnderDocker() throws Exception {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    parseCommand();
-
-    // TODO: Re-validate
-    verify(mockControllerBuilder).nodeKey(isNotNull());
-    // assertThat(fileArgumentCaptor.getValue()).isEqualTo(new File("/var/lib/besu/key"));
-  }
-
-  @Test
   public void dataDirOptionMustBeUsed() throws Exception {
     assumeTrue(isFullInstantiation());
 
@@ -861,9 +816,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--data-path", path.toString());
 
     verify(mockControllerBuilder).dataDirectory(pathArgumentCaptor.capture());
-    // TODO: Revalidate
-    // verify(mockControllerBuilder)
-    //    .nodePrivateKeyFile(eq(path.resolve("key").toAbsolutePath().toFile()));
+    verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).build();
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path.toAbsolutePath());

@@ -11,7 +11,10 @@
 # Node Information
 data-path="~/besudata"
 logging="INFO"
-node-private-key-file="./path/to/privateKey"
+
+# Security Module plugin to use
+security-module-provider="bouncycastle"
+# plugin-securitymodule-bouncycastle-private-key-file='./path/to/private-key'
 
 # P2P network
 identity="PegaSysEng"

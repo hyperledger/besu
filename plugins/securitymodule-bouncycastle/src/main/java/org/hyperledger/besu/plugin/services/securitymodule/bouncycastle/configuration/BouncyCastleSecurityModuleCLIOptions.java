@@ -22,7 +22,7 @@ public class BouncyCastleSecurityModuleCLIOptions {
   private File privateKeyFile = null;
 
   @Option(
-      names = {"--plugin-securitymodule-bc-private-key-file"},
+      names = {"--plugin-securitymodule-bouncycastle-private-key-file"},
       paramLabel = "<PATH>",
       description =
           "The node's private key file (default: a file named \"key\" in the Besu data folder)")
