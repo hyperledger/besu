@@ -187,9 +187,17 @@ public class SECP256K1 {
     signer.init(true, privKey);
 
     final BigInteger[] components = signer.generateSignature(dataHash.toArrayUnsafe());
-    final BigInteger r = components[0];
-    BigInteger s = components[1];
 
+    return normaliseSignature(components[0], components[1], keyPair.getPublicKey(), dataHash);
+  }
+
+  public static Signature normaliseSignature(
+      final BigInteger nativeR,
+      final BigInteger nativeS,
+      final PublicKey publicKey,
+      final Bytes32 dataHash) {
+
+    BigInteger s = nativeS;
     // Automatically adjust the S component to be less than or equal to half the curve
     // order, if necessary. This is required because for every signature (r,s) the signature
     // (r, -s (mod N)) is a valid signature of the same message. However, we dislike the
@@ -208,9 +216,9 @@ public class SECP256K1 {
 
     // Now we have to work backwards to figure out the recId needed to recover the signature.
     int recId = -1;
-    final BigInteger publicKeyBI = keyPair.getPublicKey().getEncodedBytes().toUnsignedBigInteger();
+    final BigInteger publicKeyBI = publicKey.getEncodedBytes().toUnsignedBigInteger();
     for (int i = 0; i < 4; i++) {
-      final BigInteger k = recoverFromSignature(i, r, s, dataHash);
+      final BigInteger k = recoverFromSignature(i, nativeR, s, dataHash);
       if (k != null && k.equals(publicKeyBI)) {
         recId = i;
         break;
@@ -221,7 +229,7 @@ public class SECP256K1 {
           "Could not construct a recoverable key. This should never happen.");
     }
 
-    return new Signature(r, s, (byte) recId);
+    return new Signature(nativeR, s, (byte) recId);
   }
 
   /**
@@ -294,6 +302,7 @@ public class SECP256K1 {
   }
 
   public static class PrivateKey implements java.security.PrivateKey {
+
     private final Bytes32 encoded;
 
     private PrivateKey(final Bytes32 encoded) {
@@ -528,6 +537,7 @@ public class SECP256K1 {
   }
 
   public static class Signature {
+
     public static final int BYTES_REQUIRED = 65;
     /**
      * The recovery id to reconstruct the public key used to create the signature.
