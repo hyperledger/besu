@@ -58,13 +58,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      return hashValueStore.containsKey(Bytes.wrap(key));
-    } finally {
-      lock.unlock();
-    }
+    return get(key).isPresent();
   }
 
   @Override
