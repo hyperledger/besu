@@ -92,10 +92,16 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return hashValueStore.keySet().stream()
-        .map(Bytes::toArrayUnsafe)
-        .filter(returnCondition)
-        .collect(Collectors.toSet());
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return hashValueStore.keySet().stream()
+          .map(Bytes::toArrayUnsafe)
+          .filter(returnCondition)
+          .collect(Collectors.toSet());
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
