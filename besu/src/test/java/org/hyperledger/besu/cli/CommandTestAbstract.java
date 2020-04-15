@@ -79,7 +79,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import org.apache.logging.log4j.LogManager;
@@ -241,8 +240,7 @@ public abstract class CommandTestAbstract {
 
     final Path tempKeyDir = temp.newFolder().toPath();
     final BouncyCastleSecurityModule bouncyCastleSecurityModule =
-        new BouncyCastleSecurityModule(
-            Suppliers.memoize(() -> KeyPairUtil.loadKeyPair(tempKeyDir)));
+        new BouncyCastleSecurityModule(() -> KeyPairUtil.loadKeyPair(tempKeyDir));
 
     lenient()
         .when(securityModuleService.getByName("bouncycastle"))

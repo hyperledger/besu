@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.Signature;
 
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -31,7 +32,8 @@ public class BouncyCastleSecurityModule implements SecurityModule {
   private final Supplier<KeyPair> keyPairSupplier;
 
   public BouncyCastleSecurityModule(final Supplier<KeyPair> keyPairSupplier) {
-    this.keyPairSupplier = keyPairSupplier;
+    // memoize allows to cache results after first get
+    this.keyPairSupplier = Suppliers.memoize(keyPairSupplier);
   }
 
   @Override

@@ -28,7 +28,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.configur
 import java.io.File;
 import java.util.Optional;
 
-import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,8 +70,7 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
   private SecurityModule createBouncyCastleSecurityModule(
       final BesuConfiguration besuConfiguration) {
     this.besuConfiguration = besuConfiguration;
-    // memoize allows Supplier.get to be initialized once, subsequent get will return cached result
-    return new BouncyCastleSecurityModule(Suppliers.memoize(this::loadKeyPair));
+    return new BouncyCastleSecurityModule(this::loadKeyPair);
   }
 
   private SECP256K1.KeyPair loadKeyPair() {
