@@ -16,9 +16,9 @@ package org.hyperledger.besu.plugin.services.securitymodule.bouncycastle;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.plugin.services.nodekey.PublicKey;
-import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
-import org.hyperledger.besu.plugin.services.nodekey.Signature;
+import org.hyperledger.besu.plugin.services.securitymodule.PublicKey;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
 

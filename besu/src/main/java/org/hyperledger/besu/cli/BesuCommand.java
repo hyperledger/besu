@@ -114,7 +114,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
-import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.BouncyCastleSecurityModulePlugin;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;

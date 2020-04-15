@@ -5,7 +5,7 @@ import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
-import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 
 import java.nio.file.Path;
 import java.util.Optional;

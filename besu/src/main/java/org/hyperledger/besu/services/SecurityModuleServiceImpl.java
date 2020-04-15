@@ -2,7 +2,7 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
-import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 
 import java.util.Map;
 import java.util.Optional;

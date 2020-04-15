@@ -15,7 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 
 import java.util.Optional;
 import java.util.function.Function;

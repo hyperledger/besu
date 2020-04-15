@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.nodekey;
+package org.hyperledger.besu.plugin.services.securitymodule;
 
 import org.apache.tuweni.bytes.Bytes32;
 
