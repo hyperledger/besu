@@ -113,7 +113,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingPublicKeyExportSubCommandWithoutPathMustWriteKeyToStandardOutput() {
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = getKeyPair();
 
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
 
@@ -126,7 +126,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public void callingPublicKeyExportSubCommandWithFilePathMustWritePublicKeyInThisFile()
       throws Exception {
 
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = getKeyPair();
 
     final File file = File.createTempFile("public", "key");
 
@@ -151,7 +151,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingPublicKeyExportAddressSubCommandWithoutPathMustWriteAddressToStandardOutput() {
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = getKeyPair();
 
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
 
@@ -164,7 +164,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public void callingPublicKeyExportAddressSubCommandWithFilePathMustWriteAddressInThisFile()
       throws Exception {
 
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = getKeyPair();
 
     final File file = File.createTempFile("public", "address");
 

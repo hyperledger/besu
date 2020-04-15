@@ -41,6 +41,7 @@ import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
 import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -158,6 +159,8 @@ public abstract class CommandTestAbstract {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
+  private SECP256K1.KeyPair keyPair;
+
   @Before
   @After
   public void resetSystemProps() {
@@ -238,9 +241,9 @@ public abstract class CommandTestAbstract {
         .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
-    final Path tempKeyDir = temp.newFolder().toPath();
+    keyPair = KeyPairUtil.loadKeyPair(temp.newFolder().toPath());
     final BouncyCastleSecurityModule bouncyCastleSecurityModule =
-        new BouncyCastleSecurityModule(() -> KeyPairUtil.loadKeyPair(tempKeyDir));
+        new BouncyCastleSecurityModule(this::getKeyPair);
 
     lenient()
         .when(securityModuleService.getByName("bouncycastle"))
@@ -269,6 +272,10 @@ public abstract class CommandTestAbstract {
     errPrintStream.close();
     commandErrorOutput.close();
     besuCommands.forEach(TestBesuCommand::close);
+  }
+
+  protected SECP256K1.KeyPair getKeyPair() {
+    return keyPair;
   }
 
   protected void setEnvironemntVariable(final String name, final String value) {
