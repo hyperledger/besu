@@ -330,6 +330,19 @@ public abstract class MainnetProtocolSpecs {
         .name("MuirGlacier");
   }
 
+  static ProtocolSpecBuilder<Void> berlinDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    if (!ExperimentalEIPs.berlinEnabled) {
+      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
+    }
+    return muirGlacierDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .name("Berlin");
+  }
+
   // TODO EIP-1559 change for the actual fork name when known
   static ProtocolSpecBuilder<Void> eip1559Definition(
       final Optional<BigInteger> chainId,
@@ -338,7 +351,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
     if (!ExperimentalEIPs.eip1559Enabled) {
-      throw new RuntimeException("EIP-1559 feature flag must be enabled");
+      throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
     }
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     final ProtocolSpecBuilder<Void> eip1559ProtocolSpecBuilder =

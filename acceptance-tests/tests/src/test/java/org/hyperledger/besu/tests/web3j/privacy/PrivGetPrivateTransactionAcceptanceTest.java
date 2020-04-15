@@ -100,7 +100,6 @@ public class PrivGetPrivateTransactionAcceptanceTest extends PrivacyAcceptanceTe
         .value(Wei.ZERO)
         .payload(Bytes.wrap(new byte[] {}))
         .sender(node.getAddress())
-        //                .chainId(BigInteger.valueOf(2018))
         .privateFrom(Bytes.fromBase64String(node.getEnclaveKey()))
         .restriction(Restriction.RESTRICTED)
         .privacyGroupId(Bytes.fromBase64String(privacyGoupId))
