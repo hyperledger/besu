@@ -16,6 +16,7 @@ package org.hyperledger.besu.crypto;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.crypto.LibSecp256k1.SECP256K1_EC_UNCOMPRESSED;
 
 import org.hyperledger.besu.crypto.LibSecp256k1.secp256k1_ecdsa_recoverable_signature;
 import org.hyperledger.besu.crypto.LibSecp256k1.secp256k1_ecdsa_signature;
@@ -30,9 +31,11 @@ import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
@@ -333,7 +336,7 @@ public class SECP256K1 {
     final LibSecp256k1.secp256k1_ecdsa_recoverable_signature signature =
         new secp256k1_ecdsa_recoverable_signature();
     // sign in internal form
-    if (LibSecp256k1.INSTANCE.secp256k1_ecdsa_sign_recoverable(
+    if (LibSecp256k1.secp256k1_ecdsa_sign_recoverable(
             LibSecp256k1.CONTEXT,
             signature,
             dataHash.toArrayUnsafe(),
@@ -348,7 +351,7 @@ public class SECP256K1 {
     // encode to compact form
     final ByteBuffer compactSig = ByteBuffer.allocate(64);
     final IntByReference recId = new IntByReference(0);
-    LibSecp256k1.INSTANCE.secp256k1_ecdsa_recoverable_signature_serialize_compact(
+    LibSecp256k1.secp256k1_ecdsa_recoverable_signature_serialize_compact(
         LibSecp256k1.CONTEXT, compactSig, recId, signature);
     compactSig.flip();
     final byte[] sig = compactSig.array();
@@ -365,7 +368,7 @@ public class SECP256K1 {
 
     // translate signature
     final LibSecp256k1.secp256k1_ecdsa_signature _signature = new secp256k1_ecdsa_signature();
-    if (LibSecp256k1.INSTANCE.secp256k1_ecdsa_signature_parse_compact(
+    if (LibSecp256k1.secp256k1_ecdsa_signature_parse_compact(
             LibSecp256k1.CONTEXT, _signature, signature.encodedBytes().toArrayUnsafe())
         == 0) {
       throw new IllegalArgumentException("Could not parse signature");
@@ -374,13 +377,13 @@ public class SECP256K1 {
     // translate key
     final LibSecp256k1.secp256k1_pubkey _pub = new secp256k1_pubkey();
     final Bytes encodedPubKey = Bytes.concatenate(Bytes.of(0x04), pub.getEncodedBytes());
-    if (LibSecp256k1.INSTANCE.secp256k1_ec_pubkey_parse(
+    if (LibSecp256k1.secp256k1_ec_pubkey_parse(
             LibSecp256k1.CONTEXT, _pub, encodedPubKey.toArrayUnsafe(), encodedPubKey.size())
         == 0) {
       throw new IllegalArgumentException("Could not parse public key");
     }
 
-    return LibSecp256k1.INSTANCE.secp256k1_ecdsa_verify(
+    return LibSecp256k1.secp256k1_ecdsa_verify(
             LibSecp256k1.CONTEXT, _signature, data.toArrayUnsafe(), _pub)
         != 0;
   }
@@ -392,7 +395,7 @@ public class SECP256K1 {
     final LibSecp256k1.secp256k1_ecdsa_recoverable_signature parsedSignature =
         new LibSecp256k1.secp256k1_ecdsa_recoverable_signature();
     final Bytes encodedSig = signature.encodedBytes();
-    if (LibSecp256k1.INSTANCE.secp256k1_ecdsa_recoverable_signature_parse_compact(
+    if (LibSecp256k1.secp256k1_ecdsa_recoverable_signature_parse_compact(
             LibSecp256k1.CONTEXT,
             parsedSignature,
             encodedSig.slice(0, 64).toArrayUnsafe(),
@@ -403,7 +406,7 @@ public class SECP256K1 {
 
     // recover the key
     final LibSecp256k1.secp256k1_pubkey newPubKey = new LibSecp256k1.secp256k1_pubkey();
-    if (LibSecp256k1.INSTANCE.secp256k1_ecdsa_recover(
+    if (LibSecp256k1.secp256k1_ecdsa_recover(
             LibSecp256k1.CONTEXT, newPubKey, parsedSignature, dataHash.toArrayUnsafe())
         == 0) {
       throw new IllegalArgumentException("Could not recover public key");
@@ -412,12 +415,8 @@ public class SECP256K1 {
     // parse the key
     final ByteBuffer recoveredKey = ByteBuffer.allocate(65);
     final LongByReference keySize = new LongByReference(recoveredKey.limit());
-    LibSecp256k1.INSTANCE.secp256k1_ec_pubkey_serialize(
-        LibSecp256k1.CONTEXT,
-        recoveredKey,
-        keySize,
-        newPubKey,
-        LibSecp256k1.SECP256K1_EC_UNCOMPRESSED);
+    LibSecp256k1.secp256k1_ec_pubkey_serialize(
+        LibSecp256k1.CONTEXT, recoveredKey, keySize, newPubKey, SECP256K1_EC_UNCOMPRESSED);
 
     return Optional.of(PublicKey.create(Bytes.wrapByteBuffer(recoveredKey).slice(1)));
   }
@@ -774,5 +773,63 @@ public class SECP256K1 {
       sb.append("recId=").append(recId);
       return sb.append("}").toString();
     }
+  }
+
+  public static void benchmarkDefault(final Bytes32 message, final KeyPair keys) {
+    final Signature signature = signDefault(message, keys);
+    if (!verifyDefault(message, signature, keys.publicKey)) {
+      throw new RuntimeException("Did not verify");
+    }
+    final BigInteger publicKeyBI =
+        SECP256K1.recoverFromSignature(
+            signature.getRecId(), signature.getR(), signature.getS(), message);
+    final PublicKey recoveredKey = PublicKey.create(publicKeyBI);
+    if (!keys.publicKey.getEncodedBytes().equals(recoveredKey.getEncodedBytes())) {
+      throw new RuntimeException("Could not extract signature");
+    }
+  }
+
+  public static void benchmarkNative(final Bytes32 message, final KeyPair keys) {
+    final Signature signature = signNative(message, keys);
+    if (!verifyNative(message, signature, keys.publicKey)) {
+      throw new RuntimeException("Did not verify");
+    }
+    final PublicKey recoveredKey =
+        recoverFromSignatureNative(message, signature)
+            .orElseThrow(() -> new RuntimeException("Could not extract signature"));
+    if (!keys.publicKey.getEncodedBytes().equals(recoveredKey.getEncodedBytes())) {
+      throw new RuntimeException("Could not extract signature");
+    }
+  }
+
+  public static void main(String[] args) {
+    KeyPair catKey =
+        KeyPair.create(
+            PrivateKey.create(
+                Bytes32.fromHexString(
+                    "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")));
+    for (int i = 0; i < 1000; i++) {
+      benchmarkDefault(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
+      benchmarkNative(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
+    }
+
+    Stopwatch defaultTimer = Stopwatch.createStarted();
+    for (int i = 0; i < 1000; i++) {
+      benchmarkDefault(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
+    }
+    defaultTimer.stop();
+
+    Stopwatch nativeTimer = Stopwatch.createStarted();
+    for (int i = 0; i < 1000; i++) {
+      benchmarkNative(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
+    }
+    nativeTimer.stop();
+
+    System.out.printf(
+        "Default - %4d µs%nNative  - %4d µs%n %.2fx performance",
+        defaultTimer.elapsed(TimeUnit.MILLISECONDS),
+        nativeTimer.elapsed(TimeUnit.MILLISECONDS),
+        ((double) defaultTimer.elapsed(TimeUnit.MILLISECONDS))
+            / nativeTimer.elapsed(TimeUnit.MILLISECONDS));
   }
 }

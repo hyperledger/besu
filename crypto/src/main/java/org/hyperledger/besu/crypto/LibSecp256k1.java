@@ -30,7 +30,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface LibSecp256k1 extends Library {
+public class LibSecp256k1 implements Library {
 
   /* Flags to pass to secp256k1_context_create */
   public static final int SECP256K1_CONTEXT_VERIFY = 0x0101;
@@ -39,24 +39,14 @@ public interface LibSecp256k1 extends Library {
   /* Flag to pass to secp256k1_ec_pubkey_serialize. */
   public static final int SECP256K1_EC_UNCOMPRESSED = 0x0002;
 
-  static final LibSecp256k1 INSTANCE = findInstance();
   static final PointerByReference CONTEXT = createContext();
 
-  private static LibSecp256k1 findInstance() {
-    try {
-      return Native.load("secp256k1", LibSecp256k1.class);
-    } catch (final Throwable t) {
-      return null;
-    }
-  }
-
   private static PointerByReference createContext() {
-    if (INSTANCE == null) {
-      return null;
-    } else {
+    try {
+      Native.register(LibSecp256k1.class, "secp256k1");
       final PointerByReference context =
-          INSTANCE.secp256k1_context_create(SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN);
-      if (INSTANCE.secp256k1_context_randomize(
+          secp256k1_context_create(SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN);
+      if (secp256k1_context_randomize(
               context, SecureRandomProvider.createSecureRandom().generateSeed(32))
           == 1) {
         // run a test extract to prove the library is built with the recover option
@@ -66,19 +56,19 @@ public interface LibSecp256k1 extends Library {
                       "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")
                   .toBytes();
           final secp256k1_pubkey pubKey = new secp256k1_pubkey();
-          INSTANCE.secp256k1_ec_pubkey_create(context, pubKey, privKey.toArrayUnsafe());
+          secp256k1_ec_pubkey_create(context, pubKey, privKey.toArrayUnsafe());
           final ByteBuffer serializedKey = ByteBuffer.allocate(65);
           final LongByReference keySize = new LongByReference(serializedKey.limit());
 
-          INSTANCE.secp256k1_ec_pubkey_serialize(
+          secp256k1_ec_pubkey_serialize(
               context, serializedKey, keySize, pubKey, SECP256K1_EC_UNCOMPRESSED);
           serializedKey.flip();
           final secp256k1_ecdsa_recoverable_signature signature =
               new secp256k1_ecdsa_recoverable_signature();
-          INSTANCE.secp256k1_ecdsa_sign_recoverable(
+          secp256k1_ecdsa_sign_recoverable(
               context, signature, privKey.toArrayUnsafe(), privKey.toArrayUnsafe(), null, null);
           final secp256k1_pubkey newPubKey = new secp256k1_pubkey();
-          INSTANCE.secp256k1_ecdsa_recover(context, newPubKey, signature, privKey.toArrayUnsafe());
+          secp256k1_ecdsa_recover(context, newPubKey, signature, privKey.toArrayUnsafe());
 
           // we don't care about the answer, we care that no UnsatisfiedLinkErrors are thrown.
           LogManager.getLogger().info("Using native secp256k1");
@@ -93,6 +83,8 @@ public interface LibSecp256k1 extends Library {
       } else {
         return null;
       }
+    } catch (final Throwable t) {
+      return null;
     }
   }
 
@@ -117,7 +109,7 @@ public interface LibSecp256k1 extends Library {
      */
     int apply(
         Pointer nonce32, Pointer msg32, Pointer key32, Pointer algo16, Pointer data, int attempt);
-  };
+  }
 
   /**
    * Opaque data structure that holds a parsed and valid public key.
@@ -175,7 +167,7 @@ public interface LibSecp256k1 extends Library {
    * @param flags which parts of the context to initialize.
    * @return a newly created context object.
    */
-  public PointerByReference secp256k1_context_create(final int flags);
+  public static native PointerByReference secp256k1_context_create(final int flags);
 
   /**
    * Parse a variable-length public key into the pubkey object.
@@ -192,10 +184,10 @@ public interface LibSecp256k1 extends Library {
    * @param input pointer to a serialized public key
    * @param inputlen length of the array pointed to by input
    */
-  public int secp256k1_ec_pubkey_parse(
+  public static native int secp256k1_ec_pubkey_parse(
       final PointerByReference ctx,
       final secp256k1_pubkey pubkey,
-      final byte input[],
+      final byte[] input,
       final long inputlen);
 
   /**
@@ -211,7 +203,7 @@ public interface LibSecp256k1 extends Library {
    * @param flags SECP256K1_EC_COMPRESSED if serialization should be in compressed format, otherwise
    *     SECP256K1_EC_UNCOMPRESSED.
    */
-  public int secp256k1_ec_pubkey_serialize(
+  public static native int secp256k1_ec_pubkey_serialize(
       final PointerByReference ctx,
       final ByteBuffer output,
       final LongByReference outputlen,
@@ -233,8 +225,8 @@ public interface LibSecp256k1 extends Library {
    * @param sig (output) a pointer to a signature object
    * @param input64 a pointer to the 64-byte array to parse
    */
-  public int secp256k1_ecdsa_signature_parse_compact(
-      final PointerByReference ctx, final secp256k1_ecdsa_signature sig, final byte input64[]);
+  public static native int secp256k1_ecdsa_signature_parse_compact(
+      final PointerByReference ctx, final secp256k1_ecdsa_signature sig, final byte[] input64);
 
   /**
    * Verify an ECDSA signature.
@@ -253,10 +245,10 @@ public interface LibSecp256k1 extends Library {
    * @param msg32 the 32-byte message hash being verified (cannot be NULL)
    * @param pubkey pointer to an initialized public key to verify with (cannot be NULL)
    */
-  public int secp256k1_ecdsa_verify(
+  public static native int secp256k1_ecdsa_verify(
       final PointerByReference ctx,
       final secp256k1_ecdsa_signature sig,
-      final byte msg32[],
+      final byte[] msg32,
       final secp256k1_pubkey pubkey);
 
   /**
@@ -267,8 +259,8 @@ public interface LibSecp256k1 extends Library {
    * @param pubkey (output) pointer to the created public key (cannot be NULL)
    * @param seckey pointer to a 32-byte private key (cannot be NULL)
    */
-  public int secp256k1_ec_pubkey_create(
-      final PointerByReference ctx, final secp256k1_pubkey pubkey, final byte seckey[]);
+  public static native int secp256k1_ec_pubkey_create(
+      final PointerByReference ctx, final secp256k1_pubkey pubkey, final byte[] seckey);
 
   /**
    * Updates the context randomization to protect against side-channel leakage. While secp256k1 code
@@ -294,7 +286,7 @@ public interface LibSecp256k1 extends Library {
    * @return Returns 1 if randomization successfully updated or nothing to randomize or 0 if an
    *     error occured
    */
-  public int secp256k1_context_randomize(final PointerByReference ctx, final byte[] seed32);
+  public static native int secp256k1_context_randomize(final PointerByReference ctx, final byte[] seed32);
 
   /**
    * Parse a compact ECDSA signature (64 bytes + recovery id).
@@ -305,10 +297,10 @@ public interface LibSecp256k1 extends Library {
    * @param input64 a pointer to a 64-byte compact signature
    * @param recid the recovery id (0, 1, 2 or 3)
    */
-  public int secp256k1_ecdsa_recoverable_signature_parse_compact(
+  public static native int secp256k1_ecdsa_recoverable_signature_parse_compact(
       final PointerByReference ctx,
       final secp256k1_ecdsa_recoverable_signature sig,
-      final byte input64[],
+      final byte[] input64,
       final int recid);
 
   /**
@@ -319,7 +311,7 @@ public interface LibSecp256k1 extends Library {
    * @param recid (output) a pointer to an integer to hold the recovery id (can be NULL).
    * @param sig a pointer to an initialized signature object (cannot be NULL)
    */
-  public void secp256k1_ecdsa_recoverable_signature_serialize_compact(
+  public static native void secp256k1_ecdsa_recoverable_signature_serialize_compact(
       final PointerByReference ctx,
       final ByteBuffer output64,
       final IntByReference recid,
@@ -338,11 +330,11 @@ public interface LibSecp256k1 extends Library {
    *     secp256k1_nonce_function_default is used
    * @param ndata pointer to arbitrary data used by the nonce generation function (can be NULL)
    */
-  public int secp256k1_ecdsa_sign_recoverable(
+  public static native int secp256k1_ecdsa_sign_recoverable(
       final PointerByReference ctx,
       final secp256k1_ecdsa_recoverable_signature sig,
-      final byte msg32[],
-      final byte seckey[],
+      final byte[] msg32,
+      final byte[] seckey,
       final secp256k1_nonce_function noncefp,
       final Pointer ndata);
 
@@ -356,9 +348,9 @@ public interface LibSecp256k1 extends Library {
    * @param sig pointer to initialized signature that supports pubkey recovery (cannot be NULL)
    * @param msg32 the 32-byte message hash assumed to be signed (cannot be NULL)
    */
-  public int secp256k1_ecdsa_recover(
+  public static native int secp256k1_ecdsa_recover(
       final PointerByReference ctx,
       final secp256k1_pubkey pubkey,
       final secp256k1_ecdsa_recoverable_signature sig,
-      final byte msg32[]);
+      final byte[] msg32);
 }
