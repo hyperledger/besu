@@ -18,7 +18,6 @@ import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.EthNetworkConfig.DEV_NETWORK_ID;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
-import static org.junit.Assert.assertTrue;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -221,7 +220,7 @@ public final class RunnerTest {
     try {
 
       runnerAhead.start();
-      assertTrue(pidPath.toFile().exists());
+      assertThat(pidPath.toFile().exists()).isTrue();
 
       final SynchronizerConfiguration syncConfigBehind =
           SynchronizerConfiguration.builder()
