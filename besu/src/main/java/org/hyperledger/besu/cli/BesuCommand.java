@@ -851,8 +851,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--pid-path"},
       paramLabel = MANDATORY_PATH_FORMAT_HELP,
-      description = "The path to Besu PID file (optional)")
-  final Path pidPath = null;
+      description = "Path to PID file (optional)")
+  private final Path pidPath = null;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
