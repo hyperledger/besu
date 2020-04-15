@@ -131,10 +131,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     final File file = File.createTempFile("public", "key");
 
     parseCommand(
-        PUBLIC_KEY_SUBCOMMAND_NAME,
-        PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
-        "--to",
-        file.getPath());
+        PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--to", file.getPath());
 
     assertThat(contentOf(file))
         .startsWith(keyPair.getPublicKey().toString())
@@ -171,7 +168,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
     final File file = File.createTempFile("public", "address");
 
-    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME,
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
         PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
         "--to",
         file.getPath());
