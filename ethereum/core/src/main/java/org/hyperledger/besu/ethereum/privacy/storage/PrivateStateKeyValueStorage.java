@@ -81,9 +81,12 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public boolean isEmpty() {
-    return keyValueStorage.getAllKeysThat(containsSuffix(LEGACY_STATUS_KEY_SUFFIX)).isEmpty()
-        && keyValueStorage.getAllKeysThat(containsSuffix(TX_RECEIPT_SUFFIX)).isEmpty()
-        && keyValueStorage.getAllKeysThat(containsSuffix(METADATA_KEY_SUFFIX)).isEmpty();
+    return keyValueStorage
+        .getAllKeysThat(
+            containsSuffix(LEGACY_STATUS_KEY_SUFFIX)
+                .or(containsSuffix(TX_RECEIPT_SUFFIX))
+                .or(containsSuffix(METADATA_KEY_SUFFIX)))
+        .isEmpty();
   }
 
   private Predicate<byte[]> containsSuffix(final Bytes suffix) {
