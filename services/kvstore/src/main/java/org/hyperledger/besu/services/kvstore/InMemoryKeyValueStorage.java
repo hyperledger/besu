@@ -144,8 +144,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
     @Override
     public void rollback() {
-      updatedValues = null;
-      removedKeys = null;
+      updatedValues.clear();
+      removedKeys.clear();
     }
   }
 }
