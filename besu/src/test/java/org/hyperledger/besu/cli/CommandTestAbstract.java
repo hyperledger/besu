@@ -270,7 +270,7 @@ public abstract class CommandTestAbstract {
     return (JsonBlockImporter<T>) jsonBlockImporter;
   }
 
-  private TestBesuCommand parseCommand(final InputStream in, final String... args) {
+  protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
 

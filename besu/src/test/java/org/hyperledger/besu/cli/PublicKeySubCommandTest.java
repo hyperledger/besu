@@ -115,7 +115,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public void callingPublicKeyExportSubCommandWithoutPathMustWriteKeyToStandardOutput() {
     final KeyPair keyPair = KeyPair.generate();
 
-    parseCommand(f -> keyPair, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
+    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = keyPair.getPublicKey().toString();
     assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
@@ -131,7 +131,6 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     final File file = File.createTempFile("public", "key");
 
     parseCommand(
-        f -> keyPair,
         PUBLIC_KEY_SUBCOMMAND_NAME,
         PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -157,8 +156,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public void callingPublicKeyExportAddressSubCommandWithoutPathMustWriteAddressToStandardOutput() {
     final KeyPair keyPair = KeyPair.generate();
 
-    parseCommand(
-        f -> keyPair, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
+    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
     assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
@@ -173,9 +171,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
     final File file = File.createTempFile("public", "address");
 
-    parseCommand(
-        f -> keyPair,
-        PUBLIC_KEY_SUBCOMMAND_NAME,
+    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME,
         PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
         "--to",
         file.getPath());
