@@ -17,12 +17,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 /** A protocol specification. */
 public class ProtocolSpec<C> {
@@ -284,15 +282,5 @@ public class ProtocolSpec<C> {
    */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
-  }
-
-  public void setTransactionFilter(final TransactionFilter transactionFilter) {
-    transactionValidator.setTransactionFilter(transactionFilter);
-  }
-
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
-    if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
-      ((PrivacyBlockProcessor) blockProcessor).setPublicWorldStateArchive(publicWorldStateArchive);
   }
 }
