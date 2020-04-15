@@ -202,7 +202,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
-  private final SecurityModuleServiceImpl nodeKeySecurityModuleService;
+  private final SecurityModuleServiceImpl securityModuleService;
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
@@ -903,7 +903,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
       final StorageServiceImpl storageService,
-      final SecurityModuleServiceImpl nodeKeySecurityService) {
+      final SecurityModuleServiceImpl securityModuleService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -913,7 +913,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.besuPluginContext = besuPluginContext;
     this.environment = environment;
     this.storageService = storageService;
-    this.nodeKeySecurityModuleService = nodeKeySecurityService;
+    this.securityModuleService = securityModuleService;
   }
 
   public void parse(
@@ -1046,7 +1046,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-    besuPluginContext.addService(SecurityModuleService.class, nodeKeySecurityModuleService);
+    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
@@ -1965,20 +1965,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  /*
-  public File nodePrivateKeyFile() {
-    File nodePrivateKeyFile = null;
-    if (isFullInstantiation()) {
-      nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile;
-    }
-
-    return nodePrivateKeyFile != null
-        ? nodePrivateKeyFile
-        : KeyPairUtil.getDefaultKeyFile(dataDir());
-  }*/
-
   private SecurityModule nodeKeySecurityModuleProvider(final String name) {
-    return nodeKeySecurityModuleService
+    return securityModuleService
         .getByName(name)
         .orElseThrow(() -> new RuntimeException("Node Key Security Module not found: " + name))
         .apply(pluginCommonConfiguration);
