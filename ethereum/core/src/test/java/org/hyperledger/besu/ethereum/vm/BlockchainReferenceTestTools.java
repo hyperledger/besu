@@ -71,6 +71,10 @@ public class BlockchainReferenceTestTools {
 
     // Absurd amount of gas, doesn't run in parallel
     params.blacklist("randomStatetest94_\\w+");
+
+    // Don't do time consuming tests
+    params.blacklist("CALLBlake2f_MaxRounds.*");
+    params.blacklist(".*\\w50000[-_].*");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {

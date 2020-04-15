@@ -20,6 +20,7 @@
 | Sally MacFarlane | macfarla         | macfarla         |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
+| Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Stefan Pingel    | pinges           | pinges           |

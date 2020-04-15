@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.4
+
+### Additions and Improvements
+
+- Implemented `priv_getLogs`. [\#686](https://github.com/hyperledger/besu/pull/686)
+
 ## 1.4.3 
 
 ### Critical Issue for Privacy Users 

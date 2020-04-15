@@ -162,14 +162,17 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getMuirGlacierBlockNumber(),
-        MainnetProtocolSpecs.berlinDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled));
+
+    if (ExperimentalEIPs.berlinEnabled) {
+      addProtocolSpec(
+          protocolSchedule,
+          config.getBerlinBlockNumber(),
+          MainnetProtocolSpecs.berlinDefinition(
+              chainId,
+              config.getContractSizeLimit(),
+              config.getEvmStackSize(),
+              isRevertReasonEnabled));
+    }
 
     if (ExperimentalEIPs.eip1559Enabled) {
       addProtocolSpec(
@@ -315,7 +318,9 @@ public class ProtocolScheduleBuilder<C> {
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
+    if (ExperimentalEIPs.berlinEnabled) {
+      lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
+    }
     assert (lastForkBlock >= 0);
   }
 

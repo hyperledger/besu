@@ -236,7 +236,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
     }
   }
 
-  private void verifyPrivacyGroupContainsEnclavePublicKey(
+  @Override
+  public void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey) {
     final PrivacyGroup privacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
     if (!privacyGroup.getMembers().contains(enclavePublicKey)) {

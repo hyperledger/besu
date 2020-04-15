@@ -43,6 +43,11 @@ public class PrivConditions {
         transactions.getPrivateTransaction(transactionHash), privateTransaction);
   }
 
+  public Condition getPrivateTransactionReturnsNull(final Hash transactionHash) {
+    return new PrivGetPrivateTransactionReturnsNull(
+        transactions.getPrivateTransaction(transactionHash));
+  }
+
   public Condition createPrivacyGroup(
       final List<String> addresses,
       final String groupName,

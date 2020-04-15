@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Map;
@@ -202,13 +204,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getBerlinBlockNumber() {
-    return getOptionalLong("berlinblock");
+    return ExperimentalEIPs.berlinEnabled ? getOptionalLong("berlinblock") : OptionalLong.empty();
   }
 
   @Override
   // TODO EIP-1559 change for the actual fork name when known
   public OptionalLong getEIP1559BlockNumber() {
-    return getOptionalLong("eip1559block");
+    return ExperimentalEIPs.eip1559Enabled ? getOptionalLong("eip1559block") : OptionalLong.empty();
   }
 
   @Override
@@ -296,6 +298,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
+    getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     if (isClique()) {

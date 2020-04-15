@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Disabl
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -53,6 +54,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private final PrivacyParameters privacyParameters;
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
+  private final PrivacyQueries privacyQueries;
 
   public PrivacyApiGroupJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -74,7 +76,12 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
     this.privateWorldStateReader =
         new PrivateWorldStateReader(
-            privateStateRootResolver, privacyParameters.getPrivateWorldStateArchive());
+            privateStateRootResolver,
+            privacyParameters.getPrivateWorldStateArchive(),
+            privacyParameters.getPrivateStateStorage());
+
+    this.privacyQueries =
+        new PrivacyQueries(blockchainQueries.getBlockchain(), this.privateWorldStateReader);
   }
 
   public BlockchainQueries getBlockchainQueries() {
@@ -160,6 +167,14 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         ? new MultiTenancyPrivacyController(
             defaultPrivacyController, chainId, privacyParameters.getEnclave())
         : defaultPrivacyController;
+  }
+
+  public PrivateWorldStateReader getPrivateWorldStateReader() {
+    return privateWorldStateReader;
+  }
+
+  PrivacyQueries getPrivacyQueries() {
+    return privacyQueries;
   }
 
   private JsonRpcMethod createPrivacyMethod(

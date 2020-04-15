@@ -339,6 +339,9 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason) {
+    if (!ExperimentalEIPs.berlinEnabled) {
+      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
+    }
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
@@ -387,7 +390,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
     if (!ExperimentalEIPs.eip1559Enabled) {
-      throw new RuntimeException("EIP-1559 feature flag must be enabled");
+      throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
     }
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     final ProtocolSpecBuilder<Void> eip1559ProtocolSpecBuilder =

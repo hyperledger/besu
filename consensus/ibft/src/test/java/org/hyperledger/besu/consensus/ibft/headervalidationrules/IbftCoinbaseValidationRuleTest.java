@@ -21,8 +21,8 @@ import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataFixture;
 import org.hyperledger.besu.consensus.ibft.Vote;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -63,7 +63,7 @@ public class IbftCoinbaseValidationRuleTest {
 
   @Test
   public void proposerInValidatorListPassesValidation() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerNodeKey.getPublicKey().getEncodedBytes()));
 
@@ -83,9 +83,9 @@ public class IbftCoinbaseValidationRuleTest {
 
   @Test
   public void proposerNotInValidatorListFailsValidation() {
-    final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey proposerNodeKey = NodeKeyUtils.generate();
 
-    final NodeKey otherValidatorNodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey otherValidatorNodeKey = NodeKeyUtils.generate();
     final Address otherValidatorNodeAddress =
         Address.extract(Hash.hash(otherValidatorNodeKey.getPublicKey().getEncodedBytes()));
 
