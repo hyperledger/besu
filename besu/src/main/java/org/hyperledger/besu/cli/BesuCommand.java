@@ -870,6 +870,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuController<?> besuController;
   private StandaloneCommand standaloneCommands;
   private BesuConfiguration pluginCommonConfiguration;
+  private NodeKey nodeKey;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
   private Vertx vertx;
@@ -964,6 +965,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /* NOTE: Must be called after addConfigurationService */
+  private void addNodeKey() {
+    if (nodeKey == null) {
+      nodeKey = new NodeKey(nodeKeySecurityModuleProvider(nodeKeySecurityModuleProviderName));
+    }
+  }
+
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
@@ -1044,9 +1052,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
-    // register built-in plugins
-    new RocksDBPlugin().register(besuPluginContext);
-    new BouncyCastleSecurityModulePlugin().register(besuPluginContext);
+    registerBuiltInPlugins();
 
     besuPluginContext.registerPlugins(pluginsDir());
 
@@ -1055,6 +1061,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .forEach(metricCategoryConverter::addRegistryCategory);
 
     return this;
+  }
+
+  private void registerBuiltInPlugins() {
+    new RocksDBPlugin().register(besuPluginContext);
+    new BouncyCastleSecurityModulePlugin().register(besuPluginContext);
   }
 
   private void parse(
@@ -1242,6 +1253,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuControllerBuilder<?> getControllerBuilder() {
     addConfigurationService();
+    addNodeKey();
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
@@ -1260,7 +1272,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 Optional.empty()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         // .nodePrivateKeyFile(nodePrivateKeyFile())
-        .nodeKey(new NodeKey(nodeKeySecurityModuleProvider(nodeKeySecurityModuleProviderName)))
+        .nodeKey(nodeKey)
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
@@ -1968,20 +1980,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SecurityModule nodeKeySecurityModuleProvider(final String name) {
-    final File privateKeyFile = nodePrivateKeyFile();
-    final Map<String, String> additionalConfiguration =
-        new HashMap<>(pluginCommonConfiguration.getAdditionalConfiguration());
-    additionalConfiguration.put("privateKeyFile", privateKeyFile.getPath());
-    final BesuConfigurationImpl besuConfiguration =
-        new BesuConfigurationImpl(
-            pluginCommonConfiguration.getDataPath(),
-            pluginCommonConfiguration.getStoragePath(),
-            additionalConfiguration);
-
-    return nodeKeySecurityModuleService
+        return nodeKeySecurityModuleService
         .getByName(name)
         .orElseThrow(() -> new RuntimeException("Node Key Security Module not found: " + name))
-        .apply(besuConfiguration);
+        .apply(pluginCommonConfiguration);
   }
 
   private File privacyPublicKeyFile() {

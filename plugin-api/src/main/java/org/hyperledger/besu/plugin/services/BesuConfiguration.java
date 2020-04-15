@@ -33,7 +33,4 @@ public interface BesuConfiguration {
    * @return location of the data directory in the file system of the client.
    */
   Path getDataPath();
-
-  /** A map of additional configurations which can be used by specific plugin */
-  Map<String, String> getAdditionalConfiguration();
 }

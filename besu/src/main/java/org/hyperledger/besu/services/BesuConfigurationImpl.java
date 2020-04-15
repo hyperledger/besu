@@ -47,9 +47,4 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   public Path getDataPath() {
     return dataPath;
   }
-
-  @Override
-  public Map<String, String> getAdditionalConfiguration() {
-    return additionalConfiguration;
-  }
 }

@@ -4,6 +4,7 @@ import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 
@@ -15,10 +16,19 @@ import org.apache.logging.log4j.Logger;
 
 public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
-
+  private static final String PICOCLI_NAME = "securitymodule-bouncycastle";
   @Override
   public void register(final BesuContext context) {
     LOG.debug("Registering plugin");
+    final Optional<PicoCLIOptions> cmdlineOptions = context.getService(PicoCLIOptions.class);
+
+    if (cmdlineOptions.isEmpty()) {
+      throw new IllegalStateException(
+              "Expecting a PicoCLIO options to register CLI options with, but none found.");
+    }
+
+    cmdlineOptions.get().addPicoCLIOptions(PICOCLI_NAME, options);
+
     context
         .getService(SecurityModuleService.class)
         .orElseThrow(
@@ -30,12 +40,8 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
 
   private SecurityModule createBouncyCastleSecurityModule(
       final BesuConfiguration besuConfiguration) {
-    final String privateKeyFile =
-        Optional.ofNullable(besuConfiguration.getAdditionalConfiguration().get("privateKeyFile"))
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Private Key File configuration not found. Besu cannot start."));
+    final String privateKeyFile = null; // TODO: From cli option
+
 
     return new BouncyCastleSecurityModule(
         KeyPairUtil.loadKeyPair(Path.of(privateKeyFile).toFile()));
