@@ -325,17 +325,17 @@ public abstract class CommandTestAbstract {
     }
 
     TestBesuCommand(
-            final Logger mockLogger,
-            final RlpBlockImporter mockBlockImporter,
-            final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
-            final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
-            final RunnerBuilder mockRunnerBuilder,
-            final BesuController.Builder controllerBuilderFactory,
-            final PublicKeySubCommand.KeyLoader keyLoader,
-            final BesuPluginContextImpl besuPluginContext,
-            final Map<String, String> environment,
-            final StorageServiceImpl storageService,
-            final SecurityModuleServiceImpl nodeKeySecurityModuleService) {
+        final Logger mockLogger,
+        final RlpBlockImporter mockBlockImporter,
+        final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
+        final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
+        final RunnerBuilder mockRunnerBuilder,
+        final BesuController.Builder controllerBuilderFactory,
+        final PublicKeySubCommand.KeyLoader keyLoader,
+        final BesuPluginContextImpl besuPluginContext,
+        final Map<String, String> environment,
+        final StorageServiceImpl storageService,
+        final SecurityModuleServiceImpl nodeKeySecurityModuleService) {
       super(
           mockLogger,
           mockBlockImporter,

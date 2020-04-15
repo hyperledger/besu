@@ -815,7 +815,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--node-private-key-file", file.getPath());
 
     verify(mockControllerBuilder).dataDirectory(isNotNull());
-    verify(mockControllerBuilder).nodeKey(isNotNull()); //TODO: Re-validate
+    verify(mockControllerBuilder).nodeKey(isNotNull()); // TODO: Re-validate
     verify(mockControllerBuilder).build();
 
     assertThat(fileArgumentCaptor.getValue()).isEqualTo(file);
@@ -862,7 +862,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder).dataDirectory(pathArgumentCaptor.capture());
     // TODO: Revalidate
-    //verify(mockControllerBuilder)
+    // verify(mockControllerBuilder)
     //    .nodePrivateKeyFile(eq(path.resolve("key").toAbsolutePath().toFile()));
     verify(mockControllerBuilder).build();
 

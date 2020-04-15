@@ -21,8 +21,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * This service allows plugins to register Security Module which is abstraction of
- * cryptographic operations by deferring to specific provider such as BouncyCastle
+ * This service allows plugins to register Security Module which is abstraction of cryptographic
+ * operations by deferring to specific provider such as BouncyCastle
  */
 @Unstable
 public interface SecurityModuleService {

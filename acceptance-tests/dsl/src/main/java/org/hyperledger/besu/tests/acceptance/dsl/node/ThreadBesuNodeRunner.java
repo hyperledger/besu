@@ -42,8 +42,8 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
-import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
 import java.io.File;
@@ -96,7 +96,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
 
-
     return besuPluginContext;
   }
 
@@ -138,7 +137,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
-    final Function<BesuConfiguration, SecurityModule> bouncyCastleNodeKey = nodeKeySecurityModuleService.getByName("bouncycastle").get();
+    final Function<BesuConfiguration, SecurityModule> bouncyCastleNodeKey =
+        nodeKeySecurityModuleService.getByName("bouncycastle").get();
 
     final BesuController<?> besuController =
         builder
@@ -146,7 +146,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .dataDirectory(node.homeDirectory())
             .miningParameters(node.getMiningParameters())
             .privacyParameters(node.getPrivacyParameters())
-            //.nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory())) //TODO: Fix
+            // .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory())) //TODO: Fix
             .metricsSystem(metricsSystem)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
