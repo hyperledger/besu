@@ -1269,7 +1269,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumExtranonce,
                 Optional.empty()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        // .nodePrivateKeyFile(nodePrivateKeyFile())
         .nodeKey(nodeKey)
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())

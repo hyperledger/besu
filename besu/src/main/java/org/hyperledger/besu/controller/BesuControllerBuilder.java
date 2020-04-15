@@ -123,12 +123,6 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  /*
-  public BesuControllerBuilder<C> nodePrivateKeyFile(final File nodePrivateKeyFile) {
-    this.nodeKey = new NodeKey(new OldBouncyCastleSecurityModule(loadKeyPair(nodePrivateKeyFile)));
-    return this;
-  }*/
-
   public BesuControllerBuilder<C> nodeKey(final NodeKey nodeKey) {
     this.nodeKey = nodeKey;
     return this;

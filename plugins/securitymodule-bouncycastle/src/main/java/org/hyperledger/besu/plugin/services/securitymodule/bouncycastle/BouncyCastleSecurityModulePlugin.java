@@ -26,7 +26,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.configuration.BouncyCastleSecurityModuleCLIOptions;
 
 import java.io.File;
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,14 +46,15 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
   }
 
   private void registerCliOptions(final BesuContext context) {
-    final Optional<PicoCLIOptions> cmdlineOptions = context.getService(PicoCLIOptions.class);
+    final PicoCLIOptions picoCLIOptions =
+        context
+            .getService(PicoCLIOptions.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Expecting a PicoCLIOptions service to register CLI options with, but none found."));
 
-    if (cmdlineOptions.isEmpty()) {
-      throw new IllegalStateException(
-          "Expecting a PicoCLIO options to register CLI options with, but none found.");
-    }
-
-    cmdlineOptions.get().addPicoCLIOptions(PICOCLI_NAME, cliOptions);
+    picoCLIOptions.addPicoCLIOptions(PICOCLI_NAME, cliOptions);
   }
 
   private void registerSecurityModule(final BesuContext context) {
