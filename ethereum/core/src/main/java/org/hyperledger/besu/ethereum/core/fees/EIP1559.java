@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
+import static java.lang.Math.floorDiv;
+
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -33,10 +35,30 @@ public class EIP1559 {
   public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
     guardActivation();
     long delta = parentBlockGasUsed - feeMarket.getTargetGasUsed();
-    return parentBaseFee
-        + ((parentBaseFee * delta)
-            / feeMarket.getTargetGasUsed()
-            / feeMarket.getBasefeeMaxChangeDenominator());
+    long baseFee =
+        parentBaseFee
+            + floorDiv(
+                floorDiv(parentBaseFee * delta, feeMarket.getTargetGasUsed()),
+                feeMarket.getBasefeeMaxChangeDenominator());
+    boolean neg = false;
+    long diff = baseFee - parentBaseFee;
+    if (diff < 0) {
+      neg = true;
+      diff = -diff;
+    }
+
+    long max = floorDiv(parentBaseFee, feeMarket.getBasefeeMaxChangeDenominator());
+    if (max < 1) {
+      max = 1;
+    }
+    if (diff > max) {
+      if (neg) {
+        max = -max;
+      }
+      baseFee = parentBaseFee + max;
+    }
+
+    return baseFee;
   }
 
   public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {

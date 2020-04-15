@@ -107,6 +107,7 @@ public final class MainnetBlockHeaderValidator {
   }
 
   static BlockHeaderValidator.Builder<Void> createEip1559OmmerValidator(final EIP1559 eip1559) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
     return new BlockHeaderValidator.Builder<Void>()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
