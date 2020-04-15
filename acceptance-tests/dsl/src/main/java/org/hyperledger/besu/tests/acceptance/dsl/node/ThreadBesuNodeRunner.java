@@ -74,6 +74,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
       final StorageServiceImpl storageService,
+      final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
@@ -95,6 +96,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
+
 
     return besuPluginContext;
   }
