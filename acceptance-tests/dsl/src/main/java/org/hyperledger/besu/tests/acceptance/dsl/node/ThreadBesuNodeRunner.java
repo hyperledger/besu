@@ -56,7 +56,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -145,8 +144,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
-    final Function<BesuConfiguration, SecurityModule> bouncyCastleNodeKey =
-        securityModuleService.getByName("bouncycastle").get();
+    final SecurityModule securityModule =
+        securityModuleService
+            .getByName("bouncycastle")
+            .orElseThrow(
+                () -> new IllegalStateException("BouncyCastle Security Module not available"))
+            .apply(commonPluginConfiguration);
 
     final BesuController<?> besuController =
         builder
@@ -154,7 +157,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .dataDirectory(node.homeDirectory())
             .miningParameters(node.getMiningParameters())
             .privacyParameters(node.getPrivacyParameters())
-            .nodeKey(new NodeKey(bouncyCastleNodeKey.apply(commonPluginConfiguration)))
+            .nodeKey(new NodeKey(securityModule))
             .metricsSystem(metricsSystem)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
