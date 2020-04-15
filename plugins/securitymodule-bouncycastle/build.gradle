@@ -16,39 +16,39 @@
 apply plugin: 'java-library'
 
 jar {
-    archiveBaseName = 'besu-plugin-securitymodule-bouncycastle'
-    manifest {
-        attributes(
-                'Specification-Title': archiveBaseName,
-                'Specification-Version': project.version,
-                'Implementation-Title': archiveBaseName,
-                'Implementation-Version': calculateVersion()
-        )
-    }
+  archiveBaseName = 'besu-plugin-securitymodule-bouncycastle'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
 }
 
 publishing {
-    publications {
-        mavenJava(MavenPublication) { artifactId 'plugins-securitymodule-bouncycastle' }
-    }
+  publications {
+    mavenJava(MavenPublication) { artifactId 'plugins-securitymodule-bouncycastle' }
+  }
 }
 
 
 dependencies {
-    api project(':plugin-api')
+  api project(':plugin-api')
 
-    implementation project(':crypto')
+  implementation project(':crypto')
 
-    implementation 'com.google.guava:guava'
-    implementation 'info.picocli:picocli'
-    implementation 'org.apache.logging.log4j:log4j-api'
-    implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'com.google.guava:guava'
+  implementation 'info.picocli:picocli'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
 
-    runtimeOnly 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
-    testImplementation project(':testutil')
+  testImplementation project(':testutil')
 
-    testImplementation 'junit:junit'
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.mockito:mockito-core'
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 }

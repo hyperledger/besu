@@ -17,10 +17,10 @@ package org.hyperledger.besu.crypto;
 public class NodeKeyUtils {
 
   public static NodeKey createFrom(final SECP256K1.KeyPair keyPair) {
-    return new NodeKey(new OldBouncyCastleSecurityModule(keyPair));
+    return new NodeKey(new BouncyCastleSecurityModule(() -> keyPair));
   }
 
   public static NodeKey generate() {
-    return new NodeKey(new OldBouncyCastleSecurityModule(SECP256K1.KeyPair.generate()));
+    return new NodeKey(new BouncyCastleSecurityModule(SECP256K1.KeyPair::generate));
   }
 }

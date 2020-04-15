@@ -12,9 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.securitymodule.bouncycastle;
+package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.plugin.services.securitymodule.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;

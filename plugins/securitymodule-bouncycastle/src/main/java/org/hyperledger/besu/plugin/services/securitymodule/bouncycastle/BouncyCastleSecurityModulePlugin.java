@@ -1,5 +1,6 @@
 package org.hyperledger.besu.plugin.services.securitymodule.bouncycastle;
 
+import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.plugin.BesuContext;
