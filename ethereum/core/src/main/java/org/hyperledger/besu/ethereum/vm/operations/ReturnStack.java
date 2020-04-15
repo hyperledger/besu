@@ -16,6 +16,10 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import java.util.ArrayDeque;
 
+/**
+ * This class describes the behaviour of the Return stack introduce on the
+ * https://eips.ethereum.org/EIPS/eip-2315
+ */
 public class ReturnStack extends ArrayDeque<Integer> {
 
   private final int capacity;

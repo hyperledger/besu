@@ -32,7 +32,7 @@ public class Code {
   /** Used to cache valid jump destinations. */
   private BitSet validJumpDestinations;
 
-  /** Used to cache valid jump destinations. */
+  /** Used to cache valid jump sub destinations. */
   private BitSet validJumpSubDestinations;
 
   /**
