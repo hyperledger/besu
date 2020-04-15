@@ -32,6 +32,8 @@ import org.apache.tuweni.bytes.Bytes32;
  * <p>Currently supported events
  *
  * <ul>
+ *   <li><b>BlockAdded</b> - Fired when a new block has been evaluated and validated.
+ *   <li><b>BlockReorg</b> - Fired when a reorg block has been evaluated and validated.
  *   <li><b>BlockPropagated</b> - Fired when a new block header has been received and validated and
  *       is about to be sent out to other peers, but before the body of the block has been evaluated
  *       and validated.
