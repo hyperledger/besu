@@ -165,7 +165,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public long removeAllEntriesUnless(
+  public long removeAllKeysUnless(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
