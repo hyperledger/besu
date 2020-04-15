@@ -58,6 +58,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getMuirGlacierBlockNumber();
 
+  OptionalLong getBerlinBlockNumber();
+
   // TODO EIP-1559 change for the actual fork name when known
   OptionalLong getEIP1559BlockNumber();
 

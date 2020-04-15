@@ -15,41 +15,32 @@
 package org.hyperledger.besu.crypto;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class BouncyCastleNodeKey implements NodeKey {
+public class BouncyCastleSecurityModule implements SecurityModule {
 
   private final KeyPair nodeKeys;
 
-  public BouncyCastleNodeKey(final KeyPair nodeKeys) {
+  public BouncyCastleSecurityModule(final KeyPair nodeKeys) {
     this.nodeKeys = nodeKeys;
-  }
-
-  public static BouncyCastleNodeKey generate() {
-    return new BouncyCastleNodeKey(KeyPair.generate());
   }
 
   @Override
   public Signature sign(final Bytes32 dataHash) {
-    return SECP256K1.sign(dataHash, nodeKeys);
+    final SECP256K1.Signature signature = SECP256K1.sign(dataHash, nodeKeys);
+    return new Signature(signature.getR(), signature.getS());
   }
 
   @Override
   public PublicKey getPublicKey() {
-    return nodeKeys.getPublicKey();
+    final SECP256K1.PublicKey pubKey = nodeKeys.getPublicKey();
+    return new PublicKey(pubKey.getEncodedBytes());
   }
 
   @Override
   public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey) {
-    return SECP256K1.calculateECDHKeyAgreement(nodeKeys.getPrivateKey(), publicKey);
-  }
-
-  @Override
-  public Bytes calculateECIESKeyAgreement(final SECP256K1.PublicKey pubKey) {
-    return SECP256K1.calculateECIESKeyAgreement(nodeKeys.getPrivateKey(), pubKey);
+    final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(publicKey.getEncoded());
+    return SECP256K1.calculateECDHKeyAgreement(nodeKeys.getPrivateKey(), pubKey);
   }
 }

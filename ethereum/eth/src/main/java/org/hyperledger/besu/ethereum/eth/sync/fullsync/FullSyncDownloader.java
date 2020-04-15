@@ -51,7 +51,7 @@ public class FullSyncDownloader<C> {
   }
 
   public void start() {
-    LOG.info("Start full sync.");
+    LOG.info("Starting full sync.");
     chainDownloader.start();
   }
 

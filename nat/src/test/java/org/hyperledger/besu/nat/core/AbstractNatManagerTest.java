@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -37,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class AbstractNatManagerTest {
 
   @Test
-  public void assertThatManagerIsStartedAfterStart() {
+  public void assertThatManagerIsStartedAfterStart() throws NatInitializationException {
     final AbstractNatManager natManager = buildNatManager(NatMethod.UPNP);
     assertThat(natManager.isStarted()).isFalse();
     natManager.start();
@@ -45,9 +46,10 @@ public class AbstractNatManagerTest {
   }
 
   @Test
-  public void assertThatManagerIsStoppedAfterStopped() {
+  public void assertThatManagerIsStoppedAfterStopped() throws NatInitializationException {
     final AbstractNatManager natManager = buildNatManager(NatMethod.UPNP);
     assertThat(natManager.isStarted()).isFalse();
+
     natManager.start();
     assertThat(natManager.isStarted()).isTrue();
     natManager.stop();
@@ -55,7 +57,7 @@ public class AbstractNatManagerTest {
   }
 
   @Test
-  public void assertThatDoStartIsCalledOnlyOnce() {
+  public void assertThatDoStartIsCalledOnlyOnce() throws NatInitializationException {
     final AbstractNatManager natManager = Mockito.spy(buildNatManager(NatMethod.UPNP));
     natManager.start();
     natManager.start();
@@ -64,7 +66,7 @@ public class AbstractNatManagerTest {
   }
 
   @Test
-  public void assertThatDoStopIsCalledOnlyOnce() {
+  public void assertThatDoStopIsCalledOnlyOnce() throws NatInitializationException {
     final AbstractNatManager natManager = Mockito.spy(buildNatManager(NatMethod.UPNP));
     natManager.start();
     natManager.stop();

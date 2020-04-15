@@ -43,8 +43,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
-import org.bouncycastle.crypto.BasicAgreement;
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.ECDomainParameters;
@@ -59,7 +57,6 @@ import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
-import org.bouncycastle.util.BigIntegers;
 
 /*
  * Adapted from the BitcoinJ ECKey (Apache 2 License) implementation:
@@ -228,9 +225,17 @@ public class SECP256K1 {
     signer.init(true, privKey);
 
     final BigInteger[] components = signer.generateSignature(dataHash.toArrayUnsafe());
-    final BigInteger r = components[0];
-    BigInteger s = components[1];
 
+    return normaliseSignature(components[0], components[1], keyPair.getPublicKey(), dataHash);
+  }
+
+  public static Signature normaliseSignature(
+      final BigInteger nativeR,
+      final BigInteger nativeS,
+      final PublicKey publicKey,
+      final Bytes32 dataHash) {
+
+    BigInteger s = nativeS;
     // Automatically adjust the S component to be less than or equal to half the curve
     // order, if necessary. This is required because for every signature (r,s) the signature
     // (r, -s (mod N)) is a valid signature of the same message. However, we dislike the
@@ -249,9 +254,9 @@ public class SECP256K1 {
 
     // Now we have to work backwards to figure out the recId needed to recover the signature.
     int recId = -1;
-    final BigInteger publicKeyBI = keyPair.getPublicKey().getEncodedBytes().toUnsignedBigInteger();
+    final BigInteger publicKeyBI = publicKey.getEncodedBytes().toUnsignedBigInteger();
     for (int i = 0; i < 4; i++) {
-      final BigInteger k = recoverFromSignature(i, r, s, dataHash);
+      final BigInteger k = recoverFromSignature(i, nativeR, s, dataHash);
       if (k != null && k.equals(publicKeyBI)) {
         recId = i;
         break;
@@ -262,7 +267,7 @@ public class SECP256K1 {
           "Could not construct a recoverable key. This should never happen.");
     }
 
-    return new Signature(r, s, (byte) recId);
+    return new Signature(nativeR, s, (byte) recId);
   }
 
   private static boolean verifyDefault(
@@ -322,18 +327,6 @@ public class SECP256K1 {
     final BigInteger agreed = agreement.calculateAgreement(pubKeyP);
 
     return UInt256.valueOf(agreed).toBytes();
-  }
-
-  public static Bytes calculateECIESKeyAgreement(final PrivateKey privKey, final PublicKey pubKey) {
-    final ECDomainParameters dp = SECP256K1.CURVE;
-
-    final CipherParameters pubParam = new ECPublicKeyParameters(pubKey.asEcPoint(), dp);
-    final CipherParameters privParam = new ECPrivateKeyParameters(privKey.getD(), dp);
-
-    final BasicAgreement agree = new ECDHBasicAgreement();
-    agree.init(privParam);
-    final BigInteger z = agree.calculateAgreement(pubParam);
-    return Bytes.wrap(BigIntegers.asUnsignedByteArray(agree.getFieldSize(), z));
   }
 
   private static Signature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
@@ -430,6 +423,7 @@ public class SECP256K1 {
   }
 
   public static class PrivateKey implements java.security.PrivateKey {
+
     private final Bytes32 encoded;
 
     private PrivateKey(final Bytes32 encoded) {
@@ -664,6 +658,7 @@ public class SECP256K1 {
   }
 
   public static class Signature {
+
     public static final int BYTES_REQUIRED = 65;
     /**
      * The recovery id to reconstruct the public key used to create the signature.

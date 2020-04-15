@@ -221,13 +221,13 @@ public class TransactionPool implements BlockAddedObserver {
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(
       final Transaction transaction) {
+    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
         getTransactionValidator().validate(transaction);
     if (!basicValidationResult.isValid()) {
       return basicValidationResult;
     }
 
-    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     if (transaction.getGasLimit() > chainHeadBlockHeader.getGasLimit()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT,

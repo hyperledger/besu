@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -44,7 +45,7 @@ public final class DockerNatManagerTest {
   private DockerNatManager natManager;
 
   @Before
-  public void initialize() {
+  public void initialize() throws NatInitializationException {
     hostBasedIpDetector = mock(HostBasedIpDetector.class);
     when(hostBasedIpDetector.detectExternalIp()).thenReturn(Optional.of(detectedAdvertisedHost));
     natManager = new DockerNatManager(hostBasedIpDetector, advertisedHost, p2pPort, rpcHttpPort);

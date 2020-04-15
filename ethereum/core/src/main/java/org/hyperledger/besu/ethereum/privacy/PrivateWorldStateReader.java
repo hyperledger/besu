@@ -16,8 +16,13 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -27,12 +32,15 @@ public class PrivateWorldStateReader {
 
   private final PrivateStateRootResolver privateStateRootResolver;
   private final WorldStateArchive privateWorldStateArchive;
+  private final PrivateStateStorage privateStateStorage;
 
   public PrivateWorldStateReader(
       final PrivateStateRootResolver privateStateRootResolver,
-      final WorldStateArchive privateWorldStateArchive) {
+      final WorldStateArchive privateWorldStateArchive,
+      final PrivateStateStorage privateStateStorage) {
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateWorldStateArchive = privateWorldStateArchive;
+    this.privateStateStorage = privateStateStorage;
   }
 
   public Optional<Bytes> getContractCode(
@@ -45,5 +53,21 @@ public class PrivateWorldStateReader {
         .get(latestStateRoot)
         .flatMap(worldState -> Optional.ofNullable(worldState.get(contractAddress)))
         .flatMap(account -> Optional.ofNullable(account.getCode()));
+  }
+
+  public List<PrivateTransactionMetadata> getPrivateTransactionMetadataList(
+      final String privacyGroupId, final Hash blockHash) {
+    final Bytes32 privacyGroupIdBytes = Bytes32.wrap(Bytes.fromBase64String(privacyGroupId));
+    final Optional<PrivateBlockMetadata> privateBlockMetadata =
+        privateStateStorage.getPrivateBlockMetadata(blockHash, privacyGroupIdBytes);
+
+    return privateBlockMetadata
+        .map(PrivateBlockMetadata::getPrivateTransactionMetadataList)
+        .orElse(Collections.emptyList());
+  }
+
+  public Optional<PrivateTransactionReceipt> getPrivateTransactionReceipt(
+      final Hash blockHash, final Hash transactionHash) {
+    return privateStateStorage.getTransactionReceipt(blockHash, transactionHash);
   }
 }

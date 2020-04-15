@@ -48,6 +48,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')

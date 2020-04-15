@@ -63,12 +63,14 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
-      LOG.info("No sync target, wait for peers.");
+      LOG.info("No sync target, waiting for peers: {}", ethContext.getEthPeers().peerCount());
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
       if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
-        LOG.info("No sync target with sufficient chain height, wait for peers.");
+        LOG.info(
+            "No sync target with sufficient chain height, waiting for peers: {}",
+            ethContext.getEthPeers().peerCount());
         return completedFuture(Optional.empty());
       } else {
         return confirmPivotBlockHeader(bestPeer);

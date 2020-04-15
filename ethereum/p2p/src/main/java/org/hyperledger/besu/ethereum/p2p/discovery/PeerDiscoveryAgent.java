@@ -125,7 +125,7 @@ public abstract class PeerDiscoveryAgent {
 
       // override advertised host if we detect an external IP address via NAT manager
       final String advertisedAddress =
-          natService.queryExternalIPAddress().orElse(config.getAdvertisedHost());
+          natService.queryExternalIPAddress(config.getAdvertisedHost());
 
       return listenForConnections()
           .thenApply(

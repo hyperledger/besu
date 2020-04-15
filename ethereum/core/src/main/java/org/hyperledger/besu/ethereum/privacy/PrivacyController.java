@@ -85,4 +85,8 @@ public interface PrivacyController {
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 
   boolean isGroupAdditionTransaction(PrivateTransaction privateTransaction);
+
+  void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey)
+      throws MultiTenancyValidationException;
 }

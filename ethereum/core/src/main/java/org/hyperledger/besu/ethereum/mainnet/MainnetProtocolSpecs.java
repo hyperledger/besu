@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -26,7 +29,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasLimitValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -118,8 +124,8 @@ public abstract class MainnetProtocolSpecs {
                     Account.DEFAULT_VERSION,
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::create)
-        .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator::createOmmerValidator)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create())
+        .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator.createOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
@@ -155,7 +161,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::createDaoValidator)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
                 transactionReceiptFactory,
@@ -322,6 +328,73 @@ public abstract class MainnetProtocolSpecs {
     return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
+  }
+
+  static ProtocolSpecBuilder<Void> berlinDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    if (!ExperimentalEIPs.berlinEnabled) {
+      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
+    }
+    return muirGlacierDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .name("Berlin");
+  }
+
+  // TODO EIP-1559 change for the actual fork name when known
+  static ProtocolSpecBuilder<Void> eip1559Definition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions) {
+    if (!ExperimentalEIPs.eip1559Enabled) {
+      throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
+    }
+    final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
+    final ProtocolSpecBuilder<Void> eip1559ProtocolSpecBuilder =
+        muirGlacierDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+            .transactionValidatorBuilder(
+                gasCalculator ->
+                    new MainnetTransactionValidator(
+                        gasCalculator,
+                        true,
+                        chainId,
+                        Optional.of(eip1559),
+                        AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
+            .name("EIP-1559");
+    final BlockHeaderValidator.Builder<Void> blockHeaderValidatorBuilder =
+        eip1559ProtocolSpecBuilder.getBlockHeaderValidatorBuilder();
+    blockHeaderValidatorBuilder
+        .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
+        .addRule(new EIP1559BlockHeaderGasPriceValidationRule(eip1559));
+    return eip1559ProtocolSpecBuilder;
+  }
+
+  // TODO EIP-1559 change for the actual fork name when known
+  static ProtocolSpecBuilder<Void> eip1559FinalizedDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions) {
+    return eip1559Definition(
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Optional.of(
+                        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0))),
+                    AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS));
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

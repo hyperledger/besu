@@ -184,7 +184,7 @@ public class Runner implements AutoCloseable {
 
   private void waitForServiceToStart(
       final String serviceName, final CompletableFuture<?> startFuture) {
-    while (!startFuture.isDone()) {
+    do {
       try {
         startFuture.get(60, TimeUnit.SECONDS);
       } catch (final InterruptedException e) {
@@ -196,7 +196,7 @@ public class Runner implements AutoCloseable {
       } catch (final TimeoutException e) {
         LOG.warn("Service {} is taking an unusually long time to start", serviceName);
       }
-    }
+    } while (!startFuture.isDone());
   }
 
   private void writeBesuPortsToFile() {
@@ -243,12 +243,9 @@ public class Runner implements AutoCloseable {
           .getLocalEnode()
           .ifPresent(
               enode -> {
-                final String globalIp =
-                    natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
+                final String globalIp = natService.queryExternalIPAddress(enode.getIpAsString());
                 properties.setProperty("global-ip", globalIp);
-
-                final String localIp =
-                    natService.queryLocalIPAddress().orElseGet(enode::getIpAsString);
+                final String localIp = natService.queryLocalIPAddress(enode.getIpAsString());
                 properties.setProperty("local-ip", localIp);
               });
     }
