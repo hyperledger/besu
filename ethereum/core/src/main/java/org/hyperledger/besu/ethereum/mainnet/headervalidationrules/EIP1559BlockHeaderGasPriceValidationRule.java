@@ -51,7 +51,7 @@ public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHe
       if (baseFee != header.getBaseFee().orElseThrow()) {
         LOG.trace(
             "Invalid block header: basefee {} does not equal expected basefee {}",
-            header.getBaseFee(),
+            header.getBaseFee().orElseThrow(),
             baseFee);
         return false;
       }
