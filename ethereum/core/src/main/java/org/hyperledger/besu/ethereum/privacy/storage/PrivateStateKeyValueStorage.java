@@ -90,11 +90,11 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   private Predicate<byte[]> containsSuffix(final Bytes suffix) {
+    final byte[] suffixArray = suffix.toArrayUnsafe();
     return key ->
-        key.length > suffix.toArrayUnsafe().length
+        key.length > suffixArray.length
             && Arrays.equals(
-                Arrays.copyOfRange(key, key.length - suffix.toArrayUnsafe().length, key.length),
-                suffix.toArrayUnsafe());
+                Arrays.copyOfRange(key, key.length - suffixArray.length, key.length), suffixArray);
   }
 
   private Optional<Bytes> get(final Bytes key, final Bytes keySuffix) {
