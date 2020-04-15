@@ -365,9 +365,13 @@ public abstract class MainnetProtocolSpecs {
                         Optional.of(eip1559),
                         AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
             .name("EIP-1559");
-    final BlockHeaderValidator.Builder<Void> blockHeaderValidatorBuilder =
-        eip1559ProtocolSpecBuilder.getBlockHeaderValidatorBuilder();
-    blockHeaderValidatorBuilder
+    eip1559ProtocolSpecBuilder
+        .getBlockHeaderValidatorBuilder()
+        .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
+        .addRule(new EIP1559BlockHeaderGasPriceValidationRule(eip1559));
+
+    eip1559ProtocolSpecBuilder
+        .getOmmerHeaderValidatorBuilder()
         .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
         .addRule(new EIP1559BlockHeaderGasPriceValidationRule(eip1559));
     return eip1559ProtocolSpecBuilder;

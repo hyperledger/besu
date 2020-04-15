@@ -244,6 +244,10 @@ public class ProtocolSpecBuilder<T> {
     return blockHeaderValidatorBuilder;
   }
 
+  public BlockHeaderValidator.Builder<T> getOmmerHeaderValidatorBuilder() {
+    return ommerHeaderValidatorBuilder;
+  }
+
   public ProtocolSpec<T> build(final ProtocolSchedule<T> protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
