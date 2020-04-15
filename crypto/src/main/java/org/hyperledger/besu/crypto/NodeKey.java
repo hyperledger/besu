@@ -30,8 +30,9 @@ public class NodeKey {
 
   public SECP256K1.Signature sign(final Bytes32 dataHash) {
     final Signature signature = securityModule.sign(dataHash);
-    return SECP256K1.Signature.create(
-        signature.getR(), signature.getS(), signature.getRecoveryId());
+
+    return SECP256K1.normaliseSignature(
+        signature.getR(), signature.getS(), getPublicKey(), dataHash);
   }
 
   public SECP256K1.PublicKey getPublicKey() {

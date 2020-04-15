@@ -32,7 +32,7 @@ public class OldBouncyCastleSecurityModule implements SecurityModule {
   @Override
   public Signature sign(final Bytes32 dataHash) {
     final SECP256K1.Signature signature = SECP256K1.sign(dataHash, nodeKeys);
-    return new Signature(signature.getR(), signature.getS(), signature.getRecId());
+    return new Signature(signature.getR(), signature.getS());
   }
 
   @Override
