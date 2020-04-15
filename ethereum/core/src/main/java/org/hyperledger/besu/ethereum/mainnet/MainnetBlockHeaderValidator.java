@@ -14,10 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasLimitValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
@@ -86,5 +90,31 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(new ProofOfWorkValidationRule());
+  }
+
+  static BlockHeaderValidator.Builder<Void> createEip1559Validator(final EIP1559 eip1559) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
+    return new BlockHeaderValidator.Builder<Void>()
+        .addRule(CalculatedDifficultyValidationRule::new)
+        .addRule(new AncestryValidationRule())
+        .addRule(new GasUsageValidationRule())
+        .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
+        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
+        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+        .addRule(new ProofOfWorkValidationRule(true))
+        .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
+        .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
+  }
+
+  static BlockHeaderValidator.Builder<Void> createEip1559OmmerValidator(final EIP1559 eip1559) {
+    return new BlockHeaderValidator.Builder<Void>()
+        .addRule(CalculatedDifficultyValidationRule::new)
+        .addRule(new AncestryValidationRule())
+        .addRule(new GasUsageValidationRule())
+        .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
+        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+        .addRule(new ProofOfWorkValidationRule(true))
+        .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
+        .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

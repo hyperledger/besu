@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
@@ -35,6 +36,16 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
   private static final BigInteger ETHASH_TARGET_UPPER_BOUND = BigInteger.valueOf(2).pow(256);
 
   static final EthHasher HASHER = new EthHasher.Light();
+
+  private final boolean includeBaseFee;
+
+  public ProofOfWorkValidationRule() {
+    this(false);
+  }
+
+  public ProofOfWorkValidationRule(final boolean includeBaseFee) {
+    this.includeBaseFee = includeBaseFee;
+  }
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
@@ -95,6 +106,10 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
+    if (includeBaseFee && header.getBaseFee().isPresent()) {
+      ExperimentalEIPs.eip1559MustBeEnabled();
+      out.writeLongScalar(header.getBaseFee().get());
+    }
     out.endList();
 
     return Hash.hash(out.encoded());
