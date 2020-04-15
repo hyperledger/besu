@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 
 import java.util.Collection;
@@ -65,6 +66,10 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
     } else {
       return emptySet();
     }
+  }
+
+  public boolean isPeerSupported(final EthPeer peer) {
+    return peer.getAgreedCapabilities().contains(EthProtocol.ETH65);
   }
 
   private Set<Hash> getOrCreateSeenTransactionsForPeer(final EthPeer peer) {

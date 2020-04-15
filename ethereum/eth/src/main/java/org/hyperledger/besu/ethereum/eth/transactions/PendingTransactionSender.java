@@ -38,6 +38,7 @@ class PendingTransactionSender implements TransactionBatchAddedListener {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
+        .filter(transactionTracker::isPeerSupported)
         .forEach(
             peer ->
                 transactions.forEach(
