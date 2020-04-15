@@ -169,14 +169,12 @@ public class RocksDBColumnarKeyValueStorage
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
+      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
           db.delete(segmentHandle, key);
         }
-        rocksIterator.next();
       }
     } catch (final RocksDBException e) {
       throw new StorageException(e);
@@ -189,13 +187,11 @@ public class RocksDBColumnarKeyValueStorage
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
     final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
+      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
         if (returnCondition.test(key)) {
           returnedKeys.add(key);
         }
-        rocksIterator.next();
       }
     }
     return returnedKeys;
