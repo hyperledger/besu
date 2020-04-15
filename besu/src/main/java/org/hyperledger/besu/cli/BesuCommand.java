@@ -1956,6 +1956,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public File nodePrivateKeyFile() {
+    // TODO: Obtain from plugin
     File nodePrivateKeyFile = null;
     if (isFullInstantiation()) {
       nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile;

@@ -38,10 +38,12 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.NodeKeySecurityModuleServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
@@ -52,6 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -105,6 +108,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     ThreadContext.put("node", node.getName());
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
+    final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService = new NodeKeySecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfiguration commonPluginConfiguration =
         new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
@@ -133,6 +137,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
+    final Function<BesuConfiguration, SecurityModule> bouncyCastleNodeKey = nodeKeySecurityModuleService.getByName("bouncycastle").get();
+
     final BesuController<?> besuController =
         builder
             .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
@@ -140,6 +146,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .miningParameters(node.getMiningParameters())
             .privacyParameters(node.getPrivacyParameters())
             .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
+
             .metricsSystem(metricsSystem)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())

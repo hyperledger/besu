@@ -59,6 +59,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.NodeKeySecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -126,6 +127,7 @@ public abstract class CommandTestAbstract {
   @Mock protected JsonBlockImporter<?> jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
+  @Mock protected NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService;
   @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
@@ -174,7 +176,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataDirectory(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.nodePrivateKeyFile(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.nodeKey(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
@@ -295,7 +297,8 @@ public abstract class CommandTestAbstract {
             keyLoader,
             mockBesuPluginContext,
             environment,
-            storageService);
+            storageService,
+            nodeKeySecurityModuleService);
     besuCommands.add(besuCommand);
 
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
@@ -322,16 +325,17 @@ public abstract class CommandTestAbstract {
     }
 
     TestBesuCommand(
-        final Logger mockLogger,
-        final RlpBlockImporter mockBlockImporter,
-        final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
-        final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
-        final RunnerBuilder mockRunnerBuilder,
-        final BesuController.Builder controllerBuilderFactory,
-        final PublicKeySubCommand.KeyLoader keyLoader,
-        final BesuPluginContextImpl besuPluginContext,
-        final Map<String, String> environment,
-        final StorageServiceImpl storageService) {
+            final Logger mockLogger,
+            final RlpBlockImporter mockBlockImporter,
+            final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
+            final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
+            final RunnerBuilder mockRunnerBuilder,
+            final BesuController.Builder controllerBuilderFactory,
+            final PublicKeySubCommand.KeyLoader keyLoader,
+            final BesuPluginContextImpl besuPluginContext,
+            final Map<String, String> environment,
+            final StorageServiceImpl storageService,
+            final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService) {
       super(
           mockLogger,
           mockBlockImporter,
@@ -341,7 +345,8 @@ public abstract class CommandTestAbstract {
           controllerBuilderFactory,
           besuPluginContext,
           environment,
-          storageService);
+          storageService,
+          nodeKeySecurityModuleService);
       this.keyLoader = keyLoader;
     }
 
