@@ -68,8 +68,8 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
     }
   }
 
-  public boolean isPeerSupported(final EthPeer peer) {
-    return peer.getAgreedCapabilities().contains(EthProtocol.ETH65);
+  public boolean isPeerSupported(final EthPeer peer, final Capability capability) {
+    return peer.getAgreedCapabilities().contains(capability);
   }
 
   private Set<Hash> getOrCreateSeenTransactionsForPeer(final EthPeer peer) {
