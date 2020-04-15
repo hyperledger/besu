@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 
@@ -38,7 +39,7 @@ class PendingTransactionSender implements TransactionBatchAddedListener {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
-        .filter(transactionTracker::isPeerSupported)
+        .filter(peer -> transactionTracker.isPeerSupported(peer, EthProtocol.ETH65))
         .forEach(
             peer ->
                 transactions.forEach(

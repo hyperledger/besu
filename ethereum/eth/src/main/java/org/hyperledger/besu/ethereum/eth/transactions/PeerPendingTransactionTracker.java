@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.util.Collection;
 import java.util.Collections;

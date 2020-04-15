@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -496,8 +497,9 @@ public class TransactionPoolTest {
   public void shouldNotNotifyPeerForPendingTransactionsIfItDoesntSupportEth65() {
     EthPeer peer = mock(EthPeer.class);
     EthPeer validPeer = mock(EthPeer.class);
-    when(peerPendingTransactionTracker.isPeerSupported(peer)).thenReturn(false);
-    when(peerPendingTransactionTracker.isPeerSupported(validPeer)).thenReturn(true);
+    when(peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)).thenReturn(false);
+    when(peerPendingTransactionTracker.isPeerSupported(validPeer, EthProtocol.ETH65))
+        .thenReturn(true);
     when(transactionValidator.validate(any())).thenReturn(valid());
     transactionPool.addTransactionHash(transaction1.getHash());
     transactionPool.handleConnect(peer);

@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -111,7 +112,7 @@ public class TransactionPool implements BlockAddedObserver {
     for (final Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
-    if (peerPendingTransactionTracker.isPeerSupported(peer)) {
+    if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)) {
       final Collection<Hash> hashes = getNewPooledHashes();
       for (final Hash hash : hashes) {
         peerPendingTransactionTracker.addToPeerSendQueue(peer, hash);
