@@ -23,6 +23,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.GasLimitCalculator;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -38,6 +39,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.BouncyCastleSecurityModulePlugin;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -73,7 +75,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
       final StorageServiceImpl storageService,
-      final SecurityModuleServiceImpl nodeKeySecurityModuleService,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
@@ -95,6 +96,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
+    new BouncyCastleSecurityModulePlugin().register(besuPluginContext);
 
     return besuPluginContext;
   }
@@ -146,7 +148,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .dataDirectory(node.homeDirectory())
             .miningParameters(node.getMiningParameters())
             .privacyParameters(node.getPrivacyParameters())
-            // .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory())) //TODO: Fix
+            .nodeKey(new NodeKey(bouncyCastleNodeKey.apply(commonPluginConfiguration)))
             .metricsSystem(metricsSystem)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())

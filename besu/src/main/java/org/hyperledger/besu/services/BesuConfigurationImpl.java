@@ -17,25 +17,15 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 public class BesuConfigurationImpl implements BesuConfiguration {
 
   private final Path storagePath;
   private final Path dataPath;
-  private final Map<String, String> additionalConfiguration;
-
-  public BesuConfigurationImpl(
-      final Path dataPath,
-      final Path storagePath,
-      final Map<String, String> additionalConfiguration) {
-    this.dataPath = dataPath;
-    this.storagePath = storagePath;
-    this.additionalConfiguration = additionalConfiguration;
-  }
 
   public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
-    this(dataPath, storagePath, Map.of());
+    this.dataPath = dataPath;
+    this.storagePath = storagePath;
   }
 
   @Override

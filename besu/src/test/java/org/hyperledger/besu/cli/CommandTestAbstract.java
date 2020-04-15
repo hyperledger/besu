@@ -35,12 +35,10 @@ import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -267,22 +265,12 @@ public abstract class CommandTestAbstract {
     return parseCommand(System.in, args);
   }
 
-  protected TestBesuCommand parseCommand(
-      final PublicKeySubCommand.KeyLoader keyLoader, final String... args) {
-    return parseCommand(keyLoader, System.in, args);
-  }
-
-  protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
-    return parseCommand(f -> KeyPair.generate(), in, args);
-  }
-
   @SuppressWarnings("unchecked")
   private <T> JsonBlockImporter<T> jsonBlockImporterFactory(final BesuController<T> controller) {
     return (JsonBlockImporter<T>) jsonBlockImporter;
   }
 
-  private TestBesuCommand parseCommand(
-      final PublicKeySubCommand.KeyLoader keyLoader, final InputStream in, final String... args) {
+  private TestBesuCommand parseCommand(final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
 
@@ -294,7 +282,6 @@ public abstract class CommandTestAbstract {
             (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
-            keyLoader,
             mockBesuPluginContext,
             environment,
             storageService,
@@ -316,13 +303,7 @@ public abstract class CommandTestAbstract {
   public static class TestBesuCommand extends BesuCommand {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
-    private final PublicKeySubCommand.KeyLoader keyLoader;
     private Vertx vertx;
-
-    @Override
-    protected PublicKeySubCommand.KeyLoader getKeyLoader() {
-      return keyLoader;
-    }
 
     TestBesuCommand(
         final Logger mockLogger,
@@ -331,7 +312,6 @@ public abstract class CommandTestAbstract {
         final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
-        final PublicKeySubCommand.KeyLoader keyLoader,
         final BesuPluginContextImpl besuPluginContext,
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
@@ -347,7 +327,6 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           nodeKeySecurityModuleService);
-      this.keyLoader = keyLoader;
     }
 
     @Override

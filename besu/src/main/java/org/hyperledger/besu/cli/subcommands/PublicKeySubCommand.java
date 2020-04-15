@@ -22,7 +22,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 
@@ -62,11 +62,9 @@ public class PublicKeySubCommand implements Runnable {
   private CommandSpec spec; // Picocli injects reference to command spec
 
   private final PrintStream out;
-  private final KeyLoader keyLoader;
 
-  public PublicKeySubCommand(final PrintStream out, final KeyLoader keyLoader) {
+  public PublicKeySubCommand(final PrintStream out) {
     this.out = out;
-    this.keyLoader = keyLoader;
   }
 
   @Override
@@ -74,13 +72,14 @@ public class PublicKeySubCommand implements Runnable {
     spec.commandLine().usage(out);
   }
 
-  private Optional<KeyPair> getKeyPair() {
-    try {
-      return Optional.of(keyLoader.load(parentCommand.nodePrivateKeyFile()));
-    } catch (IOException e) {
-      LOG.error("An error occurred while trying to read the private key", e);
-      return Optional.empty();
-    }
+  private Optional<NodeKey> getNodeKey() {
+    return parentCommand.getNodeKey();
+    //    try {
+    //      return Optional.of(keyLoader.load(parentCommand.nodePrivateKeyFile()));
+    //    } catch (IOException e) {
+    //      LOG.error("An error occurred while trying to read the private key", e);
+    //      return Optional.empty();
+    //    }
   }
 
   /**
@@ -113,22 +112,22 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      parentCommand.getKeyPair().ifPresent(this::outputPublicKey);
+      parentCommand.getNodeKey().ifPresent(this::outputPublicKey);
     }
 
-    private void outputPublicKey(final KeyPair keyPair) {
+    private void outputPublicKey(final NodeKey nodeKey) {
       // if we have an output file defined, print to it
       // otherwise print to standard output.
       if (publicKeyExportFile != null) {
         final Path path = publicKeyExportFile.toPath();
 
         try (final BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
-          fileWriter.write(keyPair.getPublicKey().toString());
+          fileWriter.write(nodeKey.getPublicKey().toString());
         } catch (final IOException e) {
           LOG.error("An error occurred while trying to write the public key", e);
         }
       } else {
-        parentCommand.out.println(keyPair.getPublicKey().toString());
+        parentCommand.out.println(nodeKey.getPublicKey().toString());
       }
     }
   }
@@ -165,11 +164,11 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      parentCommand.getKeyPair().ifPresent(this::outputAddress);
+      parentCommand.getNodeKey().ifPresent(this::outputAddress);
     }
 
-    private void outputAddress(final KeyPair keyPair) {
-      final Address address = Util.publicKeyToAddress(keyPair.getPublicKey());
+    private void outputAddress(final NodeKey nodeKey) {
+      final Address address = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
       // if we have an output file defined, print to it
       // otherwise print to standard output.
@@ -185,11 +184,5 @@ public class PublicKeySubCommand implements Runnable {
         parentCommand.out.println(address.toString());
       }
     }
-  }
-
-  @FunctionalInterface
-  public interface KeyLoader {
-
-    KeyPair load(final File keyFile) throws IOException;
   }
 }

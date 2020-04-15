@@ -51,7 +51,6 @@ import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
-import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.KeyLoader;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImporterFactory;
@@ -66,7 +65,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
-import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -209,10 +207,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
   private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
-
-  protected KeyLoader getKeyLoader() {
-    return KeyPairUtil::loadKeyPair;
-  }
 
   // Public IP stored to prevent having to research it each time we need it.
   private InetAddress autoDiscoveredDefaultIP = null;
@@ -819,6 +813,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--node-key-provider"},
       description = "Identity for the Node Key Security Module provider to be used.",
@@ -972,6 +967,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  public Optional<NodeKey> getNodeKey() {
+    return Optional.ofNullable(nodeKey);
+  }
+
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
@@ -1001,8 +1000,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             rlpBlockExporterFactory,
             resultHandler.out()));
     commandLine.addSubcommand(
-        PublicKeySubCommand.COMMAND_NAME,
-        new PublicKeySubCommand(resultHandler.out(), getKeyLoader()));
+        PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(resultHandler.out()));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1967,8 +1965,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /*
   public File nodePrivateKeyFile() {
-    // TODO: Obtain from plugin
     File nodePrivateKeyFile = null;
     if (isFullInstantiation()) {
       nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile;
@@ -1977,10 +1975,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return nodePrivateKeyFile != null
         ? nodePrivateKeyFile
         : KeyPairUtil.getDefaultKeyFile(dataDir());
-  }
+  }*/
 
   private SecurityModule nodeKeySecurityModuleProvider(final String name) {
-        return nodeKeySecurityModuleService
+    return nodeKeySecurityModuleService
         .getByName(name)
         .orElseThrow(() -> new RuntimeException("Node Key Security Module not found: " + name))
         .apply(pluginCommonConfiguration);

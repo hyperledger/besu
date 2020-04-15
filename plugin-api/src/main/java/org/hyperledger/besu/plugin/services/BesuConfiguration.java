@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.services;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 /** Generally useful configuration provided by Besu. */
 public interface BesuConfiguration {
