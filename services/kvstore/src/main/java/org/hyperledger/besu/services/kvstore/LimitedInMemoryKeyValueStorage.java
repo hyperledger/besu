@@ -59,13 +59,7 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      return storage.getIfPresent(Bytes.wrap(key)) != null;
-    } finally {
-      lock.unlock();
-    }
+    return get(key).isPresent();
   }
 
   @Override
