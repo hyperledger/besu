@@ -17,28 +17,12 @@ package org.hyperledger.besu.crypto;
 import java.math.BigInteger;
 
 public final class Signature {
-
-  /**
-   * The recovery id to reconstruct the public key used to create the signature.
-   *
-   * <p>The recId is an index from 0 to 3 which indicates which of the 4 possible keys is the
-   * correct one. Because the key recovery operation yields multiple potential keys, the correct key
-   * must either be stored alongside the signature, or you must be willing to try each recId in turn
-   * until you find one that outputs the key you are expecting.
-   */
-  private final byte recoveryId;
-
   private final BigInteger r;
   private final BigInteger s;
 
-  public Signature(final BigInteger r, final BigInteger s, final byte recoveryId) {
+  public Signature(final BigInteger r, final BigInteger s) {
     this.r = r;
     this.s = s;
-    this.recoveryId = recoveryId;
-  }
-
-  public byte getRecoveryId() {
-    return recoveryId;
   }
 
   public BigInteger getR() {
