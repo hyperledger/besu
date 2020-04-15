@@ -23,7 +23,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -43,7 +42,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
-import org.hyperledger.besu.services.NodeKeySecurityModuleServiceImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
@@ -74,7 +73,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
       final StorageServiceImpl storageService,
-      final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService,
+      final SecurityModuleServiceImpl nodeKeySecurityModuleService,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
@@ -110,7 +109,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     ThreadContext.put("node", node.getName());
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
-    final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService = new NodeKeySecurityModuleServiceImpl();
+    final SecurityModuleServiceImpl nodeKeySecurityModuleService = new SecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfiguration commonPluginConfiguration =
         new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
@@ -147,8 +146,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .dataDirectory(node.homeDirectory())
             .miningParameters(node.getMiningParameters())
             .privacyParameters(node.getPrivacyParameters())
-            .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
-
+            //.nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory())) //TODO: Fix
             .metricsSystem(metricsSystem)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())

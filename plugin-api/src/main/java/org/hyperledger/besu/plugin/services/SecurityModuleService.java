@@ -21,11 +21,11 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * This service allows plugins to register NodeKey Security Module which is abstraction of
+ * This service allows plugins to register Security Module which is abstraction of
  * cryptographic operations by deferring to specific provider such as BouncyCastle
  */
 @Unstable
-public interface NodeKeySecurityModuleService {
+public interface SecurityModuleService {
 
   /**
    * Registers a factory as available for creating SecurityProvider instances.
@@ -34,7 +34,7 @@ public interface NodeKeySecurityModuleService {
    * @param securityProviderSupplier Register reference of function that can apply BesuConfiguration
    *     to provide SecurityModule implementation.
    */
-  void registerNodeKeySecurityModule(
+  void registerSecurityModule(
       final String name,
       final Function<BesuConfiguration, SecurityModule> securityProviderSupplier);
 

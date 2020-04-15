@@ -59,7 +59,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
-import org.hyperledger.besu.services.NodeKeySecurityModuleServiceImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -127,7 +127,7 @@ public abstract class CommandTestAbstract {
   @Mock protected JsonBlockImporter<?> jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
-  @Mock protected NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService;
+  @Mock protected SecurityModuleServiceImpl nodeKeySecurityModuleService;
   @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
@@ -335,7 +335,7 @@ public abstract class CommandTestAbstract {
             final BesuPluginContextImpl besuPluginContext,
             final Map<String, String> environment,
             final StorageServiceImpl storageService,
-            final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService) {
+            final SecurityModuleServiceImpl nodeKeySecurityModuleService) {
       super(
           mockLogger,
           mockBlockImporter,

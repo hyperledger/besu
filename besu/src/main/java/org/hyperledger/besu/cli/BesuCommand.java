@@ -108,20 +108,20 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.NodeKeySecurityModuleService;
+import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.nodekey.SecurityModule;
-import org.hyperledger.besu.plugin.services.nodekey.bouncycastle.NodeKeyBouncyCastlePlugin;
+import org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.BouncyCastleSecurityModulePlugin;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
-import org.hyperledger.besu.services.NodeKeySecurityModuleServiceImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -204,7 +204,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
-  private final NodeKeySecurityModuleServiceImpl nodeKeySecurityModuleService;
+  private final SecurityModuleServiceImpl nodeKeySecurityModuleService;
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
@@ -893,7 +893,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuPluginContext,
         environment,
         new StorageServiceImpl(),
-        new NodeKeySecurityModuleServiceImpl());
+        new SecurityModuleServiceImpl());
   }
 
   @VisibleForTesting
@@ -907,7 +907,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
       final StorageServiceImpl storageService,
-      final NodeKeySecurityModuleServiceImpl nodeKeySecurityService) {
+      final SecurityModuleServiceImpl nodeKeySecurityService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1040,13 +1040,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-    besuPluginContext.addService(NodeKeySecurityModuleService.class, nodeKeySecurityModuleService);
+    besuPluginContext.addService(SecurityModuleService.class, nodeKeySecurityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
-    new NodeKeyBouncyCastlePlugin().register(besuPluginContext);
+    new BouncyCastleSecurityModulePlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
 
