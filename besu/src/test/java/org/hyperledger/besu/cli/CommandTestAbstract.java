@@ -39,6 +39,8 @@ import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
+import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -53,6 +55,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
@@ -125,7 +128,7 @@ public abstract class CommandTestAbstract {
   @Mock protected JsonBlockImporter<?> jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
-  @Mock protected SecurityModuleServiceImpl nodeKeySecurityModuleService;
+  @Mock protected SecurityModuleServiceImpl securityModuleService;
   @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
@@ -235,12 +238,23 @@ public abstract class CommandTestAbstract {
         .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
+    final Path tempKeyDir = temp.newFolder().toPath();
+    final BouncyCastleSecurityModule bouncyCastleSecurityModule =
+        new BouncyCastleSecurityModule(() -> KeyPairUtil.loadKeyPair(tempKeyDir));
+
+    lenient()
+        .when(securityModuleService.getByName("bouncycastle"))
+        .thenReturn(Optional.of(besuConfiguration -> bouncyCastleSecurityModule));
+
     lenient()
         .when(mockBesuPluginContext.getService(PicoCLIOptions.class))
         .thenReturn(Optional.of(cliOptions));
     lenient()
         .when(mockBesuPluginContext.getService(StorageService.class))
         .thenReturn(Optional.of(storageService));
+    lenient()
+        .when(mockBesuPluginContext.getService(SecurityModuleService.class))
+        .thenReturn(Optional.of(securityModuleService));
   }
 
   // Display outputs for debug purpose
@@ -285,7 +299,7 @@ public abstract class CommandTestAbstract {
             mockBesuPluginContext,
             environment,
             storageService,
-            nodeKeySecurityModuleService);
+            securityModuleService);
     besuCommands.add(besuCommand);
 
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
