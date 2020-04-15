@@ -18,6 +18,7 @@ import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.EthNetworkConfig.DEV_NETWORK_ID;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.junit.Assert.assertTrue;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -193,6 +194,7 @@ public final class RunnerTest {
     final GraphQLConfiguration aheadGraphQLConfiguration = graphQLConfiguration();
     final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
     final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
+    final Path pidPath = temp.getRoot().toPath().resolve("pid");
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
@@ -213,11 +215,13 @@ public final class RunnerTest {
             .webSocketConfiguration(aheadWebSocketConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
             .dataDir(dbAhead)
+            .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
             .build();
     try {
 
       runnerAhead.start();
+      assertTrue(pidPath.toFile().exists());
 
       final SynchronizerConfiguration syncConfigBehind =
           SynchronizerConfiguration.builder()

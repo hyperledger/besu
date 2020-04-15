@@ -848,6 +848,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
+  @CommandLine.Option(
+      names = {"--pid-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "The path to Besu PID file (optional)")
+  final Path pidPath = null;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1068,7 +1074,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
-        staticNodes);
+        staticNodes,
+        pidPath);
   }
 
   private BesuCommand startPlugins() {
@@ -1727,7 +1734,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final Collection<EnodeURL> staticNodes) {
+      final Collection<EnodeURL> staticNodes,
+      final Path pidPath) {
 
     checkNotNull(runnerBuilder);
 
@@ -1753,6 +1761,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
+            .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)

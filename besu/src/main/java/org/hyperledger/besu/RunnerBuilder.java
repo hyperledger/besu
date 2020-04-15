@@ -144,6 +144,7 @@ public class RunnerBuilder {
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private Path dataDir;
+  private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;
   private ObservableMetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
@@ -239,6 +240,11 @@ public class RunnerBuilder {
   public RunnerBuilder permissioningConfiguration(
       final PermissioningConfiguration permissioningConfiguration) {
     this.permissioningConfiguration = Optional.of(permissioningConfiguration);
+    return this;
+  }
+
+  public RunnerBuilder pidPath(final Path pidPath) {
+    this.pidPath = Optional.ofNullable(pidPath);
     return this;
   }
 
@@ -541,6 +547,7 @@ public class RunnerBuilder {
         metricsService,
         besuController,
         dataDir,
+        pidPath,
         autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
         context.getBlockchain());
   }
