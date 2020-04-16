@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNullElse;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -55,6 +56,7 @@ import org.rocksdb.LRUCache;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
+import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -74,17 +76,22 @@ public class RocksDBColumnarKeyValueStorage
   private final TransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
+  private final Optional<ColumnFamilyHandle> maybePruningHardenedColumn;
   private final RocksDBMetrics metrics;
-  private static final AtomicReference<Optional<byte[]>> doomedKey =
+  private final AtomicReference<Optional<byte[]>> doomedKey =
       new AtomicReference<>(Optional.empty());
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
       final MetricsSystem metricsSystem,
-      final RocksDBMetricsFactory rocksDBMetricsFactory)
+      final RocksDBMetricsFactory rocksDBMetricsFactory,
+      final Optional<SegmentIdentifier> pruningHardenedSegment)
       throws StorageException {
 
+    checkArgument(
+        pruningHardenedSegment.map(segments::contains).orElse(true),
+        "A pruning hardened Segment must be one of the storage segments");
     try {
       final List<ColumnFamilyDescriptor> columnDescriptors =
           segments.stream()
@@ -132,6 +139,7 @@ public class RocksDBColumnarKeyValueStorage
         builder.put(segmentName, columnHandle);
       }
       columnHandlesByName = builder.build();
+      maybePruningHardenedColumn = pruningHardenedSegment.map(this::getSegmentIdentifierByName);
 
     } catch (final RocksDBException e) {
       throw new StorageException(e);
@@ -171,22 +179,31 @@ public class RocksDBColumnarKeyValueStorage
   @Override
   public long removeAllKeysUnless(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
+    final boolean pruningHardeningEnabled =
+        maybePruningHardenedColumn.map(segmentHandle::equals).orElse(false);
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
-        doomedKey.set(Optional.of(key));
-        LOG.info("testing key");
+        if (pruningHardeningEnabled) {
+          doomedKey.set(Optional.of(key));
+        }
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
-          LOG.info("deleting key");
-          db.delete(segmentHandle, key);
+          try {
+            db.delete(segmentHandle, key);
+          } catch (RocksDBException rdbe) {
+            if (!pruningHardeningEnabled || rdbe.getStatus().getCode() != Status.Code.TimedOut)
+              throw rdbe;
+          }
         }
       }
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
-    doomedKey.set(Optional.empty());
+    if (pruningHardeningEnabled) {
+      doomedKey.set(Optional.empty());
+    }
     return removedNodeCounter;
   }
 
@@ -272,10 +289,12 @@ public class RocksDBColumnarKeyValueStorage
 
     @Override
     public void commit() throws StorageException {
-      while (doomedKey.get().map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {}
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
+        while (doomedKey.get().map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
+          Thread.sleep(0, 1000);
+        }
         innerTx.commit();
-      } catch (final RocksDBException e) {
+      } catch (final RocksDBException | InterruptedException e) {
         throw new StorageException(e);
       } finally {
         close();
