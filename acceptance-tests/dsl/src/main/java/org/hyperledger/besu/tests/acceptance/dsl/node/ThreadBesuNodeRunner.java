@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_SECURITY_MODULE_PROVIDER;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
@@ -146,9 +147,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final SecurityModule securityModule =
         securityModuleService
-            .getByName("bouncycastle")
+            .getByName(DEFAULT_SECURITY_MODULE_PROVIDER)
             .orElseThrow(
-                () -> new IllegalStateException("BouncyCastle Security Module not available"))
+                () ->
+                    new IllegalStateException(
+                        "Security Module not available: " + DEFAULT_SECURITY_MODULE_PROVIDER))
             .apply(commonPluginConfiguration);
 
     final BesuController<?> besuController =

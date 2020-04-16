@@ -818,7 +818,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--security-module-provider"},
       description = "Identity for the Security Module provider to be used.",
       arity = "1")
-  private String nodeKeySecurityModuleProviderName = DEFAULT_NODEKEY_SECURITY_MODULE_PROVIDER;
+  private String nodeKeySecurityModuleProviderName = DEFAULT_SECURITY_MODULE_PROVIDER;
 
   @Option(
       names = {"--auto-log-bloom-caching-enabled"},

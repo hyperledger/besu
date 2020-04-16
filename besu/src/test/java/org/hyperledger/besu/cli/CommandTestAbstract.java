@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_SECURITY_MODULE_PROVIDER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyFloat;
@@ -248,7 +249,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(new InMemoryKeyValueStorage());
 
     lenient()
-        .when(securityModuleService.getByName("bouncycastle"))
+        .when(securityModuleService.getByName(DEFAULT_SECURITY_MODULE_PROVIDER))
         .thenReturn(Optional.of(besuConfiguration -> bouncyCastleSecurityModule));
 
     lenient()

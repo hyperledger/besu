@@ -32,7 +32,8 @@ import org.apache.logging.log4j.Logger;
 
 public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
-  private static final String PICOCLI_NAME = "securitymodule-bouncycastle";
+  private static final String SECURITY_MODULE_NAME = "bouncycastle";
+  private static final String PICOCLI_NAMESPACE = "securitymodule-bouncycastle";
   private final boolean isDocker = Boolean.getBoolean("besu.docker");
   private final BouncyCastleSecurityModuleCLIOptions cliOptions =
       new BouncyCastleSecurityModuleCLIOptions();
@@ -54,7 +55,7 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
                     new IllegalStateException(
                         "Expecting a PicoCLIOptions service to register CLI options with, but none found."));
 
-    picoCLIOptions.addPicoCLIOptions(PICOCLI_NAME, cliOptions);
+    picoCLIOptions.addPicoCLIOptions(PICOCLI_NAMESPACE, cliOptions);
   }
 
   private void registerSecurityModule(final BesuContext context) {
@@ -64,7 +65,7 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
             () ->
                 new RuntimeException(
                     "Bouncy Castle Security Module Service not available, Besu cannot start."))
-        .registerSecurityModule("bouncycastle", this::createBouncyCastleSecurityModule);
+        .registerSecurityModule(SECURITY_MODULE_NAME, this::createBouncyCastleSecurityModule);
   }
 
   private SecurityModule createBouncyCastleSecurityModule(
