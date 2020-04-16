@@ -68,9 +68,9 @@ public class PendingTransactionsMessageProcessorTest {
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
         now(),
         ofMinutes(1));
-    verify(transactionPool).addTransactionHashes(hash1);
-    verify(transactionPool).addTransactionHashes(hash2);
-    verify(transactionPool).addTransactionHashes(hash3);
+    verify(transactionPool).addTransactionHash(hash1);
+    verify(transactionPool).addTransactionHash(hash2);
+    verify(transactionPool).addTransactionHash(hash3);
   }
 
   @Test

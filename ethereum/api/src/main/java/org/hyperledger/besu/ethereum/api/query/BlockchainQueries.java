@@ -384,8 +384,16 @@ public class BlockchainQueries {
     return blockchain.getBlockHashByNumber(blockNumber).flatMap(this::blockByHashWithTxHashes);
   }
 
+  public Optional<BlockHeader> getBlockHeaderByHash(final Hash hash) {
+    return blockchain.getBlockHeader(hash);
+  }
+
   public Optional<BlockHeader> getBlockHeaderByNumber(final long number) {
     return blockchain.getBlockHeader(number);
+  }
+
+  public boolean blockIsOnCanonicalChain(final Hash hash) {
+    return blockchain.blockIsOnCanonicalChain(hash);
   }
 
   /**

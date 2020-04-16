@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -27,7 +29,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -57,13 +58,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      return hashValueStore.containsKey(Bytes.wrap(key));
-    } finally {
-      lock.unlock();
-    }
+    return get(key).isPresent();
   }
 
   @Override
@@ -92,10 +87,16 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return hashValueStore.keySet().stream()
-        .map(Bytes::toArrayUnsafe)
-        .filter(returnCondition)
-        .collect(Collectors.toSet());
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return hashValueStore.keySet().stream()
+          .map(Bytes::toArrayUnsafe)
+          .filter(returnCondition)
+          .collect(toUnmodifiableSet());
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -143,8 +144,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
     @Override
     public void rollback() {
-      updatedValues = null;
-      removedKeys = null;
+      updatedValues.clear();
+      removedKeys.clear();
     }
   }
 }

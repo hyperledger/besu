@@ -89,7 +89,7 @@ class PendingTransactionsMessageProcessor {
       transactionTracker.markTransactionsHashesAsSeen(peer, pendingHashes);
       List<Hash> toRequest = new ArrayList<>();
       for (Hash hash : pendingHashes) {
-        if (transactionPool.addTransactionHashes(hash)) {
+        if (transactionPool.addTransactionHash(hash)) {
           toRequest.add(hash);
         }
       }
