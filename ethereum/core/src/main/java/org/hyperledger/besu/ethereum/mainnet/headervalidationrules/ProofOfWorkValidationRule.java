@@ -49,6 +49,16 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
+    if (includeBaseFee) {
+      if (!ExperimentalEIPs.eip1559Enabled) {
+        LOG.warn("Invalid block header: EIP-1559 feature flag must be enabled --Xeip1559-enabled");
+        return false;
+      } else if (header.getBaseFee().isEmpty()) {
+        LOG.warn("Invalid block header: missing mandatory base fee.");
+        return false;
+      }
+    }
+
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = hashHeader(header);
     HASHER.hash(hashBuffer, header.getNonce(), header.getNumber(), headerHash.toArray());

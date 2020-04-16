@@ -31,22 +31,32 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class EIP1559BaseFeeTest {
 
-  private static final long FORK_BLOCK = 783L;
-  private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
+  private static final long MARKER_BASE_FEE = 1049238967;
+  private final EIP1559 eip1559 = new EIP1559(0L);
+  private static final FeeMarket FEE_MARKET = FeeMarket.eip1559();
 
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {1000000000, 10000000, 1000000000},
-          {1000000000, 7000000, 962500000},
-          {1100000000, 10000000, 1100000000},
+          {
+            FEE_MARKET.getInitialBasefee(),
+            FEE_MARKET.getTargetGasUsed(),
+            FEE_MARKET.getInitialBasefee()
+          },
+          {FEE_MARKET.getInitialBasefee(), 7000000, 962500000},
+          {1100000000, FEE_MARKET.getTargetGasUsed(), 1100000000},
           {1100000000, 9000000, 1086250000},
           {1086250000, 9000000, 1072671875},
           {1072671875, 9000000, 1059263476},
           {1059263476, 10001000, 1059276716},
           {1059276716, 16000000, 1138722469},
-          {1049238967, 0, 918084097}
+          {MARKER_BASE_FEE, 0, 918084097},
+          {MARKER_BASE_FEE, 5, 918084161},
+          {MARKER_BASE_FEE, 5000, 918149673},
+          {MARKER_BASE_FEE, 500000, 924641839},
+          {MARKER_BASE_FEE, FEE_MARKET.getTargetGasUsed(), MARKER_BASE_FEE},
+          {MARKER_BASE_FEE, FEE_MARKET.getMaxGas(), 1127931889}
         });
   }
 
