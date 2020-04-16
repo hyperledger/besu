@@ -70,7 +70,8 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
   private SecurityModule createBouncyCastleSecurityModule(
       final BesuConfiguration besuConfiguration) {
     this.besuConfiguration = besuConfiguration;
-    return new BouncyCastleSecurityModule(this::loadKeyPair);
+    LOG.info("Node Private Key File: {}", nodePrivateKeyFile());
+    return new BouncyCastleSecurityModule(this.loadKeyPair());
   }
 
   private SECP256K1.KeyPair loadKeyPair() {
