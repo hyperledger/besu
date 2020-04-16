@@ -52,7 +52,7 @@ public class LocalFileSecurityModulePluginTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   @Mock private BesuContext besuContext;
-  private SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
+  private final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
   private CommandLine commandLine;
 
   @Before
