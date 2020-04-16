@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Base64;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -65,28 +66,38 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateStorage(),
+        privacyParameters.getPrivateStateRootResolver(),
         "Privacy");
   }
 
-  PrivacyPrecompiledContract(
-      final GasCalculator gasCalculator,
-      final Enclave enclave,
-      final WorldStateArchive worldStateArchive,
-      final PrivateStateStorage privateStateStorage) {
-    this(gasCalculator, enclave, worldStateArchive, privateStateStorage, "Privacy");
-  }
-
+  @VisibleForTesting
   PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
       final PrivateStateStorage privateStateStorage,
+      final PrivateStateRootResolver privateStateRootResolver) {
+    this(
+        gasCalculator,
+        enclave,
+        worldStateArchive,
+        privateStateStorage,
+        privateStateRootResolver,
+        "Privacy");
+  }
+
+  protected PrivacyPrecompiledContract(
+      final GasCalculator gasCalculator,
+      final Enclave enclave,
+      final WorldStateArchive worldStateArchive,
+      final PrivateStateStorage privateStateStorage,
+      final PrivateStateRootResolver privateStateRootResolver,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateStorage = privateStateStorage;
-    this.privateStateRootResolver = new PrivateStateRootResolver(privateStateStorage);
+    this.privateStateRootResolver = privateStateRootResolver;
   }
 
   public void setPrivateTransactionProcessor(
