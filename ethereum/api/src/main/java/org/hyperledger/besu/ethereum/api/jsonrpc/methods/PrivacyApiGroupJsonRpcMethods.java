@@ -80,8 +80,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
             privacyParameters.getPrivateWorldStateArchive(),
             privacyParameters.getPrivateStateStorage());
 
-    this.privacyQueries =
-        new PrivacyQueries(blockchainQueries.getBlockchain(), this.privateWorldStateReader);
+    this.privacyQueries = new PrivacyQueries(blockchainQueries, this.privateWorldStateReader);
   }
 
   public BlockchainQueries getBlockchainQueries() {
