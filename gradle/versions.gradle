@@ -57,7 +57,7 @@ dependencyManagement {
 
     dependency 'junit:junit:4.13'
 
-    dependency 'net.consensys:orion:1.5.0-SNAPSHOT'
+    dependency 'net.consensys:orion:1.5.0'
 
     dependency 'net.java.dev.jna:jna:5.5.0'
 
@@ -82,6 +82,8 @@ dependencyManagement {
 
     dependency 'org.bouncycastle:bcpkix-jdk15on:1.64'
     dependency 'org.bouncycastle:bcprov-jdk15on:1.64'
+
+    dependency 'org.hyperledger.besu:secp256k1:0.1.0-SNAPSHOT'
 
     dependency 'org.java-websocket:Java-WebSocket:1.4.0'
 

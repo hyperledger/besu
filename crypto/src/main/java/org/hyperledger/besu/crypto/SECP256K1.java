@@ -16,11 +16,12 @@ package org.hyperledger.besu.crypto;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.crypto.LibSecp256k1.SECP256K1_EC_UNCOMPRESSED;
+import static org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.SECP256K1_EC_UNCOMPRESSED;
 
-import org.hyperledger.besu.crypto.LibSecp256k1.secp256k1_ecdsa_recoverable_signature;
-import org.hyperledger.besu.crypto.LibSecp256k1.secp256k1_ecdsa_signature;
-import org.hyperledger.besu.crypto.LibSecp256k1.secp256k1_pubkey;
+import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1;
+import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_ecdsa_recoverable_signature;
+import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_ecdsa_signature;
+import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_pubkey;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -39,6 +40,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
+import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -101,6 +103,8 @@ public class SECP256K1 {
     } catch (final InvalidAlgorithmParameterException e) {
       throw new RuntimeException(e);
     }
+
+    LogManager.getLogger().info(useNative ? "Using Native secp256k1" : "Using default secp256k1");
   }
 
   public static Signature sign(final Bytes32 dataHash, final KeyPair keyPair) {
@@ -813,23 +817,25 @@ public class SECP256K1 {
       benchmarkNative(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
     }
 
-    Stopwatch defaultTimer = Stopwatch.createStarted();
-    for (int i = 0; i < 1000; i++) {
-      benchmarkDefault(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
-    }
-    defaultTimer.stop();
+    for (int j = 0; j < 10; j++) {
+      Stopwatch defaultTimer = Stopwatch.createStarted();
+      for (int i = 0; i < 1000; i++) {
+        benchmarkDefault(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
+      }
+      defaultTimer.stop();
 
-    Stopwatch nativeTimer = Stopwatch.createStarted();
-    for (int i = 0; i < 1000; i++) {
-      benchmarkNative(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
-    }
-    nativeTimer.stop();
+      Stopwatch nativeTimer = Stopwatch.createStarted();
+      for (int i = 0; i < 1000; i++) {
+        benchmarkNative(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
+      }
+      nativeTimer.stop();
 
-    System.out.printf(
-        "Default - %4d µs%nNative  - %4d µs%n %.2fx performance",
-        defaultTimer.elapsed(TimeUnit.MILLISECONDS),
-        nativeTimer.elapsed(TimeUnit.MILLISECONDS),
-        ((double) defaultTimer.elapsed(TimeUnit.MILLISECONDS))
-            / nativeTimer.elapsed(TimeUnit.MILLISECONDS));
+      System.out.printf(
+          "Default - %4d µs%nNative  - %4d µs%n %.2fx performance%n",
+          defaultTimer.elapsed(TimeUnit.MILLISECONDS),
+          nativeTimer.elapsed(TimeUnit.MILLISECONDS),
+          ((double) defaultTimer.elapsed(TimeUnit.MILLISECONDS))
+              / nativeTimer.elapsed(TimeUnit.MILLISECONDS));
+    }
   }
 }
