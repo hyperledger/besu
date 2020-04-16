@@ -85,6 +85,7 @@ public class PrivateGroupRehydrationBlockProcessor {
       final MutableWorldState worldState,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateStateStorage privateStateStorage,
+      final PrivateStateRootResolver privateStateRootResolver,
       final Block block,
       final Map<Hash, PrivateTransaction> forExecution,
       final List<BlockHeader> ommers) {
@@ -109,8 +110,6 @@ public class PrivateGroupRehydrationBlockProcessor {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
-      final PrivateStateRootResolver privateStateRootResolver =
-          new PrivateStateRootResolver(privateStateStorage);
       if (forExecution.containsKey(transaction.getHash())) {
         final PrivateTransaction privateTransaction = forExecution.get(transaction.getHash());
         final Hash lastRootHash =

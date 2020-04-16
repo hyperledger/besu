@@ -66,8 +66,7 @@ public class PrivateTransactionSimulator {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.privacyParameters = privacyParameters;
-    this.privateStateRootResolver =
-        new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
+    this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
   }
 
   public Optional<PrivateTransactionProcessor.Result> process(
