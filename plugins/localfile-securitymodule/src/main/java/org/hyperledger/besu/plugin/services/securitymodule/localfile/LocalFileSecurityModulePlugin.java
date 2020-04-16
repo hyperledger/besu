@@ -34,7 +34,7 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
   public static final String PICOCLI_NAMESPACE = "localfile-security-module";
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final String SECURITY_MODULE_NAME = "localfile";
+  static final String SECURITY_MODULE_NAME = "localfile";
   private final boolean isDocker = Boolean.getBoolean("besu.docker");
   private final LocalFileSecurityModuleCLIOptions cliOptions =
       new LocalFileSecurityModuleCLIOptions();
@@ -48,6 +48,10 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
   }
 
   private void registerCliOptions(final BesuContext context) {
+    if (!isFullInstantiation()) {
+      return; // don't register cli options in docker mode
+    }
+
     final PicoCLIOptions picoCLIOptions =
         context
             .getService(PicoCLIOptions.class)
