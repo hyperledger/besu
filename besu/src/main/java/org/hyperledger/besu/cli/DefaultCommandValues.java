@@ -70,7 +70,7 @@ public interface DefaultCommandValues {
   float DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
-  String DEFAULT_SECURITY_MODULE_PROVIDER = "bouncycastle";
+  String DEFAULT_SECURITY_MODULE_PROVIDER = "localfile";
 
   static Path getDefaultBesuDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Besu running shell script.

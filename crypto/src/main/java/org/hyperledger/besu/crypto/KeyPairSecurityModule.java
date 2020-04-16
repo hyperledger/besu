@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.plugin.services.securitymodule.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.Signature;
@@ -22,14 +21,13 @@ import org.hyperledger.besu.plugin.services.securitymodule.Signature;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * Implementation of SecurityModule deferring cryptographic operations via SECP256K1 class which
- * uses BouncyCastle.
+ * Implementation of SecurityModule wrapping SECP256K1.KeyPair and performing cryptographic
+ * operations via SECP256K1 class
  */
-public class BouncyCastleSecurityModule implements SecurityModule {
+public class KeyPairSecurityModule implements SecurityModule {
+  private final SECP256K1.KeyPair keyPair;
 
-  private final KeyPair keyPair;
-
-  public BouncyCastleSecurityModule(final KeyPair keyPair) {
+  public KeyPairSecurityModule(final SECP256K1.KeyPair keyPair) {
     this.keyPair = keyPair;
   }
 

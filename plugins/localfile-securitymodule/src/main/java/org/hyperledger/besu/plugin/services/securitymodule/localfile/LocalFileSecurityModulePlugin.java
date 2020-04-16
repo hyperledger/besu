@@ -12,30 +12,32 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.securitymodule.bouncycastle;
+package org.hyperledger.besu.plugin.services.securitymodule.localfile;
 
-import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
-import org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.configuration.BouncyCastleSecurityModuleCLIOptions;
+import org.hyperledger.besu.plugin.services.securitymodule.localfile.configuration.LocalFileSecurityModuleCLIOptions;
 
 import java.io.File;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
+public class LocalFileSecurityModulePlugin implements BesuPlugin {
+  public static final String PICOCLI_NAMESPACE = "localfile-security-module";
+
   private static final Logger LOG = LogManager.getLogger();
-  private static final String SECURITY_MODULE_NAME = "bouncycastle";
-  private static final String PICOCLI_NAMESPACE = "securitymodule-bouncycastle";
+  private static final String SECURITY_MODULE_NAME = "localfile";
   private final boolean isDocker = Boolean.getBoolean("besu.docker");
-  private final BouncyCastleSecurityModuleCLIOptions cliOptions =
-      new BouncyCastleSecurityModuleCLIOptions();
+  private final LocalFileSecurityModuleCLIOptions cliOptions =
+      new LocalFileSecurityModuleCLIOptions();
   private BesuConfiguration besuConfiguration;
 
   @Override
@@ -63,14 +65,17 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
         .orElseThrow(
             () ->
                 new RuntimeException(
-                    "Bouncy Castle Security Module Service not available, Besu cannot start."))
-        .registerSecurityModule(SECURITY_MODULE_NAME, this::createBouncyCastleSecurityModule);
+                    "Security Module Service Not available, cannot register Service Module: "
+                        + SECURITY_MODULE_NAME))
+        .registerSecurityModule(SECURITY_MODULE_NAME, this::createFileBasedKeyPairSecurityModule);
   }
 
-  private SecurityModule createBouncyCastleSecurityModule(
+  private SecurityModule createFileBasedKeyPairSecurityModule(
       final BesuConfiguration besuConfiguration) {
     this.besuConfiguration = besuConfiguration;
-    return new BouncyCastleSecurityModule(KeyPairUtil.loadKeyPair(nodePrivateKeyFile()));
+    final File privateKeyFile = nodePrivateKeyFile();
+    final SECP256K1.KeyPair keyPair = KeyPairUtil.loadKeyPair(privateKeyFile);
+    return new KeyPairSecurityModule(keyPair);
   }
 
   private File nodePrivateKeyFile() {

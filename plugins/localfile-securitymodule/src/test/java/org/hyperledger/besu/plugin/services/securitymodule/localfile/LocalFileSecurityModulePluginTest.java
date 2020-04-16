@@ -12,12 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.securitymodule.bouncycastle;
+package org.hyperledger.besu.plugin.services.securitymodule.localfile;
 
 import org.junit.After;
 import org.junit.Before;
 
-public class BouncyCastleSecurityModulePluginTest {
+public class LocalFileSecurityModulePluginTest {
 
   @Before
   public void setUp() throws Exception {}

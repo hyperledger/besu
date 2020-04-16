@@ -113,7 +113,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
-import org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.BouncyCastleSecurityModulePlugin;
+import org.hyperledger.besu.plugin.services.securitymodule.localfile.LocalFileSecurityModulePlugin;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
@@ -816,9 +816,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--security-module-provider"},
+      paramLabel = "<PROVIDER-NAME>",
       description = "Identity for the Security Module provider to be used.",
       arity = "1")
-  private String nodeKeySecurityModuleProviderName = DEFAULT_SECURITY_MODULE_PROVIDER;
+  private String securityModuleProviderName = DEFAULT_SECURITY_MODULE_PROVIDER;
 
   @Option(
       names = {"--auto-log-bloom-caching-enabled"},
@@ -1051,7 +1052,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void registerBuiltInPlugins() {
     new RocksDBPlugin().register(besuPluginContext);
-    new BouncyCastleSecurityModulePlugin().register(besuPluginContext);
+    new LocalFileSecurityModulePlugin().register(besuPluginContext);
   }
 
   private void parse(
@@ -1256,7 +1257,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumExtranonce,
                 Optional.empty()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodeKey(new NodeKey(nodeKeySecurityModuleProvider(nodeKeySecurityModuleProviderName)))
+        .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
@@ -1951,7 +1952,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private SecurityModule nodeKeySecurityModuleProvider(final String name) {
+  private NodeKey buildNodeKey() {
+    return new NodeKey(securityModuleProvider(securityModuleProviderName));
+  }
+
+  private SecurityModule securityModuleProvider(final String name) {
     return securityModuleService
         .getByName(name)
         .orElseThrow(() -> new RuntimeException("Node Key Security Module not found: " + name))

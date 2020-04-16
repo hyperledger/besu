@@ -40,7 +40,7 @@ import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
-import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -172,9 +172,9 @@ public abstract class CommandTestAbstract {
   @Before
   public void initMocks() throws Exception {
 
-    final SecurityModule bouncyCastleSecurityModule =
-        new BouncyCastleSecurityModule(KeyPairUtil.loadKeyPair(temp.newFolder().toPath()));
-    nodeKey = new NodeKey(bouncyCastleSecurityModule);
+    final SecurityModule securityModule =
+        new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(temp.newFolder().toPath()));
+    nodeKey = new NodeKey(securityModule);
 
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
@@ -250,7 +250,7 @@ public abstract class CommandTestAbstract {
 
     lenient()
         .when(securityModuleService.getByName(DEFAULT_SECURITY_MODULE_PROVIDER))
-        .thenReturn(Optional.of(besuConfiguration -> bouncyCastleSecurityModule));
+        .thenReturn(Optional.of(besuConfiguration -> securityModule));
 
     lenient()
         .when(mockBesuPluginContext.getService(PicoCLIOptions.class))
@@ -339,7 +339,7 @@ public abstract class CommandTestAbstract {
         final BesuPluginContextImpl besuPluginContext,
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
-        final SecurityModuleServiceImpl nodeKeySecurityModuleService) {
+        final SecurityModuleServiceImpl securityModuleService) {
       super(
           mockLogger,
           mockBlockImporter,
@@ -350,7 +350,7 @@ public abstract class CommandTestAbstract {
           besuPluginContext,
           environment,
           storageService,
-          nodeKeySecurityModuleService);
+          securityModuleService);
     }
 
     @Override

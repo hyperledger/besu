@@ -12,17 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.securitymodule.bouncycastle.configuration;
+package org.hyperledger.besu.plugin.services.securitymodule.localfile.configuration;
+
+import static org.hyperledger.besu.plugin.services.securitymodule.localfile.LocalFileSecurityModulePlugin.PICOCLI_NAMESPACE;
 
 import java.io.File;
 
 import picocli.CommandLine.Option;
 
-public class BouncyCastleSecurityModuleCLIOptions {
+public class LocalFileSecurityModuleCLIOptions {
+  private static final String CLI_OPTION_NAME =
+      "--plugin-" + PICOCLI_NAMESPACE + "-private-key-file";
   private File privateKeyFile = null;
 
   @Option(
-      names = {"--plugin-securitymodule-bouncycastle-private-key-file"},
+      names = {CLI_OPTION_NAME},
       paramLabel = "<PATH>",
       description =
           "The node's private key file (default: a file named \"key\" in the Besu data folder)")
