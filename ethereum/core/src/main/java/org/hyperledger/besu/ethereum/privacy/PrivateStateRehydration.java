@@ -46,18 +46,21 @@ public class PrivateStateRehydration {
   private final ProtocolSchedule<?> protocolSchedule;
   private final WorldStateArchive publicWorldStateArchive;
   private final WorldStateArchive privateWorldStateArchive;
+  private final PrivateStateRootResolver privateStateRootResolver;
 
   public PrivateStateRehydration(
       final PrivateStateStorage privateStateStorage,
       final Blockchain blockchain,
       final ProtocolSchedule<?> protocolSchedule,
       final WorldStateArchive publicWorldStateArchive,
-      final WorldStateArchive privateWorldStateArchive) {
+      final WorldStateArchive privateWorldStateArchive,
+      final PrivateStateRootResolver privateStateRootResolver) {
     this.privateStateStorage = privateStateStorage;
     this.blockchain = blockchain;
     this.protocolSchedule = protocolSchedule;
     this.publicWorldStateArchive = publicWorldStateArchive;
     this.privateWorldStateArchive = privateWorldStateArchive;
+    this.privateStateRootResolver = privateStateRootResolver;
   }
 
   public void rehydrate(
@@ -159,6 +162,7 @@ public class PrivateStateRehydration {
           publicWorldState,
           privateWorldStateArchive,
           privateStateStorage,
+          privateStateRootResolver,
           block,
           enclaveMap,
           block.getBody().getOmmers());
