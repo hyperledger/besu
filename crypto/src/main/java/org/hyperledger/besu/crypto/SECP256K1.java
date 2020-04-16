@@ -32,11 +32,9 @@ import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
@@ -803,39 +801,6 @@ public class SECP256K1 {
             .orElseThrow(() -> new RuntimeException("Could not extract signature"));
     if (!keys.publicKey.getEncodedBytes().equals(recoveredKey.getEncodedBytes())) {
       throw new RuntimeException("Could not extract signature");
-    }
-  }
-
-  public static void main(String[] args) {
-    KeyPair catKey =
-        KeyPair.create(
-            PrivateKey.create(
-                Bytes32.fromHexString(
-                    "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")));
-    for (int i = 0; i < 1000; i++) {
-      benchmarkDefault(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
-      benchmarkNative(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
-    }
-
-    for (int j = 0; j < 10; j++) {
-      Stopwatch defaultTimer = Stopwatch.createStarted();
-      for (int i = 0; i < 1000; i++) {
-        benchmarkDefault(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
-      }
-      defaultTimer.stop();
-
-      Stopwatch nativeTimer = Stopwatch.createStarted();
-      for (int i = 0; i < 1000; i++) {
-        benchmarkNative(Hash.keccak256(Bytes.of(i % 256, i / 256)), catKey);
-      }
-      nativeTimer.stop();
-
-      System.out.printf(
-          "Default - %4d µs%nNative  - %4d µs%n %.2fx performance%n",
-          defaultTimer.elapsed(TimeUnit.MILLISECONDS),
-          nativeTimer.elapsed(TimeUnit.MILLISECONDS),
-          ((double) defaultTimer.elapsed(TimeUnit.MILLISECONDS))
-              / nativeTimer.elapsed(TimeUnit.MILLISECONDS));
     }
   }
 }
