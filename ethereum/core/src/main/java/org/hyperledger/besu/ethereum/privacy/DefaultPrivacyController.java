@@ -510,4 +510,10 @@ public class DefaultPrivacyController implements PrivacyController {
     }
     return privateFor;
   }
+
+  @Override
+  public void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey) {
+    // NO VALIDATION NEEDED
+  }
 }

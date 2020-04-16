@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMP
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
@@ -165,7 +165,7 @@ public class PrivacyReorgTest {
             .storageProvider(new InMemoryStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKey(BouncyCastleNodeKey.generate())
+            .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
