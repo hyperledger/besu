@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -27,8 +25,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
 
@@ -70,7 +66,6 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   @Override
   public KeyValueStorageTransaction startTransaction() throws StorageException {
-    LOG.info("starting transaction");
     final SegmentedKeyValueStorage.Transaction<S> transaction = storage.startTransaction();
     return new KeyValueStorageTransaction() {
 
@@ -86,7 +81,6 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
       @Override
       public void commit() throws StorageException {
-        LOG.info("committing transaction");
         transaction.commit();
       }
 
