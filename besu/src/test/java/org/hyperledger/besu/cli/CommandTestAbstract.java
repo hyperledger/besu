@@ -41,7 +41,7 @@ import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
 import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -58,6 +58,7 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -159,7 +160,7 @@ public abstract class CommandTestAbstract {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
-  private SECP256K1.KeyPair keyPair;
+  private NodeKey nodeKey;
 
   @Before
   @After
@@ -169,6 +170,10 @@ public abstract class CommandTestAbstract {
 
   @Before
   public void initMocks() throws Exception {
+
+    final SecurityModule bouncyCastleSecurityModule =
+        new BouncyCastleSecurityModule(KeyPairUtil.loadKeyPair(temp.newFolder().toPath()));
+    nodeKey = new NodeKey(bouncyCastleSecurityModule);
 
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
@@ -200,6 +205,7 @@ public abstract class CommandTestAbstract {
     lenient()
         .when(mockController.getAdditionalPluginServices())
         .thenReturn(new NoopPluginServiceFactory());
+    lenient().when(mockController.getNodeKey()).thenReturn(nodeKey);
 
     when(mockEthProtocolManager.getBlockBroadcaster()).thenReturn(mockBlockBroadcaster);
 
@@ -241,10 +247,6 @@ public abstract class CommandTestAbstract {
         .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
-    keyPair = KeyPairUtil.loadKeyPair(temp.newFolder().toPath());
-    final BouncyCastleSecurityModule bouncyCastleSecurityModule =
-        new BouncyCastleSecurityModule(this::getKeyPair);
-
     lenient()
         .when(securityModuleService.getByName("bouncycastle"))
         .thenReturn(Optional.of(besuConfiguration -> bouncyCastleSecurityModule));
@@ -274,8 +276,8 @@ public abstract class CommandTestAbstract {
     besuCommands.forEach(TestBesuCommand::close);
   }
 
-  protected SECP256K1.KeyPair getKeyPair() {
-    return keyPair;
+  protected NodeKey getNodeKey() {
+    return nodeKey;
   }
 
   protected void setEnvironemntVariable(final String name, final String value) {
