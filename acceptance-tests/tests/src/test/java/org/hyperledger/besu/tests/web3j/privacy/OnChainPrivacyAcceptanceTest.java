@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -104,6 +105,19 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob, charlie);
 
     charlie.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
+  }
+
+  @Test
+  public void removedMemberCannotSendTransactionToGroup() {
+    final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
+
+    removeFromPrivacyGroup(privacyGroupId, alice, bob);
+
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice);
+
+    assertThatThrownBy(() -> deployPrivateContract(EventEmitter.class, privacyGroupId, bob))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Onchain Privacy group does not exist.");
   }
 
   @Test
