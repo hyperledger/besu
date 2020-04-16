@@ -1959,7 +1959,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private SecurityModule securityModuleProvider(final String name) {
     return securityModuleService
         .getByName(name)
-        .orElseThrow(() -> new RuntimeException("Node Key Security Module not found: " + name))
+        .orElseThrow(() -> new RuntimeException("Security Module not found: " + name))
         .apply(pluginCommonConfiguration);
   }
 
