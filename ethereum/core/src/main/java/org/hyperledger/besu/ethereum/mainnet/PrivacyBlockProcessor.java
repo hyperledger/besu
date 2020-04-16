@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
@@ -52,6 +53,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
   private final Enclave enclave;
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
+  private final PrivateStateRootResolver privateStateRootResolver;
   private WorldStateArchive publicWorldStateArchive;
 
   public <C> PrivacyBlockProcessor(
@@ -59,12 +61,14 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final ProtocolSchedule<C> protocolSchedule,
       final Enclave enclave,
       final PrivateStateStorage privateStateStorage,
-      final WorldStateArchive privateWorldStateArchive) {
+      final WorldStateArchive privateWorldStateArchive,
+      final PrivateStateRootResolver privateStateRootResolver) {
     this.blockProcessor = blockProcessor;
     this.protocolSchedule = protocolSchedule;
     this.enclave = enclave;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
+    this.privateStateRootResolver = privateStateRootResolver;
   }
 
   public void setPublicWorldStateArchive(final WorldStateArchive publicWorldStateArchive) {
@@ -135,7 +139,8 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                           blockchain,
                           protocolSchedule,
                           publicWorldStateArchive,
-                          privateWorldStateArchive);
+                          privateWorldStateArchive,
+                          privateStateRootResolver);
                   privateStateRehydration.rehydrate(actualList);
                   privateStateStorage.updater().putAddDataKey(privacyGroupId, addKey).commit();
                 }
