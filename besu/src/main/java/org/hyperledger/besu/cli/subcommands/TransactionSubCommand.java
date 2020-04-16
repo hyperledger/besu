@@ -19,6 +19,7 @@ import static picocli.CommandLine.Command;
 import static picocli.CommandLine.Spec;
 
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -128,6 +129,7 @@ public class TransactionSubCommand implements Runnable {
 
     @Override
     public void run() {
+      ExperimentalEIPs.eip1559Enabled = true;
       checkNotNull(parentCommand);
       try {
         sign();
