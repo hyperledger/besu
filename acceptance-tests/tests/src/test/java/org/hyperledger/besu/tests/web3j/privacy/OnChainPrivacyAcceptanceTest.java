@@ -111,9 +111,9 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void removedMemberCannotSendTransactionToGroup() {
     final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
 
-    removeFromPrivacyGroup(privacyGroupId, alice, bob);
+    final String removeHash = removeFromPrivacyGroup(privacyGroupId, alice, bob);
 
-    checkOnChainPrivacyGroupExists(privacyGroupId, alice);
+    bob.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(removeHash));
 
     assertThatThrownBy(() -> deployPrivateContract(EventEmitter.class, privacyGroupId, bob))
         .isInstanceOf(RuntimeException.class)
