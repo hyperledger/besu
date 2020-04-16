@@ -1,12 +1,24 @@
 # Changelog
 
-## 1.4.4
+## 1.4.4 - Scheduled for release 22 April
 
 ### Additions and Improvements
 
 - Implemented `priv_getLogs`. [\#686](https://github.com/hyperledger/besu/pull/686)
 
 ## 1.4.3 
+
+### Issues identified with 1.4.3 release 
+
+The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723). 
+This has the following impact: 
+* In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
+clients. 
+* On mainnet, synchronizing eventually stalls.   
+
+Workaround -> revert to v1.4.2. 
+
+A [fix](https://github.com/hyperledger/besu/pull/732) is currently [being tested](https://github.com/hyperledger/besu/pull/733). 
 
 ### Critical Issue for Privacy Users 
 
