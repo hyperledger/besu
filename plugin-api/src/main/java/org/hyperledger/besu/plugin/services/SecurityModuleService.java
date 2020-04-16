@@ -27,23 +27,26 @@ import java.util.function.Function;
 @Unstable
 public interface SecurityModuleService {
 
+  @FunctionalInterface
+  interface SecurityModuleProvider extends Function<BesuConfiguration, SecurityModule> {
+    @Override
+    SecurityModule apply(BesuConfiguration besuConfiguration);
+  }
+
   /**
    * Registers a factory as available for creating SecurityProvider instances.
    *
    * @param name The name to identify the Security Provider Supplier Function
-   * @param securityProviderSupplier Register reference of function that can apply BesuConfiguration
-   *     to provide SecurityModule implementation.
+   * @param securityModuleProvider Register reference of SecurityModuleProvider.
    */
   void registerSecurityModule(
-      final String name,
-      final Function<BesuConfiguration, SecurityModule> securityProviderSupplier);
+      final String name, final SecurityModuleProvider securityModuleProvider);
 
   /**
-   * Retrieves a registered Security Module Function corresponding to the specified name
+   * Retrieves a registered Security Module Provider corresponding to the specified name
    *
-   * @param name The name associated with supplier function to retrieve
-   * @return Optional reference of Function that can provide a Security Provider implementation, or
-   *     empty if it hasn't been registered.
+   * @param name The name associated with Security Module Provider
+   * @return Optional reference Security Module Provider, or empty if it hasn't been registered.
    */
-  Optional<Function<BesuConfiguration, SecurityModule>> getByName(String name);
+  Optional<SecurityModuleProvider> getByName(String name);
 }

@@ -16,7 +16,6 @@ package org.hyperledger.besu.plugin.services.securitymodule.bouncycastle;
 
 import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -71,15 +70,10 @@ public class BouncyCastleSecurityModulePlugin implements BesuPlugin {
   private SecurityModule createBouncyCastleSecurityModule(
       final BesuConfiguration besuConfiguration) {
     this.besuConfiguration = besuConfiguration;
-    LOG.info("Node Private Key File: {}", nodePrivateKeyFile());
-    return new BouncyCastleSecurityModule(this.loadKeyPair());
+    return new BouncyCastleSecurityModule(KeyPairUtil.loadKeyPair(nodePrivateKeyFile()));
   }
 
-  private SECP256K1.KeyPair loadKeyPair() {
-    return KeyPairUtil.loadKeyPair(nodePrivateKeyFile());
-  }
-
-  public File nodePrivateKeyFile() {
+  private File nodePrivateKeyFile() {
     File nodePrivateKeyFile = null;
     if (isFullInstantiation()) {
       nodePrivateKeyFile = cliOptions.getPrivateKeyFile();
