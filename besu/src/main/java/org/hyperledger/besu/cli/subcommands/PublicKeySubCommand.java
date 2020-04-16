@@ -77,10 +77,6 @@ public class PublicKeySubCommand implements Runnable {
     return parentCommand.buildController();
   }
 
-  private Optional<NodeKey> getNodeKey() {
-    return parentCommand.getNodeKey();
-  }
-
   /**
    * Public key export sub-command
    *
@@ -111,8 +107,8 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      parentCommand.createBesuController();
-      parentCommand.getNodeKey().ifPresent(this::outputPublicKey);
+      final BesuController<?> besuController = parentCommand.createBesuController();
+      Optional.ofNullable(besuController.getNodeKey()).ifPresent(this::outputPublicKey);
     }
 
     private void outputPublicKey(final NodeKey nodeKey) {
@@ -164,8 +160,8 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      parentCommand.createBesuController();
-      parentCommand.getNodeKey().ifPresent(this::outputAddress);
+      final BesuController<?> besuController = parentCommand.createBesuController();
+      Optional.ofNullable(besuController.getNodeKey()).ifPresent(this::outputAddress);
     }
 
     private void outputAddress(final NodeKey nodeKey) {

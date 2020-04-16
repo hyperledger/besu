@@ -865,7 +865,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuController<?> besuController;
   private StandaloneCommand standaloneCommands;
   private BesuConfiguration pluginCommonConfiguration;
-  private NodeKey nodeKey;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
   private Vertx vertx;
@@ -958,17 +957,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
       besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     }
-  }
-
-  /* NOTE: Must be called after addConfigurationService */
-  private void addNodeKey() {
-    if (nodeKey == null) {
-      nodeKey = new NodeKey(nodeKeySecurityModuleProvider(nodeKeySecurityModuleProviderName));
-    }
-  }
-
-  public Optional<NodeKey> getNodeKey() {
-    return Optional.ofNullable(nodeKey);
   }
 
   @VisibleForTesting
@@ -1251,7 +1239,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuControllerBuilder<?> getControllerBuilder() {
     addConfigurationService();
-    addNodeKey();
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
@@ -1269,7 +1256,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumExtranonce,
                 Optional.empty()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodeKey(nodeKey)
+        .nodeKey(new NodeKey(nodeKeySecurityModuleProvider(nodeKeySecurityModuleProviderName)))
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
