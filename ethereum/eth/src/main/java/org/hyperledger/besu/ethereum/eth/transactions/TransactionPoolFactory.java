@@ -99,6 +99,7 @@ public class TransactionPoolFactory {
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+    ethContext.getEthPeers().subscribeDisconnect(pendingTransactionTracker);
     return transactionPool;
   }
 }
