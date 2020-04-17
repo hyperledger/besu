@@ -38,7 +38,6 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
   private final boolean isDocker = Boolean.getBoolean("besu.docker");
   private final LocalFileSecurityModuleCLIOptions cliOptions =
       new LocalFileSecurityModuleCLIOptions();
-  private BesuConfiguration besuConfiguration;
 
   @Override
   public void register(final BesuContext context) {
@@ -76,13 +75,12 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
 
   private SecurityModule createFileBasedKeyPairSecurityModule(
       final BesuConfiguration besuConfiguration) {
-    this.besuConfiguration = besuConfiguration;
-    final File privateKeyFile = nodePrivateKeyFile();
+    final File privateKeyFile = nodePrivateKeyFile(besuConfiguration);
     final SECP256K1.KeyPair keyPair = KeyPairUtil.loadKeyPair(privateKeyFile);
     return new KeyPairSecurityModule(keyPair);
   }
 
-  private File nodePrivateKeyFile() {
+  private File nodePrivateKeyFile(final BesuConfiguration besuConfiguration) {
     final File nodePrivateKeyFile = isFullInstantiation() ? cliOptions.getPrivateKeyFile() : null;
 
     return nodePrivateKeyFile != null
