@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.securitymodule;
 
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
 import java.util.function.Function;
@@ -22,5 +23,6 @@ import java.util.function.Function;
  * Represents Security Module Provider Function which takes an instance of BesuConfiguration and
  * produces an instance of SecurityModule.
  */
+@Unstable
 @FunctionalInterface
 public interface SecurityModuleProvider extends Function<BesuConfiguration, SecurityModule> {}

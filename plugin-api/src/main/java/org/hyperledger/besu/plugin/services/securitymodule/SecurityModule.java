@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.securitymodule;
 
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
@@ -24,6 +25,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * interface ensures cryptographic functions required by Ethereum are available to the application
  * at large, without releasing the content of the private key.
  */
+@Unstable
 public interface SecurityModule {
 
   /**

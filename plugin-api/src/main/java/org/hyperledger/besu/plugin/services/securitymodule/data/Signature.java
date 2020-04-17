@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.plugin.services.securitymodule.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import java.math.BigInteger;
 
 /** Represents R and S component of a Signature obtained through sign function */
+@Unstable
 public interface Signature {
   BigInteger getR();
 
