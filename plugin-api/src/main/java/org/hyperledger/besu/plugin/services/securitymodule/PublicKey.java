@@ -16,19 +16,7 @@ package org.hyperledger.besu.plugin.services.securitymodule;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class PublicKey {
-
-  private final Bytes encoded;
-
-  public PublicKey(final Bytes encoded) {
-    this.encoded = encoded;
-  }
-
-  public static PublicKey create(final Bytes encoded) {
-    return new PublicKey(encoded);
-  }
-
-  public Bytes getEncoded() {
-    return encoded;
-  }
+@FunctionalInterface
+public interface PublicKey {
+  Bytes getEncoded();
 }

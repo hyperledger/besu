@@ -39,8 +39,7 @@ public class KeyPairSecurityModule implements SecurityModule {
 
   @Override
   public PublicKey getPublicKey() {
-    final SECP256K1.PublicKey pubKey = keyPair.getPublicKey();
-    return new PublicKey(pubKey.getEncodedBytes());
+    return keyPair.getPublicKey()::getEncodedBytes;
   }
 
   @Override

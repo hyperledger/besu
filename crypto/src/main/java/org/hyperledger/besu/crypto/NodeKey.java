@@ -41,7 +41,6 @@ public class NodeKey {
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
-    final PublicKey pubKey = new PublicKey(partyKey.getEncodedBytes());
-    return securityModule.calculateECDHKeyAgreement(pubKey);
+    return securityModule.calculateECDHKeyAgreement(partyKey::getEncodedBytes);
   }
 }
