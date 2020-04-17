@@ -49,7 +49,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   Transaction<S> startTransaction() throws StorageException;
 
-  long removeAllEntriesUnless(S segmentHandle, Predicate<byte[]> inUseCheck);
+  long removeAllKeysUnless(S segmentHandle, Predicate<byte[]> inUseCheck);
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
