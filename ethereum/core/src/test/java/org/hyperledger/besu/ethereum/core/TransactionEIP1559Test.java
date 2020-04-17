@@ -52,6 +52,7 @@ public class TransactionEIP1559Test {
   public void givenEIP1559Transaction_assertThatRlpDecodingWorks() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
+    set(legacyTransaction, "gasPrice", null);
     set(legacyTransaction, "gasPremium", expectedGasPremium);
     set(legacyTransaction, "feeCap", expectedFeeCap);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
@@ -62,6 +63,7 @@ public class TransactionEIP1559Test {
     assertThat(eip1559Transaction.isEIP1559Transaction()).isTrue();
     assertThat(eip1559Transaction.getGasPremium()).hasValue(expectedGasPremium);
     assertThat(eip1559Transaction.getFeeCap()).hasValue(expectedFeeCap);
+    assertThat(eip1559Transaction.getGasPrice()).isEqualByComparingTo(Wei.ZERO);
   }
 
   private void set(final Object object, final String fieldName, final Object fieldValue) {
