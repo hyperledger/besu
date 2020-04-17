@@ -116,6 +116,15 @@ public class FilterManager extends AbstractVerticle {
     return filterId;
   }
 
+  /**
+   * Installs a new private log filter
+   *
+   * @param privacyGroupId String privacyGroupId
+   * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
+   * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
+   * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
+   * @return the log filter id
+   */
   public String installPrivateLogFilter(
       final String privacyGroupId,
       final BlockParameter fromBlock,

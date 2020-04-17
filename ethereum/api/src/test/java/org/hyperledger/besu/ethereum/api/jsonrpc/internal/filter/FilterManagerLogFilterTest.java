@@ -216,8 +216,9 @@ public class FilterManagerLogFilterTest {
 
   @Test
   public void privateLogFilterShouldQueryPrivacyQueriesObject() {
+    final LogWithMetadata logWithMetadata = logWithMetadata();
     when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any()))
-        .thenReturn(Lists.newArrayList(logWithMetadata()));
+        .thenReturn(Lists.newArrayList(logWithMetadata));
 
     final String filterId =
         filterManager.installPrivateLogFilter(PRIVACY_GROUP_ID, latest(), latest(), logsQuery());
@@ -227,7 +228,7 @@ public class FilterManagerLogFilterTest {
     verify(blockchainQueries, times(0)).matchingLogs(anyLong(), anyLong(), any());
 
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any());
-    assertThat(filterManager.logsChanges(filterId).size()).isEqualTo(1);
+    assertThat(filterManager.logsChanges(filterId).get(0)).isEqualTo(logWithMetadata);
   }
 
   private LogWithMetadata logWithMetadata() {
