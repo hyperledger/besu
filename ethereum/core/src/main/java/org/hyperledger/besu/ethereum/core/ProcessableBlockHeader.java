@@ -31,6 +31,7 @@ public class ProcessableBlockHeader {
 
   // The block creation timestamp (seconds since the unix epoch)
   protected final long timestamp;
+  // base fee is included for post EIP-1559 blocks
   protected final Long baseFee;
 
   protected ProcessableBlockHeader(
