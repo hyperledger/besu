@@ -412,10 +412,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     out.writeLongScalar(getNonce());
     final boolean asEIP1559 =
-            ExperimentalEIPs.eip1559Enabled
-                    && (gasPrice == null || gasPrice.isZero())
-                    && gasPremium != null
-                    && feeCap != null;
+        ExperimentalEIPs.eip1559Enabled
+            && (gasPrice == null || gasPrice.isZero())
+            && gasPremium != null
+            && feeCap != null;
     if (asEIP1559) {
       out.writeNull();
     } else {
