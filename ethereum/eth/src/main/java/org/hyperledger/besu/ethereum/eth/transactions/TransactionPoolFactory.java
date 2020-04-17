@@ -54,6 +54,35 @@ public class TransactionPoolFactory {
 
     final PendingTransactionsMessageSender pendingTransactionsMessageSender =
         new PendingTransactionsMessageSender(pendingTransactionTracker);
+
+    return createTransactionPool(
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        metricsSystem,
+        syncState,
+        minTransactionGasPrice,
+        transactionPoolConfiguration,
+        pendingTransactions,
+        transactionTracker,
+        transactionsMessageSender,
+        pendingTransactionTracker,
+        pendingTransactionsMessageSender);
+  }
+
+  static TransactionPool createTransactionPool(
+      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolContext<?> protocolContext,
+      final EthContext ethContext,
+      final MetricsSystem metricsSystem,
+      final SyncState syncState,
+      final Wei minTransactionGasPrice,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final PendingTransactions pendingTransactions,
+      final PeerTransactionTracker transactionTracker,
+      final TransactionsMessageSender transactionsMessageSender,
+      final PeerPendingTransactionTracker pendingTransactionTracker,
+      final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
@@ -68,7 +97,6 @@ public class TransactionPoolFactory {
             pendingTransactionTracker,
             minTransactionGasPrice,
             metricsSystem);
-
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
@@ -97,8 +125,10 @@ public class TransactionPoolFactory {
     ethContext
         .getEthMessages()
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
+
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+    ethContext.getEthPeers().subscribeDisconnect(pendingTransactionTracker);
     return transactionPool;
   }
 }
