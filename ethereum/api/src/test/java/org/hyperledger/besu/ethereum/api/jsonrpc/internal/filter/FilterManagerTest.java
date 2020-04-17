@@ -61,8 +61,11 @@ public class FilterManagerTest {
     this.blockGenerator = new BlockDataGenerator();
     this.currentBlock = blockGenerator.genesisBlock();
     this.filterManager =
-        new FilterManager(
-            blockchainQueries, transactionPool, new FilterIdGenerator(), filterRepository);
+        new FilterManagerBuilder()
+            .blockchainQueries(blockchainQueries)
+            .transactionPool(transactionPool)
+            .filterRepository(filterRepository)
+            .build();
   }
 
   @Test
