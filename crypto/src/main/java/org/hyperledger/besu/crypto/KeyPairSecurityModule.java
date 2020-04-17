@@ -18,6 +18,8 @@ import org.hyperledger.besu.plugin.services.securitymodule.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.Signature;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -34,7 +36,7 @@ public class KeyPairSecurityModule implements SecurityModule {
   @Override
   public Signature sign(final Bytes32 dataHash) {
     final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
-    return new Signature(signature.getR(), signature.getS());
+    return new SignatureImpl(signature);
   }
 
   @Override
@@ -46,5 +48,24 @@ public class KeyPairSecurityModule implements SecurityModule {
   public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey) {
     final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(publicKey.getEncoded());
     return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), pubKey);
+  }
+
+  private static class SignatureImpl implements Signature {
+
+    private final SECP256K1.Signature signature;
+
+    public SignatureImpl(final SECP256K1.Signature signature) {
+      this.signature = signature;
+    }
+
+    @Override
+    public BigInteger getR() {
+      return signature.getR();
+    }
+
+    @Override
+    public BigInteger getS() {
+      return signature.getS();
+    }
   }
 }

@@ -16,20 +16,8 @@ package org.hyperledger.besu.plugin.services.securitymodule;
 
 import java.math.BigInteger;
 
-public final class Signature {
-  private final BigInteger r;
-  private final BigInteger s;
+public interface Signature {
+  BigInteger getR();
 
-  public Signature(final BigInteger r, final BigInteger s) {
-    this.r = r;
-    this.s = s;
-  }
-
-  public BigInteger getR() {
-    return r;
-  }
-
-  public BigInteger getS() {
-    return s;
-  }
+  BigInteger getS();
 }
