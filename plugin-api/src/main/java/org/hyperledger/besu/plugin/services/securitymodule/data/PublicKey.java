@@ -16,6 +16,9 @@ package org.hyperledger.besu.plugin.services.securitymodule.data;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Represents a function which provides encoded Bytes of Public Key (such as SECP256K1 Public Key).
+ */
 @FunctionalInterface
 public interface PublicKey {
   Bytes getEncoded();

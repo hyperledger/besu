@@ -15,10 +15,9 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleProvider;
 
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * This service allows plugins to register Security Module which is abstraction of cryptographic
@@ -26,12 +25,6 @@ import java.util.function.Function;
  */
 @Unstable
 public interface SecurityModuleService {
-
-  @FunctionalInterface
-  interface SecurityModuleProvider extends Function<BesuConfiguration, SecurityModule> {
-    @Override
-    SecurityModule apply(BesuConfiguration besuConfiguration);
-  }
 
   /**
    * Registers a factory as available for creating SecurityProvider instances.

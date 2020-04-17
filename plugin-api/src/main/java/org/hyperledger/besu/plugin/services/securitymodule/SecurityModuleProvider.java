@@ -12,13 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.securitymodule.data;
+package org.hyperledger.besu.plugin.services.securitymodule;
 
-import java.math.BigInteger;
+import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
-/** Represents R and S component of a Signature obtained through sign function */
-public interface Signature {
-  BigInteger getR();
+import java.util.function.Function;
 
-  BigInteger getS();
+/**
+ * Represents Security Module Provider Function which takes an instance of BesuConfiguration and
+ * produces an instance of SecurityModule.
+ */
+@FunctionalInterface
+public interface SecurityModuleProvider extends Function<BesuConfiguration, SecurityModule> {
+  @Override
+  SecurityModule apply(BesuConfiguration besuConfiguration);
 }
