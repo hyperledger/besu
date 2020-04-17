@@ -24,6 +24,5 @@ import java.util.function.Function;
  */
 @FunctionalInterface
 public interface SecurityModuleProvider extends Function<BesuConfiguration, SecurityModule> {
-  @Override
-  SecurityModule apply(BesuConfiguration besuConfiguration);
+
 }
