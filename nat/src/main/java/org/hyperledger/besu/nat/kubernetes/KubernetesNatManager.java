@@ -22,9 +22,9 @@ import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +32,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.Configuration;
 import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.V1LoadBalancerIngress;
 import io.kubernetes.client.models.V1Service;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
@@ -45,10 +46,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class KubernetesNatManager extends AbstractNatManager {
   protected static final Logger LOG = LogManager.getLogger();
-
-  private static final String BESU_NAMESPACE_ENV = "BESU_NAMESPACE";
-
-  private static final String DEFAULT_SERVICE_NAMESPACE = "besu";
 
   private static final String DEFAULT_BESU_POD_NAME_FILTER = "besu";
 
@@ -76,19 +73,7 @@ public class KubernetesNatManager extends AbstractNatManager {
       final CoreV1Api api = new CoreV1Api();
       // invokes the CoreV1Api client
       final V1Service service =
-          api
-              .listNamespacedService(
-                  Optional.ofNullable(System.getenv(BESU_NAMESPACE_ENV))
-                      .orElse(DEFAULT_SERVICE_NAMESPACE),
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null)
+          api.listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
               .getItems().stream()
               .filter(
                   v1Service ->
@@ -106,8 +91,25 @@ public class KubernetesNatManager extends AbstractNatManager {
   void updateUsingBesuService(final V1Service service) throws RuntimeException {
     try {
       LOG.info("Found Besu service: {}", service.getMetadata().getName());
-      LOG.info("Setting host IP to: {}.", service.getSpec().getClusterIP());
-      internalAdvertisedHost = service.getSpec().getClusterIP();
+
+      final V1LoadBalancerIngress v1LoadBalancerIngress =
+          service.getStatus().getLoadBalancer().getIngress().stream()
+              .filter(
+                  v1LoadBalancerIngress1 ->
+                      v1LoadBalancerIngress1.getHostname() != null
+                          || v1LoadBalancerIngress1.getIp() != null)
+              .findFirst()
+              .orElseThrow(() -> new NatInitializationException("Ingress not found"));
+
+      if (v1LoadBalancerIngress.getHostname() != null) {
+        internalAdvertisedHost =
+            InetAddress.getByName(v1LoadBalancerIngress.getHostname()).getHostAddress();
+      } else {
+        internalAdvertisedHost = v1LoadBalancerIngress.getIp();
+      }
+
+      LOG.info("Setting host IP to: {}.", internalAdvertisedHost);
+
       final String internalHost = queryLocalIPAddress().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       service
           .getSpec()
