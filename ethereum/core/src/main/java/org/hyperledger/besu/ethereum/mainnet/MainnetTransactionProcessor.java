@@ -58,9 +58,6 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
   private final int createContractAccountVersion;
 
-  // returnStack introduce on eip2315
-  private final boolean enableReturnStack;
-
   public static class Result implements TransactionProcessor.Result {
 
     private final Status status;
@@ -157,8 +154,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final int createContractAccountVersion,
-      final boolean enableReturnStack) {
+      final int createContractAccountVersion) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -166,7 +162,6 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.createContractAccountVersion = createContractAccountVersion;
-    this.enableReturnStack = enableReturnStack;
   }
 
   @Override
@@ -226,14 +221,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final WorldUpdater worldUpdater = worldState.updater();
     final MessageFrame initialFrame;
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-
-    // returnStack introduce on eip2315
-    final ReturnStack returnStack;
-    if (enableReturnStack) {
-      returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
-    } else {
-      returnStack = new ReturnStack();
-    }
+    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
 
     if (transaction.isContractCreation()) {
       final Address contractAddress =

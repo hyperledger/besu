@@ -1079,7 +1079,7 @@ public class MessageFrame {
     private Boolean isPersistingPrivateState = false;
     private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
-    private ReturnStack returnStack = new ReturnStack();
+    private ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
 
     public Builder type(final Type type) {
       this.type = type;

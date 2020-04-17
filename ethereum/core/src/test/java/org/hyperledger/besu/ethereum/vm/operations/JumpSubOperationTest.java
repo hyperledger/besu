@@ -155,17 +155,6 @@ public class JumpSubOperationTest {
   }
 
   @Test
-  public void shouldHaltWithTooManyStackItemsWhenReturnStackIsDeactivated() {
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
-    final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
-    frame.setPC(CURRENT_PC);
-
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
-        .contains(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
-  }
-
-  @Test
   public void shouldHaltWithTooManyStackItemsWhenReturnStackIsFull() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);

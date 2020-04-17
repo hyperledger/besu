@@ -131,8 +131,7 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
-                    false))
+                    Account.DEFAULT_VERSION))
         .name("Atlantis");
   }
 

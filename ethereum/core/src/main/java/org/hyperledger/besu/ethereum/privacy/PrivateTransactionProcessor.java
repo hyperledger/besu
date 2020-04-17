@@ -68,9 +68,6 @@ public class PrivateTransactionProcessor {
 
   private final int createContractAccountVersion;
 
-  // returnStack introduce on eip2315
-  private final boolean enableReturnStack;
-
   public static class Result implements TransactionProcessor.Result {
 
     private final Status status;
@@ -169,8 +166,7 @@ public class PrivateTransactionProcessor {
       final boolean clearEmptyAccounts,
       final int maxStackSize,
       final int createContractAccountVersion,
-      final PrivateTransactionValidator privateTransactionValidator,
-      final boolean enableReturnStack) {
+      final PrivateTransactionValidator privateTransactionValidator) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -179,7 +175,6 @@ public class PrivateTransactionProcessor {
     this.maxStackSize = maxStackSize;
     this.createContractAccountVersion = createContractAccountVersion;
     this.privateTransactionValidator = privateTransactionValidator;
-    this.enableReturnStack = enableReturnStack;
   }
 
   @SuppressWarnings("unused")
@@ -222,13 +217,7 @@ public class PrivateTransactionProcessor {
     final WorldUpdater mutablePrivateWorldStateUpdater =
         new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
 
-    // returnStack introduce on eip2315
-    final ReturnStack returnStack;
-    if (enableReturnStack) {
-      returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
-    } else {
-      returnStack = new ReturnStack();
-    }
+    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
 
     if (transaction.isContractCreation()) {
       final Address privateContractAddress =

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.util.ArrayDeque;
 
 /**
@@ -23,10 +25,6 @@ import java.util.ArrayDeque;
 public class ReturnStack extends ArrayDeque<Integer> {
 
   private final int capacity;
-
-  public ReturnStack() {
-    this.capacity = 0;
-  }
 
   public ReturnStack(final int numElements) {
     super(numElements);
@@ -48,9 +46,7 @@ public class ReturnStack extends ArrayDeque<Integer> {
 
   @Override
   public void push(final Integer value) {
-    if (size() == capacity) {
-      throw new IllegalStateException("return stack overflow");
-    }
+    checkState(!isFull(), "return stack overflow");
     super.push(value);
   }
 }
