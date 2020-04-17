@@ -35,9 +35,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -392,8 +391,14 @@ public class RunnerBuilder {
             Optional.of(besuController.getProtocolManager().ethContext().getScheduler()));
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
+
     final FilterManager filterManager =
-        createFilterManager(vertx, blockchainQueries, transactionPool);
+        new FilterManagerBuilder()
+            .blockchainQueries(blockchainQueries)
+            .transactionPool(transactionPool)
+            .privacyParameters(privacyParameters)
+            .build();
+    vertx.deployVerticle(filterManager);
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
@@ -621,17 +626,6 @@ public class RunnerBuilder {
     final Collection<EnodeURL> fixedNodes = new ArrayList<>(someFixedNodes);
     fixedNodes.addAll(moreFixedNodes);
     return fixedNodes;
-  }
-
-  private FilterManager createFilterManager(
-      final Vertx vertx,
-      final BlockchainQueries blockchainQueries,
-      final TransactionPool transactionPool) {
-    final FilterManager filterManager =
-        new FilterManager(
-            blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
-    vertx.deployVerticle(filterManager);
-    return filterManager;
   }
 
   private Map<String, JsonRpcMethod> jsonRpcMethods(
