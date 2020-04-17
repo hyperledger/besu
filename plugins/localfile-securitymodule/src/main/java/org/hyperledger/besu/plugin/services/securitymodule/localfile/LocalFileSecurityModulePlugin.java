@@ -83,10 +83,7 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
   }
 
   private File nodePrivateKeyFile() {
-    File nodePrivateKeyFile = null;
-    if (isFullInstantiation()) {
-      nodePrivateKeyFile = cliOptions.getPrivateKeyFile();
-    }
+    final File nodePrivateKeyFile = isFullInstantiation() ? cliOptions.getPrivateKeyFile() : null;
 
     return nodePrivateKeyFile != null
         ? nodePrivateKeyFile
