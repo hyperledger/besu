@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.securitymodule;
+package org.hyperledger.besu.plugin.services.securitymodule.data;
 
 import java.math.BigInteger;
 

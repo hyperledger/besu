@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.plugin.services.securitymodule.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
-import org.hyperledger.besu.plugin.services.securitymodule.Signature;
+import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
+import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import java.math.BigInteger;
 
