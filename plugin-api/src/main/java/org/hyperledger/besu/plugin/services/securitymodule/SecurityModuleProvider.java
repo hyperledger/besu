@@ -23,6 +23,4 @@ import java.util.function.Function;
  * produces an instance of SecurityModule.
  */
 @FunctionalInterface
-public interface SecurityModuleProvider extends Function<BesuConfiguration, SecurityModule> {
-
-}
+public interface SecurityModuleProvider extends Function<BesuConfiguration, SecurityModule> {}
