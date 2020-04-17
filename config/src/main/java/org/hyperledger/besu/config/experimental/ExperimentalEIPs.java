@@ -40,4 +40,10 @@ public class ExperimentalEIPs {
       description = "Enable non-finalized Berlin features (default: ${DEFAULT-VALUE})",
       arity = "1")
   public static boolean berlinEnabled = BERLIN_ENABLED_DEFAULT_VALUE;
+
+  public static void eip1559MustBeEnabled() {
+    if (!eip1559Enabled) {
+      throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
+    }
+  }
 }

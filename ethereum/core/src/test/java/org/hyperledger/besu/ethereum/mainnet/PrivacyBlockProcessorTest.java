@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
@@ -75,7 +76,8 @@ public class PrivacyBlockProcessorTest {
             protocolSchedule,
             enclave,
             privateStateStorage,
-            privateWorldStateArchive);
+            privateWorldStateArchive,
+            new PrivateStateRootResolver(privateStateStorage));
     publicWorldStateArchive = mock(WorldStateArchive.class);
     privacyBlockProcessor.setPublicWorldStateArchive(publicWorldStateArchive);
   }

@@ -326,7 +326,8 @@ public class ProtocolSpecBuilder<T> {
               protocolSchedule,
               privacyParameters.getEnclave(),
               privacyParameters.getPrivateStateStorage(),
-              privacyParameters.getPrivateWorldStateArchive());
+              privacyParameters.getPrivateWorldStateArchive(),
+              privacyParameters.getPrivateStateRootResolver());
     }
 
     final BlockValidator<T> blockValidator =

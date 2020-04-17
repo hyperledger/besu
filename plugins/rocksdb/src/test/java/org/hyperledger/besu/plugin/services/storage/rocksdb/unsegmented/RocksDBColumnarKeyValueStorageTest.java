@@ -74,9 +74,9 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     tx.commit();
 
     final long removedFromFoo =
-        store.removeAllEntriesUnless(fooSegment, x -> Arrays.equals(x, bytesOf(3)));
+        store.removeAllKeysUnless(fooSegment, x -> Arrays.equals(x, bytesOf(3)));
     final long removedFromBar =
-        store.removeAllEntriesUnless(barSegment, x -> Arrays.equals(x, bytesOf(4)));
+        store.removeAllKeysUnless(barSegment, x -> Arrays.equals(x, bytesOf(4)));
 
     assertThat(removedFromFoo).isEqualTo(2);
     assertThat(removedFromBar).isEqualTo(2);

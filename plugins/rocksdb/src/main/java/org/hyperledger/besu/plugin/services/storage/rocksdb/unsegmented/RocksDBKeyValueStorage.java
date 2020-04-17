@@ -120,14 +120,12 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator()) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
+      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
         if (!retainCondition.test(key)) {
           removedNodeCounter++;
           db.delete(key);
         }
-        rocksIterator.next();
       }
     } catch (final RocksDBException e) {
       throw new StorageException(e);
@@ -139,13 +137,11 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
     try (final RocksIterator rocksIterator = db.newIterator()) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
+      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
         if (returnCondition.test(key)) {
           returnedKeys.add(key);
         }
-        rocksIterator.next();
       }
     }
     return returnedKeys;
