@@ -24,6 +24,7 @@ import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -45,7 +46,9 @@ import org.apache.logging.log4j.Logger;
 public class KubernetesNatManager extends AbstractNatManager {
   protected static final Logger LOG = LogManager.getLogger();
 
-  private static final String DEFAULT_SERVICE_NAMESPACE = "pegasys";
+  private static final String BESU_NAMESPACE_ENV = "BESU_NAMESPACE";
+
+  private static final String DEFAULT_SERVICE_NAMESPACE = "besu";
 
   private static final String DEFAULT_BESU_POD_NAME_FILTER = "besu";
 
@@ -75,7 +78,17 @@ public class KubernetesNatManager extends AbstractNatManager {
       final V1Service service =
           api
               .listNamespacedService(
-                  DEFAULT_SERVICE_NAMESPACE, null, null, null, null, null, null, null, null, null)
+                  Optional.ofNullable(System.getenv(BESU_NAMESPACE_ENV))
+                      .orElse(DEFAULT_SERVICE_NAMESPACE),
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null)
               .getItems().stream()
               .filter(
                   v1Service ->
