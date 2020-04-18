@@ -135,7 +135,7 @@ public class BlockHeaderBuilder {
     validateProcessableBlockHeader();
 
     return new ProcessableBlockHeader(
-        parentHash, coinbase, difficulty, number, gasLimit, timestamp);
+        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {

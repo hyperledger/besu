@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import java.util.Optional;
+
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader {
 
@@ -29,6 +31,8 @@ public class ProcessableBlockHeader {
 
   // The block creation timestamp (seconds since the unix epoch)
   protected final long timestamp;
+  // base fee is included for post EIP-1559 blocks
+  protected final Long baseFee;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -36,13 +40,15 @@ public class ProcessableBlockHeader {
       final Difficulty difficulty,
       final long number,
       final long gasLimit,
-      final long timestamp) {
+      final long timestamp,
+      final Long baseFee) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
     this.number = number;
     this.gasLimit = gasLimit;
     this.timestamp = timestamp;
+    this.baseFee = baseFee;
   }
 
   /**
@@ -97,5 +103,14 @@ public class ProcessableBlockHeader {
    */
   public long getTimestamp() {
     return timestamp;
+  }
+
+  /**
+   * Returns the basefee of the block.
+   *
+   * @return the raw bytes of the extra data field
+   */
+  public Optional<Long> getBaseFee() {
+    return Optional.ofNullable(baseFee);
   }
 }
