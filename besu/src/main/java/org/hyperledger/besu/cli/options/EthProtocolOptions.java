@@ -68,19 +68,19 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
 
   @CommandLine.Option(
       hidden = true,
-      names = {ETH_65_ENABLED},
-      paramLabel = "<INTEGER>",
-      description = "Enable the Eth/65 subprotocol. (default: ${DEFAULT-VALUE})")
-  private Boolean eth65Enabled = Boolean.FALSE;
-
-  @CommandLine.Option(
-      hidden = true,
       names = {MAX_GET_POOLED_TRANSACTIONS},
       paramLabel = "<INTEGER>",
       description =
           "Maximum request limit for Ethereum Wire Protocol GET_POOLED_TRANSACTIONS. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxGetPooledTransactions =
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {ETH_65_ENABLED},
+      paramLabel = "<INTEGER>",
+      description = "Enable the Eth/65 subprotocol. (default: ${DEFAULT-VALUE})")
+  private Boolean eth65Enabled = EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED;
 
   private EthProtocolOptions() {}
 
