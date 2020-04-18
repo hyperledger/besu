@@ -98,7 +98,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
-    supportedCapabilities = calculateCapabilities(fastSyncEnabled, ethereumWireProtocolConfiguration.isEth65Enabled());
+    supportedCapabilities =
+        calculateCapabilities(fastSyncEnabled, ethereumWireProtocolConfiguration.isEth65Enabled());
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -183,7 +184,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return EthProtocol.NAME;
   }
 
-  private List<Capability> calculateCapabilities(final boolean fastSyncEnabled, final boolean eth65Enabled) {
+  private List<Capability> calculateCapabilities(
+      final boolean fastSyncEnabled, final boolean eth65Enabled) {
     final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
     if (!fastSyncEnabled) {
       capabilities.add(EthProtocol.ETH62);
