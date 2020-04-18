@@ -137,11 +137,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.of(2),
             metricsSystem);
     blockchain.observeBlockAdded(transactionPool);
@@ -392,11 +392,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem);
 
@@ -528,11 +528,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem);
 
@@ -596,11 +596,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem);
 
