@@ -192,7 +192,7 @@ public class Runner implements AutoCloseable {
 
   private void waitForServiceToStart(
       final String serviceName, final CompletableFuture<?> startFuture) {
-    while (!startFuture.isDone()) {
+    do {
       try {
         startFuture.get(60, TimeUnit.SECONDS);
       } catch (final InterruptedException e) {
@@ -204,7 +204,7 @@ public class Runner implements AutoCloseable {
       } catch (final TimeoutException e) {
         LOG.warn("Service {} is taking an unusually long time to start", serviceName);
       }
-    }
+    } while (!startFuture.isDone());
   }
 
   private void writeBesuPortsToFile() {

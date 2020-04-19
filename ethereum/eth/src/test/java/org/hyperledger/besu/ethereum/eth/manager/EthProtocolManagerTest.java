@@ -272,7 +272,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -564,7 +564,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -702,7 +702,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -986,7 +986,8 @@ public final class EthProtocolManagerTest {
           metricsSystem,
           mock(SyncState.class),
           Wei.ZERO,
-          TransactionPoolConfiguration.builder().build());
+          TransactionPoolConfiguration.builder().build(),
+          true);
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});

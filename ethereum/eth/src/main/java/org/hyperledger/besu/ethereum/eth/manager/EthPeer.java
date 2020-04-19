@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
@@ -376,6 +377,10 @@ public class EthPeer {
 
   public boolean hasAvailableRequestCapacity() {
     return outstandingRequests() < MAX_OUTSTANDING_REQUESTS;
+  }
+
+  public Set<Capability> getAgreedCapabilities() {
+    return connection.getAgreedCapabilities();
   }
 
   public Bytes nodeId() {

@@ -45,10 +45,10 @@ public class PrivateStorageMigrationBuilder {
     final WorldStateArchive publicWorldStateArchive =
         besuController.getProtocolContext().getWorldStateArchive();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
-    final PrivateStateRootResolver privateStateRootResolver =
-        new PrivateStateRootResolver(privateStateStorage);
     final LegacyPrivateStateStorage legacyPrivateStateStorage =
         privacyParameters.getPrivateStorageProvider().createLegacyPrivateStateStorage();
+    final PrivateStateRootResolver privateStateRootResolver =
+        privacyParameters.getPrivateStateRootResolver();
 
     return new PrivateStorageMigration(
         blockchain,

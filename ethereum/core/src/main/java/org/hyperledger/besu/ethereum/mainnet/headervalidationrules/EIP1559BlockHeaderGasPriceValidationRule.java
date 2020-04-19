@@ -24,7 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHeaderValidationRule {
-  private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
+  private final Logger LOG = LogManager.getLogger(EIP1559BlockHeaderGasPriceValidationRule.class);
   private final EIP1559 eip1559;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
 
@@ -51,7 +51,7 @@ public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHe
       if (baseFee != header.getBaseFee().orElseThrow()) {
         LOG.trace(
             "Invalid block header: basefee {} does not equal expected basefee {}",
-            header.getBaseFee(),
+            header.getBaseFee().orElseThrow(),
             baseFee);
         return false;
       }
