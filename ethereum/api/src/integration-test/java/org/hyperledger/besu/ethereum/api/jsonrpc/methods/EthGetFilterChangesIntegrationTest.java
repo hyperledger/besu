@@ -115,11 +115,11 @@ public class EthGetFilterChangesIntegrationTest {
             executionContext.getProtocolSchedule(),
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem);
     final BlockchainQueries blockchainQueries =
