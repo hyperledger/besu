@@ -193,6 +193,7 @@ public final class RunnerTest {
     final GraphQLConfiguration aheadGraphQLConfiguration = graphQLConfiguration();
     final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
     final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
+    final Path pidPath = temp.getRoot().toPath().resolve("pid");
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
@@ -213,11 +214,13 @@ public final class RunnerTest {
             .webSocketConfiguration(aheadWebSocketConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
             .dataDir(dbAhead)
+            .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
             .build();
     try {
 
       runnerAhead.start();
+      assertThat(pidPath.toFile().exists()).isTrue();
 
       final SynchronizerConfiguration syncConfigBehind =
           SynchronizerConfiguration.builder()

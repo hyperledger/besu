@@ -96,7 +96,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             metricsSystem,
             syncState,
             Wei.of(1),
-            TransactionPoolConfiguration.builder().build());
+            TransactionPoolConfiguration.builder().build(),
+            true);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
