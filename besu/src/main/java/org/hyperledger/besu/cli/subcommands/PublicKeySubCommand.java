@@ -22,7 +22,6 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
-import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -73,8 +72,8 @@ public class PublicKeySubCommand implements Runnable {
     spec.commandLine().usage(out);
   }
 
-  private BesuController<?> createBesuController() {
-    return parentCommand.buildController();
+  private NodeKey buildNodeKey() {
+    return parentCommand.buildNodeKey();
   }
 
   /**
@@ -107,8 +106,8 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      final BesuController<?> besuController = parentCommand.createBesuController();
-      Optional.ofNullable(besuController.getNodeKey()).ifPresent(this::outputPublicKey);
+      final NodeKey nodeKey = parentCommand.buildNodeKey();
+      Optional.ofNullable(nodeKey).ifPresent(this::outputPublicKey);
     }
 
     private void outputPublicKey(final NodeKey nodeKey) {
@@ -160,8 +159,8 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      final BesuController<?> besuController = parentCommand.createBesuController();
-      Optional.ofNullable(besuController.getNodeKey()).ifPresent(this::outputAddress);
+      final NodeKey nodeKey = parentCommand.buildNodeKey();
+      Optional.ofNullable(nodeKey).ifPresent(this::outputAddress);
     }
 
     private void outputAddress(final NodeKey nodeKey) {

@@ -1952,7 +1952,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private NodeKey buildNodeKey() {
+  /* NOTE: public access so that PublicKey subcommand can use it directly */
+  public NodeKey buildNodeKey() {
+    addConfigurationService(); // its a no-op if besu configuration service is already initialized
     return new NodeKey(securityModuleProvider(securityModuleProviderName));
   }
 
