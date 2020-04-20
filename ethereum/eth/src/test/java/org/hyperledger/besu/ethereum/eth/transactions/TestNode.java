@@ -135,7 +135,8 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.builder().build());
+            TransactionPoolConfiguration.builder().build(),
+            true);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

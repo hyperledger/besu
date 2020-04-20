@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -49,7 +50,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -111,6 +114,7 @@ public class TransactionPoolTest {
   private long genesisBlockGasLimit;
   private SyncState syncState;
   private EthContext ethContext;
+  private EthPeers ethPeers;
   private PeerTransactionTracker peerTransactionTracker;
   private PeerPendingTransactionTracker peerPendingTransactionTracker;
 
@@ -123,7 +127,7 @@ public class TransactionPoolTest {
     syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
     ethContext = mock(EthContext.class);
-    EthPeers ethPeers = mock(EthPeers.class);
+    ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     peerTransactionTracker = mock(PeerTransactionTracker.class);
     peerPendingTransactionTracker = mock(PeerPendingTransactionTracker.class);
@@ -133,11 +137,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.of(2),
             metricsSystem);
     blockchain.observeBlockAdded(transactionPool);
@@ -388,11 +392,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem);
 
@@ -490,6 +494,22 @@ public class TransactionPoolTest {
   }
 
   @Test
+  public void shouldNotNotifyPeerForPendingTransactionsIfItDoesntSupportEth65() {
+    EthPeer peer = mock(EthPeer.class);
+    EthPeer validPeer = mock(EthPeer.class);
+    when(peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)).thenReturn(false);
+    when(peerPendingTransactionTracker.isPeerSupported(validPeer, EthProtocol.ETH65))
+        .thenReturn(true);
+    when(transactionValidator.validate(any())).thenReturn(valid());
+    transactionPool.addTransactionHash(transaction1.getHash());
+    transactionPool.handleConnect(peer);
+    verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer, transaction1.getHash());
+    transactionPool.handleConnect(validPeer);
+    verify(peerPendingTransactionTracker, times(1))
+        .addToPeerSendQueue(validPeer, transaction1.getHash());
+  }
+
+  @Test
   public void shouldAllowTransactionWhenAccountWhitelistControllerIsNotPresent() {
     givenTransactionIsValid(transaction1);
 
@@ -508,11 +528,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem);
 
@@ -576,11 +596,11 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
+            Optional.of(pendingBatchAddedListener),
             syncState,
             ethContext,
             peerTransactionTracker,
-            peerPendingTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem);
 
