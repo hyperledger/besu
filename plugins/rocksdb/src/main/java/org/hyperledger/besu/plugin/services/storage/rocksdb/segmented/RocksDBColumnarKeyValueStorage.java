@@ -27,7 +27,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionTransitionValidatorDecorator;
 
-import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -60,7 +59,7 @@ import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 
 public class RocksDBColumnarKeyValueStorage
-    implements SegmentedKeyValueStorage<ColumnFamilyHandle>, Closeable {
+    implements SegmentedKeyValueStorage<ColumnFamilyHandle> {
 
   static {
     RocksDbUtil.loadNativeLibrary();
