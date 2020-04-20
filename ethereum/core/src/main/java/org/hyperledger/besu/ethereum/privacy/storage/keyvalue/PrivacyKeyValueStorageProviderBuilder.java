@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.privacy.storage.keyvalue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PRIVATE_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PRIVATE_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BESU_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BESU_PRIVATE_TRANSACTIONS;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -57,9 +57,9 @@ public class PrivacyKeyValueStorageProviderBuilder {
     checkNotNull(metricsSystem, "Cannot build a storage provider without a metrics system.");
 
     return new PrivacyKeyValueStorageProvider(
-        storageFactory.create(PRIVATE_TRANSACTIONS, commonConfiguration, metricsSystem),
+        storageFactory.create(BESU_PRIVATE_TRANSACTIONS, commonConfiguration, metricsSystem),
         new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE),
-        storageFactory.create(PRIVATE_STATE, commonConfiguration, metricsSystem),
+        storageFactory.create(BESU_PRIVATE_STATE, commonConfiguration, metricsSystem),
         storageFactory.getVersion());
   }
 }
