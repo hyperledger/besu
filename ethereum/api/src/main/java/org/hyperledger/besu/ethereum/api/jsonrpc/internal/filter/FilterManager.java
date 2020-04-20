@@ -162,35 +162,17 @@ public class FilterManager extends AbstractVerticle {
           }
         });
 
-    checkBlockchainForMatchingLogsForFilters();
+    filterRepository.getFiltersOfType(LogFilter.class).forEach(this::addNewMatchingLogs);
   }
 
-  private void checkBlockchainForMatchingLogsForFilters() {
-    filterRepository.getFiltersOfType(LogFilter.class).forEach(this::addMatchingLogs);
-  }
-
-  private void addMatchingLogs(final LogFilter filter) {
-    final long headBlockNumber = blockchainQueries.headBlockNumber();
+  private void addNewMatchingLogs(final LogFilter filter) {
+    final long fromBlockNumber = blockchainQueries.headBlockNumber();
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
 
-    final List<LogWithMetadata> logs;
-    if (filter instanceof PrivateLogFilter) {
-      logs =
-          privacyQueries
-              .map(
-                  (pq) ->
-                      pq.matchingLogs(
-                          ((PrivateLogFilter) filter).getPrivacyGroupId(),
-                          headBlockNumber,
-                          toBlockNumber,
-                          filter.getLogsQuery()))
-              .orElse(Collections.emptyList());
-    } else {
-      logs = blockchainQueries.matchingLogs(headBlockNumber, toBlockNumber, filter.getLogsQuery());
-    }
+    final List<LogWithMetadata> logs = findLogsWithinRange(filter, fromBlockNumber, toBlockNumber);
 
-    filter.addLog(logs);
+    filter.addLogs(logs);
   }
 
   @VisibleForTesting
@@ -280,6 +262,23 @@ public class FilterManager extends AbstractVerticle {
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
 
-    return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+    return findLogsWithinRange(filter, fromBlockNumber, toBlockNumber);
+  }
+
+  private List<LogWithMetadata> findLogsWithinRange(
+      final LogFilter filter, final long fromBlockNumber, final long toBlockNumber) {
+    if (filter instanceof PrivateLogFilter) {
+      return privacyQueries
+          .map(
+              (pq) ->
+                  pq.matchingLogs(
+                      ((PrivateLogFilter) filter).getPrivacyGroupId(),
+                      fromBlockNumber,
+                      toBlockNumber,
+                      filter.getLogsQuery()))
+          .orElse(Collections.emptyList());
+    } else {
+      return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+    }
   }
 }
