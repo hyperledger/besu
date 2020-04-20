@@ -33,6 +33,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,9 +63,11 @@ public class PublicKeySubCommand implements Runnable {
   private CommandSpec spec; // Picocli injects reference to command spec
 
   private final PrintStream out;
+  private final Supplier<NodeKey> nodeKeySupplier;
 
-  public PublicKeySubCommand(final PrintStream out) {
+  public PublicKeySubCommand(final PrintStream out, final Supplier<NodeKey> nodeKeySupplier) {
     this.out = out;
+    this.nodeKeySupplier = nodeKeySupplier;
   }
 
   @Override
@@ -72,8 +75,8 @@ public class PublicKeySubCommand implements Runnable {
     spec.commandLine().usage(out);
   }
 
-  private NodeKey buildNodeKey() {
-    return parentCommand.buildNodeKey();
+  private NodeKey getNodeKey() {
+    return nodeKeySupplier.get();
   }
 
   /**
@@ -106,7 +109,7 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      final NodeKey nodeKey = parentCommand.buildNodeKey();
+      final NodeKey nodeKey = parentCommand.getNodeKey();
       Optional.ofNullable(nodeKey).ifPresent(this::outputPublicKey);
     }
 
@@ -159,7 +162,7 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
-      final NodeKey nodeKey = parentCommand.buildNodeKey();
+      final NodeKey nodeKey = parentCommand.getNodeKey();
       Optional.ofNullable(nodeKey).ifPresent(this::outputAddress);
     }
 

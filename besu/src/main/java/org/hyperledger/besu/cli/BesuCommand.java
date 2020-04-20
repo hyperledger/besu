@@ -995,7 +995,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             rlpBlockExporterFactory,
             resultHandler.out()));
     commandLine.addSubcommand(
-        PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(resultHandler.out()));
+        PublicKeySubCommand.COMMAND_NAME,
+        new PublicKeySubCommand(resultHandler.out(), this::buildNodeKey));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1961,8 +1962,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  /* NOTE: public access so that PublicKey subcommand can use it directly */
-  public NodeKey buildNodeKey() {
+  private NodeKey buildNodeKey() {
     addConfigurationService(); // its a no-op if besu configuration service is already initialized
     return new NodeKey(securityModuleProvider(securityModuleProviderName));
   }
