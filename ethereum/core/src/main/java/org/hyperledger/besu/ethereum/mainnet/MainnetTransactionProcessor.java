@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -231,6 +232,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final WorldUpdater worldUpdater = worldState.updater();
     final MessageFrame initialFrame;
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+
     if (transaction.isContractCreation()) {
       final Address contractAddress =
           Address.contractAddress(senderAddress, sender.getNonce() - 1L);
@@ -239,6 +242,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           MessageFrame.builder()
               .type(MessageFrame.Type.CONTRACT_CREATION)
               .messageFrameStack(messageFrameStack)
+              .returnStack(returnStack)
               .blockchain(blockchain)
               .worldState(worldUpdater.updater())
               .initialGas(gasAvailable)
@@ -270,6 +274,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           MessageFrame.builder()
               .type(MessageFrame.Type.MESSAGE_CALL)
               .messageFrameStack(messageFrameStack)
+              .returnStack(returnStack)
               .blockchain(blockchain)
               .worldState(worldUpdater.updater())
               .initialGas(gasAvailable)
