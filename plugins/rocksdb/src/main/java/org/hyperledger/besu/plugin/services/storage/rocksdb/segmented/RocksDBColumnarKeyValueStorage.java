@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -78,8 +77,7 @@ public class RocksDBColumnarKeyValueStorage
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
   private final Optional<ColumnFamilyHandle> maybePruningHardenedColumn;
   private final RocksDBMetrics metrics;
-  private final AtomicReference<Optional<byte[]>> doomedKey =
-      new AtomicReference<>(Optional.empty());
+  private Optional<byte[]> doomedKey = Optional.empty();
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -186,7 +184,7 @@ public class RocksDBColumnarKeyValueStorage
       for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
         if (pruningHardeningEnabled) {
-          doomedKey.set(Optional.of(key));
+          doomedKey = Optional.of(key);
         }
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
@@ -202,7 +200,7 @@ public class RocksDBColumnarKeyValueStorage
       throw new StorageException(e);
     }
     if (pruningHardeningEnabled) {
-      doomedKey.set(Optional.empty());
+      doomedKey = Optional.empty();
     }
     return removedNodeCounter;
   }
@@ -290,8 +288,8 @@ public class RocksDBColumnarKeyValueStorage
     @Override
     public void commit() throws StorageException {
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
-        while (doomedKey.get().map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
-          Thread.sleep(0, 1000);
+        while (doomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
+          Thread.sleep(0, 100);
         }
         innerTx.commit();
       } catch (final RocksDBException | InterruptedException e) {
