@@ -29,7 +29,9 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -105,7 +107,9 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    TransactionPriceCalculator.frontier(),
+                    CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -230,7 +234,9 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    TransactionPriceCalculator.frontier(),
+                    CoinbaseFeePriceCalculator.frontier()))
         .name("SpuriousDragon");
   }
 
@@ -349,6 +355,8 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
     ExperimentalEIPs.eip1559MustBeEnabled();
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
@@ -360,6 +368,21 @@ public abstract class MainnetProtocolSpecs {
                     chainId,
                     Optional.of(eip1559),
                     AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION,
+                    TransactionPriceCalculator.eip1559(),
+                    CoinbaseFeePriceCalculator.eip1559()))
         .name("EIP-1559")
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(

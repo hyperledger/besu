@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -56,6 +58,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
   private final int maxStackSize;
 
   private final int createContractAccountVersion;
+
+  private final TransactionPriceCalculator transactionPriceCalculator;
+  private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   public static class Result implements TransactionProcessor.Result {
 
@@ -153,7 +158,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final int createContractAccountVersion) {
+      final int createContractAccountVersion,
+      final TransactionPriceCalculator transactionPriceCalculator,
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -161,6 +168,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.createContractAccountVersion = createContractAccountVersion;
+    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
   @Override
@@ -197,10 +206,12 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     final MutableAccount senderMutableAccount = sender.getMutable();
     final long previousNonce = senderMutableAccount.incrementNonce();
+    final Wei transactionGasPrice =
+        transactionPriceCalculator.price(transaction, blockHeader.getBaseFee());
     LOG.trace(
         "Incremented sender {} nonce ({} -> {})", senderAddress, previousNonce, sender.getNonce());
 
-    final Wei upfrontGasCost = transaction.getUpfrontGasCost();
+    final Wei upfrontGasCost = transaction.getUpfrontGasCost(transactionGasPrice);
     final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
     LOG.trace(
         "Deducted sender {} upfront gas cost {} ({} -> {})",
@@ -235,7 +246,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .originator(senderAddress)
               .contract(contractAddress)
               .contractAccountVersion(createContractAccountVersion)
-              .gasPrice(transaction.getGasPrice())
+              .gasPrice(transactionGasPrice)
               .inputData(Bytes.EMPTY)
               .sender(senderAddress)
               .value(transaction.getValue())
@@ -267,7 +278,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .contract(to)
               .contractAccountVersion(
                   contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
-              .gasPrice(transaction.getGasPrice())
+              .gasPrice(transactionGasPrice)
               .inputData(transaction.getPayload())
               .sender(senderAddress)
               .value(transaction.getValue())
@@ -293,7 +304,6 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       worldUpdater.commit();
     }
-
     if (LOG.isTraceEnabled()) {
       LOG.trace(
           "Gas used by transaction: {}, by message call/contract creation: {}",
@@ -307,12 +317,14 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
         gasCalculator.getSelfDestructRefundAmount().times(initialFrame.getSelfDestructs().size());
     final Gas refundGas = initialFrame.getGasRefund().plus(selfDestructRefund);
     final Gas refunded = refunded(transaction, initialFrame.getRemainingGas(), refundGas);
-    final Wei refundedWei = refunded.priceFor(transaction.getGasPrice());
+    final Wei refundedWei = refunded.priceFor(transactionGasPrice);
     senderMutableAccount.incrementBalance(refundedWei);
 
     final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-    final Wei coinbaseWei = coinbaseFee.priceFor(transaction.getGasPrice());
+    final Wei coinbaseWei =
+        coinbaseFeePriceCalculator.price(
+            coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
     coinbase.incrementBalance(coinbaseWei);
 
     initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
