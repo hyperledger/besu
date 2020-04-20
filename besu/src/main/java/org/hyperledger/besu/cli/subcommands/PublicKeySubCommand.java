@@ -64,15 +64,15 @@ public class PublicKeySubCommand implements Runnable {
 
   private final PrintStream out;
   private final Runnable besuConfigurationService;
-  private final Supplier<NodeKey> nodeKeySupplier;
+  private final Supplier<NodeKey> nodeKey;
 
   public PublicKeySubCommand(
       final PrintStream out,
       final Runnable besuConfigurationService,
-      final Supplier<NodeKey> nodeKeySupplier) {
+      final Supplier<NodeKey> nodeKey) {
     this.out = out;
     this.besuConfigurationService = besuConfigurationService;
-    this.nodeKeySupplier = nodeKeySupplier;
+    this.nodeKey = nodeKey;
   }
 
   @Override
@@ -85,7 +85,7 @@ public class PublicKeySubCommand implements Runnable {
   }
 
   private NodeKey getNodeKey() {
-    return nodeKeySupplier.get();
+    return nodeKey.get();
   }
 
   /**
