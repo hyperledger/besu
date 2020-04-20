@@ -20,14 +20,14 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleProvide
 import java.util.Optional;
 
 /**
- * This service allows plugins to register Security Module which is abstraction of cryptographic
- * operations by deferring to specific provider such as BouncyCastle
+ * This service allows plugins to register a Security Module, which is abstraction of cryptographic
+ * operations that defer to specific provider (e.g. BouncyCastle).
  */
 @Unstable
 public interface SecurityModuleService {
 
   /**
-   * Registers a factory as available for creating SecurityProvider instances.
+   * Registers a provider of security modules.
    *
    * @param name The name to identify the Security Provider Supplier Function
    * @param securityModuleProvider Register reference of SecurityModuleProvider.
