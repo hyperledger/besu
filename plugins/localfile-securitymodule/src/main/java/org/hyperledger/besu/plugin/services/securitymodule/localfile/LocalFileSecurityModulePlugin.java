@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.localfile.configuration.LocalFileSecurityModuleCLIOptions;
 
 import java.io.File;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,7 +48,7 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
   }
 
   private void registerCliOptions(final BesuContext context) {
-    if (!isFullInstantiation()) {
+    if (isDocker) {
       return; // don't register cli options in docker mode
     }
 
@@ -81,15 +82,10 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
   }
 
   private File nodePrivateKeyFile(final BesuConfiguration besuConfiguration) {
-    final File nodePrivateKeyFile = isFullInstantiation() ? cliOptions.getPrivateKeyFile() : null;
-
-    return nodePrivateKeyFile != null
-        ? nodePrivateKeyFile
-        : KeyPairUtil.getDefaultKeyFile(besuConfiguration.getDataPath());
-  }
-
-  private boolean isFullInstantiation() {
-    return !isDocker;
+    final Optional<File> nodePrivateKeyFile =
+        isDocker ? Optional.empty() : Optional.ofNullable(cliOptions.getPrivateKeyFile());
+    return nodePrivateKeyFile.orElse(
+        KeyPairUtil.getDefaultKeyFile(besuConfiguration.getDataPath()));
   }
 
   @Override
