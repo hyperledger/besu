@@ -996,7 +996,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             resultHandler.out()));
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME,
-        new PublicKeySubCommand(resultHandler.out(), this::buildNodeKey));
+        new PublicKeySubCommand(
+            resultHandler.out(), this::addConfigurationService, this::buildNodeKey));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1963,15 +1964,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private NodeKey buildNodeKey() {
-    addConfigurationService(); // its a no-op if besu configuration service is already initialized
-    return new NodeKey(securityModuleProvider(securityModuleProviderName));
+    return new NodeKey(securityModuleProvider());
   }
 
-  private SecurityModule securityModuleProvider(final String name) {
+  private SecurityModule securityModuleProvider() {
     return securityModuleService
-        .getByName(name)
-        .orElseThrow(() -> new RuntimeException("Security Module not found: " + name))
-        .apply(pluginCommonConfiguration);
+        .getByName(securityModuleProviderName)
+        .orElseThrow(
+            () -> new RuntimeException("Security Module not found: " + securityModuleProviderName))
+        .create(pluginCommonConfiguration);
   }
 
   private File privacyPublicKeyFile() {

@@ -152,7 +152,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 () ->
                     new IllegalStateException(
                         "Security Module not available: " + DEFAULT_SECURITY_MODULE_PROVIDER))
-            .apply(commonPluginConfiguration);
+            .create(commonPluginConfiguration);
 
     final BesuController<?> besuController =
         builder

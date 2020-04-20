@@ -63,16 +63,25 @@ public class PublicKeySubCommand implements Runnable {
   private CommandSpec spec; // Picocli injects reference to command spec
 
   private final PrintStream out;
+  private final Runnable besuConfigurationService;
   private final Supplier<NodeKey> nodeKeySupplier;
 
-  public PublicKeySubCommand(final PrintStream out, final Supplier<NodeKey> nodeKeySupplier) {
+  public PublicKeySubCommand(
+      final PrintStream out,
+      final Runnable besuConfigurationService,
+      final Supplier<NodeKey> nodeKeySupplier) {
     this.out = out;
+    this.besuConfigurationService = besuConfigurationService;
     this.nodeKeySupplier = nodeKeySupplier;
   }
 
   @Override
   public void run() {
     spec.commandLine().usage(out);
+  }
+
+  private void initBesuConfigurationService() {
+    besuConfigurationService.run();
   }
 
   private NodeKey getNodeKey() {
@@ -109,6 +118,7 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
+      parentCommand.initBesuConfigurationService();
       final NodeKey nodeKey = parentCommand.getNodeKey();
       Optional.ofNullable(nodeKey).ifPresent(this::outputPublicKey);
     }
@@ -162,6 +172,7 @@ public class PublicKeySubCommand implements Runnable {
       checkNotNull(parentCommand);
       checkNotNull(parentCommand.parentCommand);
 
+      parentCommand.initBesuConfigurationService();
       final NodeKey nodeKey = parentCommand.getNodeKey();
       Optional.ofNullable(nodeKey).ifPresent(this::outputAddress);
     }
