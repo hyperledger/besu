@@ -147,7 +147,8 @@ public class PrivNewFilterTest {
         privNewFilterRequestWithUser(PRIVACY_GROUP_ID, filterParameter, user);
 
     assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class);
+        .isInstanceOf(MultiTenancyValidationException.class)
+        .hasMessageContaining("msg");
   }
 
   private JsonRpcRequestContext privNewFilterRequest(

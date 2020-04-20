@@ -60,7 +60,6 @@ public class PrivGetFilterChanges implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), new LogsResult(logs));
     }
 
-    // Filter was not found.
     return new JsonRpcErrorResponse(
         requestContext.getRequest().getId(), JsonRpcError.FILTER_NOT_FOUND);
   }

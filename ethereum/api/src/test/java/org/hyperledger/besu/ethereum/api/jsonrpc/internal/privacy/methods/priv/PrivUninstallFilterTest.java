@@ -101,7 +101,8 @@ public class PrivUninstallFilterTest {
         privUninstallFilterRequestWithUser(PRIVACY_GROUP_ID, FILTER_ID, user);
 
     assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class);
+        .isInstanceOf(MultiTenancyValidationException.class)
+        .hasMessageContaining("msg");
   }
 
   private JsonRpcRequestContext privUninstallFilterRequest(
