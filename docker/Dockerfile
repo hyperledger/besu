@@ -15,9 +15,11 @@ EXPOSE 8545 8546 8547 30303
 ENV BESU_RPC_HTTP_HOST 0.0.0.0
 ENV BESU_RPC_WS_HOST 0.0.0.0
 ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0
+ENV BESU_PID_PATH "/tmp/pid"
 
 ENV PATH="/opt/besu/bin:${PATH}"
 ENTRYPOINT ["besu"]
+HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD bash -c "[ -f /tmp/pid ]"
 
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE

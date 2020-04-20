@@ -76,8 +76,8 @@ public abstract class BesuControllerBuilder<C> {
   private static final Logger LOG = LogManager.getLogger();
 
   protected GenesisConfigFile genesisConfig;
-  SynchronizerConfiguration syncConfig;
-  EthProtocolConfiguration ethereumWireProtocolConfiguration;
+  private SynchronizerConfiguration syncConfig;
+  private EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
   protected BigInteger networkId;
   protected MiningParameters miningParameters;
@@ -265,7 +265,8 @@ public abstract class BesuControllerBuilder<C> {
             metricsSystem,
             syncState,
             miningParameters.getMinTransactionGasPrice(),
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            ethereumWireProtocolConfiguration.isEth65Enabled());
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
@@ -311,7 +312,7 @@ public abstract class BesuControllerBuilder<C> {
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
 
-    List<Closeable> closeables = new ArrayList<>();
+    final List<Closeable> closeables = new ArrayList<>();
     closeables.add(storageProvider);
     if (privacyParameters.getPrivateStorageProvider() != null) {
       closeables.add(privacyParameters.getPrivateStorageProvider());
