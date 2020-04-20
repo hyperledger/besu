@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
@@ -32,12 +31,13 @@ import java.util.stream.LongStream;
 
 public class PrivacyQueries {
 
-  private final Blockchain blockchain;
+  private final BlockchainQueries blockchainQueries;
   private final PrivateWorldStateReader privateWorldStateReader;
 
   public PrivacyQueries(
-      final Blockchain blockchain, final PrivateWorldStateReader privateWorldStateReader) {
-    this.blockchain = blockchain;
+      final BlockchainQueries blockchainQueries,
+      final PrivateWorldStateReader privateWorldStateReader) {
+    this.blockchainQueries = blockchainQueries;
     this.privateWorldStateReader = privateWorldStateReader;
   }
 
@@ -48,7 +48,7 @@ public class PrivacyQueries {
       final LogsQuery query) {
 
     return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
-        .mapToObj(blockchain::getBlockHashByNumber)
+        .mapToObj(blockchainQueries::getBlockHashByNumber)
         .takeWhile(Optional::isPresent)
         .map(Optional::get)
         .map(hash -> matchingLogs(privacyGroupId, hash, query))
@@ -59,7 +59,7 @@ public class PrivacyQueries {
   public List<LogWithMetadata> matchingLogs(
       final String privacyGroupId, final Hash blockHash, final LogsQuery query) {
 
-    final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    final Optional<BlockHeader> blockHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
     if (blockHeader.isEmpty()) {
       return Collections.emptyList();
     }
@@ -76,7 +76,7 @@ public class PrivacyQueries {
             .collect(Collectors.toList());
 
     final long number = blockHeader.get().getNumber();
-    final boolean removed = !blockchain.blockIsOnCanonicalChain(blockHash);
+    final boolean removed = !blockchainQueries.blockIsOnCanonicalChain(blockHash);
 
     return IntStream.range(0, privateTransactionReceiptList.size())
         .mapToObj(

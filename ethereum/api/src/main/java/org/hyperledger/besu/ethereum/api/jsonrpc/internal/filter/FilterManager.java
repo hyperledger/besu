@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -28,7 +29,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AbstractVerticle;
@@ -41,10 +44,12 @@ public class FilterManager extends AbstractVerticle {
   private final FilterIdGenerator filterIdGenerator;
   private final FilterRepository filterRepository;
   private final BlockchainQueries blockchainQueries;
+  private final Optional<PrivacyQueries> privacyQueries;
 
-  public FilterManager(
+  FilterManager(
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool,
+      final Optional<PrivacyQueries> privacyQueries,
       final FilterIdGenerator filterIdGenerator,
       final FilterRepository filterRepository) {
     this.filterIdGenerator = filterIdGenerator;
@@ -53,6 +58,7 @@ public class FilterManager extends AbstractVerticle {
     blockchainQueries.getBlockchain().observeBlockAdded(this::recordBlockEvent);
     transactionPool.subscribePendingTransactions(this::recordPendingTransactionEvent);
     this.blockchainQueries = blockchainQueries;
+    this.privacyQueries = privacyQueries;
   }
 
   @Override
@@ -111,6 +117,26 @@ public class FilterManager extends AbstractVerticle {
   }
 
   /**
+   * Installs a new private log filter
+   *
+   * @param privacyGroupId String privacyGroupId
+   * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
+   * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
+   * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
+   * @return the log filter id
+   */
+  public String installPrivateLogFilter(
+      final String privacyGroupId,
+      final BlockParameter fromBlock,
+      final BlockParameter toBlock,
+      final LogsQuery logsQuery) {
+    final String filterId = filterIdGenerator.nextId();
+    filterRepository.save(
+        new PrivateLogFilter(filterId, privacyGroupId, fromBlock, toBlock, logsQuery));
+    return filterId;
+  }
+
+  /**
    * Uninstalls the specified filter.
    *
    * @param filterId the id of the filter to remove
@@ -136,20 +162,17 @@ public class FilterManager extends AbstractVerticle {
           }
         });
 
-    checkBlockchainForMatchingLogsForFilters();
+    filterRepository.getFiltersOfType(LogFilter.class).forEach(this::addNewMatchingLogs);
   }
 
-  private void checkBlockchainForMatchingLogsForFilters() {
-    final Collection<LogFilter> logFilters = filterRepository.getFiltersOfType(LogFilter.class);
-    logFilters.forEach(
-        (filter) -> {
-          final long headBlockNumber = blockchainQueries.headBlockNumber();
-          final long toBlockNumber =
-              filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
-          final List<LogWithMetadata> logs =
-              blockchainQueries.matchingLogs(headBlockNumber, toBlockNumber, filter.getLogsQuery());
-          filter.addLog(logs);
-        });
+  private void addNewMatchingLogs(final LogFilter filter) {
+    final long fromBlockNumber = blockchainQueries.headBlockNumber();
+    final long toBlockNumber =
+        filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
+
+    final List<LogWithMetadata> logs = findLogsWithinRange(filter, fromBlockNumber, toBlockNumber);
+
+    filter.addLogs(logs);
   }
 
   @VisibleForTesting
@@ -239,6 +262,23 @@ public class FilterManager extends AbstractVerticle {
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
 
-    return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+    return findLogsWithinRange(filter, fromBlockNumber, toBlockNumber);
+  }
+
+  private List<LogWithMetadata> findLogsWithinRange(
+      final LogFilter filter, final long fromBlockNumber, final long toBlockNumber) {
+    if (filter instanceof PrivateLogFilter) {
+      return privacyQueries
+          .map(
+              (pq) ->
+                  pq.matchingLogs(
+                      ((PrivateLogFilter) filter).getPrivacyGroupId(),
+                      fromBlockNumber,
+                      toBlockNumber,
+                      filter.getLogsQuery()))
+          .orElse(Collections.emptyList());
+    } else {
+      return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+    }
   }
 }

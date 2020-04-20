@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -67,23 +68,23 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolSchedule<?> protocolSchedule;
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
-  private final TransactionBatchAddedListener pendingTransactionBatchAddedListener;
+  private final Optional<TransactionBatchAddedListener> pendingTransactionBatchAddedListener;
   private final SyncState syncState;
   private final Wei minTransactionGasPrice;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
-  private final PeerPendingTransactionTracker peerPendingTransactionTracker;
+  private final Optional<PeerPendingTransactionTracker> peerPendingTransactionTracker;
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
       final ProtocolSchedule<?> protocolSchedule,
       final ProtocolContext<?> protocolContext,
       final TransactionBatchAddedListener transactionBatchAddedListener,
-      final TransactionBatchAddedListener pendingTransactionBatchAddedListener,
+      final Optional<TransactionBatchAddedListener> pendingTransactionBatchAddedListener,
       final SyncState syncState,
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
-      final PeerPendingTransactionTracker peerPendingTransactionTracker,
+      final Optional<PeerPendingTransactionTracker> peerPendingTransactionTracker,
       final Wei minTransactionGasPrice,
       final MetricsSystem metricsSystem) {
     this.pendingTransactions = pendingTransactions;
@@ -106,18 +107,23 @@ public class TransactionPool implements BlockAddedObserver {
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
   }
 
-  private void handleConnect(final EthPeer peer) {
+  void handleConnect(final EthPeer peer) {
     final List<Transaction> localTransactions = getLocalTransactions();
     for (final Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
-    final Collection<Hash> hashes = getNewPooledHashes();
-    for (final Hash hash : hashes) {
-      peerPendingTransactionTracker.addToPeerSendQueue(peer, hash);
-    }
+    peerPendingTransactionTracker.ifPresent(
+        peerPendingTransactionTracker -> {
+          if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)) {
+            final Collection<Hash> hashes = getNewPooledHashes();
+            for (final Hash hash : hashes) {
+              peerPendingTransactionTracker.addToPeerSendQueue(peer, hash);
+            }
+          }
+        });
   }
 
-  public List<Transaction> getLocalTransactions() {
+  private List<Transaction> getLocalTransactions() {
     return pendingTransactions.getLocalTransactions();
   }
 
@@ -125,7 +131,7 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.getNewPooledHashes();
   }
 
-  public boolean addTransactionHashes(final Hash transactionHash) {
+  public boolean addTransactionHash(final Hash transactionHash) {
     return pendingTransactions.addTransactionHash(transactionHash);
   }
 
@@ -141,9 +147,9 @@ public class TransactionPool implements BlockAddedObserver {
         () -> {
           final boolean added = pendingTransactions.addLocalTransaction(transaction);
           if (added) {
-            Collection<Transaction> txs = singletonList(transaction);
+            final Collection<Transaction> txs = singletonList(transaction);
             transactionBatchAddedListener.onTransactionsAdded(txs);
-            pendingTransactionBatchAddedListener.onTransactionsAdded(txs);
+            pendingTransactionBatchAddedListener.ifPresent(it -> it.onTransactionsAdded(txs));
           } else {
             duplicateTransactionCounter.labels(LOCAL).inc();
           }

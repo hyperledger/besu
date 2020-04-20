@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.PRIV_FIND_PRIV
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -42,6 +43,7 @@ public class PrivJsonRpcMethodsTest {
   @Mock private ProtocolSchedule<?> protocolSchedule;
   @Mock private TransactionPool transactionPool;
   @Mock private PrivacyParameters privacyParameters;
+  @Mock private FilterManager filterManager;
 
   private PrivJsonRpcMethods privJsonRpcMethods;
 
@@ -49,7 +51,7 @@ public class PrivJsonRpcMethodsTest {
   public void setup() {
     privJsonRpcMethods =
         new PrivJsonRpcMethods(
-            blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+            blockchainQueries, protocolSchedule, transactionPool, privacyParameters, filterManager);
 
     lenient().when(privacyParameters.isEnabled()).thenReturn(true);
   }
