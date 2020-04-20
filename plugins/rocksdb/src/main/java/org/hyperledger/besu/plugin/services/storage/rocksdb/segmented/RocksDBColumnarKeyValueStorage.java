@@ -75,7 +75,6 @@ public class RocksDBColumnarKeyValueStorage
   private final TransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
-  private final Optional<ColumnFamilyHandle> maybePruningHardenedColumn;
   private final RocksDBMetrics metrics;
   private Optional<byte[]> doomedKey = Optional.empty();
 
@@ -83,13 +82,9 @@ public class RocksDBColumnarKeyValueStorage
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
       final MetricsSystem metricsSystem,
-      final RocksDBMetricsFactory rocksDBMetricsFactory,
-      final Optional<SegmentIdentifier> pruningHardenedSegment)
+      final RocksDBMetricsFactory rocksDBMetricsFactory)
       throws StorageException {
 
-    checkArgument(
-        pruningHardenedSegment.map(segments::contains).orElse(true),
-        "A pruning hardened Segment must be one of the storage segments");
     try {
       final List<ColumnFamilyDescriptor> columnDescriptors =
           segments.stream()
@@ -137,8 +132,6 @@ public class RocksDBColumnarKeyValueStorage
         builder.put(segmentName, columnHandle);
       }
       columnHandlesByName = builder.build();
-      maybePruningHardenedColumn = pruningHardenedSegment.map(this::getSegmentIdentifierByName);
-
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -177,21 +170,17 @@ public class RocksDBColumnarKeyValueStorage
   @Override
   public long removeAllKeysUnless(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
-    final boolean pruningHardeningEnabled =
-        maybePruningHardenedColumn.map(segmentHandle::equals).orElse(false);
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
-        if (pruningHardeningEnabled) {
           doomedKey = Optional.of(key);
-        }
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
           try {
             db.delete(segmentHandle, key);
           } catch (RocksDBException rdbe) {
-            if (!pruningHardeningEnabled || rdbe.getStatus().getCode() != Status.Code.TimedOut)
+            if (rdbe.getStatus().getCode() != Status.Code.TimedOut)
               throw rdbe;
           }
         }
@@ -199,9 +188,7 @@ public class RocksDBColumnarKeyValueStorage
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
-    if (pruningHardeningEnabled) {
-      doomedKey = Optional.empty();
-    }
+    doomedKey = Optional.empty();
     return removedNodeCounter;
   }
 

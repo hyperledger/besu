@@ -120,10 +120,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                     rocksDBConfiguration,
                     segments,
                     metricsSystem,
-                    rocksDBMetricsFactory,
-                    segments.stream()
-                        .filter(segId -> segId.getName().equals("BESU_WORLD_STATE"))
-                        .findAny());
+                    rocksDBMetricsFactory);
           }
           return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
         }
