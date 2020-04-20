@@ -11,6 +11,7 @@
 # Node Information
 data-path="~/besudata"
 logging="INFO"
+pid-path="~/.pid"
 
 # Security Module plugin to use
 security-module-provider="localfile"
