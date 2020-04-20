@@ -144,7 +144,7 @@ public class LocalFileSecurityModulePluginTest {
             .getByName(SECURITY_MODULE_NAME)
             .map(
                 secModule ->
-                    secModule.apply(
+                    secModule.create(
                         new BesuConfigurationImpl(dataFolder.toPath(), dataFolder.toPath())));
     assertThat(securityModule).isPresent();
 
@@ -172,7 +172,7 @@ public class LocalFileSecurityModulePluginTest {
     final Optional<SecurityModule> securityModule =
         securityModuleService
             .getByName(SECURITY_MODULE_NAME)
-            .map(secModule -> secModule.apply(null));
+            .map(secModule -> secModule.create(null));
     assertThat(securityModule).isPresent();
 
     assertThat(securityModule.get().getPublicKey().getEncoded())
