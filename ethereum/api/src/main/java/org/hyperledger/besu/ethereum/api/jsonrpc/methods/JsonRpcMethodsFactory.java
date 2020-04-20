@@ -104,7 +104,11 @@ public class JsonRpcMethodsFactory {
               new MinerJsonRpcMethods(miningCoordinator),
               new PermJsonRpcMethods(accountsWhitelistController, nodeWhitelistController),
               new PrivJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
+                  blockchainQueries,
+                  protocolSchedule,
+                  transactionPool,
+                  privacyParameters,
+                  filterManager),
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),

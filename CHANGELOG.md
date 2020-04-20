@@ -5,6 +5,7 @@
 ### Additions and Improvements
 
 - Implemented `priv_getLogs`. [\#686](https://github.com/hyperledger/besu/pull/686)
+- Implemented Private Contracts Log Filters (including JSON-RPC methods to interact with private filters). [\#735](https://github.com/hyperledger/besu/pull/735)
 
 ## 1.4.3 
 

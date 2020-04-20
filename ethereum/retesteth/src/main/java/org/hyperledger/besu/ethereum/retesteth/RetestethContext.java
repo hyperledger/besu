@@ -178,7 +178,8 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            true);
 
     LOG.trace("Genesis Block {} ", genesisState::getBlock);
 

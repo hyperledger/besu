@@ -12,26 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.mainnet;
 
-public enum ExceptionalHaltReason {
-  NONE(""),
-  INSUFFICIENT_GAS("Out of gas"),
-  INSUFFICIENT_STACK_ITEMS("Stack underflow"),
-  INVALID_JUMP_DESTINATION("Bad jump destination"),
-  INVALID_OPERATION("Bad instruction"),
-  INVALID_RETURN_DATA_BUFFER_ACCESS("Out of bounds"),
-  TOO_MANY_STACK_ITEMS("Out of stack"),
-  ILLEGAL_STATE_CHANGE("Illegal state change"),
-  INVALID_RETSUB("Invalid retsub");
+import org.hyperledger.besu.ethereum.core.Gas;
 
-  String description;
+public class BerlinGasCalculator extends IstanbulGasCalculator {
 
-  ExceptionalHaltReason(final String description) {
-    this.description = description;
-  }
+  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(1);
 
-  public String getDescription() {
-    return description;
+  @Override
+  // as https://eips.ethereum.org/EIPS/eip-2315
+  public Gas getBeginSubGasCost() {
+    return BEGIN_SUB_GAS_COST;
   }
 }
