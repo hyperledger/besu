@@ -84,8 +84,8 @@ public class LocalFileSecurityModulePlugin implements BesuPlugin {
   private File nodePrivateKeyFile(final BesuConfiguration besuConfiguration) {
     final Optional<File> nodePrivateKeyFile =
         isDocker ? Optional.empty() : Optional.ofNullable(cliOptions.getPrivateKeyFile());
-    return nodePrivateKeyFile.orElse(
-        KeyPairUtil.getDefaultKeyFile(besuConfiguration.getDataPath()));
+    return nodePrivateKeyFile.orElseGet(
+        () -> KeyPairUtil.getDefaultKeyFile(besuConfiguration.getDataPath()));
   }
 
   @Override
