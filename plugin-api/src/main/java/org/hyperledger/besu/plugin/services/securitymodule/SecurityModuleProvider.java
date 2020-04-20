@@ -23,6 +23,6 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
  */
 @Unstable
 @FunctionalInterface
-public interface SecurityModuleProvider  {
-    SecurityModule create(BesuConfiguration besuConfiguration);
+public interface SecurityModuleProvider {
+  SecurityModule create(BesuConfiguration besuConfiguration);
 }

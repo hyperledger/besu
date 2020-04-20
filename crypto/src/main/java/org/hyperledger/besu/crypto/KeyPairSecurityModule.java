@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
@@ -34,20 +35,33 @@ public class KeyPairSecurityModule implements SecurityModule {
   }
 
   @Override
-  public Signature sign(final Bytes32 dataHash) {
-    final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
-    return new SignatureImpl(signature);
+  public Signature sign(final Bytes32 dataHash) throws SecurityModuleException {
+    try {
+      final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
+      return new SignatureImpl(signature);
+    } catch (final Exception e) {
+      throw new SecurityModuleException(e);
+    }
   }
 
   @Override
-  public PublicKey getPublicKey() {
-    return keyPair.getPublicKey()::getEncodedBytes;
+  public PublicKey getPublicKey() throws SecurityModuleException {
+    try {
+      return keyPair.getPublicKey()::getEncodedBytes;
+    } catch (final Exception e) {
+      throw new SecurityModuleException(e);
+    }
   }
 
   @Override
-  public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey) {
-    final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(publicKey.getEncoded());
-    return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), pubKey);
+  public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey)
+      throws SecurityModuleException {
+    try {
+      final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(publicKey.getEncoded());
+      return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), pubKey);
+    } catch (final Exception e) {
+      throw new SecurityModuleException(e);
+    }
   }
 
   private static class SignatureImpl implements Signature {
