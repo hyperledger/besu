@@ -117,10 +117,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           if (segmentedStorage == null) {
             segmentedStorage =
                 new RocksDBColumnarKeyValueStorage(
-                    rocksDBConfiguration,
-                    segments,
-                    metricsSystem,
-                    rocksDBMetricsFactory);
+                    rocksDBConfiguration, segments, metricsSystem, rocksDBMetricsFactory);
           }
           return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
         }

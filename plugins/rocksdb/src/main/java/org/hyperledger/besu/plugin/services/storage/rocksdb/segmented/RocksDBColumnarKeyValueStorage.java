@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNullElse;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -174,14 +173,13 @@ public class RocksDBColumnarKeyValueStorage
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
-          doomedKey = Optional.of(key);
+        doomedKey = Optional.of(key);
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
           try {
             db.delete(segmentHandle, key);
           } catch (RocksDBException rdbe) {
-            if (rdbe.getStatus().getCode() != Status.Code.TimedOut)
-              throw rdbe;
+            if (rdbe.getStatus().getCode() != Status.Code.TimedOut) throw rdbe;
           }
         }
       }
