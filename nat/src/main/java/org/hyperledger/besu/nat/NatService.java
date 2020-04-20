@@ -129,10 +129,10 @@ public class NatService {
             .orElseThrow();
 
       } catch (Exception e) {
+        LOG.debug("Caught exception while trying to query NAT external IP address (ignoring)", e);
         LOG.warn(
-            "Caught exception while trying to query NAT external IP address (ignoring). Using the fallback value : {} ",
-            fallbackValue,
-            e);
+            "Unable to query NAT external IP address. Using the fallback value : {} ",
+            fallbackValue);
       }
     }
     return fallbackValue;
@@ -155,10 +155,9 @@ public class NatService {
                 natManager.queryLocalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .orElseThrow();
       } catch (Exception e) {
+        LOG.debug("Caught exception while trying to query NAT local IP address (ignoring)", e);
         LOG.warn(
-            "Caught exception while trying to query local IP address (ignoring). Using the fallback value : {} ",
-            fallbackValue,
-            e);
+            "Unable to query NAT local IP address. Using the fallback value : {} ", fallbackValue);
       }
     }
     return fallbackValue;

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import org.hyperledger.besu.ethereum.vm.operations.BeginSubOperation;
 import org.hyperledger.besu.ethereum.vm.operations.JumpDestOperation;
 
 import java.util.BitSet;
@@ -30,6 +31,9 @@ public class Code {
 
   /** Used to cache valid jump destinations. */
   private BitSet validJumpDestinations;
+
+  /** Used to cache valid jump sub destinations. */
+  private BitSet validJumpSubDestinations;
 
   /**
    * Public constructor.
@@ -98,6 +102,35 @@ public class Code {
           });
     }
     return validJumpDestinations.get(jumpDestination);
+  }
+
+  /**
+   * Determine whether a specified destination is a valid jump sub target.
+   *
+   * @param evm the EVM executing this code
+   * @param frame The current message frame
+   * @param destination The destination we're checking for validity.
+   * @return Whether or not this location is a valid jump sub destination.
+   */
+  public boolean isValidJumpSubDestination(
+      final EVM evm, final MessageFrame frame, final UInt256 destination) {
+    if (!destination.fitsInt()) return false;
+    final int jumpDestination = destination.intValue();
+    if (jumpDestination > getSize()) return false;
+
+    if (validJumpSubDestinations == null) {
+      // Calculate valid jump destinations
+      validJumpSubDestinations = new BitSet(getSize());
+      evm.forEachOperation(
+          this,
+          frame.getContractAccountVersion(),
+          (final Operation op, final Integer offset) -> {
+            if (op.getOpcode() == BeginSubOperation.OPCODE) {
+              validJumpSubDestinations.set(offset);
+            }
+          });
+    }
+    return validJumpSubDestinations.get(jumpDestination);
   }
 
   public Bytes getBytes() {

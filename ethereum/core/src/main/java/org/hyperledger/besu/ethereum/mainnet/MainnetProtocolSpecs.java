@@ -31,8 +31,6 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasLimitValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -340,6 +338,10 @@ public abstract class MainnetProtocolSpecs {
     }
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .gasCalculator(BerlinGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .name("Berlin");
   }
 
@@ -350,27 +352,22 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
-    if (!ExperimentalEIPs.eip1559Enabled) {
-      throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
-    }
+    ExperimentalEIPs.eip1559MustBeEnabled();
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
-    final ProtocolSpecBuilder<Void> eip1559ProtocolSpecBuilder =
-        muirGlacierDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
-            .transactionValidatorBuilder(
-                gasCalculator ->
-                    new MainnetTransactionValidator(
-                        gasCalculator,
-                        true,
-                        chainId,
-                        Optional.of(eip1559),
-                        AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
-            .name("EIP-1559");
-    final BlockHeaderValidator.Builder<Void> blockHeaderValidatorBuilder =
-        eip1559ProtocolSpecBuilder.getBlockHeaderValidatorBuilder();
-    blockHeaderValidatorBuilder
-        .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
-        .addRule(new EIP1559BlockHeaderGasPriceValidationRule(eip1559));
-    return eip1559ProtocolSpecBuilder;
+    return muirGlacierDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Optional.of(eip1559),
+                    AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
+        .name("EIP-1559")
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
   }
 
   // TODO EIP-1559 change for the actual fork name when known
