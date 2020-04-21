@@ -102,7 +102,7 @@ public class SECP256K1 {
       throw new RuntimeException(e);
     }
 
-    LogManager.getLogger().info(useNative ? "Using Native secp256k1" : "Using default secp256k1");
+    LogManager.getLogger().info(useNative ? "Using native secp256k1" : "Using Java secp256k1");
   }
 
   public static Signature sign(final Bytes32 dataHash, final KeyPair keyPair) {

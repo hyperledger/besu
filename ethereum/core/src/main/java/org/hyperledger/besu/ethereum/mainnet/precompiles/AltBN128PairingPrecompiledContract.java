@@ -34,9 +34,15 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.sun.jna.ptr.IntByReference;
+import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 
 public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
+
+  static {
+    LogManager.getLogger()
+        .info(LibAltbn128.ENABLED ? "Using native alt bn128" : "Using java alt bn128");
+  }
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
