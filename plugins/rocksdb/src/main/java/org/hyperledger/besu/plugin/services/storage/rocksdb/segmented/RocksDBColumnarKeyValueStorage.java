@@ -271,12 +271,16 @@ public class RocksDBColumnarKeyValueStorage
 
     @Override
     public void commit() throws StorageException {
-      try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
-        while (maybeDoomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
+      while (maybeDoomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
+        try {
           Thread.sleep(0, 500);
+        } catch (InterruptedException e) {
+          throw new StorageException(e);
         }
+      }
+      try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
         innerTx.commit();
-      } catch (final RocksDBException | InterruptedException e) {
+      } catch (final RocksDBException e) {
         throw new StorageException(e);
       } finally {
         close();
