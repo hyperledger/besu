@@ -18,7 +18,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.math.ec.ECPoint;
 
 public class NodeKey {
 
@@ -41,11 +40,7 @@ public class NodeKey {
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
-    final ECPoint bouncycastleECPoint = partyKey.asEcPoint();
-    final java.security.spec.ECPoint ecPoint =
-        new java.security.spec.ECPoint(
-            bouncycastleECPoint.getAffineXCoord().toBigInteger(),
-            bouncycastleECPoint.getAffineYCoord().toBigInteger());
-    return securityModule.calculateECDHKeyAgreement((() -> ecPoint));
+    return securityModule.calculateECDHKeyAgreement(
+        () -> ECPointUtil.fromBouncyCastleECPoint(partyKey.asEcPoint()));
   }
 }

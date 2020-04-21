@@ -16,7 +16,6 @@ package org.hyperledger.besu.crypto;
 
 import java.math.BigInteger;
 import java.security.spec.ECPoint;
-import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -25,26 +24,34 @@ import org.bouncycastle.math.ec.ECFieldElement;
 /** Helper class for ECPoint */
 public class ECPointUtil {
   public static byte[] toCoordinateByteArray(final BigInteger coordinate) {
-    final byte[] coordinateBytes = coordinate.toByteArray();
-    if (coordinateBytes.length > 32 && coordinateBytes[0] == 0) {
-      return Arrays.copyOfRange(coordinateBytes, 1, coordinateBytes.length);
+    final Bytes bytes = Bytes.wrap(coordinate.toByteArray());
+    if (bytes.size() < 32) {
+      return Bytes32.leftPad(bytes).toArray();
+    } else if (bytes.size() > 32 && bytes.hasLeadingZeroByte()) {
+      return bytes.shiftLeft(1).toArray();
+    } else {
+      return bytes.toArray();
     }
-    return coordinateBytes;
   }
 
   public static ECPoint fromBouncyCastleECPoint(
       final org.bouncycastle.math.ec.ECPoint bouncyCastleECPoint) {
-    final ECFieldElement xCoord = bouncyCastleECPoint.normalize().getXCoord();
-    final ECFieldElement yCoord = bouncyCastleECPoint.normalize().getYCoord();
-    return new ECPoint(
-        Bytes32.wrap(xCoord.getEncoded()).toUnsignedBigInteger(),
-        Bytes32.wrap(yCoord.getEncoded()).toUnsignedBigInteger());
+    final ECFieldElement xCoord = bouncyCastleECPoint.getAffineXCoord();
+    final ECFieldElement yCoord = bouncyCastleECPoint.getAffineYCoord();
+
+    final Bytes32 xEncoded = Bytes32.wrap(xCoord.getEncoded());
+    final Bytes32 yEncoded = Bytes32.wrap(yCoord.getEncoded());
+
+    final BigInteger x = xEncoded.toBigInteger();
+    final BigInteger y = yEncoded.toBigInteger();
+
+    return new ECPoint(x, y);
   }
 
   public static Bytes getEncodedBytes(final ECPoint ecPoint) {
-    final Bytes xCoord = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineX()));
-    final Bytes yCoord = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineY()));
+    final Bytes xBytes = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineX()));
+    final Bytes yBytes = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineY()));
 
-    return Bytes.concatenate(xCoord, yCoord);
+    return Bytes.concatenate(xBytes, yBytes);
   }
 }
