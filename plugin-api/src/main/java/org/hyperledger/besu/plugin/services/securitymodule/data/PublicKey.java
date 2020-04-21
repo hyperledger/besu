@@ -22,8 +22,6 @@ import java.security.spec.ECPoint;
 @Unstable
 @FunctionalInterface
 public interface PublicKey {
-  /**
-   * @return the public point W.
-   */
+  /** @return the public point W. */
   ECPoint getW();
 }
