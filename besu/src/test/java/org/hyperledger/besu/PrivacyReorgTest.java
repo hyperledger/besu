@@ -85,6 +85,7 @@ public class PrivacyReorgTest {
   private static final long CACHE_CAPACITY = 8388608;
   private static final int MAX_BACKGROUND_COMPACTIONS = 4;
   private static final int BACKGROUND_THREAD_COUNT = 4;
+  private static final int DEFAULT_LOCK_TIMEOUT = 1;
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
@@ -397,7 +398,8 @@ public class PrivacyReorgTest {
                             MAX_OPEN_FILES,
                             MAX_BACKGROUND_COMPACTIONS,
                             BACKGROUND_THREAD_COUNT,
-                            CACHE_CAPACITY),
+                            CACHE_CAPACITY,
+                            DEFAULT_LOCK_TIMEOUT),
                     Arrays.asList(KeyValueSegmentIdentifier.values()),
                     RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
