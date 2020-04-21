@@ -35,7 +35,7 @@ public class KeyPairSecurityModuleTest {
 
     final SECP256K1.KeyPair keyPair = KeyPairUtil.loadKeyPair(keyFile);
 
-    KeyPairSecurityModule keyPairSecurityModule = new KeyPairSecurityModule(keyPair);
+    final KeyPairSecurityModule keyPairSecurityModule = new KeyPairSecurityModule(keyPair);
     final ECPoint ecPoint = keyPairSecurityModule.getPublicKey().getW();
     final Bytes encodedBytes = ECPointUtil.getEncodedBytes(ecPoint);
     final SECP256K1.PublicKey publicKey = SECP256K1.PublicKey.create(encodedBytes);
