@@ -23,8 +23,6 @@ import java.security.spec.ECPoint;
 @FunctionalInterface
 public interface PublicKey {
   /**
-   * Returns the public point W.
-   *
    * @return the public point W.
    */
   ECPoint getW();
