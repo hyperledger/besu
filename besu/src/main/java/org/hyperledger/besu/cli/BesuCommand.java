@@ -755,7 +755,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})")
+          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})")
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
