@@ -30,6 +30,8 @@ dependencyManagement {
 
     dependency 'com.graphql-java:graphql-java:13.0'
 
+    dependency 'com.splunk.logging:splunk-library-javalogging:1.8.0'
+
     dependency 'com.squareup.okhttp3:okhttp:4.2.2'
 
     dependency 'commons-cli:commons-cli:1.4'

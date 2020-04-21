@@ -58,6 +58,7 @@ downloadLicenses {
   reportByLicenseType = true
   dependencyConfiguration = 'testCompile'
 
+  ext.epl1 = license('Eclipse Public License 1.0', 'https://www.eclipse.org/legal/epl-v10.html')
   ext.apache = license('Apache License, Version 2.0', 'http://opensource.org/licenses/Apache-2.0')
   ext.mit = license('MIT License', 'http://www.opensource.org/licenses/mit-license.php')
   ext.bsd = license('BSD License', 'http://www.opensource.org/licenses/bsd-license.php')
@@ -65,6 +66,10 @@ downloadLicenses {
   ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
   ext.cc0 =  license('Public Domain (CC0) License 1.0', 'https://creativecommons.org/publicdomain/zero/1.0')
   aliases = [
+      (epl1) : [
+          'Eclipse Public License - v 1.0',
+          'Eclipse Public License 1.0',
+      ],
       (apache)    : [
           'The Apache Software License, Version 2.0',
           'The Apache Software License, version 2.0',
@@ -112,6 +117,10 @@ downloadLicenses {
       // RocksDB is dual licensed under Apache v2.0 or GPL 2 licenses
       // Explicitly declare that we are using the Apache v2.0 license
       (group('org.rocksdb'))      : apache,
+
+      // Logback is dual licensed under EPL v1.0 and LGPL v2.1
+      // Explicitly declare that we are using the EPL v1.0 license
+      (group('ch.qos.logback'))   : epl1,
   ]
 }
 
