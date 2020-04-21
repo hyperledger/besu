@@ -30,7 +30,7 @@ A fix for this issue is being actively worked on.
 ## Fast sync when running Besu on cloud providers  
 
 A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail 
-when running Besu on certain cloud providers. The following errors is displayed repeatedly: 
+when running Besu on certain cloud providers. The following error is displayed repeatedly: 
 
 ```
 ...
@@ -45,14 +45,6 @@ Workaround -> On AWS, a full restart of the AWS VM is required to restart the fa
 
 Fast sync is not currently supported on Digital Ocean. We are investigating options to 
 [add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
-
-## Fast sync reverting to full sync 
-
-In some cases of FastSyncException, fast sync reverts back to a full sync before having reached the 
-pivot block. [\#683](https://github.com/hyperledger/besu/issues/683)
-
-Workaround -> To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your 
-database, and start again.
 
 ## Bootnodes must be validators when using onchain permissioning
 
