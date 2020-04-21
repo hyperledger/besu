@@ -24,6 +24,7 @@ public class RocksDBConfiguration {
   private final int maxBackgroundCompactions;
   private final int backgroundThreadCount;
   private final long cacheCapacity;
+  private final int defaultLockTimeout;
 
   public RocksDBConfiguration(
       final Path databaseDir,
@@ -31,13 +32,15 @@ public class RocksDBConfiguration {
       final int maxBackgroundCompactions,
       final int backgroundThreadCount,
       final long cacheCapacity,
-      final String label) {
+      final String label,
+      final int defaultLockTimeout) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.label = label;
+    this.defaultLockTimeout = defaultLockTimeout;
   }
 
   public Path getDatabaseDir() {
@@ -62,5 +65,9 @@ public class RocksDBConfiguration {
 
   public String getLabel() {
     return label;
+  }
+
+  public int getDefaultLockTimeout() {
+    return defaultLockTimeout;
   }
 }
