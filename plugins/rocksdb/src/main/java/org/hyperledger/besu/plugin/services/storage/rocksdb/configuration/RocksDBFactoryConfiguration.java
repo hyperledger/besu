@@ -20,16 +20,19 @@ public class RocksDBFactoryConfiguration {
   private final int maxBackgroundCompactions;
   private final int backgroundThreadCount;
   private final long cacheCapacity;
+  private final int defaultLockTimeout;
 
   public RocksDBFactoryConfiguration(
       final int maxOpenFiles,
       final int maxBackgroundCompactions,
       final int backgroundThreadCount,
-      final long cacheCapacity) {
+      final long cacheCapacity,
+      final int defaultLockTimeout) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
+    this.defaultLockTimeout = defaultLockTimeout;
   }
 
   public int getMaxOpenFiles() {
@@ -46,5 +49,9 @@ public class RocksDBFactoryConfiguration {
 
   public long getCacheCapacity() {
     return cacheCapacity;
+  }
+
+  public int getDefaultLockTimeout() {
+    return defaultLockTimeout;
   }
 }
