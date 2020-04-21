@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
-  BESU_BLOCKCHAIN((byte) 1),
-  BESU_WORLD_STATE((byte) 2),
-  BESU_PRIVATE_TRANSACTIONS((byte) 3),
-  BESU_PRIVATE_STATE((byte) 4),
-  BESU_PRUNING_STATE((byte) 5);
+  BLOCKCHAIN((byte) 1),
+  WORLD_STATE((byte) 2),
+  PRIVATE_TRANSACTIONS((byte) 3),
+  PRIVATE_STATE((byte) 4),
+  PRUNING_STATE((byte) 5);
 
   private final byte[] id;
 
