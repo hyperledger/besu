@@ -6,6 +6,7 @@
 
 - Implemented `priv_getLogs`. [\#686](https://github.com/hyperledger/besu/pull/686)
 - Implemented private contract log filters including JSON-RPC methods to interact with private filters. [\#735](https://github.com/hyperledger/besu/pull/735)
+- Implemented EIP-2315: Simple Subroutines for the EVM [\#717](https://github.com/hyperledger/besu/pull/717)
 
 ### Bug Fixes 
 
