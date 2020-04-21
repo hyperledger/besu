@@ -29,7 +29,7 @@ jar {
 
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
-
+  implementation project(':config')
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:permissioning')

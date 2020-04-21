@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -40,7 +41,8 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final Wei minTransactionGasPrice,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final boolean eth65Enabled) {
+      final boolean eth65Enabled,
+      final Optional<EIP1559> eip1559) {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -76,7 +78,8 @@ public class TransactionPoolFactory {
         transactionsMessageSender,
         pendingTransactionTracker,
         pendingTransactionsMessageSender,
-        eth65Enabled);
+        eth65Enabled,
+        eip1559);
   }
 
   static TransactionPool createTransactionPool(
@@ -92,7 +95,8 @@ public class TransactionPoolFactory {
       final TransactionsMessageSender transactionsMessageSender,
       final Optional<PeerPendingTransactionTracker> pendingTransactionTracker,
       final Optional<PendingTransactionsMessageSender> pendingTransactionsMessageSender,
-      final boolean eth65Enabled) {
+      final boolean eth65Enabled,
+      final Optional<EIP1559> eip1559) {
     checkState(
         eth65Enabled == pendingTransactionTracker.isPresent(),
         "Pending transaction tracker is present iff eth/65 is enabled.");
@@ -117,7 +121,8 @@ public class TransactionPoolFactory {
             transactionTracker,
             pendingTransactionTracker,
             minTransactionGasPrice,
-            metricsSystem);
+            metricsSystem,
+            eip1559);
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
