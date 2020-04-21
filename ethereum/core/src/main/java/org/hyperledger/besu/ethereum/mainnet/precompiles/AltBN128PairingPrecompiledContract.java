@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
+import static org.hyperledger.besu.nativelib.altbn128.LibAltbn128.altbn128_pairing_precompiled;
+
 import org.hyperledger.besu.crypto.altbn128.AltBn128Fq12Pairer;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Fq2Point;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
@@ -24,12 +26,14 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.nativelib.altbn128.LibAltbn128;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.sun.jna.ptr.IntByReference;
 import org.apache.tuweni.bytes.Bytes;
 
 public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
@@ -74,7 +78,14 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
     if (input.size() % PARAMETER_LENGTH != 0) {
       return null;
     }
+    if (LibAltbn128.ENABLED) {
+      return computeNative(input);
+    } else {
+      return computeDefault(input);
+    }
+  }
 
+  private static Bytes computeDefault(final Bytes input) {
     final int parameters = input.size() / PARAMETER_LENGTH;
     final List<AltBn128Point> a = new ArrayList<>();
     final List<AltBn128Fq2Point> b = new ArrayList<>();
@@ -109,6 +120,17 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
       return TRUE;
     } else {
       return FALSE;
+    }
+  }
+
+  private static Bytes computeNative(final Bytes input) {
+    final byte[] output = new byte[32];
+    final IntByReference outputSize = new IntByReference(32);
+    if (altbn128_pairing_precompiled(input.toArrayUnsafe(), input.size(), output, outputSize)
+        == 0) {
+      return Bytes.wrap(output, 0, outputSize.getValue());
+    } else {
+      return null;
     }
   }
 
