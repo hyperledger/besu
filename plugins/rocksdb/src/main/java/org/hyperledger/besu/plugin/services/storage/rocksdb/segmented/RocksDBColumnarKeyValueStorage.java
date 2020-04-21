@@ -74,7 +74,7 @@ public class RocksDBColumnarKeyValueStorage
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
   private final RocksDBMetrics metrics;
-  private Optional<byte[]> doomedKey = Optional.empty();
+  private Optional<byte[]> maybeDoomedKey = Optional.empty();
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -172,7 +172,7 @@ public class RocksDBColumnarKeyValueStorage
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
-        doomedKey = Optional.of(key);
+        maybeDoomedKey = Optional.of(key);
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
           try {
@@ -185,7 +185,7 @@ public class RocksDBColumnarKeyValueStorage
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
-    doomedKey = Optional.empty();
+    maybeDoomedKey = Optional.empty();
     return removedNodeCounter;
   }
 
@@ -272,7 +272,7 @@ public class RocksDBColumnarKeyValueStorage
     @Override
     public void commit() throws StorageException {
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
-        while (doomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
+        while (maybeDoomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
           Thread.sleep(0, 500);
         }
         innerTx.commit();
