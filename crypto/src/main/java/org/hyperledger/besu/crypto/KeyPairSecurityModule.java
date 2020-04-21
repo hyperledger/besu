@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -47,7 +48,7 @@ public class KeyPairSecurityModule implements SecurityModule {
   @Override
   public PublicKey getPublicKey() throws SecurityModuleException {
     try {
-      return keyPair.getPublicKey()::getEncodedBytes;
+      return () -> ECPointUtil.fromBouncyCastleECPoint(keyPair.getPublicKey().asEcPoint());
     } catch (final Exception e) {
       throw new SecurityModuleException(e);
     }
@@ -57,7 +58,8 @@ public class KeyPairSecurityModule implements SecurityModule {
   public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey)
       throws SecurityModuleException {
     try {
-      final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(publicKey.getEncoded());
+      final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(publicKey.getW());
+      final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(encodedECPoint);
       return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), pubKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(e);

@@ -16,13 +16,16 @@ package org.hyperledger.besu.plugin.services.securitymodule.data;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-import org.apache.tuweni.bytes.Bytes;
+import java.security.spec.ECPoint;
 
-/**
- * Represents a function which provides encoded Bytes of Public Key (such as SECP256K1 Public Key).
- */
+/** Represents a PublicKey function which provides ECPoint */
 @Unstable
 @FunctionalInterface
 public interface PublicKey {
-  Bytes getEncoded();
+  /**
+   * Returns the public point W.
+   *
+   * @return the public point W.
+   */
+  ECPoint getW();
 }

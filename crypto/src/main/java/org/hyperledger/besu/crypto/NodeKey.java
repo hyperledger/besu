@@ -15,10 +15,10 @@
 package org.hyperledger.besu.crypto;
 
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
-import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.math.ec.ECPoint;
 
 public class NodeKey {
 
@@ -36,11 +36,16 @@ public class NodeKey {
   }
 
   public SECP256K1.PublicKey getPublicKey() {
-    final PublicKey pubKey = securityModule.getPublicKey();
-    return SECP256K1.PublicKey.create(pubKey.getEncoded());
+    return SECP256K1.PublicKey.create(
+        ECPointUtil.getEncodedBytes(securityModule.getPublicKey().getW()));
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
-    return securityModule.calculateECDHKeyAgreement(partyKey::getEncodedBytes);
+    final ECPoint bouncycastleECPoint = partyKey.asEcPoint();
+    final java.security.spec.ECPoint ecPoint =
+        new java.security.spec.ECPoint(
+            bouncycastleECPoint.getAffineXCoord().toBigInteger(),
+            bouncycastleECPoint.getAffineYCoord().toBigInteger());
+    return securityModule.calculateECDHKeyAgreement((() -> ecPoint));
   }
 }

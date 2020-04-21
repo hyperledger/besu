@@ -1,0 +1,50 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.crypto;
+
+import java.math.BigInteger;
+import java.security.spec.ECPoint;
+import java.util.Arrays;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.math.ec.ECFieldElement;
+
+/** Helper class for ECPoint */
+public class ECPointUtil {
+  public static byte[] toCoordinateByteArray(final BigInteger coordinate) {
+    final byte[] coordinateBytes = coordinate.toByteArray();
+    if (coordinateBytes.length > 32 && coordinateBytes[0] == 0) {
+      return Arrays.copyOfRange(coordinateBytes, 1, coordinateBytes.length);
+    }
+    return coordinateBytes;
+  }
+
+  public static ECPoint fromBouncyCastleECPoint(
+      final org.bouncycastle.math.ec.ECPoint bouncyCastleECPoint) {
+    final ECFieldElement xCoord = bouncyCastleECPoint.normalize().getXCoord();
+    final ECFieldElement yCoord = bouncyCastleECPoint.normalize().getYCoord();
+    return new ECPoint(
+        Bytes32.wrap(xCoord.getEncoded()).toUnsignedBigInteger(),
+        Bytes32.wrap(yCoord.getEncoded()).toUnsignedBigInteger());
+  }
+
+  public static Bytes getEncodedBytes(final ECPoint ecPoint) {
+    final Bytes xCoord = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineX()));
+    final Bytes yCoord = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineY()));
+
+    return Bytes.concatenate(xCoord, yCoord);
+  }
+}

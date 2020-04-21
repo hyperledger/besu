@@ -22,6 +22,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.ECPointUtil;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.plugin.BesuContext;
@@ -35,6 +36,7 @@ import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.spec.ECPoint;
 import java.util.Optional;
 
 import org.junit.After;
@@ -148,7 +150,10 @@ public class LocalFileSecurityModulePluginTest {
                         new BesuConfigurationImpl(dataFolder.toPath(), dataFolder.toPath())));
     assertThat(securityModule).isPresent();
 
-    assertThat(securityModule.get().getPublicKey().getEncoded())
+    final ECPoint ecPoint = securityModule.get().getPublicKey().getW();
+    final SECP256K1.PublicKey publicKey =
+        SECP256K1.PublicKey.create(ECPointUtil.getEncodedBytes(ecPoint));
+    assertThat(publicKey.getEncodedBytes())
         .isEqualByComparingTo(keyPair.getPublicKey().getEncodedBytes());
   }
 
@@ -175,7 +180,10 @@ public class LocalFileSecurityModulePluginTest {
             .map(secModule -> secModule.create(null));
     assertThat(securityModule).isPresent();
 
-    assertThat(securityModule.get().getPublicKey().getEncoded())
+    final ECPoint ecPoint = securityModule.get().getPublicKey().getW();
+    final SECP256K1.PublicKey publicKey =
+        SECP256K1.PublicKey.create(ECPointUtil.getEncodedBytes(ecPoint));
+    assertThat(publicKey.getEncodedBytes())
         .isEqualByComparingTo(keyPair.getPublicKey().getEncodedBytes());
   }
 }
