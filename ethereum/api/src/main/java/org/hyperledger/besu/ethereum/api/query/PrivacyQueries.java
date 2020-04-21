@@ -67,15 +67,19 @@ public class PrivacyQueries {
     final List<PrivateTransactionMetadata> privateTransactionMetadataList =
         privateWorldStateReader.getPrivateTransactionMetadataList(privacyGroupId, blockHash);
 
-    final List<PrivateTransactionReceipt> privateTransactionReceiptList =
+    final List<Hash> pmtHashList =
         privateTransactionMetadataList.stream()
             .map(PrivateTransactionMetadata::getPrivacyMarkerTransactionHash)
+            .collect(Collectors.toList());
+
+    final List<PrivateTransactionReceipt> privateTransactionReceiptList =
+        pmtHashList.stream()
             .map(
                 pmtHash -> privateWorldStateReader.getPrivateTransactionReceipt(blockHash, pmtHash))
             .flatMap(Optional::stream)
             .collect(Collectors.toList());
 
-    final long number = blockHeader.get().getNumber();
+    final long blockNumber = blockHeader.get().getNumber();
     final boolean removed = !blockchainQueries.blockIsOnCanonicalChain(blockHash);
 
     return IntStream.range(0, privateTransactionReceiptList.size())
@@ -83,13 +87,20 @@ public class PrivacyQueries {
             i ->
                 LogWithMetadata.generate(
                     privateTransactionReceiptList.get(i),
-                    number,
+                    blockNumber,
                     blockHash,
                     privateTransactionMetadataList.get(i).getPrivacyMarkerTransactionHash(),
-                    i,
+                    findPMTIndex(pmtHashList.get(i)),
                     removed))
         .flatMap(Collection::stream)
         .filter(query::matches)
         .collect(Collectors.toList());
+  }
+
+  private int findPMTIndex(final Hash pmtHash) {
+    return blockchainQueries
+        .transactionByHash(pmtHash)
+        .flatMap(TransactionWithMetadata::getTransactionIndex)
+        .orElseThrow(() -> new IllegalStateException("Can't find PMT index with hash " + pmtHash));
   }
 }
