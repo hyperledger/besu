@@ -16,8 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterChanges;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterLogs;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
@@ -29,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionReceipt;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivNewFilter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -39,12 +44,16 @@ import java.util.Map;
 
 public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
+  private final FilterManager filterManager;
+
   public PrivJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule<?> protocolSchedule,
       final TransactionPool transactionPool,
-      final PrivacyParameters privacyParameters) {
+      final PrivacyParameters privacyParameters,
+      final FilterManager filterManager) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+    this.filterManager = filterManager;
   }
 
   @Override
@@ -80,7 +89,11 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               getBlockchainQueries(),
               getPrivacyQueries(),
               privacyController,
-              enclavePublicKeyProvider));
+              enclavePublicKeyProvider),
+          new PrivNewFilter(filterManager, privacyController, enclavePublicKeyProvider),
+          new PrivUninstallFilter(filterManager, privacyController, enclavePublicKeyProvider),
+          new PrivGetFilterLogs(filterManager, privacyController, enclavePublicKeyProvider),
+          new PrivGetFilterChanges(filterManager, privacyController, enclavePublicKeyProvider));
     } else {
       return mapOf(
           new PrivGetTransactionReceipt(
@@ -108,7 +121,11 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               getBlockchainQueries(),
               getPrivacyQueries(),
               privacyController,
-              enclavePublicKeyProvider));
+              enclavePublicKeyProvider),
+          new PrivNewFilter(filterManager, privacyController, enclavePublicKeyProvider),
+          new PrivUninstallFilter(filterManager, privacyController, enclavePublicKeyProvider),
+          new PrivGetFilterLogs(filterManager, privacyController, enclavePublicKeyProvider),
+          new PrivGetFilterChanges(filterManager, privacyController, enclavePublicKeyProvider));
     }
   }
 }
