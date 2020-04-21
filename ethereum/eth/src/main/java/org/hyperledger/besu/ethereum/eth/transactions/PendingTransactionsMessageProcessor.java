@@ -100,7 +100,7 @@ class PendingTransactionsMessageProcessor {
         task.assignPeer(peer);
         ethContext
             .getScheduler()
-            .scheduleSyncWorkerTask(task)
+            .scheduleTxWorkerTask(task)
             .thenAccept(
                 result -> {
                   List<Transaction> txs = result.getResult();

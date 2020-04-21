@@ -127,6 +127,13 @@ public class EthScheduler {
     return syncFuture;
   }
 
+  public <T> CompletableFuture<T> scheduleTxWorkerTask(final EthTask<T> task) {
+    final CompletableFuture<T> txFuture = task.runAsync(txWorkerExecutor);
+    pendingFutures.add(txFuture);
+    txFuture.whenComplete((r, t) -> pendingFutures.remove(txFuture));
+    return txFuture;
+  }
+
   public void scheduleTxWorkerTask(final Runnable command) {
     txWorkerExecutor.execute(command);
   }
