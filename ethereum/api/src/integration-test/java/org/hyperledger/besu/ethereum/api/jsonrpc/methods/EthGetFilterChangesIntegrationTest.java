@@ -121,7 +121,8 @@ public class EthGetFilterChangesIntegrationTest {
             peerTransactionTracker,
             Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
-            metricsSystem);
+            metricsSystem,
+            Optional.empty());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());
     filterManager =

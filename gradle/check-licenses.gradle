@@ -110,7 +110,11 @@ downloadLicenses {
       (group('besu.plugins'))     : apache,
       (group('besu.services'))    : apache,
 
-      // RocksDB is dual licensed under Apache v2.0 and GPL 2 licenses
+      // JNA is dual licensed under Apache v2.0 or LGPL 2 licenses
+      // Explicitly declare that we are using the Apache v2.0 license
+      (group('net.java.dev.jna'))      : apache,
+
+      // RocksDB is dual licensed under Apache v2.0 or GPL 2 licenses
       // Explicitly declare that we are using the Apache v2.0 license
       (group('org.rocksdb'))      : apache,
 
