@@ -7,6 +7,8 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 
 ## Eth/65 not backwards compatible 
 
+In v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 
+
 The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723). 
 This has the following impact: 
 * In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
