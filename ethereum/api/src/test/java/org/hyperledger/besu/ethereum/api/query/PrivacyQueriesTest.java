@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -82,8 +83,8 @@ public class PrivacyQueriesTest {
 
   @Test
   public void matchingLogsReturnEmptyListForNonExistingTransactions() {
-    final Hash blockHash = Hash.hash(Bytes32.random());
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
+    final Hash blockHash = blockHeader.getHash();
     final LogsQuery query = new LogsQuery.Builder().build();
 
     when(blockchainQueries.getBlockHeaderByHash(blockHash)).thenReturn(Optional.of(blockHeader));
@@ -98,8 +99,8 @@ public class PrivacyQueriesTest {
 
   @Test
   public void matchingLogsReturnsEmptyListWhenQueryDoesNotMatch() {
-    final Hash blockHash = Hash.hash(Bytes32.random());
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
+    final Hash blockHash = blockHeader.getHash();
     final LogTopic nonMatchingTopic = LogTopic.of(Bytes32.random());
     final LogsQuery query =
         new LogsQuery.Builder().topics(List.of(List.of(nonMatchingTopic))).build();
@@ -111,7 +112,7 @@ public class PrivacyQueriesTest {
     when(blockchainQueries.blockIsOnCanonicalChain(blockHash)).thenReturn(true);
     when(privateWorldStateReader.getPrivateTransactionMetadataList(PRIVACY_GROUP_ID, blockHash))
         .thenReturn(transactionMetadataList);
-
+    mockBlockchainWithPMTs(blockHeader, transactionMetadataList);
     mockReceiptsWithLogsAndTopics(blockHash, transactionMetadataList, null);
 
     final List<LogWithMetadata> logs =
@@ -122,8 +123,8 @@ public class PrivacyQueriesTest {
 
   @Test
   public void matchingLogsReturnsAllLogsThatMatchQuery() {
-    final Hash blockHash = Hash.hash(Bytes32.random());
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
+    final Hash blockHash = blockHeader.getHash();
     final LogTopic matchingTopic = LogTopic.of(Bytes32.random());
     final LogsQuery query = new LogsQuery.Builder().topics(List.of(List.of(matchingTopic))).build();
 
@@ -134,7 +135,7 @@ public class PrivacyQueriesTest {
     when(blockchainQueries.blockIsOnCanonicalChain(blockHash)).thenReturn(true);
     when(privateWorldStateReader.getPrivateTransactionMetadataList(PRIVACY_GROUP_ID, blockHash))
         .thenReturn(transactionMetadataList);
-
+    mockBlockchainWithPMTs(blockHeader, transactionMetadataList);
     mockReceiptsWithLogsAndTopics(blockHash, transactionMetadataList, matchingTopic);
 
     final List<LogWithMetadata> logs =
@@ -180,7 +181,7 @@ public class PrivacyQueriesTest {
               when(privateWorldStateReader.getPrivateTransactionMetadataList(
                       PRIVACY_GROUP_ID, blockHash))
                   .thenReturn(transactionMetadataList);
-
+              mockBlockchainWithPMTs(blockHeader, transactionMetadataList);
               mockReceiptsWithLogsAndTopics(blockHash, transactionMetadataList, matchingTopic);
             });
 
@@ -213,5 +214,18 @@ public class PrivacyQueriesTest {
                   blockHash, metadata.getPrivacyMarkerTransactionHash()))
               .thenReturn(Optional.of(receipt));
         });
+  }
+
+  private void mockBlockchainWithPMTs(
+      final BlockHeader blockHeader,
+      final List<PrivateTransactionMetadata> transactionMetadataList) {
+
+    for (int i = 0; i < transactionMetadataList.size(); i++) {
+      final PrivateTransactionMetadata privateTransactionMetadata = transactionMetadataList.get(i);
+      final Hash pmtHash = privateTransactionMetadata.getPrivacyMarkerTransactionHash();
+      final TransactionLocation pmtLocation = new TransactionLocation(blockHeader.getHash(), i);
+      when(blockchainQueries.transactionLocationByHash(pmtHash))
+          .thenReturn(Optional.of(pmtLocation));
+    }
   }
 }
