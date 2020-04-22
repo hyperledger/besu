@@ -4,9 +4,10 @@
 
 ### Additions and Improvements
 
-- Implemented `priv_getLogs`. [\#686](https://github.com/hyperledger/besu/pull/686)
+- Implemented [`priv_getLogs`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#priv_getlogs). [\#686](https://github.com/hyperledger/besu/pull/686)
 - Implemented private contract log filters including JSON-RPC methods to interact with private filters. [\#735](https://github.com/hyperledger/besu/pull/735)
 - Implemented EIP-2315: Simple Subroutines for the EVM [\#717](https://github.com/hyperledger/besu/pull/717)
+- Implemented Splunk logging. [\#725](https://github.com/hyperledger/besu/pull/725)
 
 ### Bug Fixes 
 
@@ -21,13 +22,13 @@ updated to reflect changes.
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
-New known issues: 
+#### New known issues
 
 - `Intrinsic gas exceeds gas limit` returned when calling `delete mapping[addr]` or `mapping[addr] = 0` [\#696](https://github.com/hyperledger/besu/issues/696)
 
 Calling delete and set to 0 Solidity mapping in Solidity fail.
 
-Previously identified known issues: 
+#### Previously identified known issues
 
 - [Eth/65 not backwards compatible](KNOWN_ISSUES.md#eth65-not-backwards-compatible)
 - [Error full syncing with pruning](KNOWN_ISSUES.md#error-full-syncing-with-pruning)
