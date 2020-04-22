@@ -74,7 +74,7 @@ public class SECP256K1 {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static boolean useNative = false;
+  private static boolean useNative = true;
 
   public static final String ALGORITHM = "ECDSA";
   public static final String CURVE_NAME = "secp256k1";
