@@ -68,13 +68,13 @@ public class PrivacyQueries {
     final List<PrivateTransactionMetadata> privateTransactionMetadataList =
         privateWorldStateReader.getPrivateTransactionMetadataList(privacyGroupId, blockHash);
 
-    final List<Hash> pmtHashList =
+    final List<Hash> privacyMarkerTransactionHashes =
         privateTransactionMetadataList.stream()
             .map(PrivateTransactionMetadata::getPrivacyMarkerTransactionHash)
             .collect(Collectors.toList());
 
     final List<PrivateTransactionReceipt> privateTransactionReceiptList =
-        pmtHashList.stream()
+        privacyMarkerTransactionHashes.stream()
             .map(
                 pmtHash -> privateWorldStateReader.getPrivateTransactionReceipt(blockHash, pmtHash))
             .flatMap(Optional::stream)
@@ -91,7 +91,7 @@ public class PrivacyQueries {
                     blockNumber,
                     blockHash,
                     privateTransactionMetadataList.get(i).getPrivacyMarkerTransactionHash(),
-                    findPMTIndex(pmtHashList.get(i)),
+                    findPMTIndex(privacyMarkerTransactionHashes.get(i)),
                     removed))
         .flatMap(Collection::stream)
         .filter(query::matches)
