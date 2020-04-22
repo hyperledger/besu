@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,32 +21,30 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.util.List;
 
-import org.web3j.protocol.core.methods.response.EthLog;
-import org.web3j.protocol.core.methods.response.EthLog.LogResult;
+import org.web3j.protocol.core.methods.response.EthFilter;
 
-@SuppressWarnings("rawtypes")
-public class PrivGetLogsTransaction implements Transaction<List<LogResult>> {
+public class PrivNewFilterTransaction implements Transaction<String> {
 
   private final String privacyGroupId;
   private final LogFilterJsonParameter filterParameter;
 
-  public PrivGetLogsTransaction(
+  public PrivNewFilterTransaction(
       final String privacyGroupId, final LogFilterJsonParameter filterParameter) {
     this.privacyGroupId = privacyGroupId;
     this.filterParameter = filterParameter;
   }
 
   @Override
-  public List<LogResult> execute(final NodeRequests node) {
+  public String execute(final NodeRequests node) {
     try {
-      final EthLog response = node.privacy().privGetLogs(privacyGroupId, filterParameter).send();
+      final EthFilter response =
+          node.privacy().privNewFilter(privacyGroupId, filterParameter).send();
 
       assertThat(response).as("check response is not null").isNotNull();
       assertThat(response.getResult()).as("check result in response isn't null").isNotNull();
 
-      return response.getLogs();
+      return response.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
