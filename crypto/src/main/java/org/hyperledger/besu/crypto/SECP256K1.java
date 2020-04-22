@@ -74,7 +74,7 @@ public class SECP256K1 {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static boolean useNative = LibSecp256k1.CONTEXT != null;
+  private static boolean useNative = false;
 
   public static final String ALGORITHM = "ECDSA";
   public static final String CURVE_NAME = "secp256k1";
@@ -104,15 +104,11 @@ public class SECP256K1 {
     } catch (final InvalidAlgorithmParameterException e) {
       throw new RuntimeException(e);
     }
-
-    LOG.info(useNative ? "Using native secp256k1" : "Using Java secp256k1");
   }
 
-  public static void disableNative() {
-    if (useNative) {
-      LOG.info("Native use of secp256k1 explicitly disabled");
-    }
-    useNative = false;
+  public static void enableNative() {
+    useNative = LibSecp256k1.CONTEXT != null;
+    LOG.info(useNative ? "Using native secp256k1" : "Native secp256k1 requested but not available");
   }
 
   public static Signature sign(final Bytes32 dataHash, final KeyPair keyPair) {

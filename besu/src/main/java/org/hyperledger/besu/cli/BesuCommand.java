@@ -1118,11 +1118,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void configureNativeLibs() {
-    if (!nativeAltbn128) {
-      AltBN128PairingPrecompiledContract.disableNative();
+    if (nativeAltbn128) {
+      AltBN128PairingPrecompiledContract.enableNative();
     }
-    if (!nativeSecp256k1) {
-      SECP256K1.disableNative();
+    if (nativeSecp256k1) {
+      SECP256K1.enableNative();
     }
   }
 

@@ -40,19 +40,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
 
-  static boolean useNative = LibAltbn128.ENABLED;
+  static boolean useNative = false;
 
   private static final Logger LOG = LogManager.getLogger();
 
-  static {
-    LOG.info(LibAltbn128.ENABLED ? "Using native alt bn128" : "Using java alt bn128");
-  }
-
-  public static void disableNative() {
-    if (useNative) {
-      LOG.info("Native use of alt bn128 explicitly disabled");
-    }
-    useNative = false;
+  public static void enableNative() {
+    useNative = LibAltbn128.ENABLED;
+    LOG.info(useNative ? "Using native alt bn128" : "Native alt bn128 requested but not available");
   }
 
   private static final int FIELD_LENGTH = 32;
