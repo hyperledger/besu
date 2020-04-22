@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
+import static org.hyperledger.besu.nativelib.altbn128.LibAltbn128.altbn128_mul_precompiled;
+
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import com.sun.jna.ptr.IntByReference;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
@@ -55,6 +58,14 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
 
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+    if (AltBN128PairingPrecompiledContract.useNative) {
+      return computeNative(input);
+    } else {
+      return computeDefault(input);
+    }
+  }
+
+  private static Bytes computeDefault(final Bytes input) {
     final BigInteger x = extractParameter(input, 0, 32);
     final BigInteger y = extractParameter(input, 32, 32);
     final BigInteger n = extractParameter(input, 64, 32);
@@ -72,6 +83,16 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
     yResult.copyTo(result, 64 - yResult.size());
 
     return result;
+  }
+
+  private static Bytes computeNative(final Bytes input) {
+    final byte[] output = new byte[64];
+    final IntByReference outputSize = new IntByReference(64);
+    if (altbn128_mul_precompiled(input.toArrayUnsafe(), input.size(), output, outputSize) == 0) {
+      return Bytes.wrap(output, 0, outputSize.getValue());
+    } else {
+      return null;
+    }
   }
 
   private static BigInteger extractParameter(
