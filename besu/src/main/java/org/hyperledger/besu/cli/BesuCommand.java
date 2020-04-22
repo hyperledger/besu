@@ -859,7 +859,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--Xsecp256k1-native-enabled"},
       description = "Path to PID file (optional)",
-  arity = "1")
+      arity = "1")
   private final Boolean nativeSecp256k1 = Boolean.FALSE;
 
   @CommandLine.Option(
@@ -1125,7 +1125,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       SECP256K1.disableNative();
     }
   }
-
 
   private BesuCommand validateOptions() {
     issueOptionWarnings();
