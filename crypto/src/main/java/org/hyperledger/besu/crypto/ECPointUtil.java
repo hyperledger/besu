@@ -16,6 +16,7 @@ package org.hyperledger.besu.crypto;
 
 import java.math.BigInteger;
 import java.security.spec.ECPoint;
+import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -28,7 +29,7 @@ public class ECPointUtil {
     if (bytes.size() < 32) {
       return Bytes32.leftPad(bytes).toArray();
     } else if (bytes.size() > 32 && bytes.hasLeadingZeroByte()) {
-      return bytes.shiftLeft(1).toArray();
+      return Arrays.copyOfRange(bytes.toArray(), 1, bytes.size());
     } else {
       return bytes.toArray();
     }
@@ -42,8 +43,8 @@ public class ECPointUtil {
     final Bytes32 xEncoded = Bytes32.wrap(xCoord.getEncoded());
     final Bytes32 yEncoded = Bytes32.wrap(yCoord.getEncoded());
 
-    final BigInteger x = xEncoded.toBigInteger();
-    final BigInteger y = yEncoded.toBigInteger();
+    final BigInteger x = xEncoded.toUnsignedBigInteger();
+    final BigInteger y = yEncoded.toUnsignedBigInteger();
 
     return new ECPoint(x, y);
   }
