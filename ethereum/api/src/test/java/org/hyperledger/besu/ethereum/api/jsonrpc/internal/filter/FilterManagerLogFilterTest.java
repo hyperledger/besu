@@ -27,7 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
@@ -249,9 +248,5 @@ public class FilterManagerLogFilterTest {
 
   private BlockParameter latest() {
     return new BlockParameter("latest");
-  }
-
-  private BlockParameter blockNum(final long blockNum) {
-    return new BlockParameter(Quantity.create(blockNum));
   }
 }
