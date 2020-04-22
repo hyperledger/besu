@@ -480,6 +480,10 @@ public class BlockchainQueries {
         txs.get(txIndex), header.getNumber(), blockHeaderHash, txIndex);
   }
 
+  public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
+    return blockchain.getTransactionLocation(transactionHash);
+  }
+
   /**
    * Returns the transaction receipt associated with the given transaction hash.
    *
