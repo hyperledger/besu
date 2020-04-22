@@ -15,15 +15,18 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 public class BaseFee {
-  private static final long BOUNDING_DENOMINATOR = 8;
   private final long value;
   private final long delta;
   private final long minNextValue;
   private final long maxNextValue;
 
   public BaseFee(final long value) {
+    this(FeeMarket.eip1559(), value);
+  }
+
+  public BaseFee(final FeeMarket feeMarket, final long value) {
     this.value = value;
-    this.delta = Math.floorDiv(value, BOUNDING_DENOMINATOR);
+    this.delta = Math.floorDiv(value, feeMarket.getBasefeeMaxChangeDenominator());
     this.minNextValue = value - delta;
     this.maxNextValue = value + delta;
   }

@@ -269,7 +269,6 @@ public abstract class BesuControllerBuilder<C> {
     } else {
       eip1559 = Optional.empty();
     }
-    genesisConfig.getConfigOptions(genesisConfigOverrides).getEIP1559BlockNumber();
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
