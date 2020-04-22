@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
-import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
