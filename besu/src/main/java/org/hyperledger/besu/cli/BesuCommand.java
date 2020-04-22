@@ -755,7 +755,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})")
+          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})")
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
@@ -847,6 +847,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
+
+  @CommandLine.Option(
+      names = {"--pid-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "Path to PID file (optional)")
+  private final Path pidPath = null;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -1068,7 +1074,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
-        staticNodes);
+        staticNodes,
+        pidPath);
   }
 
   private BesuCommand startPlugins() {
@@ -1727,7 +1734,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final Collection<EnodeURL> staticNodes) {
+      final Collection<EnodeURL> staticNodes,
+      final Path pidPath) {
 
     checkNotNull(runnerBuilder);
 
@@ -1753,6 +1761,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
+            .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)

@@ -5,8 +5,39 @@
 ### Additions and Improvements
 
 - Implemented `priv_getLogs`. [\#686](https://github.com/hyperledger/besu/pull/686)
+- Implemented private contract log filters including JSON-RPC methods to interact with private filters. [\#735](https://github.com/hyperledger/besu/pull/735)
+- Implemented EIP-2315: Simple Subroutines for the EVM [\#717](https://github.com/hyperledger/besu/pull/717)
 
-## 1.4.3 
+### Bug Fixes 
+
+- Flag added to toggle `eth/65` off by default. `eth/65` will remain toggled off by default until 
+a fix is completed for the [eth/65 known issue](KNOWN_ISSUES.md). 
+
+### Known Issues 
+
+Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+Previously identified known issues: 
+
+- [Eth/65 not backwards compatible](KNOWN_ISSUES.md#eth65-not-backwards-compatible)
+- [Error full syncing with pruning](KNOWN_ISSUES.md#error-full-syncing-with-pruning)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Fast sync reverting to full sync](KNOWN_ISSUES.md#fast-sync-reverting-to-full-sync)
+- [Bootnodes must be validators when using onchain permissioning](KNOWN_ISSUES.md#bootnodes-must-be-validators-when-using-onchain-permissioning)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+## 1.4.3
+
+### Issues identified with 1.4.3 release 
+
+The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723). 
+This has the following impact: 
+* In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
+clients. 
+* On mainnet, synchronizing eventually stalls.   
+
+Workaround -> revert to v1.4.2. 
+
+A [fix](https://github.com/hyperledger/besu/pull/732) is currently [being tested](https://github.com/hyperledger/besu/pull/733). 
 
 ### Critical Issue for Privacy Users 
 

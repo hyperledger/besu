@@ -80,7 +80,9 @@ class EthServer {
     ethMessages.subscribe(EthPV62.GET_BLOCK_BODIES, this::handleGetBlockBodies);
     ethMessages.subscribe(EthPV63.GET_RECEIPTS, this::handleGetReceipts);
     ethMessages.subscribe(EthPV63.GET_NODE_DATA, this::handleGetNodeData);
-    ethMessages.subscribe(EthPV65.GET_POOLED_TRANSACTIONS, this::handleGetPooledTransactions);
+    if (ethereumWireProtocolConfiguration.isEth65Enabled()) {
+      ethMessages.subscribe(EthPV65.GET_POOLED_TRANSACTIONS, this::handleGetPooledTransactions);
+    }
   }
 
   private void handleGetBlockHeaders(final EthMessage message) {

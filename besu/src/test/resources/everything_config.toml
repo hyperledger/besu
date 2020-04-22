@@ -12,6 +12,7 @@
 data-path="~/besudata"
 logging="INFO"
 node-private-key-file="./path/to/privateKey"
+pid-path="~/.pid"
 
 # P2P network
 identity="PegaSysEng"

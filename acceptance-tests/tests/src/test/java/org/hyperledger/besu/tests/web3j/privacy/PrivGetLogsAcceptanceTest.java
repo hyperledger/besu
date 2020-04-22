@@ -27,8 +27,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
-import org.web3j.protocol.core.methods.response.EthLog;
+import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 
+@SuppressWarnings("rawtypes")
 public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   /*
@@ -36,7 +37,6 @@ public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
   */
   private static final String EVENT_EMITTER_EVENT_TOPIC =
       "0xc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5";
-  private static final long POW_CHAIN_ID = 2018;
 
   private PrivacyNode node;
 
@@ -62,12 +62,13 @@ public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
     final LogFilterJsonParameter filter =
         blockRangeLogFilter("earliest", "latest", eventEmitterContract.getContractAddress());
 
-    final EthLog response = node.execute(privacyTransactions.privGetLogs(privacyGroupId, filter));
+    final List<LogResult> logs =
+        node.execute(privacyTransactions.privGetLogs(privacyGroupId, filter));
 
     /*
      We expect one log entry per tx changing the contract value
     */
-    assertThat(response.getLogs()).hasSize(2);
+    assertThat(logs).hasSize(2);
   }
 
   @Test
@@ -85,9 +86,10 @@ public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
     final LogFilterJsonParameter filter =
         blockHashLogFilter(blockHash, eventEmitterContract.getContractAddress());
 
-    final EthLog response = node.execute(privacyTransactions.privGetLogs(privacyGroupId, filter));
+    final List<LogResult> logs =
+        node.execute(privacyTransactions.privGetLogs(privacyGroupId, filter));
 
-    assertThat(response.getLogs()).hasSize(1);
+    assertThat(logs).hasSize(1);
   }
 
   private LogFilterJsonParameter blockRangeLogFilter(

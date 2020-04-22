@@ -107,7 +107,7 @@ class MetricsPushGatewayService implements MetricsService {
       pushGateway.pushAdd(
           ((PrometheusMetricsSystem) metricsSystem).getRegistry(), config.getPrometheusJob());
     } catch (final IOException e) {
-      LOG.warn("Cound not push metrics", e);
+      LOG.warn("Could not push metrics", e);
     }
   }
 }

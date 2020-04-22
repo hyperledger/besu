@@ -21,10 +21,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.web3j.protocol.core.methods.response.EthLog;
+import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 
-public class PrivGetLogsTransaction implements Transaction<EthLog> {
+@SuppressWarnings("rawtypes")
+public class PrivGetLogsTransaction implements Transaction<List<LogResult>> {
 
   private final String privacyGroupId;
   private final LogFilterJsonParameter filterParameter;
@@ -36,14 +39,14 @@ public class PrivGetLogsTransaction implements Transaction<EthLog> {
   }
 
   @Override
-  public EthLog execute(final NodeRequests node) {
+  public List<LogResult> execute(final NodeRequests node) {
     try {
       final EthLog response = node.privacy().privGetLogs(privacyGroupId, filterParameter).send();
 
       assertThat(response).as("check response is not null").isNotNull();
       assertThat(response.getResult()).as("check result in response isn't null").isNotNull();
 
-      return response;
+      return response.getLogs();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

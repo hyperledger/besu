@@ -28,10 +28,13 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import io.kubernetes.client.custom.IntOrString;
+import io.kubernetes.client.models.V1LoadBalancerIngressBuilder;
+import io.kubernetes.client.models.V1LoadBalancerStatusBuilder;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1Service;
 import io.kubernetes.client.models.V1ServicePort;
 import io.kubernetes.client.models.V1ServiceSpec;
+import io.kubernetes.client.models.V1ServiceStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,10 +55,17 @@ public final class KubernetesNatManagerTest {
 
   @Before
   public void initialize() throws IOException {
+    final V1ServiceStatus v1ServiceStatus =
+        new V1ServiceStatus()
+            .loadBalancer(
+                new V1LoadBalancerStatusBuilder()
+                    .addToIngress(
+                        new V1LoadBalancerIngressBuilder().withIp(detectedAdvertisedHost).build())
+                    .build());
+    when(v1Service.getStatus()).thenReturn(v1ServiceStatus);
     when(v1Service.getSpec())
         .thenReturn(
             new V1ServiceSpec()
-                .clusterIP(detectedAdvertisedHost)
                 .ports(
                     Arrays.asList(
                         new V1ServicePort()

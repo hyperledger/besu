@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.Type;
+import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public class MessageFrameTestFixture {
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
+  private ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
   private ExecutionContextTestFixture executionContextTestFixture;
 
   public MessageFrameTestFixture type(final Type type) {
@@ -157,6 +159,11 @@ public class MessageFrameTestFixture {
     return this;
   }
 
+  public MessageFrameTestFixture returnStack(final ReturnStack returnStack) {
+    this.returnStack = returnStack;
+    return this;
+  }
+
   public MessageFrame build() {
     final Blockchain blockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
     final BlockHeader blockHeader =
@@ -185,6 +192,7 @@ public class MessageFrameTestFixture {
             .blockHashLookup(
                 blockHashLookup.orElseGet(() -> new BlockHashLookup(blockHeader, blockchain)))
             .maxStackSize(maxStackSize)
+            .returnStack(returnStack)
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

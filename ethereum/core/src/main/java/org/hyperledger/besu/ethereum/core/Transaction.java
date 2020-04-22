@@ -411,7 +411,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     out.startList();
 
     out.writeLongScalar(getNonce());
-    out.writeUInt256Scalar(getGasPrice());
+    final boolean asEIP1559 =
+        ExperimentalEIPs.eip1559Enabled
+            && (gasPrice == null || gasPrice.isZero())
+            && gasPremium != null
+            && feeCap != null;
+    if (asEIP1559) {
+      out.writeNull();
+    } else {
+      out.writeUInt256Scalar(getGasPrice());
+    }
     out.writeLongScalar(getGasLimit());
     out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar(getValue());
