@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -151,28 +152,28 @@ public class FilterManager extends AbstractVerticle {
     }
   }
 
-  public void recordBlockEvent(final BlockAddedEvent event, final Blockchain blockchain) {
+  public void recordBlockEvent(final BlockAddedEvent event, final Blockchain __) {
     final Hash blockHash = event.getBlock().getHash();
     final Collection<BlockFilter> blockFilters =
         filterRepository.getFiltersOfType(BlockFilter.class);
     blockFilters.forEach(
-        (filter) -> {
+        filter -> {
           synchronized (filter) {
             filter.addBlockHash(blockHash);
           }
         });
 
-    filterRepository.getFiltersOfType(LogFilter.class).forEach(this::addNewMatchingLogs);
-  }
-
-  private void addNewMatchingLogs(final LogFilter filter) {
-    final long fromBlockNumber = blockchainQueries.headBlockNumber();
-    final long toBlockNumber =
-        filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
-
-    final List<LogWithMetadata> logs = findLogsWithinRange(filter, fromBlockNumber, toBlockNumber);
-
-    filter.addLogs(logs);
+    final List<LogWithMetadata> logsWithMetadata = event.getLogsWithMetadata();
+    filterRepository
+        .getFiltersOfType(LogFilter.class)
+        .forEach(
+            filter -> {
+              final LogsQuery logsQuery = filter.getLogsQuery();
+              filter.addLogs(
+                  logsWithMetadata.stream()
+                      .filter(logsQuery::matches)
+                      .collect(toUnmodifiableList()));
+            });
   }
 
   @VisibleForTesting
