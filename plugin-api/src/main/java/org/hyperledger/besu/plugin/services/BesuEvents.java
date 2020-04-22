@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes32;
 /**
  * This service allows plugins to attach to various events during the normal operation of Besu.
  *
- * <p>Currently supported events:
+ * <p>Currently supported events
  *
  * <ul>
  *   <li><b>BlockAdded</b> - Fired when a new block has been evaluated and validated.
