@@ -170,6 +170,8 @@ public class FilterManager extends AbstractVerticle {
             filter -> {
               final LogsQuery logsQuery = filter.getLogsQuery();
               filter.addLogs(
+                  // We still need to use privacy queries for private log filters but for regular
+                  // log filters we already have all the logs in the event
                   filter instanceof PrivateLogFilter
                       ? findLogsWithinRange(
                           filter,
