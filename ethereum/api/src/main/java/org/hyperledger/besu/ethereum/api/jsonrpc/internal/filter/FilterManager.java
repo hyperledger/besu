@@ -170,9 +170,17 @@ public class FilterManager extends AbstractVerticle {
             filter -> {
               final LogsQuery logsQuery = filter.getLogsQuery();
               filter.addLogs(
-                  logsWithMetadata.stream()
-                      .filter(logsQuery::matches)
-                      .collect(toUnmodifiableList()));
+                  filter instanceof PrivateLogFilter
+                      ? findLogsWithinRange(
+                          filter,
+                          blockchainQueries.headBlockNumber(),
+                          filter
+                              .getToBlock()
+                              .getNumber()
+                              .orElse(blockchainQueries.headBlockNumber()))
+                      : logsWithMetadata.stream()
+                          .filter(logsQuery::matches)
+                          .collect(toUnmodifiableList()));
             });
   }
 
