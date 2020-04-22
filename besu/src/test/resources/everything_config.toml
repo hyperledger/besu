@@ -144,3 +144,7 @@ target-gas-limit=8000000
 
 # transaction log bloom filter caching
 auto-log-bloom-caching-enabled=true
+
+# feature flags
+Xsecp256k1-native-enabled=false
+Xaltbn128-native-enabled=false
