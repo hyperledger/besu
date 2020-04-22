@@ -94,7 +94,8 @@ public class TransactionPoolFactoryTest {
             transactionsMessageSender,
             Optional.of(peerPendingTransactionTracker),
             Optional.of(pendingTransactionsMessageSender),
-            true);
+            true,
+            Optional.empty());
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
@@ -171,7 +172,8 @@ public class TransactionPoolFactoryTest {
             transactionsMessageSender,
             Optional.empty(),
             Optional.empty(),
-            false);
+            false,
+            Optional.empty());
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
