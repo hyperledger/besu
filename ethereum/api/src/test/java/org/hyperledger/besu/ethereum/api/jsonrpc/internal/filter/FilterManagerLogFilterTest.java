@@ -160,8 +160,7 @@ public class FilterManagerLogFilterTest {
         BlockAddedEvent.createForHeadAdvancement(
             block,
             LogWithMetadata.generate(block, gen.receipts(block), false),
-            Collections.emptyList()),
-        blockchainQueries.getBlockchain());
+            Collections.emptyList()));
   }
 
   @Test

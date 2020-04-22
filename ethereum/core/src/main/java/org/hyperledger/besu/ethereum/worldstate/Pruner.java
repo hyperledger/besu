@@ -89,8 +89,7 @@ public class Pruner {
       LOG.info("Starting Pruner.");
       executorService = executorServiceSupplier.get();
       pruningStrategy.prepare();
-      blockAddedObserverId =
-          blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
+      blockAddedObserverId = blockchain.observeBlockAdded(this::handleNewBlock);
     }
   }
 

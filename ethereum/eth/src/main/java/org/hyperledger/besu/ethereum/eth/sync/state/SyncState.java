@@ -50,7 +50,7 @@ public class SyncState {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
     blockchain.observeBlockAdded(
-        (event, chain) -> {
+        event -> {
           if (event.isNewCanonicalHead()) {
             checkInSync();
           }
