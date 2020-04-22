@@ -35,13 +35,24 @@ import java.util.List;
 
 import com.sun.jna.ptr.IntByReference;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
 
+  static boolean useNative = LibAltbn128.ENABLED;
+
+  private static final Logger LOG = LogManager.getLogger();
+
   static {
-    LogManager.getLogger()
-        .info(LibAltbn128.ENABLED ? "Using native alt bn128" : "Using java alt bn128");
+    LOG.info(LibAltbn128.ENABLED ? "Using native alt bn128" : "Using java alt bn128");
+  }
+
+  public static void disableNative() {
+    if (useNative) {
+      LOG.info("Native use of alt bn128 explicitly disabled");
+    }
+    useNative = false;
   }
 
   private static final int FIELD_LENGTH = 32;
@@ -84,7 +95,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
     if (input.size() % PARAMETER_LENGTH != 0) {
       return null;
     }
-    if (LibAltbn128.ENABLED) {
+    if (AltBN128PairingPrecompiledContract.useNative) {
       return computeNative(input);
     } else {
       return computeDefault(input);

@@ -39,6 +39,7 @@ import com.google.common.base.Suppliers;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -71,7 +72,9 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
  */
 public class SECP256K1 {
 
-  private static final boolean useNative = LibSecp256k1.CONTEXT != null;
+  private static final Logger LOG = LogManager.getLogger();
+
+  private static boolean useNative = LibSecp256k1.CONTEXT != null;
 
   public static final String ALGORITHM = "ECDSA";
   public static final String CURVE_NAME = "secp256k1";
@@ -102,7 +105,14 @@ public class SECP256K1 {
       throw new RuntimeException(e);
     }
 
-    LogManager.getLogger().info(useNative ? "Using native secp256k1" : "Using Java secp256k1");
+    LOG.info(useNative ? "Using native secp256k1" : "Using Java secp256k1");
+  }
+
+  public static void disableNative() {
+    if (useNative) {
+      LOG.info("Native use of secp256k1 explicitly disabled");
+    }
+    useNative = false;
   }
 
   public static Signature sign(final Bytes32 dataHash, final KeyPair keyPair) {
@@ -774,33 +784,6 @@ public class SECP256K1 {
       sb.append("s=").append(s).append(", ");
       sb.append("recId=").append(recId);
       return sb.append("}").toString();
-    }
-  }
-
-  public static void benchmarkDefault(final Bytes32 message, final KeyPair keys) {
-    final Signature signature = signDefault(message, keys);
-    if (!verifyDefault(message, signature, keys.publicKey)) {
-      throw new RuntimeException("Did not verify");
-    }
-    final BigInteger publicKeyBI =
-        SECP256K1.recoverFromSignature(
-            signature.getRecId(), signature.getR(), signature.getS(), message);
-    final PublicKey recoveredKey = PublicKey.create(publicKeyBI);
-    if (!keys.publicKey.getEncodedBytes().equals(recoveredKey.getEncodedBytes())) {
-      throw new RuntimeException("Could not extract signature");
-    }
-  }
-
-  public static void benchmarkNative(final Bytes32 message, final KeyPair keys) {
-    final Signature signature = signNative(message, keys);
-    if (!verifyNative(message, signature, keys.publicKey)) {
-      throw new RuntimeException("Did not verify");
-    }
-    final PublicKey recoveredKey =
-        recoverFromSignatureNative(message, signature)
-            .orElseThrow(() -> new RuntimeException("Could not extract signature"));
-    if (!keys.publicKey.getEncodedBytes().equals(recoveredKey.getEncodedBytes())) {
-      throw new RuntimeException("Could not extract signature");
     }
   }
 }

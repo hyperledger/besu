@@ -55,7 +55,7 @@ public class AltBN128AddPrecompiledContract extends AbstractPrecompiledContract 
 
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
-    if (LibAltbn128.ENABLED) {
+    if (AltBN128PairingPrecompiledContract.useNative) {
       return computeNative(input);
     } else {
       return computeDefault(input);
