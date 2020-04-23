@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
 import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -37,7 +36,6 @@ import org.mockito.ArgumentCaptor;
 public class IbftChainObserverTest {
   @Test
   public void newChainHeadHeaderEventIsAddedToTheQueue() {
-    final Blockchain mockBlockchain = mock(Blockchain.class);
     final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
     final BlockAddedEvent mockBlockAddedEvent = mock(BlockAddedEvent.class);
 
@@ -55,7 +53,7 @@ public class IbftChainObserverTest {
     when(mockBlockAddedEvent.getEventType()).thenReturn(BlockAddedEvent.EventType.HEAD_ADVANCED);
     when(mockBlockAddedEvent.getBlock()).thenReturn(block);
 
-    ibftChainObserver.onBlockAdded(mockBlockAddedEvent, mockBlockchain);
+    ibftChainObserver.onBlockAdded(mockBlockAddedEvent);
 
     final ArgumentCaptor<IbftEvent> ibftEventArgumentCaptor =
         ArgumentCaptor.forClass(IbftEvent.class);
@@ -68,7 +66,6 @@ public class IbftChainObserverTest {
 
   @Test(expected = IllegalStateException.class)
   public void exceptionIsThrownWhenEventTypeIsFork() {
-    final Blockchain mockBlockchain = mock(Blockchain.class);
     final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
     final BlockAddedEvent mockBlockAddedEvent = mock(BlockAddedEvent.class);
 
@@ -76,12 +73,11 @@ public class IbftChainObserverTest {
 
     final IbftChainObserver ibftChainObserver = new IbftChainObserver(mockQueue);
 
-    ibftChainObserver.onBlockAdded(mockBlockAddedEvent, mockBlockchain);
+    ibftChainObserver.onBlockAdded(mockBlockAddedEvent);
   }
 
   @Test(expected = IllegalStateException.class)
   public void exceptionIsThrownWhenEventTypeIsChainReorg() {
-    final Blockchain mockBlockchain = mock(Blockchain.class);
     final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
     final BlockAddedEvent mockBlockAddedEvent = mock(BlockAddedEvent.class);
 
@@ -89,6 +85,6 @@ public class IbftChainObserverTest {
 
     final IbftChainObserver ibftChainObserver = new IbftChainObserver(mockQueue);
 
-    ibftChainObserver.onBlockAdded(mockBlockAddedEvent, mockBlockchain);
+    ibftChainObserver.onBlockAdded(mockBlockAddedEvent);
   }
 }

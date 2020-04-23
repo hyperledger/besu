@@ -168,7 +168,7 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
-  public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
+  public void onBlockAdded(final BlockAddedEvent event) {
     synchronized (this) {
       if (event.isNewCanonicalHead()
           && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {

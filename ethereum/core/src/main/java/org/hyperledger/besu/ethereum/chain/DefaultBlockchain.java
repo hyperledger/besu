@@ -227,7 +227,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final BlockAddedEvent blockAddedEvent =
         appendBlockHelper(new BlockWithReceipts(block, receipts));
-    notifyBlockAdded(blockAddedEvent);
+    blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
   }
 
   private BlockAddedEvent appendBlockHelper(final BlockWithReceipts blockWithReceipts) {
@@ -565,10 +565,6 @@ public class DefaultBlockchain implements MutableBlockchain {
   @VisibleForTesting
   int observerCount() {
     return blockAddedObservers.getSubscriberCount();
-  }
-
-  private void notifyBlockAdded(final BlockAddedEvent event) {
-    blockAddedObservers.forEach(observer -> observer.onBlockAdded(event, this));
   }
 
   private void notifyChainReorgBlockAdded(final BlockWithReceipts blockWithReceipts) {
