@@ -16,21 +16,18 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class BLS12MapFieldToCurvePrecompiledContract extends AbstractBLS12PrecompiledContract {
+public class BLS12MapFp2ToG2PrecompiledContract extends AbstractBLS12PrecompiledContract {
 
-  public BLS12MapFieldToCurvePrecompiledContract() {
-    super("BLS12_MAP_FIELD_TO_CURVE", LibEthPairings.BLS12_MAP_OPERATION_RAW_VALUE);
+  public BLS12MapFp2ToG2PrecompiledContract() {
+    super("BLS12_MAP_FIELD_TO_CURVE", LibEthPairings.BLS12_MAP_FP2_TO_G2_OPERATION_RAW_VALUE);
   }
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    if (input.size() >= 128) {
-      return Gas.of(110000);
-    } else {
-      return Gas.of(5500);
-    }
+    return Gas.of(110000);
   }
 }

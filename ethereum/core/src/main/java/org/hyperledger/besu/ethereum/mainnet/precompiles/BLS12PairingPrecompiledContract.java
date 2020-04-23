@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
 

@@ -20,15 +20,14 @@ import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class BLS12G1MultiExpPrecompiledContract extends AbstractBLS12PrecompiledContract {
+public class BLS12MapFpToG1PrecompiledContract extends AbstractBLS12PrecompiledContract {
 
-  public BLS12G1MultiExpPrecompiledContract() {
-    super("BLS12_G1MULTIEXP", LibEthPairings.BLS12_G1MULTIEXP_OPERATION_RAW_VALUE);
+  public BLS12MapFpToG1PrecompiledContract() {
+    super("BLS12_MAP_FIELD_TO_CURVE", LibEthPairings.BLS12_MAP_FP_TO_G1_OPERATION_RAW_VALUE);
   }
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    final int k = input.size() / 160;
-    return Gas.of(k * 12_000 * DISCOUNT_TABLE[k] / 1000);
+    return Gas.of(5500);
   }
 }

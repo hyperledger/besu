@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.io.CharStreams;
 import org.apache.tuweni.bytes.Bytes;
@@ -36,30 +35,22 @@ import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 
 @RunWith(Parameterized.class)
-public class BLS12MapFieldToCurvePrecompiledContractTest {
-  private final BLS12MapFieldToCurvePrecompiledContract contract =
-      new BLS12MapFieldToCurvePrecompiledContract();
+public class BLS12MapFpToG1PrecompiledContractTest {
+  private final BLS12MapFpToG1PrecompiledContract contract =
+      new BLS12MapFpToG1PrecompiledContract();
 
-  public BLS12MapFieldToCurvePrecompiledContractTest() {}
+  public BLS12MapFpToG1PrecompiledContractTest() {}
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
   @Parameterized.Parameters
   public static Iterable<String[]> parameters() throws IOException {
-    return Stream.concat(
-            CharStreams.readLines(
-                new InputStreamReader(
-                    BLS12MapFieldToCurvePrecompiledContractTest.class.getResourceAsStream(
-                        "fp_to_g1.csv"),
-                    UTF_8))
-                .stream(),
-            CharStreams.readLines(
-                new InputStreamReader(
-                    BLS12MapFieldToCurvePrecompiledContractTest.class.getResourceAsStream(
-                        "fp2_to_g2.csv"),
-                    UTF_8))
-                .stream())
-        .map(line -> line.split(",", -1))
+    return CharStreams.readLines(
+            new InputStreamReader(
+                BLS12MapFpToG1PrecompiledContractTest.class.getResourceAsStream("fp_to_g1.csv"),
+                UTF_8))
+        .stream()
+        .map(line -> line.split(",", 4))
         .collect(Collectors.toList());
   }
 

@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -36,26 +36,23 @@ import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 
 @RunWith(Parameterized.class)
-public class BLS12PairingPrecompiledContractTest {
-  private final BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
+public class BLS12MapFp2ToG2PrecompiledContractTest {
+  private final BLS12MapFp2ToG2PrecompiledContract contract =
+      new BLS12MapFp2ToG2PrecompiledContract();
 
-  public BLS12PairingPrecompiledContractTest() {}
+  public BLS12MapFp2ToG2PrecompiledContractTest() {}
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
   @Parameterized.Parameters
   public static Iterable<String[]> parameters() throws IOException {
-    return Streams.concat(
+    return
             CharStreams.readLines(
                 new InputStreamReader(
-                    BLS12PairingPrecompiledContractTest.class.getResourceAsStream("pairing.csv"),
+                    BLS12MapFp2ToG2PrecompiledContractTest.class.getResourceAsStream(
+                        "fp2_to_g2.csv"),
                     UTF_8))
-                .stream(),
-            CharStreams.readLines(
-                new InputStreamReader(
-                    BLS12PairingPrecompiledContractTest.class.getResourceAsStream("invalid_subgroup_for_pairing.csv"),
-                    UTF_8))
-                .stream())
+                .stream()
         .map(line -> line.split(",", 4))
         .collect(Collectors.toList());
   }

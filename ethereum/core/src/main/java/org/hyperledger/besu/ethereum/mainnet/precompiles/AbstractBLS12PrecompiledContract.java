@@ -19,7 +19,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,7 +31,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
 
   static final int[] DISCOUNT_TABLE =
       new int[] {
-        99_999_999, 1200, 888, 764, 641, 594, 547, 500, 453, 438, 423, 408, 394, 379, 364, 349,
+        -1, 1200, 888, 764, 641, 594, 547, 500, 453, 438, 423, 408, 394, 379, 364, 349,
         334, 330, 326, 322, 318, 314, 310, 306, 302, 298, 294, 289, 285, 281, 277, 273,
         269, 268, 266, 265, 263, 262, 260, 259, 257, 256, 254, 253, 251, 250, 248, 247,
         245, 244, 242, 241, 239, 238, 236, 235, 233, 232, 231, 229, 228, 226, 225, 223,
@@ -45,7 +45,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
   private final String name;
   private final byte operationId;
 
-  public AbstractBLS12PrecompiledContract(final String name, final byte operationId) {
+  AbstractBLS12PrecompiledContract(final String name, final byte operationId) {
     this.name = name;
     this.operationId = operationId;
   }
@@ -65,7 +65,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     final IntByReference err_len =
         new IntByReference(LibEthPairings.EIP2537_PREALLOCATE_FOR_ERROR_BYTES);
     final int errorNo =
-        LibEthPairings.INSTANCE.eip2537_perform_operation(
+        LibEthPairings.eip2537_perform_operation(
             operationId, input.toArrayUnsafe(), input.size(), result, o_len, error, err_len);
     if (errorNo == 0) {
       return Bytes.wrap(result, 0, o_len.getValue());
