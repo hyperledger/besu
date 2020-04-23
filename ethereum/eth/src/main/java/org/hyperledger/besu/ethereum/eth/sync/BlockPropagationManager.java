@@ -111,7 +111,7 @@ public class BlockPropagationManager<C> {
         .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
   }
 
-  private void onBlockAdded(final BlockAddedEvent blockAddedEvent, final Blockchain blockchain) {
+  private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
 
@@ -144,7 +144,7 @@ public class BlockPropagationManager<C> {
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
-      final long head = blockchain.getChainHeadBlockNumber();
+      final long head = protocolContext.getBlockchain().getChainHeadBlockNumber();
       final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
       pendingBlocks.purgeBlocksOlderThan(cutoff);
     }

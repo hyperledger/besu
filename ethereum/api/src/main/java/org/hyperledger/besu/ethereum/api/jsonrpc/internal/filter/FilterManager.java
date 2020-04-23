@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -153,7 +152,7 @@ public class FilterManager extends AbstractVerticle {
     }
   }
 
-  public void recordBlockEvent(final BlockAddedEvent event, final Blockchain __) {
+  public void recordBlockEvent(final BlockAddedEvent event) {
     final Hash blockHash = event.getBlock().getHash();
     final Collection<BlockFilter> blockFilters =
         filterRepository.getFiltersOfType(BlockFilter.class);

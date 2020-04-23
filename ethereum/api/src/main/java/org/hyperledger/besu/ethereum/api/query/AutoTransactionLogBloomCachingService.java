@@ -49,7 +49,7 @@ public class AutoTransactionLogBloomCachingService {
       blockAddedSubscriptionId =
           OptionalLong.of(
               blockchain.observeBlockAdded(
-                  (event, __) -> {
+                  event -> {
                     if (event.isNewCanonicalHead()) {
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
                           event.getBlock().getHeader(), Optional.empty(), true);

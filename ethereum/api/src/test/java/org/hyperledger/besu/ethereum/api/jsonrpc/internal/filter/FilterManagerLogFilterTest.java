@@ -177,8 +177,7 @@ public class FilterManagerLogFilterTest {
                 })
             .limit(numEvents)
             .collect(toUnmodifiableList());
-    blockAddedEvents.forEach(
-        event -> filterManager.recordBlockEvent(event, blockchainQueries.getBlockchain()));
+    blockAddedEvents.forEach(event -> filterManager.recordBlockEvent(event));
     return blockAddedEvents;
   }
 
