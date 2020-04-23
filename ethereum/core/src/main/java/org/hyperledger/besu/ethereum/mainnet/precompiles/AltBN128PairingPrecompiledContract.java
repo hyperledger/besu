@@ -40,7 +40,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
 
-  static boolean useNative = false;
+  static boolean useNative = true;
 
   private static final Logger LOG = LogManager.getLogger();
 
