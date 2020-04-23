@@ -264,7 +264,7 @@ public class PrivGetTransactionReceiptTest {
         null,
         Collections.emptyList(),
         Bytes.EMPTY,
-        null,
+        Hash.EMPTY,
         0,
         0,
         markerTransaction.getHash(),
