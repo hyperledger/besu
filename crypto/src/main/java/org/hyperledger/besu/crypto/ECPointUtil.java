@@ -24,17 +24,6 @@ import org.bouncycastle.math.ec.ECFieldElement;
 
 /** Helper class for ECPoint */
 public class ECPointUtil {
-  public static byte[] toCoordinateByteArray(final BigInteger coordinate) {
-    final Bytes bytes = Bytes.wrap(coordinate.toByteArray());
-    if (bytes.size() < 32) {
-      return Bytes32.leftPad(bytes).toArray();
-    } else if (bytes.size() > 32 && bytes.hasLeadingZeroByte()) {
-      return Arrays.copyOfRange(bytes.toArray(), 1, bytes.size());
-    } else {
-      return bytes.toArray();
-    }
-  }
-
   public static ECPoint fromBouncyCastleECPoint(
       final org.bouncycastle.math.ec.ECPoint bouncyCastleECPoint) {
     final ECFieldElement xCoord = bouncyCastleECPoint.getAffineXCoord();
@@ -50,9 +39,24 @@ public class ECPointUtil {
   }
 
   public static Bytes getEncodedBytes(final ECPoint ecPoint) {
-    final Bytes xBytes = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineX()));
-    final Bytes yBytes = Bytes32.wrap(toCoordinateByteArray(ecPoint.getAffineY()));
+    final Bytes xBytes = Bytes32.wrap(stripSign(ecPoint.getAffineX()));
+    final Bytes yBytes = Bytes32.wrap(stripSign(ecPoint.getAffineY()));
 
     return Bytes.concatenate(xBytes, yBytes);
+  }
+
+  /**
+   * @param coordinate BigInteger
+   * @return byte[] after stripping sign bit, if any and padding with 0 if smaller than 32
+   */
+  private static byte[] stripSign(final BigInteger coordinate) {
+    final Bytes bytes = Bytes.wrap(coordinate.toByteArray());
+    if (bytes.size() < 32) {
+      return Bytes32.leftPad(bytes).toArray();
+    } else if (bytes.size() > 32 && bytes.hasLeadingZeroByte()) {
+      return Arrays.copyOfRange(bytes.toArray(), 1, bytes.size());
+    } else {
+      return bytes.toArray();
+    }
   }
 }
