@@ -66,7 +66,7 @@ public class CoinbaseFeePriceCalculatorTest {
           // EIP-1559 must return gas * (gas price - base fee)
           {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(10L), Optional.of(4L), Wei.of(600L)},
           // Negative transaction gas price case
-          //{EIP_1559_CALCULATOR, Gas.of(100), Wei.of(95L), Optional.of(100L), Wei.of(-500L)}
+          // {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(95L), Optional.of(100L), Wei.of(-500L)}
         });
   }
 
