@@ -64,7 +64,6 @@ import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -139,7 +138,6 @@ public abstract class CommandTestAbstract {
 
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
-  @Captor protected ArgumentCaptor<File> fileArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Float> floatCaptor;
@@ -166,11 +164,6 @@ public abstract class CommandTestAbstract {
 
   @Before
   public void initMocks() throws Exception {
-
-    //    final SecurityModule securityModule =
-    //        new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(temp.newFolder().toPath()));
-    //    nodeKey = new NodeKey(securityModule);
-
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
         .when(mockControllerBuilderFactory)
