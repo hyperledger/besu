@@ -22,16 +22,17 @@ import java.util.Optional;
 
 @FunctionalInterface
 public interface CoinbaseFeePriceCalculator {
-  Wei price(Gas coinbaseFee, Wei transactionGasPrice, Optional<Long> baseFee);
+  long price(Gas coinbaseFee, Wei transactionGasPrice, Optional<Long> baseFee);
 
   static CoinbaseFeePriceCalculator frontier() {
-    return (coinbaseFee, transactionGasPrice, baseFee) -> coinbaseFee.priceFor(transactionGasPrice);
+    return (coinbaseFee, transactionGasPrice, baseFee) ->
+        coinbaseFee.priceFor(transactionGasPrice).toLong();
   }
 
   static CoinbaseFeePriceCalculator eip1559() {
     return (coinbaseFee, transactionGasPrice, baseFee) -> {
       ExperimentalEIPs.eip1559MustBeEnabled();
-      return coinbaseFee.priceFor(Wei.of(transactionGasPrice.toLong() - baseFee.orElseThrow()));
+      return coinbaseFee.toLong() * (transactionGasPrice.toLong() - baseFee.orElseThrow());
     };
   }
 }
