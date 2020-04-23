@@ -869,13 +869,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--Xsecp256k1-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
-  private final Boolean nativeSecp256k1 = Boolean.FALSE;
+  private final Boolean nativeSecp256k1 = Boolean.TRUE;
 
   @CommandLine.Option(
       names = {"--Xaltbn128-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
-  private final Boolean nativeAltbn128 = Boolean.FALSE;
+  private final Boolean nativeAltbn128 = Boolean.TRUE;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;

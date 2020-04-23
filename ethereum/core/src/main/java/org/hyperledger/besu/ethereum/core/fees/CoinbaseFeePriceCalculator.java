@@ -31,7 +31,7 @@ public interface CoinbaseFeePriceCalculator {
   static CoinbaseFeePriceCalculator eip1559() {
     return (coinbaseFee, transactionGasPrice, baseFee) -> {
       ExperimentalEIPs.eip1559MustBeEnabled();
-      return coinbaseFee.priceFor(Wei.of(transactionGasPrice.toLong() - baseFee.orElseThrow()));
+      return coinbaseFee.priceFor(transactionGasPrice.subtract(Wei.of(baseFee.orElseThrow())));
     };
   }
 }
