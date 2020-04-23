@@ -143,7 +143,8 @@ public class TransactionPoolTest {
             peerTransactionTracker,
             Optional.of(peerPendingTransactionTracker),
             Wei.of(2),
-            metricsSystem);
+            metricsSystem,
+            Optional.empty());
     blockchain.observeBlockAdded(transactionPool);
   }
 
@@ -398,7 +399,8 @@ public class TransactionPoolTest {
             peerTransactionTracker,
             Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
-            metricsSystem);
+            metricsSystem,
+            Optional.empty());
 
     when(pendingTransactions.containsTransaction(transaction1.getHash())).thenReturn(true);
 
@@ -534,7 +536,8 @@ public class TransactionPoolTest {
             peerTransactionTracker,
             Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
-            metricsSystem);
+            metricsSystem,
+            Optional.empty());
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
@@ -602,7 +605,8 @@ public class TransactionPoolTest {
             peerTransactionTracker,
             Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
-            metricsSystem);
+            metricsSystem,
+            Optional.empty());
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
