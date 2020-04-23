@@ -41,7 +41,6 @@ import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
-import org.hyperledger.besu.plugin.services.securitymodule.localfile.LocalFileSecurityModulePlugin;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -99,7 +98,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
-    new LocalFileSecurityModulePlugin().register(besuPluginContext);
 
     return besuPluginContext;
   }

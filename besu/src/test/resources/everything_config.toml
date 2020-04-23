@@ -11,11 +11,11 @@
 # Node Information
 data-path="~/besudata"
 logging="INFO"
+node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 
 # Security Module plugin to use
 security-module-provider="localfile"
-# plugin-localfile-security-module-private-key-file='./path/to/private-key'
 
 # P2P network
 identity="PegaSysEng"

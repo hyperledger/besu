@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli;
 
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_SECURITY_MODULE_PROVIDER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyFloat;
@@ -40,9 +39,8 @@ import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
-import org.hyperledger.besu.crypto.KeyPairSecurityModule;
-import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -57,9 +55,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
-import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -136,6 +132,7 @@ public abstract class CommandTestAbstract {
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
+  @Mock protected NodeKey nodeKey;
 
   @Mock protected Logger mockLogger;
   @Mock protected BesuPluginContextImpl mockBesuPluginContext;
@@ -161,8 +158,6 @@ public abstract class CommandTestAbstract {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
-  private NodeKey nodeKey;
-
   @Before
   @After
   public void resetSystemProps() {
@@ -172,9 +167,9 @@ public abstract class CommandTestAbstract {
   @Before
   public void initMocks() throws Exception {
 
-    final SecurityModule securityModule =
-        new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(temp.newFolder().toPath()));
-    nodeKey = new NodeKey(securityModule);
+    //    final SecurityModule securityModule =
+    //        new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(temp.newFolder().toPath()));
+    //    nodeKey = new NodeKey(securityModule);
 
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
@@ -240,6 +235,13 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     lenient()
+        .when(nodeKey.getPublicKey())
+        .thenReturn(
+            SECP256K1.PublicKey.create(
+                Bytes.fromHexString(
+                    "0x35f48529f73c4172850ed18997d00d101a9aebc130103c23d41d46351c1b1d72ffc8b246af3a446d99a8218bd69e231b75932ea9a79173751dc7eb2eb0e301f2")));
+
+    lenient()
         .when(storageService.getByName(eq("rocksdb")))
         .thenReturn(Optional.of(rocksDBStorageFactory));
     lenient()
@@ -250,18 +252,11 @@ public abstract class CommandTestAbstract {
         .thenReturn(new InMemoryKeyValueStorage());
 
     lenient()
-        .when(securityModuleService.getByName(DEFAULT_SECURITY_MODULE_PROVIDER))
-        .thenReturn(Optional.of(besuConfiguration -> securityModule));
-
-    lenient()
         .when(mockBesuPluginContext.getService(PicoCLIOptions.class))
         .thenReturn(Optional.of(cliOptions));
     lenient()
         .when(mockBesuPluginContext.getService(StorageService.class))
         .thenReturn(Optional.of(storageService));
-    lenient()
-        .when(mockBesuPluginContext.getService(SecurityModuleService.class))
-        .thenReturn(Optional.of(securityModuleService));
   }
 
   // Display outputs for debug purpose
@@ -302,6 +297,7 @@ public abstract class CommandTestAbstract {
     final TestBesuCommand besuCommand =
         new TestBesuCommand(
             mockLogger,
+            nodeKey,
             rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -329,9 +325,11 @@ public abstract class CommandTestAbstract {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private Vertx vertx;
+    private final NodeKey mockNodeKey;
 
     TestBesuCommand(
         final Logger mockLogger,
+        final NodeKey mockNodeKey,
         final RlpBlockImporter mockBlockImporter,
         final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
         final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
@@ -352,6 +350,7 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService);
+      this.mockNodeKey = mockNodeKey;
     }
 
     @Override
@@ -363,6 +362,12 @@ public abstract class CommandTestAbstract {
     protected Vertx createVertx(final VertxOptions vertxOptions) {
       vertx = super.createVertx(vertxOptions);
       return vertx;
+    }
+
+    @Override
+    NodeKey buildNodeKey() {
+      // for testing.
+      return mockNodeKey;
     }
 
     public CommandSpec getSpec() {

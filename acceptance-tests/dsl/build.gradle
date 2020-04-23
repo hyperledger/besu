@@ -16,7 +16,6 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':plugin-api')
   implementation project(':plugins:rocksdb')
-  implementation project(':plugins:localfile-securitymodule')
   implementation project(':services:kvstore')
   implementation project(':testutil')
   implementation project(':util')

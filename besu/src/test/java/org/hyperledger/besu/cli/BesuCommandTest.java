@@ -293,9 +293,14 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
+    final File dataFolder = temp.newFolder();
     final String updatedConfig =
         Resources.toString(configFile, UTF_8)
-            .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()));
+            .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()))
+            .replace(
+                "data-path=\"/opt/besu\"",
+                "data-path=\"" + escapeTomlString(dataFolder.getPath()) + "\"");
+
     final Path toml = createTempFile("toml", updatedConfig.getBytes(UTF_8));
 
     final List<RpcApi> expectedApis = asList(ETH, WEB3);
@@ -347,7 +352,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
             .setBootNodes(nodes)
             .build();
-    verify(mockControllerBuilder).dataDirectory(eq(Paths.get("/opt/besu").toAbsolutePath()));
+    verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any());
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
@@ -804,6 +809,35 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--config", path.toString());
     assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--config', '.'");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodekeyOptionMustBeUsed() throws Exception {
+    final File file = new File("./specific/enclavePrivateKey");
+
+    parseCommand("--node-private-key-file", file.getPath());
+
+    verify(mockControllerBuilder).dataDirectory(isNotNull());
+    verify(mockControllerBuilder).nodeKey(isNotNull());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodekeyOptionDisabledUnderDocker() {
+    System.setProperty("besu.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final File file = new File("./specific/enclavePrivateKey");
+    file.deleteOnExit();
+
+    parseCommand("--node-private-key-file", file.getPath());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: '--node-private-key-file', './specific/enclavePrivateKey'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 

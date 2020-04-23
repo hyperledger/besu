@@ -65,6 +65,8 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
@@ -115,7 +117,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
-import org.hyperledger.besu.plugin.services.securitymodule.localfile.LocalFileSecurityModulePlugin;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
@@ -1062,7 +1063,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
-    registerBuiltInPlugins();
+    // register built-in plugins
+    new RocksDBPlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
 
@@ -1071,11 +1073,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .forEach(metricCategoryConverter::addRegistryCategory);
 
     return this;
-  }
-
-  private void registerBuiltInPlugins() {
-    new RocksDBPlugin().register(besuPluginContext);
-    new LocalFileSecurityModulePlugin().register(besuPluginContext);
   }
 
   private void parse(
@@ -1987,16 +1984,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private NodeKey buildNodeKey() {
+  @VisibleForTesting
+  NodeKey buildNodeKey() {
     return new NodeKey(securityModuleProvider());
   }
 
   private SecurityModule securityModuleProvider() {
+    if (DEFAULT_SECURITY_MODULE_PROVIDER.equals(securityModuleProviderName)) {
+      // directly load KeyPairSecurityModule
+      return new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(nodePrivateKeyFile()));
+    }
+
     return securityModuleService
         .getByName(securityModuleProviderName)
         .orElseThrow(
             () -> new RuntimeException("Security Module not found: " + securityModuleProviderName))
         .create(pluginCommonConfiguration);
+  }
+
+  private File nodePrivateKeyFile() {
+    final Optional<File> nodePrivateKeyFile =
+        isDocker ? Optional.empty() : Optional.ofNullable(standaloneCommands.nodePrivateKeyFile);
+    return nodePrivateKeyFile.orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
 
   private File privacyPublicKeyFile() {

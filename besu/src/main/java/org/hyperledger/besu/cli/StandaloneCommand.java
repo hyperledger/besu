@@ -51,6 +51,13 @@ class StandaloneCommand implements DefaultCommandValues {
   final File genesisFile = null;
 
   @CommandLine.Option(
+      names = {"--node-private-key-file"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description =
+          "The node's private key file (default: a file named \"key\" in the Besu data folder)")
+  final File nodePrivateKeyFile = null;
+
+  @CommandLine.Option(
       names = {"--rpc-http-authentication-credentials-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
