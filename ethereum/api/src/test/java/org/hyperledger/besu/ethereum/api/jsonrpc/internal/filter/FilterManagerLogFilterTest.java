@@ -89,6 +89,26 @@ public class FilterManagerLogFilterTest {
   }
 
   @Test
+  public void shouldCheckMatchingLogsWhenRecordedNewBlockEvent() {
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
+
+    filterManager.installLogFilter(latest(), latest(), logsQuery());
+    recordNewBlockEvent();
+
+    verify(blockchainQueries).matchingLogs(eq(100L), eq(100L), eq(logsQuery()));
+  }
+
+  @Test
+  public void shouldUseHeadBlockAsFromBlockNumberWhenCheckingLogsForChanges() {
+    when(blockchainQueries.headBlockNumber()).thenReturn(3L);
+
+    filterManager.installLogFilter(blockNum(1L), blockNum(10L), logsQuery());
+    recordNewBlockEvent();
+
+    verify(blockchainQueries).matchingLogs(eq(3L), eq(10L), eq(logsQuery()));
+  }
+
+  @Test
   public void shouldReturnLogWhenLogFilterMatches() {
 
     final String filterId = filterManager.installLogFilter(latest(), latest(), logsQuery());
