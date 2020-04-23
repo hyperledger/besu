@@ -152,11 +152,6 @@ jobs:
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
             ./gradlew --no-daemon --parallel acceptanceTest $GRADLE_ARGS
       - capture_test_results
-      - store_artifacts:
-          name: Test artifacts
-          path: build/test-results
-          destination: distributions
-          when: always
 
   buildDocker:
     executor: besu_executor_med
