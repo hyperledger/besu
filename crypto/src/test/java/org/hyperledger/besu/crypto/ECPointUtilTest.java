@@ -54,7 +54,7 @@ public class ECPointUtilTest {
   }
 
   @Test
-  public void noAdjustementRequired() {
+  public void noAdjustmentRequired() {
     final Bytes32 bytesValue =
         Bytes32.fromHexString("0x5a0e86ad52892ab9a241e2f8cd26151a4432b8bd17ef27d211eb323f94dbac72");
     final BigInteger value = bytesValue.toUnsignedBigInteger();
