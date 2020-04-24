@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.vm.ReferenceTestExceptionMessage.INVALID_GENESIS_RLP;
 import static org.hyperledger.besu.ethereum.vm.ReferenceTestExceptionMessage.INVALID_LAST_BLOCK_HASH;
 
@@ -77,7 +76,7 @@ public class BlockchainReferenceTestTools {
     params.blacklist("sha3_memSizeNoQuadraticCost[0-9][0-9]_Istanbul");
     params.blacklist("sha3_memSizeQuadraticCost[0-9][0-9]_(|zeroSize|2)_?Istanbul");
 
-    // Inconsistency between expected exception and provided data (ExtraDataTooBig/RLP)
+    // Test for retesteth logic
     params.blacklist("lastblockhashException_Istanbul");
     params.blacklist("filling_unexpectedException_Istanbul");
 
@@ -137,15 +136,12 @@ public class BlockchainReferenceTestTools {
       }
 
       if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
-        final String message =
-            String.format(
-                INVALID_LAST_BLOCK_HASH.getMessage(),
-                blockchain.getChainHeadHash(),
-                spec.getLastBlockHash());
-        if (spec.getExceptions() == null) {
-          fail(String.format("Exception message needed when %s", message));
-        }
-        assertThat(spec.getExceptions()).containsAnyOf(message);
+        assertThat(spec.getExceptions())
+            .containsAnyOf(
+                String.format(
+                    INVALID_LAST_BLOCK_HASH.getMessage(),
+                    blockchain.getChainHeadHash(),
+                    spec.getLastBlockHash()));
       }
     }
   }
