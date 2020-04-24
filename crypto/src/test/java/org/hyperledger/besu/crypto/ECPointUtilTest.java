@@ -14,69 +14,57 @@
  */
 package org.hyperledger.besu.crypto;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.math.BigInteger;
+import java.security.spec.ECPoint;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class ECPointUtilTest {
 
   @Test
-  public void smallerByteArrayFromBigIntegerAdjusted() {
-    final Bytes32 bytes32 =
-        Bytes32.fromHexString("0x00169d3beacb40076ad4c8fd813a80c4d0b8e16df84066b9a7bdf2c50bff2de0");
-    final BigInteger value = bytes32.toUnsignedBigInteger();
-    // conversion from BigInteger results in 31 byte array
-    final byte[] bigIntByteArray = value.toByteArray();
-    Assertions.assertThat(bigIntByteArray).hasSize(31);
-
-    final byte[] bytes = ECPointUtil.toUnsignedByteArray(value);
-
-    Assertions.assertThat(bytes.length).isEqualTo(32);
-    Assertions.assertThat(bytes).containsExactly(bytes32.toArray());
-  }
-
-  @Test
-  public void largerByteArrayFromBigIntegerAdjusted() {
-    final Bytes32 bytesValue =
-        Bytes32.fromHexString("0xd5653abfe1713c793039cdc1e4587c851e1759ed37337db7a8ee6eec2dea1a56");
-    final BigInteger value = bytesValue.toUnsignedBigInteger();
-    // conversion from BigInteger results in 33 byte array
-    final byte[] bigIntByteArray = value.toByteArray();
-    Assertions.assertThat(bigIntByteArray).hasSize(33);
-
-    final byte[] bytes = ECPointUtil.toUnsignedByteArray(value);
-
-    Assertions.assertThat(bytes.length).isEqualTo(32);
-    Assertions.assertThat(bytes).containsExactly(bytesValue.toArray());
-  }
-
-  @Test
-  public void noAdjustmentRequired() {
-    final Bytes32 bytesValue =
-        Bytes32.fromHexString("0x5a0e86ad52892ab9a241e2f8cd26151a4432b8bd17ef27d211eb323f94dbac72");
-    final BigInteger value = bytesValue.toUnsignedBigInteger();
-    // conversion from BigInteger results in 32 byte array
-    final byte[] bigIntByteArray = value.toByteArray();
-    Assertions.assertThat(bigIntByteArray).hasSize(32);
-
-    final byte[] bytes = ECPointUtil.toUnsignedByteArray(value);
-
-    Assertions.assertThat(bytes.length).isEqualTo(32);
-    Assertions.assertThat(bytes).containsExactly(bytesValue.toArray());
-  }
-
-  @Test
-  public void invalidSizeThrowsError() {
-    final Bytes bytes36 =
+  public void ecPointWithBigIntegerByteArrayNot32ShouldBeEncoded() {
+    final BigInteger xCoord =
+        Bytes.fromHexString("0x00c139989725b24ac6214f97d4ad75e74ddec4208ddc4a277195d95f7ca56735b6")
+            .toBigInteger();
+    final BigInteger yCoord =
+        Bytes.fromHexString("0x4b80989faae422b06a2a2fe75766402eb8e89b782bdb7c352c584cda8fd239")
+            .toBigInteger();
+    final Bytes expectedEncoded =
         Bytes.fromHexString(
-            "0xb0a1162dafd9d224c0f1d2de9113e247d40497c2b7a1b85dab088b57ac1c67ae27d18292");
-    final BigInteger value = bytes36.toUnsignedBigInteger();
+            "0xc139989725b24ac6214f97d4ad75e74ddec4208ddc4a277195d95f7ca56735b6004b80989faae422b06a2a2fe75766402eb8e89b782bdb7c352c584cda8fd239");
 
-    Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> ECPointUtil.toUnsignedByteArray(value))
-        .withMessage("Unexpected byte[] size when converting ECPoint: " + 37);
+    assertThat(xCoord.toByteArray()).hasSize(33);
+    assertThat(yCoord.toByteArray()).hasSize(31);
+
+    final ECPoint ecPoint = new ECPoint(xCoord, yCoord);
+    final Bytes encodedBytes = ECPointUtil.getEncodedBytes(ecPoint);
+
+    assertThat(encodedBytes.toArray()).hasSize(64);
+    assertThat(encodedBytes).isEqualByComparingTo(expectedEncoded);
+  }
+
+  @Test
+  public void ecPointWithBigIntegerAs32ShouldBeEncoded() {
+    final BigInteger xCoord =
+        Bytes.fromHexString("0x1575de790d7d00623a3f7e6ec2d0b69d65c5c183f8773a033d2c20dd20008271")
+            .toBigInteger();
+    final BigInteger yCoord =
+        Bytes.fromHexString("0x61772e076283d628beb591a23412c7d906d11b011ca66f188d4052db1e2ad615")
+            .toBigInteger();
+    final Bytes expectedEncoded =
+        Bytes.fromHexString(
+            "0x1575de790d7d00623a3f7e6ec2d0b69d65c5c183f8773a033d2c20dd2000827161772e076283d628beb591a23412c7d906d11b011ca66f188d4052db1e2ad615");
+
+    assertThat(xCoord.toByteArray()).hasSize(32);
+    assertThat(yCoord.toByteArray()).hasSize(32);
+
+    final ECPoint ecPoint = new ECPoint(xCoord, yCoord);
+    final Bytes encodedBytes = ECPointUtil.getEncodedBytes(ecPoint);
+
+    assertThat(encodedBytes.toArray()).hasSize(64);
+    assertThat(encodedBytes).isEqualByComparingTo(expectedEncoded);
   }
 }
