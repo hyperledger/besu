@@ -104,7 +104,6 @@ jobs:
           command: |
             ./gradlew --no-daemon --parallel build
       - capture_test_results
-      - capture_test_logs
 
   integrationTests:
     executor: besu_executor_xl
@@ -125,7 +124,6 @@ jobs:
           command: |
             ./gradlew --no-daemon --parallel compileJmh
       - capture_test_results
-      - capture_test_logs
 
   referenceTests:
     executor: besu_executor_xl
@@ -140,7 +138,6 @@ jobs:
             git submodule update --init --recursive
             ./gradlew --no-daemon --parallel referenceTest
       - capture_test_results
-      - capture_test_logs
 
   acceptanceTests:
     parallelism: 2
