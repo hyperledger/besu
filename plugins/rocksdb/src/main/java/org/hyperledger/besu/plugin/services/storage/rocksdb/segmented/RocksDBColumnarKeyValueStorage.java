@@ -178,6 +178,10 @@ public class RocksDBColumnarKeyValueStorage
           try {
             db.delete(segmentHandle, key);
           } catch (RocksDBException rdbe) {
+            // We can't get a lock here because we detect that we are about to commit a doomed key
+            // in `commit` below and we are also waiting there. The timeout is configured to be as
+            // short as possible so this thread can skip this key and move on to sweeping more keys
+            // asap.
             if (rdbe.getStatus().getCode() != Status.Code.TimedOut) throw rdbe;
           }
         }
@@ -271,6 +275,8 @@ public class RocksDBColumnarKeyValueStorage
 
     @Override
     public void commit() throws StorageException {
+      // This is where we're intentionally causing the deadlock with the delete in
+      // `removeAllKeysUnless` above.
       while (maybeDoomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
         try {
           Thread.sleep(0, 500);
