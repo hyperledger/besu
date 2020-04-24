@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.crypto;
 
+import static org.hyperledger.besu.crypto.ECPointUtil.fromBouncyCastleECPoint;
+
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import java.math.BigInteger;
+import java.security.spec.ECPoint;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -30,9 +33,16 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class KeyPairSecurityModule implements SecurityModule {
   private final SECP256K1.KeyPair keyPair;
+  private final PublicKey publicKey;
 
   public KeyPairSecurityModule(final SECP256K1.KeyPair keyPair) {
     this.keyPair = keyPair;
+    try {
+      this.publicKey =
+          new PublicKeyImpl(fromBouncyCastleECPoint(keyPair.getPublicKey().asEcPoint()));
+    } catch (final Exception e) {
+      throw new SecurityModuleException(e);
+    }
   }
 
   @Override
@@ -47,20 +57,16 @@ public class KeyPairSecurityModule implements SecurityModule {
 
   @Override
   public PublicKey getPublicKey() throws SecurityModuleException {
-    try {
-      return () -> ECPointUtil.fromBouncyCastleECPoint(keyPair.getPublicKey().asEcPoint());
-    } catch (final Exception e) {
-      throw new SecurityModuleException(e);
-    }
+    return publicKey;
   }
 
   @Override
-  public Bytes32 calculateECDHKeyAgreement(final PublicKey publicKey)
+  public Bytes32 calculateECDHKeyAgreement(final PublicKey partyKey)
       throws SecurityModuleException {
     try {
-      final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(publicKey.getW());
-      final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(encodedECPoint);
-      return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), pubKey);
+      final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(partyKey.getW());
+      final SECP256K1.PublicKey secp256KPartyKey = SECP256K1.PublicKey.create(encodedECPoint);
+      return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(e);
     }
@@ -70,7 +76,7 @@ public class KeyPairSecurityModule implements SecurityModule {
 
     private final SECP256K1.Signature signature;
 
-    public SignatureImpl(final SECP256K1.Signature signature) {
+    SignatureImpl(final SECP256K1.Signature signature) {
       this.signature = signature;
     }
 
@@ -82,6 +88,19 @@ public class KeyPairSecurityModule implements SecurityModule {
     @Override
     public BigInteger getS() {
       return signature.getS();
+    }
+  }
+
+  private static class PublicKeyImpl implements PublicKey {
+    private final ECPoint w;
+
+    PublicKeyImpl(final ECPoint w) {
+      this.w = w;
+    }
+
+    @Override
+    public ECPoint getW() {
+      return w;
     }
   }
 }
