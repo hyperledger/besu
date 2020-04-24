@@ -18,20 +18,18 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 
-import java.util.Optional;
-
 @FunctionalInterface
 public interface CoinbaseFeePriceCalculator {
-  Wei price(Gas coinbaseFee, Wei transactionGasPrice, Optional<Long> baseFee);
+  Wei price(Gas coinbaseFee, Wei price, Wei burned);
 
   static CoinbaseFeePriceCalculator frontier() {
-    return (coinbaseFee, transactionGasPrice, baseFee) -> coinbaseFee.priceFor(transactionGasPrice);
+    return (coinbaseFee, price, burned) -> coinbaseFee.priceFor(price);
   }
 
   static CoinbaseFeePriceCalculator eip1559() {
-    return (coinbaseFee, transactionGasPrice, baseFee) -> {
+    return (coinbaseFee, price, burned) -> {
       ExperimentalEIPs.eip1559MustBeEnabled();
-      return coinbaseFee.priceFor(transactionGasPrice.subtract(Wei.of(baseFee.orElseThrow())));
+      return coinbaseFee.priceFor(price.subtract(burned));
     };
   }
 }

@@ -327,12 +327,15 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-    final Wei coinbaseWeiDelta =
-        coinbaseFeePriceCalculator.price(
-            coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
-    if (coinbaseWeiDelta.compareTo(Wei.ZERO) > 0) {
+    final Wei baseFee =
+        blockHeader.getBaseFee().isPresent() ? Wei.of(blockHeader.getBaseFee().get()) : Wei.ZERO;
+    final boolean credit = transactionGasPrice.compareTo(baseFee) >= 0;
+    final Wei price = credit ? transactionGasPrice : baseFee;
+    final Wei burned = credit ? baseFee : transactionGasPrice;
+    final Wei coinbaseWeiDelta = coinbaseFeePriceCalculator.price(coinbaseFee, price, burned);
+    if (credit) {
       coinbase.incrementBalance(coinbaseWeiDelta);
-    } else if (coinbaseWeiDelta.compareTo(Wei.ZERO) < 0) {
+    } else {
       if (coinbaseWeiDelta.compareTo(coinbase.getBalance()) > 0) {
         return Result.failed(
             refunded.toLong(),
