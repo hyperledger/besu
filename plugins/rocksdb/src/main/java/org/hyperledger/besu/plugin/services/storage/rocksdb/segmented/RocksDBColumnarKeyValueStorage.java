@@ -279,7 +279,7 @@ public class RocksDBColumnarKeyValueStorage
       // `removeAllKeysUnless` above.
       while (maybeDoomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
         try {
-          Thread.sleep(0, 500);
+          Thread.sleep(1);
         } catch (InterruptedException e) {
           throw new StorageException(e);
         }
