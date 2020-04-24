@@ -199,7 +199,7 @@ public class DefaultBlockchainTest {
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
     blockchain.observeBlockAdded(
-        ((event, blockchain1) ->
+        (event ->
             assertThat(event.getLogsWithMetadata())
                 .containsExactly(
                     LogWithMetadata.generate(newBlock, receipts, false)
@@ -281,8 +281,7 @@ public class DefaultBlockchainTest {
 
     // Listen to block events and add the Logs here
     List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
-    blockchain.observeBlockAdded(
-        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
 
     // Add initial blocks
@@ -358,8 +357,7 @@ public class DefaultBlockchainTest {
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     // Listen to block events and add the Logs here
     List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
-    blockchain.observeBlockAdded(
-        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
@@ -478,8 +476,7 @@ public class DefaultBlockchainTest {
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     // Listen to block events and add the Logs here
     List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
-    blockchain.observeBlockAdded(
-        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
@@ -589,8 +586,7 @@ public class DefaultBlockchainTest {
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     // Listen to block events and add the Logs here
     List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
-    blockchain.observeBlockAdded(
-        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
@@ -700,8 +696,7 @@ public class DefaultBlockchainTest {
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     // Listen to block events and add the Logs here
     List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
-    blockchain.observeBlockAdded(
-        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
@@ -797,7 +792,7 @@ public class DefaultBlockchainTest {
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
-    final long observerId = blockchain.observeBlockAdded((block, chain) -> {});
+    final long observerId = blockchain.observeBlockAdded(__ -> {});
     assertThat(blockchain.observerCount()).isEqualTo(1);
 
     assertThat(blockchain.removeObserver(observerId)).isTrue();
@@ -823,13 +818,13 @@ public class DefaultBlockchainTest {
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
-    final long observerId1 = blockchain.observeBlockAdded((block, chain) -> {});
+    final long observerId1 = blockchain.observeBlockAdded(__ -> {});
     assertThat(blockchain.observerCount()).isEqualTo(1);
 
-    final long observerId2 = blockchain.observeBlockAdded((block, chain) -> {});
+    final long observerId2 = blockchain.observeBlockAdded(__ -> {});
     assertThat(blockchain.observerCount()).isEqualTo(2);
 
-    final long observerId3 = blockchain.observeBlockAdded((block, chain) -> {});
+    final long observerId3 = blockchain.observeBlockAdded(__ -> {});
     assertThat(blockchain.observerCount()).isEqualTo(3);
 
     assertThat(blockchain.removeObserver(observerId1)).isTrue();
@@ -858,7 +853,7 @@ public class DefaultBlockchainTest {
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
 
     final AtomicBoolean observerInvoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded((block, chain) -> observerInvoked.set(true));
+    blockchain.observeBlockAdded(__ -> observerInvoked.set(true));
 
     blockchain.appendBlock(newBlock, receipts);
 
@@ -881,13 +876,13 @@ public class DefaultBlockchainTest {
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
 
     final AtomicBoolean observer1Invoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded((block, chain) -> observer1Invoked.set(true));
+    blockchain.observeBlockAdded(__ -> observer1Invoked.set(true));
 
     final AtomicBoolean observer2Invoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded((block, chain) -> observer2Invoked.set(true));
+    blockchain.observeBlockAdded(__ -> observer2Invoked.set(true));
 
     final AtomicBoolean observer3Invoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded((block, chain) -> observer3Invoked.set(true));
+    blockchain.observeBlockAdded(__ -> observer3Invoked.set(true));
 
     blockchain.appendBlock(newBlock, receipts);
 

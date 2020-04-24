@@ -237,8 +237,7 @@ public class FilterManagerTest {
     currentBlock = blockGenerator.block(options);
     filterManager.recordBlockEvent(
         BlockAddedEvent.createForHeadAdvancement(
-            currentBlock, Collections.emptyList(), Collections.emptyList()),
-        blockchainQueries.getBlockchain());
+            currentBlock, Collections.emptyList(), Collections.emptyList()));
     return currentBlock.getHash();
   }
 
