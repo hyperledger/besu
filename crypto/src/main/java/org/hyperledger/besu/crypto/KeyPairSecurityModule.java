@@ -41,7 +41,8 @@ public class KeyPairSecurityModule implements SecurityModule {
       this.publicKey =
           new PublicKeyImpl(fromBouncyCastleECPoint(keyPair.getPublicKey().asEcPoint()));
     } catch (final Exception e) {
-      throw new SecurityModuleException(e);
+      throw new SecurityModuleException(
+          "Unexpected error while converting ECPoint: " + e.getMessage(), e);
     }
   }
 
@@ -51,7 +52,7 @@ public class KeyPairSecurityModule implements SecurityModule {
       final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
       return new SignatureImpl(signature);
     } catch (final Exception e) {
-      throw new SecurityModuleException(e);
+      throw new SecurityModuleException("Unexpected error while signing: " + e.getMessage(), e);
     }
   }
 
@@ -68,7 +69,8 @@ public class KeyPairSecurityModule implements SecurityModule {
       final SECP256K1.PublicKey secp256KPartyKey = SECP256K1.PublicKey.create(encodedECPoint);
       return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
-      throw new SecurityModuleException(e);
+      throw new SecurityModuleException(
+          "Unexpected error while calculating ECDH Key Agreement: " + e.getMessage(), e);
     }
   }
 
