@@ -67,6 +67,7 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -84,6 +85,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
@@ -755,7 +757,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})")
+          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})")
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
@@ -854,6 +856,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Path to PID file (optional)")
   private final Path pidPath = null;
 
+  @CommandLine.Option(
+      names = {"--Xsecp256k1-native-enabled"},
+      description = "Path to PID file (optional)",
+      arity = "1")
+  private final Boolean nativeSecp256k1 = Boolean.TRUE;
+
+  @CommandLine.Option(
+      names = {"--Xaltbn128-native-enabled"},
+      description = "Path to PID file (optional)",
+      arity = "1")
+  private final Boolean nativeAltbn128 = Boolean.TRUE;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -932,6 +946,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public void run() {
     try {
       configureLogging(true);
+      configureNativeLibs();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
@@ -1099,6 +1114,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         System.out.println("Setting logging level to " + logLevel.name());
       }
       Configurator.setAllLevels("", logLevel);
+    }
+  }
+
+  private void configureNativeLibs() {
+    if (nativeAltbn128) {
+      AltBN128PairingPrecompiledContract.enableNative();
+    }
+    if (nativeSecp256k1) {
+      SECP256K1.enableNative();
     }
   }
 

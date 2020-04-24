@@ -41,6 +41,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -97,7 +98,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             syncState,
             Wei.of(1),
             TransactionPoolConfiguration.builder().build(),
-            true);
+            true,
+            Optional.empty());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,

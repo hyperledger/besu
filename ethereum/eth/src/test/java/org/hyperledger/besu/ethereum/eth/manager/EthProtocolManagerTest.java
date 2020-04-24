@@ -74,6 +74,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -987,7 +988,8 @@ public final class EthProtocolManagerTest {
           mock(SyncState.class),
           Wei.ZERO,
           TransactionPoolConfiguration.builder().build(),
-          true);
+          true,
+          Optional.empty());
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});

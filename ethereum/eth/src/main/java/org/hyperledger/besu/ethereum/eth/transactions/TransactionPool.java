@@ -18,16 +18,19 @@ import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.BaseFee;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -74,6 +77,11 @@ public class TransactionPool implements BlockAddedObserver {
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
   private final Optional<PeerPendingTransactionTracker> peerPendingTransactionTracker;
+  private final Optional<EIP1559> eip1559;
+  private final TransactionPriceCalculator frontierPriceCalculator =
+      TransactionPriceCalculator.frontier();
+  private final TransactionPriceCalculator eip1559PriceCalculator =
+      TransactionPriceCalculator.eip1559();
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
@@ -86,7 +94,8 @@ public class TransactionPool implements BlockAddedObserver {
       final PeerTransactionTracker peerTransactionTracker,
       final Optional<PeerPendingTransactionTracker> peerPendingTransactionTracker,
       final Wei minTransactionGasPrice,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<EIP1559> eip1559) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -96,6 +105,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.peerTransactionTracker = peerTransactionTracker;
     this.peerPendingTransactionTracker = peerPendingTransactionTracker;
     this.minTransactionGasPrice = minTransactionGasPrice;
+    this.eip1559 = eip1559;
 
     duplicateTransactionCounter =
         metricsSystem.createLabelledCounter(
@@ -137,7 +147,8 @@ public class TransactionPool implements BlockAddedObserver {
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
-    if (transaction.getGasPrice().compareTo(minTransactionGasPrice) < 0) {
+    final Wei transactionGasPrice = minTransactionGasPrice(transaction);
+    if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
       return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
     }
     final ValidationResult<TransactionInvalidReason> validationResult =
@@ -169,7 +180,8 @@ public class TransactionPool implements BlockAddedObserver {
         duplicateTransactionCounter.labels(REMOTE).inc();
         continue;
       }
-      if (transaction.getGasPrice().compareTo(minTransactionGasPrice) < 0) {
+      final Wei transactionGasPrice = minTransactionGasPrice(transaction);
+      if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
         continue;
       }
       final ValidationResult<TransactionInvalidReason> validationResult =
@@ -210,7 +222,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   @Override
-  public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
+  public void onBlockAdded(final BlockAddedEvent event) {
     event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
     addRemoteTransactions(event.getRemovedTransactions());
   }
@@ -267,5 +279,23 @@ public class TransactionPool implements BlockAddedObserver {
   public interface TransactionBatchAddedListener {
 
     void onTransactionsAdded(Iterable<Transaction> transactions);
+  }
+
+  private Wei minTransactionGasPrice(final Transaction transaction) {
+    // EIP-1559 enablement guard block
+    if (!ExperimentalEIPs.eip1559Enabled || this.eip1559.isEmpty()) {
+      return frontierPriceCalculator.price(transaction, Optional.empty());
+    }
+
+    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
+    // Compute transaction price using EIP-1559 rules if chain head is after fork
+    if (this.eip1559.get().isEIP1559(chainHeadBlockHeader.getNumber())) {
+      return eip1559PriceCalculator.price(
+          transaction,
+          Optional.of(
+              new BaseFee(chainHeadBlockHeader.getBaseFee().orElseThrow()).getMinNextValue()));
+    } else { // Use frontier rules otherwise
+      return frontierPriceCalculator.price(transaction, Optional.empty());
+    }
   }
 }

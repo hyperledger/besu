@@ -18,6 +18,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.crypto.KeyPairUtil.loadKeyPair;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.BouncyCastleSecurityModule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -256,6 +259,16 @@ public abstract class BesuControllerBuilder<C> {
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
     final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
+
+    final Optional<EIP1559> eip1559;
+    final GenesisConfigOptions genesisConfigOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides);
+    if (ExperimentalEIPs.eip1559Enabled
+        && genesisConfigOptions.getEIP1559BlockNumber().isPresent()) {
+      eip1559 = Optional.of(new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().getAsLong()));
+    } else {
+      eip1559 = Optional.empty();
+    }
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -266,7 +279,8 @@ public abstract class BesuControllerBuilder<C> {
             syncState,
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration,
-            ethereumWireProtocolConfiguration.isEth65Enabled());
+            ethereumWireProtocolConfiguration.isEth65Enabled(),
+            eip1559);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(

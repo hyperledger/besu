@@ -1,13 +1,43 @@
 # Changelog
 
-## 1.4.4 - Scheduled for release 22 April
+## 1.4.4
 
 ### Additions and Improvements
 
-- Implemented `priv_getLogs`. [\#686](https://github.com/hyperledger/besu/pull/686)
-- Implemented Private Contracts Log Filters (including JSON-RPC methods to interact with private filters). [\#735](https://github.com/hyperledger/besu/pull/735)
+- Implemented [`priv_getLogs`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#priv_getlogs). [\#686](https://github.com/hyperledger/besu/pull/686)
+- Implemented private contract log filters including JSON-RPC methods to interact with private filters. [\#735](https://github.com/hyperledger/besu/pull/735)
+- Implemented EIP-2315: Simple Subroutines for the EVM [\#717](https://github.com/hyperledger/besu/pull/717)
+- Implemented Splunk logging. [\#725](https://github.com/hyperledger/besu/pull/725)
+- Implemented optional native library encryption. [\#675](https://github.com/hyperledger/besu/pull/675).  To enable add `--Xsecp256k1-native-enabled` (for transaciton signatures) and/or `--Xaltbn128-native-enabled` (for altbn128 precomiled contracts) as command line options. 
 
-## 1.4.3 
+### Bug Fixes 
+
+- Flag added to toggle `eth/65` off by default. `eth/65` will remain toggled off by default until 
+a fix is completed for the [eth/65 known issue](KNOWN_ISSUES.md). [\#741](https://github.com/hyperledger/besu/pull/741)
+- Resolve crashing NAT detectors on GKE. [\#731](https://github.com/hyperledger/besu/pull/731) fixes [\#507](https://github.com/hyperledger/besu/issues/507). 
+[Besu-Kubernetes Readme](https://github.com/PegaSysEng/besu-kubernetes/blob/master/README.md#network-topology-and-high-availability-requirements) 
+updated to reflect changes.  
+- Deal with quick service start failures [\#714](https://github.com/hyperledger/besu/pull/714) fixes [\#662](https://github.com/hyperledger/besu/issues/662) 
+
+### Known Issues 
+
+Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+
+#### New known issues
+
+- `Intrinsic gas exceeds gas limit` returned when calling `delete mapping[addr]` or `mapping[addr] = 0` [\#696](https://github.com/hyperledger/besu/issues/696)
+
+Calling delete and set to 0 Solidity mapping in Solidity fail.
+
+#### Previously identified known issues
+
+- [Eth/65 not backwards compatible](KNOWN_ISSUES.md#eth65-not-backwards-compatible)
+- [Error full syncing with pruning](KNOWN_ISSUES.md#error-full-syncing-with-pruning)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Bootnodes must be validators when using onchain permissioning](KNOWN_ISSUES.md#bootnodes-must-be-validators-when-using-onchain-permissioning)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+## 1.4.3
 
 ### Issues identified with 1.4.3 release 
 
@@ -43,7 +73,7 @@ in 1.5.0 release. [\#639](https://github.com/hyperledger/besu/pull/639)
 #### Fast sync when running Besu on cloud providers  
 
 A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail 
-when running Besu on certain cloud providers. The following errors is displayed repeatedly: 
+when running Besu on certain cloud providers. The following error is displayed repeatedly: 
 
 ```
 ...

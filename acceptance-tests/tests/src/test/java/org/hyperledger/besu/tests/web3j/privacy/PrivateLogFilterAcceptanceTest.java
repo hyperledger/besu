@@ -22,6 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParam
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
@@ -30,13 +31,7 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 
 @SuppressWarnings("rawtypes")
-public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
-
-  /*
-   This value is derived from the contract event signature
-  */
-  private static final String EVENT_EMITTER_EVENT_TOPIC =
-      "0xc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5";
+public class PrivateLogFilterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private PrivacyNode node;
 
@@ -49,67 +44,63 @@ public class PrivGetLogsAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void getLogsUsingBlockRangeFilter() {
+  public void installAndUninstallFilter() {
     final String privacyGroupId = createPrivacyGroup();
     final EventEmitter eventEmitterContract = deployEventEmitterContract(privacyGroupId);
-
-    /*
-     Updating the contract value 2 times
-    */
-    updateContractValue(privacyGroupId, eventEmitterContract, 1);
-    updateContractValue(privacyGroupId, eventEmitterContract, 2);
 
     final LogFilterJsonParameter filter =
         blockRangeLogFilter("earliest", "latest", eventEmitterContract.getContractAddress());
 
-    final List<LogResult> logs =
-        node.execute(privacyTransactions.privGetLogs(privacyGroupId, filter));
+    final String filterId = node.execute(privacyTransactions.newFilter(privacyGroupId, filter));
 
-    /*
-     We expect one log entry per tx changing the contract value
-    */
-    assertThat(logs).hasSize(2);
+    final boolean filterUninstalled =
+        node.execute(privacyTransactions.uninstallFilter(privacyGroupId, filterId));
+
+    assertThat(filterUninstalled).isTrue();
   }
 
   @Test
-  public void getLogsUsingBlockHashFilter() {
+  public void getFilterLogs() {
     final String privacyGroupId = createPrivacyGroup();
     final EventEmitter eventEmitterContract = deployEventEmitterContract(privacyGroupId);
 
-    /*
-     Updating the contract value 1 times
-    */
-    final PrivateTransactionReceipt updateValueReceipt =
-        updateContractValue(privacyGroupId, eventEmitterContract, 1);
-    final String blockHash = updateValueReceipt.getBlockHash();
-
     final LogFilterJsonParameter filter =
-        blockHashLogFilter(blockHash, eventEmitterContract.getContractAddress());
+        blockRangeLogFilter("earliest", "latest", eventEmitterContract.getContractAddress());
+    final String filterId = node.execute(privacyTransactions.newFilter(privacyGroupId, filter));
+
+    updateContractValue(privacyGroupId, eventEmitterContract, 1);
 
     final List<LogResult> logs =
-        node.execute(privacyTransactions.privGetLogs(privacyGroupId, filter));
+        node.execute(privacyTransactions.getFilterLogs(privacyGroupId, filterId));
 
     assertThat(logs).hasSize(1);
+  }
+
+  @Test
+  public void getFilterChanges() {
+    final String privacyGroupId = createPrivacyGroup();
+    final EventEmitter eventEmitterContract = deployEventEmitterContract(privacyGroupId);
+
+    final LogFilterJsonParameter filter =
+        blockRangeLogFilter("earliest", "latest", eventEmitterContract.getContractAddress());
+    final String filterId = node.execute(privacyTransactions.newFilter(privacyGroupId, filter));
+
+    updateContractValue(privacyGroupId, eventEmitterContract, 1);
+    updateContractValue(privacyGroupId, eventEmitterContract, 2);
+
+    assertThat(node.execute(privacyTransactions.getFilterChanges(privacyGroupId, filterId)))
+        .hasSize(2);
+
+    updateContractValue(privacyGroupId, eventEmitterContract, 3);
+
+    assertThat(node.execute(privacyTransactions.getFilterChanges(privacyGroupId, filterId)))
+        .hasSize(1);
   }
 
   private LogFilterJsonParameter blockRangeLogFilter(
       final String fromBlock, final String toBlock, final String contractAddress) {
     return new LogFilterJsonParameter(
-        fromBlock,
-        toBlock,
-        List.of(contractAddress),
-        List.of(List.of(EVENT_EMITTER_EVENT_TOPIC)),
-        null);
-  }
-
-  private LogFilterJsonParameter blockHashLogFilter(
-      final String blockHash, final String contractAddress) {
-    return new LogFilterJsonParameter(
-        null,
-        null,
-        List.of(contractAddress),
-        List.of(List.of(EVENT_EMITTER_EVENT_TOPIC)),
-        blockHash);
+        fromBlock, toBlock, List.of(contractAddress), Collections.emptyList(), null);
   }
 
   private String createPrivacyGroup() {

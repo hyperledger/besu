@@ -138,7 +138,8 @@ public class BesuEventsImplTest {
             syncState,
             Wei.ZERO,
             txPoolConfig,
-            true);
+            true,
+            Optional.empty());
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }
