@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.vm.ReferenceTestExceptionMessage.INVALID_GENESIS_RLP;
+import static org.hyperledger.besu.ethereum.vm.ReferenceTestExceptionMessage.INVALID_LAST_BLOCK_HASH;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -31,8 +34,6 @@ import org.hyperledger.besu.testutil.JsonTestParameters;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import org.assertj.core.api.Assertions;
 
 public class BlockchainReferenceTestTools {
   private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
@@ -72,6 +73,14 @@ public class BlockchainReferenceTestTools {
     // Absurd amount of gas, doesn't run in parallel
     params.blacklist("randomStatetest94_\\w+");
 
+    // Insane amount of ether
+    params.blacklist("sha3_memSizeNoQuadraticCost[0-9][0-9]_Istanbul");
+    params.blacklist("sha3_memSizeQuadraticCost[0-9][0-9]_(|zeroSize|2)_?Istanbul");
+
+    // Inconsistency between expected exception and provided data (ExtraDataTooBig/RLP)
+    params.blacklist("lastblockhashException_Istanbul");
+    params.blacklist("filling_unexpectedException_Istanbul");
+
     // Don't do time consuming tests
     params.blacklist("CALLBlake2f_MaxRounds.*");
     params.blacklist(".*\\w50000[-_].*");
@@ -93,31 +102,51 @@ public class BlockchainReferenceTestTools {
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext<Void> context = spec.getProtocolContext();
 
-    for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
-        spec.getCandidateBlocks()) {
-      if (!candidateBlock.isExecutable()) {
-        return;
+    final String genesisRLP = blockchain.getGenesisBlock().toRlp().toHexString();
+
+    if (!spec.getGenesisRLP().equals(genesisRLP)) {
+      assertThat(spec.getExceptions())
+          .containsAnyOf(
+              String.format(INVALID_GENESIS_RLP.getMessage(), spec.getGenesisRLP(), genesisRLP));
+    } else {
+
+      for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
+          spec.getCandidateBlocks()) {
+        if (!candidateBlock.isExecutable()) {
+          return;
+        }
+
+        try {
+          final Block block = candidateBlock.getBlock();
+
+          final ProtocolSpec<Void> protocolSpec =
+              schedule.getByBlockNumber(block.getHeader().getNumber());
+          final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
+          final HeaderValidationMode validationMode =
+              "NoProof".equalsIgnoreCase(spec.getSealEngine())
+                  ? HeaderValidationMode.LIGHT
+                  : HeaderValidationMode.FULL;
+          final boolean imported =
+              blockImporter.importBlock(context, block, validationMode, validationMode);
+
+          assertThat(imported).isEqualTo(candidateBlock.isValid());
+
+        } catch (final RLPException e) {
+          assertThat(candidateBlock.isValid()).isFalse();
+        }
       }
 
-      try {
-        final Block block = candidateBlock.getBlock();
-
-        final ProtocolSpec<Void> protocolSpec =
-            schedule.getByBlockNumber(block.getHeader().getNumber());
-        final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
-        final HeaderValidationMode validationMode =
-            "NoProof".equalsIgnoreCase(spec.getSealEngine())
-                ? HeaderValidationMode.LIGHT
-                : HeaderValidationMode.FULL;
-        final boolean imported =
-            blockImporter.importBlock(context, block, validationMode, validationMode);
-
-        assertThat(imported).isEqualTo(candidateBlock.isValid());
-      } catch (final RLPException e) {
-        assertThat(candidateBlock.isValid()).isFalse();
+      if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
+        final String message =
+            String.format(
+                INVALID_LAST_BLOCK_HASH.getMessage(),
+                blockchain.getChainHeadHash(),
+                spec.getLastBlockHash());
+        if (spec.getExceptions() == null) {
+          fail(String.format("Exception message needed when %s", message));
+        }
+        assertThat(spec.getExceptions()).containsAnyOf(message);
       }
     }
-
-    Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(spec.getLastBlockHash());
   }
 }

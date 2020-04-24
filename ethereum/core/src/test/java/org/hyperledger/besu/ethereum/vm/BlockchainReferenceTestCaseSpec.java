@@ -54,12 +54,16 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final Hash lastBlockHash;
 
+  private final String genesisRLP;
+
   private final WorldStateArchive worldStateArchive;
 
   private final MutableBlockchain blockchain;
   private final String sealEngine;
 
   private final ProtocolContext<Void> protocolContext;
+
+  private final String[] exceptions;
 
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, WorldStateMock.AccountMock> accounts) {
@@ -89,18 +93,21 @@ public class BlockchainReferenceTestCaseSpec {
       @JsonProperty("network") final String network,
       @JsonProperty("blocks") final CandidateBlock[] candidateBlocks,
       @JsonProperty("genesisBlockHeader") final BlockHeaderMock genesisBlockHeader,
-      @SuppressWarnings("unused") @JsonProperty("genesisRLP") final String genesisRLP,
+      @JsonProperty("genesisRLP") final String genesisRLP,
       @JsonProperty("pre") final Map<String, WorldStateMock.AccountMock> accounts,
       @JsonProperty("lastblockhash") final String lastBlockHash,
-      @JsonProperty("sealEngine") final String sealEngine) {
+      @JsonProperty("sealEngine") final String sealEngine,
+      @JsonProperty("exceptions") final String[] exceptions) {
     this.network = network;
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
+    this.genesisRLP = genesisRLP;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
     this.protocolContext = new ProtocolContext<>(this.blockchain, this.worldStateArchive, null);
+    this.exceptions = exceptions;
   }
 
   public String getNetwork() {
@@ -133,6 +140,14 @@ public class BlockchainReferenceTestCaseSpec {
 
   public String getSealEngine() {
     return sealEngine;
+  }
+
+  public String getGenesisRLP() {
+    return genesisRLP;
+  }
+
+  public String[] getExceptions() {
+    return exceptions;
   }
 
   public static class BlockHeaderMock extends BlockHeader {
@@ -196,6 +211,7 @@ public class BlockchainReferenceTestCaseSpec {
     "expectExceptionEIP158",
     "expectExceptionFrontier",
     "expectExceptionHomestead",
+    "expectException",
     "blocknumber",
     "chainname",
     "expectExceptionALL",
