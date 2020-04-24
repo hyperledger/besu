@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -103,7 +102,7 @@ public class FastSyncActions<C> {
           if (ExceptionUtils.rootCause(throwable) instanceof TimeoutException) {
             return waitForAnyPeer();
           }
-          return completedExceptionally(throwable);
+          return CompletableFuture.failedFuture(throwable);
         });
   }
 

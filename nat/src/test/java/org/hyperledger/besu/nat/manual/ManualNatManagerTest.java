@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -40,7 +41,7 @@ public class ManualNatManagerTest {
   private ManualNatManager natManager;
 
   @Before
-  public void initialize() {
+  public void initialize() throws NatInitializationException {
     natManager = new ManualNatManager(advertisedHost, p2pPort, rpcHttpPort);
     natManager.start();
   }

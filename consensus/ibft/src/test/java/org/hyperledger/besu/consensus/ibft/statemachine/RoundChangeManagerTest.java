@@ -31,7 +31,8 @@ import org.hyperledger.besu.consensus.ibft.validation.ProposalBlockConsistencyVa
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangeMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator;
 import org.hyperledger.besu.consensus.ibft.validation.SignedDataValidator;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -52,10 +53,10 @@ public class RoundChangeManagerTest {
 
   private RoundChangeManager manager;
 
-  private final KeyPair proposerKey = KeyPair.generate();
-  private final KeyPair validator1Key = KeyPair.generate();
-  private final KeyPair validator2Key = KeyPair.generate();
-  private final KeyPair nonValidatorKey = KeyPair.generate();
+  private final NodeKey proposerKey = NodeKeyUtils.generate();
+  private final NodeKey validator1Key = NodeKeyUtils.generate();
+  private final NodeKey validator2Key = NodeKeyUtils.generate();
+  private final NodeKey nonValidatorKey = NodeKeyUtils.generate();
 
   private final ConsensusRoundIdentifier ri1 = new ConsensusRoundIdentifier(2, 1);
   private final ConsensusRoundIdentifier ri2 = new ConsensusRoundIdentifier(2, 2);
@@ -111,15 +112,15 @@ public class RoundChangeManagerTest {
   }
 
   private RoundChange makeRoundChangeMessage(
-      final KeyPair key, final ConsensusRoundIdentifier round) {
+      final NodeKey key, final ConsensusRoundIdentifier round) {
     final MessageFactory messageFactory = new MessageFactory(key);
     return messageFactory.createRoundChange(round, Optional.empty());
   }
 
   private RoundChange makeRoundChangeMessageWithPreparedCert(
-      final KeyPair key,
+      final NodeKey key,
       final ConsensusRoundIdentifier round,
-      final List<KeyPair> prepareProviders) {
+      final List<NodeKey> prepareProviders) {
     Preconditions.checkArgument(!prepareProviders.contains(key));
 
     final MessageFactory messageFactory = new MessageFactory(key);

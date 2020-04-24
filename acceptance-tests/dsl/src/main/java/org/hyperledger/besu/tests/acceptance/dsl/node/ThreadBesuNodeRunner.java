@@ -46,7 +46,6 @@ import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.HashMap;
@@ -134,26 +133,21 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
-    final BesuController<?> besuController;
-    try {
-      besuController =
-          builder
-              .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
-              .dataDirectory(node.homeDirectory())
-              .miningParameters(node.getMiningParameters())
-              .privacyParameters(node.getPrivacyParameters())
-              .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
-              .metricsSystem(metricsSystem)
-              .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-              .clock(Clock.systemUTC())
-              .isRevertReasonEnabled(node.isRevertReasonEnabled())
-              .storageProvider(storageProvider)
-              .targetGasLimit(GasLimitCalculator.DEFAULT)
-              .build();
-    } catch (final IOException e) {
-      throw new RuntimeException("Error building BesuController", e);
-    }
+    final BesuController<?> besuController =
+        builder
+            .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
+            .dataDirectory(node.homeDirectory())
+            .miningParameters(node.getMiningParameters())
+            .privacyParameters(node.getPrivacyParameters())
+            .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
+            .metricsSystem(metricsSystem)
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .clock(Clock.systemUTC())
+            .isRevertReasonEnabled(node.isRevertReasonEnabled())
+            .storageProvider(storageProvider)
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     if (node.getPermissioningConfiguration().isPresent()) {
@@ -238,6 +232,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       } catch (final Exception e) {
         throw new RuntimeException("Error shutting down node " + name, e);
       }
+    } else {
+      LOG.error("There was a request to kill an unknown node: {}", name);
     }
   }
 }

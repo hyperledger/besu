@@ -25,8 +25,8 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -44,9 +44,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SignedDataValidatorTest {
 
-  private final KeyPair proposerKey = KeyPair.generate();
-  private final KeyPair validatorKey = KeyPair.generate();
-  private final KeyPair nonValidatorKey = KeyPair.generate();
+  private final NodeKey proposerKey = NodeKeyUtils.generate();
+  private final NodeKey validatorKey = NodeKeyUtils.generate();
+  private final NodeKey nonValidatorKey = NodeKeyUtils.generate();
   private final MessageFactory proposerMessageFactory = new MessageFactory(proposerKey);
   private final MessageFactory validatorMessageFactory = new MessageFactory(validatorKey);
   private final MessageFactory nonValidatorMessageFactory = new MessageFactory(nonValidatorKey);
@@ -81,7 +81,7 @@ public class SignedDataValidatorTest {
   public void receivingACommitMessageBeforeProposalFails() {
     final Commit commitMsg =
         proposerMessageFactory.createCommit(
-            roundIdentifier, Hash.ZERO, SECP256K1.sign(block.getHash(), proposerKey));
+            roundIdentifier, Hash.ZERO, proposerKey.sign(block.getHash()));
 
     assertThat(validator.validateCommit(commitMsg.getSignedPayload())).isFalse();
   }
@@ -131,7 +131,7 @@ public class SignedDataValidatorTest {
         validatorMessageFactory.createPrepare(invalidRoundIdentifier, block.getHash());
     final Commit commitMsg =
         validatorMessageFactory.createCommit(
-            invalidRoundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), proposerKey));
+            invalidRoundIdentifier, block.getHash(), proposerKey.sign(block.getHash()));
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
     assertThat(validator.validatePrepare(prepareMsg.getSignedPayload())).isFalse();
@@ -156,7 +156,7 @@ public class SignedDataValidatorTest {
 
     final Commit commitMsg =
         proposerMessageFactory.createCommit(
-            roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), nonValidatorKey));
+            roundIdentifier, block.getHash(), nonValidatorKey.sign(block.getHash()));
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
     assertThat(validator.validateCommit(commitMsg.getSignedPayload())).isFalse();
@@ -169,11 +169,11 @@ public class SignedDataValidatorTest {
 
     final Commit proposerCommitMsg =
         proposerMessageFactory.createCommit(
-            roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), proposerKey));
+            roundIdentifier, block.getHash(), proposerKey.sign(block.getHash()));
 
     final Commit validatorCommitMsg =
         validatorMessageFactory.createCommit(
-            roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), validatorKey));
+            roundIdentifier, block.getHash(), validatorKey.sign(block.getHash()));
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
     assertThat(validator.validateCommit(proposerCommitMsg.getSignedPayload())).isTrue();

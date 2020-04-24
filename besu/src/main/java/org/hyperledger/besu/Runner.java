@@ -29,7 +29,11 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -53,6 +57,7 @@ public class Runner implements AutoCloseable {
 
   private final NetworkRunner networkRunner;
   private final NatService natService;
+  private final Optional<Path> pidPath;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<WebSocketService> websocketRpc;
@@ -75,12 +80,14 @@ public class Runner implements AutoCloseable {
       final Optional<MetricsService> metrics,
       final BesuController<?> besuController,
       final Path dataDir,
+      final Optional<Path> pidPath,
       final Optional<TransactionLogBloomCacher> transactionLogBloomCacher,
       final Blockchain blockchain) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
     this.natService = natService;
     this.graphQLHttp = graphQLHttp;
+    this.pidPath = pidPath;
     this.jsonRpc = jsonRpc;
     this.websocketRpc = websocketRpc;
     this.metrics = metrics;
@@ -108,12 +115,13 @@ public class Runner implements AutoCloseable {
               besuController.getTransactionPool().getPendingTransactions().evictOldTransactions());
       jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
       graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
-      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.start()));
+      websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
       autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
+      writePidFile();
     } catch (final Exception ex) {
       LOG.error("Startup failed", ex);
       throw new IllegalStateException(ex);
@@ -184,7 +192,7 @@ public class Runner implements AutoCloseable {
 
   private void waitForServiceToStart(
       final String serviceName, final CompletableFuture<?> startFuture) {
-    while (!startFuture.isDone()) {
+    do {
       try {
         startFuture.get(60, TimeUnit.SECONDS);
       } catch (final InterruptedException e) {
@@ -196,7 +204,7 @@ public class Runner implements AutoCloseable {
       } catch (final TimeoutException e) {
         LOG.warn("Service {} is taking an unusually long time to start", serviceName);
       }
-    }
+    } while (!startFuture.isDone());
   }
 
   private void writeBesuPortsToFile() {
@@ -243,12 +251,9 @@ public class Runner implements AutoCloseable {
           .getLocalEnode()
           .ifPresent(
               enode -> {
-                final String globalIp =
-                    natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
+                final String globalIp = natService.queryExternalIPAddress(enode.getIpAsString());
                 properties.setProperty("global-ip", globalIp);
-
-                final String localIp =
-                    natService.queryLocalIPAddress().orElseGet(enode::getIpAsString);
+                final String localIp = natService.queryLocalIPAddress(enode.getIpAsString());
                 properties.setProperty("local-ip", localIp);
               });
     }
@@ -257,6 +262,28 @@ public class Runner implements AutoCloseable {
         properties,
         "networks",
         "This file contains the IP Addresses (global and local) used by the running instance of Besu");
+  }
+
+  private void writePidFile() {
+    pidPath.ifPresent(
+        path -> {
+          String pid = "";
+          try {
+            pid = Long.toString(ProcessHandle.current().pid());
+          } catch (Throwable t) {
+          }
+          try {
+            Files.write(
+                path,
+                pid.getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE);
+            path.toFile().deleteOnExit();
+          } catch (IOException e) {
+            LOG.error("Error writing PID file", e);
+          }
+        });
   }
 
   public Optional<Integer> getJsonRpcPort() {

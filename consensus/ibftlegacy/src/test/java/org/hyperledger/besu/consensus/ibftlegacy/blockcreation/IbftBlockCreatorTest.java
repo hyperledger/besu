@@ -101,6 +101,7 @@ public class IbftBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
             protContext,
@@ -113,7 +114,7 @@ public class IbftBlockCreatorTest {
     final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
 
     final BlockHeaderValidator<IbftContext> rules =
-        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0);
+        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0).build();
 
     final boolean validationResult =
         rules.validateHeader(

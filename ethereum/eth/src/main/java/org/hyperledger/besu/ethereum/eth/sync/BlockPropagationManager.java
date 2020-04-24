@@ -111,7 +111,7 @@ public class BlockPropagationManager<C> {
         .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
   }
 
-  private void onBlockAdded(final BlockAddedEvent blockAddedEvent, final Blockchain blockchain) {
+  private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
 
@@ -144,7 +144,7 @@ public class BlockPropagationManager<C> {
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
-      final long head = blockchain.getChainHeadBlockNumber();
+      final long head = protocolContext.getBlockchain().getChainHeadBlockNumber();
       final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
       pendingBlocks.purgeBlocksOlderThan(cutoff);
     }
@@ -343,14 +343,15 @@ public class BlockPropagationManager<C> {
                 final double timeInS = importTask.getTaskTimeInSec();
                 LOG.info(
                     String.format(
-                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs.",
+                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
                         block.getHeader().getNumber(),
                         block.getBody().getTransactions().size(),
                         block.getBody().getOmmers().size(),
                         block.getHeader().getGasUsed(),
                         (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                        block.getHash(),
-                        timeInS));
+                        block.getHash().toHexString(),
+                        timeInS,
+                        ethContext.getEthPeers().peerCount()));
               }
             });
   }

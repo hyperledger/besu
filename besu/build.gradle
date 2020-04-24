@@ -65,8 +65,10 @@ dependencies {
   implementation 'org.springframework.security:spring-security-crypto'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
   testImplementation 'com.google.auto.service:auto-service'

@@ -17,7 +17,8 @@ package org.hyperledger.besu.consensus.ibft;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
@@ -42,7 +43,7 @@ import org.junit.Test;
 
 public class IbftBlockHashingTest {
 
-  private static final List<KeyPair> COMMITTERS_KEY_PAIRS = committersKeyPairs();
+  private static final List<NodeKey> COMMITTERS_NODE_KEYS = committersNodeKeys();
   private static final List<Address> VALIDATORS =
       Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
   private static final Optional<Vote> VOTE = Optional.of(Vote.authVote(Address.fromHexString("3")));
@@ -65,8 +66,8 @@ public class IbftBlockHashingTest {
             HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED));
 
     List<Address> expectedCommitterAddresses =
-        COMMITTERS_KEY_PAIRS.stream()
-            .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
+        COMMITTERS_NODE_KEYS.stream()
+            .map(nodeKey -> Util.publicKeyToAddress(nodeKey.getPublicKey()))
             .collect(Collectors.toList());
 
     assertThat(actualCommitterAddresses).isEqualTo(expectedCommitterAddresses);
@@ -81,8 +82,8 @@ public class IbftBlockHashingTest {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     List<Signature> commitSeals =
-        COMMITTERS_KEY_PAIRS.stream()
-            .map(keyPair -> SECP256K1.sign(dataHahsForCommittedSeal, keyPair))
+        COMMITTERS_NODE_KEYS.stream()
+            .map(nodeKey -> nodeKey.sign(dataHahsForCommittedSeal))
             .collect(Collectors.toList());
 
     IbftExtraData extraDataWithCommitSeals =
@@ -93,9 +94,12 @@ public class IbftBlockHashingTest {
     assertThat(actualHeader).isEqualTo(HEADER_TO_BE_HASHED);
   }
 
-  private static List<KeyPair> committersKeyPairs() {
+  private static List<NodeKey> committersNodeKeys() {
     return IntStream.rangeClosed(1, 4)
-        .mapToObj(i -> KeyPair.create(PrivateKey.create(UInt256.valueOf(i).toBytes())))
+        .mapToObj(
+            i ->
+                NodeKeyUtils.createFrom(
+                    (KeyPair.create(PrivateKey.create(UInt256.valueOf(i).toBytes())))))
         .collect(Collectors.toList());
   }
 
@@ -152,10 +156,8 @@ public class IbftBlockHashingTest {
     builder.buildBlockHeader().writeTo(rlpForHeaderFroCommittersSigning);
 
     List<Signature> commitSeals =
-        COMMITTERS_KEY_PAIRS.stream()
-            .map(
-                keyPair ->
-                    SECP256K1.sign(Hash.hash(rlpForHeaderFroCommittersSigning.encoded()), keyPair))
+        COMMITTERS_NODE_KEYS.stream()
+            .map(nodeKey -> nodeKey.sign(Hash.hash(rlpForHeaderFroCommittersSigning.encoded())))
             .collect(Collectors.toList());
 
     IbftExtraData extraDataWithCommitSeals =

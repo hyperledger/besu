@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -63,7 +63,7 @@ public final class RlpBlockImporterTest {
             .storageProvider(new InMemoryStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKeys(KeyPair.generate())
+            .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
@@ -103,7 +103,7 @@ public final class RlpBlockImporterTest {
             .storageProvider(new InMemoryStorageProvider())
             .networkId(BigInteger.valueOf(10))
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKeys(KeyPair.generate())
+            .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)

@@ -28,12 +28,14 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -56,6 +58,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class PrivacyPrecompiledContractTest {
+
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final String actual = "Test String";
@@ -66,6 +69,8 @@ public class PrivacyPrecompiledContractTest {
   final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
+  final PrivateStateRootResolver privateStateRootResolver =
+      new PrivateStateRootResolver(privateStateStorage);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
@@ -79,6 +84,7 @@ public class PrivacyPrecompiledContractTest {
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
+            nullable((Hash.class)),
             nullable(PrivateTransaction.class),
             nullable(Address.class),
             nullable(OperationTracer.class),
@@ -129,7 +135,11 @@ public class PrivacyPrecompiledContractTest {
     final Enclave enclave = mock(Enclave.class);
     final PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
+            new SpuriousDragonGasCalculator(),
+            enclave,
+            worldStateArchive,
+            privateStateStorage,
+            privateStateRootResolver);
     contract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
     BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
@@ -153,7 +163,11 @@ public class PrivacyPrecompiledContractTest {
 
     final PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
+            new SpuriousDragonGasCalculator(),
+            enclave,
+            worldStateArchive,
+            privateStateStorage,
+            privateStateRootResolver);
 
     when(enclave.receive(any(String.class))).thenThrow(EnclaveClientException.class);
 
@@ -167,7 +181,11 @@ public class PrivacyPrecompiledContractTest {
 
     final PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
+            new SpuriousDragonGasCalculator(),
+            enclave,
+            worldStateArchive,
+            privateStateStorage,
+            privateStateRootResolver);
 
     when(enclave.receive(any(String.class))).thenThrow(new RuntimeException());
 

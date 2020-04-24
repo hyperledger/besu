@@ -20,6 +20,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -46,7 +47,7 @@ public abstract class AbstractNatManager implements NatManager {
     this.natMethod = natMethod;
   }
 
-  protected abstract void doStart();
+  protected abstract void doStart() throws NatInitializationException;
 
   protected abstract void doStop();
 
@@ -84,7 +85,7 @@ public abstract class AbstractNatManager implements NatManager {
   }
 
   @Override
-  public void start() {
+  public void start() throws NatInitializationException {
     if (started.compareAndSet(false, true)) {
       doStart();
     } else {

@@ -17,8 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.network;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -145,7 +144,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    *
    * @param localNode A representation of the local node
    * @param peerDiscoveryAgent The agent responsible for discovering peers on the network.
-   * @param keyPair This node's keypair.
+   * @param nodeKey The node key through which cryptographic operations can be performed
    * @param config The network configuration to use.
    * @param peerPermissions An object that determines whether peers are allowed to connect
    * @param natService The NAT environment manager.
@@ -157,7 +156,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final MutableLocalNode localNode,
       final PeerDiscoveryAgent peerDiscoveryAgent,
       final RlpxAgent rlpxAgent,
-      final SECP256K1.KeyPair keyPair,
+      final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
@@ -171,7 +170,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.natService = natService;
     this.maintainedPeers = maintainedPeers;
 
-    this.nodeId = keyPair.getPublicKey().getEncodedBytes();
+    this.nodeId = nodeKey.getPublicKey().getEncodedBytes();
     this.peerPermissions = peerPermissions;
 
     final int maxPeers = config.getRlpx().getMaxPeers();
@@ -368,7 +367,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     // override advertised host if we detect an external IP address via NAT manager
-    final String advertisedAddress = natService.queryExternalIPAddress().orElse(address);
+    final String advertisedAddress = natService.queryExternalIPAddress(address);
 
     final EnodeURL localEnode =
         EnodeURL.builder()
@@ -390,7 +389,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private NetworkingConfiguration config = NetworkingConfiguration.create();
     private List<Capability> supportedCapabilities;
-    private KeyPair keyPair;
+    private NodeKey nodeKey;
 
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
@@ -421,7 +420,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           localNode,
           peerDiscoveryAgent,
           rlpxAgent,
-          keyPair,
+          nodeKey,
           config,
           peerPermissions,
           natService,
@@ -430,7 +429,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     private void validate() {
-      checkState(keyPair != null, "KeyPair must be set.");
+      checkState(nodeKey != null, "NodeKey must be set.");
       checkState(config != null, "NetworkingConfiguration must be set.");
       checkState(
           supportedCapabilities != null && supportedCapabilities.size() > 0,
@@ -442,13 +441,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx, keyPair, config.getDiscovery(), peerPermissions, natService, metricsSystem);
+          vertx, nodeKey, config.getDiscovery(), peerPermissions, natService, metricsSystem);
     }
 
     private RlpxAgent createRlpxAgent(
         final LocalNode localNode, final PeerPrivileges peerPrivileges) {
       return RlpxAgent.builder()
-          .keyPair(keyPair)
+          .nodeKey(nodeKey)
           .config(config.getRlpx())
           .peerPermissions(peerPermissions)
           .peerPrivileges(peerPrivileges)
@@ -475,9 +474,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder keyPair(final KeyPair keyPair) {
-      checkNotNull(keyPair);
-      this.keyPair = keyPair;
+    public Builder nodeKey(final NodeKey nodeKey) {
+      checkNotNull(nodeKey);
+      this.nodeKey = nodeKey;
       return this;
     }
 

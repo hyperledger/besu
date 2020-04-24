@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -43,13 +44,18 @@ public class EthServerTest {
   private static final Hash HASH3 = Hash.hash(VALUE3);
   private final Blockchain blockchain = mock(Blockchain.class);
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
+  private final TransactionPool transactionPool = mock(TransactionPool.class);
   private final EthPeer ethPeer = mock(EthPeer.class);
   private final EthMessages ethMessages = new EthMessages();
 
   @Before
   public void setUp() {
     new EthServer(
-        blockchain, worldStateArchive, ethMessages, new EthProtocolConfiguration(2, 2, 2, 2));
+        blockchain,
+        worldStateArchive,
+        transactionPool,
+        ethMessages,
+        new EthProtocolConfiguration(2, 2, 2, 2, 2, true));
   }
 
   @Test

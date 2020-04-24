@@ -18,6 +18,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -37,8 +38,12 @@ public interface NatManager {
    */
   NatMethod getNatMethod();
 
-  /** Starts the manager or service. */
-  void start();
+  /**
+   * Starts the manager or service.
+   *
+   * @throws NatInitializationException if failure during the initialization
+   */
+  void start() throws NatInitializationException;
 
   /** Stops the manager or service. */
   void stop();

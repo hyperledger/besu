@@ -384,8 +384,16 @@ public class BlockchainQueries {
     return blockchain.getBlockHashByNumber(blockNumber).flatMap(this::blockByHashWithTxHashes);
   }
 
+  public Optional<BlockHeader> getBlockHeaderByHash(final Hash hash) {
+    return blockchain.getBlockHeader(hash);
+  }
+
   public Optional<BlockHeader> getBlockHeaderByNumber(final long number) {
     return blockchain.getBlockHeader(number);
+  }
+
+  public boolean blockIsOnCanonicalChain(final Hash hash) {
+    return blockchain.blockIsOnCanonicalChain(hash);
   }
 
   /**
@@ -470,6 +478,10 @@ public class BlockchainQueries {
     }
     return new TransactionWithMetadata(
         txs.get(txIndex), header.getNumber(), blockHeaderHash, txIndex);
+  }
+
+  public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
+    return blockchain.getTransactionLocation(transactionHash);
   }
 
   /**
@@ -590,6 +602,7 @@ public class BlockchainQueries {
         try {
           raf.readFully(bloomBuff);
         } catch (final EOFException e) {
+          results.addAll(matchingLogsUncached(segmentStart + pos, segmentStart + endOffset, query));
           break;
         }
         final LogsBloomFilter logsBloom = new LogsBloomFilter(bytesValue);

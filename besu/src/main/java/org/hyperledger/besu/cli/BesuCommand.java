@@ -63,9 +63,11 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -83,6 +85,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
@@ -754,7 +757,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})")
+          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})")
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
@@ -786,6 +789,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+
+  @Option(
+      names = {"--tx-pool-hashes-max-size"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer pooledTransactionHashesSize =
+      TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
 
   @Option(
       names = {"--tx-pool-retention-hours"},
@@ -837,6 +849,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
+
+  @CommandLine.Option(
+      names = {"--pid-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "Path to PID file (optional)")
+  private final Path pidPath = null;
+
+  @CommandLine.Option(
+      names = {"--Xsecp256k1-native-enabled"},
+      description = "Path to PID file (optional)",
+      arity = "1")
+  private final Boolean nativeSecp256k1 = Boolean.TRUE;
+
+  @CommandLine.Option(
+      names = {"--Xaltbn128-native-enabled"},
+      description = "Path to PID file (optional)",
+      arity = "1")
+  private final Boolean nativeAltbn128 = Boolean.TRUE;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -904,6 +934,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
     handleStandaloneCommand()
+        .enableExperimentalEIPs()
         .addSubCommands(resultHandler, in)
         .registerConverters()
         .handleUnstableOptions()
@@ -915,6 +946,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public void run() {
     try {
       configureLogging(true);
+      configureNativeLibs();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
@@ -948,6 +980,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isFullInstantiation()) {
       commandLine.addMixin("standaloneCommands", standaloneCommands);
     }
+    return this;
+  }
+
+  private BesuCommand enableExperimentalEIPs() {
+    // Usage of static command line flags is strictly reserved for experimental EIPs
+    commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
     return this;
   }
 
@@ -1051,7 +1089,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
-        staticNodes);
+        staticNodes,
+        pidPath);
   }
 
   private BesuCommand startPlugins() {
@@ -1075,6 +1114,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         System.out.println("Setting logging level to " + logLevel.name());
       }
       Configurator.setAllLevels("", logLevel);
+    }
+  }
+
+  private void configureNativeLibs() {
+    if (nativeAltbn128) {
+      AltBN128PairingPrecompiledContract.enableNative();
+    }
+    if (nativeSecp256k1) {
+      SECP256K1.enableNative();
     }
   }
 
@@ -1207,40 +1255,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public BesuControllerBuilder<?> getControllerBuilder() {
-    try {
-      addConfigurationService();
-      return controllerBuilderFactory
-          .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
-          .synchronizerConfiguration(buildSyncConfig())
-          .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
-          .dataDirectory(dataDir())
-          .miningParameters(
-              new MiningParameters(
-                  coinbase,
-                  minTransactionGasPrice,
-                  extraData,
-                  isMiningEnabled,
-                  iStratumMiningEnabled,
-                  stratumNetworkInterface,
-                  stratumPort,
-                  stratumExtranonce,
-                  Optional.empty()))
-          .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-          .nodePrivateKeyFile(nodePrivateKeyFile())
-          .metricsSystem(metricsSystem.get())
-          .privacyParameters(privacyParameters())
-          .clock(Clock.systemUTC())
-          .isRevertReasonEnabled(isRevertReasonEnabled)
-          .storageProvider(keyStorageProvider(keyValueStorageName))
-          .isPruningEnabled(isPruningEnabled())
-          .pruningConfiguration(
-              new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
-          .genesisConfigOverrides(genesisConfigOverrides)
-          .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
-          .requiredBlocks(requiredBlocks);
-    } catch (final IOException e) {
-      throw new ExecutionException(this.commandLine, "Invalid path", e);
-    }
+    addConfigurationService();
+    return controllerBuilderFactory
+        .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+        .synchronizerConfiguration(buildSyncConfig())
+        .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
+        .dataDirectory(dataDir())
+        .miningParameters(
+            new MiningParameters(
+                coinbase,
+                minTransactionGasPrice,
+                extraData,
+                isMiningEnabled,
+                iStratumMiningEnabled,
+                stratumNetworkInterface,
+                stratumPort,
+                stratumExtranonce,
+                Optional.empty()))
+        .transactionPoolConfiguration(buildTransactionPoolConfiguration())
+        .nodePrivateKeyFile(nodePrivateKeyFile())
+        .metricsSystem(metricsSystem.get())
+        .privacyParameters(privacyParameters())
+        .clock(Clock.systemUTC())
+        .isRevertReasonEnabled(isRevertReasonEnabled)
+        .storageProvider(keyStorageProvider(keyValueStorageName))
+        .isPruningEnabled(isPruningEnabled())
+        .pruningConfiguration(
+            new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
+        .genesisConfigOverrides(genesisConfigOverrides)
+        .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
+        .requiredBlocks(requiredBlocks);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -1690,6 +1734,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return transactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
+        .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .build();
   }
@@ -1713,7 +1758,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final Collection<EnodeURL> staticNodes) {
+      final Collection<EnodeURL> staticNodes,
+      final Path pidPath) {
 
     checkNotNull(runnerBuilder);
 
@@ -1739,6 +1785,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
+            .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)

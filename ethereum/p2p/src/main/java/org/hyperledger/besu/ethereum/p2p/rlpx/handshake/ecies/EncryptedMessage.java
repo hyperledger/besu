@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 
@@ -38,11 +39,11 @@ final class EncryptedMessage {
    * Decrypts the ciphertext using our private key.
    *
    * @param msgBytes The ciphertext.
-   * @param ourKey Our private key.
+   * @param nodeKey Abstraction of this nodes private key & associated cryptographic operations
    * @return The plaintext.
    * @throws InvalidCipherTextException Thrown if decryption failed.
    */
-  public static Bytes decryptMsg(final Bytes msgBytes, final SECP256K1.PrivateKey ourKey)
+  public static Bytes decryptMsg(final Bytes msgBytes, final NodeKey nodeKey)
       throws InvalidCipherTextException {
 
     // Extract the ephemeral public key, stripping off the first byte (0x04), which designates it's
@@ -57,7 +58,7 @@ final class EncryptedMessage {
 
     // Perform the decryption.
     final ECIESEncryptionEngine decryptor =
-        ECIESEncryptionEngine.forDecryption(ourKey, ephPubKey, iv);
+        ECIESEncryptionEngine.forDecryption(nodeKey, ephPubKey, iv);
     return decryptor.decrypt(encrypted);
   }
 
@@ -65,11 +66,11 @@ final class EncryptedMessage {
    * Decrypts the ciphertext using our private key.
    *
    * @param msgBytes The ciphertext.
-   * @param ourKey Our private key.
+   * @param nodeKey Abstraction of this nodes private key & associated cryptographic operations
    * @return The plaintext.
    * @throws InvalidCipherTextException Thrown if decryption failed.
    */
-  public static Bytes decryptMsgEIP8(final Bytes msgBytes, final SECP256K1.PrivateKey ourKey)
+  public static Bytes decryptMsgEIP8(final Bytes msgBytes, final NodeKey nodeKey)
       throws InvalidCipherTextException {
     final SECP256K1.PublicKey ephPubKey = SECP256K1.PublicKey.create(msgBytes.slice(3, 64));
 
@@ -81,7 +82,7 @@ final class EncryptedMessage {
 
     // Perform the decryption.
     final ECIESEncryptionEngine decryptor =
-        ECIESEncryptionEngine.forDecryption(ourKey, ephPubKey, iv);
+        ECIESEncryptionEngine.forDecryption(nodeKey, ephPubKey, iv);
     return decryptor.decrypt(encrypted, msgBytes.slice(0, 2).toArray());
   }
 

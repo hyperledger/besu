@@ -1,14 +1,171 @@
 # Changelog
 
+## 1.4.4
+
+### Additions and Improvements
+
+- Implemented [`priv_getLogs`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#priv_getlogs). [\#686](https://github.com/hyperledger/besu/pull/686)
+- Implemented private contract log filters including JSON-RPC methods to interact with private filters. [\#735](https://github.com/hyperledger/besu/pull/735)
+- Implemented EIP-2315: Simple Subroutines for the EVM [\#717](https://github.com/hyperledger/besu/pull/717)
+- Implemented Splunk logging. [\#725](https://github.com/hyperledger/besu/pull/725)
+- Implemented optional native library encryption. [\#675](https://github.com/hyperledger/besu/pull/675).  To enable add `--Xsecp256k1-native-enabled` (for transaciton signatures) and/or `--Xaltbn128-native-enabled` (for altbn128 precomiled contracts) as command line options. 
+
+### Bug Fixes 
+
+- Flag added to toggle `eth/65` off by default. `eth/65` will remain toggled off by default until 
+a fix is completed for the [eth/65 known issue](KNOWN_ISSUES.md). [\#741](https://github.com/hyperledger/besu/pull/741)
+- Resolve crashing NAT detectors on GKE. [\#731](https://github.com/hyperledger/besu/pull/731) fixes [\#507](https://github.com/hyperledger/besu/issues/507). 
+[Besu-Kubernetes Readme](https://github.com/PegaSysEng/besu-kubernetes/blob/master/README.md#network-topology-and-high-availability-requirements) 
+updated to reflect changes.  
+- Deal with quick service start failures [\#714](https://github.com/hyperledger/besu/pull/714) fixes [\#662](https://github.com/hyperledger/besu/issues/662) 
+
+### Known Issues 
+
+Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+
+#### New known issues
+
+- `Intrinsic gas exceeds gas limit` returned when calling `delete mapping[addr]` or `mapping[addr] = 0` [\#696](https://github.com/hyperledger/besu/issues/696)
+
+Calling delete and set to 0 Solidity mapping in Solidity fail.
+
+#### Previously identified known issues
+
+- [Eth/65 not backwards compatible](KNOWN_ISSUES.md#eth65-not-backwards-compatible)
+- [Error full syncing with pruning](KNOWN_ISSUES.md#error-full-syncing-with-pruning)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Bootnodes must be validators when using onchain permissioning](KNOWN_ISSUES.md#bootnodes-must-be-validators-when-using-onchain-permissioning)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+## 1.4.3
+
+### Issues identified with 1.4.3 release 
+
+The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723). 
+This has the following impact: 
+* In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
+clients. 
+* On mainnet, synchronizing eventually stalls.   
+
+Workaround -> revert to v1.4.2. 
+
+A [fix](https://github.com/hyperledger/besu/pull/732) is currently [being tested](https://github.com/hyperledger/besu/pull/733). 
+
+### Critical Issue for Privacy Users 
+
+A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4 
+or earlier has been identified. If you have a network with private transaction created using v1.3.4 
+or earlier, please read the following and take the appropriate steps: 
+https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
+
+### Additions and Improvements
+
+- Added `eth/65` support. [\#608](https://github.com/hyperledger/besu/pull/608)
+- Added block added and block reorg events. Added revert reason to block added transactions. [\#637](https://github.com/hyperledger/besu/pull/637)
+
+### Deprecated 
+
+- Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed 
+in 1.5.0 release. [\#639](https://github.com/hyperledger/besu/pull/639)
+
+### Known Issues 
+
+#### Fast sync when running Besu on cloud providers  
+
+A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail 
+when running Besu on certain cloud providers. The following error is displayed repeatedly: 
+
+```
+...
+EthScheduler-Services-1 (importBlock) | ERROR | PipelineChainDownloader | Chain download failed. Restarting after short delay.
+java.util.concurrent.CompletionException: org.hyperledger.besu.plugin.services.exception.StorageException: org.rocksdb.RocksDBException: block checksum mismatch:
+....
+```
+
+This behaviour has been seen on AWS and Digital Ocean. 
+
+Workaround -> On AWS, a full restart of the AWS VM is required to restart the fast sync. 
+
+Fast sync is not currently supported on Digital Ocean. We are investigating options to 
+[add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
+
+#### Error full syncing with pruning
+
+- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#580](https://github.com/hyperledger/besu/issues/580)
+The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+full sync and pruning.
+
+Workarounds:
+1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
+2. If the `MerkleTrieException` occurs, delete the database and resync.
+
+A fix for this issue is being actively worked on.
+
+#### Fast sync reverting to full sync 
+
+In some cases of FastSyncException, fast sync reverts back to a full sync before having reached the 
+pivot block. [\#683](https://github.com/hyperledger/besu/issues/683)
+
+Workaround -> To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your 
+database, and start again.
+
+#### Bootnodes must be validators when using onchain permissioning
+
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#528](https://github.com/hyperledger/besu/issues/528)
+
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+
+
 ## 1.4.2
 
 ### Additions and Improvements
 
--
+- Added `trace_block` JSON RPC API [\#449](https://github.com/hyperledger/besu/pull/449)
+- Added `pulledStates` and `knownStates` to the EthQL `syncing` query and `eth_syncing` JSON-RPC api [\#565](https://github.com/hyperledger/besu/pull/565)
 
 ### Bug Fixes
 
 - Fixed file parsing behaviour for privacy enclave keystore password file [\#554](https://github.com/hyperledger/besu/pull/554) (thanks to [magooster](https://github.com/magooster))
+- Fixed known issue with being unable to re-add members to onchain privacy groups [\#471](https://github.com/hyperledger/besu/pull/471)
+
+### Updated Early Access Features 
+
+* [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. Known issue resolved (see above).
+* [TRACE API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) now includes `trace_block`, `trace_replayBlockTransactions`, and `trace_transaction`. 
+Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522). 
+
+### Known Issues 
+
+#### Fast sync defaulting to full sync
+
+-  When fast sync cannot find enough valid peers rapidly enough, Besu defaults to full sync.
+
+Workarounds:
+1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database,
+and start again.
+2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood
+of encountering the pruning bug.
+
+A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427)
+is being actively worked on.
+
+#### Error full syncing with pruning
+
+- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
+The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+full sync and pruning.
+
+Workarounds:
+1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
+2. If the `MerkleTrieException` occurs, delete the database and resync.
+
+A fix for this issue is being actively worked on.
+
+#### Bootnodes must be validators when using onchain permissioning
+
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
+
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
 
 ## 1.4.1
 
@@ -1757,7 +1914,7 @@ If using the URL `http://127.0.0.1` to make JSON-RPC calls, use `--host-whitelis
 
 If your application publishes RPC ports, specify the hostnames when starting Besu. For example:  
 
-```json
+```bash
 pantheon --host-whitelist=example.com
 ```
 

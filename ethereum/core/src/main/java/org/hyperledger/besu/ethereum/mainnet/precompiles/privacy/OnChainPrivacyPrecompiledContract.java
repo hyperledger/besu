@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -37,12 +36,10 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -63,19 +60,13 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   public OnChainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    this(
+    super(
         gasCalculator,
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
-        privacyParameters.getPrivateStateStorage());
-  }
-
-  OnChainPrivacyPrecompiledContract(
-      final GasCalculator gasCalculator,
-      final Enclave enclave,
-      final WorldStateArchive worldStateArchive,
-      final PrivateStateStorage privateStateStorage) {
-    super(gasCalculator, enclave, worldStateArchive, privateStateStorage, "OnChainPrivacy");
+        privacyParameters.getPrivateStateStorage(),
+        privacyParameters.getPrivateStateRootResolver(),
+        "OnChainPrivacy");
   }
 
   @Override
@@ -84,6 +75,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     if (isMining(messageFrame)) {
       return Bytes.EMPTY;
     }
+
+    final Hash pmtHash = messageFrame.getTransactionHash();
 
     final String key = input.slice(0, 32).toBase64String();
 
@@ -111,10 +104,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     final Bytes32 privacyGroupId = Bytes32.wrap(maybeGroupId.get());
 
-    LOG.debug(
-        "Processing private transaction {} in privacy group {}",
-        privateTransaction.getHash(),
-        privacyGroupId);
+    LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
@@ -153,14 +143,14 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     if (result.isInvalid() || !result.isSuccessful()) {
       LOG.error(
           "Failed to process private transaction {}: {}",
-          privateTransaction.getHash(),
+          pmtHash,
           result.getValidationResult().getErrorMessage());
       return Bytes.EMPTY;
     }
 
     if (messageFrame.isPersistingPrivateState()) {
       persistPrivateState(
-          messageFrame.getTransactionHash(),
+          pmtHash,
           currentBlockHash,
           privateTransaction,
           privacyGroupId,
@@ -272,6 +262,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         publicWorldState,
         canExecuteUpdater,
         currentBlockHeader,
+        messageFrame.getTransactionHash(),
         buildSimulationTransaction(
             privacyGroupId, privateWorldStateUpdater, canExecuteMethodSignature),
         messageFrame.getMiningBeneficiary(),

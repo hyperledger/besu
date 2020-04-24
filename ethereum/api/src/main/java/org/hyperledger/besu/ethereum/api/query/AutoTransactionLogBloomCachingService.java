@@ -49,7 +49,7 @@ public class AutoTransactionLogBloomCachingService {
       blockAddedSubscriptionId =
           OptionalLong.of(
               blockchain.observeBlockAdded(
-                  (event, __) -> {
+                  event -> {
                     if (event.isNewCanonicalHead()) {
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
                           event.getBlock().getHeader(), Optional.empty(), true);
@@ -58,9 +58,9 @@ public class AutoTransactionLogBloomCachingService {
       chainReorgSubscriptionId =
           OptionalLong.of(
               blockchain.observeChainReorg(
-                  (header, __) ->
+                  (blockWithReceipts, __) ->
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          header, Optional.empty(), true)));
+                          blockWithReceipts.getHeader(), Optional.empty(), true)));
 
       transactionLogBloomCacher
           .getScheduler()

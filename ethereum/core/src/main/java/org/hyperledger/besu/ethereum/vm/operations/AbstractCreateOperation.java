@@ -128,6 +128,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .miningBeneficiary(frame.getMiningBeneficiary())
             .blockHashLookup(frame.getBlockHashLookup())
             .maxStackSize(frame.getMaxStackSize())
+            .returnStack(frame.getReturnStack())
             .build();
 
     frame.getMessageFrameStack().addFirst(childFrame);

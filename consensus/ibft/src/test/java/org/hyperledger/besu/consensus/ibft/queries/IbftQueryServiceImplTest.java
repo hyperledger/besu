@@ -22,8 +22,8 @@ import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -51,12 +51,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class IbftQueryServiceImplTest {
 
   @Mock private Blockchain blockchain;
-  @Mock private KeyPair keyPair;
 
-  private final List<KeyPair> validatorKeys =
-      Lists.newArrayList(KeyPair.generate(), KeyPair.generate());
+  private final List<NodeKey> validatorKeys =
+      Lists.newArrayList(NodeKeyUtils.generate(), NodeKeyUtils.generate());
 
-  private final List<KeyPair> signingKeys = Lists.newArrayList(validatorKeys.get(0));
+  private final List<NodeKey> signingKeys = Lists.newArrayList(validatorKeys.get(0));
   private final int ROUND_NUMBER_IN_BLOCK = 5;
 
   private IbftExtraData signedExtraData;
@@ -88,10 +87,9 @@ public class IbftQueryServiceImplTest {
     final Collection<Signature> validatorSignatures =
         signingKeys.stream()
             .map(
-                keyPair ->
-                    SECP256K1.sign(
-                        IbftBlockHashing.calculateDataHashForCommittedSeal(unsignedBlockHeader),
-                        keyPair))
+                nodeKey ->
+                    nodeKey.sign(
+                        IbftBlockHashing.calculateDataHashForCommittedSeal(unsignedBlockHeader)))
             .collect(Collectors.toList());
 
     signedExtraData =
@@ -109,7 +107,7 @@ public class IbftQueryServiceImplTest {
   @Test
   public void roundNumberFromBlockIsReturned() {
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, null);
 
     assertThat(service.getRoundNumberFrom(blockHeader)).isEqualTo(ROUND_NUMBER_IN_BLOCK);
   }
@@ -121,7 +119,7 @@ public class IbftQueryServiceImplTest {
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, null);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
   }
@@ -129,11 +127,11 @@ public class IbftQueryServiceImplTest {
   @Test
   public void getSignersReturnsAddressesOfSignersInBlock() {
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, null);
 
     final List<Address> signers =
         signingKeys.stream()
-            .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
+            .map(nodeKey -> Util.publicKeyToAddress(nodeKey.getPublicKey()))
             .collect(Collectors.toList());
 
     assertThat(service.getSignersFrom(blockHeader)).containsExactlyElementsOf(signers);
@@ -146,7 +144,7 @@ public class IbftQueryServiceImplTest {
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, null);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getSignersFrom(header));
   }

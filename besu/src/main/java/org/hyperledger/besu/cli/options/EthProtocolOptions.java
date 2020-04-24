@@ -27,6 +27,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String MAX_GET_BODIES_FLAG = "--Xewp-max-get-bodies";
   private static final String MAX_GET_RECEIPTS_FLAG = "--Xewp-max-get-receipts";
   private static final String MAX_GET_NODE_DATA_FLAG = "--Xewp-max-get-node-data";
+  private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
+  private static final String ETH_65_ENABLED = "--Xeth-65-enabled";
 
   @CommandLine.Option(
       hidden = true,
@@ -64,6 +66,22 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private PositiveNumber maxGetNodeData =
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_GET_POOLED_TRANSACTIONS},
+      paramLabel = "<INTEGER>",
+      description =
+          "Maximum request limit for Ethereum Wire Protocol GET_POOLED_TRANSACTIONS. (default: ${DEFAULT-VALUE})")
+  private PositiveNumber maxGetPooledTransactions =
+      PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {ETH_65_ENABLED},
+      paramLabel = "<INTEGER>",
+      description = "Enable the Eth/65 subprotocol. (default: ${DEFAULT-VALUE})")
+  private Boolean eth65Enabled = EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED;
+
   private EthProtocolOptions() {}
 
   public static EthProtocolOptions create() {
@@ -76,6 +94,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
     options.maxGetBlockBodies = PositiveNumber.fromInt(config.getMaxGetBlockBodies());
     options.maxGetReceipts = PositiveNumber.fromInt(config.getMaxGetReceipts());
     options.maxGetNodeData = PositiveNumber.fromInt(config.getMaxGetNodeData());
+    options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
+    options.eth65Enabled = config.isEth65Enabled();
     return options;
   }
 
@@ -86,6 +106,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetBlockBodies(maxGetBlockBodies)
         .maxGetReceipts(maxGetReceipts)
         .maxGetNodeData(maxGetNodeData)
+        .maxGetPooledTransactions(maxGetPooledTransactions)
+        .eth65Enabled(eth65Enabled)
         .build();
   }
 
@@ -99,6 +121,9 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         MAX_GET_RECEIPTS_FLAG,
         OptionParser.format(maxGetReceipts.getValue()),
         MAX_GET_NODE_DATA_FLAG,
-        OptionParser.format(maxGetNodeData.getValue()));
+        OptionParser.format(maxGetNodeData.getValue()),
+        MAX_GET_POOLED_TRANSACTIONS,
+        OptionParser.format(maxGetPooledTransactions.getValue()),
+        ETH_65_ENABLED + "=" + eth65Enabled);
   }
 }

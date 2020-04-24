@@ -36,8 +36,8 @@ import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -67,9 +67,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftRoundTest {
 
-  private final KeyPair localNodeKeys = KeyPair.generate();
+  private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
-  private final MessageFactory messageFactory = new MessageFactory(localNodeKeys);
+  private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private ProtocolContext<IbftContext> protocolContext;
 
@@ -125,7 +125,7 @@ public class IbftRoundTest {
         protocolContext,
         blockImporter,
         subscribers,
-        localNodeKeys,
+        nodeKey,
         messageFactory,
         transmitter,
         roundTimer);
@@ -142,7 +142,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -163,7 +163,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -185,7 +185,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -207,7 +207,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -215,7 +215,7 @@ public class IbftRoundTest {
     final Hash commitSealHash =
         IbftBlockHashing.calculateDataHashForCommittedSeal(
             proposedBlock.getHeader(), proposedExtraData);
-    final Signature localCommitSeal = SECP256K1.sign(commitSealHash, localNodeKeys);
+    final Signature localCommitSeal = nodeKey.sign(commitSealHash);
 
     // Receive Proposal Message
     round.handleProposalMessage(
@@ -250,7 +250,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -258,7 +258,7 @@ public class IbftRoundTest {
     final Hash commitSealHash =
         IbftBlockHashing.calculateDataHashForCommittedSeal(
             proposedBlock.getHeader(), proposedExtraData);
-    final Signature localCommitSeal = SECP256K1.sign(commitSealHash, localNodeKeys);
+    final Signature localCommitSeal = nodeKey.sign(commitSealHash);
 
     round.createAndSendProposalMessage(15);
     verify(transmitter, never()).multicastCommit(any(), any(), any());
@@ -286,7 +286,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -309,7 +309,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -355,7 +355,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -388,7 +388,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -408,7 +408,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);
@@ -433,7 +433,7 @@ public class IbftRoundTest {
             protocolContext,
             blockImporter,
             subscribers,
-            localNodeKeys,
+            nodeKey,
             messageFactory,
             transmitter,
             roundTimer);

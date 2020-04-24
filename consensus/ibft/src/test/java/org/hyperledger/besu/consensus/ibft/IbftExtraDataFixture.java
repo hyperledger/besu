@@ -16,8 +16,7 @@ package org.hyperledger.besu.consensus.ibft;
 
 import static java.util.Collections.emptyList;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -37,9 +36,9 @@ public class IbftExtraDataFixture {
       final Bytes vanityData,
       final Optional<Vote> vote,
       final List<Address> validators,
-      final List<KeyPair> committerKeyPairs) {
+      final List<NodeKey> committerNodeKeys) {
 
-    return createExtraData(header, vanityData, vote, validators, committerKeyPairs, 0);
+    return createExtraData(header, vanityData, vote, validators, committerNodeKeys, 0);
   }
 
   public static IbftExtraData createExtraData(
@@ -47,11 +46,11 @@ public class IbftExtraDataFixture {
       final Bytes vanityData,
       final Optional<Vote> vote,
       final List<Address> validators,
-      final List<KeyPair> committerKeyPairs,
+      final List<NodeKey> committerNodeKeys,
       final int roundNumber) {
 
     return createExtraData(
-        header, vanityData, vote, validators, committerKeyPairs, roundNumber, false);
+        header, vanityData, vote, validators, committerNodeKeys, roundNumber, false);
   }
 
   public static IbftExtraData createExtraData(
@@ -59,7 +58,7 @@ public class IbftExtraDataFixture {
       final Bytes vanityData,
       final Optional<Vote> vote,
       final List<Address> validators,
-      final List<KeyPair> committerKeyPairs,
+      final List<NodeKey> committerNodeKeys,
       final int baseRoundNumber,
       final boolean useDifferentRoundNumbersForCommittedSeals) {
 
@@ -69,7 +68,7 @@ public class IbftExtraDataFixture {
     // if useDifferentRoundNumbersForCommittedSeals is true then each committed seal will be
     // calculated for an extraData field with a different round number
     List<Signature> commitSeals =
-        IntStream.range(0, committerKeyPairs.size())
+        IntStream.range(0, committerNodeKeys.size())
             .mapToObj(
                 i -> {
                   final int round =
@@ -89,7 +88,7 @@ public class IbftExtraDataFixture {
                       IbftBlockHashing.calculateDataHashForCommittedSeal(
                           header, extraDataForCommittedSealCalculation);
 
-                  return SECP256K1.sign(headerHashForCommitters, committerKeyPairs.get(i));
+                  return committerNodeKeys.get(i).sign(headerHashForCommitters);
                 })
             .collect(Collectors.toList());
 

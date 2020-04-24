@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -39,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -52,10 +58,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class FilterManagerLogFilterTest {
 
+  private static final String PRIVACY_GROUP_ID = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
+
   private FilterManager filterManager;
 
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
+  @Mock private PrivacyQueries privacyQueries;
   @Mock private TransactionPool transactionPool;
   @Spy private final FilterRepository filterRepository = new FilterRepository();
 
@@ -63,8 +72,12 @@ public class FilterManagerLogFilterTest {
   public void setupTest() {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     this.filterManager =
-        new FilterManager(
-            blockchainQueries, transactionPool, new FilterIdGenerator(), filterRepository);
+        new FilterManagerBuilder()
+            .blockchainQueries(blockchainQueries)
+            .transactionPool(transactionPool)
+            .privacyQueries(privacyQueries)
+            .filterRepository(filterRepository)
+            .build();
   }
 
   @Test
@@ -79,48 +92,58 @@ public class FilterManagerLogFilterTest {
   }
 
   @Test
-  public void shouldCheckMatchingLogsWhenRecordedNewBlockEvent() {
-    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
-
+  public void shouldCheckMatchingLogsWhenRecordedNewBlockEventForPrivateFiltersOnly() {
+    filterManager.installPrivateLogFilter(PRIVACY_GROUP_ID, latest(), latest(), logsQuery());
     filterManager.installLogFilter(latest(), latest(), logsQuery());
-    recordNewBlockEvent();
+    final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
 
-    verify(blockchainQueries).matchingLogs(eq(100L), eq(100L), eq(logsQuery()));
+    verify(blockchainQueries, never()).matchingLogs(eq(100L), eq(100L), eq(logsQuery()));
+    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
   }
 
   @Test
-  public void shouldUseHeadBlockAsFromBlockNumberWhenCheckingLogsForChanges() {
-    when(blockchainQueries.headBlockNumber()).thenReturn(3L);
-
+  public void shouldUseBlockHashWhenCheckingLogsForChangesForPrivateFiltersOnly() {
+    filterManager.installPrivateLogFilter(
+        PRIVACY_GROUP_ID, blockNum(1L), blockNum(10L), logsQuery());
     filterManager.installLogFilter(blockNum(1L), blockNum(10L), logsQuery());
-    recordNewBlockEvent();
 
-    verify(blockchainQueries).matchingLogs(eq(3L), eq(10L), eq(logsQuery()));
+    final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
+
+    verify(blockchainQueries, never()).matchingLogs(any(), any());
+    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
   }
 
   @Test
   public void shouldReturnLogWhenLogFilterMatches() {
-    final LogWithMetadata log = logWithMetadata();
-    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
-    when(blockchainQueries.matchingLogs(eq(100L), eq(100L), eq(logsQuery())))
-        .thenReturn(Lists.newArrayList(log));
 
     final String filterId = filterManager.installLogFilter(latest(), latest(), logsQuery());
-    recordNewBlockEvent();
+    final List<LogWithMetadata> expectedLogs = recordBlockEvents(1).get(0).getLogsWithMetadata();
 
     final List<LogWithMetadata> retrievedLogs = filterManager.logsChanges(filterId);
 
-    assertThat(retrievedLogs).isEqualToComparingFieldByFieldRecursively(Lists.newArrayList(log));
+    assertThat(retrievedLogs).isEqualToComparingFieldByFieldRecursively(expectedLogs);
   }
 
   @Test
-  public void shouldCheckLogsForEveryLogFilter() {
-    filterManager.installLogFilter(latest(), latest(), logsQuery());
-    filterManager.installLogFilter(latest(), latest(), logsQuery());
-    filterManager.installLogFilter(latest(), latest(), logsQuery());
-    recordNewBlockEvent();
+  public void shouldNotReturnLogOnNewBlockIfToBlockIsInPast() {
+    final String filterId =
+        filterManager.installLogFilter(
+            new BlockParameter("0"), new BlockParameter("1"), logsQuery());
+    recordBlockEvents(1).get(0);
 
-    verify(blockchainQueries, times(3)).matchingLogs(anyLong(), anyLong(), any());
+    final List<LogWithMetadata> retrievedLogs = filterManager.logsChanges(filterId);
+
+    assertThat(retrievedLogs).isEqualTo(emptyList());
+  }
+
+  @Test
+  public void shouldNotQueryOnNewBlock() {
+    filterManager.installLogFilter(latest(), latest(), logsQuery());
+    filterManager.installLogFilter(latest(), latest(), logsQuery());
+    filterManager.installLogFilter(latest(), latest(), logsQuery());
+    recordBlockEvents(1);
+
+    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any());
   }
 
   @Test
@@ -128,29 +151,34 @@ public class FilterManagerLogFilterTest {
     final List<LogWithMetadata> logs = filterManager.logsChanges("NOT THERE");
 
     assertThat(logs).isNull();
-    verify(blockchainQueries, times(0)).matchingLogs(anyLong(), anyLong(), any());
+    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any());
   }
 
   @Test
   public void shouldClearLogsAfterGettingLogChanges() {
-    when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any()))
-        .thenReturn(Lists.newArrayList(logWithMetadata()));
-
     final String filterId = filterManager.installLogFilter(latest(), latest(), logsQuery());
-    recordNewBlockEvent();
-    recordNewBlockEvent();
+    recordBlockEvents(2);
 
-    assertThat(filterManager.logsChanges(filterId).size()).isEqualTo(2);
+    assertThat(filterManager.logsChanges(filterId).size()).isEqualTo(8);
     assertThat(filterManager.logsChanges(filterId).size()).isEqualTo(0);
   }
 
-  private void recordNewBlockEvent() {
+  private List<BlockAddedEvent> recordBlockEvents(final int numEvents) {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final Block block = gen.block();
-    filterManager.recordBlockEvent(
-        BlockAddedEvent.createForHeadAdvancement(
-            block, LogWithMetadata.generate(block, gen.receipts(block), false)),
-        blockchainQueries.getBlockchain());
+    final List<BlockAddedEvent> blockAddedEvents =
+        Stream.generate(
+                () -> {
+                  final Block block =
+                      gen.block(new BlockDataGenerator.BlockOptions().setBlockNumber(3));
+                  return BlockAddedEvent.createForHeadAdvancement(
+                      block,
+                      LogWithMetadata.generate(block, gen.receipts(block), false),
+                      emptyList());
+                })
+            .limit(numEvents)
+            .collect(toUnmodifiableList());
+    blockAddedEvents.forEach(event -> filterManager.recordBlockEvent(event));
+    return blockAddedEvents;
   }
 
   @Test
@@ -163,12 +191,12 @@ public class FilterManagerLogFilterTest {
     final LogWithMetadata log = logWithMetadata();
     when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(eq(100L), eq(100L), eq(logsQuery())))
-        .thenReturn(Lists.newArrayList(log));
+        .thenReturn(singletonList(log));
 
     final String filterId = filterManager.installLogFilter(latest(), latest(), logsQuery());
     final List<LogWithMetadata> retrievedLogs = filterManager.logs(filterId);
 
-    assertThat(retrievedLogs).usingRecursiveComparison().isEqualTo(Lists.newArrayList(log));
+    assertThat(retrievedLogs).usingRecursiveComparison().isEqualTo(singletonList(log));
   }
 
   @Test
@@ -191,6 +219,51 @@ public class FilterManagerLogFilterTest {
     verify(filter).resetExpireTime();
   }
 
+  @Test
+  public void installAndUninstallPrivateFilter() {
+    final String filterId =
+        filterManager.installPrivateLogFilter(PRIVACY_GROUP_ID, latest(), latest(), logsQuery());
+
+    assertThat(filterRepository.getFilter(filterId, PrivateLogFilter.class)).isPresent();
+
+    assertThat(filterManager.uninstallFilter(filterId)).isTrue();
+
+    assertThat(filterRepository.getFilter(filterId, PrivateLogFilter.class)).isEmpty();
+  }
+
+  @Test
+  public void privateLogFilterShouldQueryPrivacyQueriesObject() {
+    final LogWithMetadata logWithMetadata = logWithMetadata();
+    final LogsQuery logsQuery = logsQuery();
+    when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), any(), eq(logsQuery)))
+        .thenReturn(singletonList(logWithMetadata));
+
+    final String filterId =
+        filterManager.installPrivateLogFilter(PRIVACY_GROUP_ID, latest(), latest(), logsQuery);
+    final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
+
+    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery));
+    assertThat(filterManager.logsChanges(filterId).get(0)).isEqualTo(logWithMetadata);
+  }
+
+  @Test
+  public void getLogsForPrivateFilterShouldQueryPrivacyQueriesObject() {
+    final LogWithMetadata logWithMetadata = logWithMetadata();
+    when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any()))
+        .thenReturn(Lists.newArrayList(logWithMetadata));
+
+    final String privateLogFilterId =
+        filterManager.installPrivateLogFilter(PRIVACY_GROUP_ID, latest(), latest(), logsQuery());
+
+    final List<LogWithMetadata> logs = filterManager.logs(privateLogFilterId);
+
+    verify(blockchainQueries, times(2)).headBlockNumber();
+    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any());
+
+    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any());
+    assertThat(logs.get(0)).isEqualTo(logWithMetadata);
+  }
+
   private LogWithMetadata logWithMetadata() {
     return new LogWithMetadata(
         0,
@@ -205,7 +278,7 @@ public class FilterManagerLogFilterTest {
   }
 
   private LogsQuery logsQuery() {
-    return new LogsQuery.Builder().build();
+    return new LogsQuery(emptyList(), emptyList()); // matches everything
   }
 
   private BlockParameter latest() {

@@ -21,7 +21,8 @@ import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataFixture;
 import org.hyperledger.besu.consensus.ibft.Vote;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -39,13 +40,13 @@ import org.junit.Test;
 public class IbftCoinbaseValidationRuleTest {
 
   public static BlockHeader createProposedBlockHeader(
-      final KeyPair proposerKeyPair,
+      final NodeKey proposerNodeKey,
       final List<Address> validators,
-      final List<KeyPair> committerKeyPairs) {
+      final List<NodeKey> committerNodeKeys) {
 
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    builder.coinbase(Util.publicKeyToAddress(proposerKeyPair.getPublicKey()));
+    builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
     final BlockHeader header = builder.buildHeader();
 
     final IbftExtraData ibftExtraData =
@@ -54,7 +55,7 @@ public class IbftCoinbaseValidationRuleTest {
             Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
-            committerKeyPairs);
+            committerNodeKeys);
 
     builder.extraData(ibftExtraData.encode());
     return builder.buildHeader();
@@ -62,42 +63,42 @@ public class IbftCoinbaseValidationRuleTest {
 
   @Test
   public void proposerInValidatorListPassesValidation() {
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress =
-        Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
+        Address.extract(Hash.hash(proposerNodeKey.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
-    final List<KeyPair> committers = Lists.newArrayList(proposerKeyPair);
+    final List<NodeKey> committers = Lists.newArrayList(proposerNodeKey);
 
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
 
-    BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators, committers);
+    BlockHeader header = createProposedBlockHeader(proposerNodeKey, validators, committers);
 
     assertThat(coinbaseValidationRule.validate(header, null, context)).isTrue();
   }
 
   @Test
   public void proposerNotInValidatorListFailsValidation() {
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final NodeKey proposerNodeKey = NodeKeyUtils.generate();
 
-    final KeyPair otherValidatorKeyPair = KeyPair.generate();
+    final NodeKey otherValidatorNodeKey = NodeKeyUtils.generate();
     final Address otherValidatorNodeAddress =
-        Address.extract(Hash.hash(otherValidatorKeyPair.getPublicKey().getEncodedBytes()));
+        Address.extract(Hash.hash(otherValidatorNodeKey.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 
-    final List<KeyPair> committers = Lists.newArrayList(otherValidatorKeyPair);
+    final List<NodeKey> committers = Lists.newArrayList(otherValidatorNodeKey);
 
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
 
-    BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators, committers);
+    BlockHeader header = createProposedBlockHeader(proposerNodeKey, validators, committers);
 
     assertThat(coinbaseValidationRule.validate(header, null, context)).isFalse();
   }

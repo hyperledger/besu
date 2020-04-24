@@ -17,8 +17,15 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.EeaSendRawTransactionTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivCallTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetCodeTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetLogsTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivGetFilterChangesTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivGetFilterLogsTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivNewFilterTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivUninstallFilterTransaction;
 
 import java.util.List;
 
@@ -74,8 +81,37 @@ public class PrivacyTransactions {
     return new PrivGetCodeTransaction(privacyGroupId, contractAddress, blockParameter);
   }
 
+  public PrivGetLogsTransaction privGetLogs(
+      final String privacyGroupId, final LogFilterJsonParameter filterParameter) {
+    return new PrivGetLogsTransaction(privacyGroupId, filterParameter);
+  }
+
   public RemoveFromOnChainPrivacyGroupTransaction removeFromPrivacyGroup(
       final String privacyGroupId, final PrivacyNode remover, final PrivacyNode nodeToRemove) {
     return new RemoveFromOnChainPrivacyGroupTransaction(privacyGroupId, remover, nodeToRemove);
+  }
+
+  public EeaSendRawTransactionTransaction sendRawTransaction(final String transaction) {
+    return new EeaSendRawTransactionTransaction(transaction);
+  }
+
+  public PrivNewFilterTransaction newFilter(
+      final String privacyGroupId, final LogFilterJsonParameter filterParameter) {
+    return new PrivNewFilterTransaction(privacyGroupId, filterParameter);
+  }
+
+  public PrivUninstallFilterTransaction uninstallFilter(
+      final String privacyGroupId, final String filterId) {
+    return new PrivUninstallFilterTransaction(privacyGroupId, filterId);
+  }
+
+  public PrivGetFilterLogsTransaction getFilterLogs(
+      final String privacyGroupId, final String filterId) {
+    return new PrivGetFilterLogsTransaction(privacyGroupId, filterId);
+  }
+
+  public PrivGetFilterChangesTransaction getFilterChanges(
+      final String privacyGroupId, final String filterId) {
+    return new PrivGetFilterChangesTransaction(privacyGroupId, filterId);
   }
 }

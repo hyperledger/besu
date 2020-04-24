@@ -43,8 +43,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
       case GAS_PRICE_TOO_LOW:
         return JsonRpcError.GAS_PRICE_TOO_LOW;
-      case PRIVACY_GROUP_DOES_NOT_EXIST:
-        return JsonRpcError.PRIVACY_GROUP_DOES_NOT_EXIST;
+      case OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST:
+        return JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
 
       default:
         return JsonRpcError.INVALID_PARAMS;

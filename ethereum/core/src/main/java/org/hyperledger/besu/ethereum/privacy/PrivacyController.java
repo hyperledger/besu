@@ -27,10 +27,14 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivacyController {
 
-  String sendTransaction(PrivateTransaction privateTransaction, String enclavePublicKey);
+  String sendTransaction(
+      PrivateTransaction privateTransaction,
+      String enclavePublicKey,
+      Optional<PrivacyGroup> privacyGroup);
 
   ReceiveResponse retrieveTransaction(String enclaveKey, String enclavePublicKey);
 
@@ -63,9 +67,10 @@ public interface PrivacyController {
       final CallParameter callParams,
       final long blockNumber);
 
-  Optional<String> buildAndSendAddPayload(PrivateTransaction privateTransaction, String enclaveKey);
+  Optional<String> buildAndSendAddPayload(
+      PrivateTransaction privateTransaction, Bytes32 privacyGroupId, String enclaveKey);
 
-  PrivacyGroup retrievePrivacyGroup(String toBase64String, String enclaveKey);
+  Optional<PrivacyGroup> retrieveOffChainPrivacyGroup(String toBase64String, String enclaveKey);
 
   List<PrivacyGroup> findOnChainPrivacyGroup(List<String> asList, String enclaveKey);
 
@@ -75,5 +80,13 @@ public interface PrivacyController {
       final Hash blockHash,
       final String enclavePublicKey);
 
+  Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(Bytes privacyGroupId, String enclavePublicKey);
+
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
+
+  boolean isGroupAdditionTransaction(PrivateTransaction privateTransaction);
+
+  void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey)
+      throws MultiTenancyValidationException;
 }

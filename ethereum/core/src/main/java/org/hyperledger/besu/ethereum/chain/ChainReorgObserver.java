@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 public interface ChainReorgObserver {
 
-  void onBlockAdded(BlockHeader blockHeader, Blockchain blockchain);
+  void onBlockAdded(BlockWithReceipts blockWithReceipts, Blockchain blockchain);
 }

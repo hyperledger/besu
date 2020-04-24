@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
@@ -72,8 +73,7 @@ public class GraphQLHttpService {
   private static final MediaType MEDIA_TYPE_JUST_JSON = MediaType.JSON_UTF_8.withoutParameters();
   private static final String EMPTY_RESPONSE = "";
 
-  private static final TypeReference<Map<String, Object>> MAP_TYPE =
-      new TypeReference<Map<String, Object>>() {};
+  private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
   private final Vertx vertx;
   private final GraphQLConfiguration config;
@@ -185,11 +185,13 @@ public class GraphQLHttpService {
           || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader.get()))) {
         event.next();
       } else {
-        event
-            .response()
-            .setStatusCode(403)
-            .putHeader("Content-Type", "application/json; charset=utf-8")
-            .end("{\"message\":\"Host not authorized.\"}");
+        final HttpServerResponse response = event.response();
+        if (!response.closed()) {
+          response
+              .setStatusCode(403)
+              .putHeader("Content-Type", "application/json; charset=utf-8")
+              .end("{\"message\":\"Host not authorized.\"}");
+        }
       }
     };
   }
@@ -207,8 +209,14 @@ public class GraphQLHttpService {
   }
 
   private boolean hostIsInWhitelist(final String hostHeader) {
-    return config.getHostsWhitelist().stream()
-        .anyMatch(whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()));
+    if (config.getHostsWhitelist().stream()
+        .anyMatch(
+            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+      return true;
+    } else {
+      LOG.trace("Host not in whitelist: '{}'", hostHeader);
+      return false;
+    }
   }
 
   public CompletableFuture<?> stop() {
@@ -246,7 +254,10 @@ public class GraphQLHttpService {
 
   // Empty Get/Post requests to / will be redirected to /graphql using 308 Permanent Redirect
   private void handleEmptyRequestAndRedirect(final RoutingContext routingContext) {
-    HttpServerResponse response = routingContext.response();
+    final HttpServerResponse response = routingContext.response();
+    if (response.closed()) {
+      return;
+    }
     response.setStatusCode(HttpResponseStatus.PERMANENT_REDIRECT.code());
     response.putHeader("Location", "/graphql");
     response.end();
@@ -262,11 +273,7 @@ public class GraphQLHttpService {
       switch (request.method()) {
         case GET:
           final String queryString = request.getParam("query");
-          if (queryString == null) {
-            query = "";
-          } else {
-            query = queryString;
-          }
+          query = Objects.requireNonNullElse(queryString, "");
           operationName = request.getParam("operationName");
           final String variableString = request.getParam("variables");
           if (variableString != null) {
@@ -282,26 +289,14 @@ public class GraphQLHttpService {
             final GraphQLJsonRequest jsonRequest =
                 Json.decodeValue(requestBody, GraphQLJsonRequest.class);
             final String jsonQuery = jsonRequest.getQuery();
-            if (jsonQuery == null) {
-              query = "";
-            } else {
-              query = jsonQuery;
-            }
+            query = Objects.requireNonNullElse(jsonQuery, "");
             operationName = jsonRequest.getOperationName();
-            Map<String, Object> jsonVariables = jsonRequest.getVariables();
-            if (jsonVariables != null) {
-              variables = jsonVariables;
-            } else {
-              variables = Collections.emptyMap();
-            }
+            final Map<String, Object> jsonVariables = jsonRequest.getVariables();
+            variables = Objects.requireNonNullElse(jsonVariables, Collections.emptyMap());
           } else {
             // treat all else as application/graphql
             final String requestQuery = routingContext.getBodyAsString().trim();
-            if (requestQuery == null) {
-              query = "";
-            } else {
-              query = requestQuery;
-            }
+            query = Objects.requireNonNullElse(requestQuery, "");
             operationName = null;
             variables = Collections.emptyMap();
           }
@@ -326,6 +321,9 @@ public class GraphQLHttpService {
           },
           false,
           (res) -> {
+            if (response.closed()) {
+              return;
+            }
             response.putHeader("Content-Type", MediaType.JSON_UTF_8.toString());
             if (res.failed()) {
               response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
@@ -393,10 +391,12 @@ public class GraphQLHttpService {
 
   private void handleGraphQLError(final RoutingContext routingContext, final Exception ex) {
     LOG.debug("Error handling GraphQL request", ex);
-    routingContext
-        .response()
-        .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
-        .end(Json.encode(new GraphQLErrorResponse(ex.getMessage())));
+    final HttpServerResponse response = routingContext.response();
+    if (!response.closed()) {
+      response
+          .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+          .end(Json.encode(new GraphQLErrorResponse(ex.getMessage())));
+    }
   }
 
   private String buildCorsRegexFromConfig() {

@@ -22,8 +22,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -78,7 +78,7 @@ public class PeerDiscoveryAgentTest {
     // Generate an out-of-band NEIGHBORS message.
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
     final NeighborsPacketData data = NeighborsPacketData.create(peers);
-    final Packet packet = Packet.create(PacketType.NEIGHBORS, data, otherNode.getKeyPair());
+    final Packet packet = Packet.create(PacketType.NEIGHBORS, data, otherNode.getNodeKey());
     helper.sendMessageBetweenAgents(otherNode, agent, packet);
 
     assertThat(agent.streamDiscoveredPeers()).isEmpty();
@@ -117,7 +117,7 @@ public class PeerDiscoveryAgentTest {
         Packet.create(
             PacketType.FIND_NEIGHBORS,
             FindNeighborsPacketData.create(otherAgents.get(0).getAdvertisedPeer().get().getId()),
-            testAgent.getKeyPair());
+            testAgent.getNodeKey());
     helper.sendMessageBetweenAgents(testAgent, agent, packet);
 
     // Check response packet
@@ -337,13 +337,13 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent();
     final DiscoveryPeer agentPeer = agent.getAdvertisedPeer().get();
 
-    final KeyPair remoteKeyPair = SECP256K1.KeyPair.generate();
+    final NodeKey remoteKeyPair = NodeKeyUtils.generate();
     final String remoteIp = "1.2.3.4";
     final MockPeerDiscoveryAgent remoteAgent =
         helper.createDiscoveryAgent(
             helper
                 .agentBuilder()
-                .keyPair(remoteKeyPair)
+                .nodeKey(remoteKeyPair)
                 .advertisedHost(remoteIp)
                 .bootstrapPeers(agentPeer));
 
@@ -363,7 +363,7 @@ public class PeerDiscoveryAgentTest {
         helper.createDiscoveryAgent(
             helper
                 .agentBuilder()
-                .keyPair(remoteKeyPair)
+                .nodeKey(remoteKeyPair)
                 .advertisedHost(newIp)
                 .bindPort(newPort)
                 .bootstrapPeers(agentPeer));
@@ -575,7 +575,7 @@ public class PeerDiscoveryAgentTest {
   protected void requestNeighbors(
       final MockPeerDiscoveryAgent fromAgent, final MockPeerDiscoveryAgent toAgent) {
     final FindNeighborsPacketData data = FindNeighborsPacketData.create(Peer.randomId());
-    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, fromAgent.getKeyPair());
+    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, fromAgent.getNodeKey());
     helper.sendMessageBetweenAgents(fromAgent, toAgent, packet);
   }
 }

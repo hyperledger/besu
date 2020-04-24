@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadStatus;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
@@ -43,12 +44,13 @@ public class SyncState {
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
+  private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
     blockchain.observeBlockAdded(
-        (event, chain) -> {
+        event -> {
           if (event.isNewCanonicalHead()) {
             checkInSync();
           }
@@ -109,6 +111,10 @@ public class SyncState {
   public void setSyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
     final SyncTarget syncTarget = new SyncTarget(peer, commonAncestor);
     replaceSyncTarget(Optional.of(syncTarget));
+  }
+
+  public void setWorldStateDownloadStatus(final WorldStateDownloadStatus worldStateDownloadStatus) {
+    this.worldStateDownloadStatus = Optional.ofNullable(worldStateDownloadStatus);
   }
 
   public boolean isInSync() {
@@ -183,7 +189,12 @@ public class SyncState {
           final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
           final long commonAncestor = target.commonAncestor().getNumber();
           final long highestKnownBlock = bestChainHeight(chainHeadBlockNumber);
-          return new DefaultSyncStatus(commonAncestor, chainHeadBlockNumber, highestKnownBlock);
+          return new DefaultSyncStatus(
+              commonAncestor,
+              chainHeadBlockNumber,
+              highestKnownBlock,
+              worldStateDownloadStatus.flatMap(WorldStateDownloadStatus::getPulledStates),
+              worldStateDownloadStatus.flatMap(WorldStateDownloadStatus::getKnownStates));
         });
   }
 
@@ -211,9 +222,9 @@ public class SyncState {
   }
 
   private synchronized void checkInSync() {
-    ChainHead localChain = getLocalChainHead();
-    Optional<ChainHeadEstimate> syncTargetChain = getSyncTargetChainHead();
-    Optional<ChainHeadEstimate> bestPeerChain = getBestPeerChainHead();
+    final ChainHead localChain = getLocalChainHead();
+    final Optional<ChainHeadEstimate> syncTargetChain = getSyncTargetChainHead();
+    final Optional<ChainHeadEstimate> bestPeerChain = getBestPeerChainHead();
 
     inSyncTrackers
         .values()

@@ -22,7 +22,8 @@ import static org.hyperledger.besu.consensus.ibft.headervalidationrules.HeaderVa
 
 import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -44,28 +45,28 @@ public class IbftCommitSealsValidationRuleTest {
 
   @Test
   public void correctlyConstructedHeaderPassesValidation() {
-    final List<KeyPair> committerKeyPairs =
-        IntStream.range(0, 2).mapToObj(i -> KeyPair.generate()).collect(Collectors.toList());
+    final List<NodeKey> committerNodeKeys =
+        IntStream.range(0, 2).mapToObj(i -> NodeKeyUtils.generate()).collect(Collectors.toList());
 
     final List<Address> committerAddresses =
-        committerKeyPairs.stream()
-            .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
+        committerNodeKeys.stream()
+            .map(nodeKey -> Util.publicKeyToAddress(nodeKey.getPublicKey()))
             .sorted()
             .collect(Collectors.toList());
 
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, setupContextWithValidators(committerAddresses));
 
-    BlockHeader header = createProposedBlockHeader(committerAddresses, committerKeyPairs, false);
+    BlockHeader header = createProposedBlockHeader(committerAddresses, committerNodeKeys, false);
 
     assertThat(commitSealsValidationRule.validate(header, null, context)).isTrue();
   }
 
   @Test
   public void insufficientCommitSealsFailsValidation() {
-    final KeyPair committerKeyPair = KeyPair.generate();
+    final NodeKey committerNodeKey = NodeKeyUtils.generate();
     final Address committerAddress =
-        Address.extract(Hash.hash(committerKeyPair.getPublicKey().getEncodedBytes()));
+        Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = singletonList(committerAddress);
     final ProtocolContext<IbftContext> context =
@@ -82,16 +83,16 @@ public class IbftCommitSealsValidationRuleTest {
 
   @Test
   public void committerNotInValidatorListFailsValidation() {
-    final KeyPair committerKeyPair = KeyPair.generate();
-    final Address committerAddress = Util.publicKeyToAddress(committerKeyPair.getPublicKey());
+    final NodeKey committerNodeKey = NodeKeyUtils.generate();
+    final Address committerAddress = Util.publicKeyToAddress(committerNodeKey.getPublicKey());
 
     final List<Address> validators = singletonList(committerAddress);
 
     // Insert an extraData block with committer seals.
-    final KeyPair nonValidatorKeyPair = KeyPair.generate();
+    final NodeKey nonValidatorNodeKey = NodeKeyUtils.generate();
 
     final BlockHeader header =
-        createProposedBlockHeader(validators, singletonList(nonValidatorKeyPair), false);
+        createProposedBlockHeader(validators, singletonList(nonValidatorNodeKey), false);
 
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, setupContextWithValidators(validators));
@@ -140,12 +141,12 @@ public class IbftCommitSealsValidationRuleTest {
 
   @Test
   public void headerContainsDuplicateSealsFailsValidation() {
-    final KeyPair committerKeyPair = KeyPair.generate();
+    final NodeKey committerNodeKey = NodeKeyUtils.generate();
     final List<Address> validators =
-        singletonList(Util.publicKeyToAddress(committerKeyPair.getPublicKey()));
+        singletonList(Util.publicKeyToAddress(committerNodeKey.getPublicKey()));
     final BlockHeader header =
         createProposedBlockHeader(
-            validators, Lists.newArrayList(committerKeyPair, committerKeyPair), false);
+            validators, Lists.newArrayList(committerNodeKey, committerNodeKey), false);
 
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, setupContextWithValidators(validators));
@@ -159,12 +160,12 @@ public class IbftCommitSealsValidationRuleTest {
       final boolean useDifferentRoundNumbersForCommittedSeals) {
 
     final List<Address> validators = Lists.newArrayList();
-    final List<KeyPair> committerKeys = Lists.newArrayList();
+    final List<NodeKey> committerKeys = Lists.newArrayList();
 
     for (int i = 0; i < validatorCount; i++) { // need -1 to account for proposer
-      final KeyPair committerKeyPair = KeyPair.generate();
-      committerKeys.add(committerKeyPair);
-      validators.add(Address.extract(Hash.hash(committerKeyPair.getPublicKey().getEncodedBytes())));
+      final NodeKey committerNodeKey = NodeKeyUtils.generate();
+      committerKeys.add(committerNodeKey);
+      validators.add(Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes())));
     }
 
     Collections.sort(validators);

@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -22,5 +24,9 @@ import java.util.stream.Stream;
 @FunctionalInterface
 public interface TraceFormatter {
 
-  Stream<Trace> format(TransactionTrace transactionTrace, AtomicInteger traceCounter);
+  Stream<Trace> format(
+      ProtocolSchedule<?> protocolSchedule,
+      TransactionTrace transactionTrace,
+      Block block,
+      AtomicInteger traceCounter);
 }
