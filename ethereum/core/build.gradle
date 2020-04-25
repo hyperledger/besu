@@ -106,7 +106,7 @@ test {
   exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
 }
 
-def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix) {
+def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
   def referenceTestTemplate = templateFile.text
 
   // This is how many json files to include in each test file
@@ -115,8 +115,10 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
   fileSets.eachWithIndex { fileSet, idx ->
     def paths = []
     fileSet.each { testJsonFile ->
-      if (!testJsonFile.getName().toString().startsWith(".")) {
-        String pathFile = testJsonFile.getPath();
+      def parentFile = testJsonFile.getParentFile()
+      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
+      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
+        def pathFile = testJsonFile.getPath()
         paths << pathFile.substring(pathFile.indexOf(pathstrip))
       }
     }
@@ -138,7 +140,8 @@ task blockchainReferenceTestsSetup {
     file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
     "BlockchainTests",
     "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
-    "BlockchainReferenceTest"
+    "BlockchainReferenceTest",
+    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
     )
 }
 
