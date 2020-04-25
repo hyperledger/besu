@@ -60,7 +60,7 @@ commands:
     description: "Capture test logs"
     steps:
       - store_artifacts:
-          path: acceptance-tests/build/acceptanceTestLogs
+          path: acceptance-tests/tests/build/acceptanceTestLogs
           destination: acceptance-tests-logs
 
 jobs:

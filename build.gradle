@@ -233,6 +233,8 @@ allprojects {
    *   with the 'include' option above since it is a pattern, but this is a slightly more convenient
    *   option.
    * - 'root.log.level' and 'evm.log.level': allow to control the log level used during the tests.
+   * - 'acctests.keepLogsOfPassingTests': log files of failed acceptance tests are always saved.
+   *    This property additionally keeps log files for successful tests.
    */
   test {
     jvmArgs = [
