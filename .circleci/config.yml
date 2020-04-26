@@ -95,7 +95,7 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            ./gradlew --parallel build
+            ./gradlew --no-daemon --parallel build
       - capture_test_results
 
   integrationTests:
@@ -107,15 +107,15 @@ jobs:
       - run:
           name: IntegrationTests
           command: |
-            ./gradlew --parallel integrationTest
+            ./gradlew --no-daemon --parallel integrationTest
       - run:
           name: Javadoc
           command: |
-            ./gradlew --parallel javadoc
+            ./gradlew --no-daemon --parallel javadoc
       - run:
           name: CompileJmh
           command: |
-            ./gradlew --parallel compileJmh
+            ./gradlew --no-daemon --parallel compileJmh
       - capture_test_results
 
   referenceTests:
@@ -129,7 +129,7 @@ jobs:
           no_output_timeout: 20m
           command: |
             git submodule update --init --recursive
-            ./gradlew --parallel referenceTest
+            ./gradlew --no-daemon --parallel referenceTest
       - capture_test_results
 
   acceptanceTests:
@@ -167,13 +167,13 @@ jobs:
       - run:
           name: build image
           command: |
-            ./gradlew distDocker
+            ./gradlew --no-daemon distDocker
       - run:
           name: test image
           command: |
             mkdir -p docker/reports
             curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
-            ./gradlew testDocker
+            ./gradlew --no-daemon testDocker
 
   publish:
     executor: besu_executor_med
@@ -184,7 +184,7 @@ jobs:
       - run:
           name: Publish
           command: |
-            ./gradlew --parallel bintrayUpload
+            ./gradlew --no-daemon --parallel bintrayUpload
 
   publishDocker:
     executor: besu_executor_med
@@ -198,7 +198,7 @@ jobs:
           command: |
             docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
             docker login "${ACR_REPO}" --username "${ACR_DOCKER_USER}" --password "${ACR_DOCKER_PASSWORD}"
-            ./gradlew --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:
   version: 2
