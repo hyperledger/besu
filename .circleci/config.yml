@@ -7,7 +7,7 @@ executors:
     resource_class: medium
     working_directory: ~/project
     environment:
-      GRADLE_MAX_TEST_FORKS: auto
+      GRADLE_MAX_TEST_FORKS: 1
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
@@ -15,7 +15,7 @@ executors:
     resource_class: xlarge
     working_directory: ~/project
     environment:
-      GRADLE_MAX_TEST_FORKS: auto
+      GRADLE_MAX_TEST_FORKS: 4
 
 notify:
   webhooks:
