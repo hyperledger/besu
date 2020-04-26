@@ -6,12 +6,16 @@ executors:
       - image: circleci/openjdk:11.0.4-jdk-stretch
     resource_class: medium
     working_directory: ~/project
+    environment:
+      GRADLE_MAX_TEST_FORKS: auto
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: circleci/openjdk:11.0.4-jdk-stretch
     resource_class: xlarge
     working_directory: ~/project
+    environment:
+      GRADLE_MAX_TEST_FORKS: auto
 
 notify:
   webhooks:

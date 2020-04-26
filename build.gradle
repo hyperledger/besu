@@ -382,7 +382,15 @@ subprojects {
 
   tasks.withType(Test) {
     // If GRADLE_MAX_TEST_FORKS is not set, use half the available processors
-    maxParallelForks = (System.getenv('GRADLE_MAX_TEST_FORKS') ?: (Runtime.runtime.availableProcessors().intdiv(2) ?: 1)).toInteger()
+    // if set to "auto", then let Gradle use its logic (for compatibility with the time that this env var was mandatory)
+    def ev = System.getenv('GRADLE_MAX_TEST_FORKS')
+    if (ev == null) {
+      maxParallelForks = (Runtime.runtime.availableProcessors().intdiv(2) ?: 1)
+    } else {
+      if (ev.toLowerCase() != "auto") {
+        maxParallelForks = ev.toInteger();
+      }
+    }
   }
 
   tasks.withType(JavaCompile) {
