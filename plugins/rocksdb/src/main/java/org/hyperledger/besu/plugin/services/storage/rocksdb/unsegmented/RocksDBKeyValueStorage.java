@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -32,7 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.BlockBasedTableConfig;
@@ -120,16 +121,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
-    try (final RocksIterator rocksIterator = db.newIterator()) {
-      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
-        final byte[] key = rocksIterator.key();
-        if (returnCondition.test(key)) {
-          returnedKeys.add(key);
-        }
-      }
-    }
-    return returnedKeys;
+    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
   }
 
   @Override

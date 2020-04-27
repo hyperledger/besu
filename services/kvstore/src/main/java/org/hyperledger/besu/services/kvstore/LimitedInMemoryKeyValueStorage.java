@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -27,7 +29,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
@@ -86,16 +87,7 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      return storage.asMap().keySet().stream()
-          .map(Bytes::toArrayUnsafe)
-          .filter(returnCondition)
-          .collect(Collectors.toSet());
-    } finally {
-      lock.unlock();
-    }
+    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
   }
 
   @Override
