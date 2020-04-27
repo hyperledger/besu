@@ -294,6 +294,7 @@ check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
 subprojects {
 
+  if (file('src/test-support').directory) {
   sourceSets {
     // test-support can be consumed as a library by other projects in their tests
     testSupport {
@@ -304,6 +305,21 @@ subprojects {
       }
       resources.srcDir file('src/test-support/resources')
     }
+    }
+
+    dependencies {
+      testImplementation sourceSets.testSupport.output
+    }
+
+    task testSupportJar(type: Jar) {
+      archiveBaseName = "${project.name}-support-test"
+      classifier = 'test-support'
+      from sourceSets.testSupport.output
+    }
+  }
+
+  if (file('src/integration-test').directory) {
+    sourceSets {
     integrationTest {
       java {
         compileClasspath += main.output
@@ -314,10 +330,26 @@ subprojects {
     }
   }
 
-  task testSupportJar(type: Jar) {
-    archiveBaseName = "${project.name}-support-test"
-    classifier = 'test-support'
-    from sourceSets.testSupport.output
+    if (file('src/test-support').directory) {
+      dependencies {
+        integrationTestImplementation sourceSets.testSupport.output
+      }
+    }
+
+    task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
+      group = "verification"
+      description = "Runs the Besu integration tests"
+
+      jvmArgs = [
+        '--add-opens',
+        'java.base/java.util=ALL-UNNAMED',
+        '--add-opens',
+        'java.base/java.util.concurrent=ALL-UNNAMED'
+      ]
+      testClassesDirs = sourceSets.integrationTest.output.classesDirs
+      classpath = sourceSets.integrationTest.runtimeClasspath
+      outputs.upToDateWhen { false }
+    }
   }
 
   def sourceSetIsPopulated = { sourceSetName ->
@@ -395,27 +427,6 @@ subprojects {
     testSupportImplementation.extendsFrom implementation
     integrationTestImplementation.extendsFrom implementation
     testSupportArtifacts
-  }
-
-
-  dependencies {
-    testImplementation sourceSets.testSupport.output
-    integrationTestImplementation sourceSets.testSupport.output
-  }
-
-  task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
-    group = "verification"
-    description = "Runs the Besu integration tests"
-
-    jvmArgs = [
-      '--add-opens',
-      'java.base/java.util=ALL-UNNAMED',
-      '--add-opens',
-      'java.base/java.util.concurrent=ALL-UNNAMED'
-    ]
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
-    outputs.upToDateWhen { false }
   }
 
   if (file('src/jmh').directory) {
@@ -605,7 +616,17 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   rootPath = "${projectDir}"
   spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
   filesRegex = "(.*.java)|(.*.groovy)"
-  excludeRegex = "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)|(.*blockchain/BlockchainReferenceTest.*)|(.*.gradle/.*)|(.*.idea/.*)"
+  excludeRegex = [
+    "(.*/generalstate/GeneralStateRegressionReferenceTest.*)",
+    "(.*/generalstate/GeneralStateReferenceTest.*)",
+    "(.*/blockchain/BlockchainReferenceTest.*)",
+    "(.*/.gradle/.*)",
+    "(.*/.idea/.*)",
+    "(.*/out/.*)",
+    "(.*/build/.*)",
+    "(.*/src/main/generated/.*)",
+  ].join("|")
+
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
