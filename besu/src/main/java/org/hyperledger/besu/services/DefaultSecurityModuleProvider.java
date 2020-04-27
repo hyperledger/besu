@@ -12,15 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.securitymodule;
+package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleProvider;
 
-/**
- * Represents Security Module Provider Function which produces an instance of SecurityModule.
- */
-@Unstable
-@FunctionalInterface
-public interface SecurityModuleProvider {
-  SecurityModule create();
+public class DefaultSecurityModuleProvider implements SecurityModuleProvider {
+  private final SecurityModule securityModule;
+
+  public DefaultSecurityModuleProvider(final SecurityModule securityModule) {
+    this.securityModule = securityModule;
+  }
+
+  @Override
+  public SecurityModule create() {
+    return securityModule;
+  }
 }

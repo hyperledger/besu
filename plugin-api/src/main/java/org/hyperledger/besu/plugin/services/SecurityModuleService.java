@@ -32,8 +32,7 @@ public interface SecurityModuleService {
    * @param name The name to identify the Security Provider Supplier
    * @param securityModuleProvider Register reference of SecurityModuleProvider.
    */
-  void registerSecurityModule(
-      final String name, final SecurityModuleProvider securityModuleProvider);
+  void registerSecurityModule(String name, SecurityModuleProvider securityModuleProvider);
 
   /**
    * Retrieves a registered Security Module Provider corresponding to the specified name

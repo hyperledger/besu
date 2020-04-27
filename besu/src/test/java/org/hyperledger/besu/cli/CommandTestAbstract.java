@@ -82,6 +82,7 @@ import io.vertx.core.VertxOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
@@ -110,6 +111,7 @@ public abstract class CommandTestAbstract {
   private final HashMap<String, String> environment = new HashMap<>();
 
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
+  private SECP256K1.KeyPair keyPair;
 
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
@@ -227,12 +229,11 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.pidPath(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
-    lenient()
-        .when(nodeKey.getPublicKey())
-        .thenReturn(
-            SECP256K1.PublicKey.create(
-                Bytes.fromHexString(
-                    "0x35f48529f73c4172850ed18997d00d101a9aebc130103c23d41d46351c1b1d72ffc8b246af3a446d99a8218bd69e231b75932ea9a79173751dc7eb2eb0e301f2")));
+    final Bytes32 keyPairPrvKey =
+        Bytes32.fromHexString("0xf7a58d5e755d51fa2f6206e91dd574597c73248aaf946ec1964b8c6268d6207b");
+    keyPair = SECP256K1.KeyPair.create(SECP256K1.PrivateKey.create(keyPairPrvKey));
+
+    lenient().when(nodeKey.getPublicKey()).thenReturn(keyPair.getPublicKey());
 
     lenient()
         .when(storageService.getByName(eq("rocksdb")))
@@ -291,6 +292,7 @@ public abstract class CommandTestAbstract {
         new TestBesuCommand(
             mockLogger,
             nodeKey,
+            keyPair,
             rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -319,10 +321,12 @@ public abstract class CommandTestAbstract {
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private Vertx vertx;
     private final NodeKey mockNodeKey;
+    private final SECP256K1.KeyPair keyPair;
 
     TestBesuCommand(
         final Logger mockLogger,
         final NodeKey mockNodeKey,
+        final SECP256K1.KeyPair keyPair,
         final RlpBlockImporter mockBlockImporter,
         final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
         final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
@@ -344,6 +348,7 @@ public abstract class CommandTestAbstract {
           storageService,
           securityModuleService);
       this.mockNodeKey = mockNodeKey;
+      this.keyPair = keyPair;
     }
 
     @Override
@@ -361,6 +366,12 @@ public abstract class CommandTestAbstract {
     NodeKey buildNodeKey() {
       // for testing.
       return mockNodeKey;
+    }
+
+    @Override
+    SECP256K1.KeyPair loadKeyPair() {
+      // for testing.
+      return keyPair;
     }
 
     public CommandSpec getSpec() {

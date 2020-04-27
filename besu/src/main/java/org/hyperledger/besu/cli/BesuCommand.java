@@ -117,11 +117,13 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleProvider;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.DefaultSecurityModuleProvider;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
@@ -1072,7 +1074,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .getMetricCategories()
         .forEach(metricCategoryConverter::addRegistryCategory);
 
+    // register default security module provider
+    securityModuleService.registerSecurityModule(
+        DEFAULT_SECURITY_MODULE_PROVIDER, defaultSecurityModuleProvider());
+
     return this;
+  }
+
+  private SecurityModuleProvider defaultSecurityModuleProvider() {
+    return new DefaultSecurityModuleProvider(defaultSecurityModule());
+  }
+
+  private SecurityModule defaultSecurityModule() {
+    return new KeyPairSecurityModule(loadKeyPair());
+  }
+
+  @VisibleForTesting
+  SECP256K1.KeyPair loadKeyPair() {
+    return KeyPairUtil.loadKeyPair(nodePrivateKeyFile());
   }
 
   private void parse(
@@ -1990,16 +2009,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SecurityModule securityModuleProvider() {
-    if (DEFAULT_SECURITY_MODULE_PROVIDER.equals(securityModuleProviderName)) {
-      // directly load KeyPairSecurityModule
-      return new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(nodePrivateKeyFile()));
-    }
-
     return securityModuleService
         .getByName(securityModuleProviderName)
         .orElseThrow(
             () -> new RuntimeException("Security Module not found: " + securityModuleProviderName))
-        .create(pluginCommonConfiguration);
+        .create();
   }
 
   private File nodePrivateKeyFile() {
