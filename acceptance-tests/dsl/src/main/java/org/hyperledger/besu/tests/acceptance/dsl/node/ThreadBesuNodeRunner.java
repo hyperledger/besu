@@ -104,6 +104,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
     ThreadContext.put("node", node.getName());
 
+    if (node.getRunCommand().isPresent()) {
+      throw new UnsupportedOperationException("commands are not supported with thread runner");
+    }
+
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfiguration commonPluginConfiguration =
