@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -45,7 +44,7 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
   }
 
   @Override
-  public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
+  public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()) {
       final List<Block> blocks = new ArrayList<>();
       Block blockPtr = event.getBlock();
@@ -54,7 +53,8 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
         blocks.add(blockPtr);
 
         blockPtr =
-            blockchain
+            blockchainQueries
+                .getBlockchain()
                 .getBlockByHash(blockPtr.getHeader().getParentHash())
                 .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
       }
