@@ -818,11 +818,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
-      names = {"--security-module-provider"},
-      paramLabel = "<PROVIDER-NAME>",
-      description = "Identity for the Security Module provider to be used.",
+      names = {"--security-module"},
+      paramLabel = "<NAME>",
+      description = "Identity for the Security Module to be used.",
       arity = "1")
-  private String securityModuleProviderName = DEFAULT_SECURITY_MODULE_PROVIDER;
+  private String securityModuleName = DEFAULT_SECURITY_MODULE;
 
   @Option(
       names = {"--auto-log-bloom-caching-enabled"},
@@ -1072,9 +1072,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .getMetricCategories()
         .forEach(metricCategoryConverter::addRegistryCategory);
 
-    // register default security module provider
+    // register default security module
     securityModuleService.register(
-        DEFAULT_SECURITY_MODULE_PROVIDER, Suppliers.memoize(this::defaultSecurityModule)::get);
+        DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule)::get);
 
     return this;
   }
@@ -1999,14 +1999,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   NodeKey buildNodeKey() {
-    return new NodeKey(securityModuleProvider());
+    return new NodeKey(securityModule());
   }
 
-  private SecurityModule securityModuleProvider() {
+  private SecurityModule securityModule() {
     return securityModuleService
-        .getByName(securityModuleProviderName)
-        .orElseThrow(
-            () -> new RuntimeException("Security Module not found: " + securityModuleProviderName))
+        .getByName(securityModuleName)
+        .orElseThrow(() -> new RuntimeException("Security Module not found: " + securityModuleName))
         .get();
   }
 
