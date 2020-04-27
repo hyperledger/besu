@@ -186,10 +186,10 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public void commit() {
+      nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
       if (doomedKeyRef.get().map(Bytes32::wrap).map(addedNodes::contains).orElse(false)) {
         doomedKeyRef.set(Optional.empty());
       }
-      nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
       transaction.commit();
     }
 
