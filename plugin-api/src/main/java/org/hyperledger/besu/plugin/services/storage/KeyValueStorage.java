@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
-import java.util.stream.Stream;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -22,6 +21,7 @@ import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Responsible for storing values against keys.

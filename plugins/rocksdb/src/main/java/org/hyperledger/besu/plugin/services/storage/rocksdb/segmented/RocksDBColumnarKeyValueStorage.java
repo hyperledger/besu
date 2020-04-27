@@ -16,7 +16,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static java.util.Objects.requireNonNullElse;
 
-import java.util.stream.Stream;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -31,7 +30,6 @@ import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransaction
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -55,7 +54,6 @@ import org.rocksdb.LRUCache;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
-import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -76,7 +74,6 @@ public class RocksDBColumnarKeyValueStorage
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
   private final RocksDBMetrics metrics;
-  private Optional<byte[]> maybeDoomedKey = Optional.empty();
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -190,24 +187,14 @@ public class RocksDBColumnarKeyValueStorage
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
-        maybeDoomedKey = Optional.of(key);
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
-          try {
-            db.delete(segmentHandle, key);
-          } catch (RocksDBException rdbe) {
-            // We can't get a lock here because we detect that we are about to commit a doomed key
-            // in `commit` below and we are also waiting there. The timeout is configured to be as
-            // short as possible so this thread can skip this key and move on to sweeping more keys
-            // asap.
-            if (rdbe.getStatus().getCode() != Status.Code.TimedOut) throw rdbe;
-          }
+          db.delete(segmentHandle, key);
         }
       }
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
-    maybeDoomedKey = Optional.empty();
     return removedNodeCounter;
   }
 
@@ -265,7 +252,6 @@ public class RocksDBColumnarKeyValueStorage
 
     private final org.rocksdb.Transaction innerTx;
     private final WriteOptions options;
-    private final Set<Bytes> addedKeys = new HashSet<>();
 
     RocksDbTransaction(final org.rocksdb.Transaction innerTx, final WriteOptions options) {
       this.innerTx = innerTx;
@@ -274,7 +260,6 @@ public class RocksDBColumnarKeyValueStorage
 
     @Override
     public void put(final ColumnFamilyHandle segment, final byte[] key, final byte[] value) {
-      addedKeys.add(Bytes.wrap(key));
       try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
         innerTx.put(segment, key, value);
       } catch (final RocksDBException e) {
@@ -293,15 +278,6 @@ public class RocksDBColumnarKeyValueStorage
 
     @Override
     public void commit() throws StorageException {
-      // This is where we're intentionally causing the deadlock with the delete in
-      // `removeAllKeysUnless` above.
-      while (maybeDoomedKey.map(key -> addedKeys.contains(Bytes.wrap(key))).orElse(false)) {
-        try {
-          Thread.sleep(1);
-        } catch (InterruptedException e) {
-          throw new StorageException(e);
-        }
-      }
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
         innerTx.commit();
       } catch (final RocksDBException e) {
@@ -314,7 +290,6 @@ public class RocksDBColumnarKeyValueStorage
     @Override
     public void rollback() {
       try {
-        addedKeys.clear();
         innerTx.rollback();
         metrics.getRollbackCount().inc();
       } catch (final RocksDBException e) {

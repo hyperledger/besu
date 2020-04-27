@@ -28,9 +28,11 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -59,7 +61,13 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
-    return get(key).isPresent();
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return get(key).isPresent();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -78,17 +86,51 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
-    final long initialSize = storage.size();
-    storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
-    return initialSize - storage.size();
+    final Lock lock = rwLock.writeLock();
+    lock.lock();
+    try {
+      final long initialSize = storage.size();
+      storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
+      return initialSize - storage.size();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return storage.asMap().keySet().stream()
-        .map(Bytes::toArrayUnsafe)
-        .filter(returnCondition)
-        .collect(Collectors.toSet());
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return storage.asMap().keySet().stream()
+          .map(Bytes::toArrayUnsafe)
+          .filter(returnCondition)
+          .collect(Collectors.toSet());
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Stream<byte[]> streamKeys() {
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableSet.copyOf(storage.asMap().keySet()).stream().map(Bytes::toArrayUnsafe);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public void delete(final byte[] key) {
+    final Lock lock = rwLock.writeLock();
+    lock.lock();
+    try {
+      storage.invalidate(Bytes.wrap(key));
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override

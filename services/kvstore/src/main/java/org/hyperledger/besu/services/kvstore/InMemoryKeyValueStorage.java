@@ -29,7 +29,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.tuweni.bytes.Bytes;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
@@ -77,7 +79,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     final Lock lock = rwLock.writeLock();
     lock.lock();
     try {
-      long initialSize = hashValueStore.keySet().size();
+      final long initialSize = hashValueStore.keySet().size();
       hashValueStore.keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
       return initialSize - hashValueStore.keySet().size();
     } finally {
@@ -94,6 +96,28 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
           .map(Bytes::toArrayUnsafe)
           .filter(returnCondition)
           .collect(toUnmodifiableSet());
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Stream<byte[]> streamKeys() {
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableSet.copyOf(hashValueStore.keySet()).stream().map(Bytes::toArrayUnsafe);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public void delete(final byte[] key) {
+    final Lock lock = rwLock.writeLock();
+    lock.lock();
+    try {
+      hashValueStore.remove(Bytes.wrap(key));
     } finally {
       lock.unlock();
     }

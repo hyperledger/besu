@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
-import java.util.stream.Stream;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
@@ -22,7 +21,7 @@ import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import org.rocksdb.ColumnFamilyHandle;
+import java.util.stream.Stream;
 
 /**
  * Service provided by besu to facilitate persistent data storage.
@@ -57,7 +56,6 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    * Returns a stream of all keys for the segment.
    *
    * @param segmentHandle The segment handle whose keys we want to stream.
-   *
    * @return A stream of all keys in the specified segment.
    */
   Stream<byte[]> streamKeys(final S segmentHandle);

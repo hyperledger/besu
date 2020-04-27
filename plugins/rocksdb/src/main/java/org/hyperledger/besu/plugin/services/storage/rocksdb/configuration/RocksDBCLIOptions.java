@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
-import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
-
 import com.google.common.base.MoreObjects;
 import picocli.CommandLine;
 
@@ -25,19 +23,6 @@ public class RocksDBCLIOptions {
   public static final long DEFAULT_CACHE_CAPACITY = 8388608;
   public static final int DEFAULT_MAX_BACKGROUND_COMPACTIONS = 4;
   public static final int DEFAULT_BACKGROUND_THREAD_COUNT = 4;
-  /**
-   * "If positive, specifies the wait timeout in milliseconds when writing a key OUTSIDE of a
-   * transaction (ie by calling DB::Put(),Merge(),Delete(),Write() directly). If 0, no waiting is
-   * done if a lock cannot instantly be acquired. If negative, there is no timeout and will block
-   * indefinitely when acquiring a lock." - RocksDB documentation
-   *
-   * <p>RocksDB's default is 1000ms. Besu has it set to a relatively aggressive value because the
-   * only time we call extra-transaction operations as of now is while pruning and we are
-   * strategically using a timeout event to circumvent a pruning bug.
-   *
-   * @see RocksDBColumnarKeyValueStorage#removeAllKeysUnless
-   */
-  public static final int DEFAULT_LOCK_TIMEOUT = 1;
 
   private static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
   private static final String CACHE_CAPACITY_FLAG = "--Xplugin-rocksdb-cache-capacity";
@@ -45,7 +30,6 @@ public class RocksDBCLIOptions {
       "--Xplugin-rocksdb-max-background-compactions";
   private static final String BACKGROUND_THREAD_COUNT_FLAG =
       "--Xplugin-rocksdb-background-thread-count";
-  private static final String DEFAULT_LOCK_TIMEOUT_FLAG = "--Xplugin-rocksdb-default-lock-timeout";
 
   @CommandLine.Option(
       names = {MAX_OPEN_FILES_FLAG},
@@ -79,15 +63,6 @@ public class RocksDBCLIOptions {
       description = "Number of RocksDB background threads (default: ${DEFAULT-VALUE})")
   int backgroundThreadCount;
 
-  @CommandLine.Option(
-      names = {DEFAULT_LOCK_TIMEOUT_FLAG},
-      hidden = true,
-      defaultValue = "1",
-      paramLabel = "<INTEGER>",
-      description =
-          "The wait timeout in milliseconds when writing a key OUTSIDE of a RocksDB transaction (ie by calling put, merge, delete, write directly) (default: ${DEFAULT_VALUE})")
-  int defaultLockTimeout;
-
   private RocksDBCLIOptions() {}
 
   public static RocksDBCLIOptions create() {
@@ -105,11 +80,7 @@ public class RocksDBCLIOptions {
 
   public RocksDBFactoryConfiguration toDomainObject() {
     return new RocksDBFactoryConfiguration(
-        maxOpenFiles,
-        maxBackgroundCompactions,
-        backgroundThreadCount,
-        cacheCapacity,
-        defaultLockTimeout);
+        maxOpenFiles, maxBackgroundCompactions, backgroundThreadCount, cacheCapacity);
   }
 
   @Override
