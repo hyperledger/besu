@@ -22,7 +22,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.util.BigIntegers;
 
-/** Helper class for ECPoint */
 public class ECPointUtil {
   public static ECPoint fromBouncyCastleECPoint(
       final org.bouncycastle.math.ec.ECPoint bouncyCastleECPoint) {

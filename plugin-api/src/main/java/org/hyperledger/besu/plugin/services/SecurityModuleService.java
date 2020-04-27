@@ -29,7 +29,7 @@ public interface SecurityModuleService {
   /**
    * Registers a provider of security modules.
    *
-   * @param name The name to identify the Security Provider Supplier Function
+   * @param name The name to identify the Security Provider Supplier
    * @param securityModuleProvider Register reference of SecurityModuleProvider.
    */
   void registerSecurityModule(

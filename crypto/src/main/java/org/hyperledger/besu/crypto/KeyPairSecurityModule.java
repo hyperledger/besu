@@ -37,9 +37,12 @@ public class KeyPairSecurityModule implements SecurityModule {
 
   public KeyPairSecurityModule(final SECP256K1.KeyPair keyPair) {
     this.keyPair = keyPair;
+    this.publicKey = convertPublicKey(keyPair.getPublicKey());
+  }
+
+  private PublicKey convertPublicKey(final SECP256K1.PublicKey publicKey) {
     try {
-      this.publicKey =
-          new PublicKeyImpl(fromBouncyCastleECPoint(keyPair.getPublicKey().asEcPoint()));
+      return new PublicKeyImpl(fromBouncyCastleECPoint(publicKey.asEcPoint()));
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while converting ECPoint: " + e.getMessage(), e);
