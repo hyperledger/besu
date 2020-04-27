@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Spliterator;
@@ -38,8 +40,8 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
     this.rocksIterator = rocksIterator;
   }
 
-  public static RocksDbKeyIterator create(final RocksIterator rocksIt) {
-    return new RocksDbKeyIterator(rocksIt);
+  public static RocksDbKeyIterator create(final RocksIterator rocksIterator) {
+    return new RocksDbKeyIterator(rocksIterator);
   }
 
   @Override
@@ -66,7 +68,7 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
 
   public Stream<byte[]> toStream() {
     assertOpen();
-    final Spliterator<byte[]> split =
+    final Spliterator<byte[]> spliterator =
         Spliterators.spliteratorUnknownSize(
             this,
             Spliterator.IMMUTABLE
@@ -75,13 +77,11 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
                 | Spliterator.ORDERED
                 | Spliterator.SORTED);
 
-    return StreamSupport.stream(split, false).onClose(this::close);
+    return StreamSupport.stream(spliterator, false).onClose(this::close);
   }
 
   private void assertOpen() {
-    if (closed.get()) {
-      throw new IllegalStateException("Attempt to update a closed transaction");
-    }
+    checkState(!closed.get(), "Attempt to update a closed transaction");
   }
 
   @Override
