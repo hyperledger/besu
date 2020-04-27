@@ -103,6 +103,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
           key -> {
             doomedKeyRef.set(Optional.of(key));
             if (!inUseCheck.test(key)) {
+              // even though we set this above, we might unset it in commit below to prevent thread
+              // interleaving from causing an erroneous deletion
               doomedKeyRef
                   .get()
                   .ifPresent(
@@ -185,7 +187,6 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     @Override
     public void commit() {
       if (doomedKeyRef.get().map(Bytes32::wrap).map(addedNodes::contains).orElse(false)) {
-        // this will make the prune function above skip this key
         doomedKeyRef.set(Optional.empty());
       }
       nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
