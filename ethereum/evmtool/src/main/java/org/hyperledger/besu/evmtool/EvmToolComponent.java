@@ -27,12 +27,12 @@ import dagger.Component;
 @Singleton
 @Component(
     modules = {
-        ProtocolModule.class,
-        GenesisFileModule.class,
-        DataStoreModule.class,
-        BlockchainModule.class,
-        EvmToolCommandOptionsModule.class,
-        MetricsSystemModule.class,
+      ProtocolModule.class,
+      GenesisFileModule.class,
+      DataStoreModule.class,
+      BlockchainModule.class,
+      EvmToolCommandOptionsModule.class,
+      MetricsSystemModule.class,
     })
 public interface EvmToolComponent {
 

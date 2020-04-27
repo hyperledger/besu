@@ -173,8 +173,8 @@ public class EvmToolCommand implements Runnable {
               .genesisFileModule(
                   network == null
                       ? genesisFile == null
-                      ? GenesisFileModule.createGenesisModule(NetworkName.DEV)
-                      : GenesisFileModule.createGenesisModule(genesisFile)
+                          ? GenesisFileModule.createGenesisModule(NetworkName.DEV)
+                          : GenesisFileModule.createGenesisModule(genesisFile)
                       : GenesisFileModule.createGenesisModule(network))
               .evmToolCommandOptionsModule(daggerOptions)
               .metricsSystemModule(new PrometheusMetricsSystemModule())
@@ -220,8 +220,7 @@ public class EvmToolCommand implements Runnable {
                 .code(new Code(codeHexString))
                 .blockHeader(blockHeader)
                 .depth(0)
-                .completer(c -> {
-                })
+                .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new BlockHashLookup(blockHeader, component.getBlockchain()))
                 .contractAccountVersion(Account.DEFAULT_VERSION)
