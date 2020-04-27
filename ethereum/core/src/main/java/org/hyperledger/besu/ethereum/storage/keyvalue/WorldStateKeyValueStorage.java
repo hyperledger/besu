@@ -26,8 +26,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -36,7 +34,6 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class WorldStateKeyValueStorage implements WorldStateStorage {
 
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final Subscribers<NodesAddedListener> nodeAddedListeners = Subscribers.create();
   private final KeyValueStorage keyValueStorage;
 
@@ -89,7 +86,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Updater updater() {
-    return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
+    return new Updater(keyValueStorage.startTransaction(), nodeAddedListeners);
   }
 
   static final AtomicReference<Optional<byte[]>> doomedKeyRef =
@@ -137,7 +134,6 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     private final Set<Bytes32> addedNodes = new HashSet<>();
 
     public Updater(
-        final ReadWriteLock lock,
         final KeyValueStorageTransaction transaction,
         final Subscribers<NodesAddedListener> nodeAddedListeners) {
       this.transaction = transaction;
