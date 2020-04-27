@@ -295,16 +295,16 @@ check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 subprojects {
 
   if (file('src/test-support').directory) {
-  sourceSets {
-    // test-support can be consumed as a library by other projects in their tests
-    testSupport {
-      java {
-        compileClasspath += main.output
-        runtimeClasspath += main.output
-        srcDir file('src/test-support/java')
+    sourceSets {
+      // test-support can be consumed as a library by other projects in their tests
+      testSupport {
+        java {
+          compileClasspath += main.output
+          runtimeClasspath += main.output
+          srcDir file('src/test-support/java')
+        }
+        resources.srcDir file('src/test-support/resources')
       }
-      resources.srcDir file('src/test-support/resources')
-    }
     }
 
     dependencies {
@@ -320,15 +320,15 @@ subprojects {
 
   if (file('src/integration-test').directory) {
     sourceSets {
-    integrationTest {
-      java {
-        compileClasspath += main.output
-        runtimeClasspath += main.output
-        srcDir file('src/integration-test/java')
+      integrationTest {
+        java {
+          compileClasspath += main.output
+          runtimeClasspath += main.output
+          srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
       }
-      resources.srcDir file('src/integration-test/resources')
     }
-  }
 
     if (file('src/test-support').directory) {
       dependencies {
