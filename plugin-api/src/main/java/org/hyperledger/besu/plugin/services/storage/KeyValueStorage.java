@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
+import java.util.stream.Stream;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -70,6 +71,20 @@ public interface KeyValueStorage extends Closeable {
    * @throws StorageException problem encountered when removing data.
    */
   long removeAllKeysUnless(Predicate<byte[]> retainCondition) throws StorageException;
+
+  /**
+   * Returns a stream of all keys.
+   *
+   * @return A stream of all keys in storage.
+   */
+  Stream<byte[]> streamKeys();
+
+  /**
+   * Delete the value corresponding to the given key.
+   *
+   * @param key The key to delete.
+   */
+  void delete(byte[] key);
 
   /**
    * Performs an evaluation against each key in the store, returning the set of entries that pass.

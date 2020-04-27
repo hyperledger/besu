@@ -14,6 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.stream.Stream;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -31,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class WorldStateKeyValueStorage implements WorldStateStorage {
 
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private final Subscribers<NodesAddedListener> nodeAddedListeners = Subscribers.create();
   private final KeyValueStorage keyValueStorage;
 
@@ -83,12 +90,33 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Updater updater() {
-    return new Updater(keyValueStorage.startTransaction(), nodeAddedListeners);
+    return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
   }
 
   @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
-    return keyValueStorage.removeAllKeysUnless(inUseCheck);
+
+    final int batchSize = 100;
+    final AtomicInteger prunedKeys = new AtomicInteger(0);
+    final AtomicInteger processedKeys = new AtomicInteger(0);
+    final AtomicBoolean locked = new AtomicBoolean(false);
+    try (final Stream<byte[]> keys = keyValueStorage.streamKeys()) {
+      keys.forEach((key) -> {
+        if (locked.compareAndSet(false, true)) {
+          lock.writeLock().lock();
+        }
+        if (!inUseCheck.test(key)) {
+          keyValueStorage.delete(key);
+          prunedKeys.incrementAndGet();
+        }
+        if (processedKeys.incrementAndGet() % batchSize == 0) {
+          lock.writeLock().unlock();
+          locked.set(false);
+        }
+      });
+    }
+
+    return prunedKeys.get();
   }
 
   @Override
@@ -106,10 +134,13 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     private final KeyValueStorageTransaction transaction;
     private final Subscribers<NodesAddedListener> nodeAddedListeners;
     private final List<Bytes32> addedNodes = new ArrayList<>();
+    private final ReadWriteLock lock;
 
     public Updater(
+        final ReadWriteLock lock,
         final KeyValueStorageTransaction transaction,
         final Subscribers<NodesAddedListener> nodeAddedListeners) {
+      this.lock = lock;
       this.transaction = transaction;
       this.nodeAddedListeners = nodeAddedListeners;
     }
@@ -156,8 +187,10 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public void commit() {
+      lock.writeLock().lock();
       nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
       transaction.commit();
+      lock.writeLock().unlock();
     }
 
     @Override

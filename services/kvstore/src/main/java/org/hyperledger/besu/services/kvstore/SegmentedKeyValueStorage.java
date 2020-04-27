@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import java.util.stream.Stream;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
@@ -21,6 +22,7 @@ import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import org.rocksdb.ColumnFamilyHandle;
 
 /**
  * Service provided by besu to facilitate persistent data storage.
@@ -50,6 +52,23 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   Transaction<S> startTransaction() throws StorageException;
 
   long removeAllKeysUnless(S segmentHandle, Predicate<byte[]> inUseCheck);
+
+  /**
+   * Returns a stream of all keys for the segment.
+   *
+   * @param segmentHandle The segment handle whose keys we want to stream.
+   *
+   * @return A stream of all keys in the specified segment.
+   */
+  Stream<byte[]> streamKeys(final S segmentHandle);
+
+  /**
+   * Deletes the entry with the given key in the given segment.
+   *
+   * @param segmentHandle The segment from which we want to delete
+   * @param key The key we want to delete.
+   */
+  void delete(final S segmentHandle, final byte[] key);
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 

@@ -16,12 +16,14 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static java.util.Objects.requireNonNullElse;
 
+import java.util.stream.Stream;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
@@ -163,6 +165,22 @@ public class RocksDBColumnarKeyValueStorage
     final WriteOptions options = new WriteOptions();
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
         new RocksDbTransaction(db.beginTransaction(options), options));
+  }
+
+  @Override
+  public Stream<byte[]> streamKeys(final ColumnFamilyHandle segmentHandle) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle);
+    rocksIterator.seekToFirst();
+    return RocksDbKeyIterator.create(rocksIterator).toStream();
+  }
+
+  @Override
+  public void delete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
+    try {
+      db.delete(segmentHandle, key);
+    } catch (RocksDBException e) {
+      throw new StorageException(e);
+    }
   }
 
   @Override

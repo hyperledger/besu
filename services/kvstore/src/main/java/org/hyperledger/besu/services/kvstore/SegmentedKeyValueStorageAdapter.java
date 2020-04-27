@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import java.util.stream.Stream;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -52,6 +53,11 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   @Override
   public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
     return storage.removeAllKeysUnless(segmentHandle, retainCondition);
+  }
+
+  @Override
+  public Stream<byte[]> streamKeys() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
