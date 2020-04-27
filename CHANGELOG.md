@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.5
+
+### Additions and Improvements
+
+ - Introduced Security Module Plugin API. This allows to switch to a different security module provider to 
+ provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). By default,
+  register KeyPairSecurityModule otherwise attempt to load Security Module via plugin API specified by 
+  new CLI option `--security-module=<name>. (defaults to localfile)`. [\#713](https://github.com/hyperledger/besu/pull/713)
+
+### Bug Fixes
+
+ - 
+
 ## 1.4.4
 
 ### Additions and Improvements
