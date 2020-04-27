@@ -16,12 +16,15 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.BaseFee;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
@@ -96,6 +99,8 @@ public class BlockTransactionSelector {
   private final PendingTransactions pendingTransactions;
   private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
+  private final TransactionPriceCalculator transactionPriceCalculator;
+  private final BlockHeader chainHead;
 
   private final TransactionSelectionResults transactionSelectionResult =
       new TransactionSelectionResults();
@@ -109,7 +114,8 @@ public class BlockTransactionSelector {
       final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,
       final Supplier<Boolean> isCancelled,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final TransactionPriceCalculator transactionPriceCalculator) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -119,6 +125,8 @@ public class BlockTransactionSelector {
     this.isCancelled = isCancelled;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.miningBeneficiary = miningBeneficiary;
+    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.chainHead = blockchain.getChainHeadHeader();
   }
 
   /*
@@ -167,7 +175,10 @@ public class BlockTransactionSelector {
 
     // If the gas price specified by the transaction is less than this node is willing to accept,
     // do not include it in the block.
-    if (minTransactionGasPrice.compareTo(transaction.getGasPrice()) > 0) {
+    final Wei actualMinTransactionGasPriceInBlock =
+        BaseFee.minTransactionPriceInNextBlock(
+            transaction, transactionPriceCalculator, () -> chainHead);
+    if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }
 

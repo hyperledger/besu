@@ -290,10 +290,8 @@ public class TransactionPool implements BlockAddedObserver {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     // Compute transaction price using EIP-1559 rules if chain head is after fork
     if (this.eip1559.get().isEIP1559(chainHeadBlockHeader.getNumber())) {
-      return eip1559PriceCalculator.price(
-          transaction,
-          Optional.of(
-              new BaseFee(chainHeadBlockHeader.getBaseFee().orElseThrow()).getMinNextValue()));
+      return BaseFee.minTransactionPriceInNextBlock(
+          transaction, eip1559PriceCalculator, this::getChainHeadBlockHeader);
     } else { // Use frontier rules otherwise
       return frontierPriceCalculator.price(transaction, Optional.empty());
     }
