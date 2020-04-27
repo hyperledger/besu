@@ -74,7 +74,6 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     }
   }
 
-  @Override
   public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
     final Lock lock = rwLock.writeLock();
     lock.lock();

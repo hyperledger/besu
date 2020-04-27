@@ -51,11 +51,6 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   }
 
   @Override
-  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
-    return storage.removeAllKeysUnless(segmentHandle, retainCondition);
-  }
-
-  @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     return storage.getAllKeysThat(segmentHandle, returnCondition);
   }

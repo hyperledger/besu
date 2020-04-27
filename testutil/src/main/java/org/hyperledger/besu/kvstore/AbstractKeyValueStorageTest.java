@@ -70,21 +70,7 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(key)).contains(secondValue);
   }
 
-  @Test
-  public void removeUnless() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.put(bytesFromHexString("0F"), bytesFromHexString("0ABC"));
-    tx.put(bytesFromHexString("10"), bytesFromHexString("0ABC"));
-    tx.put(bytesFromHexString("11"), bytesFromHexString("0ABC"));
-    tx.put(bytesFromHexString("12"), bytesFromHexString("0ABC"));
-    tx.commit();
-    store.removeAllKeysUnless(bv -> Bytes.wrap(bv).toString().contains("1"));
-    assertThat(store.containsKey(bytesFromHexString("0F"))).isFalse();
-    assertThat(store.containsKey(bytesFromHexString("10"))).isTrue();
-    assertThat(store.containsKey(bytesFromHexString("11"))).isTrue();
-    assertThat(store.containsKey(bytesFromHexString("12"))).isTrue();
-  }
+  // TODO: add test for stream
 
   @Test
   public void getAllKeysThat() throws Exception {

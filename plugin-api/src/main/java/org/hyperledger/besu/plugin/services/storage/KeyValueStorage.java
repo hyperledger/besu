@@ -62,17 +62,6 @@ public interface KeyValueStorage extends Closeable {
   Optional<byte[]> get(byte[] key) throws StorageException;
 
   /**
-   * Performs an evaluation against each key in the store, keeping the entries that pass, removing
-   * those that fail.
-   *
-   * @param retainCondition predicate to evaluate each key against, unless the result is {@code
-   *     null}, both the key and associated value must be removed.
-   * @return the number of keys removed.
-   * @throws StorageException problem encountered when removing data.
-   */
-  long removeAllKeysUnless(Predicate<byte[]> retainCondition) throws StorageException;
-
-  /**
    * Returns a stream of all keys.
    *
    * @return A stream of all keys in storage.
