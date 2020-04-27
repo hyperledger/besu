@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 
@@ -37,13 +36,12 @@ public class BaseFee {
   public static Wei minTransactionPriceInNextBlock(
       final Transaction transaction,
       final TransactionPriceCalculator calculator,
-      final Supplier<ProcessableBlockHeader> chainHeadSupplier) {
-    final ProcessableBlockHeader chainHead = chainHeadSupplier.get();
+      final Supplier<Optional<Long>> baseFeeSupplier) {
+    final Optional<Long> baseFee = baseFeeSupplier.get();
     Optional<Long> minBaseFeeInNextBlock = Optional.empty();
-    if (chainHead.getBaseFee().isPresent()) {
+    if (baseFee.isPresent()) {
       minBaseFeeInNextBlock =
-          Optional.of(
-              new BaseFee(FeeMarket.eip1559(), chainHead.getBaseFee().get()).getMinNextValue());
+          Optional.of(new BaseFee(FeeMarket.eip1559(), baseFee.get()).getMinNextValue());
     }
     return calculator.price(transaction, minBaseFeeInNextBlock);
   }

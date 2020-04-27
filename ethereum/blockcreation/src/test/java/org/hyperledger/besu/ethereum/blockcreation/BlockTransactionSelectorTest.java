@@ -115,7 +115,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -152,7 +153,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -207,7 +209,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -249,7 +252,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -282,7 +286,8 @@ public class BlockTransactionSelectorTest {
             Wei.of(6),
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final Transaction tx = createTransaction(1);
     pendingTransactions.addRemoteTransaction(tx);
@@ -316,7 +321,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
@@ -371,7 +377,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
@@ -430,7 +437,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction validTransaction =
@@ -511,7 +519,8 @@ public class BlockTransactionSelectorTest {
             Wei.ZERO,
             isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();

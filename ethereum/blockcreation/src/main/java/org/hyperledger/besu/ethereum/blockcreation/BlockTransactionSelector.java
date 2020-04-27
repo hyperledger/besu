@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -100,7 +100,7 @@ public class BlockTransactionSelector {
   private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
   private final TransactionPriceCalculator transactionPriceCalculator;
-  private final BlockHeader chainHead;
+  private final Supplier<Optional<Long>> baseFeeSupplier;
 
   private final TransactionSelectionResults transactionSelectionResult =
       new TransactionSelectionResults();
@@ -115,7 +115,8 @@ public class BlockTransactionSelector {
       final Wei minTransactionGasPrice,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
-      final TransactionPriceCalculator transactionPriceCalculator) {
+      final TransactionPriceCalculator transactionPriceCalculator,
+      final Supplier<Optional<Long>> baseFeeSupplier) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -126,7 +127,7 @@ public class BlockTransactionSelector {
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.miningBeneficiary = miningBeneficiary;
     this.transactionPriceCalculator = transactionPriceCalculator;
-    this.chainHead = blockchain.getChainHeadHeader();
+    this.baseFeeSupplier = baseFeeSupplier;
   }
 
   /*
@@ -177,7 +178,7 @@ public class BlockTransactionSelector {
     // do not include it in the block.
     final Wei actualMinTransactionGasPriceInBlock =
         BaseFee.minTransactionPriceInNextBlock(
-            transaction, transactionPriceCalculator, () -> chainHead);
+            transaction, transactionPriceCalculator, baseFeeSupplier);
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }

@@ -212,7 +212,8 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
             minTransactionGasPrice,
             isCancelled::get,
             miningBeneficiary,
-            protocolSpec.getTransactionPriceCalculator());
+            protocolSpec.getTransactionPriceCalculator(),
+            () -> protocolContext.getBlockchain().getChainHeadHeader().getBaseFee());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
