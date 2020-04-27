@@ -189,7 +189,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
       nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
       doomedKeyRef.updateAndGet(
           maybeDoomedKey ->
-              maybeDoomedKey.filter(doomedKey -> addedNodes.contains(Bytes32.wrap(doomedKey))));
+              maybeDoomedKey.filter(doomedKey -> !addedNodes.contains(Bytes32.wrap(doomedKey))));
       transaction.commit();
     }
 
