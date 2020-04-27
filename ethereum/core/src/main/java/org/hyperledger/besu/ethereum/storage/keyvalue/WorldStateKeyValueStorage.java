@@ -21,10 +21,11 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
@@ -91,24 +92,26 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
   }
 
+  static final AtomicReference<Optional<byte[]>> doomedKeyRef =
+      new AtomicReference<>(Optional.empty());
+
   @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
-    final int batchSize = 1000;
     final AtomicInteger prunedKeys = new AtomicInteger(0);
-    final AtomicInteger processedKeys = new AtomicInteger(0);
     try (final Stream<byte[]> keys = keyValueStorage.streamKeys()) {
       keys.forEach(
           key -> {
-            if (!lock.isWriteLockedByCurrentThread()) {
-              lock.writeLock().lock();
-            }
+            doomedKeyRef.set(Optional.of(key));
             if (!inUseCheck.test(key)) {
-              keyValueStorage.delete(key);
-              prunedKeys.incrementAndGet();
+              doomedKeyRef
+                  .get()
+                  .ifPresent(
+                      doomedKey -> {
+                        keyValueStorage.delete(doomedKey);
+                        prunedKeys.incrementAndGet();
+                      });
             }
-            if (processedKeys.incrementAndGet() % batchSize == 0) {
-              lock.writeLock().unlock();
-            }
+            doomedKeyRef.set(Optional.empty());
           });
     }
 
@@ -129,14 +132,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     private final KeyValueStorageTransaction transaction;
     private final Subscribers<NodesAddedListener> nodeAddedListeners;
-    private final List<Bytes32> addedNodes = new ArrayList<>();
-    private final ReadWriteLock lock;
+    private final Set<Bytes32> addedNodes = new HashSet<>();
 
     public Updater(
         final ReadWriteLock lock,
         final KeyValueStorageTransaction transaction,
         final Subscribers<NodesAddedListener> nodeAddedListeners) {
-      this.lock = lock;
       this.transaction = transaction;
       this.nodeAddedListeners = nodeAddedListeners;
     }
@@ -183,13 +184,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public void commit() {
-      lock.writeLock().lock();
-      try {
-        nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
-        transaction.commit();
-      } finally {
-        lock.writeLock().unlock();
+      if (doomedKeyRef.get().map(Bytes32::wrap).map(addedNodes::contains).orElse(false)) {
+        // this will make the prune function above skip this key
+        doomedKeyRef.set(Optional.empty());
       }
+      nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
+      transaction.commit();
     }
 
     @Override
