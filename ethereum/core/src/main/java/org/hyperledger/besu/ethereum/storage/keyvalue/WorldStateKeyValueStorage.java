@@ -103,8 +103,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
           key -> {
             doomedKeyRef.set(Optional.of(key));
             if (!inUseCheck.test(key)) {
-              // even though we set this above, we might unset it in commit below to prevent thread
-              // interleaving from causing an erroneous deletion
+              // even though we just set this above, we might unset it in commit below to prevent
+              // thread interleaving from causing an erroneous deletion
               doomedKeyRef
                   .get()
                   .ifPresent(
