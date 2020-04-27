@@ -16,9 +16,7 @@ package org.hyperledger.besu.plugin.services.securitymodule;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-/**
- * Represents Security Module Provider Function which produces an instance of SecurityModule.
- */
+/** Represents Security Module Provider Function which produces an instance of SecurityModule. */
 @Unstable
 @FunctionalInterface
 public interface SecurityModuleProvider {
