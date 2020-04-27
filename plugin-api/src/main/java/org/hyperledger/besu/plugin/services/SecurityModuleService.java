@@ -15,9 +15,10 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleProvider;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * This service allows plugins to register a Security Module, which is abstraction of cryptographic
@@ -30,15 +31,15 @@ public interface SecurityModuleService {
    * Registers a provider of security modules.
    *
    * @param name The name to identify the Security Provider Supplier
-   * @param securityModuleProvider Register reference of SecurityModuleProvider.
+   * @param securityModuleSupplier Register reference of Security Module Supplier.
    */
-  void registerSecurityModule(String name, SecurityModuleProvider securityModuleProvider);
+  void register(String name, Supplier<SecurityModule> securityModuleSupplier);
 
   /**
    * Retrieves a registered Security Module Provider corresponding to the specified name
    *
    * @param name The name associated with Security Module Provider
-   * @return Optional reference Security Module Provider, or empty if it hasn't been registered.
+   * @return Optional reference of Security Module Supplier, or empty if it hasn't been registered.
    */
-  Optional<SecurityModuleProvider> getByName(String name);
+  Optional<Supplier<SecurityModule>> getByName(String name);
 }

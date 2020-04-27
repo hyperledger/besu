@@ -15,24 +15,24 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
-import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleProvider;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public class SecurityModuleServiceImpl implements SecurityModuleService {
-  private final Map<String, SecurityModuleProvider> securityModuleProviders =
+  private final Map<String, Supplier<SecurityModule>> securityModuleSuppliers =
       new ConcurrentHashMap<>();
 
   @Override
-  public void registerSecurityModule(
-      final String name, final SecurityModuleProvider securityModuleProvider) {
-    securityModuleProviders.put(name, securityModuleProvider);
+  public void register(final String name, final Supplier<SecurityModule> securityModuleSupplier) {
+    securityModuleSuppliers.put(name, securityModuleSupplier);
   }
 
   @Override
-  public Optional<SecurityModuleProvider> getByName(final String name) {
-    return Optional.ofNullable(securityModuleProviders.get(name));
+  public Optional<Supplier<SecurityModule>> getByName(final String name) {
+    return Optional.ofNullable(securityModuleSuppliers.get(name));
   }
 }
