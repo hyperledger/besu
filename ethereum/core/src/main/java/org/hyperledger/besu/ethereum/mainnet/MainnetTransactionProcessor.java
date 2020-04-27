@@ -327,22 +327,22 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-    final Wei coinbaseWeiDelta =
-        coinbaseFeePriceCalculator.price(
-            coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
-    if (coinbaseWeiDelta.compareTo(Wei.ZERO) > 0) {
-      coinbase.incrementBalance(coinbaseWeiDelta);
-    } else if (coinbaseWeiDelta.compareTo(Wei.ZERO) < 0) {
-      if (coinbaseWeiDelta.compareTo(coinbase.getBalance()) > 0) {
+    if (blockHeader.getBaseFee().isPresent()) {
+      final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
+      if (transactionGasPrice.compareTo(baseFee) < 0) {
         return Result.failed(
             refunded.toLong(),
             ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INSUFFICIENT_COINBASE_BALANCE,
-                "insufficient coinbase balance"),
+                TransactionValidator.TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                "transaction price must be greater than base fee"),
             Optional.empty());
       }
-      coinbase.decrementBalance(coinbaseWeiDelta);
     }
+    final Wei coinbaseWeiDelta =
+        coinbaseFeePriceCalculator.price(
+            coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+
+    coinbase.incrementBalance(coinbaseWeiDelta);
 
     initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
