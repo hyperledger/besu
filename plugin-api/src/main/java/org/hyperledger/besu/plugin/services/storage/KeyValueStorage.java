@@ -72,7 +72,6 @@ public interface KeyValueStorage extends Closeable {
    * Delete the value corresponding to the given key.
    *
    * @param key The key to delete.
-   * @return true if the entry associated with the key was deleted, false otherwise
    */
   void delete(byte[] key);
 

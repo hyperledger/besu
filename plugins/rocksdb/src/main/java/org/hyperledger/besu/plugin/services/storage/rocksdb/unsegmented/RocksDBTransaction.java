@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBExceptionAdapter;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 
 import org.rocksdb.RocksDBException;
@@ -41,7 +42,7 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
       innerTx.put(key, value);
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     }
   }
 
@@ -50,7 +51,7 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
       innerTx.delete(key);
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     }
   }
 
@@ -59,7 +60,7 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
       innerTx.commit();
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     } finally {
       close();
     }
@@ -71,7 +72,7 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
       innerTx.rollback();
       metrics.getRollbackCount().inc();
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     } finally {
       close();
     }

@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBExceptionAdapter;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
@@ -80,7 +81,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
       db = TransactionDB.open(options, txOptions, configuration.getDatabaseDir().toString());
       rocksDBMetrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     }
   }
 
@@ -98,7 +99,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
         }
       }
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     }
   }
 
@@ -115,7 +116,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
         rocksDBMetrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(db.get(key));
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     }
   }
 
@@ -136,7 +137,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     try {
       db.delete(key);
     } catch (RocksDBException e) {
-      throw new StorageException(e);
+      throw RocksDBExceptionAdapter.createStorageException(e);
     }
   }
 

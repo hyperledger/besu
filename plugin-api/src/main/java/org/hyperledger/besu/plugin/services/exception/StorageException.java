@@ -17,6 +17,21 @@ package org.hyperledger.besu.plugin.services.exception;
 /** Base exception class for problems encountered in the domain for storage. */
 public class StorageException extends RuntimeException {
 
+  private final boolean lockTimedOut;
+
+  /**
+   * Constructs a new storage exception with the specified cause.
+   *
+   * @param cause saved for later retrieval by the {@link #getCause()} method). (A {@code null}
+   *     value is permitted, and indicates that the cause is nonexistent or unknown.)
+   * @param lockTimedOut true if the cause for this exception is the failure to aquire a lock within
+   *     a timeout period, false otherwise
+   */
+  public StorageException(final Throwable cause, final boolean lockTimedOut) {
+    super(cause);
+    this.lockTimedOut = lockTimedOut;
+  }
+
   /**
    * Constructs a new storage exception with the specified cause.
    *
@@ -25,6 +40,7 @@ public class StorageException extends RuntimeException {
    */
   public StorageException(final Throwable cause) {
     super(cause);
+    this.lockTimedOut = false;
   }
 
   /**
@@ -32,10 +48,35 @@ public class StorageException extends RuntimeException {
    *
    * @param message the detail that may be retrieved later by Throwable.getMessage().
    * @param cause saved for later retrieval by the {@link #getCause()} method). (A {@code null}
-   *     value is permitted, and indicates that the cause is nonexistent or unknown.)
+   * @param lockTimedOut true if the cause for this exception is the failure to aquire a lock within
+   *     a timeout period, false otherwise
+   */
+  public StorageException(final String message, final Throwable cause, final boolean lockTimedOut) {
+    super(message, cause);
+    this.lockTimedOut = lockTimedOut;
+  }
+
+  /**
+   * Constructs a new storage exception with the specified detail message and cause.
+   *
+   * @param message the detail that may be retrieved later by Throwable.getMessage().
+   * @param cause saved for later retrieval by the {@link #getCause()} method). (A {@code null}
    */
   public StorageException(final String message, final Throwable cause) {
     super(message, cause);
+    this.lockTimedOut = false;
+  }
+
+  /**
+   * Constructs a new storage exception with the specified detail message.
+   *
+   * @param message the detail that may be retrieved later by Throwable.getMessage().
+   * @param lockTimedOut true if the cause for this exception is the failure to aquire a lock within
+   *     a timeout period, false otherwise
+   */
+  public StorageException(final String message, final boolean lockTimedOut) {
+    super(message);
+    this.lockTimedOut = lockTimedOut;
   }
 
   /**
@@ -45,5 +86,10 @@ public class StorageException extends RuntimeException {
    */
   public StorageException(final String message) {
     super(message);
+    this.lockTimedOut = false;
+  }
+
+  public boolean lockTimedOut() {
+    return lockTimedOut;
   }
 }
