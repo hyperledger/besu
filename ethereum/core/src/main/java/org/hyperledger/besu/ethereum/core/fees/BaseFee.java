@@ -14,21 +14,36 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
+
+import java.util.Optional;
+import java.util.function.Supplier;
+
 public class BaseFee {
   private final long value;
   private final long delta;
   private final long minNextValue;
   private final long maxNextValue;
 
-  public BaseFee(final long value) {
-    this(FeeMarket.eip1559(), value);
-  }
-
   public BaseFee(final FeeMarket feeMarket, final long value) {
     this.value = value;
     this.delta = Math.floorDiv(value, feeMarket.getBasefeeMaxChangeDenominator());
     this.minNextValue = value - delta;
     this.maxNextValue = value + delta;
+  }
+
+  public static Wei minTransactionPriceInNextBlock(
+      final Transaction transaction,
+      final TransactionPriceCalculator calculator,
+      final Supplier<Optional<Long>> baseFeeSupplier) {
+    final Optional<Long> baseFee = baseFeeSupplier.get();
+    Optional<Long> minBaseFeeInNextBlock = Optional.empty();
+    if (baseFee.isPresent()) {
+      minBaseFeeInNextBlock =
+          Optional.of(new BaseFee(FeeMarket.eip1559(), baseFee.get()).getMinNextValue());
+    }
+    return calculator.price(transaction, minBaseFeeInNextBlock);
   }
 
   public long getValue() {

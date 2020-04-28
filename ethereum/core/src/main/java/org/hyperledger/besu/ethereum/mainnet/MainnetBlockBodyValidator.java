@@ -23,7 +23,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 
 import java.util.HashSet;
 import java.util.List;
@@ -275,11 +277,22 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     }
     final BlockBody body = block.getBody();
     final List<Transaction> transactions = body.getTransactions();
+    final TransactionPriceCalculator transactionPriceCalculator =
+        TransactionPriceCalculator.eip1559();
     for (final Transaction transaction : transactions) {
       if (!eip1559.isValidGasLimit(transaction)) {
         LOG.warn(
             "Invalid block: transaction gas limit {} exceeds per transaction gas limit",
             transaction.getGasLimit());
+        return false;
+      }
+      final Optional<Long> baseFee = block.getHeader().getBaseFee();
+      final Wei price = transactionPriceCalculator.price(transaction, baseFee);
+      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+        LOG.warn(
+            "Invalid block: transaction gas price {} must be greater than base fee {}",
+            price.toString(),
+            baseFee.orElseThrow());
         return false;
       }
     }

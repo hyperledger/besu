@@ -36,8 +36,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +77,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
+
+    node.getRunCommand().ifPresent(params::add);
 
     if (node.isDevMode()) {
       params.add("--network");
@@ -297,15 +301,17 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
           node.getName());
 
       final Process process = processBuilder.start();
+      process.onExit().thenRun(() -> node.setExitCode(process.exitValue()));
       outputProcessorExecutor.execute(() -> printOutput(node, process));
       besuProcesses.put(node.getName(), process);
     } catch (final IOException e) {
       LOG.error("Error starting BesuNode process", e);
     }
 
-    waitForFile(dataDir, "besu.ports");
-    waitForFile(dataDir, "besu.networks");
-
+    if (node.getRunCommand().isEmpty()) {
+      waitForFile(dataDir, "besu.ports");
+      waitForFile(dataDir, "besu.networks");
+    }
     ThreadContext.remove("node");
   }
 
@@ -355,8 +361,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   public void stopNode(final BesuNode node) {
     node.stop();
     if (besuProcesses.containsKey(node.getName())) {
-      final Process process = besuProcesses.get(node.getName());
-      killBesuProcess(node.getName(), process);
+      killBesuProcess(node.getName());
     } else {
       LOG.error("There was a request to stop an uknown node: {}", node.getName());
     }
@@ -364,7 +369,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public synchronized void shutdown() {
-    final HashMap<String, Process> localMap = new HashMap<>(besuProcesses);
+    final Set<String> localMap = new HashSet<>(besuProcesses.keySet());
     localMap.forEach(this::killBesuProcess);
     outputProcessorExecutor.shutdown();
     try {
@@ -383,13 +388,17 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     return process != null && process.isAlive();
   }
 
-  private void killBesuProcess(final String name, final Process process) {
-    LOG.info("Killing {} process", name);
-
-    final Process p = besuProcesses.remove(name);
-    if (p == null) {
+  private void killBesuProcess(final String name) {
+    final Process process = besuProcesses.remove(name);
+    if (process == null) {
       LOG.error("Process {} wasn't in our list", name);
     }
+    if (!process.isAlive()) {
+      LOG.info("Process {} already exited", name);
+      return;
+    }
+
+    LOG.info("Killing {} process", name);
 
     process.destroy();
     try {

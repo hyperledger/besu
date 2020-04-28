@@ -196,6 +196,7 @@ public class BlockchainReferenceTestCaseSpec {
     "expectExceptionEIP158",
     "expectExceptionFrontier",
     "expectExceptionHomestead",
+    "expectException",
     "blocknumber",
     "chainname",
     "expectExceptionALL",
