@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -62,6 +63,8 @@ public class ProtocolSpec<C> {
 
   private final PrivateTransactionProcessor privateTransactionProcessor;
 
+  private final TransactionPriceCalculator transactionPriceCalculator;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -84,6 +87,7 @@ public class ProtocolSpec<C> {
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
    * @param gasCalculator the gas calculator to use.
+   * @param transactionPriceCalculator the transaction price calculator to use.
    */
   public ProtocolSpec(
       final String name,
@@ -104,7 +108,8 @@ public class ProtocolSpec<C> {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
-      final GasCalculator gasCalculator) {
+      final GasCalculator gasCalculator,
+      final TransactionPriceCalculator transactionPriceCalculator) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -124,6 +129,7 @@ public class ProtocolSpec<C> {
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.gasCalculator = gasCalculator;
+    this.transactionPriceCalculator = transactionPriceCalculator;
   }
 
   /**
@@ -282,5 +288,14 @@ public class ProtocolSpec<C> {
    */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
+  }
+
+  /**
+   * Returns the transaction price calculator used in this specification.
+   *
+   * @return the transaction price calculator
+   */
+  public TransactionPriceCalculator getTransactionPriceCalculator() {
+    return transactionPriceCalculator;
   }
 }

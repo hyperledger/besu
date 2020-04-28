@@ -88,6 +88,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private final String name;
   private final MiningParameters miningParameters;
+  private final Optional<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -106,6 +107,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private Optional<Integer> exitCode = Optional.empty();
 
   public BesuNode(
       final String name,
@@ -126,7 +128,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
-      final Optional<PrivacyParameters> privacyParameters)
+      final Optional<PrivacyParameters> privacyParameters,
+      final Optional<String> runCommand)
       throws IOException {
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
@@ -151,6 +154,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.p2pEnabled = p2pEnabled;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
+    this.runCommand = runCommand;
     plugins.forEach(
         pluginName -> {
           try {
@@ -197,6 +201,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public String getNodeId() {
     return keyPair.getPublicKey().toString().substring(2);
+  }
+
+  @Override
+  public Optional<Integer> exitCode() {
+    return exitCode;
   }
 
   @Override
@@ -428,7 +437,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public void start(final BesuNodeRunner runner) {
     runner.startNode(this);
-    loadPortsFile();
+    if (runCommand.isEmpty()) {
+      loadPortsFile();
+    }
   }
 
   @Override
@@ -583,6 +594,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return staticNodes != null && !staticNodes.isEmpty();
   }
 
+  public Optional<String> getRunCommand() {
+    return runCommand;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -637,5 +652,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public void verify(final Condition expected) {
     expected.verify(this);
+  }
+
+  public void setExitCode(final int exitValue) {
+    this.exitCode = Optional.of(exitValue);
   }
 }
