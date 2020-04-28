@@ -92,7 +92,8 @@ public final class BlockTestUtil {
         ensureFileUrl(
             BlockTestUtil.class.getClassLoader().getResource("mainnet-data/mainnet.json"));
     final URL blocksURL =
-        ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("mainnet-data/badpow.blocks"));
+        ensureFileUrl(
+            BlockTestUtil.class.getClassLoader().getResource("mainnet-data/badpow.blocks"));
     return new ChainResources(genesisURL, blocksURL);
   }
 

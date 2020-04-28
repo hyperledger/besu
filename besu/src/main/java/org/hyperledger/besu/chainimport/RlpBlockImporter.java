@@ -195,9 +195,7 @@ public class RlpBlockImporter {
               skipPowValidation
                   ? HeaderValidationMode.LIGHT_SKIP_DETACHED
                   : HeaderValidationMode.SKIP_DETACHED,
-              skipPowValidation
-                  ? HeaderValidationMode.LIGHT
-                  : HeaderValidationMode.FULL);
+              skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
       if (!blockImported) {
         throw new IllegalStateException(
             "Invalid block at block number " + header.getNumber() + ".");
