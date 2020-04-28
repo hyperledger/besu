@@ -196,6 +196,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public void rollback() {
+      addedNodes.clear();
       transaction.rollback();
     }
   }
