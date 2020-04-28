@@ -12,29 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services;
+package org.hyperledger.besu.tests.acceptance;
 
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.nio.file.Path;
+import java.io.IOException;
 
-public class BesuConfigurationImpl implements BesuConfiguration {
+import org.junit.Test;
 
-  private final Path storagePath;
-  private final Path dataPath;
+public class RunHelpTest extends AcceptanceTestBase {
 
-  public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
-    this.dataPath = dataPath;
-    this.storagePath = storagePath;
-  }
-
-  @Override
-  public Path getStoragePath() {
-    return storagePath;
-  }
-
-  @Override
-  public Path getDataPath() {
-    return dataPath;
+  @Test
+  public void testShowsHelpAndExits() throws IOException {
+    BesuNode node = besu.runCommand("--help");
+    cluster.runNodeStart(node);
+    WaitUtils.waitFor(5000, () -> node.verify(exitedSuccessfully));
   }
 }

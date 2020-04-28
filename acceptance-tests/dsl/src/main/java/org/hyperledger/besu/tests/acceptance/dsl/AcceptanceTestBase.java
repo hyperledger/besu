@@ -26,6 +26,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.login.LoginConditions
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.PermissioningConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.PrivConditions;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.process.ExitedWithCode;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.txpool.TxPoolConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.web3.Web3Conditions;
 import org.hyperledger.besu.tests.acceptance.dsl.contract.ContractVerifier;
@@ -92,6 +93,7 @@ public class AcceptanceTestBase {
   protected final PrivacyTransactions privacyTransactions;
   protected final TxPoolConditions txPoolConditions;
   protected final TxPoolTransactions txPoolTransactions;
+  protected final ExitedWithCode exitedSuccessfully;
 
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
@@ -123,6 +125,7 @@ public class AcceptanceTestBase {
     txPoolConditions = new TxPoolConditions(txPoolTransactions);
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
     permissionedNodeBuilder = new PermissionedNodeBuilder();
+    exitedSuccessfully = new ExitedWithCode(0);
   }
 
   @Rule public final TestName name = new TestName();

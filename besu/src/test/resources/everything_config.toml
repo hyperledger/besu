@@ -14,6 +14,9 @@ logging="INFO"
 node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 
+# Security Module plugin to use
+security-module="localfile"
+
 # P2P network
 identity="PegaSysEng"
 p2p-enabled=true

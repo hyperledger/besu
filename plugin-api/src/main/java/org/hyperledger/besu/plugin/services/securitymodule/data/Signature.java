@@ -12,23 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.crypto;
+package org.hyperledger.besu.plugin.services.securitymodule.data;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.Unstable;
 
-public class PublicKey {
+import java.math.BigInteger;
 
-  private final Bytes encoded;
+/** Represents R and S component of a Signature obtained through sign function */
+@Unstable
+public interface Signature {
+  BigInteger getR();
 
-  public PublicKey(final Bytes encoded) {
-    this.encoded = encoded;
-  }
-
-  public static PublicKey create(final Bytes encoded) {
-    return new PublicKey(encoded);
-  }
-
-  public Bytes getEncoded() {
-    return encoded;
-  }
+  BigInteger getS();
 }

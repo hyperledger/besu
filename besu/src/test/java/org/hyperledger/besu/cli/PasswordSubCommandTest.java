@@ -45,9 +45,15 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains("Missing required option '--password=<password>'");
-    assertThat(commandErrorOutput.toString())
+  }
+
+  @Test
+  public void passwordHashSubCommandHelpDisplaysHelp() {
+    parseCommand("password", "hash", "--help");
+
+    assertThat(commandOutput.toString())
         .contains("Usage: besu password hash [-hV] --password=<password>");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString())
         .contains("This command generates the hash of a given password");
   }
 

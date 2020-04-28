@@ -195,12 +195,11 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       final Optional<List<Transaction>> transactions)
       throws RuntimeException {
     final long blockNumber = processableBlockHeader.getNumber();
-
-    final TransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(blockNumber).getTransactionProcessor();
+    final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
+    final TransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
     final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
-        protocolSchedule.getByBlockNumber(blockNumber).getTransactionReceiptFactory();
+        protocolSpec.getTransactionReceiptFactory();
 
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
@@ -212,7 +211,9 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
             transactionReceiptFactory,
             minTransactionGasPrice,
             isCancelled::get,
-            miningBeneficiary);
+            miningBeneficiary,
+            protocolSpec.getTransactionPriceCalculator(),
+            () -> protocolContext.getBlockchain().getChainHeadHeader().getBaseFee());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
