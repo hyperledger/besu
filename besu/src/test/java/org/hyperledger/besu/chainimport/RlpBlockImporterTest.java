@@ -16,6 +16,7 @@ package org.hyperledger.besu.chainimport;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
@@ -40,7 +41,6 @@ import java.util.concurrent.CompletionException;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -102,10 +102,10 @@ public final class RlpBlockImporterTest {
             .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
 
-    Assert.assertThrows(
+    assertThatThrownBy(
+        () -> rlpBlockImporter.importBlockchain(source, targetController, false),
         "Invalid header at block number 2.",
-        CompletionException.class,
-        () -> rlpBlockImporter.importBlockchain(source, targetController, false));
+        CompletionException.class);
   }
 
   @Test
