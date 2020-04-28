@@ -73,7 +73,7 @@ public interface KeyValueStorage extends Closeable {
    *
    * @param key The key to delete.
    */
-  void delete(byte[] key);
+  void tryDelete(byte[] key);
 
   /**
    * Performs an evaluation against each key in the store, returning the set of entries that pass.

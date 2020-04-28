@@ -75,6 +75,7 @@ public class RocksDBColumnarKeyValueStorage
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
   private final RocksDBMetrics metrics;
+  private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -173,9 +174,9 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public void delete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
+  public void tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
     try {
-      db.delete(segmentHandle, key);
+      db.delete(segmentHandle, tryDeleteOptions, key);
     } catch (RocksDBException e) {
       throw RocksDBExceptionAdapter.createStorageException(e);
     }

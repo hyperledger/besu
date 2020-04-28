@@ -21,6 +21,6 @@ import org.rocksdb.Status.Code;
 
 public class RocksDBExceptionAdapter {
   public static StorageException createStorageException(final RocksDBException e) {
-    return new StorageException(e, e.getStatus().getCode() == Code.TimedOut);
+    return new StorageException(e, e.getStatus().getCode() == Code.Incomplete);
   }
 }

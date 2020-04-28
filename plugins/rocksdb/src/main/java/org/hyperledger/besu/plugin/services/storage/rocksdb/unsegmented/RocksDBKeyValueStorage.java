@@ -60,6 +60,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private final TransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final RocksDBMetrics rocksDBMetrics;
+  private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
 
   public RocksDBKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -133,9 +134,9 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public void delete(final byte[] key) {
+  public void tryDelete(final byte[] key) {
     try {
-      db.delete(key);
+      db.delete(tryDeleteOptions, key);
     } catch (RocksDBException e) {
       throw RocksDBExceptionAdapter.createStorageException(e);
     }

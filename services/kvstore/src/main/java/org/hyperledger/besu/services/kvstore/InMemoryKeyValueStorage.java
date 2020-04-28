@@ -91,7 +91,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public void delete(final byte[] key) {
+  public void tryDelete(final byte[] key) {
     final Lock lock = rwLock.writeLock();
     lock.lock();
     try {

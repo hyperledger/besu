@@ -59,12 +59,12 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   Stream<byte[]> streamKeys(final S segmentHandle);
 
   /**
-   * Deletes the entry with the given key in the given segment.
+   * Attempts to delete the entry with the given key in the given segment.
    *
    * @param segmentHandle The segment from which we want to delete
    * @param key The key to delete.
    */
-  void delete(final S segmentHandle, final byte[] key);
+  void tryDelete(final S segmentHandle, final byte[] key) throws StorageException;
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
