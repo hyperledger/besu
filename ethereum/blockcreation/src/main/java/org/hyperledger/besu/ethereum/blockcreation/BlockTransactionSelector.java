@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -23,6 +24,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.BaseFee;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
@@ -64,18 +67,25 @@ public class BlockTransactionSelector {
   private final Wei minTransactionGasPrice;
 
   private static final double MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
+  private static final double EIP_1559_MIN_BLOCK_OCCUPANCY_RATIO = 0.25;
+  private static final FeeMarket EIP_1559_FEE_MARKET = FeeMarket.eip1559();
 
   public static class TransactionSelectionResults {
 
     private final List<Transaction> transactions = Lists.newArrayList();
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
-    private long cumulativeGasUsed = 0;
+    private long frontierCumulativeGasUsed = 0;
+    private long eip1559CumulativeGasUsed = 0;
 
     private void update(
         final Transaction transaction, final TransactionReceipt receipt, final long gasUsed) {
       transactions.add(transaction);
       receipts.add(receipt);
-      cumulativeGasUsed += gasUsed;
+      if (ExperimentalEIPs.eip1559Enabled && transaction.isEIP1559Transaction()) {
+        eip1559CumulativeGasUsed += gasUsed;
+      } else {
+        frontierCumulativeGasUsed += gasUsed;
+      }
     }
 
     public List<Transaction> getTransactions() {
@@ -86,8 +96,12 @@ public class BlockTransactionSelector {
       return receipts;
     }
 
-    public long getCumulativeGasUsed() {
-      return cumulativeGasUsed;
+    public long getFrontierCumulativeGasUsed() {
+      return frontierCumulativeGasUsed;
+    }
+
+    public long getEip1559CumulativeGasUsed() {
+      return eip1559CumulativeGasUsed;
     }
   }
 
@@ -101,6 +115,7 @@ public class BlockTransactionSelector {
   private final Address miningBeneficiary;
   private final TransactionPriceCalculator transactionPriceCalculator;
   private final Supplier<Optional<Long>> baseFeeSupplier;
+  private final Optional<EIP1559> eip1559;
 
   private final TransactionSelectionResults transactionSelectionResult =
       new TransactionSelectionResults();
@@ -116,7 +131,8 @@ public class BlockTransactionSelector {
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final TransactionPriceCalculator transactionPriceCalculator,
-      final Supplier<Optional<Long>> baseFeeSupplier) {
+      final Supplier<Optional<Long>> baseFeeSupplier,
+      final Optional<EIP1559> eip1559) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -128,6 +144,7 @@ public class BlockTransactionSelector {
     this.miningBeneficiary = miningBeneficiary;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.baseFeeSupplier = baseFeeSupplier;
+    this.eip1559 = eip1559;
   }
 
   /*
@@ -221,8 +238,16 @@ public class BlockTransactionSelector {
   private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessor.Result result) {
     final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
-    final long cumulativeGasUsed =
-        transactionSelectionResult.cumulativeGasUsed + gasUsedByTransaction;
+    final long cumulativeGasUsed;
+    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
+      cumulativeGasUsed =
+          transactionSelectionResult.frontierCumulativeGasUsed
+              + transactionSelectionResult.eip1559CumulativeGasUsed
+              + gasUsedByTransaction;
+    } else {
+      cumulativeGasUsed =
+          transactionSelectionResult.frontierCumulativeGasUsed + gasUsedByTransaction;
+    }
 
     transactionSelectionResult.update(
         transaction,
@@ -231,15 +256,40 @@ public class BlockTransactionSelector {
   }
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
-    final long blockGasRemaining =
-        processableBlockHeader.getGasLimit() - transactionSelectionResult.getCumulativeGasUsed();
+
+    final long blockGasRemaining;
+    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
+      if (transaction.isEIP1559Transaction()) {
+        blockGasRemaining =
+            processableBlockHeader.getGasLimit()
+                - transactionSelectionResult.getEip1559CumulativeGasUsed();
+      } else {
+        blockGasRemaining =
+            EIP_1559_FEE_MARKET.getMaxGas()
+                - processableBlockHeader.getGasLimit()
+                - transactionSelectionResult.getFrontierCumulativeGasUsed();
+      }
+    } else {
+      blockGasRemaining =
+          processableBlockHeader.getGasLimit()
+              - transactionSelectionResult.getFrontierCumulativeGasUsed();
+    }
     return (transaction.getGasLimit() > blockGasRemaining);
   }
 
   private boolean blockOccupancyAboveThreshold() {
-    final double gasUsed = transactionSelectionResult.getCumulativeGasUsed();
-    final double gasAvailable = processableBlockHeader.getGasLimit();
-
-    return (gasUsed / gasAvailable) >= MIN_BLOCK_OCCUPANCY_RATIO;
+    final double gasUsed, gasAvailable, minBlockOccupancyRatio;
+    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
+      gasUsed =
+          transactionSelectionResult.getFrontierCumulativeGasUsed()
+              + transactionSelectionResult.getEip1559CumulativeGasUsed();
+      gasAvailable = EIP_1559_FEE_MARKET.getMaxGas();
+      minBlockOccupancyRatio = EIP_1559_MIN_BLOCK_OCCUPANCY_RATIO;
+    } else {
+      gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();
+      gasAvailable = processableBlockHeader.getGasLimit();
+      minBlockOccupancyRatio = MIN_BLOCK_OCCUPANCY_RATIO;
+    }
+    return (gasUsed / gasAvailable) >= minBlockOccupancyRatio;
   }
 }

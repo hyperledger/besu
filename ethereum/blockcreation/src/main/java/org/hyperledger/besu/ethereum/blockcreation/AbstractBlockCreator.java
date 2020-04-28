@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -72,6 +73,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
   private final Wei minTransactionGasPrice;
   private final Address miningBeneficiary;
   protected final BlockHeader parentHeader;
+  protected final ProtocolSpec<C> protocolSpec;
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
@@ -94,6 +96,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.miningBeneficiary = miningBeneficiary;
     this.parentHeader = parentHeader;
+    this.protocolSpec = protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1);
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 
@@ -171,7 +174,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getCumulativeGasUsed())
+              .gasUsed(transactionResults.getFrontierCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
 
@@ -194,8 +197,6 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions)
       throws RuntimeException {
-    final long blockNumber = processableBlockHeader.getNumber();
-    final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
     final TransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
     final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
@@ -213,7 +214,8 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
             isCancelled::get,
             miningBeneficiary,
             protocolSpec.getTransactionPriceCalculator(),
-            () -> protocolContext.getBlockchain().getChainHeadHeader().getBaseFee());
+            () -> protocolContext.getBlockchain().getChainHeadHeader().getBaseFee(),
+            protocolSpec.getEip1559());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
@@ -247,10 +249,13 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final long gasLimit = gasLimitCalculator.apply(parentHeader.getGasLimit());
-
-    final DifficultyCalculator<C> difficultyCalculator =
-        protocolSchedule.getByBlockNumber(newBlockNumber).getDifficultyCalculator();
+    final long gasLimit;
+    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
+      gasLimit = protocolSpec.getEip1559().orElseThrow().eip1559GasPool(newBlockNumber);
+    } else {
+      gasLimit = gasLimitCalculator.apply(parentHeader.getGasLimit());
+    }
+    final DifficultyCalculator<C> difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
