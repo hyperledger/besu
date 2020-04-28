@@ -1100,7 +1100,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithInvalidBootnodeMustDisplayErrorAndUsage() {
+  public void callingWithInvalidBootnodeMustDisplayError() {
     parseCommand("--bootnodes", "invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
@@ -1110,7 +1110,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithBootnodeThatHasDiscoveryDisabledMustDisplayErrorAndUsage() {
+  public void callingWithBootnodeThatHasDiscoveryDisabledMustDisplayError() {
     final String validBootnode =
         "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304";
     final String invalidBootnode =
@@ -1125,7 +1125,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   // This test ensures non regression on https://pegasys1.atlassian.net/browse/PAN-2387
   @Test
-  public void callingWithInvalidBootnodeAndEqualSignMustDisplayErrorAndUsage() {
+  public void callingWithInvalidBootnodeAndEqualSignMustDisplayError() {
     parseCommand("--bootnodes=invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
@@ -1174,7 +1174,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithBannedNodeidsOptionButNoValueMustDisplayErrorAndUsage() {
+  public void callingWithBannedNodeidsOptionButNoValueMustDisplayError() {
     parseCommand("--banned-node-ids");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
@@ -1183,7 +1183,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithBannedNodeidsOptionWithInvalidValuesMustDisplayErrorAndUsage() {
+  public void callingWithBannedNodeidsOptionWithInvalidValuesMustDisplayError() {
     parseCommand("--banned-node-ids", "0x10,20,30");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
