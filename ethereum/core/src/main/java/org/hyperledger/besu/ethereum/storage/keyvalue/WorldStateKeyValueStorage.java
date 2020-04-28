@@ -25,7 +25,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -36,6 +37,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
   private final Subscribers<NodesAddedListener> nodeAddedListeners = Subscribers.create();
   private final KeyValueStorage keyValueStorage;
+  private final ReentrantLock lock = new ReentrantLock();
 
   public WorldStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
@@ -86,11 +88,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Updater updater() {
-    return new Updater(keyValueStorage.startTransaction(), nodeAddedListeners);
+    return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
   }
-
-  static final AtomicReference<Optional<byte[]>> doomedKeyRef =
-      new AtomicReference<>(Optional.empty());
 
   @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
@@ -98,19 +97,15 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     try (final Stream<byte[]> keys = keyValueStorage.streamKeys()) {
       keys.forEach(
           key -> {
-            doomedKeyRef.set(Optional.of(key));
-            if (!inUseCheck.test(key)) {
-              // even though we just set this above, we might unset it in commit below to prevent
-              // thread interleaving from causing an erroneous deletion
-              doomedKeyRef
-                  .get()
-                  .ifPresent(
-                      doomedKey -> {
-                        keyValueStorage.delete(doomedKey);
-                        prunedKeys.incrementAndGet();
-                      });
+            lock.lock();
+            try {
+              if (!inUseCheck.test(key)) {
+                keyValueStorage.delete(key);
+                prunedKeys.incrementAndGet();
+              }
+            } finally {
+              lock.unlock();
             }
-            doomedKeyRef.set(Optional.empty());
           });
     }
 
@@ -132,10 +127,13 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     private final KeyValueStorageTransaction transaction;
     private final Subscribers<NodesAddedListener> nodeAddedListeners;
     private final Set<Bytes32> addedNodes = new HashSet<>();
+    private final Lock lock;
 
     public Updater(
+        final Lock lock,
         final KeyValueStorageTransaction transaction,
         final Subscribers<NodesAddedListener> nodeAddedListeners) {
+      this.lock = lock;
       this.transaction = transaction;
       this.nodeAddedListeners = nodeAddedListeners;
     }
@@ -182,11 +180,13 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public void commit() {
-      nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
-      doomedKeyRef.updateAndGet(
-          maybeDoomedKey ->
-              maybeDoomedKey.filter(doomedKey -> !addedNodes.contains(Bytes32.wrap(doomedKey))));
-      transaction.commit();
+      lock.lock();
+      try {
+        nodeAddedListeners.forEach(listener -> listener.onNodesAdded(addedNodes));
+        transaction.commit();
+      } finally {
+        lock.unlock();
+      }
     }
 
     @Override
