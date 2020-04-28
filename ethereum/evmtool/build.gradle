@@ -19,7 +19,7 @@ apply plugin: 'application'
 apply plugin: 'idea'
 
 jar {
-  baseName 'pantheon-evmtool'
+  baseName 'besu-evmtool'
   manifest {
     attributes(
       'Specification-Title': baseName,

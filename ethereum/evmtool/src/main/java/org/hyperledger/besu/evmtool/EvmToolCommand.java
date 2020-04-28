@@ -64,7 +64,7 @@ import picocli.CommandLine.Option;
     descriptionHeading = "%nDescription:%n%n",
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
-    footer = "Pantheon is licensed under the Apache License 2.0")
+    footer = "Hyperledger Besu is licensed under the Apache License 2.0")
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
