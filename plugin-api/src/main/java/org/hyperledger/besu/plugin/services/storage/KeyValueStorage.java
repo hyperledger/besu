@@ -69,11 +69,12 @@ public interface KeyValueStorage extends Closeable {
   Stream<byte[]> streamKeys();
 
   /**
-   * Delete the value corresponding to the given key.
+   * Attempts to delete the entry with the given key. This can fail if an attempt to get a lock for
+   * the underlying storage times out, for example.
    *
    * @param key The key to delete.
    */
-  void delete(byte[] key);
+  boolean tryDelete(byte[] key);
 
   /**
    * Performs an evaluation against each key in the store, returning the set of entries that pass.

@@ -102,11 +102,12 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public void delete(final byte[] key) {
+  public boolean tryDelete(final byte[] key) {
     final Lock lock = rwLock.writeLock();
     lock.lock();
     try {
       storage.invalidate(Bytes.wrap(key));
+      return true;
     } finally {
       lock.unlock();
     }

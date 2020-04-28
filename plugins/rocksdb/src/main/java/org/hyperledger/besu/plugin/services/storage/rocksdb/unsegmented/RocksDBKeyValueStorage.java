@@ -42,6 +42,7 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
+import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -132,11 +133,13 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public void delete(final byte[] key) {
+  public boolean tryDelete(final byte[] key) {
     try {
       db.delete(key);
-    } catch (RocksDBException e) {
-      throw new StorageException(e);
+      return true;
+    } catch (final RocksDBException rdbe) {
+      if (rdbe.getStatus().getCode() == Status.Code.TimedOut) return false;
+      throw new StorageException(rdbe);
     }
   }
 
