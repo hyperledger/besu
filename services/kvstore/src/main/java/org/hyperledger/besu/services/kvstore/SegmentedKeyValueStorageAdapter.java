@@ -61,8 +61,8 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   }
 
   @Override
-  public boolean tryDelete(final byte[] key) {
-    return storage.tryDelete(segmentHandle, key);
+  public void delete(final byte[] key) {
+    storage.delete(segmentHandle, key);
   }
 
   @Override

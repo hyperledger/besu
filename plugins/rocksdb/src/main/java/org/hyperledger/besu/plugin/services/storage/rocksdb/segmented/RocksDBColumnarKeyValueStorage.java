@@ -54,7 +54,6 @@ import org.rocksdb.LRUCache;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
-import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -173,13 +172,11 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public boolean tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
+  public void delete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
     try {
       db.delete(segmentHandle, key);
-      return true;
-    } catch (final RocksDBException rdbe) {
-      if (rdbe.getStatus().getCode() == Status.Code.TimedOut) return false;
-      throw new StorageException(rdbe);
+    } catch (RocksDBException e) {
+      throw new StorageException(e);
     }
   }
 
