@@ -66,7 +66,6 @@ public class PrivacyNode implements AutoCloseable {
   private static final long CACHE_CAPACITY = 8388608;
   private static final int MAX_BACKGROUND_COMPACTIONS = 4;
   private static final int BACKGROUND_THREAD_COUNT = 4;
-  private static final int DEFAULT_LOCK_TIMEOUT = 1;
 
   private final OrionTestHarness orion;
   private final BesuNode besu;
@@ -241,8 +240,7 @@ public class PrivacyNode implements AutoCloseable {
                             MAX_OPEN_FILES,
                             MAX_BACKGROUND_COMPACTIONS,
                             BACKGROUND_THREAD_COUNT,
-                            CACHE_CAPACITY,
-                            DEFAULT_LOCK_TIMEOUT),
+                            CACHE_CAPACITY),
                     Arrays.asList(KeyValueSegmentIdentifier.values()),
                     RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
