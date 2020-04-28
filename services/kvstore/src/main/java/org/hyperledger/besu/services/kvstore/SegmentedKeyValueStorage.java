@@ -64,6 +64,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    *
    * @param segmentHandle The segment from which we want to delete
    * @param key The key to delete.
+   * @return true if the entry associated with the key was deleted, false otherwise
    */
   boolean tryDelete(final S segmentHandle, byte[] key);
 

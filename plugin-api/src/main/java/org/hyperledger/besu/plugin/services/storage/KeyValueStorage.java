@@ -73,6 +73,7 @@ public interface KeyValueStorage extends Closeable {
    * the underlying storage times out, for example.
    *
    * @param key The key to delete.
+   * @return true if the entry associated with the key was deleted, false otherwise
    */
   boolean tryDelete(byte[] key);
 
