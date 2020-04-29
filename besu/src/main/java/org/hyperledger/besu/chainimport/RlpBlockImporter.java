@@ -59,6 +59,7 @@ public class RlpBlockImporter {
    *
    * @param blocks Path to the file containing the blocks
    * @param besuController the BesuController that defines blockchain behavior
+   * @param skipPowValidation Skip proof of work validation (correct mix hash and difficulty)
    * @param <C> the consensus context type
    * @return the import result
    * @throws IOException On Failure
