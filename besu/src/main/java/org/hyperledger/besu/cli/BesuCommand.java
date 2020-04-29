@@ -861,12 +861,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path pidPath = null;
 
   @CommandLine.Option(
+      hidden = true,
       names = {"--Xsecp256k1-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
   private final Boolean nativeSecp256k1 = Boolean.TRUE;
 
   @CommandLine.Option(
+      hidden = true,
       names = {"--Xaltbn128-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
@@ -1313,7 +1315,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--graphql-http-enabled",
-        !isRpcHttpEnabled,
+        !isGraphQLHttpEnabled,
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
 
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();

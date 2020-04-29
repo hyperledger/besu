@@ -42,4 +42,3 @@ dependencies {
 }
 
 configurations { testArtifacts }
-artifacts { testSupportArtifacts testSupportJar }

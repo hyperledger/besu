@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.subcommands.blocks;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -56,13 +57,16 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_BLOCK_IMPORT_USAGE =
-      "Usage: besu blocks import [-hV] [--format=<format>] --from=<FILE>\n"
+      "Usage: besu blocks import [-hV] [--skip-pow-validation-enabled]\n"
+          + "                          [--format=<format>] --from=<FILE>\n"
           + "                          [--start-time=<startTime>]\n"
           + "This command imports blocks from a file into the database.\n"
           + "      --format=<format>   The type of data to be imported, possible values are:\n"
           + "                            RLP, JSON (default: RLP).\n"
           + "      --from=<FILE>       File containing blocks to import.\n"
           + "  -h, --help              Show this help message and exit.\n"
+          + "      --skip-pow-validation-enabled\n"
+          + "                          Skip proof of work validation when importing.\n"
           + "      --start-time=<startTime>\n"
           + "                          The timestamp in seconds of the first block for JSON\n"
           + "                            imports. Subsequent blocks will be 1 second later.\n"
@@ -100,7 +104,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   // Block sub-command
   @Test
   public void blockSubCommandExistsAndHasSubCommands() {
-    CommandSpec spec = parseCommand().getSpec();
+    final CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys(BLOCK_SUBCOMMAND_NAME);
     assertThat(spec.subcommands().get(BLOCK_SUBCOMMAND_NAME).getSubcommands())
         .containsKeys(BLOCK_IMPORT_SUBCOMMAND_NAME);
@@ -144,7 +148,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     parseCommand(
         BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
 
-    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
+    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any(), anyBoolean());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
 
@@ -163,7 +167,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--from",
         fileToImport.getPath());
 
-    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
+    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any(), anyBoolean());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
 
@@ -400,9 +404,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   private void createDbDirectory(final boolean createDataFiles) throws IOException {
-    File dbDir = folder.newFolder(BesuController.DATABASE_PATH);
+    final File dbDir = folder.newFolder(BesuController.DATABASE_PATH);
     if (createDataFiles) {
-      Path dataFilePath = Paths.get(dbDir.getAbsolutePath(), "0000001.sst");
+      final Path dataFilePath = Paths.get(dbDir.getAbsolutePath(), "0000001.sst");
       final boolean success = new File(dataFilePath.toString()).createNewFile();
       assertThat(success).isTrue();
     }
