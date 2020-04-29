@@ -103,10 +103,10 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
               if (!inUseCheck.test(key)) {
                 try {
                   keyValueStorage.tryDelete(key);
+                  prunedKeys.incrementAndGet();
                 } catch (final StorageException se) {
                   if (!se.isIncomplete()) throw se;
                 }
-                prunedKeys.incrementAndGet();
               }
             } finally {
               lock.unlock();
