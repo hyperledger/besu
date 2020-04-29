@@ -30,7 +30,7 @@ public interface WritePipe<T> {
 
   /**
    * Adds a new item to the pipe. This method will block until capacity is available in the pipe.
-   * The item will be discarded if the pipe is closed befoer capacity becomes available.
+   * The item will be discarded if the pipe is closed before capacity becomes available.
    *
    * @param value the value to add to the pipe.
    */
