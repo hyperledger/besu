@@ -186,7 +186,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
     verify(mockControllerBuilder).dataDirectory(isNotNull());
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
-    verify(mockControllerBuilder).nodePrivateKeyFile(isNotNull());
+    verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
     verify(mockControllerBuilder).targetGasLimit(eq(Optional.empty()));
     verify(mockControllerBuilder).build();
@@ -293,9 +293,14 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
+    final File dataFolder = temp.newFolder();
     final String updatedConfig =
         Resources.toString(configFile, UTF_8)
-            .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()));
+            .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()))
+            .replace(
+                "data-path=\"/opt/besu\"",
+                "data-path=\"" + escapeTomlString(dataFolder.getPath()) + "\"");
+
     final Path toml = createTempFile("toml", updatedConfig.getBytes(UTF_8));
 
     final List<RpcApi> expectedApis = asList(ETH, WEB3);
@@ -347,7 +352,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
             .setBootNodes(nodes)
             .build();
-    verify(mockControllerBuilder).dataDirectory(eq(Paths.get("/opt/besu").toAbsolutePath()));
+    verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any());
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
@@ -810,15 +815,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void nodekeyOptionMustBeUsed() throws Exception {
     final File file = new File("./specific/enclavePrivateKey");
-    file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
 
     verify(mockControllerBuilder).dataDirectory(isNotNull());
-    verify(mockControllerBuilder).nodePrivateKeyFile(fileArgumentCaptor.capture());
+    verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).build();
-
-    assertThat(fileArgumentCaptor.getValue()).isEqualTo(file);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -840,18 +842,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void nodekeyDefaultedUnderDocker() throws Exception {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    parseCommand();
-
-    verify(mockControllerBuilder).nodePrivateKeyFile(fileArgumentCaptor.capture());
-    assertThat(fileArgumentCaptor.getValue()).isEqualTo(new File("/var/lib/besu/key"));
-  }
-
-  @Test
   public void dataDirOptionMustBeUsed() throws Exception {
     assumeTrue(isFullInstantiation());
 
@@ -860,8 +850,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--data-path", path.toString());
 
     verify(mockControllerBuilder).dataDirectory(pathArgumentCaptor.capture());
-    verify(mockControllerBuilder)
-        .nodePrivateKeyFile(eq(path.resolve("key").toAbsolutePath().toFile()));
+    verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).build();
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path.toAbsolutePath());
@@ -1111,7 +1100,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithInvalidBootnodeMustDisplayErrorAndUsage() {
+  public void callingWithInvalidBootnodeMustDisplayError() {
     parseCommand("--bootnodes", "invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
@@ -1121,7 +1110,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithBootnodeThatHasDiscoveryDisabledMustDisplayErrorAndUsage() {
+  public void callingWithBootnodeThatHasDiscoveryDisabledMustDisplayError() {
     final String validBootnode =
         "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304";
     final String invalidBootnode =
@@ -1136,7 +1125,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   // This test ensures non regression on https://pegasys1.atlassian.net/browse/PAN-2387
   @Test
-  public void callingWithInvalidBootnodeAndEqualSignMustDisplayErrorAndUsage() {
+  public void callingWithInvalidBootnodeAndEqualSignMustDisplayError() {
     parseCommand("--bootnodes=invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
@@ -1185,7 +1174,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithBannedNodeidsOptionButNoValueMustDisplayErrorAndUsage() {
+  public void callingWithBannedNodeidsOptionButNoValueMustDisplayError() {
     parseCommand("--banned-node-ids");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
@@ -1194,7 +1183,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithBannedNodeidsOptionWithInvalidValuesMustDisplayErrorAndUsage() {
+  public void callingWithBannedNodeidsOptionWithInvalidValuesMustDisplayError() {
     parseCommand("--banned-node-ids", "0x10,20,30");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =

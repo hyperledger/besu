@@ -51,7 +51,6 @@ import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
-import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.KeyLoader;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImporterFactory;
@@ -66,7 +65,9 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -110,16 +111,19 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
@@ -201,14 +205,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
+  private final SecurityModuleServiceImpl securityModuleService;
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
   private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
-
-  protected KeyLoader getKeyLoader() {
-    return KeyPairUtil::loadKeyPair;
-  }
 
   // Public IP stored to prevent having to research it each time we need it.
   private InetAddress autoDiscoveredDefaultIP = null;
@@ -815,6 +816,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--security-module"},
+      paramLabel = "<NAME>",
+      description = "Identity for the Security Module to be used.",
+      arity = "1")
+  private String securityModuleName = DEFAULT_SECURITY_MODULE;
+
   @Option(
       names = {"--auto-log-bloom-caching-enabled"},
       description = "Enable automatic log bloom caching (default: ${DEFAULT-VALUE})",
@@ -857,12 +866,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path pidPath = null;
 
   @CommandLine.Option(
+      hidden = true,
       names = {"--Xsecp256k1-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
   private final Boolean nativeSecp256k1 = Boolean.TRUE;
 
   @CommandLine.Option(
+      hidden = true,
       names = {"--Xaltbn128-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
@@ -900,7 +911,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         controllerBuilderFactory,
         besuPluginContext,
         environment,
-        new StorageServiceImpl());
+        new StorageServiceImpl(),
+        new SecurityModuleServiceImpl());
   }
 
   @VisibleForTesting
@@ -913,7 +925,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
-      final StorageServiceImpl storageService) {
+      final StorageServiceImpl storageService,
+      final SecurityModuleServiceImpl securityModuleService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -923,6 +936,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.besuPluginContext = besuPluginContext;
     this.environment = environment;
     this.storageService = storageService;
+    this.securityModuleService = securityModuleService;
   }
 
   public void parse(
@@ -1000,7 +1014,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             resultHandler.out()));
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME,
-        new PublicKeySubCommand(resultHandler.out(), getKeyLoader()));
+        new PublicKeySubCommand(
+            resultHandler.out(), this::addConfigurationService, this::buildNodeKey));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1046,6 +1061,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
@@ -1058,7 +1074,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .getMetricCategories()
         .forEach(metricCategoryConverter::addRegistryCategory);
 
+    // register default security module
+    securityModuleService.register(
+        DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule)::get);
+
     return this;
+  }
+
+  private SecurityModule defaultSecurityModule() {
+    return new KeyPairSecurityModule(loadKeyPair());
+  }
+
+  @VisibleForTesting
+  SECP256K1.KeyPair loadKeyPair() {
+    return KeyPairUtil.loadKeyPair(nodePrivateKeyFile());
   }
 
   private void parse(
@@ -1273,7 +1302,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumExtranonce,
                 Optional.empty()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodePrivateKeyFile(nodePrivateKeyFile())
+        .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
@@ -1293,7 +1322,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--graphql-http-enabled",
-        !isRpcHttpEnabled,
+        !isGraphQLHttpEnabled,
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
 
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
@@ -1970,15 +1999,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public File nodePrivateKeyFile() {
-    File nodePrivateKeyFile = null;
-    if (isFullInstantiation()) {
-      nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile;
-    }
+  @VisibleForTesting
+  NodeKey buildNodeKey() {
+    return new NodeKey(securityModule());
+  }
 
-    return nodePrivateKeyFile != null
-        ? nodePrivateKeyFile
-        : KeyPairUtil.getDefaultKeyFile(dataDir());
+  private SecurityModule securityModule() {
+    return securityModuleService
+        .getByName(securityModuleName)
+        .orElseThrow(() -> new RuntimeException("Security Module not found: " + securityModuleName))
+        .get();
+  }
+
+  private File nodePrivateKeyFile() {
+    final Optional<File> nodePrivateKeyFile =
+        isDocker ? Optional.empty() : Optional.ofNullable(standaloneCommands.nodePrivateKeyFile);
+    return nodePrivateKeyFile.orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
 
   private File privacyPublicKeyFile() {

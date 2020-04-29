@@ -24,8 +24,8 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private final Path dataPath;
 
   public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
-    this.storagePath = storagePath;
     this.dataPath = dataPath;
+    this.storagePath = storagePath;
   }
 
   @Override
