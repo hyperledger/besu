@@ -72,7 +72,7 @@ public final class RlpBlockExporterTest {
       throws IOException {
     final RlpBlockImporter blockImporter = new RlpBlockImporter();
 
-    blockImporter.importBlockchain(blocksFile, controller);
+    blockImporter.importBlockchain(blocksFile, controller, false);
     return controller.getProtocolContext().getBlockchain();
   }
 
