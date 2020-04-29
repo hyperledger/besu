@@ -11,47 +11,52 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
 
 apply plugin: 'java-library'
+apply plugin: 'application'
+apply plugin: 'idea'
 
 jar {
-  archiveBaseName = 'besu-consensus-common'
+  baseName 'besu-evmtool'
   manifest {
     attributes(
-      'Specification-Title': archiveBaseName,
+      'Specification-Title': baseName,
       'Specification-Version': project.version,
-      'Implementation-Title': archiveBaseName,
+      'Implementation-Title': baseName,
       'Implementation-Version': calculateVersion()
       )
   }
 }
 
 dependencies {
-  api project(':plugin-api')
-
+  implementation project(':besu')
+  implementation project(':config')
   implementation project(':crypto')
-  implementation project(':ethereum:api')
+  implementation project(':consensus:clique')
+  implementation project(':consensus:ibft')
   implementation project(':ethereum:core')
+  implementation project(':metrics:core')
+  implementation project(':services:kvstore')
   implementation project(':util')
 
-  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.google.dagger:dagger'
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'info.picocli:picocli'
+  implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.logging.log4j:log4j-core'
 
-  testImplementation project(':crypto')
-  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
-
-  testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
-}
-configurations { testArtifacts }
-task testJar (type: Jar) {
-  archiveBaseName = "${project.name}-test"
-  from sourceSets.test.output
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 }
 
-artifacts {
-  testArtifacts testJar
+mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
+
+startScripts {
+  applicationName = 'evm'
+  doLast {
+    unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
+    windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
+  }
 }
