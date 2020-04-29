@@ -2742,21 +2742,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void fullCLIOptionsNotShownWhenInDockerContainer() {
-    System.setProperty("besu.docker", "true");
-
-    parseCommand("--help");
-
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString()).doesNotContain("--config-file");
-    assertThat(commandOutput.toString()).doesNotContain("--data-path");
-    assertThat(commandOutput.toString()).doesNotContain("--genesis-file");
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void fullCLIOptionsShownWhenNotInDockerContainer() {
+  public void fullCLIOptionsShown() {
     parseCommand("--help");
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
