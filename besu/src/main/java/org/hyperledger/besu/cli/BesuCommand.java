@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
@@ -139,7 +138,6 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -213,9 +211,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Public IP stored to prevent having to research it each time we need it.
   private InetAddress autoDiscoveredDefaultIP = null;
-
-  // Property to indicate whether Besu has been launched via docker
-  private final boolean isDocker = Boolean.getBoolean("besu.docker");
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
@@ -989,9 +984,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand handleStandaloneCommand() {
     standaloneCommands = new StandaloneCommand();
-    if (isFullInstantiation()) {
-      commandLine.addMixin("standaloneCommands", standaloneCommands);
-    }
+    commandLine.addMixin("standaloneCommands", standaloneCommands);
     return this;
   }
 
@@ -1097,7 +1090,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // and eventually it will run regular parsing of the remaining options.
     final ConfigOptionSearchAndRunHandler configParsingHandler =
         new ConfigOptionSearchAndRunHandler(
-            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, isDocker);
+            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
     commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
   }
 
@@ -1670,10 +1663,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
 
-      final boolean hasPrivacyPublicKey = privacyPublicKeyFile() != null;
+      final boolean hasPrivacyPublicKey = standaloneCommands.privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
-          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
+          privacyParametersBuilder.setEnclavePublicKeyUsingFile(
+              standaloneCommands.privacyPublicKeyFile);
         } catch (final IOException e) {
           throw new ParameterException(
               commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);
@@ -1958,42 +1952,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private File genesisFile() {
-    if (isFullInstantiation()) {
-      return standaloneCommands.genesisFile;
-    } else if (isDocker) {
-      final File genesisFile = new File(DOCKER_GENESIS_LOCATION);
-      if (genesisFile.exists()) {
-        return genesisFile;
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
+    return standaloneCommands.genesisFile;
   }
 
   public Path dataDir() {
-    if (isFullInstantiation()) {
-      return standaloneCommands.dataPath.toAbsolutePath();
-    } else if (isDocker) {
-      return Paths.get(DOCKER_DATADIR_LOCATION);
-    } else {
-      return getDefaultBesuDataPath(this);
-    }
+    return standaloneCommands.dataPath.toAbsolutePath();
   }
 
   private Path pluginsDir() {
-    if (isFullInstantiation()) {
-      final String pluginsDir = System.getProperty("besu.plugins.dir");
-      if (pluginsDir == null) {
-        return new File(System.getProperty("besu.home", "."), "plugins").toPath();
-      } else {
-        return new File(pluginsDir).toPath();
-      }
-    } else if (isDocker) {
-      return Paths.get(DOCKER_PLUGINSDIR_LOCATION);
+    final String pluginsDir = System.getProperty("besu.plugins.dir");
+    if (pluginsDir == null) {
+      return new File(System.getProperty("besu.home", "."), "plugins").toPath();
     } else {
-      return null; // null means no plugins
+      return new File(pluginsDir).toPath();
     }
   }
 
@@ -2010,34 +1981,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private File nodePrivateKeyFile() {
-    final Optional<File> nodePrivateKeyFile =
-        isDocker ? Optional.empty() : Optional.ofNullable(standaloneCommands.nodePrivateKeyFile);
-    return nodePrivateKeyFile.orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
-  }
-
-  private File privacyPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_PRIVACY_PUBLIC_KEY_FILE);
-      if (keyFile.exists()) {
-        return keyFile;
-      } else {
-        return null;
-      }
-    } else {
-      return standaloneCommands.privacyPublicKeyFile;
-    }
+    return Optional.ofNullable(standaloneCommands.nodePrivateKeyFile)
+        .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
 
   private String rpcHttpAuthenticationCredentialsFile() {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = standaloneCommands.rpcHttpAuthenticationCredentialsFile;
-    } else if (isDocker) {
-      final File authFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
-      if (authFile.exists()) {
-        filename = authFile.getAbsolutePath();
-      }
-    }
+    final String filename = standaloneCommands.rpcHttpAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "HTTP");
@@ -2046,15 +1995,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private String rpcWsAuthenticationCredentialsFile() {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = standaloneCommands.rpcWsAuthenticationCredentialsFile;
-    } else if (isDocker) {
-      final File authFile = new File(DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
-      if (authFile.exists()) {
-        filename = authFile.getAbsolutePath();
-      }
-    }
+    final String filename = standaloneCommands.rpcWsAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "WS");
@@ -2063,52 +2004,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private File rpcHttpAuthenticationPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
-      return keyFile.exists() ? keyFile : null;
-    } else {
-      return standaloneCommands.rpcHttpAuthenticationPublicKeyFile;
-    }
+    return standaloneCommands.rpcHttpAuthenticationPublicKeyFile;
   }
 
   private File rpcWsAuthenticationPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
-      return keyFile.exists() ? keyFile : null;
-    } else {
-      return standaloneCommands.rpcWsAuthenticationPublicKeyFile;
-    }
+    return standaloneCommands.rpcWsAuthenticationPublicKeyFile;
   }
 
   private String nodePermissionsConfigFile() {
-    return permissionsConfigFile(standaloneCommands.nodePermissionsConfigFile);
+    return standaloneCommands.nodePermissionsConfigFile;
   }
 
   private String accountsPermissionsConfigFile() {
-    return permissionsConfigFile(standaloneCommands.accountPermissionsConfigFile);
-  }
-
-  private String permissionsConfigFile(final String permissioningFilename) {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = permissioningFilename;
-    } else if (isDocker) {
-      final File file = new File(DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION);
-      if (file.exists()) {
-        filename = file.getAbsolutePath();
-      }
-    }
-    return filename;
+    return standaloneCommands.accountPermissionsConfigFile;
   }
 
   private String getDefaultPermissioningFilePath() {
     return dataDir().toAbsolutePath()
         + System.getProperty("file.separator")
         + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
-  }
-
-  private boolean isFullInstantiation() {
-    return !isDocker;
   }
 
   public MetricsSystem getMetricsSystem() {
