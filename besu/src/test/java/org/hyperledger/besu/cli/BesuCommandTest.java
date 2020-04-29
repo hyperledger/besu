@@ -30,8 +30,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
@@ -204,8 +202,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   // Testing each option
   @Test
   public void callingWithConfigOptionButNoConfigFileShouldDisplayHelp() {
-    assumeTrue(isFullInstantiation());
-
     parseCommand("--config-file");
 
     final String expectedOutputStart =
@@ -216,8 +212,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingWithConfigOptionButNonExistingFileShouldDisplayHelp() throws IOException {
-    assumeTrue(isFullInstantiation());
-
     final Path tempConfigFilePath = createTempFile("an-invalid-file-name-without-extension", "");
     parseCommand("--config-file", tempConfigFilePath.toString());
 
@@ -229,8 +223,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingWithConfigOptionButTomlFileNotFoundShouldDisplayHelp() {
-    assumeTrue(isFullInstantiation());
-
     parseCommand("--config-file", "./an-invalid-file-name-sdsd87sjhqoi34io23.toml");
 
     final String expectedOutputStart = "Unable to read TOML configuration, file not found.";
@@ -240,8 +232,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingWithConfigOptionButInvalidContentTomlFileShouldDisplayHelp() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     // We write a config file to prevent an invalid file in resource folder to raise errors in
     // code checks (CI + IDE)
     final Path tempConfigFile = createTempFile("invalid_config.toml", ".");
@@ -257,8 +247,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingWithNoBootnodesConfig() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     final URL configFile = this.getClass().getResource("/no_bootnodes.toml");
     final Path toml = createTempFile("toml", Resources.toString(configFile, UTF_8));
 
@@ -273,8 +261,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingWithConfigOptionButInvalidValueTomlFileShouldDisplayHelp() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     // We write a config file to prevent an invalid file in resource folder to raise errors in
     // code checks (CI + IDE)
     final Path tempConfigFile = createTempFile("invalid_config.toml", "tester===========.......");
@@ -289,8 +275,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void overrideDefaultValuesIfKeyIsPresentInConfigFile() throws IOException {
-    assumeTrue(isFullInstantiation());
-
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     final File dataFolder = temp.newFolder();
@@ -671,8 +655,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void tomlThatConfiguresEverythingExceptPermissioningToml() throws IOException {
-    assumeTrue(isFullInstantiation());
-
     // Load a TOML that configures literally everything (except permissioning TOML config)
     final URL configFile = this.getClass().getResource("/everything_config.toml");
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
@@ -721,8 +703,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() throws IOException {
-    assumeTrue(isFullInstantiation());
-
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
     parseCommand("--config-file", configFile);
@@ -766,8 +746,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void envVariableOverridesValueFromConfigFile() {
-    assumeTrue(isFullInstantiation());
-
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
     setEnvironemntVariable("BESU_MINER_COINBASE", expectedCoinbase);
@@ -784,8 +762,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void cliOptionOverridesEnvVariableAndConfig() {
-    assumeTrue(isFullInstantiation());
-
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
     setEnvironemntVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
@@ -798,18 +774,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
                 DefaultCommandValues.DEFAULT_EXTRA_DATA,
                 false));
-  }
-
-  @Test
-  public void configOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-    parseCommand("--config", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--config', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
   }
 
   @Test
@@ -827,24 +791,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void nodekeyOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final File file = new File("./specific/enclavePrivateKey");
-    file.deleteOnExit();
-
-    parseCommand("--node-private-key-file", file.getPath());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--node-private-key-file', './specific/enclavePrivateKey'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
   public void dataDirOptionMustBeUsed() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     final Path path = Paths.get(".");
 
     parseCommand("--data-path", path.toString());
@@ -860,34 +807,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void dataDirDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-
-    parseCommand("--data-path", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--data-path', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void dataDirDefaultedUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    parseCommand();
-
-    verify(mockControllerBuilder).dataDirectory(pathArgumentCaptor.capture());
-    assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(Paths.get("/var/lib/besu"));
-  }
-
-  @Test
   public void genesisPathOptionMustBeUsed() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
@@ -906,8 +826,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void genesisAndNetworkMustNotBeUsedTogether() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
 
     parseCommand("--genesis-file", genesisFile.toString(), "--network", "rinkeby");
@@ -921,8 +839,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void defaultNetworkIdAndBootnodesForCustomNetworkOptions() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
 
     parseCommand("--genesis-file", genesisFile.toString());
@@ -944,8 +860,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void defaultNetworkIdForInvalidGenesisMustBeMainnetNetworkId() throws Exception {
-    assumeTrue(isFullInstantiation());
-
     final Path genesisFile = createFakeGenesisFile(GENESIS_INVALID_DATA);
 
     parseCommand("--genesis-file", genesisFile.toString());
@@ -978,19 +892,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(genesisConfigFile.getConfigOptions().getChainId().isPresent()).isTrue();
     assertThat(genesisConfigFile.getConfigOptions().getChainId().get())
         .isEqualTo(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId());
-  }
-
-  @Test
-  public void genesisPathDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-
-    parseCommand("--genesis", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--genesis', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
   }
 
   @Test
@@ -2505,8 +2406,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void metricsAndMetricsPushMustNotBeUsedTogether() {
-    assumeTrue(isFullInstantiation());
-
     parseCommand("--metrics-enabled", "--metrics-push-enabled");
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
@@ -3049,10 +2948,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     return jsonGenesis.encodePrettily();
   }
 
-  private boolean isFullInstantiation() {
-    return !Boolean.getBoolean("besu.docker");
-  }
-
   private static String escapeTomlString(final String s) {
     return StringEscapeUtils.escapeJava(s);
   }
@@ -3084,19 +2979,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void privacyPublicKeyFileOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-    parseCommand("--privacy-public-enclavePrivateKey-file", path.toString());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--privacy-public-enclavePrivateKey-file', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
   public void privacyWithFastSyncMustError() {
     parseCommand("--sync-mode=FAST", "--privacy-enabled");
 
@@ -3109,71 +2991,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--pruning-enabled", "--privacy-enabled");
 
     assertThat(commandErrorOutput.toString()).contains("Pruning cannot be enabled with privacy.");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpAuthCredentialsFileOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-    parseCommand("--rpc-http-authentication-credentials-file", path.toString());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--rpc-http-authentication-credentials-file', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void rpcWsAuthCredentialsFileOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-    parseCommand("--rpc-ws-authentication-credentials-file", path.toString());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--rpc-ws-authentication-credentials-file', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpAuthPublicKeyFileOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-    parseCommand("--rpc-http-authentication-public-key-file", path.toString());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--rpc-http-authentication-public-key-file', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void rpcWsAuthPublicKeyFileOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-    parseCommand("--rpc-ws-authentication-public-key-file", path.toString());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--rpc-ws-authentication-public-key-file', '.'");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void permissionsConfigFileOptionDisabledUnderDocker() {
-    System.setProperty("besu.docker", "true");
-
-    assumeFalse(isFullInstantiation());
-
-    final Path path = Paths.get(".");
-    parseCommand("--permissions-config-file", path.toString());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--permissions-config-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3244,8 +3061,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void tomlThatHasInvalidOptions() throws IOException {
-    assumeTrue(isFullInstantiation());
-
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     // update genesis file path, "similar" valid option and add invalid options
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
