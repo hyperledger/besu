@@ -46,4 +46,17 @@ public class ExperimentalEIPs {
       throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
     }
   }
+
+  @Option(
+      hidden = true,
+      names = {"--Xhard-block-limit-enabled"},
+      description = "Enable hard block limit (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  public static boolean hardBlockLimitEnabled = false;
+  @Option(
+          hidden = true,
+          names = {"--Xhard-block-limit"},
+          description = "Hard block limit (default: ${DEFAULT-VALUE})",
+          arity = "1")
+  public static Long hardBlockLimit = (long) Integer.MAX_VALUE;
 }

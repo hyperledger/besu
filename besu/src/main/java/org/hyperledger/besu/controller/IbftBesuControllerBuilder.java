@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;
 import org.hyperledger.besu.config.IbftFork;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
@@ -73,6 +74,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -117,9 +119,16 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final IbftExecutors ibftExecutors = IbftExecutors.create(metricsSystem);
 
+    final Function<Long, Long> ibftGasLimitCalculator;
+    if (ExperimentalEIPs.hardBlockLimitEnabled) {
+      LOG.warn("Setting hard block gas limit to {}", ExperimentalEIPs.hardBlockLimit);
+      ibftGasLimitCalculator = (ignored) -> ExperimentalEIPs.hardBlockLimit;
+    } else {
+      ibftGasLimitCalculator = gasLimitCalculator;
+    }
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
-            gasLimitCalculator,
+            ibftGasLimitCalculator,
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,
