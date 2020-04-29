@@ -18,10 +18,10 @@ import static java.util.Objects.requireNonNullElse;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBExceptionAdapter;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
@@ -55,6 +55,7 @@ import org.rocksdb.LRUCache;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
+import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -132,7 +133,7 @@ public class RocksDBColumnarKeyValueStorage
       }
       columnHandlesByName = builder.build();
     } catch (final RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw new StorageException(e);
     }
   }
 
@@ -154,7 +155,7 @@ public class RocksDBColumnarKeyValueStorage
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(db.get(segment, key));
     } catch (final RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw new StorageException(e);
     }
   }
 
@@ -178,7 +179,9 @@ public class RocksDBColumnarKeyValueStorage
     try {
       db.delete(segmentHandle, tryDeleteOptions, key);
     } catch (RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw e.getStatus().getCode() == Status.Code.Incomplete
+          ? new IncompleteOperationException("Couldn't immediately acquire a lock. Skipping.", e)
+          : new StorageException(e);
     }
   }
 
@@ -202,7 +205,7 @@ public class RocksDBColumnarKeyValueStorage
         }
       }
     } catch (final RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw new StorageException(e);
     }
   }
 
@@ -238,7 +241,7 @@ public class RocksDBColumnarKeyValueStorage
       try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
         innerTx.put(segment, key, value);
       } catch (final RocksDBException e) {
-        throw RocksDBExceptionAdapter.createStorageException(e);
+        throw new StorageException(e);
       }
     }
 
@@ -247,7 +250,7 @@ public class RocksDBColumnarKeyValueStorage
       try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
         innerTx.delete(segment, key);
       } catch (final RocksDBException e) {
-        throw RocksDBExceptionAdapter.createStorageException(e);
+        throw new StorageException(e);
       }
     }
 
@@ -256,7 +259,7 @@ public class RocksDBColumnarKeyValueStorage
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
         innerTx.commit();
       } catch (final RocksDBException e) {
-        throw RocksDBExceptionAdapter.createStorageException(e);
+        throw new StorageException(e);
       } finally {
         close();
       }
@@ -268,7 +271,7 @@ public class RocksDBColumnarKeyValueStorage
         innerTx.rollback();
         metrics.getRollbackCount().inc();
       } catch (final RocksDBException e) {
-        throw RocksDBExceptionAdapter.createStorageException(e);
+        throw new StorageException(e);
       } finally {
         close();
       }

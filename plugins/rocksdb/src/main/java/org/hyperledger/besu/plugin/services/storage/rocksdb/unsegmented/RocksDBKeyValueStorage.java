@@ -17,11 +17,11 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBExceptionAdapter;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
@@ -43,6 +43,7 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
+import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -82,7 +83,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
       db = TransactionDB.open(options, txOptions, configuration.getDatabaseDir().toString());
       rocksDBMetrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
     } catch (final RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw new StorageException(e);
     }
   }
 
@@ -100,7 +101,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
         }
       }
     } catch (final RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw new StorageException(e);
     }
   }
 
@@ -117,7 +118,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
         rocksDBMetrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(db.get(key));
     } catch (final RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw new StorageException(e);
     }
   }
 
@@ -138,7 +139,9 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     try {
       db.delete(tryDeleteOptions, key);
     } catch (RocksDBException e) {
-      throw RocksDBExceptionAdapter.createStorageException(e);
+      throw e.getStatus().getCode() == Status.Code.Incomplete
+          ? new IncompleteOperationException("Couldn't immediately acquire a lock. Skipping.", e)
+          : new StorageException(e);
     }
   }
 

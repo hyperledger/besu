@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
@@ -104,8 +104,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
                 try {
                   keyValueStorage.tryDelete(key);
                   prunedKeys.incrementAndGet();
-                } catch (final StorageException se) {
-                  if (!se.isIncomplete()) throw se;
+                } catch (final IncompleteOperationException __) {
                 }
               }
             } finally {
