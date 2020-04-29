@@ -53,10 +53,11 @@ public class ExperimentalEIPs {
       description = "Enable hard block limit (default: ${DEFAULT-VALUE})",
       arity = "1")
   public static boolean hardBlockLimitEnabled = false;
+
   @Option(
-          hidden = true,
-          names = {"--Xhard-block-limit"},
-          description = "Hard block limit (default: ${DEFAULT-VALUE})",
-          arity = "1")
+      hidden = true,
+      names = {"--Xhard-block-limit"},
+      description = "Hard block limit (default: ${DEFAULT-VALUE})",
+      arity = "1")
   public static Long hardBlockLimit = (long) Integer.MAX_VALUE;
 }
