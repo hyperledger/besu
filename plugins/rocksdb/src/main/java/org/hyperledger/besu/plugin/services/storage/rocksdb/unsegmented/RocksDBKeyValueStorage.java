@@ -153,6 +153,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
+      tryDeleteOptions.close();
       txOptions.close();
       options.close();
       db.close();

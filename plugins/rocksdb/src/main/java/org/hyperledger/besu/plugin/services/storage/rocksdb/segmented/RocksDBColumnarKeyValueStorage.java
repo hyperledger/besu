@@ -275,6 +275,7 @@ public class RocksDBColumnarKeyValueStorage
     }
 
     private void close() {
+      tryDeleteOptions.close();
       innerTx.close();
       options.close();
     }
