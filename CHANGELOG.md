@@ -6,7 +6,7 @@
 
  - Introduced SecurityModule plugin API. This allows use of a different security module as a plugin to 
  provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). KeyPairSecurityModule
-  is registered and used by default. The CLI option `--security-module=<name>. (defaults to localfile)` can be used 
+  is registered and used by default. The CLI option `--security-module=<name> (defaults to localfile)` can be used 
   to identify the security module plugin name to use instead. [\#713](https://github.com/hyperledger/besu/pull/713)
 
 ### Bug Fixes
