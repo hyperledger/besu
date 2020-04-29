@@ -8,7 +8,7 @@
  provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). KeyPairSecurityModule
   is registered and used by default. The CLI option `--security-module=<name> (defaults to localfile)` can be used 
   to identify the security module plugin name to use instead. [\#713](https://github.com/hyperledger/besu/pull/713)
-
+- Full help not displayed unless explicitly requested. [\#791](https://github.com/hyperledger/besu/pull/791)
 ### Bug Fixes
 
  - 
