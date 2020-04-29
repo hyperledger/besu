@@ -215,7 +215,8 @@ public class BlocksSubCommand implements Runnable {
           "0.0.0.0",
           8008,
           "080c",
-          Optional.of(new IncrementingNonceGenerator(0)));
+          Optional.of(new IncrementingNonceGenerator(0)),
+          0.0);
     }
 
     private <T> void importJsonBlocks(final BesuController<T> controller, final Path path)

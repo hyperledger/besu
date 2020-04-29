@@ -84,6 +84,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
                 gasLimitCalculator,
                 nodeKey,
                 minTransactionGasPrice,
+                minBlockOccupancyRatio,
                 header,
                 epochManager);
 

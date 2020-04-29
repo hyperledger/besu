@@ -71,6 +71,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
   protected final ProtocolSchedule<C> protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
   private final Wei minTransactionGasPrice;
+  private final Double minBlockOccupancyRatio;
   private final Address miningBeneficiary;
   protected final BlockHeader parentHeader;
   protected final ProtocolSpec<C> protocolSpec;
@@ -86,6 +87,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       final Function<Long, Long> gasLimitCalculator,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     this.coinbase = coinbase;
     this.extraDataCalculator = extraDataCalculator;
@@ -94,6 +96,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     this.protocolSchedule = protocolSchedule;
     this.gasLimitCalculator = gasLimitCalculator;
     this.minTransactionGasPrice = minTransactionGasPrice;
+    this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
     this.parentHeader = parentHeader;
     this.protocolSpec = protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1);
@@ -211,6 +214,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
             processableBlockHeader,
             transactionReceiptFactory,
             minTransactionGasPrice,
+            minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
             protocolSpec.getTransactionPriceCalculator(),

@@ -41,6 +41,7 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
       final ProtocolSchedule<IbftContext> protocolSchedule,
       final Function<Long, Long> gasLimitCalculator,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         localAddress,
@@ -51,6 +52,7 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
         gasLimitCalculator,
         minTransactionGasPrice,
         localAddress,
+        minBlockOccupancyRatio,
         parentHeader);
   }
 

@@ -65,9 +65,7 @@ import com.google.common.collect.Lists;
 public class BlockTransactionSelector {
 
   private final Wei minTransactionGasPrice;
-
-  private static final double MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
-  private static final double EIP_1559_MIN_BLOCK_OCCUPANCY_RATIO = 0.25;
+  private final Double minBlockOccupancyRatio;
   private static final FeeMarket EIP_1559_FEE_MARKET = FeeMarket.eip1559();
 
   public static class TransactionSelectionResults {
@@ -128,6 +126,7 @@ public class BlockTransactionSelector {
       final ProcessableBlockHeader processableBlockHeader,
       final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final TransactionPriceCalculator transactionPriceCalculator,
@@ -141,6 +140,7 @@ public class BlockTransactionSelector {
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
     this.minTransactionGasPrice = minTransactionGasPrice;
+    this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.baseFeeSupplier = baseFeeSupplier;
@@ -278,17 +278,15 @@ public class BlockTransactionSelector {
   }
 
   private boolean blockOccupancyAboveThreshold() {
-    final double gasUsed, gasAvailable, minBlockOccupancyRatio;
+    final double gasUsed, gasAvailable;
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       gasUsed =
           transactionSelectionResult.getFrontierCumulativeGasUsed()
               + transactionSelectionResult.getEip1559CumulativeGasUsed();
       gasAvailable = EIP_1559_FEE_MARKET.getMaxGas();
-      minBlockOccupancyRatio = EIP_1559_MIN_BLOCK_OCCUPANCY_RATIO;
     } else {
       gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();
       gasAvailable = processableBlockHeader.getGasLimit();
-      minBlockOccupancyRatio = MIN_BLOCK_OCCUPANCY_RATIO;
     }
     return (gasUsed / gasAvailable) >= minBlockOccupancyRatio;
   }
