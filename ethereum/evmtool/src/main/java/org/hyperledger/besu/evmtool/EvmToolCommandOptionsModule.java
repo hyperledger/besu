@@ -28,8 +28,10 @@ public class EvmToolCommandOptionsModule {
 
   @Option(
       names = {"--revert-reason-enabled"},
-      paramLabel = ">boolean>",
-      description = "Should revert reasons be persisted. (default: ${default-value}")
+      paramLabel = "<Boolean>",
+      description = "Should revert reasons be persisted. (default: ${FALLBACK-VALUE})",
+      arity = "0..1",
+      fallbackValue = "true")
   final Boolean revertReasonEnabled = true;
 
   @Provides

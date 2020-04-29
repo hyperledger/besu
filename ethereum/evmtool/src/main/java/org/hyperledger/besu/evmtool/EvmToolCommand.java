@@ -73,76 +73,65 @@ public class EvmToolCommand implements Runnable {
       names = {"--code"},
       paramLabel = "<code>",
       description = "code to be executed")
-  Bytes codeHexString = Bytes.EMPTY;
-
-  @Option(
-      names = {"--codefile"},
-      paramLabel = "<file>",
-      description = "file containing code to be executed")
-  File codeFile;
+  private final Bytes codeHexString = Bytes.EMPTY;
 
   @Option(
       names = {"--gas"},
       paramLabel = "<int>")
-  Gas gas = Gas.of(10_000_000_000L);
+  private final Gas gas = Gas.of(10_000_000_000L);
 
   @Option(
       names = {"--price"},
       paramLabel = "<int>")
-  Wei gasPriceGWei = Wei.ZERO;
+  private final Wei gasPriceGWei = Wei.ZERO;
 
   @Option(
       names = {"--sender"},
       paramLabel = "<address>",
       description = "address of ORIGIN")
-  Address sender = Address.fromHexString("0x00");
+  private final Address sender = Address.fromHexString("0x00");
 
   @Option(
       names = {"--receiver"},
       paramLabel = "<address>",
       description = "address of ADDRESS")
-  Address receiver = Address.fromHexString("0x00");
+  private final Address receiver = Address.fromHexString("0x00");
 
   @Option(
       names = {"--input"},
       paramLabel = "<code>",
       description = "CALLDATA")
-  Bytes callData = Bytes.EMPTY;
+  private final Bytes callData = Bytes.EMPTY;
 
   @Option(
       names = {"--value"},
       paramLabel = "<int>")
-  Wei ethValue = Wei.ZERO;
+  private final Wei ethValue = Wei.ZERO;
 
   @Option(
       names = {"--json"},
       description = "output json output for each opcode")
-  boolean showJsonResults = false;
+  private final Boolean showJsonResults = false;
 
   @Option(
       names = {"--nomemory"},
       description = "disable showing the full memory output for each op")
-  boolean showMemory = true;
-
-  @Option(
-      names = {"--create"},
-      description = "initcode to execute")
-  Bytes createCode = Bytes.of();
+  private final Boolean showMemory = true;
 
   @Option(
       names = {"--prestate", "--genesis"},
       description = "a chain specification, the same one that the client normally would use")
-  File genesisFile;
+  private final File genesisFile = null;
 
   @Option(
       names = {"--chain"},
       description = "Name of a well know chain")
-  NetworkName network;
+  private final NetworkName network = null;
 
   @Option(
       names = {"--repeat"},
       description = "Number of times to repeat before gathering timing")
-  int repeat = 0;
+  private final Integer repeat = 0;
 
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
 
@@ -201,7 +190,9 @@ public class EvmToolCommand implements Runnable {
               .buildBlockHeader();
 
       Configurator.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
+      int repeat = this.repeat;
       do {
+        final boolean lastLoop = repeat == 0;
         final MessageFrame messageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -233,14 +224,14 @@ public class EvmToolCommand implements Runnable {
         evm.runToHalt(
             messageFrame,
             (frame, currentGasCost, executeOperation) -> {
-              if (showJsonResults && repeat == 0) {
+              if (showJsonResults && lastLoop) {
                 System.out.println(createEvmTraceOperation(messageFrame));
               }
               executeOperation.execute();
             });
         stopwatch.stop();
 
-        if (repeat == 0) {
+        if (lastLoop) {
           System.out.println(
               new JsonObject()
                   .put(
@@ -271,20 +262,24 @@ public class EvmToolCommand implements Runnable {
                     .map(bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8))
                     .orElse(""));
 
-    return new JsonObject()
-        .put("pc", messageFrame.getPC())
-        .put("op", messageFrame.getCurrentOperation().getOpcode())
-        .put("gas", messageFrame.getRemainingGas().asUInt256().toShortHexString())
-        .put(
-            "gasCost",
-            messageFrame.getCurrentOperation().cost(messageFrame).asUInt256().toShortHexString())
-        .put(
-            "memory",
-            messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize()).toHexString())
-        .put("memSize", messageFrame.memoryByteSize())
-        .put("depth", messageFrame.getMessageStackDepth() + 1)
-        .put("stack", stack)
-        .put("error", error)
-        .put("opName", messageFrame.getCurrentOperation().getName());
+    final JsonObject results = new JsonObject();
+    results.put("pc", messageFrame.getPC());
+    results.put("op", messageFrame.getCurrentOperation().getOpcode());
+    results.put("gas", messageFrame.getRemainingGas().asUInt256().toShortHexString());
+
+    results.put(
+        "gasCost",
+        messageFrame.getCurrentOperation().cost(messageFrame).asUInt256().toShortHexString());
+    if (!showMemory) {
+      results.put(
+          "memory",
+          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize()).toHexString());
+    }
+    results.put("memSize", messageFrame.memoryByteSize());
+    results.put("depth", messageFrame.getMessageStackDepth() + 1);
+    results.put("stack", stack);
+    results.put("error", error);
+    results.put("opName", messageFrame.getCurrentOperation().getName());
+    return results;
   }
 }
