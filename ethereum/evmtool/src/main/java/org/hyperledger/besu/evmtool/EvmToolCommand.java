@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -39,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonArray;
@@ -232,13 +234,27 @@ public class EvmToolCommand implements Runnable {
         stopwatch.stop();
 
         if (lastLoop) {
+          Transaction tx =
+              new Transaction(
+                  0,
+                  Wei.ZERO,
+                  Long.MAX_VALUE,
+                  Optional.ofNullable(receiver),
+                  Wei.ZERO,
+                  null,
+                  callData,
+                  sender,
+                  Optional.empty());
+
+          final Gas intrinsicGasCost =
+              component.getGasCalculatorAtBlock().apply(0).transactionIntrinsicGasCost(tx);
+          Gas evmGas = gas.minus(messageFrame.getRemainingGas());
           System.out.println(
               new JsonObject()
-                  .put(
-                      "gasUser",
-                      gas.minus(messageFrame.getRemainingGas()).asUInt256().toShortHexString())
+                  .put("gasUser", evmGas.asUInt256().toShortHexString())
                   .put("timens", stopwatch.elapsed().toNanos())
-                  .put("time", stopwatch.elapsed().toNanos() / 1000));
+                  .put("time", stopwatch.elapsed().toNanos() / 1000)
+                  .put("gasTotal", evmGas.plus(intrinsicGasCost).asUInt256().toShortHexString()));
         }
       } while (repeat-- > 0);
 
@@ -264,7 +280,8 @@ public class EvmToolCommand implements Runnable {
 
     final JsonObject results = new JsonObject();
     results.put("pc", messageFrame.getPC());
-    results.put("op", messageFrame.getCurrentOperation().getOpcode());
+    results.put("op", Bytes.of(messageFrame.getCurrentOperation().getOpcode()).toHexString());
+    results.put("opName", messageFrame.getCurrentOperation().getName());
     results.put("gas", messageFrame.getRemainingGas().asUInt256().toShortHexString());
 
     results.put(
@@ -279,7 +296,6 @@ public class EvmToolCommand implements Runnable {
     results.put("depth", messageFrame.getMessageStackDepth() + 1);
     results.put("stack", stack);
     results.put("error", error);
-    results.put("opName", messageFrame.getCurrentOperation().getName());
     return results;
   }
 }

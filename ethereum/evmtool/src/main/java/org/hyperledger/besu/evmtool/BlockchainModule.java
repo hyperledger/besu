@@ -18,6 +18,7 @@ package org.hyperledger.besu.evmtool;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
+import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldView;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -51,8 +52,12 @@ public class BlockchainModule {
   @Provides
   MutableWorldView getMutableWorldView(
       final WorldStateStorage worldStateStorage,
-      final WorldStatePreimageStorage worldStatePreimageStorage) {
-    return new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
+      final WorldStatePreimageStorage worldStatePreimageStorage,
+      final GenesisState genesisState) {
+    final DefaultMutableWorldState mutableWorldState =
+        new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
+    genesisState.writeStateTo(mutableWorldState);
+    return mutableWorldState;
   }
 
   @Provides
