@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.crypto;
 
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
+
 import org.apache.tuweni.bytes.Bytes32;
 
 public class NodeKey {
@@ -32,12 +35,12 @@ public class NodeKey {
   }
 
   public SECP256K1.PublicKey getPublicKey() {
-    final PublicKey pubKey = securityModule.getPublicKey();
-    return SECP256K1.PublicKey.create(pubKey.getEncoded());
+    return SECP256K1.PublicKey.create(
+        ECPointUtil.getEncodedBytes(securityModule.getPublicKey().getW()));
   }
 
   public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
-    final PublicKey pubKey = new PublicKey(partyKey.getEncodedBytes());
-    return securityModule.calculateECDHKeyAgreement(pubKey);
+    return securityModule.calculateECDHKeyAgreement(
+        () -> ECPointUtil.fromBouncyCastleECPoint(partyKey.asEcPoint()));
   }
 }

@@ -53,6 +53,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
       final Function<Long, Long> gasLimitCalculator,
       final NodeKey nodeKey,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final EpochManager epochManager) {
     super(
@@ -64,6 +65,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
         gasLimitCalculator,
         minTransactionGasPrice,
         Util.publicKeyToAddress(nodeKey.getPublicKey()),
+        minBlockOccupancyRatio,
         parentHeader);
     this.nodeKey = nodeKey;
     this.epochManager = epochManager;

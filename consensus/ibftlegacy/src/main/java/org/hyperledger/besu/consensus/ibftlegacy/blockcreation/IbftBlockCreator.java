@@ -54,6 +54,7 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
       final Function<Long, Long> gasLimitCalculator,
       final KeyPair nodeKeys,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         coinbase,
@@ -64,6 +65,7 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
         gasLimitCalculator,
         minTransactionGasPrice,
         Util.publicKeyToAddress(nodeKeys.getPublicKey()),
+        minBlockOccupancyRatio,
         parentHeader);
     this.nodeKeys = nodeKeys;
   }

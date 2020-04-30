@@ -11,24 +11,22 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.crypto;
 
-import org.apache.tuweni.bytes.Bytes;
+package org.hyperledger.besu.evmtool;
 
-public class PublicKey {
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-  private final Bytes encoded;
+import dagger.Module;
+import dagger.Provides;
 
-  public PublicKey(final Bytes encoded) {
-    this.encoded = encoded;
-  }
+@SuppressWarnings("WeakerAccess")
+@Module
+public class MetricsSystemModule {
 
-  public static PublicKey create(final Bytes encoded) {
-    return new PublicKey(encoded);
-  }
-
-  public Bytes getEncoded() {
-    return encoded;
+  @Provides
+  MetricsSystem getMetricsSystem() {
+    throw new RuntimeException("Abstract");
   }
 }
