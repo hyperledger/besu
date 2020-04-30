@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -39,6 +41,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   private final Subscribers<NodesAddedListener> nodeAddedListeners = Subscribers.create();
   private final KeyValueStorage keyValueStorage;
   private final ReentrantLock lock = new ReentrantLock();
+  private static final Logger LOG = LogManager.getLogger();
 
   public WorldStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
@@ -105,6 +108,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
                   keyValueStorage.tryDelete(key);
                   prunedKeys.incrementAndGet();
                 } catch (final IncompleteOperationException __) {
+                  LOG.trace("skipping key deletion");
                 }
               }
             } finally {
