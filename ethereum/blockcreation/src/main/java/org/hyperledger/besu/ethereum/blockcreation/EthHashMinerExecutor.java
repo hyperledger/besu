@@ -83,6 +83,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
                 gasLimitCalculator,
                 solver,
                 minTransactionGasPrice,
+                minBlockOccupancyRatio,
                 parentHeader);
 
     return new EthHashBlockMiner(

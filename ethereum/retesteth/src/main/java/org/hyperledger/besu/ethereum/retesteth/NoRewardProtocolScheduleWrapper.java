@@ -74,7 +74,8 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
         original.getPrecompileContractRegistry(),
         original.isSkipZeroBlockRewards(),
         original.getGasCalculator(),
-        original.getTransactionPriceCalculator());
+        original.getTransactionPriceCalculator(),
+        original.getEip1559());
   }
 
   @Override
