@@ -45,6 +45,7 @@ public interface DefaultCommandValues {
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
   Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+  Double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
   Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
   long DEFAULT_MAX_REFRESH_DELAY = 3600000;
   long DEFAULT_MIN_REFRESH_DELAY = 1;
@@ -70,6 +71,7 @@ public interface DefaultCommandValues {
   float DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
+  String DEFAULT_SECURITY_MODULE = "localfile";
 
   static Path getDefaultBesuDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Besu running shell script.

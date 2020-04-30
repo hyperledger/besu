@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -112,15 +113,19 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(0);
     assertThat(results.getReceipts().size()).isEqualTo(0);
-    assertThat(results.getCumulativeGasUsed()).isEqualTo(0);
+    assertThat(results.getFrontierCumulativeGasUsed()).isEqualTo(0);
   }
 
   @Test
@@ -148,8 +153,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -157,7 +166,7 @@ public class BlockTransactionSelectorTest {
     assertThat(results.getTransactions().size()).isEqualTo(1);
     Assertions.assertThat(results.getTransactions()).contains(transaction);
     assertThat(results.getReceipts().size()).isEqualTo(1);
-    assertThat(results.getCumulativeGasUsed()).isEqualTo(95L);
+    assertThat(results.getFrontierCumulativeGasUsed()).isEqualTo(95L);
   }
 
   @Test
@@ -202,8 +211,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -211,7 +224,7 @@ public class BlockTransactionSelectorTest {
     assertThat(results.getTransactions().size()).isEqualTo(4);
     assertThat(results.getTransactions().contains(transactionsToInject.get(1))).isFalse();
     assertThat(results.getReceipts().size()).isEqualTo(4);
-    assertThat(results.getCumulativeGasUsed()).isEqualTo(400);
+    assertThat(results.getFrontierCumulativeGasUsed()).isEqualTo(400);
   }
 
   @Test
@@ -243,8 +256,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -253,7 +270,7 @@ public class BlockTransactionSelectorTest {
 
     assertThat(results.getTransactions().containsAll(transactionsToInject.subList(0, 3))).isTrue();
     assertThat(results.getReceipts().size()).isEqualTo(3);
-    assertThat(results.getCumulativeGasUsed()).isEqualTo(300);
+    assertThat(results.getFrontierCumulativeGasUsed()).isEqualTo(300);
 
     // Ensure receipts have the correct cumulative gas
     Assertions.assertThat(results.getReceipts().get(0).getCumulativeGasUsed()).isEqualTo(100);
@@ -275,8 +292,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.of(6),
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final Transaction tx = createTransaction(1);
     pendingTransactions.addRemoteTransaction(tx);
@@ -308,8 +329,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
@@ -362,8 +387,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
@@ -420,8 +449,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction validTransaction =
@@ -500,8 +533,12 @@ public class BlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             Wei.ZERO,
+            0.8,
             isCancelled,
-            miningBeneficiary);
+            miningBeneficiary,
+            TransactionPriceCalculator.frontier(),
+            blockHeader::getBaseFee,
+            Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();

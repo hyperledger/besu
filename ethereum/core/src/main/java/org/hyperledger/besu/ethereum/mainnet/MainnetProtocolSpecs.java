@@ -360,7 +360,8 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions) {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-
+    final TransactionPriceCalculator transactionPriceCalculator =
+        TransactionPriceCalculator.eip1559();
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
@@ -385,9 +386,11 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     stackSizeLimit,
                     Account.DEFAULT_VERSION,
-                    TransactionPriceCalculator.eip1559(),
+                    transactionPriceCalculator,
                     CoinbaseFeePriceCalculator.eip1559()))
         .name("EIP-1559")
+        .transactionPriceCalculator(transactionPriceCalculator)
+        .eip1559(Optional.of(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));

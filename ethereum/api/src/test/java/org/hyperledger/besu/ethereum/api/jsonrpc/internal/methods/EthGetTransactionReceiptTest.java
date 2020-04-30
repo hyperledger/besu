@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -95,7 +96,9 @@ public class EthGetTransactionReceiptTest {
           BlockHeader::getCoinbase,
           null,
           false,
-          null);
+          null,
+          TransactionPriceCalculator.frontier(),
+          Optional.empty());
   private final ProtocolSpec<Void> statusTransactionTypeSpec =
       new ProtocolSpec<>(
           "status",
@@ -116,7 +119,9 @@ public class EthGetTransactionReceiptTest {
           BlockHeader::getCoinbase,
           null,
           false,
-          null);
+          null,
+          TransactionPriceCalculator.frontier(),
+          Optional.empty());
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);

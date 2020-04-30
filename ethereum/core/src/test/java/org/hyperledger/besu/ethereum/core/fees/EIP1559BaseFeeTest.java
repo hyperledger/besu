@@ -56,7 +56,7 @@ public class EIP1559BaseFeeTest {
           {MARKER_BASE_FEE, 5000, 918149673},
           {MARKER_BASE_FEE, 500000, 924641839},
           {MARKER_BASE_FEE, FEE_MARKET.getTargetGasUsed(), MARKER_BASE_FEE},
-          {MARKER_BASE_FEE, FEE_MARKET.getMaxGas(), 1127931889}
+          {MARKER_BASE_FEE, FEE_MARKET.getMaxGas(), 1180393837}
         });
   }
 

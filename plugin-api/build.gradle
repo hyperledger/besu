@@ -32,7 +32,6 @@ dependencies {
 }
 
 configurations { testArtifacts }
-artifacts { testSupportArtifacts testSupportJar }
 
 class FileStateChecker extends DefaultTask {
 
@@ -65,7 +64,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'doKb8cPvi1nrWJ2Mqi+D9Yw2lzFUMWm/LNcvJtuaGKw='
+  knownHash = 'wjORmE9I35CVqZIk78t8zgZUo9oIRy2fvu0x+CFnzaU='
 }
 check.dependsOn('checkAPIChanges')
 
