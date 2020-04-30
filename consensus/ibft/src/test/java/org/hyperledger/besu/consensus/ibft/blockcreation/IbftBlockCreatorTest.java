@@ -107,6 +107,7 @@ public class IbftBlockCreatorTest {
             protocolSchedule,
             parentGasLimit -> parentGasLimit,
             Wei.ZERO,
+            0.8,
             parentHeader);
 
     final int secondsBetweenBlocks = 1;

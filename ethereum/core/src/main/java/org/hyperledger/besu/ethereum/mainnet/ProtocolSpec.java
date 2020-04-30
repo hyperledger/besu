@@ -14,14 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+
+import java.util.Optional;
 
 /** A protocol specification. */
 public class ProtocolSpec<C> {
@@ -65,6 +69,8 @@ public class ProtocolSpec<C> {
 
   private final TransactionPriceCalculator transactionPriceCalculator;
 
+  private final Optional<EIP1559> eip1559;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -88,6 +94,7 @@ public class ProtocolSpec<C> {
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
    * @param gasCalculator the gas calculator to use.
    * @param transactionPriceCalculator the transaction price calculator to use.
+   * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    */
   public ProtocolSpec(
       final String name,
@@ -109,7 +116,8 @@ public class ProtocolSpec<C> {
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
       final GasCalculator gasCalculator,
-      final TransactionPriceCalculator transactionPriceCalculator) {
+      final TransactionPriceCalculator transactionPriceCalculator,
+      final Optional<EIP1559> eip1559) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -130,6 +138,7 @@ public class ProtocolSpec<C> {
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
+    this.eip1559 = eip1559;
   }
 
   /**
@@ -297,5 +306,18 @@ public class ProtocolSpec<C> {
    */
   public TransactionPriceCalculator getTransactionPriceCalculator() {
     return transactionPriceCalculator;
+  }
+
+  /**
+   * Returns the EIP1559 manager used in this specification.
+   *
+   * @return the {@link Optional} wrapping EIP-1559 manager
+   */
+  public Optional<EIP1559> getEip1559() {
+    return eip1559;
+  }
+
+  public boolean isEip1559() {
+    return ExperimentalEIPs.eip1559Enabled && eip1559.isPresent();
   }
 }

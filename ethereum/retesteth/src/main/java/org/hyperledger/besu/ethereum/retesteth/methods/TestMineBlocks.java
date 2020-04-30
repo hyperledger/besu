@@ -72,6 +72,7 @@ public class TestMineBlocks implements JsonRpcMethod {
             Functions.identity(),
             context.getEthHashSolver(),
             Wei.ZERO,
+            0.0,
             blockchain.getChainHeadHeader());
     final Block block = blockCreator.createBlock(retesethClock.instant().getEpochSecond());
 

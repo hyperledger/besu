@@ -30,6 +30,7 @@ public class MiningParameters {
   private final int stratumPort;
   private final String stratumExtranonce;
   private final Optional<Iterable<Long>> maybeNonceGenerator;
+  private final Double minBlockOccupancyRatio;
 
   public MiningParameters(
       final Address coinbase,
@@ -45,7 +46,8 @@ public class MiningParameters {
         "0.0.0.0",
         8008,
         "080c",
-        Optional.empty());
+        Optional.empty(),
+        0.8);
   }
 
   public MiningParameters(
@@ -57,7 +59,8 @@ public class MiningParameters {
       final String stratumNetworkInterface,
       final int stratumPort,
       final String stratumExtranonce,
-      final Optional<Iterable<Long>> maybeNonceGenerator) {
+      final Optional<Iterable<Long>> maybeNonceGenerator,
+      final Double minBlockOccupancyRatio) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
@@ -67,6 +70,7 @@ public class MiningParameters {
     this.stratumPort = stratumPort;
     this.stratumExtranonce = stratumExtranonce;
     this.maybeNonceGenerator = maybeNonceGenerator;
+    this.minBlockOccupancyRatio = minBlockOccupancyRatio;
   }
 
   public Optional<Address> getCoinbase() {
@@ -105,6 +109,10 @@ public class MiningParameters {
     return maybeNonceGenerator;
   }
 
+  public Double getMinBlockOccupancyRatio() {
+    return minBlockOccupancyRatio;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -117,7 +125,8 @@ public class MiningParameters {
         && Objects.equals(enabled, that.enabled)
         && Objects.equals(stratumMiningEnabled, that.stratumMiningEnabled)
         && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
-        && Objects.equals(stratumExtranonce, that.stratumExtranonce);
+        && Objects.equals(stratumExtranonce, that.stratumExtranonce)
+        && Objects.equals(minBlockOccupancyRatio, that.minBlockOccupancyRatio);
   }
 
   @Override
@@ -130,7 +139,8 @@ public class MiningParameters {
         stratumMiningEnabled,
         stratumNetworkInterface,
         stratumPort,
-        stratumExtranonce);
+        stratumExtranonce,
+        minBlockOccupancyRatio);
   }
 
   @Override

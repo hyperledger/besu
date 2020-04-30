@@ -132,6 +132,7 @@ public class CliqueBlockCreatorTest {
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -164,6 +165,7 @@ public class CliqueBlockCreatorTest {
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -195,6 +197,7 @@ public class CliqueBlockCreatorTest {
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -229,6 +232,7 @@ public class CliqueBlockCreatorTest {
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
