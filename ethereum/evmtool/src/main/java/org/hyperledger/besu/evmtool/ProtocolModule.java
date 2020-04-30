@@ -34,7 +34,8 @@ public class ProtocolModule {
   }
 
   @Provides
-  Function<Integer, GasCalculator>  provideGasCalculatorAtBlock(final ProtocolSchedule<?> protocolSchedule) {
+  Function<Integer, GasCalculator> provideGasCalculatorAtBlock(
+      final ProtocolSchedule<?> protocolSchedule) {
     return blockNum -> protocolSchedule.getByBlockNumber(blockNum).getGasCalculator();
   }
 }
