@@ -59,12 +59,14 @@ public class RlpBlockImporter {
    *
    * @param blocks Path to the file containing the blocks
    * @param besuController the BesuController that defines blockchain behavior
+   * @param skipPowValidation Skip proof of work validation (correct mix hash and difficulty)
    * @param <C> the consensus context type
    * @return the import result
    * @throws IOException On Failure
    */
   public <C> RlpBlockImporter.ImportResult importBlockchain(
-      final Path blocks, final BesuController<C> besuController) throws IOException {
+      final Path blocks, final BesuController<C> besuController, final boolean skipPowValidation)
+      throws IOException {
     final ProtocolSchedule<C> protocolSchedule = besuController.getProtocolSchedule();
     final ProtocolContext<C> context = besuController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
@@ -98,7 +100,8 @@ public class RlpBlockImporter {
 
         final CompletableFuture<Void> validationFuture =
             CompletableFuture.runAsync(
-                () -> validateBlock(protocolSpec, context, lastHeader, header), validationExecutor);
+                () -> validateBlock(protocolSpec, context, lastHeader, header, skipPowValidation),
+                validationExecutor);
 
         final CompletableFuture<Void> extractingFuture =
             CompletableFuture.runAsync(() -> extractSignatures(block));
@@ -119,7 +122,7 @@ public class RlpBlockImporter {
         previousBlockFuture =
             validationFuture.runAfterBothAsync(
                 calculationFutures,
-                () -> evaluateBlock(context, block, header, protocolSpec),
+                () -> evaluateBlock(context, block, header, protocolSpec, skipPowValidation),
                 importExecutor);
 
         ++count;
@@ -162,11 +165,17 @@ public class RlpBlockImporter {
       final ProtocolSpec<C> protocolSpec,
       final ProtocolContext<C> context,
       final BlockHeader previousHeader,
-      final BlockHeader header) {
+      final BlockHeader header,
+      final boolean skipPowValidation) {
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     final boolean validHeader =
         blockHeaderValidator.validateHeader(
-            header, previousHeader, context, HeaderValidationMode.DETACHED_ONLY);
+            header,
+            previousHeader,
+            context,
+            skipPowValidation
+                ? HeaderValidationMode.LIGHT_DETACHED_ONLY
+                : HeaderValidationMode.DETACHED_ONLY);
     if (!validHeader) {
       throw new IllegalStateException("Invalid header at block number " + header.getNumber() + ".");
     }
@@ -176,11 +185,18 @@ public class RlpBlockImporter {
       final ProtocolContext<C> context,
       final Block block,
       final BlockHeader header,
-      final ProtocolSpec<C> protocolSpec) {
+      final ProtocolSpec<C> protocolSpec,
+      final boolean skipPowValidation) {
     try {
       final BlockImporter<C> blockImporter = protocolSpec.getBlockImporter();
       final boolean blockImported =
-          blockImporter.importBlock(context, block, HeaderValidationMode.SKIP_DETACHED);
+          blockImporter.importBlock(
+              context,
+              block,
+              skipPowValidation
+                  ? HeaderValidationMode.LIGHT_SKIP_DETACHED
+                  : HeaderValidationMode.SKIP_DETACHED,
+              skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
       if (!blockImported) {
         throw new IllegalStateException(
             "Invalid block at block number " + header.getNumber() + ".");

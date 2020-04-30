@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.cli.error;
 
-import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigrationException;
-
 import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
-import picocli.CommandLine.ParameterException;
 
 public class BesuExceptionHandler
     extends CommandLine.AbstractHandler<List<Object>, BesuExceptionHandler>
@@ -42,15 +39,15 @@ public class BesuExceptionHandler
     } else {
       err().println(ex.getMessage());
     }
-    if (shouldPrintUsage(ex)) {
-      ex.getCommandLine().usage(err(), ansi());
-    }
-    return returnResultOrExit(null);
-  }
 
-  private boolean shouldPrintUsage(final ParameterException ex) {
-    return !CommandLine.UnmatchedArgumentException.printSuggestions(ex, err())
-        && !(ex.getCause() instanceof PrivateStorageMigrationException);
+    CommandLine.UnmatchedArgumentException.printSuggestions(ex, err());
+
+    // don't print full help, just the instructions required to get it
+    ex.getCommandLine().getErr().println();
+    ex.getCommandLine().getErr().println("To display full help:");
+    ex.getCommandLine().getErr().println("besu [COMMAND] --help");
+
+    return returnResultOrExit(null);
   }
 
   @Override

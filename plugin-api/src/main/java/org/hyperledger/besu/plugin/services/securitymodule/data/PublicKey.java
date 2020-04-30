@@ -12,24 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.crypto;
+package org.hyperledger.besu.plugin.services.securitymodule.data;
 
-import java.math.BigInteger;
+import org.hyperledger.besu.plugin.Unstable;
 
-public final class Signature {
-  private final BigInteger r;
-  private final BigInteger s;
+import java.security.spec.ECPoint;
 
-  public Signature(final BigInteger r, final BigInteger s) {
-    this.r = r;
-    this.s = s;
-  }
-
-  public BigInteger getR() {
-    return r;
-  }
-
-  public BigInteger getS() {
-    return s;
-  }
+/** Represents a PublicKey function which provides ECPoint */
+@Unstable
+@FunctionalInterface
+public interface PublicKey {
+  /** @return the public point W. */
+  ECPoint getW();
 }
