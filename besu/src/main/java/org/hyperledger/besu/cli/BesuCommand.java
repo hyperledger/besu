@@ -680,6 +680,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
+      names = {"--min-block-occupancy-ratio"},
+      description = "Minimum occupancy ratio for  a mined block (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+
+  @Option(
       names = {"--miner-extra-data"},
       description =
           "A hex string representing the (32) bytes to be included in the extra data "
@@ -866,12 +872,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path pidPath = null;
 
   @CommandLine.Option(
+      hidden = true,
       names = {"--Xsecp256k1-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
   private final Boolean nativeSecp256k1 = Boolean.TRUE;
 
   @CommandLine.Option(
+      hidden = true,
       names = {"--Xaltbn128-native-enabled"},
       description = "Path to PID file (optional)",
       arity = "1")
@@ -1034,6 +1042,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
     commandLine.registerConverter(Optional.class, Optional::of);
+    commandLine.registerConverter(Double.class, Double::parseDouble);
 
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
@@ -1215,6 +1224,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--miner-coinbase",
             "--min-gas-price",
+            "--min-block-occupancy-ratio",
             "--miner-extra-data",
             "--miner-stratum-enabled"));
 
@@ -1298,7 +1308,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumNetworkInterface,
                 stratumPort,
                 stratumExtranonce,
-                Optional.empty()))
+                Optional.empty(),
+                minBlockOccupancyRatio))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
@@ -1320,7 +1331,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--graphql-http-enabled",
-        !isRpcHttpEnabled,
+        !isGraphQLHttpEnabled,
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
 
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();

@@ -32,7 +32,6 @@ dependencies {
 }
 
 configurations { testArtifacts }
-artifacts { testSupportArtifacts testSupportJar }
 
 class FileStateChecker extends DefaultTask {
 

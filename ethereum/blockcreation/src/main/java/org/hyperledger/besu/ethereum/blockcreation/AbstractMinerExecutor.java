@@ -51,6 +51,7 @@ public abstract class AbstractMinerExecutor<
 
   protected volatile Bytes extraData;
   protected volatile Wei minTransactionGasPrice;
+  protected volatile Double minBlockOccupancyRatio;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -68,6 +69,7 @@ public abstract class AbstractMinerExecutor<
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.blockScheduler = blockScheduler;
     this.gasLimitCalculator = gasLimitCalculator;
+    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
   }
 
   public Optional<M> startAsyncMining(
