@@ -79,7 +79,7 @@ public interface Handshaker {
    *
    * @param nodeKey An object which represents our identity
    * @param theirPubKey The public key of the node we're handshaking with.
-   * @throws IllegalStateException Indicates that preparation had already occured.
+   * @throws IllegalStateException Indicates that preparation had already occurred.
    */
   void prepareInitiator(NodeKey nodeKey, SECP256K1.PublicKey theirPubKey);
 
@@ -91,7 +91,7 @@ public interface Handshaker {
    * already been prepared before, whether with the initiator or the responder role.
    *
    * @param nodeKey An object which represents our identity
-   * @throws IllegalStateException Indicates that preparation had already occured.
+   * @throws IllegalStateException Indicates that preparation had already occurred.
    */
   void prepareResponder(NodeKey nodeKey);
 

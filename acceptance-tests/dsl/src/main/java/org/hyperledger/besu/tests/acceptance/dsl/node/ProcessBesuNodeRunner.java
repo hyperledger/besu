@@ -363,7 +363,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (besuProcesses.containsKey(node.getName())) {
       killBesuProcess(node.getName());
     } else {
-      LOG.error("There was a request to stop an uknown node: {}", node.getName());
+      LOG.error("There was a request to stop an unknown node: {}", node.getName());
     }
   }
 
