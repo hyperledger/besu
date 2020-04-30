@@ -91,14 +91,17 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public void tryDelete(final byte[] key) {
+  public boolean tryDelete(final byte[] key) {
     final Lock lock = rwLock.writeLock();
-    lock.lock();
-    try {
-      hashValueStore.remove(Bytes.wrap(key));
-    } finally {
-      lock.unlock();
+    if (lock.tryLock()) {
+      try {
+        hashValueStore.remove(Bytes.wrap(key));
+      } finally {
+        lock.unlock();
+      }
+      return true;
     }
+    return false;
   }
 
   @Override

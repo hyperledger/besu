@@ -17,7 +17,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -135,13 +134,16 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public void tryDelete(final byte[] key) {
+  public boolean tryDelete(final byte[] key) {
     try {
       db.delete(tryDeleteOptions, key);
+      return true;
     } catch (RocksDBException e) {
-      throw e.getStatus().getCode() == Status.Code.Incomplete
-          ? new IncompleteOperationException("Couldn't immediately acquire a lock. Skipping.", e)
-          : new StorageException(e);
+      if (e.getStatus().getCode() == Status.Code.Incomplete) {
+        return false;
+      } else {
+        throw new StorageException(e);
+      }
     }
   }
 

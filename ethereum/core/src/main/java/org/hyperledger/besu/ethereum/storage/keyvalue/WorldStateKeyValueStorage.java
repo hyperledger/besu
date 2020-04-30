@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
@@ -41,7 +38,6 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   private final Subscribers<NodesAddedListener> nodeAddedListeners = Subscribers.create();
   private final KeyValueStorage keyValueStorage;
   private final ReentrantLock lock = new ReentrantLock();
-  private static final Logger LOG = LogManager.getLogger();
 
   public WorldStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
@@ -103,12 +99,9 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
           key -> {
             lock.lock();
             try {
-              if (!inUseCheck.test(key)) {
-                keyValueStorage.tryDelete(key);
+              if (!inUseCheck.test(key) && keyValueStorage.tryDelete(key)) {
                 prunedKeys.incrementAndGet();
               }
-            } catch (final IncompleteOperationException __) {
-              LOG.trace("skipping key deletion");
             } finally {
               lock.unlock();
             }

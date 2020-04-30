@@ -18,7 +18,6 @@ import static java.util.Objects.requireNonNullElse;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -175,13 +174,16 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public void tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
+  public boolean tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
     try {
       db.delete(segmentHandle, tryDeleteOptions, key);
+      return true;
     } catch (RocksDBException e) {
-      throw e.getStatus().getCode() == Status.Code.Incomplete
-          ? new IncompleteOperationException("Couldn't immediately acquire a lock. Skipping.", e)
-          : new StorageException(e);
+      if (e.getStatus().getCode() == Status.Code.Incomplete) {
+        return false;
+      } else {
+        throw new StorageException(e);
+      }
     }
   }
 

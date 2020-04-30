@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.services.storage;
 
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
@@ -71,15 +70,15 @@ public interface KeyValueStorage extends Closeable {
   Stream<byte[]> streamKeys() throws StorageException;
 
   /**
-   * Attempt to delete the value corresponding to the given key. For some storage mediums we want to
-   * be able to abandon the delete under certain circumstances. For example, to abandon the attempt
-   * if we can't acquire a lock on the underlying storage.
+   * Delete the value corresponding to the given key if a write lock can be instantly acquired on
+   * the underlying storage. Do nothing otherwise.
    *
    * @param key The key to delete.
-   * @throws IncompleteOperationException the operation was incomplete and the key was not deleted
-   * @throws StorageException any other problem encountered during the deletion attempt.
+   * @throws StorageException any problem encountered during the deletion attempt.
+   * @return false if the lock on the underlying storage could not be instantly acquired, true
+   *     otherwise
    */
-  void tryDelete(byte[] key) throws IncompleteOperationException, StorageException;
+  boolean tryDelete(byte[] key) throws StorageException;
 
   /**
    * Performs an evaluation against each key in the store, returning the set of entries that pass.

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
-import org.hyperledger.besu.plugin.services.exception.IncompleteOperationException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
@@ -60,17 +59,16 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   Stream<byte[]> streamKeys(final S segmentHandle);
 
   /**
-   * Attempt to delete the value corresponding to the given key in the given segment. For some
-   * storage mediums we want to be able to abandon the delete under certain circumstances. For
-   * example, to abandon the attempt if we can't acquire a lock on the underlying storage.
+   * Delete the value corresponding to the given key in the given segment if a write lock can be
+   * instantly acquired on the underlying storage. Do nothing otherwise.
    *
-   * @param segmentHandle The segment from which we want to delete
+   * @param segmentHandle The segment handle whose keys we want to stream.
    * @param key The key to delete.
-   * @throws IncompleteOperationException the operation was incomplete and the key was not deleted
-   * @throws StorageException any other problem encountered during the deletion attempt.
+   * @throws StorageException any problem encountered during the deletion attempt.
+   * @return false if the lock on the underlying storage could not be instantly acquired, true
+   *     otherwise
    */
-  void tryDelete(final S segmentHandle, byte[] key)
-      throws IncompleteOperationException, StorageException;
+  boolean tryDelete(S segmentHandle, byte[] key) throws StorageException;
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
