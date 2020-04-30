@@ -117,7 +117,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -157,7 +156,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -215,7 +213,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -260,7 +257,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -296,7 +292,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final Transaction tx = createTransaction(1);
@@ -333,7 +328,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
@@ -391,7 +385,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
@@ -453,7 +446,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
@@ -537,7 +529,6 @@ public class BlockTransactionSelectorTest {
             isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
-            blockHeader::getBaseFee,
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
