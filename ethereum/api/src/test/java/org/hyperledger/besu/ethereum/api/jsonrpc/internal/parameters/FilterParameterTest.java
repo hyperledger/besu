@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -137,6 +138,26 @@ public class FilterParameterTest {
 
     assertThat(parsedFilterParameter)
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+  }
+
+  @Test
+  public void jsonWithFromAndToParametersDeserializersCorrectly() throws Exception {
+    final String jsonWithSingleAddress =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "]}],\"id\":1}";
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter.getFromBlock()).isEqualTo(new BlockParameter(0));
+    assertThat(parsedFilterParameter.getToBlock()).isEqualTo(BlockParameter.PENDING);
   }
 
   @Test
@@ -313,6 +334,18 @@ public class FilterParameterTest {
             List.of(LogTopic.fromHexString(TOPIC_FOUR), LogTopic.fromHexString(TOPIC_FIVE)));
   }
 
+  @Test
+  public void throwsExceptionOnInvaldParameters() throws IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter(
+            "{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "," + TOPICS_FOUR_FIVE_ARRAY + "]}");
+
+    assertThat(filterParameter.getTopics())
+        .containsExactly(
+            List.of(LogTopic.fromHexString(TOPIC_TWO), LogTopic.fromHexString(TOPIC_THREE)),
+            List.of(LogTopic.fromHexString(TOPIC_FOUR), LogTopic.fromHexString(TOPIC_FIVE)));
+  }
+
   private <T> FilterParameter createFilterWithTopics(final T inputTopics)
       throws JsonProcessingException {
     final Map<String, T> payload = new HashMap<>();
@@ -324,8 +357,8 @@ public class FilterParameterTest {
 
   private FilterParameter filterParameterWithAddresses(final String... addresses) {
     return new FilterParameter(
-        "latest",
-        "latest",
+        BlockParameter.LATEST,
+        BlockParameter.LATEST,
         Arrays.stream(addresses).map(Address::fromHexString).collect(toUnmodifiableList()),
         null,
         null);
@@ -333,8 +366,8 @@ public class FilterParameterTest {
 
   private FilterParameter filterParameterWithSingleListOfTopics(final String... topics) {
     return new FilterParameter(
-        "latest",
-        "latest",
+        BlockParameter.LATEST,
+        BlockParameter.LATEST,
         singletonList(Address.fromHexString("0x0")),
         singletonList(
             Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList())),
@@ -346,7 +379,11 @@ public class FilterParameterTest {
         Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList());
     List<List<LogTopic>> topicsListList = Arrays.asList(topicsList, topicsList);
     return new FilterParameter(
-        "latest", "latest", singletonList(Address.fromHexString("0x0")), topicsListList, null);
+        BlockParameter.LATEST,
+        BlockParameter.LATEST,
+        singletonList(Address.fromHexString("0x0")),
+        topicsListList,
+        null);
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String jsonWithSingleAddress)

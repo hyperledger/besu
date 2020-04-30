@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -40,18 +41,20 @@ public class EthGetLogs implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
-    final LogsQuery query =
-        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
-
-    if (isValid(filter)) {
+    final FilterParameter filter;
+    final LogsQuery query;
+    try {
+      filter = requestContext.getRequiredParameter(0, FilterParameter.class);
+      query = new LogsQuery(filter.getAddresses(), filter.getTopics());
+    } catch (InvalidJsonRpcParameters __) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-    if (filter.getBlockhash() != null) {
+
+    if (filter.getMaybeBlockHash().isPresent()) {
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new LogsResult(blockchain.matchingLogs(filter.getBlockhash(), query)));
+          new LogsResult(blockchain.matchingLogs(filter.getMaybeBlockHash().get(), query)));
     }
 
     final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
@@ -60,11 +63,5 @@ public class EthGetLogs implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         new LogsResult(blockchain.matchingLogs(fromBlockNumber, toBlockNumber, query)));
-  }
-
-  private boolean isValid(final FilterParameter filter) {
-    return !filter.getFromBlock().isLatest()
-        && !filter.getToBlock().isLatest()
-        && filter.getBlockhash() != null;
   }
 }

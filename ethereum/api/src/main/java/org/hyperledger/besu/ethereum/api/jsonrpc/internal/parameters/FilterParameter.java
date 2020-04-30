@@ -16,11 +16,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static java.util.Collections.emptyList;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -34,23 +38,27 @@ public class FilterParameter {
   private final BlockParameter toBlock;
   private final List<Address> addresses;
   private final List<List<LogTopic>> topics;
-  private final Hash blockhash;
+  private final Optional<Hash> maybeBlockHash;
+  private final LogsQuery logsQuery;
 
   @JsonCreator
   public FilterParameter(
-      @JsonProperty("fromBlock") final String fromBlock,
-      @JsonProperty("toBlock") final String toBlock,
+      @JsonProperty("fromBlock") final BlockParameter fromBlock,
+      @JsonProperty("toBlock") final BlockParameter toBlock,
       @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY) @JsonProperty("address")
           final List<Address> address,
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics,
-      @JsonProperty("blockhash") final String blockhash) {
-    this.fromBlock =
-        fromBlock != null ? new BlockParameter(fromBlock) : new BlockParameter("latest");
-    this.toBlock = toBlock != null ? new BlockParameter(toBlock) : new BlockParameter("latest");
+      @JsonProperty("blockhash") final Hash blockHash) {
+    if (blockHash != null && (fromBlock != null || toBlock != null))
+      throw new InvalidJsonRpcParameters(
+          "If blockHash is present in the filter criteria, then neither fromBlock nor toBlock are allowed.");
+    this.fromBlock = fromBlock == null ? new BlockParameter("latest") : fromBlock;
+    this.toBlock = toBlock == null ? new BlockParameter("latest") : toBlock;
     this.addresses = address != null ? address : emptyList();
     this.topics = topics != null ? topics : emptyList();
-    this.blockhash = blockhash != null ? Hash.fromHexString(blockhash) : null;
+    this.logsQuery = new LogsQuery(addresses, topics);
+    this.maybeBlockHash = Optional.ofNullable(blockHash);
   }
 
   public BlockParameter getFromBlock() {
@@ -69,16 +77,30 @@ public class FilterParameter {
     return topics;
   }
 
-  public Hash getBlockhash() {
-    return blockhash;
+  public Optional<Hash> getMaybeBlockHash() {
+    return maybeBlockHash;
   }
 
-  public boolean isValid() {
-    if (!getFromBlock().isLatest() && !getToBlock().isLatest() && getBlockhash() != null) {
-      return false;
-    }
+  public LogsQuery getLogsQuery() {
+    return logsQuery;
+  }
 
-    return true;
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FilterParameter that = (FilterParameter) o;
+    return fromBlock.equals(that.fromBlock)
+        && toBlock.equals(that.toBlock)
+        && addresses.equals(that.addresses)
+        && topics.equals(that.topics)
+        && maybeBlockHash.equals(that.maybeBlockHash)
+        && logsQuery.equals(that.logsQuery);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(fromBlock, toBlock, addresses, topics, maybeBlockHash, logsQuery);
   }
 
   @Override
@@ -88,7 +110,7 @@ public class FilterParameter {
         .add("toBlock", toBlock)
         .add("addresses", addresses)
         .add("topics", topics)
-        .add("blockhash", blockhash)
+        .add("blockHash", maybeBlockHash)
         .toString();
   }
 }
