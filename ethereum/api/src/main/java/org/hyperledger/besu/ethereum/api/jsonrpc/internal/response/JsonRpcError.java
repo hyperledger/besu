@@ -65,7 +65,7 @@ public enum JsonRpcError {
   // Account errors
   NO_ACCOUNT_FOUND(-32000, "Account not found"),
 
-  // Worldstate erros
+  // Worldstate errors
   WORLD_STATE_UNAVAILABLE(-32000, "World state unavailable"),
 
   // Debug failures

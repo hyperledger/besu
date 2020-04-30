@@ -56,6 +56,13 @@ commands:
       - store_test_results:
           path: build/test-results
 
+  capture_test_logs:
+    description: "Capture test logs"
+    steps:
+      - store_artifacts:
+          path: acceptance-tests/tests/build/acceptanceTestLogs
+          destination: acceptance-tests-logs
+
 jobs:
   assemble:
     executor: besu_executor_xl
@@ -152,6 +159,7 @@ jobs:
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
             ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
+      - capture_test_logs
 
   buildDocker:
     executor: besu_executor_med
