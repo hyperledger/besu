@@ -37,12 +37,17 @@ import picocli.CommandLine.RunLast;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CommandLineUtilsTest {
-  @Mock Logger mockLogger;
+  @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
+  @Mock
+  Logger mockLogger;
 
   @Command(description = "This command is for testing.", name = "testcommand")
   private abstract static class AbstractTestCommand implements Runnable {
 
+    // inner class is needed for testing, so field can't be static
+    @SuppressWarnings("PrivateStaticFinalLoggers")
     final Logger logger;
+
     final CommandLine commandLine;
 
     AbstractTestCommand(final Logger logger) {

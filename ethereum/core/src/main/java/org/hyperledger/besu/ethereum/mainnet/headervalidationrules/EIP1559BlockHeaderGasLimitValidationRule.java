@@ -23,7 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EIP1559BlockHeaderGasLimitValidationRule implements DetachedBlockHeaderValidationRule {
-  private final Logger LOG = LogManager.getLogger(EIP1559BlockHeaderGasLimitValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final EIP1559 eip1559;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
 
