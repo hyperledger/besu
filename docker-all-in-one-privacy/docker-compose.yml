@@ -1,0 +1,15 @@
+---
+version: '3.6'
+
+services:
+  besu-aio:
+    image: "besu-all-in-one:latest"
+    environment:
+      - LOG4J_CONFIGURATION_FILE=/config/log-config.xml
+      - BESU_PUBLIC_KEY_DIRECTORY=/opt/besu/public-keys/
+    ports:
+      - 8545:8545/tcp # besu RPC - HTTP
+      - 8546:8546/tcp # besu RPC - WebSocket
+      - 8888:8888/tcp # orion - HTTP
+      - 9001:9001/tcp # supervisord - HTTP
+      - 9545:9545/tcp # besu metrics

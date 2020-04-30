@@ -1,0 +1,12 @@
+---
+# static Dockerfile tests
+
+# ensure there are env vars set in the dockerfile
+file:
+  /goss/Dockerfile:
+    exists: true
+    contains:
+      - "/ENV BESU_RPC_HTTP_HOST 0.0.0.0/"
+      - "/ENV BESU_RPC_WS_HOST 0.0.0.0/"
+      - "/ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0/"
+

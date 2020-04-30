@@ -1,0 +1,27 @@
+---
+# runtime docker tests
+file:
+  /opt/besu/bin/besu:
+    exists: true
+    mode: "0755"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+  /opt/besu/database:
+    exists: true
+    mode: "0755"
+    owner: root
+    group: root
+    filetype: directory
+    contains: []
+  /opt/besu/key:
+    exists: true
+    mode: "0600"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+process:
+  java:
+    running: true

@@ -1,0 +1,23 @@
+---
+# runtime docker tests for interfaces & ports
+port:
+  tcp:30303:
+    listening: true
+    ip:
+    - 0.0.0.0
+  udp:30303:
+    listening: true
+    ip:
+      - 0.0.0.0
+  tcp:8545:
+    listening: true
+    ip:
+      - 0.0.0.0
+  tcp:8546:
+    listening: true
+    ip:
+      - 0.0.0.0
+  tcp:8547:
+    listening: true
+    ip:
+      - 0.0.0.0
