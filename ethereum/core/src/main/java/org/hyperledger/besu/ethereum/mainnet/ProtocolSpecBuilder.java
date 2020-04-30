@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -63,6 +65,7 @@ public class ProtocolSpecBuilder<T> {
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
   private TransactionPriceCalculator transactionPriceCalculator =
       TransactionPriceCalculator.frontier();
+  private Optional<EIP1559> eip1559 = Optional.empty();
 
   public ProtocolSpecBuilder<T> gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -249,6 +252,11 @@ public class ProtocolSpecBuilder<T> {
     return this;
   }
 
+  public ProtocolSpecBuilder<T> eip1559(final Optional<EIP1559> eip1559) {
+    this.eip1559 = eip1559;
+    return this;
+  }
+
   public ProtocolSpec<T> build(final ProtocolSchedule<T> protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -273,6 +281,7 @@ public class ProtocolSpecBuilder<T> {
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(transactionPriceCalculator, "Missing transaction price calculator");
+    checkNotNull(eip1559, "Missing eip1559 optional wrapper");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final EVM evm = evmBuilder.apply(gasCalculator);
@@ -359,7 +368,8 @@ public class ProtocolSpecBuilder<T> {
         precompileContractRegistry,
         skipZeroBlockRewards,
         gasCalculator,
-        transactionPriceCalculator);
+        transactionPriceCalculator,
+        eip1559);
   }
 
   public interface TransactionProcessorBuilder {
