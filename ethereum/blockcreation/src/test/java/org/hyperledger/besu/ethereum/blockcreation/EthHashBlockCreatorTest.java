@@ -96,6 +96,7 @@ public class EthHashBlockCreatorTest {
             gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
+            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     // A Hashrate should not exist in the block creator prior to creating a block
@@ -146,6 +147,7 @@ public class EthHashBlockCreatorTest {
             gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
+            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     blockCreator.createBlock(BLOCK_1_TIMESTAMP);
@@ -191,6 +193,7 @@ public class EthHashBlockCreatorTest {
             gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
+            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     final MutableWorldState mutableWorldState =
@@ -252,6 +255,7 @@ public class EthHashBlockCreatorTest {
             gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
+            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     final MutableWorldState mutableWorldState =
