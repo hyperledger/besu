@@ -51,8 +51,8 @@ public class FilterParameter {
           final List<List<LogTopic>> topics,
       @JsonProperty("blockhash") final Hash blockHash) {
     this.isValid = blockHash == null || (fromBlock == null && toBlock == null);
-    this.fromBlock = fromBlock == null ? new BlockParameter("latest") : fromBlock;
-    this.toBlock = toBlock == null ? new BlockParameter("latest") : toBlock;
+    this.fromBlock = fromBlock != null ? fromBlock : BlockParameter.LATEST;
+    this.toBlock = toBlock != null ? toBlock : BlockParameter.LATEST;
     this.addresses = address != null ? address : emptyList();
     this.topics = topics != null ? topics : emptyList();
     this.logsQuery = new LogsQuery(addresses, topics);
