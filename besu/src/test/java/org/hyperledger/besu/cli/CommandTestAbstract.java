@@ -35,12 +35,12 @@ import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -59,11 +59,11 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -82,6 +82,7 @@ import io.vertx.core.VertxOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
@@ -100,7 +101,7 @@ import picocli.CommandLine.RunLast;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class CommandTestAbstract {
 
-  private final Logger TEST_LOGGER = LogManager.getLogger();
+  private static final Logger TEST_LOGGER = LogManager.getLogger();
 
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
   private final PrintStream outPrintStream = new PrintStream(commandOutput);
@@ -110,6 +111,7 @@ public abstract class CommandTestAbstract {
   private final HashMap<String, String> environment = new HashMap<>();
 
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
+  private SECP256K1.KeyPair keyPair;
 
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
@@ -126,17 +128,20 @@ public abstract class CommandTestAbstract {
   @Mock protected JsonBlockImporter<?> jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
+  @Mock protected SecurityModuleServiceImpl securityModuleService;
   @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
-
-  @Mock protected Logger mockLogger;
+  @Mock protected NodeKey nodeKey;
   @Mock protected BesuPluginContextImpl mockBesuPluginContext;
+
+  @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
+  @Mock
+  protected Logger mockLogger;
 
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
-  @Captor protected ArgumentCaptor<File> fileArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Float> floatCaptor;
@@ -163,7 +168,6 @@ public abstract class CommandTestAbstract {
 
   @Before
   public void initMocks() throws Exception {
-
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
         .when(mockControllerBuilderFactory)
@@ -174,7 +178,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataDirectory(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.nodePrivateKeyFile(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.nodeKey(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
@@ -194,6 +198,7 @@ public abstract class CommandTestAbstract {
     lenient()
         .when(mockController.getAdditionalPluginServices())
         .thenReturn(new NoopPluginServiceFactory());
+    lenient().when(mockController.getNodeKey()).thenReturn(nodeKey);
 
     when(mockEthProtocolManager.getBlockBroadcaster()).thenReturn(mockBlockBroadcaster);
 
@@ -225,6 +230,12 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.autoLogBloomCaching(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.pidPath(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
+
+    final Bytes32 keyPairPrvKey =
+        Bytes32.fromHexString("0xf7a58d5e755d51fa2f6206e91dd574597c73248aaf946ec1964b8c6268d6207b");
+    keyPair = SECP256K1.KeyPair.create(SECP256K1.PrivateKey.create(keyPairPrvKey));
+
+    lenient().when(nodeKey.getPublicKey()).thenReturn(keyPair.getPublicKey());
 
     lenient()
         .when(storageService.getByName(eq("rocksdb")))
@@ -258,6 +269,10 @@ public abstract class CommandTestAbstract {
     besuCommands.forEach(TestBesuCommand::close);
   }
 
+  protected NodeKey getNodeKey() {
+    return nodeKey;
+  }
+
   protected void setEnvironemntVariable(final String name, final String value) {
     environment.put(name, value);
   }
@@ -266,37 +281,29 @@ public abstract class CommandTestAbstract {
     return parseCommand(System.in, args);
   }
 
-  protected TestBesuCommand parseCommand(
-      final PublicKeySubCommand.KeyLoader keyLoader, final String... args) {
-    return parseCommand(keyLoader, System.in, args);
-  }
-
-  protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
-    return parseCommand(f -> KeyPair.generate(), in, args);
-  }
-
   @SuppressWarnings("unchecked")
   private <T> JsonBlockImporter<T> jsonBlockImporterFactory(final BesuController<T> controller) {
     return (JsonBlockImporter<T>) jsonBlockImporter;
   }
 
-  private TestBesuCommand parseCommand(
-      final PublicKeySubCommand.KeyLoader keyLoader, final InputStream in, final String... args) {
+  protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
 
     final TestBesuCommand besuCommand =
         new TestBesuCommand(
             mockLogger,
+            nodeKey,
+            keyPair,
             rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
-            keyLoader,
             mockBesuPluginContext,
             environment,
-            storageService);
+            storageService,
+            securityModuleService);
     besuCommands.add(besuCommand);
 
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
@@ -314,25 +321,23 @@ public abstract class CommandTestAbstract {
   public static class TestBesuCommand extends BesuCommand {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
-    private final PublicKeySubCommand.KeyLoader keyLoader;
     private Vertx vertx;
-
-    @Override
-    protected PublicKeySubCommand.KeyLoader getKeyLoader() {
-      return keyLoader;
-    }
+    private final NodeKey mockNodeKey;
+    private final SECP256K1.KeyPair keyPair;
 
     TestBesuCommand(
         final Logger mockLogger,
+        final NodeKey mockNodeKey,
+        final SECP256K1.KeyPair keyPair,
         final RlpBlockImporter mockBlockImporter,
         final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
         final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
-        final PublicKeySubCommand.KeyLoader keyLoader,
         final BesuPluginContextImpl besuPluginContext,
         final Map<String, String> environment,
-        final StorageServiceImpl storageService) {
+        final StorageServiceImpl storageService,
+        final SecurityModuleServiceImpl securityModuleService) {
       super(
           mockLogger,
           mockBlockImporter,
@@ -342,8 +347,10 @@ public abstract class CommandTestAbstract {
           controllerBuilderFactory,
           besuPluginContext,
           environment,
-          storageService);
-      this.keyLoader = keyLoader;
+          storageService,
+          securityModuleService);
+      this.mockNodeKey = mockNodeKey;
+      this.keyPair = keyPair;
     }
 
     @Override
@@ -355,6 +362,18 @@ public abstract class CommandTestAbstract {
     protected Vertx createVertx(final VertxOptions vertxOptions) {
       vertx = super.createVertx(vertxOptions);
       return vertx;
+    }
+
+    @Override
+    NodeKey buildNodeKey() {
+      // for testing.
+      return mockNodeKey;
+    }
+
+    @Override
+    SECP256K1.KeyPair loadKeyPair() {
+      // for testing.
+      return keyPair;
     }
 
     public CommandSpec getSpec() {

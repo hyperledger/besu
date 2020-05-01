@@ -46,6 +46,7 @@ public class IbftBlockCreatorFactory {
 
   private volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
+  private volatile Double minBlockOccupancyRatio;
 
   public IbftBlockCreatorFactory(
       final Function<Long, Long> gasLimitCalculator,
@@ -60,6 +61,7 @@ public class IbftBlockCreatorFactory {
     this.protocolSchedule = protocolSchedule;
     this.localAddress = localAddress;
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
+    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
   }
 
@@ -72,6 +74,7 @@ public class IbftBlockCreatorFactory {
         protocolSchedule,
         gasLimitCalculator,
         minTransactionGasPrice,
+        minBlockOccupancyRatio,
         parentHeader);
   }
 

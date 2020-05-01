@@ -66,7 +66,8 @@ public class BesuNodeFactory {
         config.getPlugins(),
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
-        config.getPrivacyParameters());
+        config.getPrivacyParameters(),
+        config.getRunCommand());
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
@@ -358,5 +359,9 @@ public class BesuNodeFactory {
             .staticNodes(staticNodesUrls)
             .bootnodeEligible(false)
             .build());
+  }
+
+  public BesuNode runCommand(final String command) throws IOException {
+    return create(new BesuNodeConfigurationBuilder().name("run " + command).run(command).build());
   }
 }

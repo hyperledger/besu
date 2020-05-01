@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 // https://github.com/keep-network/go-ethereum/pull/4
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
-  public static Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
     super("BLAKE2f", gasCalculator);

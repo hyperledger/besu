@@ -48,6 +48,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
       final Function<Long, Long> gasLimitCalculator,
       final EthHashSolver nonceSolver,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         coinbase,
@@ -58,6 +59,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
         gasLimitCalculator,
         minTransactionGasPrice,
         coinbase,
+        minBlockOccupancyRatio,
         parentHeader);
 
     this.nonceSolver = nonceSolver;

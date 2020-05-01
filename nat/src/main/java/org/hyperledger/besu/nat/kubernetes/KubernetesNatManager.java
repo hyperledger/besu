@@ -45,7 +45,7 @@ import org.apache.logging.log4j.Logger;
  * support for Kubernetes’s NAT implementation when Besu is being run from a Kubernetes cluster
  */
 public class KubernetesNatManager extends AbstractNatManager {
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final String DEFAULT_BESU_POD_NAME_FILTER = "besu";
 

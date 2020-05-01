@@ -138,6 +138,11 @@ public class BlocksSubCommand implements Runnable {
         arity = "1..1")
     private final Long startTime = System.currentTimeMillis() / 1000;
 
+    @Option(
+        names = "--skip-pow-validation-enabled",
+        description = "Skip proof of work validation when importing.")
+    private final Boolean skipPow = false;
+
     @SuppressWarnings("unused")
     @Spec
     private CommandSpec spec;
@@ -215,7 +220,8 @@ public class BlocksSubCommand implements Runnable {
           "0.0.0.0",
           8008,
           "080c",
-          Optional.of(new IncrementingNonceGenerator(0)));
+          Optional.of(new IncrementingNonceGenerator(0)),
+          0.0);
     }
 
     private <T> void importJsonBlocks(final BesuController<T> controller, final Path path)
@@ -228,7 +234,7 @@ public class BlocksSubCommand implements Runnable {
 
     private <T> void importRlpBlocks(final BesuController<T> controller, final Path path)
         throws IOException {
-      parentCommand.rlpBlockImporter.importBlockchain(path, controller);
+      parentCommand.rlpBlockImporter.importBlockchain(path, controller, skipPow);
     }
   }
 
