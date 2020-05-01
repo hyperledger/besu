@@ -74,7 +74,7 @@ public class CapabilityMultiplexer {
    * message code to the appropriate value.
    *
    * @param receivedMessage The message received from a peer.
-   * @return The intepreted message.
+   * @return The interpreted message.
    */
   public ProtocolMessage demultiplex(final MessageData receivedMessage) {
     final Entry<Range<Integer>, Capability> agreedCap =

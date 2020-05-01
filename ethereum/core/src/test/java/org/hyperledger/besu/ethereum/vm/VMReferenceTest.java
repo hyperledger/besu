@@ -173,7 +173,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
           .isTrue();
     } else {
       // This is normally performed when the message processor executing the VM
-      // executes to completion successfuly.
+      // executes to completion successfully.
       frame.getWorldState().commit();
 
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
