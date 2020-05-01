@@ -141,7 +141,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void jsonWithFromAndToParametersDeserializersCorrectly() throws Exception {
+  public void jsonWithFromAndToParametersDeserializesCorrectly() throws Exception {
     final String jsonWithSingleAddress =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
             + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
