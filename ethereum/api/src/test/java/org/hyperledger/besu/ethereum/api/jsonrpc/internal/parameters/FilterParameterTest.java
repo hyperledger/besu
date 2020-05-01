@@ -22,9 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -142,7 +142,7 @@ public class FilterParameterTest {
 
   @Test
   public void jsonWithFromAndToParametersDeserializesCorrectly() throws Exception {
-    final String jsonWithSingleAddress =
+    final String json =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
             + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
             + "\"topics\":["
@@ -151,13 +151,32 @@ public class FilterParameterTest {
             + TOPICS_TWO_THREE_ARRAY
             + "]}],\"id\":1}";
 
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter.getFromBlock()).isEqualTo(new BlockParameter(0));
     assertThat(parsedFilterParameter.getToBlock()).isEqualTo(BlockParameter.PENDING);
+  }
+
+  @Test
+  public void jsonWithBlockAndFromAndToParametersIsInvalid() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockhash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter.isValid()).isFalse();
   }
 
   @Test
@@ -324,18 +343,6 @@ public class FilterParameterTest {
   @Test
   public void twoTopicsInFirstAndSecondPositionShouldDeserializeAsTwoListsOfTopics()
       throws java.io.IOException {
-    final FilterParameter filterParameter =
-        readJsonAsFilterParameter(
-            "{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "," + TOPICS_FOUR_FIVE_ARRAY + "]}");
-
-    assertThat(filterParameter.getTopics())
-        .containsExactly(
-            List.of(LogTopic.fromHexString(TOPIC_TWO), LogTopic.fromHexString(TOPIC_THREE)),
-            List.of(LogTopic.fromHexString(TOPIC_FOUR), LogTopic.fromHexString(TOPIC_FIVE)));
-  }
-
-  @Test
-  public void throwsExceptionOnInvaldParameters() throws IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter(
             "{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "," + TOPICS_FOUR_FIVE_ARRAY + "]}");
