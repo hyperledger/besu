@@ -232,20 +232,22 @@ public class PrivateGroupRehydrationBlockProcessor {
     if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
       // inject management
       final DefaultEvmAccount managementPrecompile =
-          privateWorldStateUpdater.createAccount(Address.DEFAULT_PRIVACY_MANAGEMENT);
+          privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
       final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
       // this is the code for the simple management contract
-      mutableManagementPrecompiled.setCode(OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_CODE);
+      mutableManagementPrecompiled.setCode(
+          OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
       final DefaultEvmAccount proxyPrecompile =
-          privateWorldStateUpdater.createAccount(Address.PRIVACY_PROXY);
+          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY);
       final MutableAccount mutableProxyPrecompiled = proxyPrecompile.getMutable();
       // this is the code for the proxy contract
-      mutableProxyPrecompiled.setCode(OnChainGroupManagement.DEFAULT_PROXY_PRECOMPILED_CODE);
+      mutableProxyPrecompiled.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
       mutableProxyPrecompiled.setStorageValue(
-          UInt256.ZERO, UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_PRIVACY_MANAGEMENT)));
+          UInt256.ZERO,
+          UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
 
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist();
