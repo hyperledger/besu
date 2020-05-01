@@ -18,12 +18,10 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
 import java.io.IOException;
@@ -34,7 +32,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
@@ -173,17 +170,6 @@ public class FilterParameterTest {
 
     assertThat(readJsonAsFilterParameter(jsonWithTopicsFirst))
         .isEqualToComparingFieldByFieldRecursively(readJsonAsFilterParameter(jsonWithTopicsLast));
-  }
-
-  @Test
-  public void jsonSpecifyingBlockHashAndRangeShouldThrowIllegalArgumentException() {
-    final String invalidJson =
-        "{\"address\":\"0x8CdaF0CD259887258Bc13a92C0a6dA92698644C0\",\"fromBlock\":\"earliest\",\"toBlock\":\"latest\",\"topics\":[\"0x492e34c7da2a87c57444aa0f6143558999bceec63065f04557cfb20932e0d591\"], \"blockhash\": \""
-            + Hash.ZERO.toHexString()
-            + "\"}";
-
-    assertThatThrownBy(() -> readJsonAsFilterParameter(invalidJson))
-        .isInstanceOf(ValueInstantiationException.class);
   }
 
   @Test
