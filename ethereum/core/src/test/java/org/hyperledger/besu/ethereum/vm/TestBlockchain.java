@@ -44,7 +44,7 @@ import org.apache.tuweni.bytes.Bytes;
  * lookup blocks by number since the block being processed may not be on the canonical chain but
  * that must not affect the execution of its transactions.
  *
- * <p>The Ethereum reference tests for VM exection (VMTests) and transaction processing
+ * <p>The Ethereum reference tests for VM execution (VMTests) and transaction processing
  * (GeneralStateTests) require a block's hash to be to be the hash of the string of it's block
  * number.
  */

@@ -188,6 +188,8 @@ import picocli.CommandLine.ParameterException;
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
 
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  // non-static for testing
   private final Logger logger;
 
   private CommandLine commandLine;
