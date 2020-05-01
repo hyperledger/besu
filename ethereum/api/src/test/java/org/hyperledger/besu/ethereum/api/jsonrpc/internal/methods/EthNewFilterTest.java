@@ -28,10 +28,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
 import java.util.Collections;
@@ -157,6 +160,26 @@ public class EthNewFilterTest {
     verify(filterManager)
         .installLogFilter(
             refEq(BlockParameter.LATEST), refEq(BlockParameter.LATEST), eq(expectedLogsQuery));
+  }
+
+  @Test
+  public void filterWithInvalidParameters() {
+    final FilterParameter invalidFilter =
+        new FilterParameter(
+            BlockParameter.EARLIEST,
+            BlockParameter.LATEST,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Hash.ZERO);
+
+    final JsonRpcRequestContext request = ethNewFilter(invalidFilter);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private List<List<LogTopic>> topics() {
