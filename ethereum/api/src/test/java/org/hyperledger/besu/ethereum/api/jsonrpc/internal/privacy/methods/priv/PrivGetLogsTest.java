@@ -29,9 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -100,26 +97,6 @@ public class PrivGetLogsTest {
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("Missing required json rpc parameter at index 1");
-  }
-
-  @Test
-  public void filterWithInvalidParameters() {
-    final FilterParameter invalidFilter =
-        new FilterParameter(
-            BlockParameter.EARLIEST,
-            BlockParameter.LATEST,
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Hash.ZERO);
-
-    final JsonRpcRequestContext request = privGetLogRequest(PRIVACY_GROUP_ID, invalidFilter);
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
-
-    final JsonRpcResponse response = method.response(request);
-
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test

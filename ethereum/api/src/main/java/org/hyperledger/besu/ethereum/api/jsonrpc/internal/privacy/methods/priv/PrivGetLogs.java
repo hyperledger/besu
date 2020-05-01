@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
@@ -26,9 +25,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+
+import java.util.List;
 
 public class PrivGetLogs implements JsonRpcMethod {
 
@@ -55,37 +56,33 @@ public class PrivGetLogs implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final String privacyGroupId;
-    final FilterParameter filter;
-    try {
-      privacyGroupId = requestContext.getRequiredParameter(0, String.class);
-      filter = requestContext.getRequiredParameter(1, FilterParameter.class);
-    } catch (InvalidJsonRpcParameters __) {
+    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    final FilterParameter filter = requestContext.getRequiredParameter(1, FilterParameter.class);
+
+    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(requestContext, privacyGroupId);
+
+    if (!filter.isValid()) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(requestContext, privacyGroupId);
-
-    final LogsQuery query =
-        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
-
-    if (filter.getMaybeBlockHash().isPresent()) {
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(),
-          new LogsResult(
-              privacyQueries.matchingLogs(
-                  privacyGroupId, filter.getMaybeBlockHash().get(), query)));
-    }
-
-    final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
-    final long toBlockNumber =
-        filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
+    final List<LogWithMetadata> matchingLogs =
+        filter
+            .getBlockHash()
+            .map(
+                blockHash ->
+                    privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery()))
+            .orElseGet(
+                () -> {
+                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
+                  final long toBlockNumber =
+                      filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
+                  return privacyQueries.matchingLogs(
+                      privacyGroupId, fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+                });
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
-        new LogsResult(
-            privacyQueries.matchingLogs(privacyGroupId, fromBlockNumber, toBlockNumber, query)));
+        requestContext.getRequest().getId(), new LogsResult(matchingLogs));
   }
 
   private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static java.util.Collections.emptyList;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -40,6 +39,7 @@ public class FilterParameter {
   private final List<List<LogTopic>> topics;
   private final Optional<Hash> maybeBlockHash;
   private final LogsQuery logsQuery;
+  private final boolean isValid;
 
   @JsonCreator
   public FilterParameter(
@@ -50,9 +50,7 @@ public class FilterParameter {
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics,
       @JsonProperty("blockhash") final Hash blockHash) {
-    if (blockHash != null && (fromBlock != null || toBlock != null))
-      throw new InvalidJsonRpcParameters(
-          "If blockHash is present in the filter criteria, then neither fromBlock nor toBlock are allowed.");
+    this.isValid = blockHash == null || (fromBlock == null && toBlock == null);
     this.fromBlock = fromBlock == null ? new BlockParameter("latest") : fromBlock;
     this.toBlock = toBlock == null ? new BlockParameter("latest") : toBlock;
     this.addresses = address != null ? address : emptyList();
@@ -77,7 +75,7 @@ public class FilterParameter {
     return topics;
   }
 
-  public Optional<Hash> getMaybeBlockHash() {
+  public Optional<Hash> getBlockHash() {
     return maybeBlockHash;
   }
 
@@ -112,5 +110,9 @@ public class FilterParameter {
         .add("topics", topics)
         .add("blockHash", maybeBlockHash)
         .toString();
+  }
+
+  public boolean isValid() {
+    return isValid;
   }
 }

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
@@ -25,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 public class PrivNewFilter implements JsonRpcMethod {
@@ -50,23 +48,18 @@ public class PrivNewFilter implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
-    final String privacyGroupId;
-    final FilterParameter filter;
-    try {
-      privacyGroupId = request.getRequiredParameter(0, String.class);
-      filter = request.getRequiredParameter(1, FilterParameter.class);
-    } catch (InvalidJsonRpcParameters __) {
-      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-    }
+    final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final FilterParameter filter = request.getRequiredParameter(1, FilterParameter.class);
 
     checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(request, privacyGroupId);
 
-    final LogsQuery query =
-        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
+    if (!filter.isValid()) {
+      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    }
 
     final String logFilterId =
         filterManager.installPrivateLogFilter(
-            privacyGroupId, filter.getFromBlock(), filter.getToBlock(), query);
+            privacyGroupId, filter.getFromBlock(), filter.getToBlock(), filter.getLogsQuery());
 
     return new JsonRpcSuccessResponse(request.getRequest().getId(), logFilterId);
   }
