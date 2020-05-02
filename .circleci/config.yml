@@ -140,8 +140,8 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 2
-    executor: besu_executor_xl
+    parallelism: 8
+    executor: besu_executor_med
     steps:
       - prepare
       - attach_workspace:
@@ -157,7 +157,7 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon --max-workers=1 acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
