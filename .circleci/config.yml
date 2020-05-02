@@ -9,6 +9,14 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
+  besu_executor_med_plus: # 3cpu, 6G ram, for acceptance testing
+    docker:
+      - image: circleci/openjdk:11.0.4-jdk-stretch
+    resource_class: medium+
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=1
+
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: circleci/openjdk:11.0.4-jdk-stretch
@@ -141,7 +149,7 @@ jobs:
 
   acceptanceTests:
     parallelism: 8
-    executor: besu_executor_med
+    executor: besu_executor_med_plus
     steps:
       - prepare
       - attach_workspace:
@@ -157,8 +165,7 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            GRADLE_OPTS=-Xmx2G $GRADLE_OPTS
-            ./gradlew --no-daemon --max-workers=1 acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
