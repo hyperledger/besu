@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOG = LogManager.getLogger(GasUsageValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
