@@ -109,6 +109,7 @@ public class IbftBlockCreatorTest {
             parentGasLimit -> parentGasLimit,
             nodeKeys,
             Wei.ZERO,
+            0.8,
             parentHeader);
 
     final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());

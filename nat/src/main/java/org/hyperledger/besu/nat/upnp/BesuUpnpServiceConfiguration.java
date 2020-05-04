@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jupnp.DefaultUpnpServiceConfiguration;
 import org.jupnp.UpnpServiceConfiguration;
 import org.jupnp.binding.xml.DeviceDescriptorBinder;
@@ -50,6 +52,7 @@ import org.jupnp.transport.spi.StreamClient;
 import org.jupnp.transport.spi.StreamServer;
 
 class BesuUpnpServiceConfiguration implements UpnpServiceConfiguration {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final ThreadPoolExecutor executorService;
   private final DeviceDescriptorBinder deviceDescriptorBinderUDA10;
@@ -80,7 +83,7 @@ class BesuUpnpServiceConfiguration implements UpnpServiceConfiguration {
               public void rejectedExecution(
                   final Runnable runnable, final ThreadPoolExecutor threadPoolExecutor) {
                 // Log and discard
-                UpnpNatManager.LOG.warn("Thread pool rejected execution of " + runnable.getClass());
+                LOG.warn("Thread pool rejected execution of " + runnable.getClass());
                 super.rejectedExecution(runnable, threadPoolExecutor);
               }
             });

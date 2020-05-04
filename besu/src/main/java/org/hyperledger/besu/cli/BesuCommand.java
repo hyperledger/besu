@@ -186,6 +186,8 @@ import picocli.CommandLine.ParameterException;
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
 
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  // non-static for testing
   private final Logger logger;
 
   private CommandLine commandLine;
@@ -675,6 +677,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
+      names = {"--min-block-occupancy-ratio"},
+      description = "Minimum occupancy ratio for  a mined block (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+
+  @Option(
       names = {"--miner-extra-data"},
       description =
           "A hex string representing the (32) bytes to be included in the extra data "
@@ -1029,6 +1037,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
     commandLine.registerConverter(Optional.class, Optional::of);
+    commandLine.registerConverter(Double.class, Double::parseDouble);
 
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
@@ -1210,6 +1219,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--miner-coinbase",
             "--min-gas-price",
+            "--min-block-occupancy-ratio",
             "--miner-extra-data",
             "--miner-stratum-enabled"));
 
@@ -1293,7 +1303,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumNetworkInterface,
                 stratumPort,
                 stratumExtranonce,
-                Optional.empty()))
+                Optional.empty(),
+                minBlockOccupancyRatio))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())

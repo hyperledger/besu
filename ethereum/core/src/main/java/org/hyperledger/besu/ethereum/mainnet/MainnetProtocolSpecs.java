@@ -390,6 +390,7 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         .name("EIP-1559")
         .transactionPriceCalculator(transactionPriceCalculator)
+        .eip1559(Optional.of(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));

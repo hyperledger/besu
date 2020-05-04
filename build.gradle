@@ -233,6 +233,9 @@ allprojects {
    *   with the 'include' option above since it is a pattern, but this is a slightly more convenient
    *   option.
    * - 'root.log.level' and 'evm.log.level': allow to control the log level used during the tests.
+   * - 'acctests.keepLogsOfPassingTests': log files of failed acceptance tests are always saved.
+   *    This property additionally keeps the log files of successful tests.
+   *
    */
   test {
     jvmArgs = [
@@ -499,7 +502,7 @@ startScripts {
 
 
 dependencies {
-  compile project(':besu')
+  implementation project(':besu')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
