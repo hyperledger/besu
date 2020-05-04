@@ -121,7 +121,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class RunnerBuilder {
 
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private Vertx vertx;
   private BesuController<?> besuController;

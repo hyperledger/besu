@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 public class PrivNewFilter implements JsonRpcMethod {
@@ -58,12 +57,9 @@ public class PrivNewFilter implements JsonRpcMethod {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final LogsQuery query =
-        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
-
     final String logFilterId =
         filterManager.installPrivateLogFilter(
-            privacyGroupId, filter.getFromBlock(), filter.getToBlock(), query);
+            privacyGroupId, filter.getFromBlock(), filter.getToBlock(), filter.getLogsQuery());
 
     return new JsonRpcSuccessResponse(request.getRequest().getId(), logFilterId);
   }

@@ -18,22 +18,23 @@ import com.google.errorprone.CompilationTestHelper;
 import org.junit.Before;
 import org.junit.Test;
 
-public class BannedMethodTest {
+public class PrivateStaticFinalLoggersTest {
 
   private CompilationTestHelper compilationHelper;
 
   @Before
   public void setup() {
-    compilationHelper = CompilationTestHelper.newInstance(BannedMethod.class, getClass());
+    compilationHelper =
+        CompilationTestHelper.newInstance(PrivateStaticFinalLoggers.class, getClass());
   }
 
   @Test
-  public void bannedMethodsPositiveCases() {
-    compilationHelper.addSourceFile("BannedMethodPositiveCases.java").doTest();
+  public void privateStaticFinalLoggersPositiveCases() {
+    compilationHelper.addSourceFile("PrivateStaticFinalLoggersPositiveCases.java").doTest();
   }
 
   @Test
-  public void bannedMethodsNegativeCases() {
-    compilationHelper.addSourceFile("BannedMethodNegativeCases.java").doTest();
+  public void privateStaticFinalLoggersNegativeCases() {
+    compilationHelper.addSourceFile("PrivateStaticFinalLoggersNegativeCases.java").doTest();
   }
 }

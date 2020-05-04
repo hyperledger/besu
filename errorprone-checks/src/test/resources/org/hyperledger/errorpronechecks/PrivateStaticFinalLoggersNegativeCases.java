@@ -12,26 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
 
-public interface FeeMarket {
-  long getBasefeeMaxChangeDenominator();
+package org.hyperledger.errorpronechecks;
 
-  long getTargetGasUsed();
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-  long getMaxGas();
+public class PrivateStaticFinalLoggersNegativeCases {
 
-  long getDecayRange();
-
-  long getGasIncrementAmount();
-
-  long getInitialBasefee();
-
-  long getPerTxGaslimit();
-
-  double getSlackCoefficient();
-
-  static FeeMarket eip1559() {
-    return new FeeMarketConfig(8L, 10000000L, 2.0, 800000L, 10L, 1000000000L, 8000000L);
-  }
+  private static final Logger LOG = LogManager.getLogger();
 }

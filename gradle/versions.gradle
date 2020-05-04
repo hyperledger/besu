@@ -19,6 +19,7 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.11.0'
 
     dependency 'com.github.tomakehurst:wiremock-jre8:2.25.1'
+    dependency 'com.github.tomakehurst:wiremock-jre8-standalone:2.25.1'
 
     dependency 'com.google.auto.service:auto-service:1.0-rc6'
 

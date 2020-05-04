@@ -55,7 +55,7 @@ import org.apache.tuweni.bytes.Bytes;
  * via UDP.
  */
 public abstract class PeerDiscoveryAgent {
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.

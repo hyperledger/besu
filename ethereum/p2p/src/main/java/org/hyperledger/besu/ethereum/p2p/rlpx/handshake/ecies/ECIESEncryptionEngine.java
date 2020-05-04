@@ -128,7 +128,7 @@ public class ECIESEncryptionEngine {
    *
    * @param in The plaintext.
    * @return The ciphertext.
-   * @throws InvalidCipherTextException Thrown if an error occured during encryption.
+   * @throws InvalidCipherTextException Thrown if an error occurred during encryption.
    */
   public Bytes encrypt(final Bytes in) throws InvalidCipherTextException {
     return Bytes.wrap(encrypt(in.toArray(), 0, in.size(), null));
@@ -200,7 +200,7 @@ public class ECIESEncryptionEngine {
    *
    * @param in The ciphertext.
    * @return The plaintext.
-   * @throws InvalidCipherTextException Thrown if an error occured during decryption.
+   * @throws InvalidCipherTextException Thrown if an error occurred during decryption.
    */
   public Bytes decrypt(final Bytes in) throws InvalidCipherTextException {
     return Bytes.wrap(decrypt(in.toArray(), 0, in.size(), null));
