@@ -44,6 +44,7 @@ public class BesuNodeConfiguration {
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
   private final boolean revertReasonEnabled;
+  private final boolean secp256k1Native;
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
@@ -66,6 +67,7 @@ public class BesuNodeConfiguration {
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
+      final boolean secp256k1Native,
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
@@ -86,6 +88,7 @@ public class BesuNodeConfiguration {
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
+    this.secp256k1Native = secp256k1Native;
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
@@ -159,6 +162,10 @@ public class BesuNodeConfiguration {
 
   public boolean isRevertReasonEnabled() {
     return revertReasonEnabled;
+  }
+
+  public boolean isSecp256k1Native() {
+    return secp256k1Native;
   }
 
   public List<String> getStaticNodes() {

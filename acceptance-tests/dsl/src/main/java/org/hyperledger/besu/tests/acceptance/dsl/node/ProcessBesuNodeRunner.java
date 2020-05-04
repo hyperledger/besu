@@ -228,6 +228,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--revert-reason-enabled");
     }
 
+    params.add("--Xsecp256k1-native-enabled=" + node.isSecp256k1Native());
+
     node.getPermissioningConfiguration()
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
