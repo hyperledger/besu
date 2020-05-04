@@ -161,12 +161,6 @@ public abstract class CommandTestAbstract {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   @Before
-  @After
-  public void resetSystemProps() {
-    System.setProperty("besu.docker", "false");
-  }
-
-  @Before
   public void initMocks() throws Exception {
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
