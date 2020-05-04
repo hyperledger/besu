@@ -21,12 +21,12 @@ public class FeeMarketConfig implements FeeMarket {
   private final long gasIncrementAmount;
   private final long initialBasefee;
   private final long perTxGaslimit;
-  private final double slackCoefficient;
+  private final long slackCoefficient;
 
   public FeeMarketConfig(
       final long basefeeMaxChangeDenominator,
       final long targetGasUsed,
-      final double slackCoefficient,
+      final long slackCoefficient,
       final long decayRange,
       final long gasIncrementAmount,
       final long initialBasefee,
@@ -52,7 +52,7 @@ public class FeeMarketConfig implements FeeMarket {
 
   @Override
   public long getMaxGas() {
-    return (long) (slackCoefficient * targetGasUsed);
+    return slackCoefficient * targetGasUsed;
   }
 
   @Override
@@ -76,7 +76,7 @@ public class FeeMarketConfig implements FeeMarket {
   }
 
   @Override
-  public double getSlackCoefficient() {
+  public long getSlackCoefficient() {
     return slackCoefficient;
   }
 }
