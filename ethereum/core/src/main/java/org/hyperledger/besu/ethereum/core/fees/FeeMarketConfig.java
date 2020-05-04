@@ -77,6 +77,6 @@ public class FeeMarketConfig implements FeeMarket {
 
   @Override
   public double getSlackCoefficient() {
-    return 0;
+    return slackCoefficient;
   }
 }
