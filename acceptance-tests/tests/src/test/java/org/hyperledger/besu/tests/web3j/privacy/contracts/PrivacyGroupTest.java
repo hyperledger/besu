@@ -16,11 +16,10 @@ package org.hyperledger.besu.tests.web3j.privacy.contracts;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.privacy.contracts.generated.PrivacyGroup;
+import org.hyperledger.besu.privacy.contracts.generated.DefaultOnChainPrivacyGroupManagementContract;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,7 +37,7 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
       Base64String.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
   private final Base64String thirdParticipant =
       Base64String.wrap("Jo2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
-  private PrivacyGroup privacyGroup;
+  private DefaultOnChainPrivacyGroupManagementContract privacyGroup;
 
   private static final String RAW_FIRST_PARTICIPANT =
       "0x0b0235be035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a";
@@ -57,7 +56,10 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("node");
     cluster.start(minerNode);
-    privacyGroup = minerNode.execute(contractTransactions.createSmartContract(PrivacyGroup.class));
+    privacyGroup =
+        minerNode.execute(
+            contractTransactions.createSmartContract(
+                DefaultOnChainPrivacyGroupManagementContract.class));
   }
 
   @Test
@@ -132,6 +134,26 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
   }
 
   @Test
+  public void ensurePrivacyGroupVersionIsAlwaysDifferent() throws Exception {
+    privacyGroup
+        .addParticipants(firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
+        .send();
+    final byte[] version1 = privacyGroup.getVersion().send();
+    privacyGroup.lock().send();
+    privacyGroup
+        .addParticipants(firstParticipant.raw(), Collections.singletonList(thirdParticipant.raw()))
+        .send();
+    final byte[] version2 = privacyGroup.getVersion().send();
+    privacyGroup.lock().send();
+    privacyGroup.removeParticipant(firstParticipant.raw(), secondParticipant.raw()).send();
+    final byte[] version3 = privacyGroup.getVersion().send();
+
+    assertThat(version1).isNotEqualTo(version2);
+    assertThat(version1).isNotEqualTo(version3);
+    assertThat(version2).isNotEqualTo(version3);
+  }
+
+  @Test
   public void canAddTwiceToContractWhenCallLock() throws Exception {
     privacyGroup
         .addParticipants(firstParticipant.raw(), Collections.singletonList(thirdParticipant.raw()))
@@ -140,20 +162,12 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
     privacyGroup
         .addParticipants(firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
         .send();
-    final BigInteger privacyGroupVersion = privacyGroup.getVersion().send();
-    assertThat(privacyGroupVersion).isEqualTo(BigInteger.TWO);
 
     final List<byte[]> participants = privacyGroup.getParticipants(firstParticipant.raw()).send();
     assertThat(participants.size()).isEqualTo(3);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(thirdParticipant.raw()).isEqualTo(participants.get(1));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(2));
-  }
-
-  @Test
-  public void versionStartsAtZero() throws Exception {
-    final BigInteger privacyGroupVersion = privacyGroup.getVersion().send();
-    assertThat(privacyGroupVersion).isEqualTo(BigInteger.ZERO);
   }
 
   @Test(expected = TransactionException.class)

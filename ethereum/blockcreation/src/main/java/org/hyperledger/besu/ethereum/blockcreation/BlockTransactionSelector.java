@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.BaseFee;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
@@ -101,6 +100,10 @@ public class BlockTransactionSelector {
     public long getEip1559CumulativeGasUsed() {
       return eip1559CumulativeGasUsed;
     }
+
+    public long getTotalCumulativeGasUsed() {
+      return frontierCumulativeGasUsed + eip1559CumulativeGasUsed;
+    }
   }
 
   private final Supplier<Boolean> isCancelled;
@@ -112,7 +115,6 @@ public class BlockTransactionSelector {
   private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
   private final TransactionPriceCalculator transactionPriceCalculator;
-  private final Supplier<Optional<Long>> baseFeeSupplier;
   private final Optional<EIP1559> eip1559;
 
   private final TransactionSelectionResults transactionSelectionResult =
@@ -130,7 +132,6 @@ public class BlockTransactionSelector {
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final TransactionPriceCalculator transactionPriceCalculator,
-      final Supplier<Optional<Long>> baseFeeSupplier,
       final Optional<EIP1559> eip1559) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
@@ -143,7 +144,6 @@ public class BlockTransactionSelector {
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
     this.transactionPriceCalculator = transactionPriceCalculator;
-    this.baseFeeSupplier = baseFeeSupplier;
     this.eip1559 = eip1559;
   }
 
@@ -194,8 +194,7 @@ public class BlockTransactionSelector {
     // If the gas price specified by the transaction is less than this node is willing to accept,
     // do not include it in the block.
     final Wei actualMinTransactionGasPriceInBlock =
-        BaseFee.minTransactionPriceInNextBlock(
-            transaction, transactionPriceCalculator, baseFeeSupplier);
+        transactionPriceCalculator.price(transaction, processableBlockHeader.getBaseFee());
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }

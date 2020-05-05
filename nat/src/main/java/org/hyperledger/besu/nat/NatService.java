@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
 /** Utility class to help interacting with various {@link NatManager}. */
 public class NatService {
 
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private NatMethod currentNatMethod;
   private Optional<NatManager> currentNatManager;
