@@ -20,7 +20,6 @@ import org.hyperledger.besu.privacy.contracts.generated.DefaultOnChainPrivacyGro
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
