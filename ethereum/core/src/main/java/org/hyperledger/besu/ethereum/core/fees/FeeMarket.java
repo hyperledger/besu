@@ -29,7 +29,9 @@ public interface FeeMarket {
 
   long getPerTxGaslimit();
 
+  long getSlackCoefficient();
+
   static FeeMarket eip1559() {
-    return new FeeMarketConfig(8L, 10000000L, 20000000L, 800000L, 10L, 1000000000L, 8000000L);
+    return new FeeMarketConfig(8L, 10000000L, 2L, 800000L, 10L, 1000000000L, 8000000L);
   }
 }

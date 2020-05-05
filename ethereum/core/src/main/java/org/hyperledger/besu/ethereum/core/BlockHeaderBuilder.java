@@ -103,6 +103,7 @@ public class BlockHeaderBuilder {
             .timestamp(fromBuilder.timestamp)
             .extraData(fromBuilder.extraData)
             .mixHash(fromBuilder.mixHash)
+            .baseFee(fromBuilder.baseFee)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -193,6 +194,7 @@ public class BlockHeaderBuilder {
     number(processableBlockHeader.getNumber());
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
+    baseFee(processableBlockHeader.getBaseFee().orElse(null));
     return this;
   }
 
@@ -211,6 +213,7 @@ public class BlockHeaderBuilder {
     gasUsed(sealableBlockHeader.getGasUsed());
     timestamp(sealableBlockHeader.getTimestamp());
     extraData(sealableBlockHeader.getExtraData());
+    baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     return this;
   }
 
