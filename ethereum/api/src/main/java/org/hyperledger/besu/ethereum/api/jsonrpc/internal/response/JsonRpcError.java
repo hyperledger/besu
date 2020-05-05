@@ -127,6 +127,7 @@ public enum JsonRpcError {
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
       "Private Marker Transaction failed due to intrinsic gas exeeding the limit. Gas limit used from the Private Transaction."),
+  PRIVATE_SUBSCRIPTION_MULTI_TENANCY_ERROR(-50100, "foo."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 

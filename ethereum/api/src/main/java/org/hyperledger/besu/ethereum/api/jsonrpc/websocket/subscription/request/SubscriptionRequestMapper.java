@@ -84,7 +84,56 @@ public class SubscriptionRequestMapper {
           webSocketRpcRequestBody.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
       return new UnsubscribeRequest(subscriptionId, webSocketRpcRequestBody.getConnectionId());
     } catch (final Exception e) {
+      throw new InvalidSubscriptionRequestException("Error parsing unsubscribe request", e);
+    }
+  }
+
+  public PrivateSubscribeRequest mapPrivateSubscribeRequest(
+      final JsonRpcRequestContext jsonRpcRequestContext)
+      throws InvalidSubscriptionRequestException {
+    try {
+      final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
+
+      final String privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
+      final SubscriptionType subscriptionType =
+          webSocketRpcRequestBody.getRequiredParameter(1, SubscriptionType.class);
+
+      switch (subscriptionType) {
+        case LOGS:
+          {
+            final FilterParameter filterParameter =
+                jsonRpcRequestContext.getRequiredParameter(2, FilterParameter.class);
+            return new PrivateSubscribeRequest(
+                SubscriptionType.LOGS,
+                filterParameter,
+                null,
+                webSocketRpcRequestBody.getConnectionId(),
+                privacyGroupId);
+          }
+        default:
+          throw new InvalidSubscriptionRequestException(
+              "Invalid subscribe request. Invalid private subscription type.");
+      }
+    } catch (InvalidSubscriptionRequestException e) {
+      throw e;
+    } catch (final Exception e) {
       throw new InvalidSubscriptionRequestException("Error parsing subscribe request", e);
+    }
+  }
+
+  public PrivateUnsubscribeRequest mapPrivateUnsubscribeRequest(
+      final JsonRpcRequestContext jsonRpcRequestContext)
+      throws InvalidSubscriptionRequestException {
+    try {
+      final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
+
+      final String privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
+      final long subscriptionId =
+          webSocketRpcRequestBody.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
+      return new PrivateUnsubscribeRequest(
+          subscriptionId, webSocketRpcRequestBody.getConnectionId(), privacyGroupId);
+    } catch (final Exception e) {
+      throw new InvalidSubscriptionRequestException("Error parsing unsubscribe request", e);
     }
   }
 
