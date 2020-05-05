@@ -106,10 +106,10 @@ public class EthEstimateGas implements JsonRpcMethod {
                   .orElseThrow();
 
       // check that the estimate is valid and if not we increase the estimate by
-      // GAS_ESTIMATE_CHANGE_DENOMINATOR
-      // if after MAX_ESTIMATE_NUMBER_OF_RETRY retries you cannot find a valid estimate. we return
-      // the error
+      // GAS_ESTIMATE_CHANGE_DENOMINATOR. if after MAX_ESTIMATE_NUMBER_OF_RETRY retries you cannot
+      // find a valid estimate. we return the error returned by the transaction
       do {
+
         modifiedCallParams.setGasLimit(highGasLimit);
         simulatorResult = transactionSimulator.process(modifiedCallParams, blockHeader.getNumber());
         foundEstimateGas =
@@ -119,10 +119,17 @@ public class EthEstimateGas implements JsonRpcMethod {
           lowGasLimit = modifiedCallParams.getGasLimit();
           highGasLimit = lowGasLimit + lowGasLimit / GAS_ESTIMATE_CHANGE_DENOMINATOR;
         }
-      } while (numberOfRetry++ < MAX_ESTIMATE_NUMBER_OF_RETRY && !foundEstimateGas);
+
+        // unable to find a good estimate we send the error returned by the transaction
+        if (numberOfRetry++ > MAX_ESTIMATE_NUMBER_OF_RETRY) {
+          throw new RuntimeException("Unable to find a good estimate");
+        }
+
+      } while (!foundEstimateGas);
 
       // performs binary search to find the most accurate estimate
       while (lowGasLimit + 1 < highGasLimit) {
+
         midGasLimit = (highGasLimit + lowGasLimit) / 2;
 
         modifiedCallParams.setGasLimit(midGasLimit);
