@@ -149,10 +149,6 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
     privacyGroup.removeParticipant(firstParticipant.raw(), secondParticipant.raw()).send();
     final byte[] version3 = privacyGroup.getVersion().send();
 
-    System.out.println(Arrays.toString(version1));
-    System.out.println(Arrays.toString(version2));
-    System.out.println(Arrays.toString(version3));
-
     assertThat(version1).isNotEqualTo(version2);
     assertThat(version1).isNotEqualTo(version3);
     assertThat(version2).isNotEqualTo(version3);
