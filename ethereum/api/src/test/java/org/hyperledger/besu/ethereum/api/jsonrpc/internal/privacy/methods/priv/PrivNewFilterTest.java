@@ -96,11 +96,11 @@ public class PrivNewFilterTest {
   public void filterWithInvalidParameters() {
     final FilterParameter invalidFilter =
         new FilterParameter(
-            "earliest",
-            "earliest",
+            BlockParameter.EARLIEST,
+            BlockParameter.LATEST,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO.toHexString());
+            Hash.ZERO);
 
     final JsonRpcRequestContext request = privNewFilterRequest(PRIVACY_GROUP_ID, invalidFilter);
 
@@ -114,13 +114,12 @@ public class PrivNewFilterTest {
 
   @Test
   public void filterWithExpectedQueryIsCreated() {
-    final BlockParameter fromBlock = new BlockParameter("earliest");
-    final BlockParameter toBlock = new BlockParameter("latest");
     final List<Address> addresses = List.of(Address.ZERO);
     final List<List<LogTopic>> logTopics = List.of(List.of(LogTopic.of(Bytes32.random())));
 
     final FilterParameter filter =
-        new FilterParameter("earliest", "latest", addresses, logTopics, null);
+        new FilterParameter(
+            BlockParameter.EARLIEST, BlockParameter.LATEST, addresses, logTopics, null);
 
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();
@@ -130,7 +129,10 @@ public class PrivNewFilterTest {
 
     verify(filterManager)
         .installPrivateLogFilter(
-            eq(PRIVACY_GROUP_ID), refEq(fromBlock), refEq(toBlock), eq((expectedQuery)));
+            eq(PRIVACY_GROUP_ID),
+            refEq(BlockParameter.EARLIEST),
+            refEq(BlockParameter.LATEST),
+            eq((expectedQuery)));
   }
 
   @Test

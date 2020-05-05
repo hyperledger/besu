@@ -26,8 +26,9 @@ import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
@@ -171,9 +172,12 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                emptyList()),
+                emptyList(),
+                null),
             null,
             null);
 
@@ -193,7 +197,9 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 Stream.of(
                         "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd",
                         "0xf17f52151EbEF6C7334FAD080c5704D77216b732")
@@ -202,7 +208,8 @@ public class SubscriptionRequestMapperTest {
                 singletonList(
                     singletonList(
                         LogTopic.fromHexString(
-                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")))),
+                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"))),
+                null),
             null,
             null);
 
@@ -222,7 +229,9 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
                 List.of(
                     singletonList(
@@ -230,7 +239,8 @@ public class SubscriptionRequestMapperTest {
                             "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")),
                     singletonList(
                         LogTopic.fromHexString(
-                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901")))),
+                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901"))),
+                null),
             null,
             null);
 
@@ -250,9 +260,12 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                emptyList()),
+                emptyList(),
+                null),
             null,
             null);
 

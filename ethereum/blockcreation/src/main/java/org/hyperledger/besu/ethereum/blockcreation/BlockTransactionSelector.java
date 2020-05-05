@@ -100,6 +100,10 @@ public class BlockTransactionSelector {
     public long getEip1559CumulativeGasUsed() {
       return eip1559CumulativeGasUsed;
     }
+
+    public long getTotalCumulativeGasUsed() {
+      return frontierCumulativeGasUsed + eip1559CumulativeGasUsed;
+    }
   }
 
   private final Supplier<Boolean> isCancelled;

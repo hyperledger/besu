@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -105,11 +106,11 @@ public class PrivGetLogsTest {
   public void filterWithInvalidParameters() {
     final FilterParameter invalidFilter =
         new FilterParameter(
-            "earliest",
-            "earliest",
+            BlockParameter.EARLIEST,
+            BlockParameter.EARLIEST,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO.toHexString());
+            Hash.ZERO);
 
     final JsonRpcRequestContext request = privGetLogRequest(PRIVACY_GROUP_ID, invalidFilter);
 
@@ -128,7 +129,7 @@ public class PrivGetLogsTest {
     final List<List<LogTopic>> logTopics = List.of(List.of(LogTopic.of(Bytes32.random())));
 
     final FilterParameter blockHashFilter =
-        new FilterParameter(null, null, addresses, logTopics, blockHash.toHexString());
+        new FilterParameter(null, null, addresses, logTopics, blockHash);
 
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();
@@ -144,7 +145,7 @@ public class PrivGetLogsTest {
     final Hash blockHash = Hash.hash(Bytes32.random());
     final FilterParameter blockHashFilter =
         new FilterParameter(
-            null, null, Collections.emptyList(), Collections.emptyList(), blockHash.toHexString());
+            null, null, Collections.emptyList(), Collections.emptyList(), blockHash);
 
     final List<LogWithMetadata> logWithMetadataList = logWithMetadataList(3);
     final LogsResult expectedLogsResult = new LogsResult(logWithMetadataList);
@@ -164,7 +165,11 @@ public class PrivGetLogsTest {
     long chainHeadBlockNumber = 3L;
     final FilterParameter blockHashFilter =
         new FilterParameter(
-            "earliest", "latest", Collections.emptyList(), Collections.emptyList(), null);
+            BlockParameter.EARLIEST,
+            BlockParameter.LATEST,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            null);
     final List<LogWithMetadata> logWithMetadataList = logWithMetadataList(3);
     final LogsResult expectedLogsResult = new LogsResult(logWithMetadataList);
 
