@@ -321,7 +321,7 @@ public class DefaultPrivacyController implements PrivacyController {
   private CallParameter buildCallParams(final Bytes enclavePublicKey, final Bytes methodCall) {
     return new CallParameter(
         Address.ZERO,
-        Address.PRIVACY_PROXY,
+        Address.ONCHAIN_PRIVACY_PROXY,
         3000000,
         Wei.of(1000),
         Wei.ZERO,
@@ -394,7 +394,7 @@ public class DefaultPrivacyController implements PrivacyController {
   @Override
   public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     return privateTransaction.getTo().isPresent()
-        && privateTransaction.getTo().get().equals(Address.PRIVACY_PROXY)
+        && privateTransaction.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY)
         && privateTransaction
             .getPayload()
             .toHexString()
