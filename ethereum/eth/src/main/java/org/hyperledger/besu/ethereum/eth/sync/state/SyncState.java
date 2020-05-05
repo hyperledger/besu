@@ -45,6 +45,7 @@ public class SyncState {
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
   private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
+  private Optional<Long> newPeerListenerId;
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this.blockchain = blockchain;
@@ -55,6 +56,17 @@ public class SyncState {
             checkInSync();
           }
         });
+
+    // Add new peer listener to prevent permissioned PoA network stalling on start-up.
+    // https://github.com/hyperledger/besu/issues/528
+    newPeerListenerId =
+        Optional.of(
+            ethPeers.subscribeConnect(
+                newPeer -> {
+                  if (newPeer.readyForRequests()) {
+                    checkInSync();
+                  }
+                }));
   }
 
   /**
@@ -223,6 +235,14 @@ public class SyncState {
 
   private synchronized void checkInSync() {
     final ChainHead localChain = getLocalChainHead();
+
+    // Remove listener when we've found a peer.
+    newPeerListenerId.ifPresent(
+        listenerId -> {
+          ethPeers.unsubscribeConnect(listenerId);
+          newPeerListenerId = Optional.empty();
+        });
+
     final Optional<ChainHeadEstimate> syncTargetChain = getSyncTargetChainHead();
     final Optional<ChainHeadEstimate> bestPeerChain = getBestPeerChainHead();
 
