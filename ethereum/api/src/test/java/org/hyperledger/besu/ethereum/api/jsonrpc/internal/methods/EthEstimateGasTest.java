@@ -74,7 +74,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnErrorWhenTransientTransactionProcessorReturnsEmpty() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
-    when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
+    when(transactionSimulator.process(eq(modifiedCallParameter(Long.MAX_VALUE)), eq(1L)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -87,6 +87,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnGasEstimateWhenTransientTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+
     mockTransientProcessorResultGasEstimate(1L, true);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
@@ -134,7 +135,10 @@ public class EthEstimateGasTest {
 
   private TransactionSimulatorResult getMockTransactionSimulatorResult(final boolean isSuccessful) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
-    when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
+    when(transactionSimulator.process(eq(modifiedCallParameter(Long.MAX_VALUE)), eq(1L)))
+        .thenReturn(Optional.of(mockTxSimResult));
+    when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
+    when(transactionSimulator.process(eq(modifiedCallParameter(1L)), eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
     return mockTxSimResult;
@@ -144,8 +148,8 @@ public class EthEstimateGasTest {
     return new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
   }
 
-  private JsonCallParameter modifiedCallParameter() {
-    return new JsonCallParameter("0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x0", "");
+  private JsonCallParameter modifiedCallParameter(final long gasLimit) {
+    return new JsonCallParameter("0x0", "0x0", Quantity.create(gasLimit), "0x0", "0x0", "");
   }
 
   private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {
