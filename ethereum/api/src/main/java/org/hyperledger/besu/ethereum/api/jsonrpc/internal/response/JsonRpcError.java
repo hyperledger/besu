@@ -120,8 +120,8 @@ public enum JsonRpcError {
   ONCHAIN_PRIVACY_GROUP_NOT_ENABLED(-50100, "Onchain privacy groups not enabled."),
   OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED(
       -50100, "Offchain privacy group can't be used with Onchain privacy groups enabled."),
-  PRIVACY_GROUP_ID_NOT_AVAILABLE(
-      -50100, "Privacy group id is not available while OnChain privacy groups are enabled"),
+  ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE(
+      -50100, "Private transactions to on-chain privacy groups must use privacyGroupId"),
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
