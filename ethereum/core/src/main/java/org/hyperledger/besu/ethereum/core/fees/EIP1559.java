@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 public class EIP1559 {
-
   private final long initialForkBlknum;
   private final long finalForkBlknum;
 

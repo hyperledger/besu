@@ -1,5 +1,16 @@
 # Changelog
 
+## Breaking change upcoming in v1.5 
+
+To maintain best security practices, we're changing the `user:group` on the Docker containers to `besu/orion/etc` .
+
+What this means for you:
+
+* If you are running Besu and Orion as binaries, there is no impact.
+* If you are running Besu and Orion as Docker containers *and* have volume mounts for data,  ensure that the 
+permissions on the directory allow other users and groups to r/w. Ideally this should be set to
+`besu:besu` and `orion:orion` as the owners. 
+
 ## 1.4.5
 
 ### Additions and Improvements
@@ -9,6 +20,7 @@
   is registered and used by default. The CLI option `--security-module=<name> (defaults to localfile)` can be used 
   to identify the security module plugin name to use instead. [\#713](https://github.com/hyperledger/besu/pull/713)
 - Full help not displayed unless explicitly requested. [\#791](https://github.com/hyperledger/besu/pull/791)
+
 ### Bug Fixes
 
  - 

@@ -139,7 +139,6 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -188,6 +187,8 @@ import picocli.CommandLine.ParameterException;
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
 
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  // non-static for testing
   private final Logger logger;
 
   private CommandLine commandLine;
@@ -214,14 +215,45 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // Public IP stored to prevent having to research it each time we need it.
   private InetAddress autoDiscoveredDefaultIP = null;
 
-  // Property to indicate whether Besu has been launched via docker
-  private final boolean isDocker = Boolean.getBoolean("besu.docker");
-
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
+
+  // While this variable is never read it is needed for the PicoCLI to create
+  // the config file option that is read elsewhere.
+  @SuppressWarnings("UnusedVariable")
+  @CommandLine.Option(
+      names = {CONFIG_FILE_OPTION_NAME},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "TOML config file (default: none)")
+  private final File configFile = null;
+
+  @CommandLine.Option(
+      names = {"--data-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
+  final Path dataPath = getDefaultBesuDataPath(this);
+
+  // Genesis file path with null default option if the option
+  // is not defined on command line as this default is handled by Runner
+  // to use mainnet json file from resources as indicated in the
+  // default network option
+  // Then we have no control over genesis default value here.
+  @CommandLine.Option(
+      names = {"--genesis-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Genesis file. Setting this option makes --network option ignored and requires --network-id to be set.")
+  private final File genesisFile = null;
+
+  @CommandLine.Option(
+      names = {"--node-private-key-file"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description =
+          "The node's private key file (default: a file named \"key\" in the Besu data folder)")
+  private final File nodePrivateKeyFile = null;
 
   @Option(
       names = "--identity",
@@ -458,6 +490,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Require authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpAuthenticationEnabled = false;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--rpc-http-authentication-credentials-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Storage file for JSON-RPC HTTP authentication credentials (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String rpcHttpAuthenticationCredentialsFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-http-authentication-jwt-public-key-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "JWT public key file for JSON-RPC HTTP authentication",
+      arity = "1")
+  private final File rpcHttpAuthenticationPublicKeyFile = null;
+
   @Option(
       names = {"--rpc-http-tls-enabled"},
       description = "Enable TLS for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
@@ -531,6 +579,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Require authentication for the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcWsAuthenticationEnabled = false;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--rpc-ws-authentication-credentials-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String rpcWsAuthenticationCredentialsFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-authentication-jwt-public-key-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "JWT public key file for JSON-RPC WebSocket authentication",
+      arity = "1")
+  private final File rpcWsAuthenticationPublicKeyFile = null;
 
   @Option(
       names = {"--privacy-tls-enabled"},
@@ -704,10 +768,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesEnabled = false;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--permissions-nodes-config-file"},
+      description =
+          "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+  private String nodePermissionsConfigFile = null;
+
   @Option(
       names = {"--permissions-accounts-config-file-enabled"},
       description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsAccountsEnabled = false;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--permissions-accounts-config-file"},
+      description =
+          "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+  private String accountPermissionsConfigFile = null;
 
   @Option(
       names = {"--permissions-nodes-contract-address"},
@@ -760,6 +838,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--privacy-url"},
       description = "The URL on which the enclave is running")
   private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
+
+  @CommandLine.Option(
+      names = {"--privacy-public-key-file"},
+      description = "The enclave's public key file")
+  private final File privacyPublicKeyFile = null;
 
   @Option(
       names = {"--privacy-precompiled-address"},
@@ -893,7 +976,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController<?> besuController;
-  private StandaloneCommand standaloneCommands;
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
@@ -953,13 +1035,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine =
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
-    handleStandaloneCommand()
-        .enableExperimentalEIPs()
-        .addSubCommands(resultHandler, in)
-        .registerConverters()
-        .handleUnstableOptions()
-        .preparePlugins()
-        .parse(resultHandler, exceptionHandler, args);
+
+    enableExperimentalEIPs();
+    addSubCommands(resultHandler, in);
+    registerConverters();
+    handleUnstableOptions();
+    preparePlugins();
+    parse(resultHandler, exceptionHandler, args);
   }
 
   @Override
@@ -993,14 +1075,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
-  }
-
-  private BesuCommand handleStandaloneCommand() {
-    standaloneCommands = new StandaloneCommand();
-    if (isFullInstantiation()) {
-      commandLine.addMixin("standaloneCommands", standaloneCommands);
-    }
-    return this;
   }
 
   private BesuCommand enableExperimentalEIPs() {
@@ -1106,7 +1180,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // and eventually it will run regular parsing of the remaining options.
     final ConfigOptionSearchAndRunHandler configParsingHandler =
         new ConfigOptionSearchAndRunHandler(
-            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, isDocker);
+            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
     commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
   }
 
@@ -1371,7 +1445,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
-        && rpcHttpAuthenticationPublicKeyFile() == null) {
+        && rpcHttpAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
@@ -1386,7 +1460,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
-    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
+    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     return jsonRpcConfiguration;
   }
@@ -1492,7 +1566,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (isRpcWsAuthenticationEnabled
         && rpcWsAuthenticationCredentialsFile() == null
-        && rpcWsAuthenticationPublicKeyFile() == null) {
+        && rpcWsAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
           "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
@@ -1506,7 +1580,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
-    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile());
+    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
     return webSocketConfiguration;
   }
 
@@ -1563,9 +1637,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
     if (localPermissionsEnabled()) {
       final Optional<String> nodePermissioningConfigFile =
-          Optional.ofNullable(nodePermissionsConfigFile());
+          Optional.ofNullable(nodePermissionsConfigFile);
       final Optional<String> accountPermissioningConfigFile =
-          Optional.ofNullable(accountsPermissionsConfigFile());
+          Optional.ofNullable(accountPermissionsConfigFile);
 
       final LocalPermissioningConfiguration localPermissioningConfiguration =
           PermissioningConfigurationBuilder.permissioningConfiguration(
@@ -1576,16 +1650,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
     } else {
-      if (nodePermissionsConfigFile() != null && !permissionsNodesEnabled) {
+      if (nodePermissionsConfigFile != null && !permissionsNodesEnabled) {
         logger.warn(
             "Node permissioning config file set {} but no permissions enabled",
-            nodePermissionsConfigFile());
+            nodePermissionsConfigFile);
       }
 
-      if (accountsPermissionsConfigFile() != null && !permissionsAccountsEnabled) {
+      if (accountPermissionsConfigFile != null && !permissionsAccountsEnabled) {
         logger.warn(
             "Account permissioning config file set {} but no permissions enabled",
-            accountsPermissionsConfigFile());
+            accountPermissionsConfigFile);
       }
       localPermissioningConfigurationOptional = Optional.empty();
     }
@@ -1681,10 +1755,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
 
-      final boolean hasPrivacyPublicKey = privacyPublicKeyFile() != null;
+      final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
-          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
+          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile);
         } catch (final IOException e) {
           throw new ParameterException(
               commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);
@@ -1887,7 +1961,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // custom genesis file use comes with specific default values for the genesis
     // file itself
     // but also for the network id and the bootnodes list.
-    final File genesisFile = genesisFile();
     if (genesisFile != null) {
 
       // noinspection ConstantConditions network is not always null but injected by
@@ -1961,50 +2034,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private String genesisConfig() {
     try {
-      return Resources.toString(genesisFile().toURI().toURL(), UTF_8);
+      return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
     } catch (final IOException e) {
       throw new ParameterException(
-          this.commandLine, String.format("Unable to load genesis file %s.", genesisFile()), e);
+          this.commandLine, String.format("Unable to load genesis file %s.", genesisFile), e);
     }
   }
 
-  private File genesisFile() {
-    if (isFullInstantiation()) {
-      return standaloneCommands.genesisFile;
-    } else if (isDocker) {
-      final File genesisFile = new File(DOCKER_GENESIS_LOCATION);
-      if (genesisFile.exists()) {
-        return genesisFile;
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
-  }
-
+  // dataDir() is public because it is accessed by subcommands
   public Path dataDir() {
-    if (isFullInstantiation()) {
-      return standaloneCommands.dataPath.toAbsolutePath();
-    } else if (isDocker) {
-      return Paths.get(DOCKER_DATADIR_LOCATION);
-    } else {
-      return getDefaultBesuDataPath(this);
-    }
+    return dataPath.toAbsolutePath();
   }
 
   private Path pluginsDir() {
-    if (isFullInstantiation()) {
-      final String pluginsDir = System.getProperty("besu.plugins.dir");
-      if (pluginsDir == null) {
-        return new File(System.getProperty("besu.home", "."), "plugins").toPath();
-      } else {
-        return new File(pluginsDir).toPath();
-      }
-    } else if (isDocker) {
-      return Paths.get(DOCKER_PLUGINSDIR_LOCATION);
+    final String pluginsDir = System.getProperty("besu.plugins.dir");
+    if (pluginsDir == null) {
+      return new File(System.getProperty("besu.home", "."), "plugins").toPath();
     } else {
-      return null; // null means no plugins
+      return new File(pluginsDir).toPath();
     }
   }
 
@@ -2021,34 +2068,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private File nodePrivateKeyFile() {
-    final Optional<File> nodePrivateKeyFile =
-        isDocker ? Optional.empty() : Optional.ofNullable(standaloneCommands.nodePrivateKeyFile);
-    return nodePrivateKeyFile.orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
-  }
-
-  private File privacyPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_PRIVACY_PUBLIC_KEY_FILE);
-      if (keyFile.exists()) {
-        return keyFile;
-      } else {
-        return null;
-      }
-    } else {
-      return standaloneCommands.privacyPublicKeyFile;
-    }
+    return Optional.ofNullable(nodePrivateKeyFile)
+        .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
 
   private String rpcHttpAuthenticationCredentialsFile() {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = standaloneCommands.rpcHttpAuthenticationCredentialsFile;
-    } else if (isDocker) {
-      final File authFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
-      if (authFile.exists()) {
-        filename = authFile.getAbsolutePath();
-      }
-    }
+    final String filename = rpcHttpAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "HTTP");
@@ -2057,15 +2082,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private String rpcWsAuthenticationCredentialsFile() {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = standaloneCommands.rpcWsAuthenticationCredentialsFile;
-    } else if (isDocker) {
-      final File authFile = new File(DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
-      if (authFile.exists()) {
-        filename = authFile.getAbsolutePath();
-      }
-    }
+    final String filename = rpcWsAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "WS");
@@ -2073,53 +2090,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return filename;
   }
 
-  private File rpcHttpAuthenticationPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
-      return keyFile.exists() ? keyFile : null;
-    } else {
-      return standaloneCommands.rpcHttpAuthenticationPublicKeyFile;
-    }
-  }
-
-  private File rpcWsAuthenticationPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
-      return keyFile.exists() ? keyFile : null;
-    } else {
-      return standaloneCommands.rpcWsAuthenticationPublicKeyFile;
-    }
-  }
-
-  private String nodePermissionsConfigFile() {
-    return permissionsConfigFile(standaloneCommands.nodePermissionsConfigFile);
-  }
-
-  private String accountsPermissionsConfigFile() {
-    return permissionsConfigFile(standaloneCommands.accountPermissionsConfigFile);
-  }
-
-  private String permissionsConfigFile(final String permissioningFilename) {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = permissioningFilename;
-    } else if (isDocker) {
-      final File file = new File(DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION);
-      if (file.exists()) {
-        filename = file.getAbsolutePath();
-      }
-    }
-    return filename;
-  }
-
   private String getDefaultPermissioningFilePath() {
-    return dataDir().toAbsolutePath()
+    return dataDir()
         + System.getProperty("file.separator")
         + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
-  }
-
-  private boolean isFullInstantiation() {
-    return !isDocker;
   }
 
   public MetricsSystem getMetricsSystem() {

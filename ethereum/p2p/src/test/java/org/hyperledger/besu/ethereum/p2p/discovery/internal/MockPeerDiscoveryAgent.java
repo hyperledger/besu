@@ -31,9 +31,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
+  private static final Logger LOG = LogManager.getLogger();
+
   // The set of known agents operating on the network
   private final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork;
   private final Deque<IncomingPacket> incomingPackets = new ArrayDeque<>();

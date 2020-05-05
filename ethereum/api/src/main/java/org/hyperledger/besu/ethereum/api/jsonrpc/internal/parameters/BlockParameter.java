@@ -28,6 +28,9 @@ public class BlockParameter {
 
   private final BlockParameterType type;
   private final OptionalLong number;
+  public static final BlockParameter EARLIEST = new BlockParameter("earliest");
+  public static final BlockParameter LATEST = new BlockParameter("latest");
+  public static final BlockParameter PENDING = new BlockParameter("pending");
 
   @JsonCreator
   public BlockParameter(final String value) {
@@ -48,6 +51,11 @@ public class BlockParameter {
     }
   }
 
+  public BlockParameter(final long value) {
+    type = BlockParameterType.NUMERIC;
+    number = OptionalLong.of(value);
+  }
+
   public OptionalLong getNumber() {
     return number;
   }
@@ -66,6 +74,24 @@ public class BlockParameter {
 
   public boolean isNumeric() {
     return this.type == BlockParameterType.NUMERIC;
+  }
+
+  @Override
+  public String toString() {
+    return "BlockParameter{" + "type=" + type + ", number=" + number + '}';
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BlockParameter that = (BlockParameter) o;
+    return type == that.type && number.equals(that.number);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, number);
   }
 
   private enum BlockParameterType {
