@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.PendingTransactionSubscriptionService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscriptionService;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -85,6 +86,7 @@ import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningControl
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
@@ -524,7 +526,11 @@ public class RunnerBuilder {
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
 
-      createLogsSubscriptionService(context.getBlockchain(), subscriptionManager);
+      createLogsSubscriptionService(
+          context.getBlockchain(),
+          context.getWorldStateArchive(),
+          subscriptionManager,
+          privacyParameters);
 
       createNewBlockHeadersSubscriptionService(
           context.getBlockchain(), blockchainQueries, subscriptionManager);
@@ -706,11 +712,31 @@ public class RunnerBuilder {
   }
 
   private void createLogsSubscriptionService(
-      final Blockchain blockchain, final SubscriptionManager subscriptionManager) {
-    final LogsSubscriptionService logsSubscriptionService =
-        new LogsSubscriptionService(subscriptionManager);
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final SubscriptionManager subscriptionManager,
+      final PrivacyParameters privacyParameters) {
 
+    Optional<PrivacyQueries> privacyQueries = Optional.empty();
+    if (privacyParameters.isEnabled()) {
+      final BlockchainQueries blockchainQueries =
+          new BlockchainQueries(blockchain, worldStateArchive);
+      privacyQueries =
+          Optional.of(
+              new PrivacyQueries(
+                  blockchainQueries, privacyParameters.getPrivateWorldStateReader()));
+    }
+
+    final LogsSubscriptionService logsSubscriptionService =
+        new LogsSubscriptionService(subscriptionManager, privacyQueries);
+
+    // monitoring public logs
     blockchain.observeLogs(logsSubscriptionService);
+
+    // monitoring private logs
+    if (privacyParameters.isEnabled()) {
+      blockchain.observeBlockAdded(logsSubscriptionService::checkPrivateLogs);
+    }
   }
 
   private void createSyncingSubscriptionService(
