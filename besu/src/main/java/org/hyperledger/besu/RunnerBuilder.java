@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.PrivateWebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscriptionService;
@@ -533,7 +534,14 @@ public class RunnerBuilder {
       webSocketService =
           Optional.of(
               createWebsocketService(
-                  vertx, webSocketConfiguration, subscriptionManager, webSocketsJsonRpcMethods));
+                  vertx,
+                  webSocketConfiguration,
+                  subscriptionManager,
+                  webSocketsJsonRpcMethods,
+                  privacyParameters,
+                  protocolSchedule,
+                  blockchainQueries,
+                  transactionPool));
     }
 
     Optional<MetricsService> metricsService = Optional.empty();
@@ -724,9 +732,27 @@ public class RunnerBuilder {
       final Vertx vertx,
       final WebSocketConfiguration configuration,
       final SubscriptionManager subscriptionManager,
-      final Map<String, JsonRpcMethod> jsonRpcMethods) {
+      final Map<String, JsonRpcMethod> jsonRpcMethods,
+      final PrivacyParameters privacyParameters,
+      final ProtocolSchedule<?> protocolSchedule,
+      final BlockchainQueries blockchainQueries,
+      final TransactionPool transactionPool) {
+
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
+
+    if (privacyParameters.isEnabled()) {
+      final PrivateWebSocketMethodsFactory privateWebSocketMethodsFactory =
+          new PrivateWebSocketMethodsFactory(
+              privacyParameters,
+              subscriptionManager,
+              protocolSchedule,
+              blockchainQueries,
+              transactionPool);
+
+      privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
+    }
+
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(vertx, websocketMethodsFactory.methods());
 
