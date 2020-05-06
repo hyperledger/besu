@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 public class SubscriptionBuilder {
@@ -36,11 +35,7 @@ public class SubscriptionBuilder {
         }
       case LOGS:
         {
-          return new LogsSubscription(
-              subscriptionId,
-              connectionId,
-              Optional.ofNullable(request.getLogsQuery())
-                  .orElseThrow(IllegalArgumentException::new));
+          return new LogsSubscription(subscriptionId, connectionId, request.getFilterParameter());
         }
       case SYNCING:
         {

@@ -36,7 +36,7 @@ import org.apache.logging.log4j.Logger;
  * Docker’s NAT implementation when Besu is being run from a Docker container
  */
 public class DockerNatManager extends AbstractNatManager {
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final String PORT_MAPPING_TAG = "HOST_PORT_";
 

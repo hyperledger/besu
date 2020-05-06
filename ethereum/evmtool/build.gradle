@@ -19,12 +19,12 @@ apply plugin: 'application'
 apply plugin: 'idea'
 
 jar {
-  baseName 'besu-evmtool'
+  archiveBaseName = 'besu-evmtool'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }

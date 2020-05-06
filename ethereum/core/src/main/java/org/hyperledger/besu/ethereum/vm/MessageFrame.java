@@ -551,7 +551,7 @@ public class MessageFrame {
   }
 
   /**
-   * Expands memory to accomodate the specified memory access.
+   * Expands memory to accommodate the specified memory access.
    *
    * @param offset The offset in memory
    * @param length The length of the memory access

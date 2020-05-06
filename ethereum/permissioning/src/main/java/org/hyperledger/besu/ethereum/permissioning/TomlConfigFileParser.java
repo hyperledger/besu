@@ -29,7 +29,7 @@ import org.apache.tuweni.toml.TomlParseResult;
 
 public class TomlConfigFileParser {
 
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private static TomlParseResult checkConfigurationValidity(
       final TomlParseResult result, final String toml) throws Exception {

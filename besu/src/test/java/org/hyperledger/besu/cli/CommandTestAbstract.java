@@ -101,7 +101,7 @@ import picocli.CommandLine.RunLast;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class CommandTestAbstract {
 
-  private final Logger TEST_LOGGER = LogManager.getLogger();
+  private static final Logger TEST_LOGGER = LogManager.getLogger();
 
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
   private final PrintStream outPrintStream = new PrintStream(commandOutput);
@@ -134,9 +134,11 @@ public abstract class CommandTestAbstract {
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
   @Mock protected NodeKey nodeKey;
-
-  @Mock protected Logger mockLogger;
   @Mock protected BesuPluginContextImpl mockBesuPluginContext;
+
+  @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
+  @Mock
+  protected Logger mockLogger;
 
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
@@ -157,12 +159,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
-
-  @Before
-  @After
-  public void resetSystemProps() {
-    System.setProperty("besu.docker", "false");
-  }
 
   @Before
   public void initMocks() throws Exception {
