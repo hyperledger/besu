@@ -18,13 +18,17 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Arrays;
@@ -42,6 +46,7 @@ public class PendingTransactionsMessageProcessorTest {
   @Mock private PeerPendingTransactionTracker transactionTracker;
   @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
+  @Mock private SyncState syncState;
   @InjectMocks private PendingTransactionsMessageProcessor messageHandler;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
@@ -59,10 +64,13 @@ public class PendingTransactionsMessageProcessorTest {
 
     verify(transactionTracker)
         .markTransactionsHashesAsSeen(peer1, Arrays.asList(hash1, hash2, hash3));
+    verifyNoMoreInteractions(transactionTracker);
   }
 
   @Test
   public void shouldAddInitiatedRequestingTransactions() {
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
@@ -71,6 +79,19 @@ public class PendingTransactionsMessageProcessorTest {
     verify(transactionPool).addTransactionHash(hash1);
     verify(transactionPool).addTransactionHash(hash2);
     verify(transactionPool).addTransactionHash(hash3);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void shouldNotAddInitiatedRequestingTransactionsWhemOutOfSync() {
+    when(syncState.isInSync(anyLong())).thenReturn(false);
+
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1,
+        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        now(),
+        ofMinutes(1));
+    verifyNoInteractions(transactionPool);
   }
 
   @Test
@@ -80,8 +101,9 @@ public class PendingTransactionsMessageProcessorTest {
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
         now().minus(ofMinutes(1)),
         ofMillis(1));
-    verifyZeroInteractions(transactionTracker);
+    verifyNoInteractions(transactionTracker);
     verify(totalSkippedTransactionsMessageCounter).inc(1);
+    verifyNoMoreInteractions(totalSkippedTransactionsMessageCounter);
   }
 
   @Test
@@ -91,7 +113,8 @@ public class PendingTransactionsMessageProcessorTest {
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
         now().minus(ofMinutes(1)),
         ofMillis(1));
-    verifyZeroInteractions(transactionPool);
+    verifyNoInteractions(transactionPool);
     verify(totalSkippedTransactionsMessageCounter).inc(1);
+    verifyNoMoreInteractions(totalSkippedTransactionsMessageCounter);
   }
 }
