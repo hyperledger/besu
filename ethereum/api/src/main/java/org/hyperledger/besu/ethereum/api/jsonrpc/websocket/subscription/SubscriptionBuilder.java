@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.LogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
@@ -35,7 +37,7 @@ public class SubscriptionBuilder {
         }
       case LOGS:
         {
-          return new LogsSubscription(subscriptionId, connectionId, request.getFilterParameter());
+          return logsSubscription(subscriptionId, connectionId, request);
         }
       case SYNCING:
         {
@@ -45,6 +47,19 @@ public class SubscriptionBuilder {
       default:
         return new Subscription(
             subscriptionId, connectionId, subscriptionType, request.getIncludeTransaction());
+    }
+  }
+
+  private Subscription logsSubscription(
+      final long subscriptionId, final String connectionId, final SubscribeRequest request) {
+    if (request instanceof PrivateSubscribeRequest) {
+      return new PrivateLogsSubscription(
+          subscriptionId,
+          connectionId,
+          request.getFilterParameter(),
+          ((PrivateSubscribeRequest) request).getPrivacyGroupId());
+    } else {
+      return new LogsSubscription(subscriptionId, connectionId, request.getFilterParameter());
     }
   }
 
