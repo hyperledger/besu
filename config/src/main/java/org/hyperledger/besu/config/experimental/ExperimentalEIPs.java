@@ -73,12 +73,6 @@ public class ExperimentalEIPs {
 
   @Option(
       hidden = true,
-      names = {"--Xeip1559-gas-increment-amount"},
-      arity = "1")
-  public static Long gasIncrementAmount = 10L;
-
-  @Option(
-      hidden = true,
       names = {"--Xeip1559-initial-base-fee"},
       arity = "1")
   public static Long initialBasefee = 1000000000L;
