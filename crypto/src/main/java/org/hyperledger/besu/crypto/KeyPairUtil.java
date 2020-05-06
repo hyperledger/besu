@@ -61,7 +61,8 @@ public class KeyPairUtil {
     if (keyFile.exists()) {
 
       key = load(keyFile);
-      LOG.info("Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
+      LOG.info(
+          "Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
     } else {
       key = SECP256K1.KeyPair.generate();
       try {
