@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -58,10 +60,10 @@ public class Result {
 
   public static final class Builder {
 
-    private static final String GAS_USED_EMPTY = "0x0";
+    private static final String GAS_USED_EMPTY = Quantity.HEX_ZERO;
 
     private String gasUsed = GAS_USED_EMPTY;
-    private String output = "0x";
+    private String output = Quantity.HEX_PREFIX;
     private String code;
     private String address;
 

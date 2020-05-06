@@ -93,7 +93,7 @@ public class FlatTraceGenerator {
           .getActionBuilder()
           .to(tx.getTo().map(Bytes::toHexString).orElse(null))
           .callType("call")
-          .input(payload == null ? "0x" : payload.toHexString());
+          .input(payload == null ? Quantity.HEX_PREFIX : payload.toHexString());
     } else {
       firstFlatTraceBuilder
           .type("create")
@@ -450,7 +450,7 @@ public class FlatTraceGenerator {
           .getActionBuilder()
           .value(traceFrame.getValue().toShortHexString());
     } else {
-      currentContext.getBuilder().getActionBuilder().value("0x0");
+      currentContext.getBuilder().getActionBuilder().value(Quantity.HEX_ZERO);
     }
     return currentContext;
   }

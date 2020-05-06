@@ -30,8 +30,8 @@ import org.apache.tuweni.units.bigints.UInt256Value;
  */
 public class Quantity {
 
-  private static final String HEX_PREFIX = "0x";
-  private static final String HEX_ZERO = "0x0";
+  public static final String HEX_PREFIX = "0x";
+  public static final String HEX_ZERO = "0x0";
 
   private Quantity() {}
 

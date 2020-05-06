@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 
 import java.util.ArrayList;
@@ -193,7 +194,7 @@ public class FlatTrace implements Trace {
 
     public void setGasUsed(final long gasUsed) {
       this.gasUsed = gasUsed;
-      builder.getResultBuilder().gasUsed("0x" + Long.toHexString(gasUsed));
+      builder.getResultBuilder().gasUsed(Quantity.create(gasUsed));
     }
 
     boolean isCreateOp() {
