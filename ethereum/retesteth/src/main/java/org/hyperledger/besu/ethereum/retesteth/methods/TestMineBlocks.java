@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 
 import com.google.common.base.Functions;
-import org.apache.tuweni.bytes.Bytes;
 
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
