@@ -56,8 +56,9 @@ public class MarkSweepPrunerTest {
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Map<Bytes, byte[]> hashValueStore = spy(new HashMap<>());
-  private final InMemoryKeyValueStorage stateStorage = spy(new TestInMemoryStorage(hashValueStore));
-  private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
+  private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
+  private final WorldStateStorage worldStateStorage =
+      spy(new WorldStateKeyValueStorage(stateStorage));
   private final WorldStateArchive worldStateArchive =
       new WorldStateArchive(
           worldStateStorage, new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
@@ -137,11 +138,11 @@ public class MarkSweepPrunerTest {
     pruner.sweepBefore(markBlock.getNumber());
 
     // Check stateRoots are marked first
-    InOrder inOrder = inOrder(hashValueStore, stateStorage);
+    InOrder inOrder = inOrder(hashValueStore, worldStateStorage);
     for (Bytes32 stateRoot : stateRoots) {
       inOrder.verify(hashValueStore).remove(stateRoot);
     }
-    inOrder.verify(stateStorage).removeAllKeysUnless(any());
+    inOrder.verify(worldStateStorage).prune(any());
   }
 
   @Test
@@ -172,11 +173,11 @@ public class MarkSweepPrunerTest {
     pruner.sweepBefore(markBlock.getNumber());
 
     // Check stateRoots are marked first
-    InOrder inOrder = inOrder(hashValueStore, stateStorage);
+    InOrder inOrder = inOrder(hashValueStore, worldStateStorage);
     for (Bytes32 stateRoot : stateRoots) {
       inOrder.verify(hashValueStore).remove(stateRoot);
     }
-    inOrder.verify(stateStorage).removeAllKeysUnless(any());
+    inOrder.verify(worldStateStorage).prune(any());
 
     assertThat(stateStorage.containsKey(markedRoot.toArray())).isTrue();
   }
