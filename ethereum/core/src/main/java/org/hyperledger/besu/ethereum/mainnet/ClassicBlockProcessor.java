@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -44,7 +45,8 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
-        skipZeroBlockRewards);
+        skipZeroBlockRewards,
+        TransactionGasBudgetCalculator.frontier());
   }
 
   @Override
