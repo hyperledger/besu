@@ -65,7 +65,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
             context.getCoinbase(),
-            header -> Bytes.of(),
+            header -> context.getExtraData(),
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
             protocolSchedule,
