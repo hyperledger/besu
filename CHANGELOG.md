@@ -15,15 +15,20 @@ permissions on the directory allow other users and groups to r/w. Ideally this s
 
 ### Additions and Improvements
 
- - Introduced SecurityModule plugin API. This allows use of a different security module as a plugin to 
- provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). KeyPairSecurityModule
+- Introduced SecurityModule plugin API. This allows use of a different security module as a plugin to 
+  provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). KeyPairSecurityModule
   is registered and used by default. The CLI option `--security-module=<name> (defaults to localfile)` can be used 
   to identify the security module plugin name to use instead. [\#713](https://github.com/hyperledger/besu/pull/713)
-- Full help not displayed unless explicitly requested. [\#791](https://github.com/hyperledger/besu/pull/791)
+- Several testing related changes to improve compatibility with [Hive](https://hivetests.ethdevops.io/) and Retesteth. 
+  [\#806](https://github.com/hyperledger/besu/pull/806) and [#845](https://github.com/hyperledger/besu/pull/845)
+- Native libraries for secp256k1 and Altbn128 encryption are enabled by default.  To disable these libraries use 
+  `--Xsecp256k1-native-enabled=false` and `--Xaltbn128-native-enabled`. [\#775](https://github.com/hyperledger/besu/pull/775)
 
 ### Bug Fixes
 
- - 
+- Full help not displayed unless explicitly requested. [\#437](https://github.com/hyperledger/besu/pull/437)
+- Compatibility with undocumented Geth `eth_subscribe` fields [\#654](https://github.com/hyperledger/besu/pull/654)
+- Current block number included as part of `eth_getWork` response [\#849](https://github.com/hyperledger/besu/pull/849)
 
 ## 1.4.4
 
