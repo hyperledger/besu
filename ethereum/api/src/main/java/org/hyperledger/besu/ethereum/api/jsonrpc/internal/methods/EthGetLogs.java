@@ -23,7 +23,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+
+import java.util.List;
 
 public class EthGetLogs implements JsonRpcMethod {
 
@@ -41,30 +43,26 @@ public class EthGetLogs implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
-    final LogsQuery query =
-        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
 
-    if (isValid(filter)) {
+    if (!filter.isValid()) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-    if (filter.getBlockhash() != null) {
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(),
-          new LogsResult(blockchain.matchingLogs(filter.getBlockhash(), query)));
-    }
 
-    final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
-    final long toBlockNumber = filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
+    final List<LogWithMetadata> matchingLogs =
+        filter
+            .getBlockHash()
+            .map(blockHash -> blockchain.matchingLogs(blockHash, filter.getLogsQuery()))
+            .orElseGet(
+                () -> {
+                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
+                  final long toBlockNumber =
+                      filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
+                  return blockchain.matchingLogs(
+                      fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+                });
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
-        new LogsResult(blockchain.matchingLogs(fromBlockNumber, toBlockNumber, query)));
-  }
-
-  private boolean isValid(final FilterParameter filter) {
-    return !filter.getFromBlock().isLatest()
-        && !filter.getToBlock().isLatest()
-        && filter.getBlockhash() != null;
+        requestContext.getRequest().getId(), new LogsResult(matchingLogs));
   }
 }

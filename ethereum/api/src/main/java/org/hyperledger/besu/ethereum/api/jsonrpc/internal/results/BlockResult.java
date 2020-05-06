@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.JsonNode;
   "difficulty",
   "totalDifficulty",
   "extraData",
+  "baseFee",
   "size",
   "gasLimit",
   "gasUsed",
@@ -61,6 +62,7 @@ public class BlockResult implements JsonRpcResult {
   private final String difficulty;
   private final String totalDifficulty;
   private final String extraData;
+  private final String baseFee;
   private final String size;
   private final String gasLimit;
   private final String gasUsed;
@@ -98,6 +100,7 @@ public class BlockResult implements JsonRpcResult {
     this.difficulty = Quantity.create(header.getDifficulty());
     this.totalDifficulty = Quantity.create(totalDifficulty);
     this.extraData = header.getExtraData().toString();
+    this.baseFee = header.getBaseFee().map(Quantity::create).orElse(null);
     this.size = Quantity.create(size);
     this.gasLimit = Quantity.create(header.getGasLimit());
     this.gasUsed = Quantity.create(header.getGasUsed());
@@ -170,6 +173,11 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "extraData")
   public String getExtraData() {
     return extraData;
+  }
+
+  @JsonGetter(value = "baseFee")
+  public String getBaseFee() {
+    return baseFee;
   }
 
   @JsonGetter(value = "size")

@@ -330,7 +330,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
         new PrivateTransactionReceipt(
             null,
             alice.getAddress().toHexString(),
-            Address.PRIVACY_PROXY.toHexString(),
+            Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
             "0x",
             Collections.emptyList(),
             null,
@@ -503,7 +503,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
       final String privacyGroupId, final PrivacyNode groupCreator) {
     return groupCreator.execute(
         privateContractTransactions.callOnChainPermissioningSmartContract(
-            Address.PRIVACY_PROXY.toHexString(),
+            Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE
                 + Bytes.fromBase64String(groupCreator.getEnclaveKey()).toUnprefixedHexString(),
             groupCreator.getTransactionSigningKey(),
@@ -529,7 +529,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
     return new PrivateTransactionReceipt(
         null,
         groupCreator.getAddress().toHexString(),
-        Address.PRIVACY_PROXY.toHexString(),
+        Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
         output.toString(),
         Collections.emptyList(),
         null,

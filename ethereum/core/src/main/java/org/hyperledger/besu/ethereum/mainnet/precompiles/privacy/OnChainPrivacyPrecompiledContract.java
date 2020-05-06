@@ -228,7 +228,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
     final PrivateTransactionProcessor.Result result =
-        checkCanExecute(
+        simulateTransaction(
             messageFrame,
             currentBlockHeader,
             publicWorldState,
@@ -240,7 +240,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return result.getOutput().toHexString().endsWith("0");
   }
 
-  protected PrivateTransactionProcessor.Result checkCanExecute(
+  protected PrivateTransactionProcessor.Result simulateTransaction(
       final MessageFrame messageFrame,
       final ProcessableBlockHeader currentBlockHeader,
       final WorldUpdater publicWorldState,
@@ -248,23 +248,22 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Blockchain currentBlockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
-      final Bytes canExecuteMethodSignature) {
+      final Bytes methodSignature) {
     // We need the "lock status" of the group for every single transaction but we don't want this
     // call to affect the state
     // privateTransactionProcessor.processTransaction(...) commits the state if the process was
     // successful before it returns
-    final MutableWorldState canExecutePrivateState =
+    final MutableWorldState localMutableState =
         privateWorldStateArchive.getMutable(disposablePrivateState.rootHash()).get();
-    final WorldUpdater canExecuteUpdater = canExecutePrivateState.updater();
+    final WorldUpdater updater = localMutableState.updater();
 
     return privateTransactionProcessor.processTransaction(
         currentBlockchain,
         publicWorldState,
-        canExecuteUpdater,
+        updater,
         currentBlockHeader,
         messageFrame.getTransactionHash(),
-        buildSimulationTransaction(
-            privacyGroupId, privateWorldStateUpdater, canExecuteMethodSignature),
+        buildSimulationTransaction(privacyGroupId, privateWorldStateUpdater, methodSignature),
         messageFrame.getMiningBeneficiary(),
         new DebugOperationTracer(TraceOptions.DEFAULT),
         messageFrame.getBlockHashLookup(),
@@ -278,20 +277,22 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
       // inject management
       final DefaultEvmAccount managementPrecompile =
-          privateWorldStateUpdater.createAccount(Address.DEFAULT_PRIVACY_MANAGEMENT);
+          privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
       final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
       // this is the code for the simple management contract
-      mutableManagementPrecompiled.setCode(OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_CODE);
+      mutableManagementPrecompiled.setCode(
+          OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
       final DefaultEvmAccount proxyPrecompile =
-          privateWorldStateUpdater.createAccount(Address.PRIVACY_PROXY);
+          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY);
       final MutableAccount mutableProxyPrecompiled = proxyPrecompile.getMutable();
       // this is the code for the proxy contract
-      mutableProxyPrecompiled.setCode(OnChainGroupManagement.DEFAULT_PROXY_PRECOMPILED_CODE);
+      mutableProxyPrecompiled.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
       mutableProxyPrecompiled.setStorageValue(
-          UInt256.ZERO, UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_PRIVACY_MANAGEMENT)));
+          UInt256.ZERO,
+          UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
 
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist();
@@ -312,7 +313,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     // privateTransactionProcessor.processTransaction(...) commits the state if the process was
     // successful before it returns
     final PrivateTransactionProcessor.Result getVersionResult =
-        checkCanExecute(
+        simulateTransaction(
             messageFrame,
             currentBlockHeader,
             publicWorldState,
@@ -348,7 +349,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
                 : 0)
         .gasPrice(Wei.of(1000))
         .gasLimit(3000000)
-        .to(Address.PRIVACY_PROXY)
+        .to(Address.ONCHAIN_PRIVACY_PROXY)
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .payload(payload)

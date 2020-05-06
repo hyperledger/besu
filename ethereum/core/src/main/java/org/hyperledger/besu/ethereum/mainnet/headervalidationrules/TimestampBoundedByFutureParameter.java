@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
   private final long acceptableClockDriftSeconds;
 
   public TimestampBoundedByFutureParameter(final long acceptableClockDriftSeconds) {

@@ -14,5 +14,5 @@ interface OnChainPrivacyGroupManagementInterface {
 
     function canExecute() external view returns (bool);
 
-    function getVersion() external view returns (int);
+    function getVersion() external view returns (bytes32);
 }

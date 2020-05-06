@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
 import java.util.Arrays;
@@ -137,6 +138,45 @@ public class FilterParameterTest {
 
     assertThat(parsedFilterParameter)
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+  }
+
+  @Test
+  public void jsonWithFromAndToParametersDeserializesCorrectly() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "]}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter.getFromBlock()).isEqualTo(new BlockParameter(0));
+    assertThat(parsedFilterParameter.getToBlock()).isEqualTo(BlockParameter.PENDING);
+  }
+
+  @Test
+  public void jsonWithBlockAndFromAndToParametersIsInvalid() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockhash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter.isValid()).isFalse();
   }
 
   @Test
@@ -324,8 +364,8 @@ public class FilterParameterTest {
 
   private FilterParameter filterParameterWithAddresses(final String... addresses) {
     return new FilterParameter(
-        "latest",
-        "latest",
+        BlockParameter.LATEST,
+        BlockParameter.LATEST,
         Arrays.stream(addresses).map(Address::fromHexString).collect(toUnmodifiableList()),
         null,
         null);
@@ -333,8 +373,8 @@ public class FilterParameterTest {
 
   private FilterParameter filterParameterWithSingleListOfTopics(final String... topics) {
     return new FilterParameter(
-        "latest",
-        "latest",
+        BlockParameter.LATEST,
+        BlockParameter.LATEST,
         singletonList(Address.fromHexString("0x0")),
         singletonList(
             Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList())),
@@ -346,7 +386,11 @@ public class FilterParameterTest {
         Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList());
     List<List<LogTopic>> topicsListList = Arrays.asList(topicsList, topicsList);
     return new FilterParameter(
-        "latest", "latest", singletonList(Address.fromHexString("0x0")), topicsListList, null);
+        BlockParameter.LATEST,
+        BlockParameter.LATEST,
+        singletonList(Address.fromHexString("0x0")),
+        topicsListList,
+        null);
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String jsonWithSingleAddress)

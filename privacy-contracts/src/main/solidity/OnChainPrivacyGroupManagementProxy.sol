@@ -49,7 +49,7 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         return privacyInterface.canExecute();
     }
 
-    function getVersion() public view returns (int) {
+    function getVersion() public view returns (bytes32) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.getVersion();
     }
