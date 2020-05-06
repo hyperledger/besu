@@ -23,7 +23,7 @@ permissions on the directory allow other users and groups to r/w. Ideally this s
 
 ### Bug Fixes
 
- - 
+ - MerkleTrieException when pruning should no longer occur. Using `--pruning-enabled=true` will no longer accidentaly delete keys in certain edge cases. [\#760](https://github.com/hyperledger/besu/pull/760).
 
 ## 1.4.4
 
