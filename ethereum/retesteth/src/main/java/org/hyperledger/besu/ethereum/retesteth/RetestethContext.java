@@ -63,6 +63,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RetestethContext {
 
@@ -72,6 +73,7 @@ public class RetestethContext {
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
+  private Bytes extraData;
   private MutableBlockchain blockchain;
   private ProtocolContext<Void> protocolContext;
   private BlockchainQueries blockchainQueries;
@@ -128,6 +130,7 @@ public class RetestethContext {
 
     final GenesisState genesisState = GenesisState.fromJson(genesisConfigString, protocolSchedule);
     coinbase = genesisState.getBlock().getHeader().getCoinbase();
+    extraData = genesisState.getBlock().getHeader().getExtraData();
 
     final WorldStateArchive worldStateArchive =
         new WorldStateArchive(
@@ -246,6 +249,10 @@ public class RetestethContext {
 
   public Address getCoinbase() {
     return coinbase;
+  }
+
+  public Bytes getExtraData() {
+    return extraData;
   }
 
   public MutableBlockchain getBlockchain() {
