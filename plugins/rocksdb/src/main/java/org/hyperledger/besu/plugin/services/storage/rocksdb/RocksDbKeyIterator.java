@@ -56,7 +56,9 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
     try {
       rocksIterator.status();
     } catch (final RocksDBException e) {
-      LOG.error("RocksDbEntryIterator encountered a problem while iterating.", e);
+      LOG.error(
+          String.format("%s encountered a problem while iterating.", getClass().getSimpleName()),
+          e);
     }
     if (!hasNext()) {
       throw new NoSuchElementException();
@@ -81,7 +83,9 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
   }
 
   private void assertOpen() {
-    checkState(!closed.get(), "Attempt to update a closed transaction");
+    checkState(
+        !closed.get(),
+        String.format("Attempt to read from a closed %s", getClass().getSimpleName()));
   }
 
   @Override
