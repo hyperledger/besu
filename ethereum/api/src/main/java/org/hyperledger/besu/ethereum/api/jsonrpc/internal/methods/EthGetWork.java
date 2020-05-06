@@ -54,7 +54,8 @@ public class EthGetWork implements JsonRpcMethod {
       final String[] result = {
         "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
-        rawResult.getTarget().toHexString()
+        rawResult.getTarget().toHexString(),
+        "0x" + Long.toHexString(rawResult.getBlockNumber())
       };
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } else {
