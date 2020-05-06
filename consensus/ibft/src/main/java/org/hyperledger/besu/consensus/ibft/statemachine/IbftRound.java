@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
@@ -118,8 +119,13 @@ public class IbftRound {
 
   private void updateStateWithProposalAndTransmit(
       final Block block, final Optional<RoundChangeCertificate> roundChangeCertificate) {
-    final Proposal proposal =
-        messageFactory.createProposal(getRoundIdentifier(), block, roundChangeCertificate);
+    final Proposal proposal;
+    try {
+      proposal = messageFactory.createProposal(getRoundIdentifier(), block, roundChangeCertificate);
+    } catch (final SecurityModuleException e) {
+      LOG.warn("Failed to create a signed Proposal, waiting for next round.", e);
+      return;
+    }
 
     transmitter.multicastProposal(
         proposal.getRoundIdentifier(), proposal.getBlock(), proposal.getRoundChangeCertificate());
@@ -132,11 +138,15 @@ public class IbftRound {
 
     if (updateStateWithProposedBlock(msg)) {
       LOG.debug("Sending prepare message. round={}", roundState.getRoundIdentifier());
-      final Prepare localPrepareMessage =
-          messageFactory.createPrepare(getRoundIdentifier(), block.getHash());
-      transmitter.multicastPrepare(
-          localPrepareMessage.getRoundIdentifier(), localPrepareMessage.getDigest());
-      peerIsPrepared(localPrepareMessage);
+      try {
+        final Prepare localPrepareMessage =
+            messageFactory.createPrepare(getRoundIdentifier(), block.getHash());
+        peerIsPrepared(localPrepareMessage);
+        transmitter.multicastPrepare(
+            localPrepareMessage.getRoundIdentifier(), localPrepareMessage.getDigest());
+      } catch (final SecurityModuleException e) {
+        LOG.warn("Failed to create a signed Prepare; {}", e.getMessage());
+      }
     }
   }
 
@@ -158,23 +168,41 @@ public class IbftRound {
     final boolean wasPrepared = roundState.isPrepared();
     final boolean wasCommitted = roundState.isCommitted();
     final boolean blockAccepted = roundState.setProposedBlock(msg);
+
     if (blockAccepted) {
+      final Block block = roundState.getProposedBlock().get();
+
+      final Signature commitSeal;
+      try {
+        commitSeal = createCommitSeal(block);
+      } catch (final SecurityModuleException e) {
+        LOG.warn("Failed to construct commit seal; {}", e.getMessage());
+        return blockAccepted;
+      }
+
       // There are times handling a proposed block is enough to enter prepared.
       if (wasPrepared != roundState.isPrepared()) {
         LOG.debug("Sending commit message. round={}", roundState.getRoundIdentifier());
-        final Block block = roundState.getProposedBlock().get();
-        transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), createCommitSeal(block));
+        transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), commitSeal);
       }
+
+      // can automatically add _our_ commit message to the roundState
+      // cannot create a prepare message here, as it may be _our_ proposal, and thus we cannot also
+      // prepare
+      try {
+        final Commit localCommitMessage =
+            messageFactory.createCommit(
+                roundState.getRoundIdentifier(), msg.getBlock().getHash(), commitSeal);
+        roundState.addCommitMessage(localCommitMessage);
+      } catch (final SecurityModuleException e) {
+        LOG.warn("Failed to create signed Commit message; {}", e.getMessage());
+        return blockAccepted;
+      }
+
+      // It is possible sufficient commit seals are now available and the block should be imported
       if (wasCommitted != roundState.isCommitted()) {
         importBlockToChain();
       }
-
-      final Commit localCommitMessage =
-          messageFactory.createCommit(
-              roundState.getRoundIdentifier(),
-              msg.getBlock().getHash(),
-              createCommitSeal(roundState.getProposedBlock().get()));
-      peerIsCommitted(localCommitMessage);
     }
 
     return blockAccepted;
@@ -186,7 +214,13 @@ public class IbftRound {
     if (wasPrepared != roundState.isPrepared()) {
       LOG.debug("Sending commit message. round={}", roundState.getRoundIdentifier());
       final Block block = roundState.getProposedBlock().get();
-      transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), createCommitSeal(block));
+      try {
+        transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), createCommitSeal(block));
+        // Note: the local-node's commit message was added to RoundState on block acceptance
+        // and thus does not need to be done again here.
+      } catch (final SecurityModuleException e) {
+        LOG.warn("Failed to construct a commit seal: {}", e.getMessage());
+      }
     }
   }
 

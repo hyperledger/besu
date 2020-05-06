@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.ArrayList;
@@ -89,26 +90,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
-  public AbstractBlockProcessor(final AbstractBlockProcessor blockProcessor) {
-    this(
-        blockProcessor.transactionProcessor,
-        blockProcessor.transactionReceiptFactory,
-        blockProcessor.blockReward,
-        blockProcessor.miningBeneficiaryCalculator,
-        blockProcessor.skipZeroBlockRewards);
-  }
+  private final TransactionGasBudgetCalculator gasBudgetCalculator;
 
   public AbstractBlockProcessor(
       final TransactionProcessor transactionProcessor,
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+      final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final TransactionGasBudgetCalculator gasBudgetCalculator) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
+    this.gasBudgetCalculator = gasBudgetCalculator;
   }
 
   @Override
@@ -124,7 +120,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     for (final Transaction transaction : transactions) {
       final long remainingGasBudget = blockHeader.getGasLimit() - gasUsed;
-      if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
+      if (!gasBudgetCalculator.hasBudget(transaction, blockHeader, gasUsed)) {
         LOG.warn(
             "Transaction processing error: transaction gas limit {} exceeds available block budget remaining {}",
             transaction.getGasLimit(),

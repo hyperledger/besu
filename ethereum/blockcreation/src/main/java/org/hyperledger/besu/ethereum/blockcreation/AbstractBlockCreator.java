@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -170,14 +171,6 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      Long baseFee = null;
-      if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
-        final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
-        baseFee =
-            eip1559.computeBaseFee(
-                parentHeader.getBaseFee().orElse(FeeMarket.eip1559().getInitialBasefee()),
-                parentHeader.getGasUsed());
-      }
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
@@ -187,15 +180,16 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getFrontierCumulativeGasUsed())
+              .gasUsed(transactionResults.getTotalCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
-              .baseFee(baseFee)
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       return new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
-
+    } catch (final SecurityModuleException ex) {
+      LOG.warn("Failed to create block signature.", ex);
+      throw ex;
     } catch (final CancellationException ex) {
       LOG.trace("Attempt to create block was interrupted.");
       throw ex;
@@ -273,6 +267,17 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
+    Long baseFee = null;
+    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
+      final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
+      if (eip1559.isForkBlock(newBlockNumber)) {
+        baseFee = FeeMarket.eip1559().getInitialBasefee();
+      } else {
+        baseFee =
+            eip1559.computeBaseFee(
+                parentHeader.getBaseFee().orElseThrow(), parentHeader.getGasUsed());
+      }
+    }
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)
@@ -280,6 +285,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
         .number(newBlockNumber)
         .gasLimit(gasLimit)
         .timestamp(timestamp)
+        .baseFee(baseFee)
         .buildProcessableBlockHeader();
   }
 

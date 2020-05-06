@@ -21,10 +21,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -354,7 +355,10 @@ public class LogsSubscriptionServiceTest {
       final List<Address> addresses, final List<List<LogTopic>> logTopics) {
 
     return new LogsSubscription(
-        nextSubscriptionId.incrementAndGet(), "conn", new LogsQuery(addresses, logTopics));
+        nextSubscriptionId.incrementAndGet(),
+        "conn",
+        new FilterParameter(
+            BlockParameter.LATEST, BlockParameter.LATEST, addresses, logTopics, null));
   }
 
   private void registerSubscriptions(final LogsSubscription... subscriptions) {

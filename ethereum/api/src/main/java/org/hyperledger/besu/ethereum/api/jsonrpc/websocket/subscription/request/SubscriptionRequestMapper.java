@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
 import java.util.Optional;
 
@@ -70,8 +70,9 @@ public class SubscriptionRequestMapper {
   }
 
   private SubscribeRequest parseLogsRequest(final WebSocketRpcRequest request) {
-    final LogsQuery logsQuery = request.getRequiredParameter(1, LogsQuery.class);
-    return new SubscribeRequest(SubscriptionType.LOGS, logsQuery, null, request.getConnectionId());
+    final FilterParameter filterParameter = request.getRequiredParameter(1, FilterParameter.class);
+    return new SubscribeRequest(
+        SubscriptionType.LOGS, filterParameter, null, request.getConnectionId());
   }
 
   public UnsubscribeRequest mapUnsubscribeRequest(final JsonRpcRequestContext jsonRpcRequestContext)

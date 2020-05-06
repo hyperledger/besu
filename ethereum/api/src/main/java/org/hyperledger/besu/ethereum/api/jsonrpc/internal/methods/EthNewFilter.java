@@ -18,9 +18,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
 public class EthNewFilter implements JsonRpcMethod {
 
@@ -38,11 +39,15 @@ public class EthNewFilter implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
-    final LogsQuery query =
-        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
+
+    if (!filter.isValid()) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    }
 
     final String logFilterId =
-        filterManager.installLogFilter(filter.getFromBlock(), filter.getToBlock(), query);
+        filterManager.installLogFilter(
+            filter.getFromBlock(), filter.getToBlock(), filter.getLogsQuery());
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), logFilterId);
   }

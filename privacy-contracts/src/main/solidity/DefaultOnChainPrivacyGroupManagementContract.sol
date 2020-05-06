@@ -4,11 +4,11 @@ import "./OnChainPrivacyGroupManagementInterface.sol";
 contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupManagementInterface {
 
     bool private _canExecute;
-    int private _version;
+    bytes32 private _version;
     bytes32[] private distributionList;
     mapping(bytes32 => uint256) private distributionIndexOf;
 
-    function getVersion() external view returns (int) {
+    function getVersion() external view returns (bytes32) {
         return _version;
     }
 
@@ -35,13 +35,15 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
         require(isMember(_enclaveKey));
         bool result = addAll(_enclaveKey, _accounts);
         _canExecute = true;
-        _version++;
+        updateVersion();
         return result;
     }
 
     function removeParticipant(bytes32 _enclaveKey, bytes32 _account) public returns (bool) {
         require(isMember(_enclaveKey));
-        return removeInternal(_account);
+        bool result = removeInternal(_account);
+        updateVersion();
+        return result;
     }
 
     function getParticipants(bytes32 _enclaveKey) public view returns (bytes32[] memory) {
@@ -96,6 +98,10 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
             return true;
         }
         return false;
+    }
+
+    function updateVersion() internal returns (int) {
+        _version = keccak256(abi.encodePacked(blockhash(block.number-1), block.coinbase, distributionList));
     }
 
     event ParticipantAdded(
