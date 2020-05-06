@@ -69,7 +69,7 @@ public class ExperimentalEIPs {
       hidden = true,
       names = {"--Xeip1559-decay-range"},
       arity = "1")
-  public static Long decayRange = 800000L;
+  public static Long decayRange = 1000000L;
 
   @Option(
       hidden = true,
