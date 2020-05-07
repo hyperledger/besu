@@ -358,7 +358,7 @@ public class MultiTenancyPrivacyControllerTest {
         .thenReturn(
             Optional.of(
                 PrivateTransactionProcessor.Result.successful(
-                    LOGS, 0, Bytes.EMPTY, ValidationResult.valid())));
+                    LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
     final Optional<PrivateTransactionProcessor.Result> result =
         multiTenancyPrivacyController.simulatePrivateTransaction(
             PRIVACY_GROUP_ID,

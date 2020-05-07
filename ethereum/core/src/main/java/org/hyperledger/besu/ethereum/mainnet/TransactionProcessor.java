@@ -146,6 +146,23 @@ public interface TransactionProcessor {
         transactionValidationParams);
   }
 
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams Validation parameters that will be used by the {@link
+   *     TransactionValidator}
+   * @param operationTracer operation tracer {@link OperationTracer}
+   * @return the transaction result
+   * @see TransactionValidator
+   * @see TransactionValidationParams
+   */
   default Result processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
