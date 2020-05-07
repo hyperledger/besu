@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -50,12 +49,12 @@ public final class GenesisStateTest {
 
   @BeforeClass
   public static void initialize() {
-    ExperimentalEIPs.eip1559Enabled = false;
+    // ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @AfterClass
   public static void reset() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+    // ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test

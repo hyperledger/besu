@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 
@@ -26,6 +25,7 @@ import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -74,6 +74,7 @@ public class TransactionPriceCalculatorTest {
   }
 
   @Test
+  @Ignore
   public void assertThatCalculatorWorks() {
     assertThat(
             transactionPriceCalculator.price(
@@ -88,11 +89,11 @@ public class TransactionPriceCalculatorTest {
 
   @Before
   public void setUp() {
-    ExperimentalEIPs.eip1559Enabled = true;
+    // ExperimentalEIPs.eip1559Enabled = true;
   }
 
   @After
   public void reset() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+    // ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 }

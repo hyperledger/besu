@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -41,10 +40,10 @@ public class EIP1559Helper {
   }
 
   public static void enableEIP1559() {
-    ExperimentalEIPs.eip1559Enabled = true;
+    // ExperimentalEIPs.eip1559Enabled = true;
   }
 
   public static void disableEIP1559() {
-    ExperimentalEIPs.eip1559Enabled = false;
+    // ExperimentalEIPs.eip1559Enabled = false;
   }
 }
