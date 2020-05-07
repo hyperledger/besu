@@ -72,7 +72,7 @@ public class RetestethService {
             new EthGetBlockByNumber(retestethContext::getBlockchainQueries, blockResult, true),
             new DebugAccountRange(retestethContext::getBlockchainQueries),
             new EthGetBalance(retestethContext::getBlockchainQueries),
-            new EthGetBlockByHash(retestethContext::getBlockchainQueries, blockResult),
+            new EthGetBlockByHash(retestethContext::getBlockchainQueries, blockResult, true),
             new EthGetCode(retestethContext::getBlockchainQueries),
             new EthGetTransactionCount(
                 retestethContext::getBlockchainQueries,

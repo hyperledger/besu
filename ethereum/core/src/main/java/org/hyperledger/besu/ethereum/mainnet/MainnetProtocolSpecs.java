@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -169,14 +170,16 @@ public abstract class MainnetProtocolSpecs {
                 transactionReceiptFactory,
                 blockReward,
                 miningBeneficiaryCalculator,
-                skipZeroBlockRewards) ->
+                skipZeroBlockRewards,
+                gasBudgetCalculator) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
                         transactionReceiptFactory,
                         blockReward,
                         miningBeneficiaryCalculator,
-                        skipZeroBlockRewards)))
+                        skipZeroBlockRewards,
+                        gasBudgetCalculator)))
         .name("DaoRecoveryInit");
   }
 
@@ -391,6 +394,7 @@ public abstract class MainnetProtocolSpecs {
         .name("EIP-1559")
         .transactionPriceCalculator(transactionPriceCalculator)
         .eip1559(Optional.of(eip1559))
+        .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
