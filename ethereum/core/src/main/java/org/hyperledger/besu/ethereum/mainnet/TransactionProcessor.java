@@ -47,7 +47,6 @@ public interface TransactionProcessor {
       FAILED
     }
 
-
     /**
      * Return the logs produced by the transaction.
      *
@@ -148,25 +147,25 @@ public interface TransactionProcessor {
   }
 
   default Result processTransaction(
-          final Blockchain blockchain,
-          final WorldUpdater worldState,
-          final ProcessableBlockHeader blockHeader,
-          final Transaction transaction,
-          final Address miningBeneficiary,
-          final BlockHashLookup blockHashLookup,
-          final Boolean isPersistingPrivateState,
-          final TransactionValidationParams transactionValidationParams,
-          final OperationTracer operationTracer) {
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer) {
     return processTransaction(
-            blockchain,
-            worldState,
-            blockHeader,
-            transaction,
-            miningBeneficiary,
-            operationTracer,
-            blockHashLookup,
-            isPersistingPrivateState,
-            transactionValidationParams);
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams);
   }
 
   /**

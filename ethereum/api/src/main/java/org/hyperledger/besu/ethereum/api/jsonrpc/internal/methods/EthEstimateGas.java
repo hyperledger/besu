@@ -66,8 +66,8 @@ public class EthEstimateGas implements JsonRpcMethod {
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
 
     return transactionSimulator
-        .process(modifiedCallParams,operationTracer, blockHeader.getNumber())
-        .map(gasEstimateResponse(requestContext,operationTracer))
+        .process(modifiedCallParams, operationTracer, blockHeader.getNumber())
+        .map(gasEstimateResponse(requestContext, operationTracer))
         .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
   }
 
@@ -89,26 +89,30 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
       final JsonRpcRequestContext request, final EstimateGasOperationTracer operationTracer) {
-    return result -> result.isSuccessful()
-      ? new JsonRpcSuccessResponse(
-          request.getRequest().getId(), Quantity.create(processEstimateGas(result, operationTracer)))
-      : errorResponse(request, result.getValidationResult());
+    return result ->
+        result.isSuccessful()
+            ? new JsonRpcSuccessResponse(
+                request.getRequest().getId(),
+                Quantity.create(processEstimateGas(result, operationTracer)))
+            : errorResponse(request, result.getValidationResult());
   }
 
   /**
-   * Estimate gas by adding minimum gas remaining for some operation
-   * and the necessary gas for sub calls
+   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
+   * calls
+   *
    * @param result transaction simulator result
    * @param operationTracer estimate gas operation tracer
    * @return estimate gas
    */
-  private long processEstimateGas(final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
+  private long processEstimateGas(
+      final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
     // no more than 63/64s of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier = Math.pow(65D/64D,operationTracer.getMaxDepth());
+    final double subCallMultiplier = Math.pow(65D / 64D, operationTracer.getMaxDepth());
     // and minimum gas remaining is necessary for some operation (additionalStipend)
     final long gasStipend = operationTracer.getStipendNeeded().toLong();
     final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();
-    return ((long) ((gasUsedByTransaction+gasStipend)*subCallMultiplier));
+    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 
   private JsonRpcErrorResponse errorResponse(
@@ -129,5 +133,4 @@ public class EthEstimateGas implements JsonRpcMethod {
         request.getRequest().getId(),
         jsonRpcError == null ? JsonRpcError.INTERNAL_ERROR : jsonRpcError);
   }
-
 }

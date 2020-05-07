@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -73,12 +72,14 @@ public class TransactionSimulator {
   }
 
   public Optional<TransactionSimulatorResult> process(
-          final CallParameter callParams, final long blockNumber) {
+      final CallParameter callParams, final long blockNumber) {
     return process(callParams, OperationTracer.NO_TRACING, blockNumber);
   }
 
   public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams, final OperationTracer operationTracer,  final long blockNumber) {
+      final CallParameter callParams,
+      final OperationTracer operationTracer,
+      final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
     return process(callParams, operationTracer, header);
   }
@@ -88,7 +89,9 @@ public class TransactionSimulator {
   }
 
   private Optional<TransactionSimulatorResult> process(
-          final CallParameter callParams, final OperationTracer operationTracer,  final BlockHeader header) {
+      final CallParameter callParams,
+      final OperationTracer operationTracer,
+      final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
     }
@@ -126,19 +129,18 @@ public class TransactionSimulator {
         protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
     final TransactionProcessor.Result result =
         transactionProcessor.processTransaction(
-                blockchain,
-                worldState.updater(),
-                header,
-                transaction,
-                protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
-                new BlockHashLookup(header, blockchain),
-                false,
-                TransactionValidationParams.transactionSimulator(),
-                operationTracer);
+            blockchain,
+            worldState.updater(),
+            header,
+            transaction,
+            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
+            new BlockHashLookup(header, blockchain),
+            false,
+            TransactionValidationParams.transactionSimulator(),
+            operationTracer);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
-
 
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     return doesAddressExist(address, blockchain.getChainHeadHeader());
@@ -157,6 +159,4 @@ public class TransactionSimulator {
 
     return Optional.of(worldState.get(address) != null);
   }
-
-
 }

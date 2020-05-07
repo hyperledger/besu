@@ -81,18 +81,24 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     public static Result invalid(
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
       return new Result(
-          Status.INVALID, new ArrayList<>(), -1,-1, Bytes.EMPTY, validationResult, Optional.empty());
+          Status.INVALID,
+          new ArrayList<>(),
+          -1,
+          -1,
+          Bytes.EMPTY,
+          validationResult,
+          Optional.empty());
     }
 
     public static Result failed(
-            final long gasUsedByTransaction,
+        final long gasUsedByTransaction,
         final long gasRemaining,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
         final Optional<Bytes> revertReason) {
       return new Result(
           Status.FAILED,
           new ArrayList<>(),
-              gasUsedByTransaction,
+          gasUsedByTransaction,
           gasRemaining,
           Bytes.EMPTY,
           validationResult,
@@ -101,12 +107,18 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     public static Result successful(
         final List<Log> logs,
-         final long gasUsedByTransaction,
+        final long gasUsedByTransaction,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
       return new Result(
-          Status.SUCCESSFUL, logs, gasUsedByTransaction, gasRemaining, output, validationResult, Optional.empty());
+          Status.SUCCESSFUL,
+          logs,
+          gasUsedByTransaction,
+          gasRemaining,
+          output,
+          validationResult,
+          Optional.empty());
     }
 
     Result(
@@ -213,7 +225,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     validationResult =
         transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
-      LOG.trace("Invalid transaction: {}", validationResult.getErrorMessage());
+      LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
       return Result.invalid(validationResult);
     }
 
@@ -226,7 +238,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     final Wei upfrontGasCost = transaction.getUpfrontGasCost(transactionGasPrice);
     final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
-    LOG.info(
+    LOG.trace(
         "Deducted sender {} upfront gas cost {} ({} -> {})",
         senderAddress,
         upfrontGasCost,
@@ -234,9 +246,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
         sender.getBalance());
 
     final Gas intrinsicGas = gasCalculator.transactionIntrinsicGasCost(transaction);
-    System.out.println("intrinsicGas"+intrinsicGas);
     final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
-    System.out.println("gasAvailable"+gasAvailable);
     LOG.trace(
         "Gas available for execution {} = {} - {} (limit - intrinsic)",
         gasAvailable,
@@ -324,10 +334,6 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       worldUpdater.commit();
     }
 
-    LOG.info(
-            "Gas used by transaction: {}, by message call/contract creation: {}",
-            () -> Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas()),
-            () -> gasAvailable.minus(initialFrame.getRemainingGas()));
     if (LOG.isTraceEnabled()) {
       LOG.trace(
           "Gas used by transaction: {}, by message call/contract creation: {}",
@@ -344,7 +350,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final Wei refundedWei = refunded.priceFor(transactionGasPrice);
     senderMutableAccount.incrementBalance(refundedWei);
 
-    final Gas gasUsedByTransaction = Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas());
+    final Gas gasUsedByTransaction =
+        Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas());
 
     final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
@@ -352,7 +359,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
       if (transactionGasPrice.compareTo(baseFee) < 0) {
         return Result.failed(
-                gasUsedByTransaction.toLong(),
+            gasUsedByTransaction.toLong(),
             refunded.toLong(),
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
@@ -375,12 +382,16 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       return Result.successful(
           initialFrame.getLogs(),
-              gasUsedByTransaction.toLong(),
+          gasUsedByTransaction.toLong(),
           refunded.toLong(),
           initialFrame.getOutputData(),
           validationResult);
     } else {
-      return Result.failed(gasUsedByTransaction.toLong(), refunded.toLong(), validationResult, initialFrame.getRevertReason());
+      return Result.failed(
+          gasUsedByTransaction.toLong(),
+          refunded.toLong(),
+          validationResult,
+          initialFrame.getRevertReason());
     }
   }
 
