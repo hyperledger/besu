@@ -63,6 +63,8 @@ public class BesuNodeFactory {
         config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
         config.isRevertReasonEnabled(),
+        config.isSecp256k1Native(),
+        config.isAltbn128Native(),
         config.getPlugins(),
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
