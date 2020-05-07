@@ -197,7 +197,8 @@ public class RocksDBColumnarKeyValueStorage
       db.delete(segmentHandle, tryDeleteOptions, key);
       return true;
     } catch (RocksDBException e) {
-      if (e.getStatus().getCode() == Status.Code.Incomplete) {
+      if (e.getStatus().getCode() == Status.Code.Incomplete
+          || e.getStatus().getCode() == Status.Code.InvalidArgument) {
         return false;
       } else {
         throw new StorageException(e.getStatus().toString() + " " + e.getStatus().getCode(), e);
