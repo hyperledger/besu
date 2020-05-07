@@ -100,6 +100,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<URI> bootnodes = new ArrayList<>();
   private final boolean bootnodeEligible;
   private final boolean secp256k1Native;
+  private final boolean altbn128Native;
   private Optional<String> genesisConfig = Optional.empty();
   private NodeRequests nodeRequests;
   private LoginRequestFactory loginRequestFactory;
@@ -127,6 +128,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
       final boolean secp256k1Native,
+      final boolean altbn128Native,
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
@@ -157,6 +159,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
     this.secp256k1Native = secp256k1Native;
+    this.altbn128Native = altbn128Native;
     this.runCommand = runCommand;
     plugins.forEach(
         pluginName -> {
@@ -567,6 +570,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public boolean isSecp256k1Native() {
     return secp256k1Native;
+  }
+
+  public boolean isAltbn128Native() {
+    return altbn128Native;
   }
 
   @Override
