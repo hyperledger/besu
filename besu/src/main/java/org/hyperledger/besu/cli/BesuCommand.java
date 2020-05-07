@@ -1313,7 +1313,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuCommand configure() throws Exception {
     syncMode =
         Optional.ofNullable(syncMode)
-            .orElse(genesisFile() == null && !isPrivacyEnabled ? SyncMode.FAST : SyncMode.FULL);
+            .orElse(genesisFile == null && !isPrivacyEnabled ? SyncMode.FAST : SyncMode.FULL);
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
