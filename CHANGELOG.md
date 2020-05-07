@@ -35,6 +35,10 @@ permissions on the directory allow other users and groups to r/w. Ideally this s
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
+#### New known issues 
+
+- [Peering issues when syncing](https://github.com/hyperledger/besu/issues/797)
+
 #### Previously identified known issues
 
 - [`Intrinsic gas exceeds gas limit` returned when calling `delete mapping[addr]` or `mapping[addr] = 0`](KNOWN_ISSUES.md#intrinsic-gas-exceeds-gas-limit)
