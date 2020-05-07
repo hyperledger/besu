@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetPooledTransactionsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -40,23 +41,28 @@ class PendingTransactionsMessageProcessor {
 
   private static final int MAX_HASHES = 256;
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
+  private static final long SYNC_TOLERANCE = 100L;
+
   private static final Logger LOG = getLogger();
   private final PeerPendingTransactionTracker transactionTracker;
   private final Counter totalSkippedTransactionsMessageCounter;
   private final TransactionPool transactionPool;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
+  private final SyncState syncState;
 
   PendingTransactionsMessageProcessor(
       final PeerPendingTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final Counter metricsCounter,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncState syncState) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
+    this.syncState = syncState;
     this.totalSkippedTransactionsMessageCounter =
         new RunnableCounter(
             metricsCounter,
@@ -87,27 +93,30 @@ class PendingTransactionsMessageProcessor {
 
       final List<Hash> pendingHashes = transactionsMessage.pendingTransactions();
       transactionTracker.markTransactionsHashesAsSeen(peer, pendingHashes);
-      List<Hash> toRequest = new ArrayList<>();
-      for (Hash hash : pendingHashes) {
-        if (transactionPool.addTransactionHash(hash)) {
-          toRequest.add(hash);
+      if (syncState.isInSync(SYNC_TOLERANCE)) {
+        final List<Hash> toRequest = new ArrayList<>();
+        for (final Hash hash : pendingHashes) {
+          if (transactionPool.addTransactionHash(hash)) {
+            toRequest.add(hash);
+          }
         }
-      }
-      while (!toRequest.isEmpty()) {
-        List<Hash> messageHashes = toRequest.subList(0, Math.min(toRequest.size(), MAX_HASHES));
-        GetPooledTransactionsFromPeerTask task =
-            GetPooledTransactionsFromPeerTask.forHashes(ethContext, messageHashes, metricsSystem);
-        task.assignPeer(peer);
-        ethContext
-            .getScheduler()
-            .scheduleSyncWorkerTask(task)
-            .thenAccept(
-                result -> {
-                  List<Transaction> txs = result.getResult();
-                  transactionPool.addRemoteTransactions(txs);
-                });
+        while (!toRequest.isEmpty()) {
+          final List<Hash> messageHashes =
+              toRequest.subList(0, Math.min(toRequest.size(), MAX_HASHES));
+          final GetPooledTransactionsFromPeerTask task =
+              GetPooledTransactionsFromPeerTask.forHashes(ethContext, messageHashes, metricsSystem);
+          task.assignPeer(peer);
+          ethContext
+              .getScheduler()
+              .scheduleSyncWorkerTask(task)
+              .thenAccept(
+                  result -> {
+                    final List<Transaction> txs = result.getResult();
+                    transactionPool.addRemoteTransactions(txs);
+                  });
 
-        toRequest.removeAll(messageHashes);
+          toRequest.removeAll(messageHashes);
+        }
       }
     } catch (final RLPException ex) {
       if (peer != null) {
