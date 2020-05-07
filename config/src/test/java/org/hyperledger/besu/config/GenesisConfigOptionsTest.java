@@ -18,6 +18,8 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
 import java.math.BigInteger;
 import java.util.Map;
 
@@ -140,6 +142,29 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetBerlinBlockNumber() {
+    try {
+      ExperimentalEIPs.berlinEnabled = true;
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("berlinBlock", 1000));
+      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
+    } finally {
+      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
+    }
+  }
+
+  @Test
+  // TODO EIP-1559 change for the actual fork name when known
+  public void shouldGetEIP1559BlockNumber() {
+    try {
+      ExperimentalEIPs.eip1559Enabled = true;
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip1559block", 1000));
+      assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    } finally {
+      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+    }
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -151,6 +176,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
+    assertThat(config.getBerlinBlockNumber()).isEmpty();
   }
 
   @Test

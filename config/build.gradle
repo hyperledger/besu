@@ -31,7 +31,7 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
-
+  implementation 'info.picocli:picocli'
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(':testutil')
@@ -42,4 +42,3 @@ dependencies {
 }
 
 configurations { testArtifacts }
-artifacts { testSupportArtifacts testSupportJar }

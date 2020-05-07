@@ -1,0 +1,32 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_block",
+    "params": [
+      "0x1"
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "action": {
+          "author": "0x0000000000000000000000000000000000000000",
+          "rewardType": "block",
+          "value": "0x1bc16d674ec80000"
+        },
+        "blockHash": "0x65a7a86c7ef2b1cd293d6302428994a7f8e4d20e35786e67246cf7c85441f70b",
+        "blockNumber": 1,
+        "result": null,
+        "subtraces": 0,
+        "traceAddress": [],
+        "transactionHash": null,
+        "transactionPosition": null,
+        "type": "reward"
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

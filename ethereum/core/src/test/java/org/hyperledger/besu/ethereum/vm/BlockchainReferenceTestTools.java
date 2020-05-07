@@ -45,7 +45,7 @@ public class BlockchainReferenceTestTools {
         System.getProperty(
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
-                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul");
+                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
 
@@ -71,6 +71,14 @@ public class BlockchainReferenceTestTools {
 
     // Absurd amount of gas, doesn't run in parallel
     params.blacklist("randomStatetest94_\\w+");
+
+    // Don't do time consuming tests
+    params.blacklist("CALLBlake2f_MaxRounds.*");
+    params.blacklist(".*\\w50000[-_].*");
+
+    // Insane amount of ether
+    params.blacklist("sha3_memSizeNoQuadraticCost[0-9][0-9]_Istanbul");
+    params.blacklist("sha3_memSizeQuadraticCost[0-9][0-9]_(|zeroSize|2)_?Istanbul");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {

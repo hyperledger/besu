@@ -16,14 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 
-import java.math.BigInteger;
-
 import org.apache.tuweni.bytes.Bytes;
-import org.bouncycastle.crypto.BasicAgreement;
 import org.bouncycastle.crypto.BufferedBlockCipher;
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.DerivationFunction;
 import org.bouncycastle.crypto.DerivationParameters;
@@ -31,20 +28,15 @@ import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.DigestDerivationFunction;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.Mac;
-import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.modes.SICBlockCipher;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.params.IESWithCipherParameters;
 import org.bouncycastle.crypto.params.KDFParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.Pack;
 
 /**
@@ -58,6 +50,7 @@ import org.bouncycastle.util.Pack;
  * the IV.
  */
 public class ECIESEncryptionEngine {
+
   public static final int ENCRYPTION_OVERHEAD = 113;
 
   private static final byte[] IES_DERIVATION = new byte[0];
@@ -82,41 +75,30 @@ public class ECIESEncryptionEngine {
   private final byte[] iv;
 
   private ECIESEncryptionEngine(
-      final CipherParameters pubParam,
-      final CipherParameters privParam,
-      final SECP256K1.PublicKey ephPubKey,
-      final byte[] iv) {
+      final Bytes agreedSecret, final SECP256K1.PublicKey ephPubKey, final byte[] iv) {
     this.ephPubKey = ephPubKey;
     this.iv = iv;
 
-    // Compute the common value and convert to byte array.
-    final BasicAgreement agree = new ECDHBasicAgreement();
-    agree.init(privParam);
-    final BigInteger z = agree.calculateAgreement(pubParam);
-    final byte[] Z = BigIntegers.asUnsignedByteArray(agree.getFieldSize(), z);
-
     // Initialise the KDF.
-    this.kdf.init(new KDFParameters(Z, PARAM.getDerivationV()));
+    this.kdf.init(new KDFParameters(agreedSecret.toArrayUnsafe(), PARAM.getDerivationV()));
   }
 
   /**
    * Creates a new engine for decryption.
    *
-   * @param privKey The private key of the deciphering end.
+   * @param nodeKey An abstraction of the decrypting private key
    * @param ephPubKey The ephemeral public key extracted from the raw message.
    * @param iv The initialization vector extracted from the raw message.
    * @return An engine prepared for decryption.
    */
   public static ECIESEncryptionEngine forDecryption(
-      final SECP256K1.PrivateKey privKey, final SECP256K1.PublicKey ephPubKey, final Bytes iv) {
+      final NodeKey nodeKey, final SECP256K1.PublicKey ephPubKey, final Bytes iv) {
     final byte[] ivb = iv.toArray();
 
     // Create parameters.
-    final ECDomainParameters dp = SECP256K1.CURVE;
-    final CipherParameters pubParam = new ECPublicKeyParameters(ephPubKey.asEcPoint(), dp);
-    final CipherParameters privParam = new ECPrivateKeyParameters(privKey.getD(), dp);
+    final Bytes agreedSecret = nodeKey.calculateECDHKeyAgreement(ephPubKey);
 
-    return new ECIESEncryptionEngine(pubParam, privParam, ephPubKey, ivb);
+    return new ECIESEncryptionEngine(agreedSecret, ephPubKey, ivb);
   }
 
   /**
@@ -135,13 +117,10 @@ public class ECIESEncryptionEngine {
     // Create random iv.
     final byte[] ivb = ECIESHandshaker.random(CIPHER_BLOCK_SIZE).toArray();
 
-    // Create parameters.
-    final CipherParameters pubParam =
-        new ECPublicKeyParameters(pubKey.asEcPoint(), SECP256K1.CURVE);
-    final CipherParameters privParam =
-        new ECPrivateKeyParameters(ephKeyPair.getPrivateKey().getD(), SECP256K1.CURVE);
-
-    return new ECIESEncryptionEngine(pubParam, privParam, ephKeyPair.getPublicKey(), ivb);
+    return new ECIESEncryptionEngine(
+        SECP256K1.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
+        ephKeyPair.getPublicKey(),
+        ivb);
   }
 
   /**
@@ -149,7 +128,7 @@ public class ECIESEncryptionEngine {
    *
    * @param in The plaintext.
    * @return The ciphertext.
-   * @throws InvalidCipherTextException Thrown if an error occured during encryption.
+   * @throws InvalidCipherTextException Thrown if an error occurred during encryption.
    */
   public Bytes encrypt(final Bytes in) throws InvalidCipherTextException {
     return Bytes.wrap(encrypt(in.toArray(), 0, in.size(), null));
@@ -221,7 +200,7 @@ public class ECIESEncryptionEngine {
    *
    * @param in The ciphertext.
    * @return The plaintext.
-   * @throws InvalidCipherTextException Thrown if an error occured during decryption.
+   * @throws InvalidCipherTextException Thrown if an error occurred during decryption.
    */
   public Bytes decrypt(final Bytes in) throws InvalidCipherTextException {
     return Bytes.wrap(decrypt(in.toArray(), 0, in.size(), null));
@@ -329,6 +308,7 @@ public class ECIESEncryptionEngine {
    * Bouncy Castle.
    */
   private static class ECIESHandshakeKDFFunction implements DigestDerivationFunction {
+
     private static final int COUNTER_START = 1;
     private final Digest digest = new SHA256Digest();
     private final int digestSize = digest.getDigestSize();

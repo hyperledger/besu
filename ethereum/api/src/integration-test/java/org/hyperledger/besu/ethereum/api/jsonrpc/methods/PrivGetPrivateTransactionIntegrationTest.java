@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
@@ -56,7 +57,6 @@ import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -74,13 +74,14 @@ public class PrivGetPrivateTransactionIntegrationTest {
   private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
 
   private final Transaction justTransaction = mock(Transaction.class);
+  private final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
 
   private static final Vertx vertx = Vertx.vertx();
 
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  @BeforeClass
-  public static void setUpOnce() throws Exception {
+  @Before
+  public void setUp() throws Exception {
     folder.create();
 
     testHarness =
@@ -92,7 +93,9 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
 
-    privacyController = new DefaultPrivacyController(enclave, null, null, null, null, null);
+    privacyController =
+        new DefaultPrivacyController(
+            null, privateStateStorage, enclave, null, null, null, null, null);
   }
 
   @AfterClass
@@ -151,11 +154,13 @@ public class PrivGetPrivateTransactionIntegrationTest {
   public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyController, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(
+            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
 
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
+    when(returnedTransaction.getBlockHash()).thenReturn(Optional.of(Hash.ZERO));
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);

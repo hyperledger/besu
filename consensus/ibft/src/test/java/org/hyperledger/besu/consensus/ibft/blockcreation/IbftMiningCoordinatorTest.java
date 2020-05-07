@@ -103,8 +103,9 @@ public class IbftMiningCoordinatorTest {
   @Test
   public void addsNewChainHeadEventWhenNewCanonicalHeadBlockEventReceived() throws Exception {
     BlockAddedEvent headAdvancement =
-        BlockAddedEvent.createForHeadAdvancement(block, Collections.emptyList());
-    ibftMiningCoordinator.onBlockAdded(headAdvancement, blockChain);
+        BlockAddedEvent.createForHeadAdvancement(
+            block, Collections.emptyList(), Collections.emptyList());
+    ibftMiningCoordinator.onBlockAdded(headAdvancement);
 
     assertThat(eventQueue.size()).isEqualTo(1);
     final NewChainHead ibftEvent = (NewChainHead) eventQueue.poll(1, TimeUnit.SECONDS);
@@ -114,7 +115,7 @@ public class IbftMiningCoordinatorTest {
   @Test
   public void doesntAddNewChainHeadEventWhenNotACanonicalHeadBlockEvent() {
     final BlockAddedEvent fork = BlockAddedEvent.createForFork(block);
-    ibftMiningCoordinator.onBlockAdded(fork, blockChain);
+    ibftMiningCoordinator.onBlockAdded(fork);
     assertThat(eventQueue.isEmpty()).isTrue();
   }
 }

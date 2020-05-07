@@ -29,7 +29,8 @@ import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -45,9 +46,9 @@ import org.junit.Test;
 
 public class RoundChangeSignedDataValidatorTest {
 
-  private final KeyPair proposerKey = KeyPair.generate();
-  private final KeyPair validatorKey = KeyPair.generate();
-  private final KeyPair nonValidatorKey = KeyPair.generate();
+  private final NodeKey proposerKey = NodeKeyUtils.generate();
+  private final NodeKey validatorKey = NodeKeyUtils.generate();
+  private final NodeKey nonValidatorKey = NodeKeyUtils.generate();
   private final MessageFactory proposerMessageFactory = new MessageFactory(proposerKey);
   private final MessageFactory validatorMessageFactory = new MessageFactory(validatorKey);
   private final MessageFactory nonValidatorMessageFactory = new MessageFactory(nonValidatorKey);

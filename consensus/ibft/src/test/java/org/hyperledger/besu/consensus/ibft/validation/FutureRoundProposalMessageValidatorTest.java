@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -38,8 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class FutureRoundProposalMessageValidatorTest {
 
-  private final KeyPair proposerKey = KeyPair.generate();
-  private final MessageFactory messageFactoy = new MessageFactory(proposerKey);
+  private final MessageFactory messageFactoy = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
   private final Block proposedBlock = TestHelpers.createProposalBlock(emptyList(), roundIdentifier);
 

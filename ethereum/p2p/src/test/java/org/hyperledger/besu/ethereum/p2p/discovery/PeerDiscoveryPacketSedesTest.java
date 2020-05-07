@@ -17,7 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -42,16 +43,16 @@ public class PeerDiscoveryPacketSedesTest {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
     final Bytes target = Bytes.wrap(r);
-    final SECP256K1.KeyPair kp = SECP256K1.KeyPair.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
 
     final FindNeighborsPacketData packetData = FindNeighborsPacketData.create(target);
-    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, packetData, kp);
+    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, packetData, nodeKey);
     final Buffer encoded = packet.encode();
     assertThat(encoded).isNotNull();
 
     final Packet decoded = Packet.decode(encoded);
     assertThat(decoded.getType()).isEqualTo(PacketType.FIND_NEIGHBORS);
-    assertThat(decoded.getNodeId()).isEqualTo(kp.getPublicKey().getEncodedBytes());
+    assertThat(decoded.getNodeId()).isEqualTo(nodeKey.getPublicKey().getEncodedBytes());
     assertThat(decoded.getPacketData(NeighborsPacketData.class)).isNotPresent();
     assertThat(decoded.getPacketData(FindNeighborsPacketData.class)).isPresent();
   }
@@ -112,10 +113,10 @@ public class PeerDiscoveryPacketSedesTest {
     new Random().nextBytes(r);
     final Bytes target = Bytes.wrap(r);
 
-    final SECP256K1.KeyPair kp = SECP256K1.KeyPair.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
 
     final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
-    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, kp);
+    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, nodeKey);
 
     final Bytes encoded = Bytes.wrapBuffer(packet.encode());
     final MutableBytes garbled = encoded.mutableCopy();

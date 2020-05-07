@@ -31,10 +31,10 @@ import org.apache.logging.log4j.Logger;
 /** Utility class to help interacting with various {@link NatManager}. */
 public class NatService {
 
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
-  private final NatMethod currentNatMethod;
-  private final Optional<NatManager> currentNatManager;
+  private NatMethod currentNatMethod;
+  private Optional<NatManager> currentNatManager;
 
   public NatService(final Optional<NatManager> natManager) {
     this.currentNatMethod = retrieveNatMethod(natManager);
@@ -87,7 +87,8 @@ public class NatService {
       try {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
-        LOG.warn("Caught exception while trying to start the manager or service.", e);
+        LOG.debug("Caught exception while trying to start the manager or service.", e);
+        disableNatManager();
       }
     } else {
       LOG.info("No NAT environment detected so no service could be started");
@@ -110,46 +111,56 @@ public class NatService {
   /**
    * Returns a {@link Optional} wrapping the advertised IP address.
    *
+   * @param fallbackValue the advertised IP address fallback value
    * @return The advertised IP address wrapped in a {@link Optional}. Empty if
    *     `isNatExternalIpUsageEnabled` is false
    */
-  public Optional<String> queryExternalIPAddress() {
+  public String queryExternalIPAddress(final String fallbackValue) {
     if (isNatEnvironment()) {
       try {
         final NatManager natManager = getNatManager().orElseThrow();
-        LOG.info(
+        LOG.debug(
             "Waiting for up to {} seconds to detect external IP address...",
             NatManager.TIMEOUT_SECONDS);
-        return Optional.of(
-            natManager.queryExternalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS));
+        return Optional.ofNullable(
+                natManager
+                    .queryExternalIPAddress()
+                    .get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS))
+            .orElseThrow();
 
       } catch (Exception e) {
+        LOG.debug("Caught exception while trying to query NAT external IP address (ignoring)", e);
         LOG.warn(
-            "Caught exception while trying to query NAT external IP address (ignoring): {}", e);
+            "Unable to query NAT external IP address. Using the fallback value : {} ",
+            fallbackValue);
       }
     }
-    return Optional.empty();
+    return fallbackValue;
   }
 
   /**
    * Returns a {@link Optional} wrapping the local IP address.
    *
+   * @param fallbackValue the advertised IP address fallback value
    * @return The local IP address wrapped in a {@link Optional}.
    */
-  public Optional<String> queryLocalIPAddress() throws RuntimeException {
+  public String queryLocalIPAddress(final String fallbackValue) throws RuntimeException {
     if (isNatEnvironment()) {
       try {
         final NatManager natManager = getNatManager().orElseThrow();
-        LOG.info(
-            "Waiting for up to {} seconds to detect external IP address...",
+        LOG.debug(
+            "Waiting for up to {} seconds to detect local IP address...",
             NatManager.TIMEOUT_SECONDS);
-        return Optional.of(
-            natManager.queryLocalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS));
+        return Optional.ofNullable(
+                natManager.queryLocalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS))
+            .orElseThrow();
       } catch (Exception e) {
-        LOG.warn("Caught exception while trying to query local IP address (ignoring): {}", e);
+        LOG.debug("Caught exception while trying to query NAT local IP address (ignoring)", e);
+        LOG.warn(
+            "Unable to query NAT local IP address. Using the fallback value : {} ", fallbackValue);
       }
     }
-    return Optional.empty();
+    return fallbackValue;
   }
 
   /**
@@ -170,6 +181,13 @@ public class NatService {
       }
     }
     return Optional.empty();
+  }
+
+  /** Disable the natManager */
+  private void disableNatManager() {
+    LOG.warn("Unable to use NAT. Disabling NAT manager");
+    currentNatMethod = NatMethod.NONE;
+    currentNatManager = Optional.empty();
   }
 
   /**

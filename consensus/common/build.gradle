@@ -54,5 +54,4 @@ task testJar (type: Jar) {
 
 artifacts {
   testArtifacts testJar
-  testSupportArtifacts testSupportJar
 }

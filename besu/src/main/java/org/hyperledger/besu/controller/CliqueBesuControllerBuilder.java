@@ -46,6 +46,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueContext> {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private Address localAddress;
@@ -55,7 +56,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
   @Override
   protected void prepForBuild() {
-    localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
+    localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final CliqueConfigOptions cliqueConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
@@ -83,7 +84,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             protocolContext,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
-            nodeKeys,
+            nodeKey,
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
@@ -109,7 +110,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   protected ProtocolSchedule<CliqueContext> createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
-        nodeKeys,
+        nodeKey,
         privacyParameters,
         isRevertReasonEnabled);
   }
@@ -125,7 +126,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new CliqueQueryPluginServiceFactory(blockchain, nodeKeys);
+    return new CliqueQueryPluginServiceFactory(blockchain, nodeKey);
   }
 
   @Override

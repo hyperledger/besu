@@ -20,8 +20,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -33,10 +32,10 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class MessageFactory {
 
-  private final KeyPair validatorKeyPair;
+  private final NodeKey nodeKey;
 
-  public MessageFactory(final KeyPair validatorKeyPair) {
-    this.validatorKeyPair = validatorKeyPair;
+  public MessageFactory(final NodeKey nodeKey) {
+    this.nodeKey = nodeKey;
   }
 
   public Proposal createProposal(
@@ -79,19 +78,13 @@ public class MessageFactory {
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final Signature signature = sign(payload, validatorKeyPair);
-
-    return new SignedData<>(
-        payload, Util.publicKeyToAddress(validatorKeyPair.getPublicKey()), signature);
+    final Signature signature = nodeKey.sign(hashForSignature(payload));
+    return new SignedData<>(payload, Util.publicKeyToAddress(nodeKey.getPublicKey()), signature);
   }
 
   public static Hash hashForSignature(final Payload unsignedMessageData) {
     return Hash.hash(
         Bytes.concatenate(
             Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
-  }
-
-  private static Signature sign(final Payload unsignedMessageData, final KeyPair nodeKeys) {
-    return SECP256K1.sign(hashForSignature(unsignedMessageData), nodeKeys);
   }
 }

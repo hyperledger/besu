@@ -57,7 +57,7 @@ public class LocalNodeNotProposerTest {
     expectedTxCommit =
         new Commit(
             createSignedCommitPayload(
-                roundId, blockToPropose, context.getLocalNodeParams().getNodeKeyPair()));
+                roundId, blockToPropose, context.getLocalNodeParams().getNodeKey()));
   }
 
   @Test
@@ -130,7 +130,7 @@ public class LocalNodeNotProposerTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
     peers.getProposer().injectProposal(roundId, blockToPropose);
-    // TODO(tmm): Unfortunatley, there are times that the Commit will go out BEFORE the prepare
+    // TODO(tmm): Unfortunately, there are times that the Commit will go out BEFORE the prepare
     // This is one of them :( Maybe fix the testing to be ignorant of ordering?
     peers.verifyMessagesReceived(expectedTxCommit, expectedTxPrepare);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);

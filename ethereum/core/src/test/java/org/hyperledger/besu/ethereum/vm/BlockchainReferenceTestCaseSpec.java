@@ -152,6 +152,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("gasUsed") final String gasUsed,
         @JsonProperty("timestamp") final String timestamp,
         @JsonProperty("extraData") final String extraData,
+        @JsonProperty("baseFee") final String baseFee,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("hash") final String hash) {
@@ -169,6 +170,7 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(gasUsed), // gasUsed
           Long.decode(timestamp), // timestamp
           Bytes.fromHexString(extraData), // extraData
+          baseFee != null ? Long.decode(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexString(nonce).getLong(0),
           new BlockHeaderFunctions() {
@@ -194,6 +196,7 @@ public class BlockchainReferenceTestCaseSpec {
     "expectExceptionEIP158",
     "expectExceptionFrontier",
     "expectExceptionHomestead",
+    "expectException",
     "blocknumber",
     "chainname",
     "expectExceptionALL",

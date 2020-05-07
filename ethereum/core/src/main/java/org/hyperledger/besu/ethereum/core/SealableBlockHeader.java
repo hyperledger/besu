@@ -45,8 +45,9 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long gasLimit,
       final long gasUsed,
       final long timestamp,
-      final Bytes extraData) {
-    super(parentHash, coinbase, difficulty, number, gasLimit, timestamp);
+      final Bytes extraData,
+      final Long baseFee) {
+    super(parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

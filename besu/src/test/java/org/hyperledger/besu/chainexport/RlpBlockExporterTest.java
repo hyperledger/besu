@@ -21,7 +21,7 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -72,7 +72,7 @@ public final class RlpBlockExporterTest {
       throws IOException {
     final RlpBlockImporter blockImporter = new RlpBlockImporter();
 
-    blockImporter.importBlockchain(blocksFile, controller);
+    blockImporter.importBlockchain(blocksFile, controller, false);
     return controller.getProtocolContext().getBlockchain();
   }
 
@@ -85,7 +85,7 @@ public final class RlpBlockExporterTest {
         .storageProvider(new InMemoryStorageProvider())
         .networkId(BigInteger.ONE)
         .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-        .nodeKeys(KeyPair.generate())
+        .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
         .dataDirectory(dataDir)

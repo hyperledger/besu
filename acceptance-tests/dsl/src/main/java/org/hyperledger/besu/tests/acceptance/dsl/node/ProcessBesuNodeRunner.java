@@ -36,8 +36,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -45,12 +47,13 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.awaitility.Awaitility;
+import org.apache.logging.log4j.ThreadContext;
 
 public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
-  private final Logger LOG = LogManager.getLogger();
-  private final Logger PROCESS_LOG = LogManager.getLogger("org.hyperledger.besu.SubProcessLog");
+  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger PROCESS_LOG =
+      LogManager.getLogger("org.hyperledger.besu.SubProcessLog");
 
   private final Map<String, Process> besuProcesses = new HashMap<>();
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
@@ -61,6 +64,12 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void startNode(final BesuNode node) {
+
+    if (ThreadContext.containsKey("node")) {
+      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
+    }
+    ThreadContext.put("node", node.getName());
+
     final Path dataDir = node.homeDirectory();
 
     final List<String> params = new ArrayList<>();
@@ -68,6 +77,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
+
+    node.getRunCommand().ifPresent(params::add);
 
     if (node.isDevMode()) {
       params.add("--network");
@@ -113,6 +124,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(String.valueOf(node.getPrivacyParameters().getPrivacyAddress()));
       params.add("--privacy-marker-transaction-signing-key-file");
       params.add(node.homeDirectory().resolve("key").toString());
+
+      if (node.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+        params.add("--privacy-onchain-groups-enabled");
+      }
     }
 
     params.add("--bootnodes");
@@ -213,6 +228,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--revert-reason-enabled");
     }
 
+    params.add("--Xsecp256k1-native-enabled=" + node.isSecp256k1Native());
+    params.add("--Xaltbn128-native-enabled=" + node.isAltbn128Native());
+
     node.getPermissioningConfiguration()
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
@@ -257,8 +275,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--key-value-storage");
     params.add("rocksdb");
 
-    params.add("--auto-logs-bloom-indexing-enabled");
+    params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
+
+    String level = System.getProperty("root.log.level");
+    if (level != null) {
+      params.add("--logging=" + level);
+    }
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
@@ -281,14 +304,18 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
           node.getName());
 
       final Process process = processBuilder.start();
+      process.onExit().thenRun(() -> node.setExitCode(process.exitValue()));
       outputProcessorExecutor.execute(() -> printOutput(node, process));
       besuProcesses.put(node.getName(), process);
     } catch (final IOException e) {
       LOG.error("Error starting BesuNode process", e);
     }
 
-    waitForFile(dataDir, "besu.ports");
-    waitForFile(dataDir, "besu.networks");
+    if (node.getRunCommand().isEmpty()) {
+      waitForFile(dataDir, "besu.ports");
+      waitForFile(dataDir, "besu.networks");
+    }
+    ThreadContext.remove("node");
   }
 
   private boolean isNotAliveOrphan(final String name) {
@@ -301,11 +328,16 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
       String line = in.readLine();
       while (line != null) {
-        PROCESS_LOG.info("{}: {}", node.getName(), line);
+        // would be nice to pass up the log level of the incoming log line
+        PROCESS_LOG.info(line);
         line = in.readLine();
       }
     } catch (final IOException e) {
-      LOG.error("Failed to read output from process", e);
+      if (besuProcesses.containsKey(node.getName())) {
+        LOG.error("Failed to read output from process for node " + node.getName(), e);
+      } else {
+        LOG.debug("Stdout from process {} closed", node.getName());
+      }
     }
   }
 
@@ -332,14 +364,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   public void stopNode(final BesuNode node) {
     node.stop();
     if (besuProcesses.containsKey(node.getName())) {
-      final Process process = besuProcesses.get(node.getName());
-      killBesuProcess(node.getName(), process);
+      killBesuProcess(node.getName());
+    } else {
+      LOG.error("There was a request to stop an unknown node: {}", node.getName());
     }
   }
 
   @Override
   public synchronized void shutdown() {
-    final HashMap<String, Process> localMap = new HashMap<>(besuProcesses);
+    final Set<String> localMap = new HashSet<>(besuProcesses.keySet());
     localMap.forEach(this::killBesuProcess);
     outputProcessorExecutor.shutdown();
     try {
@@ -358,20 +391,33 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     return process != null && process.isAlive();
   }
 
-  private void killBesuProcess(final String name, final Process process) {
-    LOG.info("Killing " + name + " process");
+  private void killBesuProcess(final String name) {
+    final Process process = besuProcesses.remove(name);
+    if (process == null) {
+      LOG.error("Process {} wasn't in our list", name);
+    }
+    if (!process.isAlive()) {
+      LOG.info("Process {} already exited", name);
+      return;
+    }
 
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (process.isAlive()) {
-                process.destroy();
-                besuProcesses.remove(name);
-                return false;
-              } else {
-                besuProcesses.remove(name);
-                return true;
-              }
-            });
+    LOG.info("Killing {} process", name);
+
+    process.destroy();
+    try {
+      process.waitFor(2, TimeUnit.SECONDS);
+    } catch (final InterruptedException e) {
+      LOG.warn("Wait for death of process {} was interrupted", name, e);
+    }
+
+    if (process.isAlive()) {
+      LOG.warn("Process {} still alive, destroying forcibly now", name);
+      try {
+        process.destroyForcibly().waitFor(2, TimeUnit.SECONDS);
+      } catch (final Exception e) {
+        // just die already
+      }
+      LOG.info("Process exited with code {}", process.exitValue());
+    }
   }
 }

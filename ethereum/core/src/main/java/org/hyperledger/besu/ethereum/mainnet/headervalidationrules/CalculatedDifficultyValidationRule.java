@@ -25,7 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CalculatedDifficultyValidationRule<C> implements AttachedBlockHeaderValidationRule<C> {
-  private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final DifficultyCalculator<C> difficultyCalculator;
 
   public CalculatedDifficultyValidationRule(final DifficultyCalculator<C> difficultyCalculator) {

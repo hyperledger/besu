@@ -52,6 +52,8 @@ public class BlockHeaderBuilder {
 
   private Bytes extraData;
 
+  private Long baseFee = null;
+
   private Hash mixHash;
 
   private BlockHeaderFunctions blockHeaderFunctions;
@@ -79,6 +81,7 @@ public class BlockHeaderBuilder {
         .gasUsed(header.getGasUsed())
         .timestamp(header.getTimestamp())
         .extraData(header.getExtraData())
+        .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
         .nonce(header.getNonce());
   }
@@ -100,6 +103,7 @@ public class BlockHeaderBuilder {
             .timestamp(fromBuilder.timestamp)
             .extraData(fromBuilder.extraData)
             .mixHash(fromBuilder.mixHash)
+            .baseFee(fromBuilder.baseFee)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -122,6 +126,7 @@ public class BlockHeaderBuilder {
         gasUsed,
         timestamp < 0 ? Instant.now().getEpochSecond() : timestamp,
         extraData,
+        baseFee,
         mixHash,
         nonce.getAsLong(),
         blockHeaderFunctions);
@@ -131,7 +136,7 @@ public class BlockHeaderBuilder {
     validateProcessableBlockHeader();
 
     return new ProcessableBlockHeader(
-        parentHash, coinbase, difficulty, number, gasLimit, timestamp);
+        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -150,7 +155,8 @@ public class BlockHeaderBuilder {
         gasLimit,
         gasUsed,
         timestamp,
-        extraData);
+        extraData,
+        baseFee);
   }
 
   private void validateBlockHeader() {
@@ -188,6 +194,7 @@ public class BlockHeaderBuilder {
     number(processableBlockHeader.getNumber());
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
+    baseFee(processableBlockHeader.getBaseFee().orElse(null));
     return this;
   }
 
@@ -206,6 +213,7 @@ public class BlockHeaderBuilder {
     gasUsed(sealableBlockHeader.getGasUsed());
     timestamp(sealableBlockHeader.getTimestamp());
     extraData(sealableBlockHeader.getExtraData());
+    baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     return this;
   }
 
@@ -301,6 +309,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder blockHeaderFunctions(final BlockHeaderFunctions blockHeaderFunctions) {
     this.blockHeaderFunctions = blockHeaderFunctions;
+    return this;
+  }
+
+  public BlockHeaderBuilder baseFee(final Long baseFee) {
+    this.baseFee = baseFee;
     return this;
   }
 }

@@ -37,6 +37,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import io.vertx.core.Vertx;
 
@@ -48,6 +49,7 @@ public class BesuNodeFactory {
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
         config.getName(),
+        config.getDataPath(),
         config.getMiningParameters(),
         config.getJsonRpcConfiguration(),
         config.getWebSocketConfiguration(),
@@ -61,10 +63,13 @@ public class BesuNodeFactory {
         config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
         config.isRevertReasonEnabled(),
+        config.isSecp256k1Native(),
+        config.isAltbn128Native(),
         config.getPlugins(),
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
-        config.getPrivacyParameters());
+        config.getPrivacyParameters(),
+        config.getRunCommand());
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
@@ -90,7 +95,21 @@ public class BesuNodeFactory {
 
   public BesuNode createArchiveNode(final String name) throws IOException {
     return create(
-        new BesuNodeConfigurationBuilder().name(name).jsonRpcEnabled().webSocketEnabled().build());
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcTxPool()
+            .webSocketEnabled()
+            .build());
+  }
+
+  public BesuNode createNode(
+      final String name,
+      final Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configModifier)
+      throws IOException {
+    final BesuNodeConfigurationBuilder configBuilder =
+        configModifier.apply(new BesuNodeConfigurationBuilder().name(name));
+    return create(configBuilder.build());
   }
 
   public Node createArchiveNodeThatMustNotBeTheBootnode(final String name) throws IOException {
@@ -342,5 +361,9 @@ public class BesuNodeFactory {
             .staticNodes(staticNodesUrls)
             .bootnodeEligible(false)
             .build());
+  }
+
+  public BesuNode runCommand(final String command) throws IOException {
+    return create(new BesuNodeConfigurationBuilder().name("run " + command).run(command).build());
   }
 }

@@ -24,21 +24,43 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 public class ExpectValidPrivateTransactionReceipt implements PrivateCondition {
   private final PrivacyTransactions transactions;
   private final String transactionHash;
-  private final PrivateTransactionReceipt receipt;
+  private final PrivateTransactionReceipt expectedReceipt;
 
   public ExpectValidPrivateTransactionReceipt(
       final PrivacyTransactions transactions,
       final String transactionHash,
-      final PrivateTransactionReceipt receipt) {
+      final PrivateTransactionReceipt expectedReceipt) {
 
     this.transactions = transactions;
     this.transactionHash = transactionHash;
-    this.receipt = receipt;
+    this.expectedReceipt = expectedReceipt;
   }
 
   @Override
   public void verify(final PrivacyNode node) {
-    assertThat(node.execute(transactions.getPrivateTransactionReceipt(transactionHash)))
-        .isEqualToIgnoringGivenFields(receipt, "commitmentHash");
+    final PrivateTransactionReceipt actualReceipt =
+        node.execute(transactions.getPrivateTransactionReceipt(transactionHash));
+    assertThat(actualReceipt)
+        .usingRecursiveComparison()
+        .ignoringFields(
+            "commitmentHash",
+            "logs",
+            "blockHash",
+            "blockNumber",
+            "logsBloom",
+            "transactionIndex") // TODO: The fields blockHash, blockNumber, logsBloom and
+        // transactionIndex have to be ignored as the class
+        // org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt does not contain these
+        // fields. Once web3j has been updated these ignores can be removed.
+        .isEqualTo(expectedReceipt);
+
+    assertThat(actualReceipt.getLogs().size()).isEqualTo(expectedReceipt.getLogs().size());
+
+    for (int i = 0; i < expectedReceipt.getLogs().size(); i++) {
+      assertThat(actualReceipt.getLogs().get(i))
+          .usingRecursiveComparison()
+          .ignoringFields("blockHash", "blockNumber")
+          .isEqualTo(expectedReceipt.getLogs().get(i));
+    }
   }
 }

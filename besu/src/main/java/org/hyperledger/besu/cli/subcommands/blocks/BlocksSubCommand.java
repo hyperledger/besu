@@ -26,6 +26,7 @@ import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ExportSubCom
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.IncrementingNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -137,6 +138,11 @@ public class BlocksSubCommand implements Runnable {
         arity = "1..1")
     private final Long startTime = System.currentTimeMillis() / 1000;
 
+    @Option(
+        names = "--skip-pow-validation-enabled",
+        description = "Skip proof of work validation when importing.")
+    private final Boolean skipPow = false;
+
     @SuppressWarnings("unused")
     @Spec
     private CommandSpec spec;
@@ -205,7 +211,17 @@ public class BlocksSubCommand implements Runnable {
       // Extradata and coinbase can be configured on a per-block level via the json file
       final Address coinbase = Address.ZERO;
       final Bytes extraData = Bytes.EMPTY;
-      return new MiningParameters(coinbase, minTransactionGasPrice, extraData, false);
+      return new MiningParameters(
+          coinbase,
+          minTransactionGasPrice,
+          extraData,
+          false,
+          false,
+          "0.0.0.0",
+          8008,
+          "080c",
+          Optional.of(new IncrementingNonceGenerator(0)),
+          0.0);
     }
 
     private <T> void importJsonBlocks(final BesuController<T> controller, final Path path)
@@ -218,7 +234,7 @@ public class BlocksSubCommand implements Runnable {
 
     private <T> void importRlpBlocks(final BesuController<T> controller, final Path path)
         throws IOException {
-      parentCommand.rlpBlockImporter.importBlockchain(path, controller);
+      parentCommand.rlpBlockImporter.importBlockchain(path, controller, skipPow);
     }
   }
 

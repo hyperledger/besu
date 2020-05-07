@@ -266,7 +266,8 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the additional call stipend for calls with value transfers
    */
-  protected Gas additionalCallStipend() {
+  @Override
+  public Gas getAdditionalCallStipend() {
     return ADDITIONAL_CALL_STIPEND;
   }
 
@@ -274,7 +275,7 @@ public class FrontierGasCalculator implements GasCalculator {
   public Gas gasAvailableForChildCall(
       final MessageFrame frame, final Gas stipend, final boolean transfersValue) {
     if (transfersValue) {
-      return stipend.plus(additionalCallStipend());
+      return stipend.plus(getAdditionalCallStipend());
     } else {
       return stipend;
     }
@@ -437,6 +438,12 @@ public class FrontierGasCalculator implements GasCalculator {
   @Override
   public Gas getSelfDestructRefundAmount() {
     return SELF_DESTRUCT_REFUND_AMOUNT;
+  }
+
+  @Override
+  public Gas getBeginSubGasCost() {
+    throw new UnsupportedOperationException(
+        "BEGINSUB operation not supported by " + getClass().getSimpleName());
   }
 
   private Gas copyWordsToMemoryGasCost(

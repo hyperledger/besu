@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static java.util.Objects.requireNonNullElse;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -22,12 +23,12 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionTransitionValidatorDecorator;
 
-import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +38,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -53,12 +54,13 @@ import org.rocksdb.LRUCache;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
+import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 
 public class RocksDBColumnarKeyValueStorage
-    implements SegmentedKeyValueStorage<ColumnFamilyHandle>, Closeable {
+    implements SegmentedKeyValueStorage<ColumnFamilyHandle> {
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -73,6 +75,7 @@ public class RocksDBColumnarKeyValueStorage
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
   private final RocksDBMetrics metrics;
+  private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -128,7 +131,6 @@ public class RocksDBColumnarKeyValueStorage
         builder.put(segmentName, columnHandle);
       }
       columnHandlesByName = builder.build();
-
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -165,18 +167,23 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public long removeAllEntriesUnless(
+  public Stream<byte[]> streamKeys(final ColumnFamilyHandle segmentHandle) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle);
+    rocksIterator.seekToFirst();
+    return RocksDbKeyIterator.create(rocksIterator).toStream();
+  }
+
+  @Override
+  public long removeAllKeysUnless(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
+      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
         if (!inUseCheck.test(key)) {
           removedNodeCounter++;
           db.delete(segmentHandle, key);
         }
-        rocksIterator.next();
       }
     } catch (final RocksDBException e) {
       throw new StorageException(e);
@@ -185,20 +192,23 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Set<byte[]> getAllKeysThat(
-      final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
-    final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
-    try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
-        final byte[] key = rocksIterator.key();
-        if (returnCondition.test(key)) {
-          returnedKeys.add(key);
-        }
-        rocksIterator.next();
+  public boolean tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
+    try {
+      db.delete(segmentHandle, tryDeleteOptions, key);
+      return true;
+    } catch (RocksDBException e) {
+      if (e.getStatus().getCode() == Status.Code.Incomplete) {
+        return false;
+      } else {
+        throw new StorageException(e);
       }
     }
-    return returnedKeys;
+  }
+
+  @Override
+  public Set<byte[]> getAllKeysThat(
+      final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
+    return streamKeys(segmentHandle).filter(returnCondition).collect(toUnmodifiableSet());
   }
 
   @Override
@@ -288,6 +298,7 @@ public class RocksDBColumnarKeyValueStorage
     }
 
     private void close() {
+      tryDeleteOptions.close();
       innerTx.close();
       options.close();
     }

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountRa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugStorageRangeAt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBalance;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetCode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetTransactionCount;
@@ -71,6 +72,7 @@ public class RetestethService {
             new EthGetBlockByNumber(retestethContext::getBlockchainQueries, blockResult, true),
             new DebugAccountRange(retestethContext::getBlockchainQueries),
             new EthGetBalance(retestethContext::getBlockchainQueries),
+            new EthGetBlockByHash(retestethContext::getBlockchainQueries, blockResult, true),
             new EthGetCode(retestethContext::getBlockchainQueries),
             new EthGetTransactionCount(
                 retestethContext::getBlockchainQueries,

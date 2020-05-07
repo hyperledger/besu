@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -62,6 +63,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RetestethContext {
 
@@ -71,6 +73,7 @@ public class RetestethContext {
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
+  private Bytes extraData;
   private MutableBlockchain blockchain;
   private ProtocolContext<Void> protocolContext;
   private BlockchainQueries blockchainQueries;
@@ -117,16 +120,17 @@ public class RetestethContext {
     clockTime.ifPresent(retestethClock::resetTime);
     final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-    protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
-            JsonGenesisConfigOptions.fromJsonObject(
-                JsonUtil.getObjectNode(genesisConfig, "config").get()));
+    final JsonGenesisConfigOptions jsonGenesisConfigOptions =
+        JsonGenesisConfigOptions.fromJsonObject(
+            JsonUtil.getObjectNode(genesisConfig, "config").get());
+    protocolSchedule = MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper<>(protocolSchedule);
     }
 
     final GenesisState genesisState = GenesisState.fromJson(genesisConfigString, protocolSchedule);
     coinbase = genesisState.getBlock().getHeader().getCoinbase();
+    extraData = genesisState.getBlock().getHeader().getExtraData();
 
     final WorldStateArchive worldStateArchive =
         new WorldStateArchive(
@@ -163,7 +167,7 @@ public class RetestethContext {
     final EthPeers ethPeers = new EthPeers("reteseth", retestethClock, metricsSystem);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
-    ethScheduler = new EthScheduler(1, 1, 1, metricsSystem);
+    ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, new EthMessages(), ethScheduler);
 
     final TransactionPoolConfiguration transactionPoolConfiguration =
@@ -178,7 +182,12 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            true,
+            jsonGenesisConfigOptions.getEIP1559BlockNumber().isPresent()
+                ? Optional.of(
+                    new EIP1559(jsonGenesisConfigOptions.getEIP1559BlockNumber().getAsLong()))
+                : Optional.empty());
 
     LOG.trace("Genesis Block {} ", genesisState::getBlock);
 
@@ -240,6 +249,10 @@ public class RetestethContext {
 
   public Address getCoinbase() {
     return coinbase;
+  }
+
+  public Bytes getExtraData() {
+    return extraData;
   }
 
   public MutableBlockchain getBlockchain() {

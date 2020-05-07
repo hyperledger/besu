@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 
 import org.junit.Test;
 
@@ -30,8 +30,7 @@ public class RoundChangeMessageValidatorTest {
 
   private final RoundChangePayloadValidator payloadValidator =
       mock(RoundChangePayloadValidator.class);
-  private final KeyPair keyPair = KeyPair.generate();
-  private final MessageFactory messageFactory = new MessageFactory(keyPair);
+  private final MessageFactory messageFactory = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
 
   private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =

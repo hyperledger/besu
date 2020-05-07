@@ -132,6 +132,15 @@ public class Cluster implements AutoCloseable {
     this.startNode(node, false);
   }
 
+  public void runNodeStart(final RunnableNode node) {
+    LOG.info(
+        "Starting node {} (id = {}...{})",
+        node.getName(),
+        node.getNodeId().substring(0, 4),
+        node.getNodeId().substring(124));
+    node.start(besuNodeRunner);
+  }
+
   private void startNode(final RunnableNode node, final boolean isBootNode) {
     node.getConfiguration().setBootnodes(isBootNode ? emptyList() : bootnodes);
 
@@ -139,12 +148,7 @@ public class Cluster implements AutoCloseable {
         .getGenesisConfigProvider()
         .create(originalNodes)
         .ifPresent(node.getConfiguration()::setGenesisConfig);
-    LOG.info(
-        "Starting node {} (id = {}...{})",
-        node.getName(),
-        node.getNodeId().substring(0, 4),
-        node.getNodeId().substring(124));
-    node.start(besuNodeRunner);
+    runNodeStart(node);
   }
 
   public void stop() {

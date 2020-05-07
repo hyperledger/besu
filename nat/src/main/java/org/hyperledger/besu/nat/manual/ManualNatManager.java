@@ -26,12 +26,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * This class describes the behaviour of the Manual NAT manager. Manual Nat manager add the ability
  * to explicitly configure the external IP and Ports to broadcast without regards to NAT or other
  * considerations.
  */
 public class ManualNatManager extends AbstractNatManager {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final String advertisedHost;
   private final int p2pPort;

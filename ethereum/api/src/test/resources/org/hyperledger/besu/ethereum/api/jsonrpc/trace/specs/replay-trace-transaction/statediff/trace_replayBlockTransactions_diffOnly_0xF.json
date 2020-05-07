@@ -1,0 +1,90 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0xF",
+      [
+        "stateDiff"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x18493fba655a76ac8",
+                "to": "0x18493fba655f6d785"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xffffffffffffffffffffffffffffffffffaff599d",
+                "to": "0xffffffffffffffffffffffffffffffffffaafece0"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0xd",
+                "to": "0xe"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [],
+        "transactionHash": "0x293cefc718137a74d36a5da204e3617604a9e8dfc79b6a6efb11056b3efd3b4a",
+        "vmTrace": null
+      },
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x18493fba655f6d785",
+                "to": "0x18493fba65647a528"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xffffffffffffffffffffffffffffffffffaafece0",
+                "to": "0xffffffffffffffffffffffffffffffffffa5f1f3d"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0xe",
+                "to": "0xf"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [],
+        "transactionHash": "0xb19370be2ace59794ee9bb5a69db98464cd6cb0b02b9afb3b978c9aad2bf5417",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

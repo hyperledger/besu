@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 
 import java.util.List;
 
@@ -35,13 +36,15 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final TransactionGasBudgetCalculator gasBudgetCalculator) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
-        skipZeroBlockRewards);
+        skipZeroBlockRewards,
+        gasBudgetCalculator);
   }
 
   @Override
@@ -54,7 +57,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       return true;
     }
 
-    final Wei coinbaseReward = blockReward.add(blockReward.multiply(ommers.size()).divide(32));
+    final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
     final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
 
@@ -71,8 +74,8 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
       final MutableAccount ommerCoinbase =
           updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
-      final long distance = header.getNumber() - ommerHeader.getNumber();
-      final Wei ommerReward = blockReward.subtract(blockReward.multiply(distance).divide(8));
+      final Wei ommerReward =
+          getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
       ommerCoinbase.incrementBalance(ommerReward);
     }
 

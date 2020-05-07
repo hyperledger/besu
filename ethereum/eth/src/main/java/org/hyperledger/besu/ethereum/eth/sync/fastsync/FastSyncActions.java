@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -36,6 +35,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,6 +88,11 @@ public class FastSyncActions<C> {
         .thenApply(successfulWaitResult -> fastSyncState);
   }
 
+  public <T> CompletableFuture<T> scheduleFutureTask(
+      final Supplier<CompletableFuture<T>> future, final Duration duration) {
+    return ethContext.getScheduler().scheduleFutureTask(future, duration);
+  }
+
   private CompletableFuture<Void> waitForAnyPeer() {
     final CompletableFuture<Void> waitForPeerResult =
         ethContext.getScheduler().timeout(WaitForPeersTask.create(ethContext, 1, metricsSystem));
@@ -97,7 +102,7 @@ public class FastSyncActions<C> {
           if (ExceptionUtils.rootCause(throwable) instanceof TimeoutException) {
             return waitForAnyPeer();
           }
-          return completedExceptionally(throwable);
+          return CompletableFuture.failedFuture(throwable);
         });
   }
 

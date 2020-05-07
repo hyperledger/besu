@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
+import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -186,6 +188,9 @@ public class MessageFrame {
 
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
+  // as defined on https://eips.ethereum.org/EIPS/eip-2315
+  public static final int DEFAULT_MAX_RETURN_STACK_SIZE = 1023;
+
   // Global data fields.
   private final WorldUpdater worldState;
   private final Blockchain blockchain;
@@ -226,8 +231,14 @@ public class MessageFrame {
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
-  private final Boolean isPersistingState;
+  private final Boolean isPersistingPrivateState;
   private Optional<Bytes> revertReason;
+
+  // as defined on https://eips.ethereum.org/EIPS/eip-2315
+  private final ReturnStack returnStack;
+
+  // Privacy Execution Environment fields.
+  private final Hash transactionHash;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -245,6 +256,7 @@ public class MessageFrame {
       final Type type,
       final Blockchain blockchain,
       final Deque<MessageFrame> messageFrameStack,
+      final ReturnStack returnStack,
       final WorldUpdater worldState,
       final Gas initialGas,
       final Address recipient,
@@ -263,12 +275,14 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
+      final Hash transactionHash,
       final Optional<Bytes> revertReason,
       final int maxStackSize) {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
+    this.returnStack = returnStack;
     this.worldState = worldState;
     this.gasRemaining = initialGas;
     this.blockHashLookup = blockHashLookup;
@@ -298,7 +312,8 @@ public class MessageFrame {
     this.isStatic = isStatic;
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
-    this.isPersistingState = isPersistingState;
+    this.isPersistingPrivateState = isPersistingPrivateState;
+    this.transactionHash = transactionHash;
     this.revertReason = revertReason;
   }
 
@@ -469,6 +484,53 @@ public class MessageFrame {
   }
 
   /**
+   * Tests if the return stack is full
+   *
+   * @return true is the return stack is full, else false
+   */
+  public boolean isReturnStackFull() {
+    return returnStack.isFull();
+  }
+
+  /**
+   * Tests if the return stack is empty
+   *
+   * @return true is the return stack is empty, else false
+   */
+  public boolean isReturnStackEmpty() {
+    return returnStack.isEmpty();
+  }
+
+  /**
+   * Removes the item at the top of the return stack.
+   *
+   * @return the item at the top of the return stack
+   * @throws IllegalStateException if the return stack is empty
+   */
+  public int popReturnStackItem() {
+    return returnStack.pop();
+  }
+
+  /**
+   * Return the return stack.
+   *
+   * @return the return stack
+   */
+  public ReturnStack getReturnStack() {
+    return returnStack;
+  }
+
+  /**
+   * Pushes the corresponding item onto the top of the return stack
+   *
+   * @param value The value to push onto the return stack.
+   * @throws IllegalStateException if the stack is full
+   */
+  public void pushReturnStackItem(final int value) {
+    returnStack.push(value);
+  }
+
+  /**
    * Returns whether or not the message frame is static or not.
    *
    * @return {@code} true if the frame is static; otherwise {@code false}
@@ -489,7 +551,7 @@ public class MessageFrame {
   }
 
   /**
-   * Expands memory to accomodate the specified memory access.
+   * Expands memory to accommodate the specified memory access.
    *
    * @param offset The offset in memory
    * @param length The length of the memory access
@@ -956,8 +1018,17 @@ public class MessageFrame {
    *
    * @return whether Message calls will be persisted
    */
-  public Boolean isPersistingState() {
-    return isPersistingState;
+  public Boolean isPersistingPrivateState() {
+    return isPersistingPrivateState;
+  }
+
+  /**
+   * Returns the transaction hash of the transaction being processed
+   *
+   * @return the transaction hash of the transaction being processed
+   */
+  public Hash getTransactionHash() {
+    return transactionHash;
   }
 
   public void setCurrentOperation(final Operation currentOperation) {
@@ -1005,11 +1076,18 @@ public class MessageFrame {
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
-    private Boolean isPersistingState = false;
+    private Boolean isPersistingPrivateState = false;
+    private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
+    private ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
 
     public Builder type(final Type type) {
       this.type = type;
+      return this;
+    }
+
+    public Builder returnStack(final ReturnStack returnStack) {
+      this.returnStack = returnStack;
       return this;
     }
 
@@ -1119,8 +1197,13 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder isPersistingState(final Boolean isPersistingState) {
-      this.isPersistingState = isPersistingState;
+    public Builder isPersistingPrivateState(final Boolean isPersistingPrivateState) {
+      this.isPersistingPrivateState = isPersistingPrivateState;
+      return this;
+    }
+
+    public Builder transactionHash(final Hash transactionHash) {
+      this.transactionHash = transactionHash;
       return this;
     }
 
@@ -1133,6 +1216,7 @@ public class MessageFrame {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
       checkState(messageFrameStack != null, "Missing message frame message frame stack");
+      checkState(returnStack != null, "Missing return stack");
       checkState(worldState != null, "Missing message frame world state");
       checkState(initialGas != null, "Missing message frame initial getGasRemaining");
       checkState(address != null, "Missing message frame recipient");
@@ -1149,7 +1233,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
-      checkState(isPersistingState != null, "Missing isPersistingState");
+      checkState(isPersistingPrivateState != null, "Missing isPersistingPrivateState");
       checkState(contractAccountVersion != -1, "Missing contractAccountVersion");
     }
 
@@ -1160,6 +1244,7 @@ public class MessageFrame {
           type,
           blockchain,
           messageFrameStack,
+          returnStack,
           worldState,
           initialGas,
           address,
@@ -1178,7 +1263,8 @@ public class MessageFrame {
           completer,
           miningBeneficiary,
           blockHashLookup,
-          isPersistingState,
+          isPersistingPrivateState,
+          transactionHash,
           reason,
           maxStackSize);
     }

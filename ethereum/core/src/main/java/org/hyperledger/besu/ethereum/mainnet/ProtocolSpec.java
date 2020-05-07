@@ -14,14 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+
+import java.util.Optional;
 
 /** A protocol specification. */
 public class ProtocolSpec<C> {
@@ -63,6 +68,12 @@ public class ProtocolSpec<C> {
 
   private final PrivateTransactionProcessor privateTransactionProcessor;
 
+  private final TransactionPriceCalculator transactionPriceCalculator;
+
+  private final Optional<EIP1559> eip1559;
+
+  private final TransactionGasBudgetCalculator gasBudgetCalculator;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -85,6 +96,9 @@ public class ProtocolSpec<C> {
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
    * @param gasCalculator the gas calculator to use.
+   * @param transactionPriceCalculator the transaction price calculator to use.
+   * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
+   * @param gasBudgetCalculator the gas budget calculator to use.
    */
   public ProtocolSpec(
       final String name,
@@ -105,7 +119,10 @@ public class ProtocolSpec<C> {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
-      final GasCalculator gasCalculator) {
+      final GasCalculator gasCalculator,
+      final TransactionPriceCalculator transactionPriceCalculator,
+      final Optional<EIP1559> eip1559,
+      final TransactionGasBudgetCalculator gasBudgetCalculator) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -125,6 +142,9 @@ public class ProtocolSpec<C> {
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.gasCalculator = gasCalculator;
+    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.eip1559 = eip1559;
+    this.gasBudgetCalculator = gasBudgetCalculator;
   }
 
   /**
@@ -285,7 +305,34 @@ public class ProtocolSpec<C> {
     return gasCalculator;
   }
 
-  public void setTransactionFilter(final TransactionFilter transactionFilter) {
-    transactionValidator.setTransactionFilter(transactionFilter);
+  /**
+   * Returns the transaction price calculator used in this specification.
+   *
+   * @return the transaction price calculator
+   */
+  public TransactionPriceCalculator getTransactionPriceCalculator() {
+    return transactionPriceCalculator;
+  }
+
+  /**
+   * Returns the EIP1559 manager used in this specification.
+   *
+   * @return the {@link Optional} wrapping EIP-1559 manager
+   */
+  public Optional<EIP1559> getEip1559() {
+    return eip1559;
+  }
+
+  public boolean isEip1559() {
+    return ExperimentalEIPs.eip1559Enabled && eip1559.isPresent();
+  }
+
+  /**
+   * Returns the gas budget calculator in this specification.
+   *
+   * @return the gas budget calculator
+   */
+  public TransactionGasBudgetCalculator getGasBudgetCalculator() {
+    return gasBudgetCalculator;
   }
 }

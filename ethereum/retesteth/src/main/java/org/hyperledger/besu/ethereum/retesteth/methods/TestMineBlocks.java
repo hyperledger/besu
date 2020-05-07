@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 
 import com.google.common.base.Functions;
-import org.apache.tuweni.bytes.Bytes;
 
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
@@ -65,13 +64,14 @@ public class TestMineBlocks implements JsonRpcMethod {
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
             context.getCoinbase(),
-            header -> Bytes.of(),
+            header -> context.getExtraData(),
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
             protocolSchedule,
             Functions.identity(),
             context.getEthHashSolver(),
             Wei.ZERO,
+            0.0,
             blockchain.getChainHeadHeader());
     final Block block = blockCreator.createBlock(retesethClock.instant().getEpochSecond());
 

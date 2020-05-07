@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage.keyvalue;
 
+import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -27,36 +29,41 @@ import java.io.IOException;
 
 public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
 
-  private final KeyValueStorage privateWorldStateStorage;
-  private final KeyValueStorage privateWorldStatePreimageStorage;
-  private final KeyValueStorage privateStateStorage;
+  private final KeyValueStorage privateWorldStateKeyValueStorage;
+  private final KeyValueStorage privateWorldStatePreimageKeyValueStorage;
+  private final KeyValueStorage privateStateKeyValueStorage;
 
   private final int factoryVersion;
 
   public PrivacyKeyValueStorageProvider(
-      final KeyValueStorage privateWorldStateStorage,
-      final KeyValueStorage privateWorldStatePreimageStorage,
-      final KeyValueStorage privateStateStorage,
+      final KeyValueStorage privateWorldStateKeyValueStorage,
+      final KeyValueStorage privateWorldStatePreimageKeyValueStorage,
+      final KeyValueStorage privateStateKeyValueStorage,
       final int factoryVersion) {
-    this.privateWorldStateStorage = privateWorldStateStorage;
-    this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
-    this.privateStateStorage = privateStateStorage;
+    this.privateWorldStateKeyValueStorage = privateWorldStateKeyValueStorage;
+    this.privateWorldStatePreimageKeyValueStorage = privateWorldStatePreimageKeyValueStorage;
+    this.privateStateKeyValueStorage = privateStateKeyValueStorage;
     this.factoryVersion = factoryVersion;
   }
 
   @Override
   public WorldStateStorage createWorldStateStorage() {
-    return new WorldStateKeyValueStorage(privateWorldStateStorage);
-  }
-
-  @Override
-  public PrivateStateStorage createPrivateStateStorage() {
-    return new PrivateStateKeyValueStorage(privateStateStorage);
+    return new WorldStateKeyValueStorage(privateWorldStateKeyValueStorage);
   }
 
   @Override
   public WorldStatePreimageStorage createWorldStatePreimageStorage() {
-    return new WorldStatePreimageKeyValueStorage(privateWorldStatePreimageStorage);
+    return new WorldStatePreimageKeyValueStorage(privateWorldStatePreimageKeyValueStorage);
+  }
+
+  @Override
+  public PrivateStateStorage createPrivateStateStorage() {
+    return new PrivateStateKeyValueStorage(privateStateKeyValueStorage);
+  }
+
+  @Override
+  public LegacyPrivateStateStorage createLegacyPrivateStateStorage() {
+    return new LegacyPrivateStateKeyValueStorage(privateStateKeyValueStorage);
   }
 
   @Override
@@ -66,8 +73,8 @@ public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
 
   @Override
   public void close() throws IOException {
-    privateWorldStateStorage.close();
-    privateWorldStatePreimageStorage.close();
-    privateStateStorage.close();
+    privateWorldStateKeyValueStorage.close();
+    privateWorldStatePreimageKeyValueStorage.close();
+    privateStateKeyValueStorage.close();
   }
 }

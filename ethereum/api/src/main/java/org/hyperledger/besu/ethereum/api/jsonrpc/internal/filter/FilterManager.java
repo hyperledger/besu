@@ -15,12 +15,14 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -29,6 +31,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AbstractVerticle;
@@ -41,10 +45,12 @@ public class FilterManager extends AbstractVerticle {
   private final FilterIdGenerator filterIdGenerator;
   private final FilterRepository filterRepository;
   private final BlockchainQueries blockchainQueries;
+  private final Optional<PrivacyQueries> privacyQueries;
 
-  public FilterManager(
+  FilterManager(
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool,
+      final Optional<PrivacyQueries> privacyQueries,
       final FilterIdGenerator filterIdGenerator,
       final FilterRepository filterRepository) {
     this.filterIdGenerator = filterIdGenerator;
@@ -53,6 +59,7 @@ public class FilterManager extends AbstractVerticle {
     blockchainQueries.getBlockchain().observeBlockAdded(this::recordBlockEvent);
     transactionPool.subscribePendingTransactions(this::recordPendingTransactionEvent);
     this.blockchainQueries = blockchainQueries;
+    this.privacyQueries = privacyQueries;
   }
 
   @Override
@@ -111,6 +118,26 @@ public class FilterManager extends AbstractVerticle {
   }
 
   /**
+   * Installs a new private log filter
+   *
+   * @param privacyGroupId String privacyGroupId
+   * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
+   * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
+   * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
+   * @return the log filter id
+   */
+  public String installPrivateLogFilter(
+      final String privacyGroupId,
+      final BlockParameter fromBlock,
+      final BlockParameter toBlock,
+      final LogsQuery logsQuery) {
+    final String filterId = filterIdGenerator.nextId();
+    filterRepository.save(
+        new PrivateLogFilter(filterId, privacyGroupId, fromBlock, toBlock, logsQuery));
+    return filterId;
+  }
+
+  /**
    * Uninstalls the specified filter.
    *
    * @param filterId the id of the filter to remove
@@ -125,31 +152,45 @@ public class FilterManager extends AbstractVerticle {
     }
   }
 
-  public void recordBlockEvent(final BlockAddedEvent event, final Blockchain blockchain) {
+  public void recordBlockEvent(final BlockAddedEvent event) {
     final Hash blockHash = event.getBlock().getHash();
     final Collection<BlockFilter> blockFilters =
         filterRepository.getFiltersOfType(BlockFilter.class);
     blockFilters.forEach(
-        (filter) -> {
+        filter -> {
           synchronized (filter) {
             filter.addBlockHash(blockHash);
           }
         });
 
-    checkBlockchainForMatchingLogsForFilters();
-  }
-
-  private void checkBlockchainForMatchingLogsForFilters() {
-    final Collection<LogFilter> logFilters = filterRepository.getFiltersOfType(LogFilter.class);
-    logFilters.forEach(
-        (filter) -> {
-          final long headBlockNumber = blockchainQueries.headBlockNumber();
-          final long toBlockNumber =
-              filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
-          final List<LogWithMetadata> logs =
-              blockchainQueries.matchingLogs(headBlockNumber, toBlockNumber, filter.getLogsQuery());
-          filter.addLog(logs);
-        });
+    final List<LogWithMetadata> logsWithMetadata = event.getLogsWithMetadata();
+    filterRepository.getFiltersOfType(LogFilter.class).stream()
+        .filter(
+            // Only keep filters where the "to" block could include the block in the event
+            filter -> {
+              final OptionalLong maybeToBlockNumber = filter.getToBlock().getNumber();
+              return maybeToBlockNumber.isEmpty()
+                  || maybeToBlockNumber.getAsLong() >= event.getBlock().getHeader().getNumber();
+            })
+        .forEach(
+            filter -> {
+              final LogsQuery logsQuery = filter.getLogsQuery();
+              filter.addLogs(
+                  // We need to use privacy queries for private log filters but for regular
+                  // log filters we already have all the info in the event
+                  filter instanceof PrivateLogFilter
+                      ? privacyQueries
+                          .map(
+                              pq ->
+                                  pq.matchingLogs(
+                                      ((PrivateLogFilter) filter).getPrivacyGroupId(),
+                                      blockHash,
+                                      logsQuery))
+                          .orElse(emptyList())
+                      : logsWithMetadata.stream()
+                          .filter(logsQuery::matches)
+                          .collect(toUnmodifiableList()));
+            });
   }
 
   @VisibleForTesting
@@ -239,6 +280,23 @@ public class FilterManager extends AbstractVerticle {
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
 
-    return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+    return findLogsWithinRange(filter, fromBlockNumber, toBlockNumber);
+  }
+
+  private List<LogWithMetadata> findLogsWithinRange(
+      final LogFilter filter, final long fromBlockNumber, final long toBlockNumber) {
+    if (filter instanceof PrivateLogFilter) {
+      return privacyQueries
+          .map(
+              pq ->
+                  pq.matchingLogs(
+                      ((PrivateLogFilter) filter).getPrivacyGroupId(),
+                      fromBlockNumber,
+                      toBlockNumber,
+                      filter.getLogsQuery()))
+          .orElse(emptyList());
+    } else {
+      return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+    }
   }
 }

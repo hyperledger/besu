@@ -29,6 +29,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -971,7 +972,7 @@ public class RlpxAgentTest {
   private RlpxAgent agent() {
     config.setLimitRemoteWireConnectionsEnabled(true);
     return RlpxAgent.builder()
-        .keyPair(KEY_PAIR)
+        .nodeKey(NodeKeyUtils.createFrom(KEY_PAIR))
         .config(config)
         .peerPermissions(peerPermissions)
         .peerPrivileges(peerPrivileges)

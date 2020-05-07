@@ -23,12 +23,14 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
 public class BesuNodeConfiguration {
 
   private final String name;
+  private final Optional<Path> dataPath;
   private final MiningParameters miningParameters;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -42,13 +44,17 @@ public class BesuNodeConfiguration {
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
   private final boolean revertReasonEnabled;
+  private final boolean secp256k1Native;
+  private final boolean altbn128Native;
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
   private final Optional<PrivacyParameters> privacyParameters;
+  private final Optional<String> runCommand;
 
-  public BesuNodeConfiguration(
+  BesuNodeConfiguration(
       final String name,
+      final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
@@ -62,10 +68,13 @@ public class BesuNodeConfiguration {
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
+      final boolean secp256k1Native,
+      final boolean altbn128Native,
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
-      final Optional<PrivacyParameters> privacyParameters) {
+      final Optional<PrivacyParameters> privacyParameters,
+      final Optional<String> runCommand) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -73,6 +82,7 @@ public class BesuNodeConfiguration {
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.keyFilePath = keyFilePath;
+    this.dataPath = dataPath;
     this.devMode = devMode;
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
@@ -80,10 +90,13 @@ public class BesuNodeConfiguration {
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
+    this.secp256k1Native = secp256k1Native;
+    this.altbn128Native = altbn128Native;
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.privacyParameters = privacyParameters;
+    this.runCommand = runCommand;
   }
 
   public String getName() {
@@ -112,6 +125,10 @@ public class BesuNodeConfiguration {
 
   public Optional<String> getKeyFilePath() {
     return keyFilePath;
+  }
+
+  public Optional<Path> getDataPath() {
+    return dataPath;
   }
 
   public boolean isDevMode() {
@@ -150,11 +167,23 @@ public class BesuNodeConfiguration {
     return revertReasonEnabled;
   }
 
+  public boolean isSecp256k1Native() {
+    return secp256k1Native;
+  }
+
+  public boolean isAltbn128Native() {
+    return altbn128Native;
+  }
+
   public List<String> getStaticNodes() {
     return staticNodes;
   }
 
   public Optional<PrivacyParameters> getPrivacyParameters() {
     return privacyParameters;
+  }
+
+  public Optional<String> getRunCommand() {
+    return runCommand;
   }
 }

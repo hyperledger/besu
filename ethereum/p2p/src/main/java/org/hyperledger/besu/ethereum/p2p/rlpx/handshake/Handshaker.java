@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake;
 
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
 
@@ -76,11 +77,11 @@ public interface Handshaker {
    * <p>This method must throw an {@link IllegalStateException} exception if the handshake had
    * already been prepared before, no matter if under the initiator or the responder role.
    *
-   * @param ourKeypair The keypair for our node identity.
+   * @param nodeKey An object which represents our identity
    * @param theirPubKey The public key of the node we're handshaking with.
-   * @throws IllegalStateException Indicates that preparation had already occured.
+   * @throws IllegalStateException Indicates that preparation had already occurred.
    */
-  void prepareInitiator(SECP256K1.KeyPair ourKeypair, SECP256K1.PublicKey theirPubKey);
+  void prepareInitiator(NodeKey nodeKey, SECP256K1.PublicKey theirPubKey);
 
   /**
    * This method must be called by the <em>responding side</em> of the handshake to prepare the
@@ -89,10 +90,10 @@ public interface Handshaker {
    * <p>This method must throw an {@link IllegalStateException} exception if the handshake had
    * already been prepared before, whether with the initiator or the responder role.
    *
-   * @param ourKeypair The keypair for our node identity.
-   * @throws IllegalStateException Indicates that preparation had already occured.
+   * @param nodeKey An object which represents our identity
+   * @throws IllegalStateException Indicates that preparation had already occurred.
    */
-  void prepareResponder(SECP256K1.KeyPair ourKeypair);
+  void prepareResponder(NodeKey nodeKey);
 
   /**
    * Retrieves the first message to dispatch in the handshake ceremony.

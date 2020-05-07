@@ -58,98 +58,69 @@ downloadLicenses {
   reportByLicenseType = true
   dependencyConfiguration = 'testCompile'
 
+  ext.epl1 = license('Eclipse Public License 1.0', 'https://www.eclipse.org/legal/epl-v10.html')
   ext.apache = license('Apache License, Version 2.0', 'http://opensource.org/licenses/Apache-2.0')
   ext.mit = license('MIT License', 'http://www.opensource.org/licenses/mit-license.php')
   ext.bsd = license('BSD License', 'http://www.opensource.org/licenses/bsd-license.php')
   ext.bsd3Clause = license('BSD 3-Clause', 'http://opensource.org/licenses/BSD-3-Clause')
-  ext.mpl = license('Mozilla Public License', 'http://www.mozilla.org/MPL')
-  ext.mpl1_1 = license('Mozilla Public License Version 1.1', 'http://www.mozilla.org/MPL/1.1/')
-  ext.mpl2_0 = license('Mozilla Public License, Version 2.0', 'http://www.mozilla.org/MPL/2.0/')
   ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
-  ext.cddl1_1 = license('Common Development and Distribution License 1.0', 'http://oss.oracle.com/licenses/CDDL-1.1')
   ext.cc0 =  license('Public Domain (CC0) License 1.0', 'https://creativecommons.org/publicdomain/zero/1.0')
   aliases = [
+      (epl1) : [
+          'Eclipse Public License - v 1.0',
+          'Eclipse Public License 1.0',
+      ],
       (apache)    : [
           'The Apache Software License, Version 2.0',
           'The Apache Software License, version 2.0',
-          'Apache License Version 2.0',
-          'Apache License, Version 2.0',
           'The Apache License, Version 2.0',
           'Apache 2',
           'Apache 2.0',
           'Apache License 2.0',
-          'Apache-2.0',
-          license('Apache License', 'http://www.apache.org/licenses/LICENSE-2.0'),
-          license('Apache Software Licenses', 'http://www.apache.org/licenses/LICENSE-2.0.txt'),
-          license('Apache', 'http://www.opensource.org/licenses/Apache-2.0')
       ],
-      (mit)       : ['The MIT License', 'MIT', 'MIT license'],
+      (mit)       : [
+          'MIT',
+          'The MIT License',
+      ],
       (bsd)       : [
           'BSD',
-          'BSD licence',
           'The BSD License',
-          'Berkeley Software Distribution (BSD) License',
-          license('New BSD License', 'http://www.opensource.org/licenses/bsd-license.php')
       ],
       (bsd3Clause): [
           'BSD 3-Clause',
           'BSD 3-Clause "New" or "Revised" License (BSD-3-Clause)',
+          '3-Clause BSD License',
           license('BSD 3-clause', 'http://opensource.org/licenses/BSD-3-Clause'),
           license('BSD 3-Clause', 'http://www.scala-lang.org/license.html')
       ],
-      (mpl): [
-          'MPL',
-          'Mozilla Public License',
-          'Mozilla Public License 1.0',
-          license('Mozilla Public License', 'http://www.mozilla.org/MPL')
-      ],
-      (mpl1_1): [
-          'MPL 1.1',
-          'Mozilla Public License Version 1.1',
-          license('Mozilla Public License Version 1.1', 'http://www.mozilla.org/media/MPL/1.1/index.0c5913925d40.txt')
-      ],
-      (mpl2_0): [
-          'MPL 2.0',
-          'Mozilla Public License Version 2.0',
-          license('Mozilla Public License 2.0', 'http://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt')
-      ],
       (cddl): [
-              'CDDL 1.0',
-              'CDDL',
-              'Common Development and Distribution License 1.0',
-              'CDDL + GPLv2 with classpath exception',
-              'Dual license consisting of the CDDL v1.1 and GPL v2'
+          'CDDL 1.0',
       ],
-      (cddl1_1): [
-              'CDDL 1.1',
-              'COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1',
-      ],
-      (cc0): ['Public Domain (CC0) License 1.0', 'CC0']
+      (cc0): [
+          'CC0'
+      ]
   ]
 
   licenses = [
-      (group('besu'))            : apache,
-      (group('besu.ethereum.api'))   : apache,
-      (group('besu.consensus'))  : apache,
-      (group('besu.ethereum'))   : apache,
-      (group('besu.metrics'))  : apache,
-      (group('besu.plugins'))   : apache,
-      (group('besu.services'))   : apache,
+      (group('besu'))             : apache,
+      (group('besu.ethereum.api')): apache,
+      (group('besu.consensus'))   : apache,
+      (group('besu.ethereum'))    : apache,
+      (group('besu.metrics'))     : apache,
+      (group('besu.plugins'))     : apache,
+      (group('besu.services'))    : apache,
 
-      // https://checkerframework.org/manual/#license
-      // The more permissive MIT License applies to code that you might want
-      // to include in your own program, such as the annotations and run-time utility classes.
-      (group('org.checkerframework')): mit,
-      // RocksDB is dual licensed under Apache v2.0 and GPL 2 licenses
+      // JNA is dual licensed under Apache v2.0 or LGPL 2 licenses
       // Explicitly declare that we are using the Apache v2.0 license
-      (group('org.rocksdb')): apache,
-      /// Explicilitly declare Apache 2.0 license for javassist
-      (group('org.javassist')): apache,
-      /// Explicilitly declare Apache 2.0 license for javassist
-      (group('javax.ws.rs')): cddl1_1,
-      (group('org.glassfish.jersey.core')): apache,
-      (group('org.glassfish.jersey.bundles.repackaged')): apache,
-      (group('org.glassfish.jersey.connectors')): apache
+      (group('net.java.dev.jna'))      : apache,
+
+      // RocksDB is dual licensed under Apache v2.0 or GPL 2 licenses
+      // Explicitly declare that we are using the Apache v2.0 license
+      (group('org.rocksdb'))      : apache,
+
+      // Logback is dual licensed under EPL v1.0 and LGPL v2.1
+      // Explicitly declare that we are using the EPL v1.0 license
+      (group('ch.qos.logback'))   : epl1,
   ]
 }
 

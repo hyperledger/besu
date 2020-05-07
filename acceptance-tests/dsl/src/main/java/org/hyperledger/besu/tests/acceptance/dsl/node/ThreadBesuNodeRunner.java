@@ -23,7 +23,9 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.GasLimitCalculator;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -37,48 +39,48 @@ import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
-  private final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
   private final Map<String, Runner> besuRunners = new HashMap<>();
-  private ExecutorService nodeExecutor = Executors.newCachedThreadPool();
 
   private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new HashMap<>();
 
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
       final StorageServiceImpl storageService,
+      final SecurityModuleServiceImpl securityModuleService,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
     besuPluginContext.addService(StorageService.class, storageService);
+    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
 
     final Path pluginsPath = node.homeDirectory().resolve("plugins");
@@ -102,17 +104,27 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void startNode(final BesuNode node) {
-    if (nodeExecutor == null || nodeExecutor.isShutdown()) {
-      nodeExecutor = Executors.newCachedThreadPool();
+
+    if (ThreadContext.containsKey("node")) {
+      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
+    }
+    ThreadContext.put("node", node.getName());
+
+    if (node.getRunCommand().isPresent()) {
+      throw new UnsupportedOperationException("commands are not supported with thread runner");
     }
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
+    final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfiguration commonPluginConfiguration =
         new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
-            node, n -> buildPluginContext(node, storageService, commonPluginConfiguration));
+            node,
+            n ->
+                buildPluginContext(
+                    node, storageService, securityModuleService, commonPluginConfiguration));
 
     final ObservableMetricsSystem metricsSystem =
         PrometheusMetricsSystem.init(node.getMetricsConfiguration());
@@ -135,26 +147,21 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
-    final BesuController<?> besuController;
-    try {
-      besuController =
-          builder
-              .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
-              .dataDirectory(node.homeDirectory())
-              .miningParameters(node.getMiningParameters())
-              .privacyParameters(node.getPrivacyParameters())
-              .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
-              .metricsSystem(metricsSystem)
-              .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-              .clock(Clock.systemUTC())
-              .isRevertReasonEnabled(node.isRevertReasonEnabled())
-              .storageProvider(storageProvider)
-              .targetGasLimit(GasLimitCalculator.DEFAULT)
-              .build();
-    } catch (final IOException e) {
-      throw new RuntimeException("Error building BesuController", e);
-    }
+    final BesuController<?> besuController =
+        builder
+            .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
+            .dataDirectory(node.homeDirectory())
+            .miningParameters(node.getMiningParameters())
+            .privacyParameters(node.getPrivacyParameters())
+            .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
+            .metricsSystem(metricsSystem)
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .clock(Clock.systemUTC())
+            .isRevertReasonEnabled(node.isRevertReasonEnabled())
+            .storageProvider(storageProvider)
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     if (node.getPermissioningConfiguration().isPresent()) {
@@ -195,12 +202,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     .map(EnodeURL::fromString)
                     .collect(Collectors.toList()))
             .besuPluginContext(new BesuPluginContextImpl())
-            .autoLogsBloomIndexing(false)
+            .autoLogBloomCaching(false)
             .build();
 
     runner.start();
 
     besuRunners.put(node.getName(), runner);
+    ThreadContext.remove("node");
   }
 
   @Override
@@ -221,14 +229,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     // iterate over a copy of the set so that besuRunner can be updated when a runner is killed
     new HashSet<>(besuRunners.keySet()).forEach(this::killRunner);
-    try {
-      nodeExecutor.shutdownNow();
-      if (!nodeExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-        throw new IllegalStateException("Failed to shut down node executor");
-      }
-    } catch (final InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
@@ -246,6 +246,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       } catch (final Exception e) {
         throw new RuntimeException("Error shutting down node " + name, e);
       }
+    } else {
+      LOG.error("There was a request to kill an unknown node: {}", name);
     }
   }
 }

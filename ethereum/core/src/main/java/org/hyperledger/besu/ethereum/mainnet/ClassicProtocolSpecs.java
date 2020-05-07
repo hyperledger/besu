@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
@@ -32,7 +34,7 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder<Void> classicRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return MainnetProtocolSpecs.homesteadDefinition(contractSizeLimit, configStackSizeLimit)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::createClassicValidator)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 
@@ -69,7 +71,8 @@ public class ClassicProtocolSpecs {
                 transactionReceiptFactory,
                 blockReward,
                 miningBeneficiaryCalculator,
-                skipZeroBlockRewards) ->
+                skipZeroBlockRewards,
+                gasBudgetCalculator) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
                     transactionReceiptFactory,
@@ -131,7 +134,9 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    TransactionPriceCalculator.frontier(),
+                    CoinbaseFeePriceCalculator.frontier()))
         .name("Atlantis");
   }
 
@@ -149,19 +154,19 @@ public class ClassicProtocolSpecs {
         .name("Agharta");
   }
 
-  public static ProtocolSpecBuilder<Void> aztlanDefinition(
+  public static ProtocolSpecBuilder<Void> phoenixDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason) {
     return aghartaDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
-        .gasCalculator(AztlanGasCalculator::new)
+        .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
-                MainnetEvmRegistries.aztlan(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .name("Aztlan");
+        .name("Phoenix");
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(

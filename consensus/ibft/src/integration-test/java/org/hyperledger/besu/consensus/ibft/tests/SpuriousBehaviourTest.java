@@ -27,8 +27,8 @@ import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.ibft.support.ValidatorPeer;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -75,7 +75,7 @@ public class SpuriousBehaviourTest {
     expectedCommit =
         new Commit(
             createSignedCommitPayload(
-                roundId, proposedBlock, context.getLocalNodeParams().getNodeKeyPair()));
+                roundId, proposedBlock, context.getLocalNodeParams().getNodeKey()));
   }
 
   @Test
@@ -98,14 +98,15 @@ public class SpuriousBehaviourTest {
 
   @Test
   public void nonValidatorsCannotTriggerResponses() {
-    final KeyPair nonValidatorKeys = KeyPair.generate();
+    final NodeKey nonValidatorNodeKey = NodeKeyUtils.generate();
     final NodeParams nonValidatorParams =
-        new NodeParams(Util.publicKeyToAddress(nonValidatorKeys.getPublicKey()), nonValidatorKeys);
+        new NodeParams(
+            Util.publicKeyToAddress(nonValidatorNodeKey.getPublicKey()), nonValidatorNodeKey);
 
     final ValidatorPeer nonvalidator =
         new ValidatorPeer(
             nonValidatorParams,
-            new MessageFactory(nonValidatorParams.getNodeKeyPair()),
+            new MessageFactory(nonValidatorParams.getNodeKey()),
             context.getEventMultiplexer());
 
     nonvalidator.injectProposal(new ConsensusRoundIdentifier(1, 0), proposedBlock);
@@ -144,7 +145,7 @@ public class SpuriousBehaviourTest {
 
     // nonProposer-2 will generate an invalid seal
     final ValidatorPeer badSealPeer = peers.getNonProposing(2);
-    final Signature illegalSeal = SECP256K1.sign(Hash.ZERO, badSealPeer.getNodeKeys());
+    final Signature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
 
     badSealPeer.injectCommit(roundId, proposedBlock.getHash(), illegalSeal);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);

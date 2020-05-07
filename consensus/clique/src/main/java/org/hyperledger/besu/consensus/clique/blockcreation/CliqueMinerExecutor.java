@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
@@ -44,14 +44,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, CliqueBlockMiner> {
 
   private final Address localAddress;
-  private final KeyPair nodeKeys;
+  private final NodeKey nodeKey;
   private final EpochManager epochManager;
 
   public CliqueMinerExecutor(
       final ProtocolContext<CliqueContext> protocolContext,
       final ProtocolSchedule<CliqueContext> protocolSchedule,
       final PendingTransactions pendingTransactions,
-      final KeyPair nodeKeys,
+      final NodeKey nodeKey,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager,
@@ -63,8 +63,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
         miningParams,
         blockScheduler,
         gasLimitCalculator);
-    this.nodeKeys = nodeKeys;
-    this.localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
+    this.nodeKey = nodeKey;
+    this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
   }
 
@@ -82,8 +82,9 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
                 protocolContext,
                 protocolSchedule,
                 gasLimitCalculator,
-                nodeKeys,
+                nodeKey,
                 minTransactionGasPrice,
+                minBlockOccupancyRatio,
                 header,
                 epochManager);
 

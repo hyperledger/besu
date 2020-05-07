@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -34,7 +36,10 @@ import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSch
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -59,6 +64,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
@@ -71,7 +77,7 @@ public class TestNode implements Closeable {
   private static final Logger LOG = LogManager.getLogger();
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  protected final SECP256K1.KeyPair kp;
+  protected final NodeKey nodeKey;
   protected final P2PNetwork network;
   protected final Peer selfPeer;
   protected final Map<PeerConnection, DisconnectReason> disconnections = new HashMap<>();
@@ -86,7 +92,7 @@ public class TestNode implements Closeable {
     checkNotNull(discoveryCfg);
 
     final int listenPort = port != null ? port : 0;
-    this.kp = kp != null ? kp : SECP256K1.KeyPair.generate();
+    this.nodeKey = kp != null ? NodeKeyUtils.createFrom(kp) : NodeKeyUtils.generate();
 
     final NetworkingConfiguration networkingConfiguration =
         NetworkingConfiguration.create()
@@ -110,43 +116,16 @@ public class TestNode implements Closeable {
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext<Void> protocolContext =
         new ProtocolContext<>(blockchain, worldStateArchive, null);
-    final EthProtocolManager ethProtocolManager =
-        new EthProtocolManager(
-            blockchain,
-            worldStateArchive,
-            BigInteger.ONE,
-            Collections.emptyList(),
-            false,
-            1,
-            1,
-            1,
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.defaultConfig());
-
-    final NetworkRunner networkRunner =
-        NetworkRunner.builder()
-            .subProtocols(EthProtocol.get())
-            .protocolManagers(singletonList(ethProtocolManager))
-            .network(
-                capabilities ->
-                    DefaultP2PNetwork.builder()
-                        .vertx(vertx)
-                        .keyPair(this.kp)
-                        .config(networkingConfiguration)
-                        .metricsSystem(new NoOpMetricsSystem())
-                        .supportedCapabilities(capabilities)
-                        .build())
-            .metricsSystem(new NoOpMetricsSystem())
-            .build();
-    network = networkRunner.getNetwork();
-    network.subscribeDisconnect(
-        (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
-
-    final EthContext ethContext = ethProtocolManager.ethContext();
 
     final SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
+
+    final EthMessages ethMessages = new EthMessages();
+
+    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+
+    final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
+    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -157,14 +136,49 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.builder().build());
+            TransactionPoolConfiguration.builder().build(),
+            true,
+            Optional.empty());
+
+    final EthProtocolManager ethProtocolManager =
+        new EthProtocolManager(
+            blockchain,
+            BigInteger.ONE,
+            worldStateArchive,
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            ethPeers,
+            ethMessages,
+            ethContext,
+            Collections.emptyList(),
+            false,
+            scheduler);
+
+    final NetworkRunner networkRunner =
+        NetworkRunner.builder()
+            .subProtocols(EthProtocol.get())
+            .protocolManagers(singletonList(ethProtocolManager))
+            .network(
+                capabilities ->
+                    DefaultP2PNetwork.builder()
+                        .vertx(vertx)
+                        .nodeKey(nodeKey)
+                        .config(networkingConfiguration)
+                        .metricsSystem(new NoOpMetricsSystem())
+                        .supportedCapabilities(capabilities)
+                        .build())
+            .metricsSystem(new NoOpMetricsSystem())
+            .build();
+    network = networkRunner.getNetwork();
+    network.subscribeDisconnect(
+        (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
 
     networkRunner.start();
     selfPeer = DefaultPeer.fromEnodeURL(network.getLocalEnode().get());
   }
 
   public Bytes id() {
-    return kp.getPublicKey().getEncodedBytes();
+    return nodeKey.getPublicKey().getEncodedBytes();
   }
 
   public static String shortId(final Bytes id) {

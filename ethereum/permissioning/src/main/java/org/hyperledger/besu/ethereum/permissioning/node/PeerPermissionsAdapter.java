@@ -51,7 +51,7 @@ public class PeerPermissionsAdapter extends PeerPermissions {
 
     // TODO: These events should be more targeted
     blockchainListenId =
-        blockchain.observeBlockAdded((evt, chain) -> dispatchUpdate(true, Optional.empty()));
+        blockchain.observeBlockAdded(evt -> dispatchUpdate(true, Optional.empty()));
     nodePermissioningListenId =
         this.nodePermissioningController.subscribeToUpdates(
             () -> dispatchUpdate(true, Optional.empty()));

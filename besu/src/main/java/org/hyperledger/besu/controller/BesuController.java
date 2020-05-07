@@ -17,7 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -52,7 +52,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final EthProtocolManager ethProtocolManager;
   private final GenesisConfigOptions genesisConfigOptions;
   private final SubProtocolConfiguration subProtocolConfiguration;
-  private final KeyPair keyPair;
+  private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
 
@@ -77,7 +77,7 @@ public class BesuController<C> implements java.io.Closeable {
       final PrivacyParameters privacyParameters,
       final MiningParameters miningParameters,
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
-      final KeyPair keyPair,
+      final NodeKey nodeKey,
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices) {
     this.protocolSchedule = protocolSchedule;
@@ -88,7 +88,7 @@ public class BesuController<C> implements java.io.Closeable {
     this.synchronizer = synchronizer;
     this.syncState = syncState;
     this.additionalJsonRpcMethodsFactory = additionalJsonRpcMethodsFactory;
-    this.keyPair = keyPair;
+    this.nodeKey = nodeKey;
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
@@ -121,8 +121,8 @@ public class BesuController<C> implements java.io.Closeable {
     return subProtocolConfiguration;
   }
 
-  public KeyPair getLocalNodeKeyPair() {
-    return keyPair;
+  public NodeKey getNodeKey() {
+    return nodeKey;
   }
 
   public TransactionPool getTransactionPool() {

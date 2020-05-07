@@ -19,11 +19,13 @@ import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -45,7 +47,8 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
             original.getTransactionReceiptFactory(),
             Wei.ZERO,
             original.getMiningBeneficiaryCalculator(),
-            original.isSkipZeroBlockRewards());
+            original.isSkipZeroBlockRewards(),
+            TransactionGasBudgetCalculator.frontier());
     final BlockValidator<C> noRewardBlockValidator =
         new MainnetBlockValidator<>(
             original.getBlockHeaderValidator(),
@@ -72,7 +75,10 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
         original.getMiningBeneficiaryCalculator(),
         original.getPrecompileContractRegistry(),
         original.isSkipZeroBlockRewards(),
-        original.getGasCalculator());
+        original.getGasCalculator(),
+        original.getTransactionPriceCalculator(),
+        original.getEip1559(),
+        original.getGasBudgetCalculator());
   }
 
   @Override
@@ -83,5 +89,11 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     delegate.setTransactionFilter(transactionFilter);
+  }
+
+  @Override
+  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
+      final WorldStateArchive publicWorldStateArchive) {
+    delegate.setPublicWorldStateArchiveForPrivacyBlockProcessor(publicWorldStateArchive);
   }
 }

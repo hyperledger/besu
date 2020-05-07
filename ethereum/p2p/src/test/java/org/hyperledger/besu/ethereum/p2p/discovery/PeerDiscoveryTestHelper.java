@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -48,8 +48,8 @@ public class PeerDiscoveryTestHelper {
   private final AtomicInteger nextAvailablePort = new AtomicInteger(1);
   Map<Bytes, MockPeerDiscoveryAgent> agents = new HashMap<>();
 
-  public static List<SECP256K1.KeyPair> generateKeyPairs(final int count) {
-    return Stream.generate(SECP256K1.KeyPair::generate).limit(count).collect(Collectors.toList());
+  public static List<NodeKey> generateNodeKeys(final int count) {
+    return Stream.generate(NodeKeyUtils::generate).limit(count).collect(Collectors.toList());
   }
 
   /**
@@ -62,16 +62,16 @@ public class PeerDiscoveryTestHelper {
     return Stream.generate(this::createDiscoveryPeer).limit(count).collect(Collectors.toList());
   }
 
-  public List<DiscoveryPeer> createDiscoveryPeers(final List<KeyPair> keyPairs) {
-    return keyPairs.stream().map(this::createDiscoveryPeer).collect(Collectors.toList());
+  public List<DiscoveryPeer> createDiscoveryPeers(final List<NodeKey> nodeKeys) {
+    return nodeKeys.stream().map(this::createDiscoveryPeer).collect(Collectors.toList());
   }
 
   public DiscoveryPeer createDiscoveryPeer() {
-    return createDiscoveryPeer(KeyPair.generate());
+    return createDiscoveryPeer(NodeKeyUtils.generate());
   }
 
-  public DiscoveryPeer createDiscoveryPeer(final KeyPair keyPair) {
-    final Bytes peerId = keyPair.getPublicKey().getEncodedBytes();
+  public DiscoveryPeer createDiscoveryPeer(final NodeKey nodeKey) {
+    final Bytes peerId = nodeKey.getPublicKey().getEncodedBytes();
     final int port = nextAvailablePort.incrementAndGet();
     return DiscoveryPeer.fromEnode(
         EnodeURL.builder()
@@ -88,7 +88,7 @@ public class PeerDiscoveryTestHelper {
         PingPacketData.create(
             fromAgent.getAdvertisedPeer().get().getEndpoint(),
             toAgent.getAdvertisedPeer().get().getEndpoint()),
-        fromAgent.getKeyPair());
+        fromAgent.getNodeKey());
   }
 
   public AgentBuilder agentBuilder() {
@@ -180,6 +180,7 @@ public class PeerDiscoveryTestHelper {
   }
 
   public static class AgentBuilder {
+
     private final Map<Bytes, MockPeerDiscoveryAgent> agents;
     private final AtomicInteger nextAvailablePort;
 
@@ -188,7 +189,7 @@ public class PeerDiscoveryTestHelper {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
     private String advertisedHost = "127.0.0.1";
     private OptionalInt bindPort = OptionalInt.empty();
-    private KeyPair keyPair = SECP256K1.KeyPair.generate();
+    private NodeKey nodeKey = NodeKeyUtils.generate();
 
     private AgentBuilder(
         final Map<Bytes, MockPeerDiscoveryAgent> agents, final AtomicInteger nextAvailablePort) {
@@ -240,9 +241,9 @@ public class PeerDiscoveryTestHelper {
       return this;
     }
 
-    public AgentBuilder keyPair(final KeyPair keyPair) {
-      checkNotNull(keyPair);
-      this.keyPair = keyPair;
+    public AgentBuilder nodeKey(final NodeKey nodeKey) {
+      checkNotNull(nodeKey);
+      this.nodeKey = nodeKey;
       return this;
     }
 
@@ -255,7 +256,7 @@ public class PeerDiscoveryTestHelper {
       config.setBindPort(port);
       config.setActive(active);
 
-      return new MockPeerDiscoveryAgent(keyPair, config, peerPermissions, agents, natService);
+      return new MockPeerDiscoveryAgent(nodeKey, config, peerPermissions, agents, natService);
     }
   }
 }

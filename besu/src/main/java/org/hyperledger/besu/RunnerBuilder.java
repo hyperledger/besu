@@ -22,7 +22,7 @@ import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
@@ -35,9 +35,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -93,6 +92,8 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.docker.DockerDetector;
 import org.hyperledger.besu.nat.docker.DockerNatManager;
+import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
+import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
 import org.hyperledger.besu.nat.manual.ManualNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -114,9 +115,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RunnerBuilder {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private Vertx vertx;
   private BesuController<?> besuController;
@@ -138,13 +143,14 @@ public class RunnerBuilder {
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private Path dataDir;
+  private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;
   private ObservableMetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
-  private boolean autoLogsBloomIndexing = true;
+  private boolean autoLogBloomCaching = true;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -236,6 +242,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder pidPath(final Path pidPath) {
+    this.pidPath = Optional.ofNullable(pidPath);
+    return this;
+  }
+
   public RunnerBuilder dataDir(final Path dataDir) {
     this.dataDir = dataDir;
     return this;
@@ -271,8 +282,8 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder autoLogsBloomIndexing(final boolean autoLogsBloomIndexing) {
-    this.autoLogsBloomIndexing = autoLogsBloomIndexing;
+  public RunnerBuilder autoLogBloomCaching(final boolean autoLogBloomCaching) {
+    this.autoLogBloomCaching = autoLogBloomCaching;
     return this;
   }
 
@@ -298,7 +309,7 @@ public class RunnerBuilder {
       discoveryConfiguration = DiscoveryConfiguration.create().setActive(false);
     }
 
-    final KeyPair keyPair = besuController.getLocalNodeKeyPair();
+    final NodeKey nodeKey = besuController.getNodeKey();
 
     final SubProtocolConfiguration subProtocolConfiguration =
         besuController.getSubProtocolConfiguration();
@@ -335,7 +346,7 @@ public class RunnerBuilder {
         new TransactionSimulator(
             context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule);
 
-    final Bytes localNodeId = keyPair.getPublicKey().getEncodedBytes();
+    final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
         buildNodePermissioningController(
             bootnodes, synchronizer, transactionSimulator, localNodeId);
@@ -346,13 +357,14 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
+    LOG.info("Detecting NAT service.");
     final NatService natService = new NatService(buildNatManager(natMethod));
     final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
         (caps) ->
             DefaultP2PNetwork.builder()
                 .vertx(vertx)
-                .keyPair(keyPair)
+                .nodeKey(nodeKey)
                 .config(networkingConfiguration)
                 .peerPermissions(peerPermissions)
                 .metricsSystem(metricsSystem)
@@ -385,8 +397,14 @@ public class RunnerBuilder {
             Optional.of(besuController.getProtocolManager().ethContext().getScheduler()));
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
+
     final FilterManager filterManager =
-        createFilterManager(vertx, blockchainQueries, transactionPool);
+        new FilterManagerBuilder()
+            .blockchainQueries(blockchainQueries)
+            .transactionPool(transactionPool)
+            .privacyParameters(privacyParameters)
+            .build();
+    vertx.deployVerticle(filterManager);
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
@@ -534,7 +552,8 @@ public class RunnerBuilder {
         metricsService,
         besuController,
         dataDir,
-        autoLogsBloomIndexing ? blockchainQueries.getTransactionLogsIndexer() : Optional.empty(),
+        pidPath,
+        autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
         context.getBlockchain());
   }
 
@@ -590,7 +609,7 @@ public class RunnerBuilder {
     final NatMethod detectedNatMethod =
         Optional.of(natMethod)
             .filter(not(isEqual(NatMethod.AUTO)))
-            .orElse(NatService.autoDetectNatMethod(new DockerDetector()));
+            .orElse(NatService.autoDetectNatMethod(new KubernetesDetector(), new DockerDetector()));
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
@@ -600,6 +619,8 @@ public class RunnerBuilder {
       case DOCKER:
         return Optional.of(
             new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+      case KUBERNETES:
+        return Optional.of(new KubernetesNatManager());
       case NONE:
       default:
         return Optional.empty();
@@ -612,17 +633,6 @@ public class RunnerBuilder {
     final Collection<EnodeURL> fixedNodes = new ArrayList<>(someFixedNodes);
     fixedNodes.addAll(moreFixedNodes);
     return fixedNodes;
-  }
-
-  private FilterManager createFilterManager(
-      final Vertx vertx,
-      final BlockchainQueries blockchainQueries,
-      final TransactionPool transactionPool) {
-    final FilterManager filterManager =
-        new FilterManager(
-            blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
-    vertx.deployVerticle(filterManager);
-    return filterManager;
   }
 
   private Map<String, JsonRpcMethod> jsonRpcMethods(

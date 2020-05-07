@@ -16,11 +16,12 @@ package org.hyperledger.besu.chainimport;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -36,6 +37,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.CompletionException;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -63,7 +65,7 @@ public final class RlpBlockImporterTest {
             .storageProvider(new InMemoryStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKeys(KeyPair.generate())
+            .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
@@ -72,10 +74,66 @@ public final class RlpBlockImporterTest {
             .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
     final RlpBlockImporter.ImportResult result =
-        rlpBlockImporter.importBlockchain(source, targetController);
+        rlpBlockImporter.importBlockchain(source, targetController, false);
     // Don't count the Genesis block
     assertThat(result.count).isEqualTo(999);
     assertThat(result.td).isEqualTo(UInt256.valueOf(21991996248790L));
+  }
+
+  @Test
+  public void blockImportRejectsBadPow() throws IOException {
+    final Path dataDir = folder.newFolder().toPath();
+    final Path source = dataDir.resolve("badpow.blocks");
+    BlockTestUtil.writeBadPowBlocks(source);
+    final BesuController<?> targetController =
+        new BesuController.Builder()
+            .fromGenesisConfig(GenesisConfigFile.mainnet())
+            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .storageProvider(new InMemoryStorageProvider())
+            .networkId(BigInteger.ONE)
+            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .nodeKey(NodeKeyUtils.generate())
+            .metricsSystem(new NoOpMetricsSystem())
+            .privacyParameters(PrivacyParameters.DEFAULT)
+            .dataDirectory(dataDir)
+            .clock(TestClock.fixed())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .build();
+
+    assertThatThrownBy(
+        () -> rlpBlockImporter.importBlockchain(source, targetController, false),
+        "Invalid header at block number 2.",
+        CompletionException.class);
+  }
+
+  @Test
+  public void blockImportCanSkipPow() throws IOException {
+    final Path dataDir = folder.newFolder().toPath();
+    final Path source = dataDir.resolve("badpow.blocks");
+    BlockTestUtil.writeBadPowBlocks(source);
+    final BesuController<?> targetController =
+        new BesuController.Builder()
+            .fromGenesisConfig(GenesisConfigFile.mainnet())
+            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .storageProvider(new InMemoryStorageProvider())
+            .networkId(BigInteger.ONE)
+            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .nodeKey(NodeKeyUtils.generate())
+            .metricsSystem(new NoOpMetricsSystem())
+            .privacyParameters(PrivacyParameters.DEFAULT)
+            .dataDirectory(dataDir)
+            .clock(TestClock.fixed())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .build();
+
+    final RlpBlockImporter.ImportResult result =
+        rlpBlockImporter.importBlockchain(source, targetController, true);
+    assertThat(result.count).isEqualTo(1);
+    assertThat(result.td).isEqualTo(UInt256.valueOf(34351349760L));
   }
 
   @Test
@@ -103,7 +161,7 @@ public final class RlpBlockImporterTest {
             .storageProvider(new InMemoryStorageProvider())
             .networkId(BigInteger.valueOf(10))
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKeys(KeyPair.generate())
+            .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
@@ -112,7 +170,7 @@ public final class RlpBlockImporterTest {
             .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
     final RlpBlockImporter.ImportResult result =
-        rlpBlockImporter.importBlockchain(source, controller);
+        rlpBlockImporter.importBlockchain(source, controller, false);
 
     // Don't count the Genesis block
     assertThat(result.count).isEqualTo(958);

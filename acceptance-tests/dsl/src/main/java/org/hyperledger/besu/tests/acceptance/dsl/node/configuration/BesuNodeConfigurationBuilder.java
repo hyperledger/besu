@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +40,7 @@ import java.util.Optional;
 public class BesuNodeConfigurationBuilder {
 
   private String name;
+  private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
       new MiningParametersTestBuilder().enabled(false).build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -52,10 +55,13 @@ public class BesuNodeConfigurationBuilder {
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
+  private boolean secp256K1Native = false;
+  private boolean altbn128Native = false;
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
+  private Optional<String> runCommand = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -65,6 +71,12 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder name(final String name) {
     this.name = name;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder dataPath(final Path dataPath) {
+    checkNotNull(dataPath);
+    this.dataPath = Optional.of(dataPath);
     return this;
   }
 
@@ -108,6 +120,11 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder enablePrivateTransactions() {
     this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA);
     this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcTxPool() {
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.TX_POOL);
     return this;
   }
 
@@ -236,6 +253,16 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder secp256k1Native() {
+    this.secp256K1Native = true;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder altbn128() {
+    this.altbn128Native = true;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder staticNodes(final List<String> staticNodes) {
     this.staticNodes = staticNodes;
     return this;
@@ -246,9 +273,15 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder run(final String command) {
+    this.runCommand = Optional.ofNullable(command);
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
+        dataPath,
         miningParameters,
         jsonRpcConfiguration,
         webSocketConfiguration,
@@ -262,9 +295,12 @@ public class BesuNodeConfigurationBuilder {
         discoveryEnabled,
         bootnodeEligible,
         revertReasonEnabled,
+        secp256K1Native,
+        altbn128Native,
         plugins,
         extraCLIOptions,
         staticNodes,
-        privacyParameters);
+        privacyParameters,
+        runCommand);
   }
 }

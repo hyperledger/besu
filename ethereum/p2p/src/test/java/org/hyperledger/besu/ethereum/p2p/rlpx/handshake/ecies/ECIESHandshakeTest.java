@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker.HandshakeStatus;
@@ -80,6 +81,7 @@ public class ECIESHandshakeTest {
   }
 
   private static class Expectations {
+
     private static final byte[] aesSecret =
         h32("0xc0458fa97a5230830e05f4f20b7c755c1d4e54b1ce5cf43260bb191eef4e418d").toArray();
     private static final byte[] macSecret =
@@ -98,7 +100,8 @@ public class ECIESHandshakeTest {
     final ECIESHandshaker initiator = new ECIESHandshaker();
 
     // Prepare the handshaker to take the initiator role.
-    initiator.prepareInitiator(Input.initiatorKeyPair, Input.responderKeyPair.getPublicKey());
+    initiator.prepareInitiator(
+        NodeKeyUtils.createFrom(Input.initiatorKeyPair), Input.responderKeyPair.getPublicKey());
 
     // Set the test vectors.
     initiator.setEphKeyPair(Input.initiatorEphKeyPair);
@@ -112,7 +115,7 @@ public class ECIESHandshakeTest {
     final ECIESHandshaker responder = new ECIESHandshaker();
 
     // Prepare the handshaker with the responder's keypair.
-    responder.prepareResponder(Input.responderKeyPair);
+    responder.prepareResponder(NodeKeyUtils.createFrom(Input.responderKeyPair));
 
     // Set the test data.
     responder.setEphKeyPair(Input.responderEphKeyPair);
@@ -125,7 +128,7 @@ public class ECIESHandshakeTest {
             .orElseThrow(() -> new AssertionFailedError("Expected responder message"));
     assertThat(responder.getPartyEphPubKey()).isEqualTo(initiator.getEphKeyPair().getPublicKey());
     assertThat(responder.getInitiatorNonce()).isEqualTo(initiator.getInitiatorNonce());
-    assertThat(responder.partyPubKey()).isEqualTo(initiator.getIdentityKeyPair().getPublicKey());
+    assertThat(responder.partyPubKey()).isEqualTo(initiator.getNodeKey().getPublicKey());
 
     // Provide that message to the initiator, check that it has nothing to send.
     final Optional<ByteBuf> noMessage = initiator.handleMessage(responderRp);
@@ -146,7 +149,7 @@ public class ECIESHandshakeTest {
     final ECIESHandshaker responder = new ECIESHandshaker();
 
     // Prepare the handshaker with the responder's keypair.
-    responder.prepareResponder(Input.responderKeyPair);
+    responder.prepareResponder(NodeKeyUtils.createFrom(Input.responderKeyPair));
 
     // Set the test data.
     responder.setEphKeyPair(Input.responderEphKeyPair);
@@ -163,7 +166,8 @@ public class ECIESHandshakeTest {
   public void ingressEgressMacsAsExpected() {
     // Initiator end of the handshake.
     final ECIESHandshaker initiator = new ECIESHandshaker();
-    initiator.prepareInitiator(Input.initiatorKeyPair, Input.responderKeyPair.getPublicKey());
+    initiator.prepareInitiator(
+        NodeKeyUtils.createFrom(Input.initiatorKeyPair), Input.responderKeyPair.getPublicKey());
     initiator.firstMessage();
     initiator.setInitiatorMsgEnc(Bytes.wrap(Messages.initiatorMsgEnc));
     initiator.setEphKeyPair(Input.initiatorEphKeyPair);
@@ -171,7 +175,7 @@ public class ECIESHandshakeTest {
 
     // Responder end of the handshake.
     final ECIESHandshaker responder = new ECIESHandshaker();
-    responder.prepareResponder(Input.responderKeyPair);
+    responder.prepareResponder(NodeKeyUtils.createFrom(Input.responderKeyPair));
     responder.setEphKeyPair(Input.responderEphKeyPair);
     responder.setResponderNonce(Input.responderNonce);
 

@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -47,7 +46,6 @@ public class TrailingPeerLimiterTest {
   private static final int MAX_TRAILING_PEERS = 2;
   private static final int TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD = 10;
   private final EthPeers ethPeers = mock(EthPeers.class);
-  private final Blockchain blockchain = mock(Blockchain.class);
   private final List<EthPeer> peers = new ArrayList<>();
   private final TrailingPeerLimiter trailingPeerLimiter =
       new TrailingPeerLimiter(
@@ -118,8 +116,9 @@ public class TrailingPeerLimiterTest {
             new Block(
                 new BlockHeaderTestFixture().number(500).buildHeader(),
                 new BlockBody(emptyList(), emptyList())),
+            Collections.emptyList(),
             Collections.emptyList());
-    trailingPeerLimiter.onBlockAdded(blockAddedEvent, blockchain);
+    trailingPeerLimiter.onBlockAdded(blockAddedEvent);
 
     assertDisconnections(ethPeer1);
   }
@@ -135,8 +134,9 @@ public class TrailingPeerLimiterTest {
             new Block(
                 new BlockHeaderTestFixture().number(599).buildHeader(),
                 new BlockBody(emptyList(), emptyList())),
+            Collections.emptyList(),
             Collections.emptyList());
-    trailingPeerLimiter.onBlockAdded(blockAddedEvent, blockchain);
+    trailingPeerLimiter.onBlockAdded(blockAddedEvent);
 
     assertDisconnections();
   }

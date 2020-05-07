@@ -47,6 +47,7 @@ dependencies {
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
   testImplementation('io.pkts:pkts-core') {

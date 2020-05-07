@@ -194,11 +194,10 @@ public class JsonRpcHttpService {
 
                   natService.ifNatEnvironment(
                       NatMethod.UPNP,
-                      natManager -> {
-                        ((UpnpNatManager) natManager)
-                            .requestPortForward(
-                                config.getPort(), NetworkProtocol.TCP, NatServiceType.JSON_RPC);
-                      });
+                      natManager ->
+                          ((UpnpNatManager) natManager)
+                              .requestPortForward(
+                                  config.getPort(), NetworkProtocol.TCP, NatServiceType.JSON_RPC));
 
                   return;
                 }
@@ -343,11 +342,13 @@ public class JsonRpcHttpService {
           || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader.get()))) {
         event.next();
       } else {
-        event
-            .response()
-            .setStatusCode(403)
-            .putHeader("Content-Type", "application/json; charset=utf-8")
-            .end("{\"message\":\"Host not authorized.\"}");
+        final HttpServerResponse response = event.response();
+        if (!response.closed()) {
+          response
+              .setStatusCode(403)
+              .putHeader("Content-Type", "application/json; charset=utf-8")
+              .end("{\"message\":\"Host not authorized.\"}");
+        }
       }
     };
   }
@@ -370,8 +371,14 @@ public class JsonRpcHttpService {
   }
 
   private boolean hostIsInWhitelist(final String hostHeader) {
-    return config.getHostsWhitelist().stream()
-        .anyMatch(whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()));
+    if (config.getHostsWhitelist().stream()
+        .anyMatch(
+            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+      return true;
+    } else {
+      LOG.trace("Host not in whitelist: '{}'", hostHeader);
+      return false;
+    }
   }
 
   public CompletableFuture<?> stop() {
@@ -413,7 +420,7 @@ public class JsonRpcHttpService {
 
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
     // first check token if authentication is required
-    String token = getAuthToken(routingContext);
+    final String token = getAuthToken(routingContext);
     if (authenticationService.isPresent() && token == null) {
       // no auth token when auth required
       handleJsonRpcUnauthorizedError(routingContext, null, JsonRpcError.UNAUTHORIZED);
@@ -425,9 +432,7 @@ public class JsonRpcHttpService {
           AuthenticationUtils.getUser(
               authenticationService,
               token,
-              user -> {
-                handleJsonSingleRequest(routingContext, new JsonObject(json), user);
-              });
+              user -> handleJsonSingleRequest(routingContext, new JsonObject(json), user));
         } else {
           final JsonArray array = new JsonArray(json);
           if (array.size() < 1) {
@@ -437,9 +442,7 @@ public class JsonRpcHttpService {
           AuthenticationUtils.getUser(
               authenticationService,
               token,
-              user -> {
-                handleJsonBatchRequest(routingContext, array, user);
-              });
+              user -> handleJsonBatchRequest(routingContext, array, user));
         }
       } catch (final DecodeException ex) {
         handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
@@ -468,9 +471,12 @@ public class JsonRpcHttpService {
           }
 
           final JsonRpcResponse jsonRpcResponse = (JsonRpcResponse) res.result();
-          response.setStatusCode(status(jsonRpcResponse).code());
-          response.putHeader("Content-Type", APPLICATION_JSON);
-          response.end(serialize(jsonRpcResponse));
+          if (!response.closed()) {
+            response
+                .setStatusCode(status(jsonRpcResponse).code())
+                .putHeader("Content-Type", APPLICATION_JSON)
+                .end(serialize(jsonRpcResponse));
+          }
         });
   }
 
@@ -529,11 +535,12 @@ public class JsonRpcHttpService {
     CompositeFuture.all(responses)
         .setHandler(
             (res) -> {
+              final HttpServerResponse response = routingContext.response();
+              if (response.closed()) {
+                return;
+              }
               if (res.failed()) {
-                routingContext
-                    .response()
-                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                    .end();
+                response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
                 return;
               }
               final JsonRpcResponse[] completed =
@@ -542,7 +549,7 @@ public class JsonRpcHttpService {
                       .filter(this::isNonEmptyResponses)
                       .toArray(JsonRpcResponse[]::new);
 
-              routingContext.response().end(Json.encode(completed));
+              response.end(Json.encode(completed));
             });
   }
 
@@ -612,18 +619,22 @@ public class JsonRpcHttpService {
 
   private void handleJsonRpcError(
       final RoutingContext routingContext, final Object id, final JsonRpcError error) {
-    routingContext
-        .response()
-        .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
-        .end(Json.encode(new JsonRpcErrorResponse(id, error)));
+    final HttpServerResponse response = routingContext.response();
+    if (!response.closed()) {
+      response
+          .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+          .end(Json.encode(new JsonRpcErrorResponse(id, error)));
+    }
   }
 
   private void handleJsonRpcUnauthorizedError(
       final RoutingContext routingContext, final Object id, final JsonRpcError error) {
-    routingContext
-        .response()
-        .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
-        .end(Json.encode(new JsonRpcErrorResponse(id, error)));
+    final HttpServerResponse response = routingContext.response();
+    if (!response.closed()) {
+      response
+          .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
+          .end(Json.encode(new JsonRpcErrorResponse(id, error)));
+    }
   }
 
   private JsonRpcResponse errorResponse(final Object id, final JsonRpcError error) {

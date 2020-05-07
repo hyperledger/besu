@@ -39,9 +39,14 @@ public class BesuExceptionHandler
     } else {
       err().println(ex.getMessage());
     }
-    if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, err())) {
-      ex.getCommandLine().usage(err(), ansi());
-    }
+
+    CommandLine.UnmatchedArgumentException.printSuggestions(ex, err());
+
+    // don't print full help, just the instructions required to get it
+    ex.getCommandLine().getErr().println();
+    ex.getCommandLine().getErr().println("To display full help:");
+    ex.getCommandLine().getErr().println("besu [COMMAND] --help");
+
     return returnResultOrExit(null);
   }
 

@@ -18,7 +18,8 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -27,7 +28,7 @@ import org.junit.Test;
 
 public class CliqueProtocolScheduleTest {
 
-  private static final KeyPair NODE_KEYS = KeyPair.generate();
+  private static final NodeKey NODE_KEY = NodeKeyUtils.generate();
 
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {
@@ -43,7 +44,7 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule<CliqueContext> protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEYS, false);
+        CliqueProtocolSchedule.create(config, NODE_KEY, false);
 
     final ProtocolSpec<CliqueContext> homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec<CliqueContext> tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
@@ -58,8 +59,7 @@ public class CliqueProtocolScheduleTest {
   @Test
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec<CliqueContext> homestead =
-        CliqueProtocolSchedule.create(
-                GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEYS, false)
+        CliqueProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEY, false)
             .getByBlockNumber(0);
 
     assertThat(homestead.getName()).isEqualTo("Frontier");

@@ -26,7 +26,8 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -47,7 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RoundStateTest {
 
-  private final List<KeyPair> validatorKeys = Lists.newArrayList();
+  private final List<NodeKey> validatorKeys = Lists.newArrayList();
   private final List<MessageFactory> validatorMessageFactories = Lists.newArrayList();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
 
@@ -60,10 +61,10 @@ public class RoundStateTest {
   @Before
   public void setup() {
     for (int i = 0; i < 3; i++) {
-      final KeyPair newKeyPair = KeyPair.generate();
-      validatorKeys.add(newKeyPair);
-      validators.add(Util.publicKeyToAddress(newKeyPair.getPublicKey()));
-      validatorMessageFactories.add(new MessageFactory(newKeyPair));
+      final NodeKey newNodeKey = NodeKeyUtils.generate();
+      validatorKeys.add(newNodeKey);
+      validators.add(Util.publicKeyToAddress(newNodeKey.getPublicKey()));
+      validatorMessageFactories.add(new MessageFactory(newNodeKey));
     }
     when(block.getHash()).thenReturn(Hash.fromHexStringLenient("1"));
   }

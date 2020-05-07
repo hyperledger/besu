@@ -22,6 +22,7 @@ import org.hyperledger.besu.nat.core.AbstractNatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +57,7 @@ import org.jupnp.support.model.PortMapping;
  * with the NAT environment through UPnP.
  */
 public class UpnpNatManager extends AbstractNatManager {
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   static final String SERVICE_TYPE_WAN_IP_CONNECTION = "WANIPConnection";
 
@@ -112,11 +113,15 @@ public class UpnpNatManager extends AbstractNatManager {
    * @throws IllegalStateException if already started.
    */
   @Override
-  public synchronized void doStart() {
+  public synchronized void doStart() throws NatInitializationException {
     LOG.info("Starting UPnP Service");
-    upnpService.startup();
-    upnpService.getRegistry().addListener(registryListener);
-    initiateExternalIpQuery();
+    try {
+      upnpService.startup();
+      upnpService.getRegistry().addListener(registryListener);
+      initiateExternalIpQuery();
+    } catch (Exception e) {
+      throw new NatInitializationException("Failed start UPnP nat service.", e);
+    }
   }
 
   /**

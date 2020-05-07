@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -61,7 +61,7 @@ public class BlockchainQueries {
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
-  private final Optional<TransactionLogsIndexer> transactionLogsIndexer;
+  private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
@@ -82,9 +82,10 @@ public class BlockchainQueries {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
-    this.transactionLogsIndexer =
+    this.transactionLogBloomCacher =
         (cachePath.isPresent() && scheduler.isPresent())
-            ? Optional.of(new TransactionLogsIndexer(blockchain, cachePath.get(), scheduler.get()))
+            ? Optional.of(
+                new TransactionLogBloomCacher(blockchain, cachePath.get(), scheduler.get()))
             : Optional.empty();
   }
 
@@ -96,8 +97,8 @@ public class BlockchainQueries {
     return worldStateArchive;
   }
 
-  public Optional<TransactionLogsIndexer> getTransactionLogsIndexer() {
-    return transactionLogsIndexer;
+  public Optional<TransactionLogBloomCacher> getTransactionLogBloomCacher() {
+    return transactionLogBloomCacher;
   }
 
   /**
@@ -383,8 +384,16 @@ public class BlockchainQueries {
     return blockchain.getBlockHashByNumber(blockNumber).flatMap(this::blockByHashWithTxHashes);
   }
 
+  public Optional<BlockHeader> getBlockHeaderByHash(final Hash hash) {
+    return blockchain.getBlockHeader(hash);
+  }
+
   public Optional<BlockHeader> getBlockHeaderByNumber(final long number) {
     return blockchain.getBlockHeader(number);
+  }
+
+  public boolean blockIsOnCanonicalChain(final Hash hash) {
+    return blockchain.blockIsOnCanonicalChain(hash);
   }
 
   /**
@@ -469,6 +478,10 @@ public class BlockchainQueries {
     }
     return new TransactionWithMetadata(
         txs.get(txIndex), header.getNumber(), blockHeaderHash, txIndex);
+  }
+
+  public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
+    return blockchain.getTransactionLocation(transactionHash);
   }
 
   /**
@@ -589,6 +602,7 @@ public class BlockchainQueries {
         try {
           raf.readFully(bloomBuff);
         } catch (final EOFException e) {
+          results.addAll(matchingLogsUncached(segmentStart + pos, segmentStart + endOffset, query));
           break;
         }
         final LogsBloomFilter logsBloom = new LogsBloomFilter(bytesValue);

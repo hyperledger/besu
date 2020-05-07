@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
+import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -124,6 +125,8 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .build(new MutableProtocolSchedule<>(CHAIN_ID));
 
+    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+
     final TestBlockchain blockchain = new TestBlockchain(execEnv.getBlockHeader().getNumber());
     final MessageFrame frame =
         MessageFrame.builder()
@@ -148,6 +151,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .miningBeneficiary(execEnv.getBlockHeader().getCoinbase())
             .blockHashLookup(new BlockHashLookup(execEnv.getBlockHeader(), blockchain))
             .maxStackSize(MessageFrame.DEFAULT_MAX_STACK_SIZE)
+            .returnStack(returnStack)
             .build();
 
     // This is normally set inside the containing message executing the code.
@@ -169,7 +173,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
           .isTrue();
     } else {
       // This is normally performed when the message processor executing the VM
-      // executes to completion successfuly.
+      // executes to completion successfully.
       frame.getWorldState().commit();
 
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)

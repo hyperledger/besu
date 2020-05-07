@@ -22,21 +22,26 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Disabl
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -45,6 +50,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private final ProtocolSchedule<?> protocolSchedule;
   private final TransactionPool transactionPool;
   private final PrivacyParameters privacyParameters;
+  private final PrivateNonceProvider privateNonceProvider;
+  private final PrivacyQueries privacyQueries;
 
   public PrivacyApiGroupJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -55,6 +62,15 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     this.protocolSchedule = protocolSchedule;
     this.transactionPool = transactionPool;
     this.privacyParameters = privacyParameters;
+
+    this.privateNonceProvider =
+        new ChainHeadPrivateNonceProvider(
+            blockchainQueries.getBlockchain(),
+            privacyParameters.getPrivateStateRootResolver(),
+            privacyParameters.getPrivateWorldStateArchive());
+
+    this.privacyQueries =
+        new PrivacyQueries(blockchainQueries, privacyParameters.getPrivateWorldStateReader());
   }
 
   public BlockchainQueries getBlockchainQueries() {
@@ -126,16 +142,24 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   private PrivacyController createPrivacyController(
       final PrivateMarkerTransactionFactory markerTransactionFactory) {
+    final Optional<BigInteger> chainId = protocolSchedule.getChainId();
     final DefaultPrivacyController defaultPrivacyController =
         new DefaultPrivacyController(
+            getBlockchainQueries().getBlockchain(),
             privacyParameters,
-            protocolSchedule.getChainId(),
+            chainId,
             markerTransactionFactory,
-            createPrivateTransactionSimulator());
+            createPrivateTransactionSimulator(),
+            privateNonceProvider,
+            privacyParameters.getPrivateWorldStateReader());
     return privacyParameters.isMultiTenancyEnabled()
         ? new MultiTenancyPrivacyController(
-            defaultPrivacyController, privacyParameters.getEnclave())
+            defaultPrivacyController, chainId, privacyParameters.getEnclave())
         : defaultPrivacyController;
+  }
+
+  PrivacyQueries getPrivacyQueries() {
+    return privacyQueries;
   }
 
   private JsonRpcMethod createPrivacyMethod(

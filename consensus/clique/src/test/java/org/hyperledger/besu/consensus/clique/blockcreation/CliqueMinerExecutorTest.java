@@ -30,7 +30,8 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -59,7 +60,7 @@ public class CliqueMinerExecutorTest {
   private static final int EPOCH_LENGTH = 10;
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
       GenesisConfigFile.fromConfig("{}").getConfigOptions();
-  private final KeyPair proposerKeyPair = KeyPair.generate();
+  private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
   private final Random random = new Random(21341234L);
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();
@@ -70,7 +71,7 @@ public class CliqueMinerExecutorTest {
 
   @Before
   public void setup() {
-    localAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
+    localAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
     validatorList.add(localAddress);
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 1));
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 2));
@@ -93,13 +94,14 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair, false),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
-            proposerKeyPair,
+            proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
@@ -130,13 +132,14 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair, false),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
-            proposerKeyPair,
+            proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
@@ -167,13 +170,14 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair, false),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
+                5,
                 TestClock.fixed(),
                 metricsSystem),
-            proposerKeyPair,
+            proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, initialVanityData, false),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),

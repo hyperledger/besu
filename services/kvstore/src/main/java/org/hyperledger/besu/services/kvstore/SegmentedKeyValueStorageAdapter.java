@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
-
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
 
@@ -51,13 +51,23 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   }
 
   @Override
-  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
-    return storage.removeAllEntriesUnless(segmentHandle, retainCondition);
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    return storage.getAllKeysThat(segmentHandle, returnCondition);
   }
 
   @Override
-  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return storage.getAllKeysThat(segmentHandle, returnCondition);
+  public Stream<byte[]> streamKeys() {
+    return storage.streamKeys(segmentHandle);
+  }
+
+  @Override
+  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
+    return storage.removeAllKeysUnless(segmentHandle, retainCondition);
+  }
+
+  @Override
+  public boolean tryDelete(final byte[] key) {
+    return storage.tryDelete(segmentHandle, key);
   }
 
   @Override

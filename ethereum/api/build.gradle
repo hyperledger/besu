@@ -64,6 +64,7 @@ dependencies {
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':services:kvstore')
@@ -115,7 +116,8 @@ task generateTestBlockchain() {
         "blocks",
         "import",
         "--format=JSON",
-        "--from=$srcFiles/blocks.json"
+        "--from=$srcFiles/blocks.json",
+        "--start-time=1438269971"
       ]
     }
     javaexec {

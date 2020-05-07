@@ -33,6 +33,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
 
   private volatile Optional<Address> coinbase;
   private boolean stratumMiningEnabled;
+  private final Iterable<Long> nonceGenerator;
 
   public EthHashMinerExecutor(
       final ProtocolContext<Void> protocolContext,
@@ -49,6 +50,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
         blockScheduler,
         gasLimitCalculator);
     this.coinbase = miningParams.getCoinbase();
+    this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
   }
 
   @Override
@@ -56,7 +58,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final Subscribers<MinedBlockObserver> observers,
       final Subscribers<EthHashObserver> ethHashObservers,
       final BlockHeader parentHeader) {
-    if (!coinbase.isPresent()) {
+    if (coinbase.isEmpty()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
     }
     return super.startAsyncMining(observers, ethHashObservers, parentHeader);
@@ -69,10 +71,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final BlockHeader parentHeader) {
     final EthHashSolver solver =
         new EthHashSolver(
-            new RandomNonceGenerator(),
-            new EthHasher.Light(),
-            stratumMiningEnabled,
-            ethHashObservers);
+            nonceGenerator, new EthHasher.Light(), stratumMiningEnabled, ethHashObservers);
     final Function<BlockHeader, EthHashBlockCreator> blockCreator =
         (header) ->
             new EthHashBlockCreator(
@@ -84,6 +83,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
                 gasLimitCalculator,
                 solver,
                 minTransactionGasPrice,
+                minBlockOccupancyRatio,
                 parentHeader);
 
     return new EthHashBlockMiner(

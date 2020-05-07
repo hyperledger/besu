@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
-
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -127,7 +125,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
         subTaskFuture.whenComplete((r, t) -> subTaskFutures.remove(subTaskFuture));
         return subTaskFuture;
       } else {
-        return completedExceptionally(new CancellationException());
+        return CompletableFuture.failedFuture(new CancellationException());
       }
     }
   }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -26,11 +27,13 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -140,8 +143,11 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(localBlockchain, worldStateArchive);
-
+        EthProtocolManagerTestUtil.create(
+            localBlockchain,
+            worldStateArchive,
+            mock(TransactionPool.class),
+            EthProtocolConfiguration.defaultConfig());
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
     final RespondingEthPeer respondingEthPeer =

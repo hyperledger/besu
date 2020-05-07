@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -26,6 +29,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -101,7 +108,9 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    TransactionPriceCalculator.frontier(),
+                    CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -118,8 +127,8 @@ public abstract class MainnetProtocolSpecs {
                     Account.DEFAULT_VERSION,
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::create)
-        .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator::createOmmerValidator)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create())
+        .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator.createOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
@@ -155,20 +164,22 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::createDaoValidator)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
                 transactionReceiptFactory,
                 blockReward,
                 miningBeneficiaryCalculator,
-                skipZeroBlockRewards) ->
+                skipZeroBlockRewards,
+                gasBudgetCalculator) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
                         transactionReceiptFactory,
                         blockReward,
                         miningBeneficiaryCalculator,
-                        skipZeroBlockRewards)))
+                        skipZeroBlockRewards,
+                        gasBudgetCalculator)))
         .name("DaoRecoveryInit");
   }
 
@@ -226,7 +237,9 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    TransactionPriceCalculator.frontier(),
+                    CoinbaseFeePriceCalculator.frontier()))
         .name("SpuriousDragon");
   }
 
@@ -322,6 +335,93 @@ public abstract class MainnetProtocolSpecs {
     return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
+  }
+
+  static ProtocolSpecBuilder<Void> berlinDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    if (!ExperimentalEIPs.berlinEnabled) {
+      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
+    }
+    return muirGlacierDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .gasCalculator(BerlinGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .name("Berlin");
+  }
+
+  // TODO EIP-1559 change for the actual fork name when known
+  static ProtocolSpecBuilder<Void> eip1559Definition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final TransactionPriceCalculator transactionPriceCalculator =
+        TransactionPriceCalculator.eip1559();
+    final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
+    return muirGlacierDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Optional.of(eip1559),
+                    AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION,
+                    transactionPriceCalculator,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .name("EIP-1559")
+        .transactionPriceCalculator(transactionPriceCalculator)
+        .eip1559(Optional.of(eip1559))
+        .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
+  }
+
+  // TODO EIP-1559 change for the actual fork name when known
+  static ProtocolSpecBuilder<Void> eip1559FinalizedDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions) {
+    return eip1559Definition(
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Optional.of(
+                        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0))),
+                    AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS));
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

@@ -50,7 +50,7 @@ import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -175,8 +175,6 @@ public class TestContextBuilder {
     final MutableBlockchain blockChain =
         createInMemoryBlockchain(genesisBlock, IbftBlockHeaderFunctions.forOnChainBlock());
 
-    final KeyPair nodeKeys = networkNodes.getLocalNode().getNodeKeyPair();
-
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
     final UniqueMessageMulticaster uniqueMulticaster =
@@ -190,7 +188,7 @@ public class TestContextBuilder {
         createControllerAndFinalState(
             blockChain,
             multicaster,
-            nodeKeys,
+            networkNodes.getLocalNode().getNodeKey(),
             clock,
             ibftEventQueue,
             gossiper,
@@ -207,7 +205,7 @@ public class TestContextBuilder {
                     nodeParams ->
                         new ValidatorPeer(
                             nodeParams,
-                            new MessageFactory(nodeParams.getNodeKeyPair()),
+                            new MessageFactory(nodeParams.getNodeKey()),
                             controllerAndState.getEventMultiplexer()),
                     (u, v) -> {
                       throw new IllegalStateException(String.format("Duplicate key %s", u));
@@ -256,7 +254,7 @@ public class TestContextBuilder {
   private static ControllerAndState createControllerAndFinalState(
       final MutableBlockchain blockChain,
       final StubValidatorMulticaster multicaster,
-      final KeyPair nodeKeys,
+      final NodeKey nodeKey,
       final Clock clock,
       final IbftEventQueue ibftEventQueue,
       final Gossiper gossiper,
@@ -300,7 +298,7 @@ public class TestContextBuilder {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS, 1, clock, metricsSystem);
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS, 1, 1, clock, metricsSystem);
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
@@ -309,7 +307,7 @@ public class TestContextBuilder {
             protocolContext,
             protocolSchedule,
             miningParams,
-            Util.publicKeyToAddress(nodeKeys.getPublicKey()));
+            Util.publicKeyToAddress(nodeKey.getPublicKey()));
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
@@ -318,15 +316,15 @@ public class TestContextBuilder {
     final IbftFinalState finalState =
         new IbftFinalState(
             protocolContext.getConsensusState().getVoteTallyCache(),
-            nodeKeys,
-            Util.publicKeyToAddress(nodeKeys.getPublicKey()),
+            nodeKey,
+            Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             multicaster,
             new RoundTimer(ibftEventQueue, ROUND_TIMER_SEC * 1000, ibftExecutors),
             new BlockTimer(
                 ibftEventQueue, BLOCK_TIMER_SEC * 1000, ibftExecutors, TestClock.fixed()),
             blockCreatorFactory,
-            new MessageFactory(nodeKeys),
+            new MessageFactory(nodeKey),
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =

@@ -23,15 +23,28 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+
 public class EthGetBlockByHash implements JsonRpcMethod {
 
   private final BlockResultFactory blockResult;
-  private final BlockchainQueries blockchain;
+  private final Supplier<BlockchainQueries> blockchain;
+  private final boolean includeCoinbase;
 
   public EthGetBlockByHash(
       final BlockchainQueries blockchain, final BlockResultFactory blockResult) {
+    this(Suppliers.ofInstance(blockchain), blockResult, false);
+  }
+
+  public EthGetBlockByHash(
+      final Supplier<BlockchainQueries> blockchain,
+      final BlockResultFactory blockResult,
+      final boolean includeCoinbase) {
     this.blockchain = blockchain;
     this.blockResult = blockResult;
+    this.includeCoinbase = includeCoinbase;
   }
 
   @Override
@@ -56,13 +69,18 @@ public class EthGetBlockByHash implements JsonRpcMethod {
   }
 
   private BlockResult transactionComplete(final Hash hash) {
-    return blockchain.blockByHash(hash).map(tx -> blockResult.transactionComplete(tx)).orElse(null);
+    return blockchain
+        .get()
+        .blockByHash(hash)
+        .map(tx -> blockResult.transactionComplete(tx, includeCoinbase))
+        .orElse(null);
   }
 
   private BlockResult transactionHash(final Hash hash) {
     return blockchain
+        .get()
         .blockByHashWithTxHashes(hash)
-        .map(tx -> blockResult.transactionHash(tx))
+        .map(blockResult::transactionHash)
         .orElse(null);
   }
 

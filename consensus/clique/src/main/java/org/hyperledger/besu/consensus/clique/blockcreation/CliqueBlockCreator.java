@@ -21,8 +21,7 @@ import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ValidatorVote;
 import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -42,7 +41,7 @@ import java.util.function.Function;
 
 public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
 
-  private final KeyPair nodeKeys;
+  private final NodeKey nodeKey;
   private final EpochManager epochManager;
 
   public CliqueBlockCreator(
@@ -52,8 +51,9 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
       final ProtocolContext<CliqueContext> protocolContext,
       final ProtocolSchedule<CliqueContext> protocolSchedule,
       final Function<Long, Long> gasLimitCalculator,
-      final KeyPair nodeKeys,
+      final NodeKey nodeKey,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final EpochManager epochManager) {
     super(
@@ -64,9 +64,10 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
         protocolSchedule,
         gasLimitCalculator,
         minTransactionGasPrice,
-        Util.publicKeyToAddress(nodeKeys.getPublicKey()),
+        Util.publicKeyToAddress(nodeKey.getPublicKey()),
+        minBlockOccupancyRatio,
         parentHeader);
-    this.nodeKeys = nodeKeys;
+    this.nodeKey = nodeKey;
     this.epochManager = epochManager;
   }
 
@@ -109,7 +110,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
           cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
       return cliqueContext
           .getVoteProposer()
-          .getVote(Util.publicKeyToAddress(nodeKeys.getPublicKey()), voteTally);
+          .getVote(Util.publicKeyToAddress(nodeKey.getPublicKey()), voteTally);
     }
   }
 
@@ -127,7 +128,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
         CliqueBlockHashing.calculateDataHashForProposerSeal(headerToSign, extraData);
     return new CliqueExtraData(
         extraData.getVanityData(),
-        SECP256K1.sign(hashToSign, nodeKeys),
+        nodeKey.sign(hashToSign),
         extraData.getValidators(),
         headerToSign);
   }

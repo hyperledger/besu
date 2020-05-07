@@ -7,7 +7,15 @@ executors:
     resource_class: medium
     working_directory: ~/project
     environment:
-      GRADLE_OPTS: -Xmx2048m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
+  besu_executor_med_plus: # 3cpu, 6G ram, for acceptance testing
+    docker:
+      - image: circleci/openjdk:11.0.4-jdk-stretch
+    resource_class: medium+
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=1
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
@@ -15,7 +23,7 @@ executors:
     resource_class: xlarge
     working_directory: ~/project
     environment:
-      GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
 notify:
   webhooks:
@@ -56,6 +64,13 @@ commands:
       - store_test_results:
           path: build/test-results
 
+  capture_test_logs:
+    description: "Capture test logs"
+    steps:
+      - store_artifacts:
+          path: acceptance-tests/tests/build/acceptanceTestLogs
+          destination: acceptance-tests-logs
+
 jobs:
   assemble:
     executor: besu_executor_xl
@@ -68,7 +83,7 @@ jobs:
       - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon --parallel clean spotlessCheck compileJava compileTestJava assemble
+            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
@@ -95,7 +110,7 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon --parallel build
+            ./gradlew --no-daemon build
       - capture_test_results
 
   integrationTests:
@@ -107,15 +122,15 @@ jobs:
       - run:
           name: IntegrationTests
           command: |
-            ./gradlew --no-daemon --parallel integrationTest
+            ./gradlew --no-daemon integrationTest
       - run:
           name: Javadoc
           command: |
-            ./gradlew --no-daemon --parallel javadoc
+            ./gradlew --no-daemon javadoc
       - run:
           name: CompileJmh
           command: |
-            ./gradlew --no-daemon --parallel compileJmh
+            ./gradlew --no-daemon compileJmh
       - capture_test_results
 
   referenceTests:
@@ -129,12 +144,12 @@ jobs:
           no_output_timeout: 20m
           command: |
             git submodule update --init --recursive
-            ./gradlew --no-daemon --parallel referenceTest
+            ./gradlew --no-daemon referenceTest
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 2
-    executor: besu_executor_xl
+    parallelism: 8
+    executor: besu_executor_med_plus
     steps:
       - prepare
       - attach_workspace:
@@ -150,8 +165,9 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon --parallel acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
+      - capture_test_logs
 
   buildDocker:
     executor: besu_executor_med
@@ -184,7 +200,7 @@ jobs:
       - run:
           name: Publish
           command: |
-            ./gradlew --no-daemon --parallel bintrayUpload
+            ./gradlew --no-daemon bintrayUpload
 
   publishDocker:
     executor: besu_executor_med
@@ -198,7 +214,7 @@ jobs:
           command: |
             docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
             docker login "${ACR_REPO}" --username "${ACR_DOCKER_USER}" --password "${ACR_DOCKER_PASSWORD}"
-            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:
   version: 2
@@ -244,4 +260,3 @@ workflows:
             - acceptanceTests
             - referenceTests
             - buildDocker
-

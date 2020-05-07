@@ -20,10 +20,27 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(NON_NULL)
+@JsonPropertyOrder({
+  "creationMethod",
+  "callType",
+  "from",
+  "gas",
+  "input",
+  "to",
+  "init",
+  "author",
+  "rewardType",
+  "value",
+  "address",
+  "balance",
+  "refundAddress",
+})
 public class Action {
 
+  private final String creationMethod;
   private final String callType;
   private final String from;
   private final String gas;
@@ -34,8 +51,11 @@ public class Action {
   private final String address;
   private final String balance;
   private final String refundAddress;
+  private final String author;
+  private final String rewardType;
 
   private Action(
+      final String creationMethod,
       final String callType,
       final String from,
       final String gas,
@@ -45,7 +65,10 @@ public class Action {
       final String value,
       final String address,
       final String balance,
-      final String refundAddress) {
+      final String refundAddress,
+      final String author,
+      final String rewardType) {
+    this.creationMethod = creationMethod;
     this.callType = callType;
     this.from = from;
     this.gas = gas;
@@ -56,10 +79,16 @@ public class Action {
     this.address = address;
     this.balance = balance;
     this.refundAddress = refundAddress;
+    this.author = author;
+    this.rewardType = rewardType;
   }
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public String getCreationMethod() {
+    return creationMethod;
   }
 
   public String getCallType() {
@@ -102,7 +131,16 @@ public class Action {
     return refundAddress;
   }
 
+  public String getAuthor() {
+    return author;
+  }
+
+  public String getRewardType() {
+    return rewardType;
+  }
+
   public static final class Builder {
+    private String creationMethod;
     private String callType;
     private String from;
     private String gas;
@@ -113,11 +151,14 @@ public class Action {
     private String address;
     private String balance;
     private String refundAddress;
+    private String author;
+    private String rewardType;
 
     private Builder() {}
 
     public static Builder of(final Action action) {
       final Builder builder = new Builder();
+      builder.creationMethod = action.creationMethod;
       builder.callType = action.callType;
       builder.from = action.from;
       builder.gas = action.gas;
@@ -128,6 +169,8 @@ public class Action {
       builder.address = action.address;
       builder.refundAddress = action.refundAddress;
       builder.balance = action.balance;
+      builder.author = action.author;
+      builder.rewardType = action.rewardType;
       return builder;
     }
 
@@ -136,6 +179,11 @@ public class Action {
           .from(trace.getTransaction().getSender().toHexString())
           .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
           .value(Quantity.create(trace.getTransaction().getValue()));
+    }
+
+    public Builder creationMethod(final String creationMethod) {
+      this.creationMethod = creationMethod;
+      return this;
     }
 
     public Builder callType(final String callType) {
@@ -168,6 +216,16 @@ public class Action {
 
     public Builder to(final String to) {
       this.to = to;
+      return this;
+    }
+
+    public Builder author(final String author) {
+      this.author = author;
+      return this;
+    }
+
+    public Builder rewardType(final String rewardType) {
+      this.rewardType = rewardType;
       return this;
     }
 
@@ -206,7 +264,19 @@ public class Action {
 
     public Action build() {
       return new Action(
-          callType, from, gas, input, to, init, value, address, balance, refundAddress);
+          creationMethod,
+          callType,
+          from,
+          gas,
+          input,
+          to,
+          init,
+          value,
+          address,
+          balance,
+          refundAddress,
+          author,
+          rewardType);
     }
   }
 }

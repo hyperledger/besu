@@ -18,12 +18,14 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.security.SecureRandom;
 import java.util.Optional;
@@ -46,6 +48,7 @@ import org.bouncycastle.crypto.InvalidCipherTextException;
  *     encrypted handshake</a>
  */
 public class ECIESHandshaker implements Handshaker {
+
   private static final Logger LOG = LogManager.getLogger();
   private static final SecureRandom RANDOM = SecureRandomProvider.publicSecureRandom();
 
@@ -56,7 +59,7 @@ public class ECIESHandshaker implements Handshaker {
   static final int TOKEN_FLAG_LENGTH = 1;
 
   // Keypairs under our control.
-  private SECP256K1.KeyPair identityKeyPair;
+  private NodeKey nodeKey;
   private SECP256K1.KeyPair ephKeyPair;
 
   // Party's material, only public keys.
@@ -84,14 +87,14 @@ public class ECIESHandshaker implements Handshaker {
   private boolean version4 = true;
 
   @Override
-  public void prepareInitiator(final SECP256K1.KeyPair ourKeypair, final PublicKey theirPubKey) {
+  public void prepareInitiator(final NodeKey nodeKey, final PublicKey theirPubKey) {
     checkState(
         status.compareAndSet(
             Handshaker.HandshakeStatus.UNINITIALIZED, Handshaker.HandshakeStatus.PREPARED),
         "handshake was already prepared");
 
     this.initiator = true;
-    this.identityKeyPair = ourKeypair;
+    this.nodeKey = nodeKey;
     this.ephKeyPair = SECP256K1.KeyPair.generate();
     this.partyPubKey = theirPubKey;
     this.initiatorNonce = Bytes32.wrap(random(32), 0);
@@ -101,14 +104,14 @@ public class ECIESHandshaker implements Handshaker {
   }
 
   @Override
-  public void prepareResponder(final SECP256K1.KeyPair ourKeypair) {
+  public void prepareResponder(final NodeKey nodeKey) {
     checkState(
         status.compareAndSet(
             Handshaker.HandshakeStatus.UNINITIALIZED, Handshaker.HandshakeStatus.IN_PROGRESS),
         "handshake was already prepared");
 
     this.initiator = false;
-    this.identityKeyPair = ourKeypair;
+    this.nodeKey = nodeKey;
     this.ephKeyPair = SECP256K1.KeyPair.generate();
     this.responderNonce = Bytes32.wrap(random(32), 0);
     LOG.trace("Prepared ECIES handshake under RESPONDER role");
@@ -122,20 +125,15 @@ public class ECIESHandshaker implements Handshaker {
             Handshaker.HandshakeStatus.PREPARED, Handshaker.HandshakeStatus.IN_PROGRESS),
         "illegal invocation of firstMessage, handshake had already started");
 
-    final Bytes32 staticSharedSecret =
-        SECP256K1.calculateKeyAgreement(identityKeyPair.getPrivateKey(), partyPubKey);
+    final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(partyPubKey);
     if (version4) {
       initiatorMsg =
           InitiatorHandshakeMessageV4.create(
-              identityKeyPair.getPublicKey(), ephKeyPair, staticSharedSecret, initiatorNonce);
+              nodeKey.getPublicKey(), ephKeyPair, staticSharedSecret, initiatorNonce);
     } else {
       initiatorMsg =
           InitiatorHandshakeMessageV1.create(
-              identityKeyPair.getPublicKey(),
-              ephKeyPair,
-              staticSharedSecret,
-              initiatorNonce,
-              false);
+              nodeKey.getPublicKey(), ephKeyPair, staticSharedSecret, initiatorNonce, false);
     }
     try {
       if (version4) {
@@ -187,7 +185,7 @@ public class ECIESHandshaker implements Handshaker {
     try {
       // Decrypt the message with our private key.
       try {
-        bytes = EncryptedMessage.decryptMsg(bytes, identityKeyPair.getPrivateKey());
+        bytes = EncryptedMessage.decryptMsg(bytes, nodeKey);
         version4 = false;
       } catch (final Exception ex) {
         // Assume new format
@@ -198,7 +196,7 @@ public class ECIESHandshaker implements Handshaker {
           bufferedBytes.readBytes(fullMessage, 0, expectedLength);
           buf.readBytes(fullMessage, expectedLength, size - expectedLength + 2);
           encryptedMsg = Bytes.wrap(fullMessage);
-          bytes = EncryptedMessage.decryptMsgEIP8(encryptedMsg, identityKeyPair.getPrivateKey());
+          bytes = EncryptedMessage.decryptMsgEIP8(encryptedMsg, nodeKey);
           version4 = true;
         } else {
           throw new HandshakeException("Failed to decrypt handshake message", ex);
@@ -207,6 +205,10 @@ public class ECIESHandshaker implements Handshaker {
     } catch (final InvalidCipherTextException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
       throw new HandshakeException("Decrypting an incoming handshake message failed", e);
+    } catch (final SecurityModuleException e) {
+      status.set(Handshaker.HandshakeStatus.FAILED);
+      throw new HandshakeException(
+          "Unable to create ECDH Key agreement due to Crypto engine failure", e);
     }
 
     Optional<Bytes> nextMsg = Optional.empty();
@@ -246,15 +248,21 @@ public class ECIESHandshaker implements Handshaker {
 
       // Store the message, as we need it to generating our ingress and egress MACs.
       initiatorMsgEnc = encryptedMsg;
-      if (version4) {
-        initiatorMsg = InitiatorHandshakeMessageV4.decode(bytes, identityKeyPair);
-      } else {
-        initiatorMsg = InitiatorHandshakeMessageV1.decode(bytes, identityKeyPair);
+      try {
+        if (version4) {
+          initiatorMsg = InitiatorHandshakeMessageV4.decode(bytes, nodeKey);
+        } else {
+          initiatorMsg = InitiatorHandshakeMessageV1.decode(bytes, nodeKey);
+        }
+      } catch (final SecurityModuleException e) {
+        status.set(Handshaker.HandshakeStatus.FAILED);
+        throw new HandshakeException(
+            "Unable to create ECDH Key agreement due to Crypto engine failure", e);
       }
 
       LOG.trace(
           "[{}] Received initiator's ECIES handshake message: {}",
-          identityKeyPair.getPublicKey().getEncodedBytes(),
+          nodeKey.getPublicKey().getEncodedBytes(),
           initiatorMsg);
 
       // Extract the initiator's data.
@@ -294,7 +302,14 @@ public class ECIESHandshaker implements Handshaker {
 
       // Compute the secrets and declare this handshake as successful.
     }
-    computeSecrets();
+
+    try {
+      computeSecrets();
+    } catch (final SecurityModuleException e) {
+      status.set(Handshaker.HandshakeStatus.FAILED);
+      throw new HandshakeException(
+          "Unable to create ECDH Key agreement due to Crypto engine failure", e);
+    }
 
     status.set(Handshaker.HandshakeStatus.SUCCESS);
     LOG.trace("Handshake status set to {}", status.get());
@@ -340,7 +355,8 @@ public class ECIESHandshaker implements Handshaker {
   /** Computes the secrets from the two exchanged messages. */
   void computeSecrets() {
     final Bytes agreedSecret =
-        SECP256K1.calculateKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
+        SECP256K1.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
+
     final Bytes sharedSecret =
         keccak256(
             concatenate(agreedSecret, keccak256(concatenate(responderNonce, initiatorNonce))));
@@ -377,8 +393,8 @@ public class ECIESHandshaker implements Handshaker {
   // ---------------------------------------------
 
   @VisibleForTesting
-  SECP256K1.KeyPair getIdentityKeyPair() {
-    return identityKeyPair;
+  NodeKey getNodeKey() {
+    return nodeKey;
   }
 
   @VisibleForTesting

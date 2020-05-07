@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
@@ -40,7 +40,7 @@ public class EthProtocolOptionsTest
   @Test
   public void parsesInvalidEwpMaxGetHeadersOptionsShouldFail() {
     parseCommand("--Xewp-max-get-headers", "-13");
-    verifyZeroInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
@@ -62,7 +62,7 @@ public class EthProtocolOptionsTest
   @Test
   public void parsesInvalidEwpMaxGetBodiesOptionsShouldFail() {
     parseCommand("--Xewp-max-get-bodies", "-14");
-    verifyZeroInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
@@ -85,7 +85,7 @@ public class EthProtocolOptionsTest
   public void parsesInvalidEwpMaxGetReceiptsOptionsShouldFail() {
     parseCommand("--Xewp-max-get-receipts", "-15");
 
-    verifyZeroInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
@@ -107,7 +107,7 @@ public class EthProtocolOptionsTest
   @Test
   public void parsesInvalidEwpMaxGetNodeDataOptionsShouldFail() {
     parseCommand("--Xewp-max-get-node-data", "-16");
-    verifyZeroInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
@@ -130,6 +130,10 @@ public class EthProtocolOptionsTest
             PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2))
         .maxGetNodeData(
             PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2))
+        .maxGetPooledTransactions(
+            PositiveNumber.fromInt(
+                EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2))
+        .eth65Enabled(!EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED)
         .build();
   }
 

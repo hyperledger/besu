@@ -18,11 +18,15 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Objects;
+
 /** Mined private transaction metadata. */
 public class PrivateTransactionMetadata {
+  private final Hash privacyMarkerTransactionHash;
   private final Hash stateRoot;
 
-  public PrivateTransactionMetadata(final Hash stateRoot) {
+  public PrivateTransactionMetadata(final Hash privacyMarkerTransactionHash, final Hash stateRoot) {
+    this.privacyMarkerTransactionHash = privacyMarkerTransactionHash;
     this.stateRoot = stateRoot;
   }
 
@@ -30,9 +34,14 @@ public class PrivateTransactionMetadata {
     return stateRoot;
   }
 
+  public Hash getPrivacyMarkerTransactionHash() {
+    return privacyMarkerTransactionHash;
+  }
+
   public void writeTo(final RLPOutput out) {
     out.startList();
 
+    out.writeBytes(privacyMarkerTransactionHash);
     out.writeBytes(stateRoot);
 
     out.endList();
@@ -42,9 +51,24 @@ public class PrivateTransactionMetadata {
     input.enterList();
 
     final PrivateTransactionMetadata privateTransactionMetadata =
-        new PrivateTransactionMetadata(Hash.wrap(input.readBytes32()));
+        new PrivateTransactionMetadata(
+            Hash.wrap(input.readBytes32()), Hash.wrap(input.readBytes32()));
 
     input.leaveList();
     return privateTransactionMetadata;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final PrivateTransactionMetadata that = (PrivateTransactionMetadata) o;
+    return privacyMarkerTransactionHash.equals(that.privacyMarkerTransactionHash)
+        && stateRoot.equals(that.stateRoot);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(privacyMarkerTransactionHash, stateRoot);
   }
 }

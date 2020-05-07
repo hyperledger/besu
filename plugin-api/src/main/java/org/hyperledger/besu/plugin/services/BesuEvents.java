@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
@@ -31,6 +32,9 @@ import org.apache.tuweni.bytes.Bytes32;
  * <p>Currently supported events
  *
  * <ul>
+ *   <li><b>BlockAdded</b> - Fired when a new block has been evaluated and validated.
+ *   <li><b>BlockReorg</b> - Fired when a block is removed from the chain to change to a different
+ *       chainhead.
  *   <li><b>BlockPropagated</b> - Fired when a new block header has been received and validated and
  *       is about to be sent out to other peers, but before the body of the block has been evaluated
  *       and validated.
@@ -56,6 +60,36 @@ public interface BesuEvents {
    * @param listenerIdentifier The id that was returned from addBlockAddedListener;
    */
   void removeBlockPropagatedListener(long listenerIdentifier);
+
+  /**
+   * Add a listener watching for new blocks added.
+   *
+   * @param blockAddedListener The listener that will accept the Block object as the event.
+   * @return an id to be used as an identifier when de-registering the event.
+   */
+  long addBlockAddedListener(BlockAddedListener blockAddedListener);
+
+  /**
+   * Remove the block added listener from besu notifications.
+   *
+   * @param listenerIdentifier The id that was returned from addBlockAddedListener;
+   */
+  void removeBlockAddedListener(long listenerIdentifier);
+
+  /**
+   * Add a listener watching for new reorg blocks added.
+   *
+   * @param blockReorgListener The listener that will accept the reorg Block object as the event.
+   * @return an id to be used as an identifier when de-registering the event.
+   */
+  long addBlockReorgListener(BlockReorgListener blockReorgListener);
+
+  /**
+   * Remove the block reorg listener from besu notifications.
+   *
+   * @param listenerIdentifier The id that was returned from addBlockReorgListener;
+   */
+  void removeBlockReorgListener(long listenerIdentifier);
 
   /**
    * Add a listener watching new transactions added to the node.
@@ -136,6 +170,28 @@ public interface BesuEvents {
      * @param propagatedBlockContext block being propagated.
      */
     void onBlockPropagated(PropagatedBlockContext propagatedBlockContext);
+  }
+
+  /** The listener interface for receiving new block added events. */
+  interface BlockAddedListener {
+
+    /**
+     * Invoked when a new block has been evaluated and validated.
+     *
+     * @param addedBlockContext block being added.
+     */
+    void onBlockAdded(AddedBlockContext addedBlockContext);
+  }
+
+  /** The listener interface for receiving new block reorg events. */
+  interface BlockReorgListener {
+
+    /**
+     * Invoked when a reorg block has been evaluated and validated.
+     *
+     * @param addedBlockContext reorg block being added.
+     */
+    void onBlockReorg(AddedBlockContext addedBlockContext);
   }
 
   /** The listener interface for receiving new transaction added events. */

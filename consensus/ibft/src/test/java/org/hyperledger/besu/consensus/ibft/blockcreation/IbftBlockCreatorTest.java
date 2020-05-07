@@ -87,6 +87,7 @@ public class IbftBlockCreatorTest {
         new PendingTransactions(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
+            5,
             TestClock.fixed(),
             metricsSystem);
 
@@ -106,13 +107,15 @@ public class IbftBlockCreatorTest {
             protocolSchedule,
             parentGasLimit -> parentGasLimit,
             Wei.ZERO,
+            0.8,
             parentHeader);
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
 
     final BlockHeaderValidator<IbftContext> rules =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(secondsBetweenBlocks);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(secondsBetweenBlocks)
+            .build();
 
     // NOTE: The header will not contain commit seals, so can only do light validation on header.
     final boolean validationResult =

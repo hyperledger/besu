@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
-
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -102,7 +100,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(
       final PeerTaskResult<List<BlockHeader>> headerResult) {
     if (headerResult.getResult().isEmpty()) {
-      return completedExceptionally(new IncompleteResultsException());
+      return CompletableFuture.failedFuture(new IncompleteResultsException());
     }
 
     return executeSubTask(

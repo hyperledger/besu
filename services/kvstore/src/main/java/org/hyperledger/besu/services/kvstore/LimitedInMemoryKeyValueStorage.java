@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -27,10 +29,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -59,13 +62,7 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      return storage.getIfPresent(Bytes.wrap(key)) != null;
-    } finally {
-      lock.unlock();
-    }
+    return get(key).isPresent();
   }
 
   @Override
@@ -83,18 +80,46 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
-    final long initialSize = storage.size();
-    storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
-    return initialSize - storage.size();
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
   }
 
   @Override
-  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return storage.asMap().keySet().stream()
-        .map(Bytes::toArrayUnsafe)
-        .filter(returnCondition)
-        .collect(Collectors.toSet());
+  public Stream<byte[]> streamKeys() {
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableSet.copyOf(storage.asMap().keySet()).stream().map(Bytes::toArrayUnsafe);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
+    final Lock lock = rwLock.writeLock();
+    lock.lock();
+    try {
+      final long initialSize = storage.size();
+      storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
+      return initialSize - storage.size();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public boolean tryDelete(final byte[] key) {
+    final Lock lock = rwLock.writeLock();
+    if (lock.tryLock()) {
+      try {
+        storage.invalidate(Bytes.wrap(key));
+      } finally {
+        lock.unlock();
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -135,8 +160,8 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
     @Override
     public void rollback() {
-      updatedValues = null;
-      removedKeys = null;
+      updatedValues.clear();
+      removedKeys.clear();
     }
   }
 }

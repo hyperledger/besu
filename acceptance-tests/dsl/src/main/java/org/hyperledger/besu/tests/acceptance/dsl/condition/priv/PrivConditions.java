@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 
 import java.util.List;
@@ -39,6 +41,11 @@ public class PrivConditions {
       final Hash transactionHash, final PrivateTransaction privateTransaction) {
     return new PrivGetPrivateTransactionSuccess(
         transactions.getPrivateTransaction(transactionHash), privateTransaction);
+  }
+
+  public Condition getPrivateTransactionReturnsNull(final Hash transactionHash) {
+    return new PrivGetPrivateTransactionReturnsNull(
+        transactions.getPrivateTransaction(transactionHash));
   }
 
   public Condition createPrivacyGroup(
@@ -89,5 +96,10 @@ public class PrivConditions {
   public Condition getTransactionReceipt(final Hash transactionHash) {
     return new PrivGetTransactionReceiptSuccess(
         transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition multiTenancyValidationFail(
+      final Transaction<?> transaction, final JsonRpcError error) {
+    return new ExpectJsonRpcError(transaction, error);
   }
 }

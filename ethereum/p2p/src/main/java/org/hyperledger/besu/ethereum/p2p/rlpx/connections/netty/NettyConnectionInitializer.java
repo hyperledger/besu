@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -51,7 +51,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
 
   private static final int TIMEOUT_SECONDS = 10;
 
-  private final KeyPair keyPair;
+  private final NodeKey nodeKey;
   private final RlpxConfiguration config;
   private final LocalNode localNode;
   private final PeerConnectionEventDispatcher eventDispatcher;
@@ -60,17 +60,17 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
 
   private ChannelFuture server;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
-  private final EventLoopGroup workers = new NioEventLoopGroup(1);
+  private final EventLoopGroup workers = new NioEventLoopGroup(10);
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   public NettyConnectionInitializer(
-      final KeyPair keyPair,
+      final NodeKey nodeKey,
       final RlpxConfiguration config,
       final LocalNode localNode,
       final PeerConnectionEventDispatcher eventDispatcher,
       final MetricsSystem metricsSystem) {
-    this.keyPair = keyPair;
+    this.nodeKey = nodeKey;
     this.config = config;
     this.localNode = localNode;
     this.eventDispatcher = eventDispatcher;
@@ -185,7 +185,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
                                         "Timed out waiting to establish connection with peer: "
                                             + peer.getId()))),
                         new HandshakeHandlerOutbound(
-                            keyPair,
+                            nodeKey,
                             peer,
                             config.getSupportedProtocols(),
                             localNode,
@@ -224,7 +224,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
                             new TimeoutException(
                                 "Timed out waiting to fully establish incoming connection"))),
                 new HandshakeHandlerInbound(
-                    keyPair,
+                    nodeKey,
                     config.getSupportedProtocols(),
                     localNode,
                     connectionFuture,

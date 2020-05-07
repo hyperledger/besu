@@ -26,21 +26,29 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
   public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
   public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
+  public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
+  public static final boolean DEFAULT_ETH_65_ENABLED = false;
 
   private final int maxGetBlockHeaders;
   private final int maxGetBlockBodies;
   private final int maxGetReceipts;
   private final int maxGetNodeData;
+  private final int maxGetPooledTransactions;
+  private final boolean eth65Enabled;
 
   public EthProtocolConfiguration(
       final int maxGetBlockHeaders,
       final int maxGetBlockBodies,
       final int maxGetReceipts,
-      final int maxGetNodeData) {
+      final int maxGetNodeData,
+      final int maxGetPooledTransactions,
+      final boolean eth65Enabled) {
     this.maxGetBlockHeaders = maxGetBlockHeaders;
     this.maxGetBlockBodies = maxGetBlockBodies;
     this.maxGetReceipts = maxGetReceipts;
     this.maxGetNodeData = maxGetNodeData;
+    this.maxGetPooledTransactions = maxGetPooledTransactions;
+    this.eth65Enabled = eth65Enabled;
   }
 
   public static EthProtocolConfiguration defaultConfig() {
@@ -48,7 +56,9 @@ public class EthProtocolConfiguration {
         DEFAULT_MAX_GET_BLOCK_HEADERS,
         DEFAULT_MAX_GET_BLOCK_BODIES,
         DEFAULT_MAX_GET_RECEIPTS,
-        DEFAULT_MAX_GET_NODE_DATA);
+        DEFAULT_MAX_GET_NODE_DATA,
+        DEFAULT_MAX_GET_POOLED_TRANSACTIONS,
+        DEFAULT_ETH_65_ENABLED);
   }
 
   public static Builder builder() {
@@ -71,6 +81,14 @@ public class EthProtocolConfiguration {
     return maxGetNodeData;
   }
 
+  public int getMaxGetPooledTransactions() {
+    return maxGetPooledTransactions;
+  }
+
+  public boolean isEth65Enabled() {
+    return eth65Enabled;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -83,7 +101,8 @@ public class EthProtocolConfiguration {
     return maxGetBlockHeaders == that.maxGetBlockHeaders
         && maxGetBlockBodies == that.maxGetBlockBodies
         && maxGetReceipts == that.maxGetReceipts
-        && maxGetNodeData == that.maxGetNodeData;
+        && maxGetNodeData == that.maxGetNodeData
+        && maxGetPooledTransactions == that.maxGetPooledTransactions;
   }
 
   @Override
@@ -98,6 +117,7 @@ public class EthProtocolConfiguration {
         .add("maxGetBlockBodies", maxGetBlockBodies)
         .add("maxGetReceipts", maxGetReceipts)
         .add("maxGetNodeData", maxGetNodeData)
+        .add("maxGetPooledTransactions", maxGetPooledTransactions)
         .toString();
   }
 
@@ -113,6 +133,11 @@ public class EthProtocolConfiguration {
 
     private PositiveNumber maxGetNodeData =
         PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
+
+    private PositiveNumber maxGetPooledTransactions =
+        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
+
+    private boolean eth65Enabled = EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED;
 
     public Builder maxGetBlockHeaders(final PositiveNumber maxGetBlockHeaders) {
       this.maxGetBlockHeaders = maxGetBlockHeaders;
@@ -134,12 +159,24 @@ public class EthProtocolConfiguration {
       return this;
     }
 
+    public Builder maxGetPooledTransactions(final PositiveNumber maxGetPooledTransactions) {
+      this.maxGetPooledTransactions = maxGetPooledTransactions;
+      return this;
+    }
+
+    public Builder eth65Enabled(final boolean eth65Enabled) {
+      this.eth65Enabled = eth65Enabled;
+      return this;
+    }
+
     public EthProtocolConfiguration build() {
       return new EthProtocolConfiguration(
           maxGetBlockHeaders.getValue(),
           maxGetBlockBodies.getValue(),
           maxGetReceipts.getValue(),
-          maxGetNodeData.getValue());
+          maxGetNodeData.getValue(),
+          maxGetPooledTransactions.getValue(),
+          eth65Enabled);
     }
   }
 }

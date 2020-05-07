@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -31,21 +31,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
+  private static final Logger LOG = LogManager.getLogger();
+
   // The set of known agents operating on the network
   private final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork;
   private final Deque<IncomingPacket> incomingPackets = new ArrayDeque<>();
   private boolean isRunning = false;
 
   public MockPeerDiscoveryAgent(
-      final KeyPair keyPair,
+      final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService) {
-    super(keyPair, config, peerPermissions, natService, new NoOpMetricsSystem());
+    super(nodeKey, config, peerPermissions, natService, new NoOpMetricsSystem());
     this.agentNetwork = agentNetwork;
   }
 
@@ -128,8 +132,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
     return CompletableFuture.completedFuture(null);
   }
 
-  public KeyPair getKeyPair() {
-    return keyPair;
+  public NodeKey getNodeKey() {
+    return nodeKey;
   }
 
   public static class IncomingPacket {

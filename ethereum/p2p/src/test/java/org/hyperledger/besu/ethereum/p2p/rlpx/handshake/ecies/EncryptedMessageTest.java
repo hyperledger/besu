@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -33,7 +34,8 @@ public final class EncryptedMessageTest {
     ThreadLocalRandom.current().nextBytes(message);
     final Bytes initial = Bytes.wrap(message);
     final Bytes encrypted = EncryptedMessage.encryptMsgEip8(initial, keyPair.getPublicKey());
-    final Bytes decrypted = EncryptedMessage.decryptMsgEIP8(encrypted, keyPair.getPrivateKey());
+    final Bytes decrypted =
+        EncryptedMessage.decryptMsgEIP8(encrypted, NodeKeyUtils.createFrom(keyPair));
     Assertions.assertThat(decrypted.slice(0, 288)).isEqualTo(initial);
   }
 }

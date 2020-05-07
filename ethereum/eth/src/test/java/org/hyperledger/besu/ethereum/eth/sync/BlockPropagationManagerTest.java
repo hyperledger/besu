@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -93,7 +94,11 @@ public class BlockPropagationManagerTest {
             tempProtocolContext.getWorldStateArchive(),
             tempProtocolContext.getConsensusState());
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(blockchain, blockchainUtil.getWorldArchive());
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            blockchainUtil.getWorldArchive(),
+            blockchainUtil.getTransactionPool(),
+            EthProtocolConfiguration.defaultConfig());
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockBroadcaster = mock(BlockBroadcaster.class);

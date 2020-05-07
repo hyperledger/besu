@@ -8,6 +8,7 @@
 | ---------------- | ---------------- | ---------------- |
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
+| Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | Edward Evans     | EdJoJob          | EdJoJob          |
@@ -19,8 +20,10 @@
 | Sally MacFarlane | macfarla         | macfarla         |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
+| Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
+| Stefan Pingel    | pinges           | pinges           |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -21,6 +23,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
@@ -29,8 +32,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.BlockBasedTableConfig;
@@ -39,6 +42,7 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
+import org.rocksdb.Status;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -56,6 +60,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private final TransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final RocksDBMetrics rocksDBMetrics;
+  private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
 
   public RocksDBKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -117,17 +122,27 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public Stream<byte[]> streamKeys() {
+    final RocksIterator rocksIterator = db.newIterator();
+    rocksIterator.seekToFirst();
+    return RocksDbKeyIterator.create(rocksIterator).toStream();
+  }
+
+  @Override
   public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator()) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
+      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         final byte[] key = rocksIterator.key();
         if (!retainCondition.test(key)) {
           removedNodeCounter++;
           db.delete(key);
         }
-        rocksIterator.next();
       }
     } catch (final RocksDBException e) {
       throw new StorageException(e);
@@ -136,19 +151,17 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
-    try (final RocksIterator rocksIterator = db.newIterator()) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
-        final byte[] key = rocksIterator.key();
-        if (returnCondition.test(key)) {
-          returnedKeys.add(key);
-        }
-        rocksIterator.next();
+  public boolean tryDelete(final byte[] key) {
+    try {
+      db.delete(tryDeleteOptions, key);
+      return true;
+    } catch (RocksDBException e) {
+      if (e.getStatus().getCode() == Status.Code.Incomplete) {
+        return false;
+      } else {
+        throw new StorageException(e);
       }
     }
-    return returnedKeys;
   }
 
   @Override
@@ -162,6 +175,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
+      tryDeleteOptions.close();
       txOptions.close();
       options.close();
       db.close();

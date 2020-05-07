@@ -122,7 +122,8 @@ public class VmTraceGenerator {
     } else {
       op.setVmOperationExecutionReport(report);
     }
-    if (currentTrace != null) {
+    if (currentTrace != null
+        && (op.getSub() != null || op.getVmOperationExecutionReport() != null)) {
       currentTrace.add(op);
     }
     currentIndex++;
@@ -140,6 +141,12 @@ public class VmTraceGenerator {
       case "CALL":
       case "CREATE":
       case "CREATE2":
+        if (currentOperation.equals("CALL") || currentOperation.equals("DELEGATECALL")) {
+          findReturnInCall(currentTraceFrame, currentIndex)
+              .map(output -> new Mem(output.getOutputData().toHexString(), 0))
+              .ifPresent(report::setMem);
+        }
+
         findLastFrameInCall(currentTraceFrame, currentIndex)
             .ifPresent(
                 lastFrameInCall -> {
@@ -159,6 +166,7 @@ public class VmTraceGenerator {
                         .ifPresent(report::setMem);
                   }
                 });
+
         if (currentTraceFrame.getMaybeCode().map(Code::getSize).orElse(0) > 0) {
           if (nextTraceFrame.map(TraceFrame::getDepth).orElse(0) > currentTraceFrame.getDepth()) {
             op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
@@ -172,6 +180,10 @@ public class VmTraceGenerator {
         } else {
           if (currentTraceFrame.getPrecompiledGasCost().isPresent()) {
             op.setCost(op.getCost() + currentTraceFrame.getPrecompiledGasCost().get().toLong());
+          } else if (currentOperation.equals("STATICCALL")
+              && nextTraceFrame.map(TraceFrame::getDepth).orElse(0)
+                  > currentTraceFrame.getDepth()) {
+            op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
           }
           op.setSub(new VmTrace());
         }
@@ -252,8 +264,8 @@ public class VmTraceGenerator {
             entry ->
                 report.setStore(
                     new Store(
-                        entry.getOffset().toShortHexString(),
-                        entry.getValue().toShortHexString())));
+                        entry.getOffset().toBytes().toQuantityHexString(),
+                        entry.getValue().toQuantityHexString())));
   }
 
   /**
@@ -285,6 +297,18 @@ public class VmTraceGenerator {
       if (i + 1 < transactionTrace.getTraceFrames().size()) {
         final TraceFrame next = transactionTrace.getTraceFrames().get(i + 1);
         if (next.getPc() == (callFrame.getPc() + 1) && next.getDepth() == callFrame.getDepth()) {
+          return Optional.of(next);
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  private Optional<TraceFrame> findReturnInCall(final TraceFrame callFrame, final int callIndex) {
+    for (int i = callIndex; i < transactionTrace.getTraceFrames().size(); i++) {
+      if (i + 1 < transactionTrace.getTraceFrames().size()) {
+        final TraceFrame next = transactionTrace.getTraceFrames().get(i + 1);
+        if (next.getOpcode().equals("RETURN") && next.getDepth() == callFrame.getDepth()) {
           return Optional.of(next);
         }
       }

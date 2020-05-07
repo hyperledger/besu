@@ -18,18 +18,23 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -52,16 +57,19 @@ class EthServer {
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
+  private final TransactionPool transactionPool;
   private final EthMessages ethMessages;
   private final EthProtocolConfiguration ethereumWireProtocolConfiguration;
 
   EthServer(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
       final EthMessages ethMessages,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
+    this.transactionPool = transactionPool;
     this.ethMessages = ethMessages;
     this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
     this.setupListeners();
@@ -72,6 +80,9 @@ class EthServer {
     ethMessages.subscribe(EthPV62.GET_BLOCK_BODIES, this::handleGetBlockBodies);
     ethMessages.subscribe(EthPV63.GET_RECEIPTS, this::handleGetReceipts);
     ethMessages.subscribe(EthPV63.GET_NODE_DATA, this::handleGetNodeData);
+    if (ethereumWireProtocolConfiguration.isEth65Enabled()) {
+      ethMessages.subscribe(EthPV65.GET_POOLED_TRANSACTIONS, this::handleGetPooledTransactions);
+    }
   }
 
   private void handleGetBlockHeaders(final EthMessage message) {
@@ -137,6 +148,26 @@ class EthServer {
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed GET_NODE_DATA message, disconnecting: {}", message.getPeer(), e);
+      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    } catch (final PeerNotConnected peerNotConnected) {
+      // Peer disconnected before we could respond - nothing to do
+    }
+  }
+
+  private void handleGetPooledTransactions(final EthMessage message) {
+    LOG.trace("Responding to GET_POOLED_TRANSACTIONS request");
+    try {
+      final MessageData response =
+          constructGetPooledTransactionsResponse(
+              transactionPool,
+              message.getData(),
+              ethereumWireProtocolConfiguration.getMaxGetPooledTransactions());
+      message.getPeer().send(response);
+    } catch (final RLPException e) {
+      LOG.debug(
+          "Received malformed GET_POOLED_TRANSACTIONS message, disconnecting: {}",
+          message.getPeer(),
+          e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
     } catch (final PeerNotConnected peerNotConnected) {
       // Peer disconnected before we could respond - nothing to do
@@ -220,6 +251,28 @@ class EthServer {
       receipts.add(maybeReceipts.get());
     }
     return ReceiptsMessage.create(receipts);
+  }
+
+  static MessageData constructGetPooledTransactionsResponse(
+      final TransactionPool transactionPool, final MessageData message, final int requestLimit) {
+    final GetPooledTransactionsMessage getPooledTransactions =
+        GetPooledTransactionsMessage.readFrom(message);
+    final Iterable<Hash> hashes = getPooledTransactions.pooledTransactions();
+
+    final List<Transaction> tx = new ArrayList<>();
+    int count = 0;
+    for (final Hash hash : hashes) {
+      if (count >= requestLimit) {
+        break;
+      }
+      count++;
+      final Optional<Transaction> maybeTx = transactionPool.getTransactionByHash(hash);
+      if (maybeTx.isEmpty()) {
+        continue;
+      }
+      tx.add(maybeTx.get());
+    }
+    return PooledTransactionsMessage.create(tx);
   }
 
   static MessageData constructGetNodeDataResponse(

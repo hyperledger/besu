@@ -19,23 +19,31 @@ import java.util.Objects;
 public class TransactionPoolConfiguration {
   public static final int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
   public static final int MAX_PENDING_TRANSACTIONS = 4096;
+  public static final int MAX_PENDING_TRANSACTIONS_HASHES = 4096;
   public static final int DEFAULT_TX_RETENTION_HOURS = 13;
 
   private final int txPoolMaxSize;
+  private final int pooledTransactionHashesSize;
   private final int pendingTxRetentionPeriod;
   private final int txMessageKeepAliveSeconds;
 
   public TransactionPoolConfiguration(
       final int txPoolMaxSize,
+      final int pooledTransactionHashesSize,
       final int pendingTxRetentionPeriod,
       final int txMessageKeepAliveSeconds) {
     this.txPoolMaxSize = txPoolMaxSize;
+    this.pooledTransactionHashesSize = pooledTransactionHashesSize;
     this.pendingTxRetentionPeriod = pendingTxRetentionPeriod;
     this.txMessageKeepAliveSeconds = txMessageKeepAliveSeconds;
   }
 
   public int getTxPoolMaxSize() {
     return txPoolMaxSize;
+  }
+
+  public int getPooledTransactionHashesSize() {
+    return pooledTransactionHashesSize;
   }
 
   public int getPendingTxRetentionPeriod() {
@@ -85,9 +93,15 @@ public class TransactionPoolConfiguration {
     private int txPoolMaxSize = MAX_PENDING_TRANSACTIONS;
     private int pendingTxRetentionPeriod = DEFAULT_TX_RETENTION_HOURS;
     private Integer txMessageKeepAliveSeconds = DEFAULT_TX_MSG_KEEP_ALIVE;
+    private int pooledTransactionHashesSize = MAX_PENDING_TRANSACTIONS_HASHES;
 
     public Builder txPoolMaxSize(final int txPoolMaxSize) {
       this.txPoolMaxSize = txPoolMaxSize;
+      return this;
+    }
+
+    public Builder pooledTransactionHashesSize(final int pooledTransactionHashesSize) {
+      this.pooledTransactionHashesSize = pooledTransactionHashesSize;
       return this;
     }
 
@@ -103,7 +117,10 @@ public class TransactionPoolConfiguration {
 
     public TransactionPoolConfiguration build() {
       return new TransactionPoolConfiguration(
-          txPoolMaxSize, pendingTxRetentionPeriod, txMessageKeepAliveSeconds);
+          txPoolMaxSize,
+          pooledTransactionHashesSize,
+          pendingTxRetentionPeriod,
+          txMessageKeepAliveSeconds);
     }
   }
 }

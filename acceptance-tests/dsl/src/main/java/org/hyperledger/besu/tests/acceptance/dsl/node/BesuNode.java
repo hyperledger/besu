@@ -42,6 +42,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -87,6 +88,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private final String name;
   private final MiningParameters miningParameters;
+  private final Optional<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -97,6 +99,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final boolean discoveryEnabled;
   private final List<URI> bootnodes = new ArrayList<>();
   private final boolean bootnodeEligible;
+  private final boolean secp256k1Native;
+  private final boolean altbn128Native;
   private Optional<String> genesisConfig = Optional.empty();
   private NodeRequests nodeRequests;
   private LoginRequestFactory loginRequestFactory;
@@ -105,9 +109,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private Optional<Integer> exitCode = Optional.empty();
 
   public BesuNode(
       final String name,
+      final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
@@ -121,14 +127,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
+      final boolean secp256k1Native,
+      final boolean altbn128Native,
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
-      final Optional<PrivacyParameters> privacyParameters)
+      final Optional<PrivacyParameters> privacyParameters,
+      final Optional<String> runCommand)
       throws IOException {
-    this.bootnodeEligible = bootnodeEligible;
-    this.revertReasonEnabled = revertReasonEnabled;
-    this.homeDirectory = Files.createTempDirectory("acctest");
+    this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
         path -> {
           try {
@@ -149,6 +156,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.p2pEnabled = p2pEnabled;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
+    this.bootnodeEligible = bootnodeEligible;
+    this.revertReasonEnabled = revertReasonEnabled;
+    this.secp256k1Native = secp256k1Native;
+    this.altbn128Native = altbn128Native;
+    this.runCommand = runCommand;
     plugins.forEach(
         pluginName -> {
           try {
@@ -164,6 +176,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.staticNodes = staticNodes;
     privacyParameters.ifPresent(this::setPrivacyParameters);
     LOG.info("Created BesuNode {}", this.toString());
+  }
+
+  private static Path createTmpDataDirectory() {
+    try {
+      return Files.createTempDirectory("acctest");
+    } catch (final IOException e) {
+      throw new RuntimeException("Unable to create temporary data directory", e);
+    }
   }
 
   @Override
@@ -187,6 +207,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public String getNodeId() {
     return keyPair.getPublicKey().toString().substring(2);
+  }
+
+  @Override
+  public Optional<Integer> exitCode() {
+    return exitCode;
   }
 
   @Override
@@ -321,6 +346,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
               new PrivacyRequestFactory(web3jService),
               new CustomRequestFactory(web3jService),
               new MinerRequestFactory(web3jService),
+              new TxPoolRequestFactory(web3jService),
               websocketService,
               loginRequestFactory());
     }
@@ -417,7 +443,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public void start(final BesuNodeRunner runner) {
     runner.startNode(this);
-    loadPortsFile();
+    if (runCommand.isEmpty()) {
+      loadPortsFile();
+    }
   }
 
   @Override
@@ -540,6 +568,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return devMode;
   }
 
+  public boolean isSecp256k1Native() {
+    return secp256k1Native;
+  }
+
+  public boolean isAltbn128Native() {
+    return altbn128Native;
+  }
+
   @Override
   public boolean isDiscoveryEnabled() {
     return discoveryEnabled;
@@ -570,6 +606,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public boolean hasStaticNodes() {
     return staticNodes != null && !staticNodes.isEmpty();
+  }
+
+  public Optional<String> getRunCommand() {
+    return runCommand;
   }
 
   @Override
@@ -626,5 +666,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public void verify(final Condition expected) {
     expected.verify(this);
+  }
+
+  public void setExitCode(final int exitValue) {
+    this.exitCode = Optional.of(exitValue);
   }
 }
