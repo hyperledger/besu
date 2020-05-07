@@ -59,7 +59,7 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
   }
 
   @Test
-  public void canRemoveThroughSegmentIteration() throws Exception {
+  public void canDeleteKeys() throws Exception {
     final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
     final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
     final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
@@ -73,30 +73,16 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     tx.put(barSegment, bytesOf(6), bytesOf(6));
     tx.commit();
 
-    store
-        .streamKeys(fooSegment)
-        .forEach(
-            key -> {
-              if (!Arrays.equals(key, bytesOf(3))) store.tryDelete(fooSegment, key);
-            });
-    store
-        .streamKeys(barSegment)
-        .forEach(
-            key -> {
-              if (!Arrays.equals(key, bytesOf(4))) store.tryDelete(barSegment, key);
-            });
-
     for (final ColumnFamilyHandle segment : Set.of(fooSegment, barSegment)) {
-      assertThat(store.streamKeys(segment).count()).isEqualTo(1);
+      while (store.streamKeys(segment).findAny().isPresent()) {
+        store
+            .streamKeys(segment)
+            .forEach(
+                key ->
+                    assertThat(store.tryDelete(segment, key))
+                        .isEqualTo(!store.containsKey(segment, key)));
+      }
     }
-
-    assertThat(store.get(fooSegment, bytesOf(1))).isEmpty();
-    assertThat(store.get(fooSegment, bytesOf(2))).isEmpty();
-    assertThat(store.get(fooSegment, bytesOf(3))).contains(bytesOf(3));
-
-    assertThat(store.get(barSegment, bytesOf(4))).contains(bytesOf(4));
-    assertThat(store.get(barSegment, bytesOf(5))).isEmpty();
-    assertThat(store.get(barSegment, bytesOf(6))).isEmpty();
   }
 
   @Test
