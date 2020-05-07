@@ -135,9 +135,9 @@ public class SubscriptionManager extends AbstractVerticle {
 
   public void sendMessage(final Long subscriptionId, final JsonRpcResult msg) {
     final Subscription subscription = subscriptions.get(subscriptionId);
-    final SubscriptionResponse response = new SubscriptionResponse(subscription, msg);
 
     if (subscription != null) {
+      final SubscriptionResponse response = new SubscriptionResponse(subscription, msg);
       vertx.eventBus().send(subscription.getConnectionId(), Json.encode(response));
     }
   }
