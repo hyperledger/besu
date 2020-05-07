@@ -212,7 +212,7 @@ Workaround -> When using onchain permissioning, ensure bootnodes are also valida
 
 ## 1.4.1
 
-### Additions and Improvements
+### Additions and Improvements 
 
 - Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
 - Added `trace_transaction` JSON RPC API [\#441](https://github.com/hyperledger/besu/pull/441)
