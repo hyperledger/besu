@@ -26,7 +26,6 @@ import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Bytes32;
-import org.web3j.abi.datatypes.generated.Int256;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
@@ -45,10 +44,10 @@ import org.web3j.tx.gas.ContractGasProvider;
  * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the <a
  * href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
- * <p>Generated with web3j version 4.5.14.
+ * <p>Generated with web3j version 4.5.15.
  */
 @SuppressWarnings("rawtypes")
-public class PrivacyInterface extends Contract {
+public class OnChainPrivacyGroupManagementInterface extends Contract {
   public static final String BINARY = "";
 
   public static final String FUNC_ADDPARTICIPANTS = "addParticipants";
@@ -66,7 +65,7 @@ public class PrivacyInterface extends Contract {
   public static final String FUNC_UNLOCK = "unlock";
 
   @Deprecated
-  protected PrivacyInterface(
+  protected OnChainPrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -75,7 +74,7 @@ public class PrivacyInterface extends Contract {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
-  protected PrivacyInterface(
+  protected OnChainPrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -84,7 +83,7 @@ public class PrivacyInterface extends Contract {
   }
 
   @Deprecated
-  protected PrivacyInterface(
+  protected OnChainPrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -93,7 +92,7 @@ public class PrivacyInterface extends Contract {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  protected PrivacyInterface(
+  protected OnChainPrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -143,13 +142,13 @@ public class PrivacyInterface extends Contract {
         });
   }
 
-  public RemoteFunctionCall<BigInteger> getVersion() {
+  public RemoteFunctionCall<byte[]> getVersion() {
     final Function function =
         new Function(
             FUNC_GETVERSION,
             Arrays.<Type>asList(),
-            Arrays.<TypeReference<?>>asList(new TypeReference<Int256>() {}));
-    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+            Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>() {}));
+    return executeRemoteCallSingleValueReturn(function, byte[].class);
   }
 
   public RemoteFunctionCall<TransactionReceipt> lock() {
@@ -177,67 +176,93 @@ public class PrivacyInterface extends Contract {
   }
 
   @Deprecated
-  public static PrivacyInterface load(
+  public static OnChainPrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new PrivacyInterface(contractAddress, web3j, credentials, gasPrice, gasLimit);
+    return new OnChainPrivacyGroupManagementInterface(
+        contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
-  public static PrivacyInterface load(
+  public static OnChainPrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new PrivacyInterface(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
+    return new OnChainPrivacyGroupManagementInterface(
+        contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  public static PrivacyInterface load(
+  public static OnChainPrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       ContractGasProvider contractGasProvider) {
-    return new PrivacyInterface(contractAddress, web3j, credentials, contractGasProvider);
+    return new OnChainPrivacyGroupManagementInterface(
+        contractAddress, web3j, credentials, contractGasProvider);
   }
 
-  public static PrivacyInterface load(
+  public static OnChainPrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       ContractGasProvider contractGasProvider) {
-    return new PrivacyInterface(contractAddress, web3j, transactionManager, contractGasProvider);
+    return new OnChainPrivacyGroupManagementInterface(
+        contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public static RemoteCall<PrivacyInterface> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementInterface> deploy(
       Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
-        PrivacyInterface.class, web3j, credentials, contractGasProvider, BINARY, "");
+        OnChainPrivacyGroupManagementInterface.class,
+        web3j,
+        credentials,
+        contractGasProvider,
+        BINARY,
+        "");
   }
 
   @Deprecated
-  public static RemoteCall<PrivacyInterface> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementInterface> deploy(
       Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
     return deployRemoteCall(
-        PrivacyInterface.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
+        OnChainPrivacyGroupManagementInterface.class,
+        web3j,
+        credentials,
+        gasPrice,
+        gasLimit,
+        BINARY,
+        "");
   }
 
-  public static RemoteCall<PrivacyInterface> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementInterface> deploy(
       Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
-        PrivacyInterface.class, web3j, transactionManager, contractGasProvider, BINARY, "");
+        OnChainPrivacyGroupManagementInterface.class,
+        web3j,
+        transactionManager,
+        contractGasProvider,
+        BINARY,
+        "");
   }
 
   @Deprecated
-  public static RemoteCall<PrivacyInterface> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementInterface> deploy(
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
     return deployRemoteCall(
-        PrivacyInterface.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
+        OnChainPrivacyGroupManagementInterface.class,
+        web3j,
+        transactionManager,
+        gasPrice,
+        gasLimit,
+        BINARY,
+        "");
   }
 }

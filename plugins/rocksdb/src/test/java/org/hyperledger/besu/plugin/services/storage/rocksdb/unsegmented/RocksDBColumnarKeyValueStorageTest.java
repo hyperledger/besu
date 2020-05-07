@@ -73,13 +73,22 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     tx.put(barSegment, bytesOf(6), bytesOf(6));
     tx.commit();
 
-    final long removedFromFoo =
-        store.removeAllKeysUnless(fooSegment, x -> Arrays.equals(x, bytesOf(3)));
-    final long removedFromBar =
-        store.removeAllKeysUnless(barSegment, x -> Arrays.equals(x, bytesOf(4)));
+    store
+        .streamKeys(fooSegment)
+        .forEach(
+            key -> {
+              if (!Arrays.equals(key, bytesOf(3))) store.tryDelete(fooSegment, key);
+            });
+    store
+        .streamKeys(barSegment)
+        .forEach(
+            key -> {
+              if (!Arrays.equals(key, bytesOf(4))) store.tryDelete(barSegment, key);
+            });
 
-    assertThat(removedFromFoo).isEqualTo(2);
-    assertThat(removedFromBar).isEqualTo(2);
+    for (final ColumnFamilyHandle segment : Set.of(fooSegment, barSegment)) {
+      assertThat(store.streamKeys(segment).count()).isEqualTo(1);
+    }
 
     assertThat(store.get(fooSegment, bytesOf(1))).isEmpty();
     assertThat(store.get(fooSegment, bytesOf(2))).isEmpty();

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
@@ -71,6 +72,8 @@ public class ProtocolSpec<C> {
 
   private final Optional<EIP1559> eip1559;
 
+  private final TransactionGasBudgetCalculator gasBudgetCalculator;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -95,6 +98,7 @@ public class ProtocolSpec<C> {
    * @param gasCalculator the gas calculator to use.
    * @param transactionPriceCalculator the transaction price calculator to use.
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
+   * @param gasBudgetCalculator the gas budget calculator to use.
    */
   public ProtocolSpec(
       final String name,
@@ -117,7 +121,8 @@ public class ProtocolSpec<C> {
       final boolean skipZeroBlockRewards,
       final GasCalculator gasCalculator,
       final TransactionPriceCalculator transactionPriceCalculator,
-      final Optional<EIP1559> eip1559) {
+      final Optional<EIP1559> eip1559,
+      final TransactionGasBudgetCalculator gasBudgetCalculator) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -139,6 +144,7 @@ public class ProtocolSpec<C> {
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.eip1559 = eip1559;
+    this.gasBudgetCalculator = gasBudgetCalculator;
   }
 
   /**
@@ -319,5 +325,14 @@ public class ProtocolSpec<C> {
 
   public boolean isEip1559() {
     return ExperimentalEIPs.eip1559Enabled && eip1559.isPresent();
+  }
+
+  /**
+   * Returns the gas budget calculator in this specification.
+   *
+   * @return the gas budget calculator
+   */
+  public TransactionGasBudgetCalculator getGasBudgetCalculator() {
+    return gasBudgetCalculator;
   }
 }
