@@ -28,7 +28,7 @@ public class CallParameter {
 
   private final Address to;
 
-  private long gasLimit;
+  private final long gasLimit;
 
   private final Wei gasPrice;
 
@@ -61,10 +61,6 @@ public class CallParameter {
 
   public long getGasLimit() {
     return gasLimit;
-  }
-
-  public void setGasLimit(final long gasLimit) {
-    this.gasLimit = gasLimit;
   }
 
   public Wei getGasPrice() {

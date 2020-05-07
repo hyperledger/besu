@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -28,21 +25,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.EstimateGasOperationTracer;
 
-import java.util.Optional;
-
-import org.apache.logging.log4j.Logger;
+import java.util.function.Function;
 
 public class EthEstimateGas implements JsonRpcMethod {
-
-  private static final int GAS_ESTIMATE_CHANGE_DENOMINATOR = 10;
-  private static final int MAX_ESTIMATE_NUMBER_OF_RETRY = 20;
-
-  private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchainQueries;
   private final TransactionSimulator transactionSimulator;
@@ -60,94 +52,23 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-
     final JsonCallParameter callParams =
         requestContext.getRequiredParameter(0, JsonCallParameter.class);
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+      return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
     }
-    return doEstimateGas(requestContext.getRequest(), callParams, blockHeader);
-  }
 
-  /**
-   * Allows to estimate gas for a transaction
-   *
-   * @param request json rpc request
-   * @param callParams call params
-   * @param blockHeader block header
-   * @return json rpc response with the estimate gas of the transaction, otherwise the error
-   */
-  private JsonRpcResponse doEstimateGas(
-      final JsonRpcRequest request,
-      final JsonCallParameter callParams,
-      final BlockHeader blockHeader) {
-
-    long lowGasLimit, midGasLimit, highGasLimit;
-    int numberOfRetry = 0;
-    boolean foundEstimateGas;
-
-    JsonCallParameter modifiedCallParams =
+    final JsonCallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
 
-    Optional<TransactionSimulatorResult> simulatorResult = Optional.empty();
+    final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
 
-    try {
-
-      // make a first estimate of the necessary gasLimit
-      simulatorResult = transactionSimulator.process(modifiedCallParams, blockHeader.getNumber());
-      lowGasLimit =
-          highGasLimit =
-              simulatorResult
-                  .filter(TransactionSimulatorResult::isSuccessful)
-                  .map(TransactionSimulatorResult::getGasEstimate)
-                  .orElseThrow();
-
-      // check that the estimate is valid and if not we increase the estimate by
-      // GAS_ESTIMATE_CHANGE_DENOMINATOR. if after MAX_ESTIMATE_NUMBER_OF_RETRY retries you cannot
-      // find a valid estimate. we return the error returned by the transaction
-      do {
-
-        modifiedCallParams.setGasLimit(highGasLimit);
-        simulatorResult = transactionSimulator.process(modifiedCallParams, blockHeader.getNumber());
-        foundEstimateGas =
-            simulatorResult.filter(TransactionSimulatorResult::isSuccessful).isPresent();
-
-        if (!foundEstimateGas) {
-          lowGasLimit = modifiedCallParams.getGasLimit();
-          highGasLimit = lowGasLimit + lowGasLimit / GAS_ESTIMATE_CHANGE_DENOMINATOR;
-        }
-
-        // unable to find a good estimate we send the error returned by the transaction
-        if (numberOfRetry++ > MAX_ESTIMATE_NUMBER_OF_RETRY) {
-          throw new RuntimeException("Unable to find a good estimate");
-        }
-
-      } while (!foundEstimateGas);
-
-      // performs binary search to find the most accurate estimate
-      while (lowGasLimit + 1 < highGasLimit) {
-
-        midGasLimit = (highGasLimit + lowGasLimit) / 2;
-
-        modifiedCallParams.setGasLimit(midGasLimit);
-        simulatorResult = transactionSimulator.process(modifiedCallParams, blockHeader.getNumber());
-        foundEstimateGas =
-            simulatorResult.filter(TransactionSimulatorResult::isSuccessful).isPresent();
-
-        if (!foundEstimateGas) {
-          lowGasLimit = midGasLimit;
-        } else {
-          highGasLimit = midGasLimit;
-        }
-      }
-      return new JsonRpcSuccessResponse(request.getId(), Quantity.create(highGasLimit));
-    } catch (Exception e) {
-      LOG.error("Error while executing the transaction");
-    }
-    return errorResponse(request, simulatorResult);
+    return transactionSimulator
+        .process(modifiedCallParams,operationTracer, blockHeader.getNumber())
+        .map(gasEstimateResponse(requestContext,operationTracer))
+        .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
   }
 
   private BlockHeader blockHeader() {
@@ -166,20 +87,47 @@ public class EthEstimateGas implements JsonRpcMethod {
         callParams.getPayload() != null ? callParams.getPayload().toString() : null);
   }
 
-  private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequest request, final Optional<TransactionSimulatorResult> simulatorResult) {
+  private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
+      final JsonRpcRequestContext request, final EstimateGasOperationTracer operationTracer) {
+    return result -> result.isSuccessful()
+      ? new JsonRpcSuccessResponse(
+          request.getRequest().getId(), Quantity.create(processEstimateGas(result, operationTracer)))
+      : errorResponse(request, result.getValidationResult());
+  }
 
-    JsonRpcError jsonRpcError;
-    try {
+  /**
+   * Estimate gas by adding minimum gas remaining for some operation
+   * and the necessary gas for sub calls
+   * @param result transaction simulator result
+   * @param operationTracer estimate gas operation tracer
+   * @return estimate gas
+   */
+  private long processEstimateGas(final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
+    // no more than 63/64s of the remaining gas can be passed to the sub calls
+    final double subCallMultiplier = Math.pow(65D/64D,operationTracer.getMaxDepth());
+    // and minimum gas remaining is necessary for some operation (additionalStipend)
+    final long gasStipend = operationTracer.getStipendNeeded().toLong();
+    final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();
+    return ((long) ((gasUsedByTransaction+gasStipend)*subCallMultiplier));
+  }
+
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request,
+      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+    JsonRpcError jsonRpcError = null;
+    if (validationResult != null) {
       jsonRpcError =
           JsonRpcErrorConverter.convertTransactionInvalidReason(
-              simulatorResult
-                  .map(TransactionSimulatorResult::getValidationResult)
-                  .map(ValidationResult::getInvalidReason)
-                  .orElseThrow());
-    } catch (Exception e) {
-      jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+              validationResult.getInvalidReason());
     }
-    return new JsonRpcErrorResponse(request.getId(), jsonRpcError);
+    return errorResponse(request, jsonRpcError);
   }
+
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
+    return new JsonRpcErrorResponse(
+        request.getRequest().getId(),
+        jsonRpcError == null ? JsonRpcError.INTERNAL_ERROR : jsonRpcError);
+  }
+
 }
