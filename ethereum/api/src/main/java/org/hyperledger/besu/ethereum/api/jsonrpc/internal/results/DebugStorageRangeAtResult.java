@@ -88,7 +88,12 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
     public StorageEntry(final AccountStorageEntry entry, final boolean shortValues) {
       if (shortValues) {
         this.value = entry.getValue().toShortHexString();
-        this.key = entry.getKey().map(UInt256::toShortHexString).orElse(null);
+        this.key =
+            entry
+                .getKey()
+                .map(UInt256::toShortHexString)
+                .map(s -> "0x".equals(s) ? "0x00" : s)
+                .orElse(null);
       } else {
         this.value = entry.getValue().toHexString();
         this.key = entry.getKey().map(UInt256::toHexString).orElse(null);

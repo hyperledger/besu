@@ -308,7 +308,7 @@ public class EeaSendRawTransactionTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.PRIVACY_GROUP_ID_NOT_AVAILABLE);
+            request.getRequest().getId(), JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

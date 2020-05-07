@@ -28,7 +28,6 @@ import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Bytes32;
-import org.web3j.abi.datatypes.generated.Int256;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
@@ -47,12 +46,12 @@ import org.web3j.tx.gas.ContractGasProvider;
  * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the <a
  * href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
- * <p>Generated with web3j version 4.5.14.
+ * <p>Generated with web3j version 4.5.15.
  */
 @SuppressWarnings("rawtypes")
-public class PrivacyProxy extends Contract {
+public class OnChainPrivacyGroupManagementProxy extends Contract {
   public static final String BINARY =
-      "608060405234801561001057600080fd5b50604051610a4f380380610a4f8339818101604052602081101561003357600080fd5b8101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550506109bb806100946000396000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c806361544c911161006657806361544c91146101c757806378b9033714610217578063a69df4b514610239578063f744b08914610243578063f83d08ba1461031d57610093565b80630b0235be146100985780630d8e6e2c1461011b5780633659cfe6146101395780635c60da1b1461017d575b600080fd5b6100c4600480360360208110156100ae57600080fd5b8101908080359060200190929190505050610327565b6040518080602001828103825283818151815260200191508051906020019060200280838360005b838110156101075780820151818401526020810190506100ec565b505050509050019250505060405180910390f35b61012361047d565b6040518082815260200191505060405180910390f35b61017b6004803603602081101561014f57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505061052b565b005b610185610591565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101fd600480360360408110156101dd57600080fd5b8101908080359060200190929190803590602001909291905050506105b6565b604051808215151515815260200191505060405180910390f35b61021f61067c565b604051808215151515815260200191505060405180910390f35b61024161072a565b005b6103036004803603604081101561025957600080fd5b81019080803590602001909291908035906020019064010000000081111561028057600080fd5b82018360208201111561029257600080fd5b803590602001918460208302840111640100000000831117156102b457600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f8201169050808301925050505050505091929192905050506107b3565b604051808215151515815260200191505060405180910390f35b6103256108ba565b005b606060008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff16630b0235be846040518263ffffffff1660e01b81526004018082815260200191505060006040518083038186803b1580156103a057600080fd5b505afa1580156103b4573d6000803e3d6000fd5b505050506040513d6000823e3d601f19601f8201168201806040525060208110156103de57600080fd5b81019080805160405193929190846401000000008211156103fe57600080fd5b8382019150602082018581111561041457600080fd5b825186602082028301116401000000008211171561043157600080fd5b8083526020830192505050908051906020019060200280838360005b8381101561046857808201518184015260208101905061044d565b50505050905001604052505050915050919050565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff16630d8e6e2c6040518163ffffffff1660e01b815260040160206040518083038186803b1580156104ea57600080fd5b505afa1580156104fe573d6000803e3d6000fd5b505050506040513d602081101561051457600080fd5b810190808051906020019092919050505091505090565b8073ffffffffffffffffffffffffffffffffffffffff166000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16141561058557600080fd5b61058e81610943565b50565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff166361544c9185856040518363ffffffff1660e01b81526004018083815260200182815260200192505050602060405180830381600087803b15801561063857600080fd5b505af115801561064c573d6000803e3d6000fd5b505050506040513d602081101561066257600080fd5b810190808051906020019092919050505091505092915050565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff166378b903376040518163ffffffff1660e01b815260040160206040518083038186803b1580156106e957600080fd5b505afa1580156106fd573d6000803e3d6000fd5b505050506040513d602081101561071357600080fd5b810190808051906020019092919050505091505090565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663a69df4b56040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561079857600080fd5b505af11580156107ac573d6000803e3d6000fd5b5050505050565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663f744b08985856040518363ffffffff1660e01b81526004018083815260200180602001828103825283818151815260200191508051906020019060200280838360005b83811015610850578082015181840152602081019050610835565b505050509050019350505050602060405180830381600087803b15801561087657600080fd5b505af115801561088a573d6000803e3d6000fd5b505050506040513d60208110156108a057600080fd5b810190808051906020019092919050505091505092915050565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663f83d08ba6040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561092857600080fd5b505af115801561093c573d6000803e3d6000fd5b5050505050565b806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505056fea265627a7a72315820e33ecd4eea8b7a726b69d0db7cbc6b26d018a34ebd1b88911b5506edc542777264736f6c634300050c0032";
+      "608060405234801561001057600080fd5b50604051610a4f380380610a4f8339818101604052602081101561003357600080fd5b8101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550506109bb806100946000396000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c806361544c911161006657806361544c91146101c757806378b9033714610217578063a69df4b514610239578063f744b08914610243578063f83d08ba1461031d57610093565b80630b0235be146100985780630d8e6e2c1461011b5780633659cfe6146101395780635c60da1b1461017d575b600080fd5b6100c4600480360360208110156100ae57600080fd5b8101908080359060200190929190505050610327565b6040518080602001828103825283818151815260200191508051906020019060200280838360005b838110156101075780820151818401526020810190506100ec565b505050509050019250505060405180910390f35b61012361047d565b6040518082815260200191505060405180910390f35b61017b6004803603602081101561014f57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505061052b565b005b610185610591565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101fd600480360360408110156101dd57600080fd5b8101908080359060200190929190803590602001909291905050506105b6565b604051808215151515815260200191505060405180910390f35b61021f61067c565b604051808215151515815260200191505060405180910390f35b61024161072a565b005b6103036004803603604081101561025957600080fd5b81019080803590602001909291908035906020019064010000000081111561028057600080fd5b82018360208201111561029257600080fd5b803590602001918460208302840111640100000000831117156102b457600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f8201169050808301925050505050505091929192905050506107b3565b604051808215151515815260200191505060405180910390f35b6103256108ba565b005b606060008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff16630b0235be846040518263ffffffff1660e01b81526004018082815260200191505060006040518083038186803b1580156103a057600080fd5b505afa1580156103b4573d6000803e3d6000fd5b505050506040513d6000823e3d601f19601f8201168201806040525060208110156103de57600080fd5b81019080805160405193929190846401000000008211156103fe57600080fd5b8382019150602082018581111561041457600080fd5b825186602082028301116401000000008211171561043157600080fd5b8083526020830192505050908051906020019060200280838360005b8381101561046857808201518184015260208101905061044d565b50505050905001604052505050915050919050565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff16630d8e6e2c6040518163ffffffff1660e01b815260040160206040518083038186803b1580156104ea57600080fd5b505afa1580156104fe573d6000803e3d6000fd5b505050506040513d602081101561051457600080fd5b810190808051906020019092919050505091505090565b8073ffffffffffffffffffffffffffffffffffffffff166000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16141561058557600080fd5b61058e81610943565b50565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff166361544c9185856040518363ffffffff1660e01b81526004018083815260200182815260200192505050602060405180830381600087803b15801561063857600080fd5b505af115801561064c573d6000803e3d6000fd5b505050506040513d602081101561066257600080fd5b810190808051906020019092919050505091505092915050565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff166378b903376040518163ffffffff1660e01b815260040160206040518083038186803b1580156106e957600080fd5b505afa1580156106fd573d6000803e3d6000fd5b505050506040513d602081101561071357600080fd5b810190808051906020019092919050505091505090565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663a69df4b56040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561079857600080fd5b505af11580156107ac573d6000803e3d6000fd5b5050505050565b6000806000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663f744b08985856040518363ffffffff1660e01b81526004018083815260200180602001828103825283818151815260200191508051906020019060200280838360005b83811015610850578082015181840152602081019050610835565b505050509050019350505050602060405180830381600087803b15801561087657600080fd5b505af115801561088a573d6000803e3d6000fd5b505050506040513d60208110156108a057600080fd5b810190808051906020019092919050505091505092915050565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663f83d08ba6040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561092857600080fd5b505af115801561093c573d6000803e3d6000fd5b5050505050565b806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505056fea265627a7a723158207fea7928b00fedaff98beadf2cfe879463becd0c33005dc70cf51f4d8ff0cb8c64736f6c63430005110032";
 
   public static final String FUNC_ADDPARTICIPANTS = "addParticipants";
 
@@ -73,7 +72,7 @@ public class PrivacyProxy extends Contract {
   public static final String FUNC_UPGRADETO = "upgradeTo";
 
   @Deprecated
-  protected PrivacyProxy(
+  protected OnChainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -82,7 +81,7 @@ public class PrivacyProxy extends Contract {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
-  protected PrivacyProxy(
+  protected OnChainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -91,7 +90,7 @@ public class PrivacyProxy extends Contract {
   }
 
   @Deprecated
-  protected PrivacyProxy(
+  protected OnChainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -100,7 +99,7 @@ public class PrivacyProxy extends Contract {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  protected PrivacyProxy(
+  protected OnChainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -150,13 +149,13 @@ public class PrivacyProxy extends Contract {
         });
   }
 
-  public RemoteFunctionCall<BigInteger> getVersion() {
+  public RemoteFunctionCall<byte[]> getVersion() {
     final Function function =
         new Function(
             FUNC_GETVERSION,
             Arrays.<Type>asList(),
-            Arrays.<TypeReference<?>>asList(new TypeReference<Int256>() {}));
-    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+            Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>() {}));
+    return executeRemoteCallSingleValueReturn(function, byte[].class);
   }
 
   public RemoteFunctionCall<String> implementation() {
@@ -202,42 +201,46 @@ public class PrivacyProxy extends Contract {
   }
 
   @Deprecated
-  public static PrivacyProxy load(
+  public static OnChainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new PrivacyProxy(contractAddress, web3j, credentials, gasPrice, gasLimit);
+    return new OnChainPrivacyGroupManagementProxy(
+        contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
-  public static PrivacyProxy load(
+  public static OnChainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new PrivacyProxy(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
+    return new OnChainPrivacyGroupManagementProxy(
+        contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  public static PrivacyProxy load(
+  public static OnChainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       ContractGasProvider contractGasProvider) {
-    return new PrivacyProxy(contractAddress, web3j, credentials, contractGasProvider);
+    return new OnChainPrivacyGroupManagementProxy(
+        contractAddress, web3j, credentials, contractGasProvider);
   }
 
-  public static PrivacyProxy load(
+  public static OnChainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       ContractGasProvider contractGasProvider) {
-    return new PrivacyProxy(contractAddress, web3j, transactionManager, contractGasProvider);
+    return new OnChainPrivacyGroupManagementProxy(
+        contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public static RemoteCall<PrivacyProxy> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       Credentials credentials,
       ContractGasProvider contractGasProvider,
@@ -246,10 +249,15 @@ public class PrivacyProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        PrivacyProxy.class, web3j, credentials, contractGasProvider, BINARY, encodedConstructor);
+        OnChainPrivacyGroupManagementProxy.class,
+        web3j,
+        credentials,
+        contractGasProvider,
+        BINARY,
+        encodedConstructor);
   }
 
-  public static RemoteCall<PrivacyProxy> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       TransactionManager transactionManager,
       ContractGasProvider contractGasProvider,
@@ -258,7 +266,7 @@ public class PrivacyProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        PrivacyProxy.class,
+        OnChainPrivacyGroupManagementProxy.class,
         web3j,
         transactionManager,
         contractGasProvider,
@@ -267,7 +275,7 @@ public class PrivacyProxy extends Contract {
   }
 
   @Deprecated
-  public static RemoteCall<PrivacyProxy> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       Credentials credentials,
       BigInteger gasPrice,
@@ -277,11 +285,17 @@ public class PrivacyProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        PrivacyProxy.class, web3j, credentials, gasPrice, gasLimit, BINARY, encodedConstructor);
+        OnChainPrivacyGroupManagementProxy.class,
+        web3j,
+        credentials,
+        gasPrice,
+        gasLimit,
+        BINARY,
+        encodedConstructor);
   }
 
   @Deprecated
-  public static RemoteCall<PrivacyProxy> deploy(
+  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
@@ -291,7 +305,7 @@ public class PrivacyProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        PrivacyProxy.class,
+        OnChainPrivacyGroupManagementProxy.class,
         web3j,
         transactionManager,
         gasPrice,

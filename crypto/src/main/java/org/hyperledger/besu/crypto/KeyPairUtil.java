@@ -61,7 +61,8 @@ public class KeyPairUtil {
     if (keyFile.exists()) {
 
       key = load(keyFile);
-      LOG.info("Loaded key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
+      LOG.info(
+          "Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
     } else {
       key = SECP256K1.KeyPair.generate();
       try {
@@ -70,7 +71,7 @@ public class KeyPairUtil {
         throw new IllegalArgumentException("Cannot store generated private key.");
       }
       LOG.info(
-          "Generated new key {} and stored it to {}",
+          "Generated new public key {} and stored it to {}",
           key.getPublicKey().toString(),
           keyFile.getAbsolutePath());
     }

@@ -46,4 +46,40 @@ public class ExperimentalEIPs {
       throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
     }
   }
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-basefee-max-change-denominator"},
+      arity = "1")
+  public static Long basefeeMaxChangeDenominator = 8L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-target-gas-used"},
+      arity = "1")
+  public static Long targetGasUsed = 10000000L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-slack-coefficient"},
+      arity = "1")
+  public static Long slackCoefficient = 2L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-decay-range"},
+      arity = "1")
+  public static Long decayRange = 1000000L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-initial-base-fee"},
+      arity = "1")
+  public static Long initialBasefee = 1000000000L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-per-tx-gas-limit"},
+      arity = "1")
+  public static Long perTxGasLimit = 8000000L;
 }

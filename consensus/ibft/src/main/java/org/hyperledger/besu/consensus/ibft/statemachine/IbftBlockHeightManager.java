@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.ibft.payload.Payload;
 import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
 import java.util.Collection;
@@ -139,15 +140,20 @@ public class IbftBlockHeightManager implements BlockHeightManager {
 
     startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
 
-    final RoundChange localRoundChange =
-        messageFactory.createRoundChange(
-            currentRound.getRoundIdentifier(), latestPreparedRoundArtifacts);
+    try {
+      final RoundChange localRoundChange =
+          messageFactory.createRoundChange(
+              currentRound.getRoundIdentifier(), latestPreparedRoundArtifacts);
+
+      // Its possible the locally created RoundChange triggers the transmission of a NewRound
+      // message - so it must be handled accordingly.
+      handleRoundChangePayload(localRoundChange);
+    } catch (final SecurityModuleException e) {
+      LOG.warn("Failed to create signed RoundChange message.", e);
+    }
+
     transmitter.multicastRoundChange(
         currentRound.getRoundIdentifier(), latestPreparedRoundArtifacts);
-
-    // Its possible the locally created RoundChange triggers the transmission of a NewRound
-    // message - so it must be handled accordingly.
-    handleRoundChangePayload(localRoundChange);
   }
 
   @Override
