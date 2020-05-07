@@ -21,9 +21,11 @@ import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContex
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
@@ -49,6 +51,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
@@ -445,5 +448,40 @@ public class IbftRoundTest {
         messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
 
     verify(blockImporter, times(1)).importBlock(any(), any(), any());
+  }
+
+  @Test
+  public void exceptionDuringNodeKeySigningDoesNotEscape() {
+    final int QUORUM_SIZE = 1;
+    final RoundState roundState = new RoundState(roundIdentifier, QUORUM_SIZE, messageValidator);
+    final NodeKey throwingNodeKey = mock(NodeKey.class);
+    final MessageFactory throwingMessageFactory = new MessageFactory(throwingNodeKey);
+    when(throwingNodeKey.sign(any())).thenThrow(new SecurityModuleException("Hsm is Offline"));
+
+    final IbftRound round =
+        new IbftRound(
+            roundState,
+            blockCreator,
+            protocolContext,
+            blockImporter,
+            subscribers,
+            throwingNodeKey,
+            throwingMessageFactory,
+            transmitter,
+            roundTimer);
+
+    round.handleProposalMessage(
+        messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
+
+    // Verify that no prepare message was constructed by the IbftRound
+    assertThat(
+            roundState
+                .constructPreparedRoundArtifacts()
+                .get()
+                .getPreparedCertificate()
+                .getPreparePayloads())
+        .isEmpty();
+
+    verifyNoInteractions(transmitter);
   }
 }

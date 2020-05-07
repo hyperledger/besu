@@ -66,7 +66,8 @@ public class EthGetWorkTest {
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0x0"
     };
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
@@ -87,7 +88,8 @@ public class EthGetWorkTest {
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x" + BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000)),
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0x7530"
     };
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);

@@ -49,18 +49,6 @@ public interface DefaultCommandValues {
   Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
   long DEFAULT_MAX_REFRESH_DELAY = 3600000;
   long DEFAULT_MIN_REFRESH_DELAY = 1;
-  String DOCKER_GENESIS_LOCATION = "/etc/besu/genesis.json";
-  String DOCKER_DATADIR_LOCATION = "/var/lib/besu";
-  String DOCKER_PLUGINSDIR_LOCATION = "/etc/besu/plugins";
-  String DOCKER_RPC_HTTP_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
-      "/etc/besu/rpc_http_auth_config.toml";
-  String DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
-      "/etc/besu/rpc_ws_auth_config.toml";
-  String DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION =
-      "/etc/besu/rpc_http_auth_public_key";
-  String DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION = "/etc/besu/rpc_ws_auth_public_key";
-  String DOCKER_PRIVACY_PUBLIC_KEY_FILE = "/etc/besu/privacy_public_key";
-  String DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION = "/etc/besu/permissions_config.toml";
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";

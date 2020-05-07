@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -186,7 +187,9 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       return new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
-
+    } catch (final SecurityModuleException ex) {
+      LOG.warn("Failed to create block signature.", ex);
+      throw ex;
     } catch (final CancellationException ex) {
       LOG.trace("Attempt to create block was interrupted.");
       throw ex;

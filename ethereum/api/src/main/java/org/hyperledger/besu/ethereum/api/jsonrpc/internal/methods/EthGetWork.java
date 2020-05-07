@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
@@ -54,7 +55,8 @@ public class EthGetWork implements JsonRpcMethod {
       final String[] result = {
         "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
-        rawResult.getTarget().toHexString()
+        rawResult.getTarget().toHexString(),
+        Quantity.create(rawResult.getBlockNumber())
       };
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } else {

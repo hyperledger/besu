@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
@@ -66,6 +67,8 @@ public class ProtocolSpecBuilder<T> {
   private TransactionPriceCalculator transactionPriceCalculator =
       TransactionPriceCalculator.frontier();
   private Optional<EIP1559> eip1559 = Optional.empty();
+  private TransactionGasBudgetCalculator gasBudgetCalculator =
+      TransactionGasBudgetCalculator.frontier();
 
   public ProtocolSpecBuilder<T> gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -257,6 +260,12 @@ public class ProtocolSpecBuilder<T> {
     return this;
   }
 
+  public ProtocolSpecBuilder<T> gasBudgetCalculator(
+      final TransactionGasBudgetCalculator gasBudgetCalculator) {
+    this.gasBudgetCalculator = gasBudgetCalculator;
+    return this;
+  }
+
   public ProtocolSpec<T> build(final ProtocolSchedule<T> protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -313,7 +322,8 @@ public class ProtocolSpecBuilder<T> {
             transactionReceiptFactory,
             blockReward,
             miningBeneficiaryCalculator,
-            skipZeroBlockRewards);
+            skipZeroBlockRewards,
+            gasBudgetCalculator);
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor = null;
     if (privacyParameters.isEnabled()) {
@@ -369,7 +379,8 @@ public class ProtocolSpecBuilder<T> {
         skipZeroBlockRewards,
         gasCalculator,
         transactionPriceCalculator,
-        eip1559);
+        eip1559,
+        gasBudgetCalculator);
   }
 
   public interface TransactionProcessorBuilder {
@@ -399,7 +410,8 @@ public class ProtocolSpecBuilder<T> {
         MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        boolean skipZeroBlockRewards);
+        boolean skipZeroBlockRewards,
+        TransactionGasBudgetCalculator gasBudgetCalculator);
   }
 
   public interface BlockValidatorBuilder<T> {
