@@ -20,6 +20,7 @@ import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
@@ -73,6 +74,7 @@ public abstract class PeerDiscoveryAgent {
   protected final NodeKey nodeKey;
   private final Bytes id;
   protected final DiscoveryConfiguration config;
+  protected final NetworkingConfiguration networkingConfig;
 
   /* This is the {@link org.hyperledger.besu.ethereum.p2p.Peer} object representing our local node.
    * This value is empty on construction, and is set after the discovery agent is started.
@@ -85,22 +87,23 @@ public abstract class PeerDiscoveryAgent {
 
   public PeerDiscoveryAgent(
       final NodeKey nodeKey,
-      final DiscoveryConfiguration config,
+      final NetworkingConfiguration networkingConfig,
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
-    checkArgument(config != null, "provided configuration cannot be null");
+    checkArgument(networkingConfig != null, "provided configuration cannot be null");
 
-    validateConfiguration(config);
+    validateConfiguration(networkingConfig.getDiscovery());
 
     this.peerPermissions = peerPermissions;
     this.natService = natService;
+    this.networkingConfig = networkingConfig;
+    config = networkingConfig.getDiscovery();
     this.bootstrapPeers =
         config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
 
-    this.config = config;
     this.nodeKey = nodeKey;
 
     id = nodeKey.getPublicKey().getEncodedBytes();
@@ -174,6 +177,7 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
+        .tableRefreshIntervalMs(networkingConfig.getPeerTableRefreshFrequency())
         .build();
   }
 
@@ -191,8 +195,8 @@ public abstract class PeerDiscoveryAgent {
     }
 
     // Notify the peer controller.
-    String host = sourceEndpoint.getHost();
-    int port = sourceEndpoint.getUdpPort();
+    final String host = sourceEndpoint.getHost();
+    final int port = sourceEndpoint.getUdpPort();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
             EnodeURL.builder()

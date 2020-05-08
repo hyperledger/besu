@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
@@ -30,7 +30,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.OptionalInt;
@@ -59,7 +58,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   public VertxPeerDiscoveryAgent(
       final Vertx vertx,
       final NodeKey nodeKey,
-      final DiscoveryConfiguration config,
+      final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem) {
@@ -94,7 +93,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   protected CompletableFuture<InetSocketAddress> listenForConnections() {
-    CompletableFuture<InetSocketAddress> future = new CompletableFuture<>();
+    final CompletableFuture<InetSocketAddress> future = new CompletableFuture<>();
     vertx
         .createDatagramSocket(new DatagramSocketOptions().setIpV6(NetworkUtility.isIPv6Available()))
         .listen(
@@ -109,7 +108,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       Throwable cause = listenResult.cause();
       LOG.error("An exception occurred when starting the peer discovery agent", cause);
 
-      if (cause instanceof BindException || cause instanceof SocketException) {
+      if (cause instanceof SocketException) {
         cause =
             new PeerDiscoveryServiceException(
                 String.format(
@@ -136,7 +135,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     socket.exceptionHandler(this::handleException);
     socket.handler(this::handlePacket);
 
-    InetSocketAddress address =
+    final InetSocketAddress address =
         new InetSocketAddress(socket.localAddress().host(), socket.localAddress().port());
     addressFuture.complete(address);
   }
@@ -144,7 +143,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
       final DiscoveryPeer peer, final Packet packet) {
-    CompletableFuture<Void> result = new CompletableFuture<>();
+    final CompletableFuture<Void> result = new CompletableFuture<>();
     socket.send(
         packet.encode(),
         peer.getEndpoint().getUdpPort(),

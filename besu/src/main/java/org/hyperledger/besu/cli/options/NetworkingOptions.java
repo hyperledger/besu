@@ -26,6 +26,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       "--Xp2p-initiate-connections-frequency";
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-check-maintained-connections-frequency";
+  private final String PEER_TABLE_REFRESH_FREQUENCY_FLAG = "--Xp2p-peer-table-refresh-frequency";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
@@ -47,6 +48,16 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private int checkMaintainedConnectionsFrequencySec =
       NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
 
+  @CommandLine.Option(
+      names = PEER_TABLE_REFRESH_FREQUENCY_FLAG,
+      hidden = true,
+      defaultValue = "30",
+      paramLabel = "<INTEGER>",
+      description =
+          "The frequency (in seconds) at which to refresh the peer table (default: ${DEFAULT-VALUE})")
+  private int peerTableRefreshFrequencySec =
+      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
+
   private NetworkingOptions() {}
 
   public static NetworkingOptions create() {
@@ -59,14 +70,16 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
         networkingConfig.getCheckMaintainedConnectionsFrequencySec();
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
+    cliOptions.peerTableRefreshFrequencySec = networkingConfig.getPeerTableRefreshFrequency();
     return cliOptions;
   }
 
   @Override
   public NetworkingConfiguration toDomainObject() {
-    NetworkingConfiguration config = NetworkingConfiguration.create();
+    final NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
+    config.setPeerTableRefreshFrequency(peerTableRefreshFrequencySec);
     return config;
   }
 
