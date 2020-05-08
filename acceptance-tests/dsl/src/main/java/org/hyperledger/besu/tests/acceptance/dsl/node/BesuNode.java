@@ -109,6 +109,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private final String natMethod;
   private Optional<Integer> exitCode = Optional.empty();
 
   public BesuNode(
@@ -132,6 +133,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
+      final String natMethod,
       final Optional<PrivacyParameters> privacyParameters,
       final Optional<String> runCommand)
       throws IOException {
@@ -174,6 +176,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         });
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    this.natMethod = natMethod;
     privacyParameters.ifPresent(this::setPrivacyParameters);
     LOG.info("Created BesuNode {}", this.toString());
   }
@@ -606,6 +609,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public boolean hasStaticNodes() {
     return staticNodes != null && !staticNodes.isEmpty();
+  }
+
+  public String getNatMethod() {
+    return natMethod;
   }
 
   public Optional<String> getRunCommand() {

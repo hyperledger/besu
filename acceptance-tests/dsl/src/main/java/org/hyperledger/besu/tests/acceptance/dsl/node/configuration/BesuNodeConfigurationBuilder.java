@@ -60,6 +60,7 @@ public class BesuNodeConfigurationBuilder {
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
+  private String natMethod = "NONE";
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private Optional<String> runCommand = Optional.empty();
 
@@ -268,6 +269,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder natMethod(final String natMethod) {
+    this.natMethod = natMethod;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = Optional.ofNullable(privacyParameters);
     return this;
@@ -300,6 +306,7 @@ public class BesuNodeConfigurationBuilder {
         plugins,
         extraCLIOptions,
         staticNodes,
+        natMethod,
         privacyParameters,
         runCommand);
   }
