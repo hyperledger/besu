@@ -259,7 +259,8 @@ public class PeerDiscoveryTestHelper {
       final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
       networkingConfiguration.setDiscovery(config);
 
-      return new MockPeerDiscoveryAgent(nodeKey, networkingConfiguration, peerPermissions, agents, natService);
+      return new MockPeerDiscoveryAgent(
+          nodeKey, networkingConfiguration, peerPermissions, agents, natService);
     }
   }
 }
