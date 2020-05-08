@@ -292,6 +292,17 @@ public class PeerDiscoveryController {
       return;
     }
 
+    //  Message from spoofed IP should be ignored
+    if (packet.getType().equals(PacketType.PING)
+        && packet
+        .getPacketData(PingPacketData.class)
+        .map(
+            pingPacketData ->
+                !sender.getEndpoint().getHost().equals(pingPacketData.getFrom().getHost()))
+        .orElse(false)) {
+      return;
+    }
+
     // Load the peer from the table, or use the instance that comes in.
     final Optional<DiscoveryPeer> maybeKnownPeer =
         peerTable.get(sender).filter(known -> known.discoveryEndpointMatches(sender));
