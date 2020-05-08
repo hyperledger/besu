@@ -68,7 +68,9 @@ public class BesuNodeConfigurationBuilder {
     // Check connections more frequently during acceptance tests to cut down on
     // intermittent failures due to the fact that we're running over a real network
     networkingConfiguration.setInitiateConnectionsFrequency(5);
-    networkingConfiguration.setPeerTableRefreshFrequency(5);
+    if (!bootnodeEligible) {
+      networkingConfiguration.setPeerTableRefreshFrequency(6);
+    }
   }
 
   public BesuNodeConfigurationBuilder name(final String name) {
