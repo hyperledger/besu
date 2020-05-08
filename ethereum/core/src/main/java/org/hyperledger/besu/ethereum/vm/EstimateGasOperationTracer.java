@@ -32,14 +32,17 @@ public class EstimateGasOperationTracer implements OperationTracer {
       final Optional<Gas> currentGasCost,
       final OperationTracer.ExecuteOperation executeOperation)
       throws ExceptionalHaltException {
-    executeOperation.execute();
-    if (frame.getCurrentOperation() instanceof SStoreOperation
-        && sStoreStipendNeeded.toLong() == 0) {
-      sStoreStipendNeeded =
-          ((SStoreOperation) frame.getCurrentOperation()).getMinumumGasRemaining();
-    }
-    if (maxDepth < frame.getMessageStackDepth()) {
-      maxDepth = frame.getMessageStackDepth();
+    try {
+      executeOperation.execute();
+    } finally {
+      if (frame.getCurrentOperation() instanceof SStoreOperation
+          && sStoreStipendNeeded.toLong() == 0) {
+        sStoreStipendNeeded =
+            ((SStoreOperation) frame.getCurrentOperation()).getMinumumGasRemaining();
+      }
+      if (maxDepth < frame.getMessageStackDepth()) {
+        maxDepth = frame.getMessageStackDepth();
+      }
     }
   }
 
