@@ -49,17 +49,6 @@ public class NodeSmartContractPermissioningAcceptanceTest
   }
 
   @Test
-  public void doesTheClusterStillHaveRulesWhenItRestarts() {
-    permissionedCluster.stop();
-    permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
-
-    // these should be there from the setUp()
-    permissionedNode.verify(nodeIsAllowed(bootnode));
-    permissionedNode.verify(nodeIsAllowed(allowedNode));
-    permissionedNode.verify(nodeIsAllowed(permissionedNode));
-  }
-
-  @Test
   public void permissionedNodeShouldPeerOnlyWithAllowedNodes() {
     bootnode.verify(net.awaitPeerCount(3));
     allowedNode.verify(net.awaitPeerCount(3));
