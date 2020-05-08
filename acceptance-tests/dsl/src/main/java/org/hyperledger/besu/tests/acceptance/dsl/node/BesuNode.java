@@ -553,6 +553,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public void setBootnodes(final List<URI> bootnodes) {
     this.bootnodes.clear();
     this.bootnodes.addAll(bootnodes);
+    if (!bootnodes.isEmpty()) {
+      networkingConfiguration.setPeerTableRefreshFrequency(6);
+    }
   }
 
   MiningParameters getMiningParameters() {
