@@ -295,11 +295,11 @@ public class PeerDiscoveryController {
     //  Message from spoofed IP should be ignored
     if (packet.getType().equals(PacketType.PING)
         && packet
-        .getPacketData(PingPacketData.class)
-        .map(
-            pingPacketData ->
-                !sender.getEndpoint().getHost().equals(pingPacketData.getFrom().getHost()))
-        .orElse(false)) {
+            .getPacketData(PingPacketData.class)
+            .map(
+                pingPacketData ->
+                    !sender.getEndpoint().getHost().equals(pingPacketData.getFrom().getHost()))
+            .orElse(false)) {
       return;
     }
 
