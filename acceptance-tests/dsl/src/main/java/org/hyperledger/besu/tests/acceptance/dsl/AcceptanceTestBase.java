@@ -132,8 +132,8 @@ public class AcceptanceTestBase {
 
   @After
   public void tearDownAcceptanceTestBase() {
-    cluster.close();
     reportMemory();
+    cluster.close();
   }
 
   public void reportMemory() {
@@ -212,7 +212,7 @@ public class AcceptanceTestBase {
                     + ".log";
             LOG.info("Test successful, deleting log at {}", pathname);
             File file = new File(pathname);
-            file.delete();
+//            file.delete();
           }
         }
       };
