@@ -69,13 +69,7 @@ public class ExperimentalEIPs {
       hidden = true,
       names = {"--Xeip1559-decay-range"},
       arity = "1")
-  public static Long decayRange = 800000L;
-
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-gas-increment-amount"},
-      arity = "1")
-  public static Long gasIncrementAmount = 10L;
+  public static Long decayRange = 1000000L;
 
   @Option(
       hidden = true,

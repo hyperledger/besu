@@ -21,6 +21,7 @@ import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Responsible for storing values against keys.
@@ -61,15 +62,34 @@ public interface KeyValueStorage extends Closeable {
   Optional<byte[]> get(byte[] key) throws StorageException;
 
   /**
+   * Returns a stream of all keys.
+   *
+   * @return A stream of all keys in storage.
+   * @throws StorageException problem encountered during the retrieval attempt.
+   */
+  Stream<byte[]> streamKeys() throws StorageException;
+
+  /**
    * Performs an evaluation against each key in the store, keeping the entries that pass, removing
    * those that fail.
    *
    * @param retainCondition predicate to evaluate each key against, unless the result is {@code
    *     null}, both the key and associated value must be removed.
    * @return the number of keys removed.
-   * @throws StorageException problem encountered when removing data.
+   * @throws StorageException problem encountered during the retrieval attempt.
    */
   long removeAllKeysUnless(Predicate<byte[]> retainCondition) throws StorageException;
+
+  /**
+   * Delete the value corresponding to the given key if a write lock can be instantly acquired on
+   * the underlying storage. Do nothing otherwise.
+   *
+   * @param key The key to delete.
+   * @throws StorageException any problem encountered during the deletion attempt.
+   * @return false if the lock on the underlying storage could not be instantly acquired, true
+   *     otherwise
+   */
+  boolean tryDelete(byte[] key) throws StorageException;
 
   /**
    * Performs an evaluation against each key in the store, returning the set of entries that pass.

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 
 import java.util.List;
 
@@ -35,13 +36,15 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final TransactionGasBudgetCalculator gasBudgetCalculator) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
-        skipZeroBlockRewards);
+        skipZeroBlockRewards,
+        gasBudgetCalculator);
   }
 
   @Override

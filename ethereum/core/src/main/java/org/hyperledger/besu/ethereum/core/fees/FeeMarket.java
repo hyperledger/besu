@@ -40,7 +40,6 @@ public interface FeeMarket {
         ExperimentalEIPs.targetGasUsed,
         ExperimentalEIPs.slackCoefficient,
         ExperimentalEIPs.decayRange,
-        ExperimentalEIPs.gasIncrementAmount,
         ExperimentalEIPs.initialBasefee,
         ExperimentalEIPs.perTxGasLimit);
   }

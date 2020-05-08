@@ -60,7 +60,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
 
   private ChannelFuture server;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
-  private final EventLoopGroup workers = new NioEventLoopGroup(1);
+  private final EventLoopGroup workers = new NioEventLoopGroup(10);
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
