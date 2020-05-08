@@ -301,6 +301,7 @@ public class PeerDiscoveryController {
                 pingPacketData ->
                     !sender.getEndpoint().getHost().equals(pingPacketData.getFrom().getHost()))
             .orElse(false)) {
+      LOG.debug("Rejecting ping attempt from IP {}", sender.getEndpoint().getHost());
       return;
     }
 
