@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO" monitorInterval="30">
   <Properties>
-    <Property name="root.log.level">INFO</Property>
+    <Property name="root.log.level">DEBUG</Property>
   </Properties>
 
   <Appenders>
