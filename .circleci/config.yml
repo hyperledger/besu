@@ -3,7 +3,7 @@ version: 2.1
 executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: circleci/openjdk:11.0.4-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -11,7 +11,7 @@ executors:
 
   besu_executor_large: # 4cpu, 8G ram, for acceptance testing
     docker:
-      - image: circleci/openjdk:11.0.4-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
     resource_class: large
     working_directory: ~/project
     environment:
@@ -19,7 +19,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: circleci/openjdk:11.0.4-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
     resource_class: xlarge
     working_directory: ~/project
     environment:
