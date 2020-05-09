@@ -202,7 +202,7 @@ public abstract class PeerDiscoveryAgent {
             EnodeURL.builder()
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
-                .listeningPort(tcpPort.orElse(port))
+                .listeningPort(tcpPort.orElse(sourceEndpoint.getTcpPort().orElse(port)))
                 .discoveryPort(port)
                 .build());
 
