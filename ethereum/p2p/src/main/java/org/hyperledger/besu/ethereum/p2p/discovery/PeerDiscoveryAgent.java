@@ -178,7 +178,8 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
-        .tableRefreshIntervalMs(TimeUnit.SECONDS.toMillis(networkingConfig.getPeerTableRefreshFrequency()))
+        .tableRefreshIntervalMs(
+            TimeUnit.SECONDS.toMillis(networkingConfig.getPeerTableRefreshFrequency()))
         .build();
   }
 
