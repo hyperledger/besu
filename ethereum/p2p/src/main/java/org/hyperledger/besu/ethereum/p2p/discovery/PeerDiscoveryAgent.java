@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -177,7 +178,7 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
-        .tableRefreshIntervalMs(networkingConfig.getPeerTableRefreshFrequency())
+        .tableRefreshIntervalMs(TimeUnit.SECONDS.toMillis(networkingConfig.getPeerTableRefreshFrequency()))
         .build();
   }
 
