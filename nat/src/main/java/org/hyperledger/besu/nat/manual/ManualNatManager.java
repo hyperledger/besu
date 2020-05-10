@@ -39,14 +39,12 @@ public class ManualNatManager extends AbstractNatManager {
 
   private final String advertisedHost;
   private final int p2pPort;
-  private final int rpcHttpPort;
   private final List<NatPortMapping> forwardedPorts;
 
-  public ManualNatManager(final String advertisedHost, final int p2pPort, final int rpcHttpPort) {
+  public ManualNatManager(final String advertisedHost, final int p2pPort) {
     super(NatMethod.MANUAL);
     this.advertisedHost = advertisedHost;
     this.p2pPort = p2pPort;
-    this.rpcHttpPort = rpcHttpPort;
     this.forwardedPorts = buildForwardedPorts();
   }
 
@@ -67,14 +65,7 @@ public class ManualNatManager extends AbstractNatManager {
               internalHost,
               advertisedHost,
               p2pPort,
-              p2pPort),
-          new NatPortMapping(
-              NatServiceType.JSON_RPC,
-              NetworkProtocol.TCP,
-              internalHost,
-              advertisedHost,
-              rpcHttpPort,
-              rpcHttpPort));
+              p2pPort));
     } catch (Exception e) {
       LOG.warn("Failed to create forwarded port list", e);
     }

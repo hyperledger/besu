@@ -36,13 +36,12 @@ public class ManualNatManagerTest {
 
   private final String advertisedHost = "99.45.69.12";
   private final int p2pPort = 1;
-  private final int rpcHttpPort = 2;
 
   private ManualNatManager natManager;
 
   @Before
   public void initialize() throws NatInitializationException {
-    natManager = new ManualNatManager(advertisedHost, p2pPort, rpcHttpPort);
+    natManager = new ManualNatManager(advertisedHost, p2pPort);
     natManager.start();
   }
 
@@ -74,25 +73,6 @@ public class ManualNatManagerTest {
             advertisedHost,
             p2pPort,
             p2pPort);
-
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
-  }
-
-  @Test
-  public void assertThatMappingForJsonRpcWorks() throws UnknownHostException {
-    final String internalHost = InetAddress.getLocalHost().getHostAddress();
-
-    final NatPortMapping mapping =
-        natManager.getPortMapping(NatServiceType.JSON_RPC, NetworkProtocol.TCP);
-
-    final NatPortMapping expectedMapping =
-        new NatPortMapping(
-            NatServiceType.JSON_RPC,
-            NetworkProtocol.TCP,
-            internalHost,
-            advertisedHost,
-            rpcHttpPort,
-            rpcHttpPort);
 
     assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
   }
