@@ -1338,6 +1338,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 ensureAllNodesAreInWhitelist(
                     staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
     metricsConfiguration = metricsConfiguration();
+
+    logger.info("Security Module: {}", securityModuleName);
     return this;
   }
 
