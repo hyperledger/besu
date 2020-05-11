@@ -23,7 +23,7 @@ A fix for this issue is being actively worked on.
 
 ## Error full syncing with pruning
 
-- When pruning is enabled, the a StorageException orrurs. [\#888](https://github.com/hyperledger/besu/issues/888)
+- When pruning is enabled, a StorageException orrurs. [\#888](https://github.com/hyperledger/besu/issues/888)
 The associated error is `Sync Writes has to enable WAL`.
 
 A fix for this issue is being actively worked on. In the meantime do not enable pruning.
