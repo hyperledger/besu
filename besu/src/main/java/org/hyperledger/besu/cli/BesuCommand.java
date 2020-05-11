@@ -1308,6 +1308,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--sync-mode",
         !SyncMode.FAST.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
+
+    if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE) && nodePrivateKeyFile != null) {
+      logger.warn(
+          "--node-private-key-file will have no effect unless --security-module={} is defined on the command line.",
+          DEFAULT_SECURITY_MODULE);
+    }
   }
 
   private BesuCommand configure() throws Exception {
@@ -1335,6 +1341,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 ensureAllNodesAreInWhitelist(
                     staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
     metricsConfiguration = metricsConfiguration();
+
+    logger.info("Security Module: {}", securityModuleName);
     return this;
   }
 

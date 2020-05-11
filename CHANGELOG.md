@@ -26,7 +26,6 @@ permissions on the directory allow other users and groups to r/w. Ideally this s
 
 ### Bug Fixes
 
-- MerkleTrieException when pruning should no longer occur. Using `--pruning-enabled=true` will no longer accidentaly delete keys in certain edge cases. [\#760](https://github.com/hyperledger/besu/pull/760) fixes [\#580](https://github.com/hyperledger/besu/issues/580).
 - Full help not displayed unless explicitly requested. [\#437](https://github.com/hyperledger/besu/pull/437)
 - Compatibility with undocumented Geth `eth_subscribe` fields. [\#654](https://github.com/hyperledger/besu/pull/654)
 - Current block number included as part of `eth_getWork` response. [\#849](https://github.com/hyperledger/besu/pull/849) 
@@ -39,6 +38,7 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 
 - [`Intrinsic gas exceeds gas limit` returned when calling `delete mapping[addr]` or `mapping[addr] = 0`](KNOWN_ISSUES.md#intrinsic-gas-exceeds-gas-limit)
 - [Eth/65 not backwards compatible](KNOWN_ISSUES.md#eth65-not-backwards-compatible)
+- [Error full syncing with pruning](KNOWN_ISSUES.md#error-full-syncing-with-pruning)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Bootnodes must be validators when using onchain permissioning](KNOWN_ISSUES.md#bootnodes-must-be-validators-when-using-onchain-permissioning)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
