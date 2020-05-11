@@ -119,7 +119,7 @@ public class EthEstimateGas implements JsonRpcMethod {
       final JsonRpcRequestContext request,
       final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
     JsonRpcError jsonRpcError = null;
-    if (validationResult != null) {
+    if (validationResult != null && !validationResult.isValid()) {
       jsonRpcError =
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason());
