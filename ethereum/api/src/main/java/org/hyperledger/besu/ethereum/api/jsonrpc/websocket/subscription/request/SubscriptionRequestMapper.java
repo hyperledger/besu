@@ -114,7 +114,7 @@ public class SubscriptionRequestMapper {
           throw new InvalidSubscriptionRequestException(
               "Invalid subscribe request. Invalid private subscription type.");
       }
-    } catch (InvalidSubscriptionRequestException e) {
+    } catch (final InvalidSubscriptionRequestException e) {
       throw e;
     } catch (final Exception e) {
       throw new InvalidSubscriptionRequestException("Error parsing subscribe request", e);

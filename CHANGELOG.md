@@ -11,6 +11,12 @@ What this means for you:
 permissions on the directory allow other users and groups to r/w. Ideally this should be set to
 `besu:besu` and `orion:orion` as the owners. 
 
+## 1.4.6
+
+### Additions and Improvements
+
+- Implemented WebSocket logs subscription for private contracts (`priv_subscribe`/`priv_unsubscribe`) [#762]
+
 ## 1.4.5
 
 ### Additions and Improvements
@@ -23,7 +29,6 @@ permissions on the directory allow other users and groups to r/w. Ideally this s
   [\#806](https://github.com/hyperledger/besu/pull/806) and [#845](https://github.com/hyperledger/besu/pull/845)
 - Native libraries for secp256k1 and Altbn128 encryption are enabled by default.  To disable these libraries use 
   `--Xsecp256k1-native-enabled=false` and `--Xaltbn128-native-enabled=false`. [\#775](https://github.com/hyperledger/besu/pull/775)
-- Implemented WebSocket logs subscription for private contracts (`priv_subscribe`/`priv_unsubscribe`) [#762]
 
 ### Bug Fixes
 
