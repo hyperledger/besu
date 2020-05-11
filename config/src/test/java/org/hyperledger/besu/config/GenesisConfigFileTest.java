@@ -299,6 +299,20 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
+    // petersburg node
+    final GenesisConfigFile config = GenesisConfigFile.development();
+
+    assertThat(config.getConfigOptions().getConstantinopleFixBlockNumber()).hasValue(0);
+
+    // constantinopleFix node
+    final Map<String, String> override = new HashMap<>();
+    override.put("constantinopleFixBlock", "1000");
+
+    assertThat(config.getConfigOptions(override).getConstantinopleFixBlockNumber()).isEmpty();
+  }
+
+  @Test
   public void shouldLoadForksInSortedOrder() throws IOException {
     final ObjectNode configNode =
         new ObjectMapper()
