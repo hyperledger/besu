@@ -187,7 +187,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .ethNetworkConfig(ethNetworkConfig)
             .discovery(node.isDiscoveryEnabled())
             .p2pAdvertisedHost(node.getHostName())
-            .p2pListenPort(0)
+            .p2pListenPort(node.getP2pListenPort())
             .maxPeers(25)
             .networkingConfiguration(node.getNetworkingConfiguration())
             .jsonRpcConfiguration(node.jsonRpcConfiguration())

@@ -56,11 +56,13 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     return new Cluster(clusterConfiguration, net);
   }
 
-  protected Node permissionedNode(final String name, final Node... localConfigWhiteListedNodes) {
+  protected Node permissionedNode(
+      final String name, final boolean staticPorts, final Node... localConfigWhiteListedNodes) {
     PermissionedNodeBuilder permissionedNodeBuilder =
         this.permissionedNodeBuilder
             .name(name)
             .genesisFile(GENESIS_FILE)
+            .staticP2pPort(staticPorts)
             .nodesContractEnabled(CONTRACT_ADDRESS);
     if (localConfigWhiteListedNodes != null && localConfigWhiteListedNodes.length > 0) {
       permissionedNodeBuilder.nodesPermittedInConfig(localConfigWhiteListedNodes);
@@ -68,17 +70,29 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     return permissionedNodeBuilder.build();
   }
 
+  protected Node permissionedNode(final String name, final Node... localConfigWhiteListedNodes) {
+    return permissionedNode(name, false, localConfigWhiteListedNodes);
+  }
+
   protected Node bootnode(final String name) {
+    return bootnode(name, false);
+  }
+
+  protected Node bootnode(final String name, final boolean staticP2pPortEnabled) {
     try {
-      return besu.createCustomGenesisNode(name, GENESIS_FILE, true);
+      return besu.createCustomGenesisNode(name, GENESIS_FILE, true, staticP2pPortEnabled);
     } catch (IOException e) {
       throw new RuntimeException("Error creating node", e);
     }
   }
 
   protected Node node(final String name) {
+    return node(name, false);
+  }
+
+  protected Node node(final String name, final boolean staticP2pPortEnabled) {
     try {
-      return besu.createCustomGenesisNode(name, GENESIS_FILE, false);
+      return besu.createCustomGenesisNode(name, GENESIS_FILE, false, staticP2pPortEnabled);
     } catch (IOException e) {
       throw new RuntimeException("Error creating node", e);
     }
@@ -86,7 +100,7 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
 
   protected Node miner(final String name) {
     try {
-      return besu.createCustomGenesisNode(name, GENESIS_FILE, false, true);
+      return besu.createCustomGenesisNode(name, GENESIS_FILE, false, true, false);
     } catch (IOException e) {
       throw new RuntimeException("Error creating node", e);
     }

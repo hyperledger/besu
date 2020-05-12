@@ -40,6 +40,7 @@ public class BesuNodeConfiguration {
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
+  private final boolean staticP2pPort;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
@@ -64,6 +65,7 @@ public class BesuNodeConfiguration {
       final boolean devMode,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final boolean staticP2pPort,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -86,6 +88,7 @@ public class BesuNodeConfiguration {
     this.devMode = devMode;
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
+    this.staticP2pPort = staticP2pPort;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -145,6 +148,10 @@ public class BesuNodeConfiguration {
 
   public boolean isP2pEnabled() {
     return p2pEnabled;
+  }
+
+  public boolean getStaticP2pPort() {
+    return this.staticP2pPort;
   }
 
   public NetworkingConfiguration getNetworkingConfiguration() {

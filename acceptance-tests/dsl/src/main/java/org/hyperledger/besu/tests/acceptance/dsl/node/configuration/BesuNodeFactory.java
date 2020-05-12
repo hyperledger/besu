@@ -59,6 +59,7 @@ public class BesuNodeFactory {
         config.isDevMode(),
         config.getGenesisConfigProvider(),
         config.isP2pEnabled(),
+        config.getStaticP2pPort(),
         config.getNetworkingConfiguration(),
         config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
@@ -281,15 +282,25 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createCustomGenesisNode(
+      final String name,
+      final String genesisPath,
+      final boolean canBeBootnode,
+      final boolean staticP2pPortEnabled)
+      throws IOException {
+    return createCustomGenesisNode(name, genesisPath, canBeBootnode, false, staticP2pPortEnabled);
+  }
+
+  public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
-    return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
+    return createCustomGenesisNode(name, genesisPath, canBeBootnode, false, false);
   }
 
   public BesuNode createCustomGenesisNode(
       final String name,
       final String genesisPath,
       final boolean canBeBootnode,
-      final boolean mining)
+      final boolean mining,
+      final boolean staticP2pPortEnabled)
       throws IOException {
     final String genesisFile = genesis.readGenesisFile(genesisPath);
     final BesuNodeConfigurationBuilder builder =
@@ -303,6 +314,10 @@ public class BesuNodeFactory {
 
     if (mining) {
       builder.miningEnabled();
+    }
+
+    if (staticP2pPortEnabled) {
+      builder.staticP2pPortEnabled();
     }
 
     return create(builder.build());

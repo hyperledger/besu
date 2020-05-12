@@ -51,6 +51,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
+  private boolean staticP2pPort = false;
   private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
@@ -231,6 +232,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder staticP2pPortEnabled() {
+    this.staticP2pPort = true;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
     this.discoveryEnabled = discoveryEnabled;
     return this;
@@ -291,6 +297,7 @@ public class BesuNodeConfigurationBuilder {
         devMode,
         genesisConfigProvider,
         p2pEnabled,
+        staticP2pPort,
         networkingConfiguration,
         discoveryEnabled,
         bootnodeEligible,

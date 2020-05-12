@@ -72,6 +72,7 @@ public class PermissionedNodeBuilder {
 
   private List<String> staticNodes = new ArrayList<>();
   private boolean mining = true;
+  private boolean staticP2pPort = false;
 
   public PermissionedNodeBuilder name(final String name) {
     this.name = name;
@@ -83,6 +84,11 @@ public class PermissionedNodeBuilder {
     if (this.localConfigPermittedNodes == null) {
       this.localConfigPermittedNodes = new ArrayList<>();
     }
+    return this;
+  }
+
+  public PermissionedNodeBuilder staticP2pPort(final boolean staticP2pPort) {
+    this.staticP2pPort = staticP2pPort;
     return this;
   }
 
@@ -182,6 +188,10 @@ public class PermissionedNodeBuilder {
 
     if (mining) {
       builder.miningEnabled();
+    }
+
+    if (staticP2pPort) {
+      builder.staticP2pPortEnabled();
     }
 
     if (!staticNodes.isEmpty()) {

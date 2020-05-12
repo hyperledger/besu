@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,6 +84,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final KeyPair keyPair;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
+  private final int p2pListenPort;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
 
@@ -123,6 +125,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean devMode,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final boolean staticP2pPort,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -133,8 +136,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final Optional<PrivacyParameters> privacyParameters,
-      final Optional<String> runCommand)
-      throws IOException {
+      final Optional<String> runCommand) {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
         path -> {
@@ -154,6 +156,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
     this.p2pEnabled = p2pEnabled;
+    this.p2pListenPort = selectP2pListenPort(staticP2pPort);
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -298,6 +301,26 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     } else {
       return Optional.empty();
     }
+  }
+
+  public int selectP2pListenPort(final boolean staticP2pPort) {
+    return staticP2pPort ? getRandomPort() : 0;
+  }
+
+  int getP2pListenPort() {
+    return p2pListenPort;
+  }
+
+  private int getRandomPort() {
+    int port = 0;
+    try {
+      ServerSocket socket = new ServerSocket(0);
+      port = socket.getLocalPort();
+      socket.close();
+    } catch (final Exception e) {
+
+    }
+    return port;
   }
 
   @Override

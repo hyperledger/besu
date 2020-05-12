@@ -29,10 +29,10 @@ public class NodeSmartContractPermissioningAcceptanceTest
 
   @Before
   public void setUp() {
-    bootnode = bootnode("bootnode");
-    forbiddenNode = node("forbidden-node");
-    allowedNode = node("allowed-node");
-    permissionedNode = permissionedNode("permissioned-node");
+    bootnode = bootnode("bootnode", true);
+    forbiddenNode = node("forbidden-node", true);
+    allowedNode = node("allowed-node", true);
+    permissionedNode = permissionedNode("permissioned-node", true);
 
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
 
@@ -45,6 +45,17 @@ public class NodeSmartContractPermissioningAcceptanceTest
     permissionedNode.verify(nodeIsAllowed(allowedNode));
 
     permissionedNode.execute(allowNode(permissionedNode));
+    permissionedNode.verify(nodeIsAllowed(permissionedNode));
+  }
+
+  @Test
+  public void onChainPermissioningWhitelistShouldPersistAcrossRestarts() {
+    permissionedCluster.stop();
+    permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
+
+    // these should be there from the setUp()
+    permissionedNode.verify(nodeIsAllowed(bootnode));
+    permissionedNode.verify(nodeIsAllowed(allowedNode));
     permissionedNode.verify(nodeIsAllowed(permissionedNode));
   }
 

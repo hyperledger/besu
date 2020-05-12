@@ -97,6 +97,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.isDevMode(),
             besuConfig.getGenesisConfigProvider(),
             besuConfig.isP2pEnabled(),
+            besuConfig.getStaticP2pPort(),
             besuConfig.getNetworkingConfiguration(),
             besuConfig.isDiscoveryEnabled(),
             besuConfig.isBootnodeEligible(),
