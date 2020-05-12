@@ -15,11 +15,15 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Comparator.comparing;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
 
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -130,11 +134,11 @@ public class PendingTransactions {
   public boolean addRemoteTransaction(final Transaction transaction) {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
-    final boolean transactionAdded = addTransaction(transactionInfo);
-    if (transactionAdded) {
+    final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
+    if (transactionAddedStatus.equals(ADDED)) {
       remoteTransactionAddedCounter.inc();
     }
-    return transactionAdded;
+    return transactionAddedStatus.equals(ADDED);
   }
 
   boolean addTransactionHash(final Hash transactionHash) {
@@ -149,10 +153,10 @@ public class PendingTransactions {
   }
 
   @VisibleForTesting
-  public boolean addLocalTransaction(final Transaction transaction) {
-    final boolean transactionAdded =
+  public TransactionAddedStatus addLocalTransaction(final Transaction transaction) {
+    final TransactionAddedStatus transactionAdded =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
-    if (transactionAdded) {
+    if (transactionAdded.equals(ADDED)) {
       localTransactionAddedCounter.inc();
     }
     return transactionAdded;
@@ -230,15 +234,17 @@ public class PendingTransactions {
             .map(TransactionInfo::getTransaction));
   }
 
-  private boolean addTransaction(final TransactionInfo transactionInfo) {
+  private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
     Optional<Transaction> droppedTransaction = Optional.empty();
     synchronized (pendingTransactions) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
-        return false;
+        return ALREADY_KNOWN;
       }
 
-      if (!addTransactionForSenderAndNonce(transactionInfo)) {
-        return false;
+      final TransactionAddedStatus transactionAddedStatus =
+          addTransactionForSenderAndNonce(transactionInfo);
+      if (!transactionAddedStatus.equals(ADDED)) {
+        return transactionAddedStatus;
       }
       prioritizedTransactions.add(transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
@@ -252,20 +258,21 @@ public class PendingTransactions {
     }
     notifyTransactionAdded(transactionInfo.getTransaction());
     droppedTransaction.ifPresent(this::notifyTransactionDropped);
-    return true;
+    return ADDED;
   }
 
-  private boolean addTransactionForSenderAndNonce(final TransactionInfo transactionInfo) {
+  private TransactionAddedStatus addTransactionForSenderAndNonce(
+      final TransactionInfo transactionInfo) {
     final TransactionInfo existingTransaction =
         getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
       if (!shouldReplace(existingTransaction, transactionInfo)) {
-        return false;
+        return REJECTED_UNDERPRICED_REPLACEMENT;
       }
       removeTransaction(existingTransaction.getTransaction());
     }
     trackTransactionBySenderAndNonce(transactionInfo);
-    return true;
+    return ADDED;
   }
 
   private void trackTransactionBySenderAndNonce(final TransactionInfo transactionInfo) {
@@ -434,5 +441,21 @@ public class PendingTransactions {
   public interface TransactionSelector {
 
     TransactionSelectionResult evaluateTransaction(final Transaction transaction);
+  }
+
+  public enum TransactionAddedStatus {
+    ALREADY_KNOWN(TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN),
+    REJECTED_UNDERPRICED_REPLACEMENT(TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED),
+    ADDED(null);
+
+    private final TransactionInvalidReason invalidReason;
+
+    TransactionAddedStatus(final TransactionInvalidReason invalidReason) {
+      this.invalidReason = invalidReason;
+    }
+
+    public TransactionInvalidReason getInvalidReason() {
+      return invalidReason;
+    }
   }
 }
