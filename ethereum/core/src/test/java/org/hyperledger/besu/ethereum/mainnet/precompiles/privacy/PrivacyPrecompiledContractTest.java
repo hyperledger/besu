@@ -78,7 +78,7 @@ public class PrivacyPrecompiledContractTest {
     final List<Log> logs = new ArrayList<>();
     final PrivateTransactionProcessor.Result result =
         PrivateTransactionProcessor.Result.successful(
-            logs, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
+            logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),
             nullable(WorldUpdater.class),
