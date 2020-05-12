@@ -15,11 +15,14 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.util.function.Function;
+import javax.inject.Named;
 
 import dagger.Module;
 import dagger.Provides;
@@ -29,13 +32,9 @@ import dagger.Provides;
 public class ProtocolModule {
 
   @Provides
-  Function<Integer, EVM> provideEvmAtBlock(final ProtocolSchedule<?> protocolSchedule) {
-    return blockNum -> protocolSchedule.getByBlockNumber(blockNum).getEvm();
+  Function<Integer, ProtocolSpec<?>> getProtocolSpec(
+      final ProtocolSchedule<?> protocolSchedule) {
+    return protocolSchedule::getByBlockNumber;
   }
 
-  @Provides
-  Function<Integer, GasCalculator> provideGasCalculatorAtBlock(
-      final ProtocolSchedule<?> protocolSchedule) {
-    return blockNum -> protocolSchedule.getByBlockNumber(blockNum).getGasCalculator();
-  }
 }
