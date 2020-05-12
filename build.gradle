@@ -462,14 +462,18 @@ apply plugin: 'application'
 mainClassName = 'org.hyperledger.besu.Besu'
 applicationDefaultJvmArgs = [
   '-Dvertx.disableFileCPResolving=true',
+  // BESU_HOME is replaced by a doFirst block in the run task.
   '-Dbesu.home=BESU_HOME',
   // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
   '-Dlog4j.shutdownHookEnabled=false',
+  // Suppress Java JPMS warnings.  Document the reason for each suppression.
   // Bouncy Castle needs access to sun.security.provider, which is not open by default.
-  // This suppresses an illegal access warning.
   '--add-opens',
-  'java.base/sun.security.provider=ALL-UNNAMED'
+  'java.base/sun.security.provider=ALL-UNNAMED',
+  // Jackson likes to access java.util.OptionalLong's constructor
+  '--add-opens',
+  'java.base/java.util=ALL-UNNAMED'
 ]
 
 run {

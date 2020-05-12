@@ -23,15 +23,10 @@ A fix for this issue is being actively worked on.
 
 ## Error full syncing with pruning
 
-- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#580](https://github.com/hyperledger/besu/issues/580)
-The associated error is `Unable to load trie node value for hash` and is caused by the combination of
-full sync and pruning.
+- When pruning is enabled, a StorageException orrurs. [\#888](https://github.com/hyperledger/besu/issues/888)
+The associated error is `Sync Writes has to enable WAL`.
 
-Workarounds:
-1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
-2. If the `MerkleTrieException` occurs, delete the database and resync.
-
-A fix for this issue is being actively worked on.
+A fix for this issue is being actively worked on. In the meantime do not enable pruning.
 
 ## Fast sync when running Besu on cloud providers  
 

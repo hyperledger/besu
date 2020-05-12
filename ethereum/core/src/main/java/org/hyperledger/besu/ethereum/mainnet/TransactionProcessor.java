@@ -105,6 +105,14 @@ public interface TransactionProcessor {
      * @return the revert reason.
      */
     Optional<Bytes> getRevertReason();
+
+    /**
+     * Returns the estimate gas used by the transaction Difference between the gas limit and the
+     * remaining gas
+     *
+     * @return the estimate gas used
+     */
+    long getEstimateGasUsedByTransaction();
   }
 
   /**
@@ -139,6 +147,45 @@ public interface TransactionProcessor {
         transaction,
         miningBeneficiary,
         OperationTracer.NO_TRACING,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams);
+  }
+
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams Validation parameters that will be used by the {@link
+   *     TransactionValidator}
+   * @param operationTracer operation tracer {@link OperationTracer}
+   * @return the transaction result
+   * @see TransactionValidator
+   * @see TransactionValidationParams
+   */
+  default Result processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams);

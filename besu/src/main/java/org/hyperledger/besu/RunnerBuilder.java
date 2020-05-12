@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.PrivateWebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscriptionService;
@@ -50,6 +51,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.PendingTransactionSubscriptionService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscriptionService;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -84,6 +86,7 @@ import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningControl
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
@@ -523,7 +526,11 @@ public class RunnerBuilder {
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
 
-      createLogsSubscriptionService(context.getBlockchain(), subscriptionManager);
+      createLogsSubscriptionService(
+          context.getBlockchain(),
+          context.getWorldStateArchive(),
+          subscriptionManager,
+          privacyParameters);
 
       createNewBlockHeadersSubscriptionService(
           context.getBlockchain(), blockchainQueries, subscriptionManager);
@@ -533,7 +540,14 @@ public class RunnerBuilder {
       webSocketService =
           Optional.of(
               createWebsocketService(
-                  vertx, webSocketConfiguration, subscriptionManager, webSocketsJsonRpcMethods));
+                  vertx,
+                  webSocketConfiguration,
+                  subscriptionManager,
+                  webSocketsJsonRpcMethods,
+                  privacyParameters,
+                  protocolSchedule,
+                  blockchainQueries,
+                  transactionPool));
     }
 
     Optional<MetricsService> metricsService = Optional.empty();
@@ -698,11 +712,31 @@ public class RunnerBuilder {
   }
 
   private void createLogsSubscriptionService(
-      final Blockchain blockchain, final SubscriptionManager subscriptionManager) {
-    final LogsSubscriptionService logsSubscriptionService =
-        new LogsSubscriptionService(subscriptionManager);
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final SubscriptionManager subscriptionManager,
+      final PrivacyParameters privacyParameters) {
 
+    Optional<PrivacyQueries> privacyQueries = Optional.empty();
+    if (privacyParameters.isEnabled()) {
+      final BlockchainQueries blockchainQueries =
+          new BlockchainQueries(blockchain, worldStateArchive);
+      privacyQueries =
+          Optional.of(
+              new PrivacyQueries(
+                  blockchainQueries, privacyParameters.getPrivateWorldStateReader()));
+    }
+
+    final LogsSubscriptionService logsSubscriptionService =
+        new LogsSubscriptionService(subscriptionManager, privacyQueries);
+
+    // monitoring public logs
     blockchain.observeLogs(logsSubscriptionService);
+
+    // monitoring private logs
+    if (privacyParameters.isEnabled()) {
+      blockchain.observeBlockAdded(logsSubscriptionService::checkPrivateLogs);
+    }
   }
 
   private void createSyncingSubscriptionService(
@@ -724,9 +758,27 @@ public class RunnerBuilder {
       final Vertx vertx,
       final WebSocketConfiguration configuration,
       final SubscriptionManager subscriptionManager,
-      final Map<String, JsonRpcMethod> jsonRpcMethods) {
+      final Map<String, JsonRpcMethod> jsonRpcMethods,
+      final PrivacyParameters privacyParameters,
+      final ProtocolSchedule<?> protocolSchedule,
+      final BlockchainQueries blockchainQueries,
+      final TransactionPool transactionPool) {
+
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
+
+    if (privacyParameters.isEnabled()) {
+      final PrivateWebSocketMethodsFactory privateWebSocketMethodsFactory =
+          new PrivateWebSocketMethodsFactory(
+              privacyParameters,
+              subscriptionManager,
+              protocolSchedule,
+              blockchainQueries,
+              transactionPool);
+
+      privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
+    }
+
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(vertx, websocketMethodsFactory.methods());
 
