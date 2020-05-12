@@ -473,7 +473,7 @@ applicationDefaultJvmArgs = [
   'java.base/sun.security.provider=ALL-UNNAMED',
   // Jackson likes to access java.util.OptionalLong's constructor
   '--add-opens',
-  'java.util/sun.security.provider=ALL-UNNAMED'
+  'java.base/java.util=ALL-UNNAMED'
 ]
 
 run {
