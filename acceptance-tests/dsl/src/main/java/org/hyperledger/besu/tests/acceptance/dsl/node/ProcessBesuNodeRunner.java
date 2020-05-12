@@ -92,7 +92,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add(node.p2pListenHost());
 
     params.add("--p2p-port");
-    params.add("0");
+    params.add(String.valueOf(node.getP2pListenPort()));
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
