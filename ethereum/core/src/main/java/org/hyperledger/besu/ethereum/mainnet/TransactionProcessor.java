@@ -106,6 +106,12 @@ public interface TransactionProcessor {
      */
     Optional<Bytes> getRevertReason();
 
+    /**
+     * Returns the estimate gas used by the transaction Difference between the gas limit and the
+     * remaining gas
+     *
+     * @return the estimate gas used
+     */
     long getEstimateGasUsedByTransaction();
   }
 

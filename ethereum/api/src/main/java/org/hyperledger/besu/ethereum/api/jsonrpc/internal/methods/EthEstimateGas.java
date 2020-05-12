@@ -36,6 +36,8 @@ import java.util.function.Function;
 
 public class EthEstimateGas implements JsonRpcMethod {
 
+  private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
+
   private final BlockchainQueries blockchainQueries;
   private final TransactionSimulator transactionSimulator;
 
@@ -108,7 +110,8 @@ public class EthEstimateGas implements JsonRpcMethod {
   private long processEstimateGas(
       final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
     // no more than 63/64s of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier = Math.pow(65D / 64D, operationTracer.getMaxDepth());
+    final double subCallMultiplier =
+        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
     // and minimum gas remaining is necessary for some operation (additionalStipend)
     final long gasStipend = operationTracer.getStipendNeeded().toLong();
     final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();

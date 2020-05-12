@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.vm.operations.SStoreOperation;
 
 import java.util.Optional;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,27 +45,27 @@ public class EstimateGasOperationTracerTest {
 
     final ExecuteOperation noExecutionOperation = mock(ExecuteOperation.class);
 
-    Assertions.assertThat(operationTracer.getMaxDepth()).isEqualTo(0);
+    assertThat(operationTracer.getMaxDepth()).isEqualTo(0);
 
     final MessageFrame firstFrame = messageFrameTestFixture.depth(0).build();
     operationTracer.traceExecution(firstFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getMaxDepth()).isEqualTo(0);
+    assertThat(operationTracer.getMaxDepth()).isEqualTo(0);
 
     final MessageFrame secondFrame = messageFrameTestFixture.depth(1).build();
     operationTracer.traceExecution(secondFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getMaxDepth()).isEqualTo(1);
+    assertThat(operationTracer.getMaxDepth()).isEqualTo(1);
 
     final MessageFrame thirdFrame = messageFrameTestFixture.depth(1).build();
     operationTracer.traceExecution(thirdFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getMaxDepth()).isEqualTo(1);
+    assertThat(operationTracer.getMaxDepth()).isEqualTo(1);
 
     final MessageFrame fourthFrame = messageFrameTestFixture.depth(2).build();
     operationTracer.traceExecution(fourthFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getMaxDepth()).isEqualTo(2);
+    assertThat(operationTracer.getMaxDepth()).isEqualTo(2);
 
     final MessageFrame fifthFrame = messageFrameTestFixture.depth(0).build();
     operationTracer.traceExecution(fifthFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getMaxDepth()).isEqualTo(2);
+    assertThat(operationTracer.getMaxDepth()).isEqualTo(2);
   }
 
   @Test
@@ -74,20 +74,20 @@ public class EstimateGasOperationTracerTest {
     final ExecuteOperation noExecutionOperation = mock(ExecuteOperation.class);
     final Gas minimumGasRemaining = Gas.of(2300);
 
-    Assertions.assertThat(operationTracer.getStipendNeeded()).isEqualTo(Gas.ZERO);
+    assertThat(operationTracer.getStipendNeeded()).isEqualTo(Gas.ZERO);
 
     final MessageFrame firstFrame = messageFrameTestFixture.build();
     firstFrame.setCurrentOperation(mock(CallCodeOperation.class));
     operationTracer.traceExecution(firstFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getStipendNeeded()).isEqualTo(Gas.ZERO);
+    assertThat(operationTracer.getStipendNeeded()).isEqualTo(Gas.ZERO);
 
     final MessageFrame secondFrame = messageFrameTestFixture.build();
     secondFrame.setCurrentOperation(
         new SStoreOperation(mock(GasCalculator.class), minimumGasRemaining));
     operationTracer.traceExecution(secondFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getStipendNeeded()).isEqualTo(minimumGasRemaining);
+    assertThat(operationTracer.getStipendNeeded()).isEqualTo(minimumGasRemaining);
 
     operationTracer.traceExecution(secondFrame, Optional.empty(), noExecutionOperation);
-    Assertions.assertThat(operationTracer.getStipendNeeded()).isEqualTo(minimumGasRemaining);
+    assertThat(operationTracer.getStipendNeeded()).isEqualTo(minimumGasRemaining);
   }
 }
