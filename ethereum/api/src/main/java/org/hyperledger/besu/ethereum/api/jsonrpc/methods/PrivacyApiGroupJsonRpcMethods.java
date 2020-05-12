@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
@@ -94,7 +92,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     final PrivateMarkerTransactionFactory markerTransactionFactory =
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
-    final EnclavePublicKeyProvider enclavePublicProvider = createEnclavePublicKeyProvider();
+    final EnclavePublicKeyProvider enclavePublicProvider =
+        EnclavePublicKeyProvider.build(privacyParameters);
     final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
     return create(privacyController, enclavePublicProvider).entrySet().stream()
         .collect(
@@ -121,23 +120,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
-  }
-
-  private EnclavePublicKeyProvider createEnclavePublicKeyProvider() {
-    return privacyParameters.isMultiTenancyEnabled()
-        ? multiTenancyEnclavePublicKeyProvider()
-        : defaultEnclavePublicKeyProvider();
-  }
-
-  private EnclavePublicKeyProvider multiTenancyEnclavePublicKeyProvider() {
-    return user ->
-        enclavePublicKey(user)
-            .orElseThrow(
-                () -> new IllegalStateException("Request does not contain an authorization token"));
-  }
-
-  private EnclavePublicKeyProvider defaultEnclavePublicKeyProvider() {
-    return user -> privacyParameters.getEnclavePublicKey();
   }
 
   private PrivacyController createPrivacyController(
