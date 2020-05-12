@@ -447,15 +447,19 @@ public class PendingTransactions {
   public enum TransactionAddedStatus {
     ALREADY_KNOWN(TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN),
     REJECTED_UNDERPRICED_REPLACEMENT(TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED),
-    ADDED(null);
+    ADDED();
 
-    private final TransactionInvalidReason invalidReason;
+    private final Optional<TransactionInvalidReason> invalidReason;
 
-    TransactionAddedStatus(final TransactionInvalidReason invalidReason) {
-      this.invalidReason = invalidReason;
+    TransactionAddedStatus() {
+      this.invalidReason = Optional.empty();
     }
 
-    public TransactionInvalidReason getInvalidReason() {
+    TransactionAddedStatus(final TransactionInvalidReason invalidReason) {
+      this.invalidReason = Optional.of(invalidReason);
+    }
+
+    public Optional<TransactionInvalidReason> getInvalidReason() {
       return invalidReason;
     }
   }

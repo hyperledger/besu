@@ -159,7 +159,7 @@ public class TransactionPool implements BlockAddedObserver {
           pendingTransactions.addLocalTransaction(transaction);
       if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
         duplicateTransactionCounter.labels(LOCAL).inc();
-        return ValidationResult.invalid(transactionAddedStatus.getInvalidReason());
+        return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
       }
       final Collection<Transaction> txs = singletonList(transaction);
       transactionBatchAddedListener.onTransactionsAdded(txs);
