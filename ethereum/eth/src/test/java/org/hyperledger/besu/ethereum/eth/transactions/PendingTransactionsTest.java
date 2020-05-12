@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -389,7 +390,8 @@ public class PendingTransactionsTest {
     }
     final Transaction finalReplacingTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
     final Transaction independentTx = transactionWithNonceSenderAndGasPrice(2, KEYS1, 1);
-    assertThat(transactions.addLocalTransaction(finalReplacingTx)).isTrue();
+    assertThat(transactions.addLocalTransaction(finalReplacingTx))
+        .isEqualTo(TransactionAddedStatus.ADDED);
     assertThat(transactions.addRemoteTransaction(independentTx)).isTrue();
 
     // All tx's except the last duplicate should be removed
@@ -628,7 +630,8 @@ public class PendingTransactionsTest {
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(0);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
 
-    assertThat(transactions.addLocalTransaction(transaction1)).isFalse();
+    assertThat(transactions.addLocalTransaction(transaction1))
+        .isEqualTo(TransactionAddedStatus.ALREADY_KNOWN);
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(0);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
