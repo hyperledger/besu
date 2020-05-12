@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.LogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
@@ -47,6 +49,22 @@ public class SubscriptionBuilderTest {
         new SubscribeRequest(SubscriptionType.LOGS, filterParameter, null, CONNECTION_ID);
     final LogsSubscription expectedSubscription =
         new LogsSubscription(1L, CONNECTION_ID, filterParameter);
+
+    final Subscription builtSubscription =
+        subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
+
+    assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
+  }
+
+  @Test
+  public void shouldBuildPrivateLogsSubscriptionWhenSubscribeRequestTypeIsPrivateLogs() {
+    final String privacyGroupId = "ZDmkMK7CyxA1F1rktItzKFTfRwApg7aWzsTtm2IOZ5Y=";
+    final FilterParameter filterParameter = filterParameter();
+    final PrivateSubscribeRequest subscribeRequest =
+        new PrivateSubscribeRequest(
+            SubscriptionType.LOGS, filterParameter, null, CONNECTION_ID, privacyGroupId);
+    final PrivateLogsSubscription expectedSubscription =
+        new PrivateLogsSubscription(1L, CONNECTION_ID, filterParameter, privacyGroupId);
 
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);

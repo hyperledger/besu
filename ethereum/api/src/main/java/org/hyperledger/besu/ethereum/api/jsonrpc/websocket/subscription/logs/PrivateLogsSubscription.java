@@ -12,19 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
+package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs;
 
-public class InvalidSubscriptionRequestException extends RuntimeException {
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 
-  public InvalidSubscriptionRequestException() {
-    super();
+public class PrivateLogsSubscription extends LogsSubscription {
+
+  private final String privacyGroupId;
+
+  public PrivateLogsSubscription(
+      final Long subscriptionId,
+      final String connectionId,
+      final FilterParameter filterParameter,
+      final String privacyGroupId) {
+    super(subscriptionId, connectionId, filterParameter);
+    this.privacyGroupId = privacyGroupId;
   }
 
-  public InvalidSubscriptionRequestException(final String message) {
-    super(message);
-  }
-
-  public InvalidSubscriptionRequestException(final String message, final Throwable cause) {
-    super(message, cause);
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
   }
 }

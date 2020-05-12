@@ -149,7 +149,11 @@ class MetricsHttpService implements MetricsService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    final String hostHeader = event.request().host();
+    if (hostHeader == null) {
+      return Optional.empty();
+    }
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostHeader);
     final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
