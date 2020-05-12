@@ -40,6 +40,10 @@ public class SStoreOperation extends AbstractOperation {
     this.minumumGasRemaining = minumumGasRemaining;
   }
 
+  public Gas getMinumumGasRemaining() {
+    return minumumGasRemaining;
+  }
+
   @Override
   public Gas cost(final MessageFrame frame) {
     final UInt256 key = UInt256.fromBytes(frame.getStackItem(0));
