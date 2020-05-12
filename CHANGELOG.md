@@ -11,6 +11,12 @@ What this means for you:
 permissions on the directory allow other users and groups to r/w. Ideally this should be set to
 `besu:besu` and `orion:orion` as the owners. 
 
+## 1.4.6
+
+### Additions and Improvements
+
+- Implemented WebSocket logs subscription for private contracts (`priv_subscribe`/`priv_unsubscribe`) [#762]
+
 ## 1.4.5
 
 ### Additions and Improvements
