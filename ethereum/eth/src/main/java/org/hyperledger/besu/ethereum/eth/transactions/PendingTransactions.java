@@ -135,10 +135,11 @@ public class PendingTransactions {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
     final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
-    if (transactionAddedStatus.equals(ADDED)) {
+    final boolean added = transactionAddedStatus.equals(ADDED);
+    if (added) {
       remoteTransactionAddedCounter.inc();
     }
-    return transactionAddedStatus.equals(ADDED);
+    return added;
   }
 
   boolean addTransactionHash(final Hash transactionHash) {
