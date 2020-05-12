@@ -136,13 +136,13 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getConstantinopleFixBlockNumber()).hasValue(1000);
   }
 
-  @Test
-  public void shouldGetNeitherPetersburgOrConstantinopleFixBlockNumber() {
+  @Test(expected = RuntimeException.class)
+  public void shouldFailWithBothPetersburgAndConstantinopleFixBlockNumber() {
     Map<String, Object> configMap = new HashMap<>();
     configMap.put("constantinopleFixBlock", 1000);
     configMap.put("petersburgBlock", 1000);
     final GenesisConfigOptions config = fromConfigOptions(configMap);
-    assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
+    config.getConstantinopleFixBlockNumber();
   }
 
   @Test

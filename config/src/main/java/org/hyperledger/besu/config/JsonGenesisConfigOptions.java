@@ -189,11 +189,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getConstantinopleFixBlockNumber() {
-    OptionalLong petersburgBlock = getOptionalLong("petersburgblock");
-    OptionalLong constantinopleFixBlock = getOptionalLong("constantinoplefixblock");
+    final OptionalLong petersburgBlock = getOptionalLong("petersburgblock");
+    final OptionalLong constantinopleFixBlock = getOptionalLong("constantinoplefixblock");
     if (constantinopleFixBlock.isPresent()) {
       if (petersburgBlock.isPresent()) {
-        return OptionalLong.empty();
+        throw new RuntimeException(
+            "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
       }
       return constantinopleFixBlock;
     }

@@ -298,7 +298,7 @@ public class GenesisConfigFileTest {
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
   }
 
-  @Test
+  @Test(expected = RuntimeException.class)
   public void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
     // petersburg node
     final GenesisConfigFile config = GenesisConfigFile.development();
@@ -309,7 +309,7 @@ public class GenesisConfigFileTest {
     final Map<String, String> override = new HashMap<>();
     override.put("constantinopleFixBlock", "1000");
 
-    assertThat(config.getConfigOptions(override).getConstantinopleFixBlockNumber()).isEmpty();
+    config.getConfigOptions(override).getConstantinopleFixBlockNumber();
   }
 
   @Test
