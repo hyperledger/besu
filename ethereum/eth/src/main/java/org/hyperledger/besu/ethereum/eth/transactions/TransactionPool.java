@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
@@ -153,18 +154,18 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateTransaction(transaction);
+    if (validationResult.isValid()) {
+      final TransactionAddedStatus transactionAddedStatus =
+          pendingTransactions.addLocalTransaction(transaction);
+      if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
+        duplicateTransactionCounter.labels(LOCAL).inc();
+        return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
+      }
+      final Collection<Transaction> txs = singletonList(transaction);
+      transactionBatchAddedListener.onTransactionsAdded(txs);
+      pendingTransactionBatchAddedListener.ifPresent(it -> it.onTransactionsAdded(txs));
+    }
 
-    validationResult.ifValid(
-        () -> {
-          final boolean added = pendingTransactions.addLocalTransaction(transaction);
-          if (added) {
-            final Collection<Transaction> txs = singletonList(transaction);
-            transactionBatchAddedListener.onTransactionsAdded(txs);
-            pendingTransactionBatchAddedListener.ifPresent(it -> it.onTransactionsAdded(txs));
-          } else {
-            duplicateTransactionCounter.labels(LOCAL).inc();
-          }
-        });
     return validationResult;
   }
 

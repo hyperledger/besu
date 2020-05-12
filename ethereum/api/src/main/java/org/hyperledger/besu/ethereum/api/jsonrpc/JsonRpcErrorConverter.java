@@ -45,7 +45,10 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.GAS_PRICE_TOO_LOW;
       case OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST:
         return JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
-
+      case TRANSACTION_ALREADY_KNOWN:
+        return JsonRpcError.ETH_SEND_TX_ALREADY_KNOWN;
+      case TRANSACTION_REPLACEMENT_UNDERPRICED:
+        return JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
       default:
         return JsonRpcError.INVALID_PARAMS;
     }
