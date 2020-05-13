@@ -105,7 +105,8 @@ public class TransactionPoolTest {
           MAX_TRANSACTIONS,
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
-          metricsSystem);
+          metricsSystem,
+          blockchain::getChainHeadHeader);
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();

@@ -50,7 +50,8 @@ public class TransactionPoolFactory {
             transactionPoolConfiguration.getTxPoolMaxSize(),
             transactionPoolConfiguration.getPooledTransactionHashesSize(),
             clock,
-            metricsSystem);
+            metricsSystem,
+            protocolContext.getBlockchain()::getChainHeadHeader);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =

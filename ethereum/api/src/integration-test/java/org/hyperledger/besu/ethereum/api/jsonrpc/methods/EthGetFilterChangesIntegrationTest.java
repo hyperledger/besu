@@ -86,7 +86,8 @@ public class EthGetFilterChangesIntegrationTest {
           MAX_TRANSACTIONS,
           MAX_HASHES,
           TestClock.fixed(),
-          metricsSystem);
+          metricsSystem,
+          blockchain::getChainHeadHeader);
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_HASHES = 5;
