@@ -80,14 +80,7 @@ public class EthGetFilterChangesIntegrationTest {
   private TransactionPool transactionPool;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  private final PendingTransactions transactions =
-      new PendingTransactions(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
-          MAX_HASHES,
-          TestClock.fixed(),
-          metricsSystem,
-          blockchain::getChainHeadHeader);
+  private PendingTransactions transactions;
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_HASHES = 5;
@@ -101,6 +94,14 @@ public class EthGetFilterChangesIntegrationTest {
   public void setUp() {
     final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
     blockchain = executionContext.getBlockchain();
+    transactions =
+        new PendingTransactions(
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            MAX_TRANSACTIONS,
+            MAX_HASHES,
+            TestClock.fixed(),
+            metricsSystem,
+            blockchain::getChainHeadHeader);
     final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
 
     PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
