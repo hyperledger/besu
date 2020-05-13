@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
@@ -208,7 +209,7 @@ public class EvmToolCommand implements Runnable {
       do {
 
         final boolean lastLoop = repeat == 0;
-        final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+        final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
         messageFrameStack.add(
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -239,8 +240,7 @@ public class EvmToolCommand implements Runnable {
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
           mcp.process(
-              messageFrame,
-              new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
+              messageFrame, new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
           if (lastLoop) {
             if (!messageFrame.getExceptionalHaltReasons().isEmpty()) {
               System.out.println(messageFrame.getExceptionalHaltReasons());
@@ -318,8 +318,7 @@ public class EvmToolCommand implements Runnable {
       results.put("gasCost", currentOp.cost(messageFrame).asUInt256().toShortHexString());
     } else {
       final MessageFrame caller =
-          ((ArrayDeque<MessageFrame>) messageFrame.getMessageFrameStack())
-              .toArray(new MessageFrame[0])[1];
+          messageFrame.getMessageFrameStack().toArray(new MessageFrame[0])[1];
       final CallOperation callOp = (CallOperation) caller.getCurrentOperation();
 
       results.put("address", messageFrame.getContractAddress().toShortHexString());
@@ -330,7 +329,10 @@ public class EvmToolCommand implements Runnable {
               .getName());
       results.put(
           "gasCost",
-          callOp.gasAvailableForChildCall(caller).minus(messageFrame.getRemainingGas()).toHexString());
+          callOp
+              .gasAvailableForChildCall(caller)
+              .minus(messageFrame.getRemainingGas())
+              .toHexString());
     }
     results.put("gas", messageFrame.getRemainingGas().asUInt256().toShortHexString());
     if (!showMemory) {
@@ -350,8 +352,7 @@ public class EvmToolCommand implements Runnable {
     private final PrecompileContractRegistry precompiledContractRegistries;
 
     EvmToolOperationTracer(
-        final boolean lastLoop,
-        final PrecompileContractRegistry precompiledContractRegistries) {
+        final boolean lastLoop, final PrecompileContractRegistry precompiledContractRegistries) {
       this.lastLoop = lastLoop;
       this.precompiledContractRegistries = precompiledContractRegistries;
     }
@@ -364,8 +365,7 @@ public class EvmToolCommand implements Runnable {
         throws ExceptionalHaltException {
       if (showJsonResults && lastLoop) {
         final JsonObject op =
-            EvmToolCommand.this.createEvmTraceOperation(
-                frame, precompiledContractRegistries);
+            EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);
         final Stopwatch timer = Stopwatch.createStarted();
         executeOperation.execute();
         timer.stop();
@@ -381,8 +381,7 @@ public class EvmToolCommand implements Runnable {
         final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
       if (showJsonResults && lastLoop) {
         final JsonObject op =
-            EvmToolCommand.this.createEvmTraceOperation(
-                frame, precompiledContractRegistries);
+            EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);
         System.out.println(op);
       }
     }

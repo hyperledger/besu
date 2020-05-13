@@ -28,7 +28,8 @@ import javax.inject.Named;
 
 class CliqueGenesisFileModule extends GenesisFileModule {
 
-  NodeKey nodeKey = new NodeKey(new KeyPairSecurityModule(SECP256K1.KeyPair.generate()));
+  private final NodeKey nodeKey =
+      new NodeKey(new KeyPairSecurityModule(SECP256K1.KeyPair.generate()));
 
   CliqueGenesisFileModule(final String genesisConfig) {
     super(genesisConfig);
