@@ -11,24 +11,14 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
-import java.util.function.Function;
+@FunctionalInterface
+public interface TransactionPoolReplacementRule {
 
-import dagger.Module;
-import dagger.Provides;
-
-@SuppressWarnings("WeakerAccess")
-@Module(includes = GenesisFileModule.class)
-public class ProtocolModule {
-
-  @Provides
-  Function<Integer, ProtocolSpec<?>> getProtocolSpec(final ProtocolSchedule<?> protocolSchedule) {
-    return protocolSchedule::getByBlockNumber;
-  }
+  boolean shouldReplace(
+      TransactionInfo existingTransactionInfo, TransactionInfo newTransactionInfo);
 }
