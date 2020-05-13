@@ -15,6 +15,7 @@
 package org.hyperledger.besu.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
@@ -298,7 +299,7 @@ public class GenesisConfigFileTest {
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
     // petersburg node
     final GenesisConfigFile config = GenesisConfigFile.development();
@@ -309,7 +310,11 @@ public class GenesisConfigFileTest {
     final Map<String, String> override = new HashMap<>();
     override.put("constantinopleFixBlock", "1000");
 
-    config.getConfigOptions(override).getConstantinopleFixBlockNumber();
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> config.getConfigOptions(override).getConstantinopleFixBlockNumber())
+        .withMessage(
+            "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
+    ;
   }
 
   @Test
