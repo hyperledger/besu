@@ -31,6 +31,11 @@ public class NodeSmartContractPermissioningConditions {
     return new WaitForTrueResponse(transactions.isNodeAllowed(address, node));
   }
 
+  public Condition enodeURLIsAllowed(
+      final String address, final String enodeURL, Node executorNode) {
+    return new WaitForTrueResponse(transactions.isEnodeURLAllowed(address, enodeURL, executorNode));
+  }
+
   public Condition nodeIsForbidden(final String address, final Node node) {
     return new WaitForFalseResponse(transactions.isNodeAllowed(address, node));
   }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
@@ -46,6 +47,22 @@ public class NodeSmartContractPermissioningAcceptanceTest
 
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(nodeIsAllowed(permissionedNode));
+  }
+
+  @Test
+  public void onChainPermissioningWhitelistShouldPersistAcrossRestarts() {
+    // enodeURLs will change on restart due to port allocations.  We need to store them for
+    // comparison.
+    final String allowedNodeId = ((BesuNode) allowedNode).enodeUrl().toASCIIString();
+    final String bootnodeId = ((BesuNode) bootnode).enodeUrl().toASCIIString();
+    final String permissionedNodeId = ((BesuNode) permissionedNode).enodeUrl().toASCIIString();
+
+    permissionedCluster.stop();
+    permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
+
+    permissionedNode.verify(enodeURLIsAllowed(allowedNodeId, bootnode));
+    permissionedNode.verify(enodeURLIsAllowed(bootnodeId, bootnode));
+    permissionedNode.verify(enodeURLIsAllowed(permissionedNodeId, bootnode));
   }
 
   @Test

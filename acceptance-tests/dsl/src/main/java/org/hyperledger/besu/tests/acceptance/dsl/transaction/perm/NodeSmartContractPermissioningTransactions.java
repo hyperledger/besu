@@ -20,6 +20,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
+import java.util.Optional;
+
 public class NodeSmartContractPermissioningTransactions {
 
   private final Accounts accounts;
@@ -40,7 +42,13 @@ public class NodeSmartContractPermissioningTransactions {
 
   public Transaction<Boolean> isNodeAllowed(final String contractAddress, final Node node) {
     return new NodeSmartContractPermissioningIsAllowedTransaction(
-        Address.fromHexString(contractAddress), node);
+        Address.fromHexString(contractAddress), node, Optional.empty());
+  }
+
+  public Transaction<Boolean> isEnodeURLAllowed(
+      final String contractAddress, final String enodeURL, final Node executorNode) {
+    return new NodeSmartContractPermissioningIsAllowedTransaction(
+        Address.fromHexString(contractAddress), executorNode, Optional.of(enodeURL));
   }
 
   public Transaction<Boolean> isConnectionAllowed(

@@ -106,6 +106,11 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     return nodeSmartContractPermissioningConditions.nodeIsAllowed(CONTRACT_ADDRESS, node);
   }
 
+  protected Condition enodeURLIsAllowed(final String enodeURL, final Node executorNode) {
+    return nodeSmartContractPermissioningConditions.enodeURLIsAllowed(
+        CONTRACT_ADDRESS, enodeURL, executorNode);
+  }
+
   protected Transaction<Hash> forbidNode(final Node node) {
     return smartContractNodePermissioning.forbidNode(CONTRACT_ADDRESS, node);
   }

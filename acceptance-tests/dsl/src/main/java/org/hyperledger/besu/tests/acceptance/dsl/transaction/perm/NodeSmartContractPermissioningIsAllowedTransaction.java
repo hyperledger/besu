@@ -26,6 +26,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -38,11 +39,13 @@ public class NodeSmartContractPermissioningIsAllowedTransaction implements Trans
 
   private final Address contractAddress;
   private final Node node;
+  private final Optional<String> enodeURL;
 
   public NodeSmartContractPermissioningIsAllowedTransaction(
-      final Address contractAddress, final Node node) {
+      final Address contractAddress, final Node node, final Optional<String> enodeUrl) {
     this.contractAddress = contractAddress;
     this.node = node;
+    this.enodeURL = enodeUrl;
   }
 
   @Override
@@ -82,9 +85,10 @@ public class NodeSmartContractPermissioningIsAllowedTransaction implements Trans
 
   private org.web3j.protocol.core.methods.request.Transaction payload() {
     final String sourceEnodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
+    final EnodeURL checkEnodeURL = EnodeURL.fromString(enodeURL.orElse(sourceEnodeURL));
     final Bytes payload =
         NodeSmartContractPermissioningController.createPayload(
-            IS_NODE_ALLOWED_SIGNATURE, EnodeURL.fromString(sourceEnodeURL));
+            IS_NODE_ALLOWED_SIGNATURE, checkEnodeURL);
 
     return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
         null, null, null, null, contractAddress.toString(), payload.toString());
