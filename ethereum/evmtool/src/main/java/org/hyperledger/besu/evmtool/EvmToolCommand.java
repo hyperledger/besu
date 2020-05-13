@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.vm.operations.CallOperation;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
@@ -143,12 +144,14 @@ public class EvmToolCommand implements Runnable {
   private final Integer repeat = 0;
 
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
+  private PrintStream out = System.out;
 
   void parse(
       final CommandLine.AbstractParseResultHandler<List<Object>> resultHandler,
       final CommandLine.DefaultExceptionHandler<List<Object>> exceptionHandler,
       final String[] args) {
 
+    out = resultHandler.out();
     final CommandLine commandLine = new CommandLine(this);
     commandLine.addMixin("Dagger Options", daggerOptions);
 
@@ -243,10 +246,10 @@ public class EvmToolCommand implements Runnable {
               messageFrame, new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
           if (lastLoop) {
             if (!messageFrame.getExceptionalHaltReasons().isEmpty()) {
-              System.out.println(messageFrame.getExceptionalHaltReasons());
+              out.println(messageFrame.getExceptionalHaltReasons());
             }
             if (messageFrame.getRevertReason().isPresent()) {
-              System.out.println(
+              out.println(
                   new String(
                       messageFrame.getRevertReason().get().toArray(), StandardCharsets.UTF_8));
             }
@@ -274,8 +277,8 @@ public class EvmToolCommand implements Runnable {
             final Gas intrinsicGasCost =
                 protocolSpec.getGasCalculator().transactionIntrinsicGasCost(tx);
             final Gas evmGas = gas.minus(messageFrame.getRemainingGas());
-            System.out.println();
-            System.out.println(
+            out.println();
+            out.println(
                 new JsonObject()
                     .put("gasUser", evmGas.asUInt256().toShortHexString())
                     .put("timens", lastTime)
@@ -370,7 +373,7 @@ public class EvmToolCommand implements Runnable {
         executeOperation.execute();
         timer.stop();
         op.put("timens", timer.elapsed().toNanos());
-        System.out.println(op);
+        out.println(op);
       } else {
         executeOperation.execute();
       }
@@ -382,7 +385,7 @@ public class EvmToolCommand implements Runnable {
       if (showJsonResults && lastLoop) {
         final JsonObject op =
             EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);
-        System.out.println(op);
+        out.println(op);
       }
     }
   }
