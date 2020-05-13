@@ -20,11 +20,13 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlArray;
 import org.apache.tuweni.toml.TomlParseError;
 import org.apache.tuweni.toml.TomlParseResult;
 import picocli.CommandLine;
@@ -93,12 +95,22 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     // returns the string representation of the array value of the config line in CLI format
     // corresponding to the option in toml file
     // or null if not present in the config
-    return getKeyName(spec)
-        .map(result::getArray)
+    return decodeTomlArray(
+        getKeyName(spec).map(result::getArray).map(tomlArray -> tomlArray.toList()).orElse(null));
+  }
+
+  private String decodeTomlArray(final List<Object> tomlArrayElements) {
+    if (tomlArrayElements == null) return null;
+    return tomlArrayElements.stream()
         .map(
-            tomlArray ->
-                tomlArray.toList().stream().map(Object::toString).collect(Collectors.joining(",")))
-        .orElse(null);
+            tomlObject -> {
+              if (tomlObject instanceof TomlArray) {
+                return "[".concat(decodeTomlArray(((TomlArray) tomlObject).toList())).concat("]");
+              } else {
+                return tomlObject.toString();
+              }
+            })
+        .collect(Collectors.joining(","));
   }
 
   private String getBooleanEntryAsString(final OptionSpec spec) {
