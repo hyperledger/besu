@@ -85,6 +85,8 @@ public class PendingTransactions {
   private final Counter localTransactionHashesAddedCounter;
 
   private final long maxPendingTransactions;
+  private final TransactionPoolReplacementHandler transactionReplacementHandler =
+      new TransactionPoolReplacementHandler();
 
   public PendingTransactions(
       final int maxTransactionRetentionHours,
@@ -267,7 +269,7 @@ public class PendingTransactions {
     final TransactionInfo existingTransaction =
         getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
-      if (!shouldReplace(existingTransaction, transactionInfo)) {
+      if (!transactionReplacementHandler.shouldReplace(existingTransaction, transactionInfo)) {
         return REJECTED_UNDERPRICED_REPLACEMENT;
       }
       removeTransaction(existingTransaction.getTransaction());
@@ -301,15 +303,6 @@ public class PendingTransactions {
         transactionsBySender.computeIfAbsent(
             transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
     return transactionsForSenderInfo.getTransactionsInfos().get(transactionInfo.getNonce());
-  }
-
-  private boolean shouldReplace(
-      final TransactionInfo existingTransaction, final TransactionInfo newTransaction) {
-    return newTransaction
-            .getTransaction()
-            .getGasPrice()
-            .compareTo(existingTransaction.getTransaction().getGasPrice())
-        > 0;
   }
 
   private void notifyTransactionAdded(final Transaction transaction) {
