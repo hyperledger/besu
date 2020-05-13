@@ -17,10 +17,12 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -127,6 +129,24 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config =
         fromConfigOptions(singletonMap("constantinopleFixBlock", 1000));
     assertThat(config.getConstantinopleFixBlockNumber()).hasValue(1000);
+  }
+
+  @Test
+  public void shouldGetPetersburgBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("petersburgBlock", 1000));
+    assertThat(config.getConstantinopleFixBlockNumber()).hasValue(1000);
+  }
+
+  @Test
+  public void shouldFailWithBothPetersburgAndConstantinopleFixBlockNumber() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("constantinopleFixBlock", 1000);
+    configMap.put("petersburgBlock", 1000);
+    final GenesisConfigOptions config = fromConfigOptions(configMap);
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(config::getConstantinopleFixBlockNumber)
+        .withMessage(
+            "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
   }
 
   @Test
