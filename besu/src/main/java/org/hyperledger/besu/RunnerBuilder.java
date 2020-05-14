@@ -97,6 +97,7 @@ import org.hyperledger.besu.nat.docker.DockerDetector;
 import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
 import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
+import org.hyperledger.besu.nat.manual.ManualNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -626,6 +627,9 @@ public class RunnerBuilder {
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
+      case MANUAL:
+        return Optional.of(
+            new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case DOCKER:
         return Optional.of(
             new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
