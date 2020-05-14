@@ -34,6 +34,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import com.google.common.collect.Lists;
@@ -60,7 +61,8 @@ public class PendingTransactionsTest {
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
-          () -> null);
+          () -> null,
+          Optional.empty());
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -561,7 +563,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null);
+            () -> null,
+            Optional.empty());
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -584,7 +587,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null);
+            () -> null,
+            Optional.empty());
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -603,7 +607,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null);
+            () -> null,
+            Optional.empty());
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);
