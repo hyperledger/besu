@@ -59,7 +59,8 @@ public class PendingTransactionsTest {
           MAX_TRANSACTIONS,
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
-          metricsSystem);
+          metricsSystem,
+          () -> null);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -559,7 +560,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
             clock,
-            metricsSystem);
+            metricsSystem,
+            () -> null);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -581,7 +583,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
             clock,
-            metricsSystem);
+            metricsSystem,
+            () -> null);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -599,7 +602,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
             clock,
-            metricsSystem);
+            metricsSystem,
+            () -> null);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);

@@ -19,6 +19,7 @@ import static java.util.Arrays.asList;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -36,12 +37,14 @@ public class TransactionPoolReplacementHandler implements TransactionPoolReplace
 
   @Override
   public boolean shouldReplace(
-      final TransactionInfo existingTransactionInfo, final TransactionInfo newTransactionInfo) {
+      final TransactionInfo existingTransactionInfo,
+      final TransactionInfo newTransactionInfo,
+      final Optional<Long> baseFee) {
     assert existingTransactionInfo != null;
     if (newTransactionInfo == null) {
       return false;
     }
     return rules.stream()
-        .anyMatch(rule -> rule.shouldReplace(existingTransactionInfo, newTransactionInfo));
+        .anyMatch(rule -> rule.shouldReplace(existingTransactionInfo, newTransactionInfo, baseFee));
   }
 }

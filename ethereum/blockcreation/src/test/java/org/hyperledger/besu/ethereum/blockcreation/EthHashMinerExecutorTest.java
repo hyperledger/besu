@@ -43,7 +43,8 @@ public class EthHashMinerExecutorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            () -> null);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
@@ -69,7 +70,8 @@ public class EthHashMinerExecutorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            () -> null);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(

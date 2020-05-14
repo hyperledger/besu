@@ -14,18 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
+import java.util.Optional;
+
 public class TransactionReplacementByPriceRule implements TransactionPoolReplacementRule {
+  private static final TransactionPriceCalculator FRONTIER_CALCULATOR =
+      TransactionPriceCalculator.frontier();
+  private static final TransactionPriceCalculator EIP1559_CALCULATOR =
+      TransactionPriceCalculator.eip1559();
+
   @Override
   public boolean shouldReplace(
-      final TransactionInfo existingTransactionInfo, final TransactionInfo newTransactionInfo) {
+      final TransactionInfo existingTransactionInfo,
+      final TransactionInfo newTransactionInfo,
+      final Optional<Long> baseFee) {
     assert existingTransactionInfo.getTransaction() != null
         && newTransactionInfo.getTransaction() != null;
-    return newTransactionInfo
-            .getTransaction()
-            .getGasPrice()
-            .compareTo(existingTransactionInfo.getTransaction().getGasPrice())
+    return priceOf(newTransactionInfo.getTransaction(), baseFee)
+            .compareTo(priceOf(existingTransactionInfo.getTransaction(), baseFee))
         > 0;
+  }
+
+  private Wei priceOf(final Transaction transaction, final Optional<Long> baseFee) {
+    final TransactionPriceCalculator transactionPriceCalculator =
+        transaction.isEIP1559Transaction() ? EIP1559_CALCULATOR : FRONTIER_CALCULATOR;
+    return transactionPriceCalculator.price(transaction, baseFee);
   }
 }

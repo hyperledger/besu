@@ -89,7 +89,8 @@ public class IbftBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            blockchain::getChainHeadHeader);
 
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
