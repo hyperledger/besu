@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.Transa
 import java.util.Collection;
 import java.util.Optional;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,7 +76,7 @@ public class TransactionReplacementByPriceRuleTest {
     ExperimentalEIPs.eip1559Enabled = true;
   }
 
-  @Before
+  @After
   public void resetEIP1559() {
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
