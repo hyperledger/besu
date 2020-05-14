@@ -19,8 +19,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
@@ -48,6 +50,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -87,17 +90,20 @@ public class PendingTransactions {
   private final long maxPendingTransactions;
   private final TransactionPoolReplacementHandler transactionReplacementHandler =
       new TransactionPoolReplacementHandler();
+  private final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
   public PendingTransactions(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
       final int maxPooledTransactionHashes,
       final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Supplier<BlockHeader> chainHeadHeaderSupplier) {
     this.maxTransactionRetentionHours = maxTransactionRetentionHours;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
+    this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -269,7 +275,14 @@ public class PendingTransactions {
     final TransactionInfo existingTransaction =
         getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
-      if (!transactionReplacementHandler.shouldReplace(existingTransaction, transactionInfo)) {
+      final Optional<Long> baseFee =
+          ExperimentalEIPs.eip1559Enabled
+                  && (existingTransaction.getTransaction().isEIP1559Transaction()
+                      || transactionInfo.getTransaction().isEIP1559Transaction())
+              ? chainHeadHeaderSupplier.get().getBaseFee()
+              : Optional.empty();
+      if (!transactionReplacementHandler.shouldReplace(
+          existingTransaction, transactionInfo, baseFee)) {
         return REJECTED_UNDERPRICED_REPLACEMENT;
       }
       removeTransaction(existingTransaction.getTransaction());

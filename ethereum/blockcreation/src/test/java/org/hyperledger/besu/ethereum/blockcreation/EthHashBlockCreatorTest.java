@@ -84,7 +84,8 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -135,7 +136,8 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -181,7 +183,8 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -243,7 +246,8 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(

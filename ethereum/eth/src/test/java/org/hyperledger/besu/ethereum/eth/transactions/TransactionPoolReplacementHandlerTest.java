@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.Transa
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -37,23 +39,26 @@ public class TransactionPoolReplacementHandlerTest {
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
-          {emptyList(), mock(TransactionInfo.class), mock(TransactionInfo.class), false},
+          {emptyList(), mock(TransactionInfo.class), mock(TransactionInfo.class), empty(), false},
           {
             singletonList(constantRule(false)),
             mock(TransactionInfo.class),
             mock(TransactionInfo.class),
+            empty(),
             false
           },
           {
             singletonList(constantRule(true)),
             mock(TransactionInfo.class),
             mock(TransactionInfo.class),
+            empty(),
             true
           },
           {
             constantRules(asList(false, false, false, true)),
             mock(TransactionInfo.class),
             mock(TransactionInfo.class),
+            empty(),
             true
           },
         });
@@ -62,16 +67,19 @@ public class TransactionPoolReplacementHandlerTest {
   private final List<TransactionPoolReplacementRule> rules;
   private final TransactionInfo oldTransactionInfo;
   private final TransactionInfo newTransactionInfo;
+  private final Optional<Long> baseFee;
   private final boolean expectedResult;
 
   public TransactionPoolReplacementHandlerTest(
       final List<TransactionPoolReplacementRule> rules,
       final TransactionInfo oldTransactionInfo,
       final TransactionInfo newTransactionInfo,
+      final Optional<Long> baseFee,
       final boolean expectedResult) {
     this.rules = rules;
     this.oldTransactionInfo = oldTransactionInfo;
     this.newTransactionInfo = newTransactionInfo;
+    this.baseFee = baseFee;
     this.expectedResult = expectedResult;
   }
 
@@ -79,12 +87,12 @@ public class TransactionPoolReplacementHandlerTest {
   public void shouldReplace() {
     assertThat(
             new TransactionPoolReplacementHandler(rules)
-                .shouldReplace(oldTransactionInfo, newTransactionInfo))
+                .shouldReplace(oldTransactionInfo, newTransactionInfo, baseFee))
         .isEqualTo(expectedResult);
   }
 
   private static TransactionPoolReplacementRule constantRule(final boolean returnValue) {
-    return (o, n) -> returnValue;
+    return (ot, nt, bf) -> returnValue;
   }
 
   private static List<TransactionPoolReplacementRule> constantRules(
