@@ -36,6 +36,10 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case EXCEEDS_BLOCK_GAS_LIMIT:
         return JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT;
+      case WRONG_CHAIN_ID:
+        return JsonRpcError.WRONG_CHAIN_ID;
+      case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:
+        return JsonRpcError.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
       case TX_SENDER_NOT_AUTHORIZED:
         return JsonRpcError.TX_SENDER_NOT_AUTHORIZED;
         // Private Transaction Invalid Reasons
