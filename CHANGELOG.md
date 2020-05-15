@@ -11,9 +11,9 @@ What this means for you:
 permissions on the directory allow other users and groups to r/w. Ideally this should be set to
 `besu:besu` and `orion:orion` as the owners. 
 
-## Upcoming 1.5 upgrade 
+## Upcoming 1.5 release 
 
-[1.5 Upgrade](1_5_Upgrade.md)
+The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
 
 ## 1.4.6
 
