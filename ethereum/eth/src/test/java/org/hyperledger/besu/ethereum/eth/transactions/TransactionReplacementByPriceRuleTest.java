@@ -24,6 +24,7 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -41,33 +42,42 @@ public class TransactionReplacementByPriceRuleTest {
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
-          {frontierTx(5L), frontierTx(6L), empty(), true},
-          {frontierTx(5L), frontierTx(5L), empty(), false},
-          {frontierTx(5L), frontierTx(4L), empty(), false},
-          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(1L), false},
-          {frontierTx(5L), eip1559Tx(3L, 5L), Optional.of(3L), false},
-          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(3L), true},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 6L), Optional.of(3L), false},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(3L), false},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(4L), true},
-          {eip1559Tx(3L, 8L), frontierTx(7L), Optional.of(4L), false},
-          {eip1559Tx(3L, 8L), frontierTx(8L), Optional.of(4L), true}
+          {frontierTx(5L), frontierTx(6L), empty(), 0, true},
+          {frontierTx(5L), frontierTx(5L), empty(), 0, false},
+          {frontierTx(5L), frontierTx(4L), empty(), 0, false},
+          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(1L), 0, false},
+          {frontierTx(5L), eip1559Tx(3L, 5L), Optional.of(3L), 0, false},
+          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(3L), 0, true},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 6L), Optional.of(3L), 0, false},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(3L), 0, false},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(4L), 0, true},
+          {eip1559Tx(3L, 8L), frontierTx(7L), Optional.of(4L), 0, false},
+          {eip1559Tx(3L, 8L), frontierTx(8L), Optional.of(4L), 0, true},
+          {frontierTx(100L), frontierTx(105L), empty(), 10, false},
+          {frontierTx(100L), frontierTx(110L), empty(), 10, false},
+          {frontierTx(100L), frontierTx(111L), empty(), 10, true},
+          {eip1559Tx(10L, 200L), eip1559Tx(10L, 200L), Optional.of(90L), 10, false},
+          {eip1559Tx(10L, 200L), eip1559Tx(15L, 200L), Optional.of(90L), 10, false},
+          {eip1559Tx(10L, 200L), eip1559Tx(21L, 200L), Optional.of(90L), 10, true},
         });
   }
 
   private final TransactionInfo oldTx;
   private final TransactionInfo newTx;
   private final Optional<Long> baseFee;
+  private final int priceBump;
   private final boolean expected;
 
   public TransactionReplacementByPriceRuleTest(
       final TransactionInfo oldTx,
       final TransactionInfo newTx,
       final Optional<Long> baseFee,
+      final int priceBump,
       final boolean expected) {
     this.oldTx = oldTx;
     this.newTx = newTx;
     this.baseFee = baseFee;
+    this.priceBump = priceBump;
     this.expected = expected;
   }
 
@@ -83,7 +93,9 @@ public class TransactionReplacementByPriceRuleTest {
 
   @Test
   public void shouldReplace() {
-    assertThat(new TransactionReplacementByPriceRule().shouldReplace(oldTx, newTx, baseFee))
+    assertThat(
+            new TransactionReplacementByPriceRule(Percentage.fromInt(priceBump))
+                .shouldReplace(oldTx, newTx, baseFee))
         .isEqualTo(expected);
   }
 

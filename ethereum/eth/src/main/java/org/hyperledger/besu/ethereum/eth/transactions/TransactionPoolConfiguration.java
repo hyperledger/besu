@@ -21,6 +21,7 @@ public class TransactionPoolConfiguration {
   public static final int MAX_PENDING_TRANSACTIONS = 4096;
   public static final int MAX_PENDING_TRANSACTIONS_HASHES = 4096;
   public static final int DEFAULT_TX_RETENTION_HOURS = 13;
+  public static final int DEFAULT_PRICE_BUMP = 10;
 
   private final int txPoolMaxSize;
   private final int pooledTransactionHashesSize;
