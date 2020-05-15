@@ -230,9 +230,7 @@ workflows:
       - integrationTests:
           requires:
             - assemble
-      - acceptanceTests:
-          requires:
-            - assemble
+      - acceptanceTests
       - buildDocker:
           requires:
             - unitTests
