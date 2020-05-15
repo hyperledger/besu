@@ -56,6 +56,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
         store.get(store.getSegmentIdentifierByName(TestSegment.FOO), bytesFromHexString("0001"));
 
     assertThat(result).isEmpty();
+
+    store.close();
   }
 
   @Test
@@ -104,6 +106,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     assertThat(store.get(barSegment, bytesOf(4))).contains(bytesOf(4));
     assertThat(store.get(barSegment, bytesOf(5))).isEmpty();
     assertThat(store.get(barSegment, bytesOf(6))).isEmpty();
+
+    store.close();
   }
 
   @Test
@@ -135,6 +139,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
 
     assertThat(gotFromFoo).containsExactlyInAnyOrder(bytesOf(3));
     assertThat(gotFromBar).containsExactlyInAnyOrder(bytesOf(4), bytesOf(5));
+
+    store.close();
   }
 
   public enum TestSegment implements SegmentIdentifier {
