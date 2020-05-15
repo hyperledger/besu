@@ -19,6 +19,7 @@ import static java.util.Arrays.asList;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,8 +30,9 @@ public class TransactionPoolReplacementHandler {
   private final List<TransactionPoolReplacementRule> rules;
   private final Optional<EIP1559> eip1559;
 
-  public TransactionPoolReplacementHandler(final Optional<EIP1559> eip1559) {
-    this(asList(new TransactionReplacementByPriceRule()), eip1559);
+  public TransactionPoolReplacementHandler(
+      final Optional<EIP1559> eip1559, final Percentage priceBump) {
+    this(asList(new TransactionReplacementByPriceRule(priceBump)), eip1559);
   }
 
   @VisibleForTesting

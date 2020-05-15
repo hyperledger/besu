@@ -64,7 +64,8 @@ public class PendingTransactionsTest {
           TestClock.fixed(),
           metricsSystem,
           PendingTransactionsTest::mockBlockHeader,
-          Optional.empty());
+          Optional.empty(),
+          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -384,7 +385,8 @@ public class PendingTransactionsTest {
     final List<Transaction> replacedTransactions = new ArrayList<>();
     int remoteDuplicateCount = 0;
     for (int i = 0; i < replacedTxCount; i++) {
-      final Transaction duplicateTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, i + 1);
+      final Transaction duplicateTx =
+          transactionWithNonceSenderAndGasPrice(1, KEYS1, (i * 110 / 100) + 1);
       replacedTransactions.add(duplicateTx);
       if (i % 2 == 0) {
         transactions.addRemoteTransaction(duplicateTx);
@@ -566,7 +568,8 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -590,7 +593,8 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -610,7 +614,8 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);

@@ -31,6 +31,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.util.Subscribers;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -98,13 +99,14 @@ public class PendingTransactions {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Optional<EIP1559> eip1559) {
+      final Optional<EIP1559> eip1559,
+      final Percentage priceBump) {
     this.maxTransactionRetentionHours = maxTransactionRetentionHours;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
-    this.transactionReplacementHandler = new TransactionPoolReplacementHandler(eip1559);
+    this.transactionReplacementHandler = new TransactionPoolReplacementHandler(eip1559, priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
