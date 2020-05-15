@@ -87,7 +87,8 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -140,7 +141,8 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -188,7 +190,8 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -252,7 +255,8 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(

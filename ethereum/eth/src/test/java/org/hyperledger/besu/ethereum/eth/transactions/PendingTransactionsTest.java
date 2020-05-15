@@ -64,7 +64,8 @@ public class PendingTransactionsTest {
           TestClock.fixed(),
           metricsSystem,
           PendingTransactionsTest::mockBlockHeader,
-          Optional.empty());
+          Optional.empty(),
+          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -567,7 +568,8 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -591,7 +593,8 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -611,7 +614,8 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);

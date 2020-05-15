@@ -898,6 +898,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
+  @Option(
+      names = {"--tx-pool-price-bump"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      converter = PercentageConverter.class,
+      description =
+          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
@@ -1856,6 +1865,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolMaxSize)
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
+        .priceBump(priceBump)
         .build();
   }
 
