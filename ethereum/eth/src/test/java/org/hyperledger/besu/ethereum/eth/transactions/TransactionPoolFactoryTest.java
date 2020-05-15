@@ -89,7 +89,8 @@ public class TransactionPoolFactoryTest {
             new NoOpMetricsSystem(),
             state,
             Wei.of(1),
-            new TransactionPoolConfiguration(1, 1, 1, 1),
+            new TransactionPoolConfiguration(
+                1, 1, 1, 1, TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
@@ -167,7 +168,8 @@ public class TransactionPoolFactoryTest {
             new NoOpMetricsSystem(),
             state,
             Wei.of(1),
-            new TransactionPoolConfiguration(1, 1, 1, 1),
+            new TransactionPoolConfiguration(
+                1, 1, 1, 1, TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
