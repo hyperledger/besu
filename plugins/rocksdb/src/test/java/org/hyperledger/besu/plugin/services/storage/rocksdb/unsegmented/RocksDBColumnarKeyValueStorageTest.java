@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -59,7 +58,14 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     assertThat(result).isEmpty();
   }
 
-  @Ignore
+  @Test
+  public void canRemoveThroughSegmentIterationMultipleTimes() throws Exception {
+    for (int i = 0; i < 1000; i++) {
+      canRemoveThroughSegmentIteration();
+    }
+  }
+
+  @Test
   public void canRemoveThroughSegmentIteration() throws Exception {
     final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
     final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
