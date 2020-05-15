@@ -78,7 +78,8 @@ public class BlockTransactionSelectorTest {
           TestClock.fixed(),
           metricsSystem,
           blockchain::getChainHeadHeader,
-          Optional.empty());
+          Optional.empty(),
+          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
   private final Supplier<Boolean> isCancelled = () -> false;
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
