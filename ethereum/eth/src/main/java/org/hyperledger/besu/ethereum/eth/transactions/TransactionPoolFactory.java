@@ -51,7 +51,8 @@ public class TransactionPoolFactory {
             transactionPoolConfiguration.getPooledTransactionHashesSize(),
             clock,
             metricsSystem,
-            protocolContext.getBlockchain()::getChainHeadHeader);
+            protocolContext.getBlockchain()::getChainHeadHeader,
+            eip1559);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =

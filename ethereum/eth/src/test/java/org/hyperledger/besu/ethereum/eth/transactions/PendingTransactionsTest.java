@@ -19,9 +19,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -34,6 +36,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import com.google.common.collect.Lists;
@@ -60,7 +63,8 @@ public class PendingTransactionsTest {
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
-          () -> null);
+          PendingTransactionsTest::mockBlockHeader,
+          Optional.empty());
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -561,7 +565,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null);
+            () -> null,
+            Optional.empty());
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -584,7 +589,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null);
+            () -> null,
+            Optional.empty());
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -603,7 +609,8 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null);
+            () -> null,
+            Optional.empty());
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);
@@ -662,5 +669,11 @@ public class PendingTransactionsTest {
     for (int nonce : nonces) {
       transactions.addLocalTransaction(createTransaction(nonce));
     }
+  }
+
+  private static BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    return blockHeader;
   }
 }
