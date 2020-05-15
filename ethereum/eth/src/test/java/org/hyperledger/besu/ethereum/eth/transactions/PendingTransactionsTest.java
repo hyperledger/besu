@@ -384,7 +384,8 @@ public class PendingTransactionsTest {
     final List<Transaction> replacedTransactions = new ArrayList<>();
     int remoteDuplicateCount = 0;
     for (int i = 0; i < replacedTxCount; i++) {
-      final Transaction duplicateTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, i + 1);
+      final Transaction duplicateTx =
+          transactionWithNonceSenderAndGasPrice(1, KEYS1, (i * 110 / 100) + 1);
       replacedTransactions.add(duplicateTx);
       if (i % 2 == 0) {
         transactions.addRemoteTransaction(duplicateTx);
