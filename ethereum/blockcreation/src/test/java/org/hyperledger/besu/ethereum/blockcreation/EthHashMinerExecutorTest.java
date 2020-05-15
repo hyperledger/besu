@@ -46,7 +46,8 @@ public class EthHashMinerExecutorTest {
             TestClock.fixed(),
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
@@ -74,7 +75,8 @@ public class EthHashMinerExecutorTest {
             TestClock.fixed(),
             metricsSystem,
             () -> null,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
