@@ -53,7 +53,8 @@ public class BLS12PairingPrecompiledContractTest {
                 .stream(),
             CharStreams.readLines(
                 new InputStreamReader(
-                    BLS12PairingPrecompiledContractTest.class.getResourceAsStream("invalid_subgroup_for_pairing.csv"),
+                    BLS12PairingPrecompiledContractTest.class.getResourceAsStream(
+                        "invalid_subgroup_for_pairing.csv"),
                     UTF_8))
                 .stream())
         .map(line -> line.split(",", 4))

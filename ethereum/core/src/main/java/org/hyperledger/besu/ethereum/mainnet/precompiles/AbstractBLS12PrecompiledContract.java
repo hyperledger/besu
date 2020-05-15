@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
+
 import com.sun.jna.ptr.IntByReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractBLS12PrecompiledContract implements PrecompiledContract {
 
-  public static Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   static final int[] DISCOUNT_TABLE =
       new int[] {

@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.io.CharStreams;
 import org.apache.tuweni.bytes.Bytes;
@@ -46,13 +45,11 @@ public class BLS12MapFp2ToG2PrecompiledContractTest {
 
   @Parameterized.Parameters
   public static Iterable<String[]> parameters() throws IOException {
-    return
-            CharStreams.readLines(
-                new InputStreamReader(
-                    BLS12MapFp2ToG2PrecompiledContractTest.class.getResourceAsStream(
-                        "fp2_to_g2.csv"),
-                    UTF_8))
-                .stream()
+    return CharStreams.readLines(
+            new InputStreamReader(
+                BLS12MapFp2ToG2PrecompiledContractTest.class.getResourceAsStream("fp2_to_g2.csv"),
+                UTF_8))
+        .stream()
         .map(line -> line.split(",", 4))
         .collect(Collectors.toList());
   }
