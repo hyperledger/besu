@@ -174,24 +174,6 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public long removeAllKeysUnless(
-      final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
-    long removedNodeCounter = 0;
-    try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
-      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
-        final byte[] key = rocksIterator.key();
-        if (!inUseCheck.test(key)) {
-          removedNodeCounter++;
-          db.delete(segmentHandle, key);
-        }
-      }
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
-    }
-    return removedNodeCounter;
-  }
-
-  @Override
   public boolean tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
     try {
       db.delete(segmentHandle, tryDeleteOptions, key);
