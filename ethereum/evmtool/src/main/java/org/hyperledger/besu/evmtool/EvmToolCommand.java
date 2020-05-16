@@ -170,7 +170,7 @@ public class EvmToolCommand implements Runnable {
     try {
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
-              .dataStoreModule(new InMemoryDataStoreModule())
+              .dataStoreModule(new DataStoreModule())
               .genesisFileModule(
                   network == null
                       ? genesisFile == null
