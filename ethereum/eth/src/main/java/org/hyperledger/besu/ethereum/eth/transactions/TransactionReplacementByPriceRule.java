@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;
 
@@ -26,6 +27,11 @@ public class TransactionReplacementByPriceRule implements TransactionPoolReplace
       TransactionPriceCalculator.frontier();
   private static final TransactionPriceCalculator EIP1559_CALCULATOR =
       TransactionPriceCalculator.eip1559();
+  private final Percentage priceBump;
+
+  public TransactionReplacementByPriceRule(final Percentage priceBump) {
+    this.priceBump = priceBump;
+  }
 
   @Override
   public boolean shouldReplace(
@@ -34,8 +40,11 @@ public class TransactionReplacementByPriceRule implements TransactionPoolReplace
       final Optional<Long> baseFee) {
     assert existingTransactionInfo.getTransaction() != null
         && newTransactionInfo.getTransaction() != null;
-    return priceOf(newTransactionInfo.getTransaction(), baseFee)
-            .compareTo(priceOf(existingTransactionInfo.getTransaction(), baseFee))
+    final Wei replacementThreshold =
+        priceOf(existingTransactionInfo.getTransaction(), baseFee)
+            .multiply(100 + priceBump.getValue())
+            .divide(100);
+    return priceOf(newTransactionInfo.getTransaction(), baseFee).compareTo(replacementThreshold)
         > 0;
   }
 

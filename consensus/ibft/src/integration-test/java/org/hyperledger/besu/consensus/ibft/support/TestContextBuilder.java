@@ -303,7 +303,9 @@ public class TestContextBuilder {
             1,
             clock,
             metricsSystem,
-            blockChain::getChainHeadHeader);
+            blockChain::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(

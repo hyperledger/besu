@@ -16,35 +16,50 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Arrays.asList;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class TransactionPoolReplacementHandler implements TransactionPoolReplacementRule {
+public class TransactionPoolReplacementHandler {
   private final List<TransactionPoolReplacementRule> rules;
+  private final Optional<EIP1559> eip1559;
 
-  public TransactionPoolReplacementHandler() {
-    this(asList(new TransactionReplacementByPriceRule()));
+  public TransactionPoolReplacementHandler(
+      final Optional<EIP1559> eip1559, final Percentage priceBump) {
+    this(asList(new TransactionReplacementByPriceRule(priceBump)), eip1559);
   }
 
   @VisibleForTesting
-  TransactionPoolReplacementHandler(final List<TransactionPoolReplacementRule> rules) {
+  TransactionPoolReplacementHandler(
+      final List<TransactionPoolReplacementRule> rules, final Optional<EIP1559> eip1559) {
     this.rules = rules;
+    this.eip1559 = eip1559;
   }
 
-  @Override
   public boolean shouldReplace(
       final TransactionInfo existingTransactionInfo,
       final TransactionInfo newTransactionInfo,
-      final Optional<Long> baseFee) {
+      final BlockHeader chainHeadHeader) {
     assert existingTransactionInfo != null;
     if (newTransactionInfo == null) {
       return false;
     }
-    return rules.stream()
-        .anyMatch(rule -> rule.shouldReplace(existingTransactionInfo, newTransactionInfo, baseFee));
+    return eip1559
+            .map(
+                eip ->
+                    eip.isValidTransaction(
+                        chainHeadHeader.getNumber(), newTransactionInfo.getTransaction()))
+            .orElse(newTransactionInfo.getTransaction().isFrontierTransaction())
+        && rules.stream()
+            .anyMatch(
+                rule ->
+                    rule.shouldReplace(
+                        existingTransactionInfo, newTransactionInfo, chainHeadHeader.getBaseFee()));
   }
 }

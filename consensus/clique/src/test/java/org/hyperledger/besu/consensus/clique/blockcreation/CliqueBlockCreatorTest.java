@@ -54,6 +54,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -127,7 +128,9 @@ public class CliqueBlockCreatorTest {
                 5,
                 TestClock.fixed(),
                 metricsSystem,
-                blockchain::getChainHeadHeader),
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
@@ -161,7 +164,9 @@ public class CliqueBlockCreatorTest {
                 5,
                 TestClock.fixed(),
                 metricsSystem,
-                blockchain::getChainHeadHeader),
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
@@ -194,7 +199,9 @@ public class CliqueBlockCreatorTest {
                 5,
                 TestClock.fixed(),
                 metricsSystem,
-                blockchain::getChainHeadHeader),
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
@@ -230,7 +237,9 @@ public class CliqueBlockCreatorTest {
                 5,
                 TestClock.fixed(),
                 metricsSystem,
-                blockchain::getChainHeadHeader),
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
