@@ -15,11 +15,13 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldView;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -35,6 +37,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import org.apache.tuweni.bytes.Bytes32;
 
 @SuppressWarnings("WeakerAccess")
 @Module(includes = {GenesisFileModule.class, DataStoreModule.class})
@@ -51,28 +54,52 @@ public class BlockchainModule {
 
   @Provides
   MutableWorldView getMutableWorldView(
+      @Named("StateRoot") final Bytes32 stateRoot,
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage worldStatePreimageStorage,
-      final GenesisState genesisState) {
-    final DefaultMutableWorldState mutableWorldState =
-        new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
-    genesisState.writeStateTo(mutableWorldState);
-    return mutableWorldState;
+      final GenesisState genesisState,
+      @Named("KeyValueStorageName") final String keyValueStorageName) {
+    if ("memory".equals(keyValueStorageName)) {
+      final DefaultMutableWorldState mutableWorldState =
+          new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
+      genesisState.writeStateTo(mutableWorldState);
+      return mutableWorldState;
+    } else {
+      return new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
+    }
   }
 
   @Provides
-  WorldStateStorage provideWorldStateStorage(final KeyValueStorage keyValueStorage) {
+  WorldStateStorage provideWorldStateStorage(
+      @Named("worldState") final KeyValueStorage keyValueStorage) {
     return new WorldStateKeyValueStorage(keyValueStorage);
   }
 
   @Provides
   WorldStatePreimageStorage provideWorldStatePreimageStorage(
-      final KeyValueStorage keyValueStorage) {
+      @Named("worldStatePreimage") final KeyValueStorage keyValueStorage) {
     return new WorldStatePreimageKeyValueStorage(keyValueStorage);
   }
 
   @Provides
   WorldUpdater provideWorldUpdater(final MutableWorldView mutableWorldView) {
     return mutableWorldView.updater();
+  }
+
+  @Provides
+  @Named("StateRoot")
+  Bytes32 provideStateRoot(final BlockParameter blockParameter, final Blockchain blockchain) {
+    if (blockParameter.isEarliest()) {
+      return blockchain.getBlockHeader(0).orElseThrow().getStateRoot();
+    } else if (blockParameter.isLatest() || blockParameter.isPending()) {
+      return blockchain.getChainHeadHeader().getStateRoot();
+    } else if (blockParameter.isNumeric()) {
+      return blockchain
+          .getBlockHeader(blockParameter.getNumber().orElseThrow())
+          .orElseThrow()
+          .getStateRoot();
+    } else {
+      return Hash.EMPTY_TRIE_HASH;
+    }
   }
 }

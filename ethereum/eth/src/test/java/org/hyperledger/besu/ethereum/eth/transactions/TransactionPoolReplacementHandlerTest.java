@@ -19,11 +19,15 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -37,23 +41,13 @@ public class TransactionPoolReplacementHandlerTest {
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
-          {emptyList(), mock(TransactionInfo.class), mock(TransactionInfo.class), false},
-          {
-            singletonList(constantRule(false)),
-            mock(TransactionInfo.class),
-            mock(TransactionInfo.class),
-            false
-          },
-          {
-            singletonList(constantRule(true)),
-            mock(TransactionInfo.class),
-            mock(TransactionInfo.class),
-            true
-          },
+          {emptyList(), mockTransactionInfo(), mockTransactionInfo(), false},
+          {singletonList(constantRule(false)), mockTransactionInfo(), mockTransactionInfo(), false},
+          {singletonList(constantRule(true)), mockTransactionInfo(), mockTransactionInfo(), true},
           {
             constantRules(asList(false, false, false, true)),
-            mock(TransactionInfo.class),
-            mock(TransactionInfo.class),
+            mockTransactionInfo(),
+            mockTransactionInfo(),
             true
           },
         });
@@ -63,6 +57,7 @@ public class TransactionPoolReplacementHandlerTest {
   private final TransactionInfo oldTransactionInfo;
   private final TransactionInfo newTransactionInfo;
   private final boolean expectedResult;
+  private final BlockHeader header;
 
   public TransactionPoolReplacementHandlerTest(
       final List<TransactionPoolReplacementRule> rules,
@@ -73,18 +68,20 @@ public class TransactionPoolReplacementHandlerTest {
     this.oldTransactionInfo = oldTransactionInfo;
     this.newTransactionInfo = newTransactionInfo;
     this.expectedResult = expectedResult;
+    header = mock(BlockHeader.class);
+    when(header.getBaseFee()).thenReturn(Optional.empty());
   }
 
   @Test
   public void shouldReplace() {
     assertThat(
-            new TransactionPoolReplacementHandler(rules)
-                .shouldReplace(oldTransactionInfo, newTransactionInfo))
+            new TransactionPoolReplacementHandler(rules, Optional.empty())
+                .shouldReplace(oldTransactionInfo, newTransactionInfo, header))
         .isEqualTo(expectedResult);
   }
 
   private static TransactionPoolReplacementRule constantRule(final boolean returnValue) {
-    return (o, n) -> returnValue;
+    return (ot, nt, bf) -> returnValue;
   }
 
   private static List<TransactionPoolReplacementRule> constantRules(
@@ -92,5 +89,13 @@ public class TransactionPoolReplacementHandlerTest {
     return returnValues.stream()
         .map(TransactionPoolReplacementHandlerTest::constantRule)
         .collect(Collectors.toList());
+  }
+
+  private static TransactionInfo mockTransactionInfo() {
+    final TransactionInfo transactionInfo = mock(TransactionInfo.class);
+    final Transaction transaction = mock(Transaction.class);
+    when(transaction.isFrontierTransaction()).thenReturn(true);
+    when(transactionInfo.getTransaction()).thenReturn(transaction);
+    return transactionInfo;
   }
 }

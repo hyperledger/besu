@@ -298,7 +298,14 @@ public class TestContextBuilder {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS, 1, 1, clock, metricsSystem);
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            1,
+            1,
+            clock,
+            metricsSystem,
+            blockChain::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
