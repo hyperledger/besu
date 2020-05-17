@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class Util {
 
   /**
@@ -35,6 +37,10 @@ public class Util {
 
   public static Address publicKeyToAddress(final PublicKey publicKey) {
     return Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+  }
+
+  public static Address encodedPublicKeyToAddress(final Bytes publicKeyBytes) {
+    return Address.extract(Hash.hash(publicKeyBytes));
   }
 
   /**
