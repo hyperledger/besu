@@ -45,10 +45,10 @@ public class NodeSmartContractPermissioningTransactions {
         Address.fromHexString(contractAddress), node, Optional.empty());
   }
 
-  public Transaction<Boolean> isEnodeURLAllowed(
-      final String contractAddress, final String enodeURL, final Node executorNode) {
+  public Transaction<Boolean> isEnodeUrlAllowed(
+      final String contractAddress, final String enodeUrl, final Node executorNode) {
     return new NodeSmartContractPermissioningIsAllowedTransaction(
-        Address.fromHexString(contractAddress), executorNode, Optional.of(enodeURL));
+        Address.fromHexString(contractAddress), executorNode, Optional.of(enodeUrl));
   }
 
   public Transaction<Boolean> isConnectionAllowed(

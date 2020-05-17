@@ -51,7 +51,7 @@ public class NodeSmartContractPermissioningAcceptanceTest
 
   @Test
   public void onChainPermissioningWhitelistShouldPersistAcrossRestarts() {
-    // enodeURLs will change on restart due to port allocations.  We need to store them for
+    // enodeUrls will change on restart due to port allocations.  We need to store them for
     // comparison.
     final String allowedNodeId = ((BesuNode) allowedNode).enodeUrl().toASCIIString();
     final String bootnodeId = ((BesuNode) bootnode).enodeUrl().toASCIIString();
@@ -60,9 +60,9 @@ public class NodeSmartContractPermissioningAcceptanceTest
     permissionedCluster.stop();
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
 
-    permissionedNode.verify(enodeURLIsAllowed(allowedNodeId, bootnode));
-    permissionedNode.verify(enodeURLIsAllowed(bootnodeId, bootnode));
-    permissionedNode.verify(enodeURLIsAllowed(permissionedNodeId, bootnode));
+    permissionedNode.verify(enodeUrlIsAllowed(allowedNodeId, bootnode));
+    permissionedNode.verify(enodeUrlIsAllowed(bootnodeId, bootnode));
+    permissionedNode.verify(enodeUrlIsAllowed(permissionedNodeId, bootnode));
   }
 
   @Test

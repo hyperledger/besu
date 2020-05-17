@@ -84,11 +84,11 @@ public class NodeSmartContractPermissioningIsAllowedTransaction implements Trans
   }
 
   private org.web3j.protocol.core.methods.request.Transaction payload() {
-    final String sourceEnodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
-    final EnodeURL checkEnodeURL = EnodeURL.fromString(enodeUrl.orElse(sourceEnodeURL));
+    final String sourceEnodeUrl = ((RunnableNode) node).enodeUrl().toASCIIString();
+    final EnodeURL checkEnodeUrl = EnodeURL.fromString(enodeUrl.orElse(sourceEnodeUrl));
     final Bytes payload =
         NodeSmartContractPermissioningController.createPayload(
-            IS_NODE_ALLOWED_SIGNATURE, checkEnodeURL);
+            IS_NODE_ALLOWED_SIGNATURE, checkEnodeUrl);
 
     return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
         null, null, null, null, contractAddress.toString(), payload.toString());
