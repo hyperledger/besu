@@ -473,7 +473,13 @@ applicationDefaultJvmArgs = [
   'java.base/sun.security.provider=ALL-UNNAMED',
   // Jackson likes to access java.util.OptionalLong's constructor
   '--add-opens',
-  'java.base/java.util=ALL-UNNAMED'
+  'java.base/java.util=ALL-UNNAMED',
+  // suppress netty specific module warnings in debug
+  "-Dio.netty.tryReflectionSetAccessible=true",
+  "--add-exports",
+  "java.base/jdk.internal.misc=ALL-UNNAMED",
+  "--add-opens",
+  "java.base/java.nio=ALL-UNNAMED"
 ]
 
 run {
