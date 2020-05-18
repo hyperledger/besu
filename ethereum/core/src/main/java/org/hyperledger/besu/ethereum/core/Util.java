@@ -36,10 +36,10 @@ public class Util {
   }
 
   public static Address publicKeyToAddress(final PublicKey publicKey) {
-    return Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+    return publicKeyToAddress(publicKey.getEncodedBytes());
   }
 
-  public static Address encodedPublicKeyToAddress(final Bytes publicKeyBytes) {
+  public static Address publicKeyToAddress(final Bytes publicKeyBytes) {
     return Address.extract(Hash.hash(publicKeyBytes));
   }
 
