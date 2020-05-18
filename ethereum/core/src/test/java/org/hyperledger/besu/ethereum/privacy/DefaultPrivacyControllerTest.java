@@ -244,6 +244,7 @@ public class DefaultPrivacyControllerTest {
                     TransactionProcessor.Result.Status.SUCCESSFUL,
                     emptyList(),
                     0,
+                    0,
                     Bytes.fromHexString(
                         MOCK_TRANSACTION_SIMULATOR_RESULT_OUTPUT_BYTES_PREFIX
                             + Bytes.fromBase64String(ENCLAVE_PUBLIC_KEY).toUnprefixedHexString()
@@ -427,7 +428,7 @@ public class DefaultPrivacyControllerTest {
         .thenReturn(
             Optional.of(
                 PrivateTransactionProcessor.Result.successful(
-                    LOGS, 0, Bytes.EMPTY, ValidationResult.valid())));
+                    LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
     final Optional<PrivateTransactionProcessor.Result> result =
         privacyController.simulatePrivateTransaction(
             "Group1", ENCLAVE_PUBLIC_KEY, callParameter, 1);

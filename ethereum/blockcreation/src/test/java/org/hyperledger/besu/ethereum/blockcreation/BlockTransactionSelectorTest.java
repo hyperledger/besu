@@ -69,14 +69,17 @@ public class BlockTransactionSelectorTest {
   private static final KeyPair keyPair = KeyPair.generate();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
+  private final Blockchain blockchain = new TestBlockchain();
   private final PendingTransactions pendingTransactions =
       new PendingTransactions(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
           5,
           TestClock.fixed(),
-          metricsSystem);
-  private final Blockchain blockchain = new TestBlockchain();
+          metricsSystem,
+          blockchain::getChainHeadHeader,
+          Optional.empty(),
+          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
   private final Supplier<Boolean> isCancelled = () -> false;
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
@@ -136,7 +139,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.failed(
-                5, ValidationResult.valid(), Optional.empty()));
+                0, 5, ValidationResult.valid(), Optional.empty()));
 
     // The block should fit 3 transactions only
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(5000);
@@ -180,7 +183,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             any(),
             any(),
@@ -238,7 +241,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(301);
 
@@ -312,7 +315,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -369,7 +372,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -468,7 +471,7 @@ public class BlockTransactionSelectorTest {
             any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new ArrayList<>(), 10000, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 2000, 10000, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             eq(blockchain),
             any(WorldUpdater.class),

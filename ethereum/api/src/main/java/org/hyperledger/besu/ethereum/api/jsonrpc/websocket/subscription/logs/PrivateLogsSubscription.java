@@ -11,17 +11,25 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 
-class InMemoryDataStoreModule extends DataStoreModule {
+public class PrivateLogsSubscription extends LogsSubscription {
 
-  @Override
-  KeyValueStorage provideKeyValueStorage() {
-    return new InMemoryKeyValueStorage();
+  private final String privacyGroupId;
+
+  public PrivateLogsSubscription(
+      final Long subscriptionId,
+      final String connectionId,
+      final FilterParameter filterParameter,
+      final String privacyGroupId) {
+    super(subscriptionId, connectionId, filterParameter);
+    this.privacyGroupId = privacyGroupId;
+  }
+
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
   }
 }

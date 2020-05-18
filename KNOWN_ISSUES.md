@@ -21,17 +21,6 @@ clients.
 
 A fix for this issue is being actively worked on. 
 
-## Error full syncing with pruning
-
-- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#580](https://github.com/hyperledger/besu/issues/580)
-The associated error is `Unable to load trie node value for hash`.
-
-Workarounds:
-1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync. It is already disabled by default for full sync.
-2. If the `MerkleTrieException` occurs, delete the database and resync.
-
-A fix for this issue is being actively worked on.
-
 ## Fast sync when running Besu on cloud providers  
 
 A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail 

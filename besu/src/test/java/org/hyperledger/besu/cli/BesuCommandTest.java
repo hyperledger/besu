@@ -90,6 +90,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -2511,7 +2512,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
   }
 
-  @Test
+  @Ignore
   public void pruningIsEnabledIfSyncModeIsFast() {
     parseCommand("--sync-mode", "FAST");
 
@@ -2522,7 +2523,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  @Test
+  @Ignore
   public void pruningIsDisabledIfSyncModeIsFull() {
     parseCommand("--sync-mode", "FULL");
 
@@ -2544,12 +2545,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  @Test
+  @Ignore
   public void pruningDisabledExplicitly() {
     parseCommand("--pruning-enabled=false", "--sync-mode=FAST");
 
     verify(mockControllerBuilder).isPruningEnabled(false);
     verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void pruningDisabledByDefault() {
+    parseCommand();
+
+    verify(mockControllerBuilder).isPruningEnabled(false);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3033,6 +3044,26 @@ public class BesuCommandTest extends CommandTestAbstract {
         .isEqualTo(pendingTxRetentionHours);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void transactionPoolPriceBump() {
+    final Percentage priceBump = Percentage.fromInt(13);
+    parseCommand("--tx-pool-price-bump", priceBump.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getPriceBump()).isEqualTo(priceBump);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void invalidTansactionPoolPriceBumpShouldFail() {
+    parseCommand("--tx-pool-price-bump", "101");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Invalid value for option '--tx-pool-price-bump'",
+            "should be a number between 0 and 100 inclusive");
   }
 
   @Test

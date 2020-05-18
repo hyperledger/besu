@@ -374,6 +374,59 @@ public class SubscriptionRequestMapperTest {
     mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
   }
 
+  @Test
+  public void mapRequestToPrivateLogsSubscription() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"priv_subscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\"}]}");
+
+    final PrivateSubscribeRequest expectedSubscribeRequest =
+        new PrivateSubscribeRequest(
+            SubscriptionType.LOGS,
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
+                singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
+                emptyList(),
+                null),
+            null,
+            null,
+            "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+
+    final PrivateSubscribeRequest subscribeRequest =
+        mapper.mapPrivateSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+
+    assertThat(subscribeRequest)
+        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToPrivateSubscriptionWithInvalidType() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"priv_subscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"syncing\", {\"includeTransactions\": true}]}");
+
+    thrown.expect(InvalidSubscriptionRequestException.class);
+    thrown.expectMessage("Invalid subscribe request. Invalid private subscription type.");
+
+    mapper.mapPrivateSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+  }
+
+  @Test
+  public void mapRequestToPrivateUnsubscribeRequest() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"priv_unsubscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"0x1\"]}");
+    final PrivateUnsubscribeRequest expectedUnsubscribeRequest =
+        new PrivateUnsubscribeRequest(
+            1L, CONNECTION_ID, "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+
+    final PrivateUnsubscribeRequest unsubscribeRequest =
+        mapper.mapPrivateUnsubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+
+    assertThat(unsubscribeRequest).isEqualTo(expectedUnsubscribeRequest);
+  }
+
   private WebSocketRpcRequest parseWebSocketRpcRequest(final String json) {
     return Json.decodeValue(json, WebSocketRpcRequest.class);
   }

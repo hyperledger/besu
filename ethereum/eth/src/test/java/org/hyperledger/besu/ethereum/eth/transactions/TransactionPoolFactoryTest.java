@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
@@ -88,7 +89,8 @@ public class TransactionPoolFactoryTest {
             new NoOpMetricsSystem(),
             state,
             Wei.of(1),
-            new TransactionPoolConfiguration(1, 1, 1, 1),
+            new TransactionPoolConfiguration(
+                1, 1, 1, 1, TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
@@ -150,7 +152,7 @@ public class TransactionPoolFactoryTest {
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(pendingTransactions.addLocalTransaction(any())).thenReturn(true);
+    when(pendingTransactions.addLocalTransaction(any())).thenReturn(TransactionAddedStatus.ADDED);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     when(schedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(transactionValidator.validate(any())).thenReturn(ValidationResult.valid());
@@ -166,7 +168,8 @@ public class TransactionPoolFactoryTest {
             new NoOpMetricsSystem(),
             state,
             Wei.of(1),
-            new TransactionPoolConfiguration(1, 1, 1, 1),
+            new TransactionPoolConfiguration(
+                1, 1, 1, 1, TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,

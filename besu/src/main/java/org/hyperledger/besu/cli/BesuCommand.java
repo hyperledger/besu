@@ -761,7 +761,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--pruning-enabled"},
       description =
           "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
-  private Boolean pruningOverride;
+  private final Boolean pruningEnabled = false;
 
   @Option(
       names = {"--permissions-nodes-config-file-enabled"},
@@ -897,6 +897,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+
+  @Option(
+      names = {"--tx-pool-price-bump"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      converter = PercentageConverter.class,
+      description =
+          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -1338,6 +1347,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 ensureAllNodesAreInWhitelist(
                     staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
     metricsConfiguration = metricsConfiguration();
+
+    logger.info("Security Module: {}", securityModuleName);
     return this;
   }
 
@@ -1854,11 +1865,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolMaxSize)
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
+        .priceBump(priceBump)
         .build();
   }
 
   private boolean isPruningEnabled() {
-    return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
+    return pruningEnabled;
   }
 
   // Blockchain synchronisation from peers.
