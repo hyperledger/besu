@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
 import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -42,7 +43,7 @@ public class BeginSubOperationTest {
   private static final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   private static final int CURRENT_PC = 1;
-  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(1);
+  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(0);
 
   private Blockchain blockchain;
   private Address address;
@@ -85,17 +86,16 @@ public class BeginSubOperationTest {
   }
 
   @Test
-  public void shouldNotConsumeStackItem() {
+  public void shouldHaltWithOutOfGasWhenBeginSubIsExecuted() {
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
-            .pushStackItem(Bytes32.fromHexString("0xFF"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
+            .pushStackItem(Bytes32.fromHexString("0x04"))
+            .code(new Code(Bytes.fromHexString("0x610400b2")))
             .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
             .build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null)).isNotPresent();
-    operation.execute(frame);
-    assertThat(frame.stackSize()).isEqualTo(1);
+    assertThat(operation.exceptionalHaltCondition(frame, null, null))
+        .contains(ExceptionalHaltReason.INSUFFICIENT_GAS);
   }
 }
