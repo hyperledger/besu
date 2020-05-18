@@ -11,17 +11,18 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
-class InMemoryDataStoreModule extends DataStoreModule {
+import java.util.Optional;
 
-  @Override
-  KeyValueStorage provideKeyValueStorage() {
-    return new InMemoryKeyValueStorage();
-  }
+@FunctionalInterface
+public interface TransactionPoolReplacementRule {
+
+  boolean shouldReplace(
+      TransactionInfo existingTransactionInfo,
+      TransactionInfo newTransactionInfo,
+      Optional<Long> baseFee);
 }

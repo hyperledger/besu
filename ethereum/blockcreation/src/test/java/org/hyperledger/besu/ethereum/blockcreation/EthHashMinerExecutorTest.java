@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.junit.Test;
@@ -43,7 +44,10 @@ public class EthHashMinerExecutorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            () -> null,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
@@ -69,7 +73,10 @@ public class EthHashMinerExecutorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            () -> null,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(

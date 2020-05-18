@@ -99,13 +99,7 @@ public class TransactionPoolTest {
   private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
   private MutableBlockchain blockchain;
 
-  private final PendingTransactions transactions =
-      new PendingTransactions(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
-          MAX_TRANSACTION_HASHES,
-          TestClock.fixed(),
-          metricsSystem);
+  private PendingTransactions transactions;
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
@@ -121,6 +115,16 @@ public class TransactionPoolTest {
   @Before
   public void setUp() {
     blockchain = executionContext.getBlockchain();
+    transactions =
+        new PendingTransactions(
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            MAX_TRANSACTIONS,
+            MAX_TRANSACTION_HASHES,
+            TestClock.fixed(),
+            metricsSystem,
+            blockchain::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();

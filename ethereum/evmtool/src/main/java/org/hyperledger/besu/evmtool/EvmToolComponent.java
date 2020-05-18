@@ -17,7 +17,7 @@ package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
 import javax.inject.Singleton;
@@ -36,7 +36,7 @@ import dagger.Component;
     })
 public interface EvmToolComponent {
 
-  Function<Integer, EVM> getEvmAtBlock();
+  Function<Integer, ProtocolSpec<?>> getProtocolSpec();
 
   WorldUpdater getWorldUpdater();
 

@@ -36,8 +36,10 @@ dependencies {
   implementation project(':crypto')
   implementation project(':consensus:clique')
   implementation project(':consensus:ibft')
+  implementation project(':ethereum:api')
   implementation project(':ethereum:core')
   implementation project(':metrics:core')
+  implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')
   implementation project(':util')
 

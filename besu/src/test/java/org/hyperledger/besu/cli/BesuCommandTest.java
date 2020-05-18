@@ -3047,6 +3047,26 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void transactionPoolPriceBump() {
+    final Percentage priceBump = Percentage.fromInt(13);
+    parseCommand("--tx-pool-price-bump", priceBump.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getPriceBump()).isEqualTo(priceBump);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void invalidTansactionPoolPriceBumpShouldFail() {
+    parseCommand("--tx-pool-price-bump", "101");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Invalid value for option '--tx-pool-price-bump'",
+            "should be a number between 0 and 100 inclusive");
+  }
+
+  @Test
   public void txMessageKeepAliveSecondsWithInvalidInputShouldFail() {
     parseCommand("--Xincoming-tx-messages-keep-alive-seconds", "acbd");
 
