@@ -379,7 +379,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
             .build();
 
     LOG.info("Enode URL {}", localEnode.toString());
-    LOG.info("Public address {}", Util.encodedPublicKeyToAddress(localEnode.getNodeId()));
+    LOG.info("Node address {}", Util.encodedPublicKeyToAddress(localEnode.getNodeId()));
     localNode.setEnode(localEnode);
   }
 
