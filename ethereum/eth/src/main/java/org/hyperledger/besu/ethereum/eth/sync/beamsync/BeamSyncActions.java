@@ -116,11 +116,11 @@ public class BeamSyncActions<C> {
   private CompletableFuture<BeamSyncState> selectLaunchBlockFromPeers() {
     return ethContext
         .getEthPeers()
-        .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
+        .bestPeerMatchingCriteria(this::canPeerDetermineLaunchBlock)
         // Only select a pivot block number when we have a minimum number of height estimates
         .filter(
             peer -> {
-              final long peerCount = countPeersThatCanDeterminePivotBlock();
+              final long peerCount = countPeersThatCanDetermineLaunchBlock();
               final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
               if (peerCount < minPeerCount) {
                 LOG.info(
@@ -148,15 +148,15 @@ public class BeamSyncActions<C> {
         .orElseGet(this::retrySelectLaunchBlockAfterDelay);
   }
 
-  private long countPeersThatCanDeterminePivotBlock() {
+  private long countPeersThatCanDetermineLaunchBlock() {
     return ethContext
         .getEthPeers()
         .streamAvailablePeers()
-        .filter(this::canPeerDeterminePivotBlock)
+        .filter(this::canPeerDetermineLaunchBlock)
         .count();
   }
 
-  private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
+  private boolean canPeerDetermineLaunchBlock(final EthPeer peer) {
     return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
   }
 

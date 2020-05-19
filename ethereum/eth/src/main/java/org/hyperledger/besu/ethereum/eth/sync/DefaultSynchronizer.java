@@ -52,6 +52,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final BlockPropagationManager<C> blockPropagationManager;
   private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
+  /*private final Optional<BeamSyncDownloader<C>> beamSyncDownloader;*/
   private final FullSyncDownloader<C> fullSyncDownloader;
 
   public DefaultSynchronizer(
@@ -101,6 +102,18 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             worldStateStorage,
             syncState,
             clock);
+
+    /*this.beamSyncDownloader =
+    BeamDownloaderFactory.create(
+        syncConfig,
+        dataDirectory,
+        protocolSchedule,
+        protocolContext,
+        metricsSystem,
+        ethContext,
+        worldStateStorage,
+        syncState,
+        clock);*/
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,

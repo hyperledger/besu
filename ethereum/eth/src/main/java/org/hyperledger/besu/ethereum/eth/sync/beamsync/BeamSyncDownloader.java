@@ -21,20 +21,15 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class BeamSyncDownloader<C> {
-  private static final Logger LOG = LogManager.getLogger();
+  // private static final Logger LOG = LogManager.getLogger();
   private final BeamSyncActions<C> beamSyncActions;
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolContext<C> protocolContext;
@@ -76,7 +71,7 @@ public class BeamSyncDownloader<C> {
             .thenApply(this::updateMaxTrailingPeers)
             .thenApply(this::storeState)
             .thenCompose(this::downloadChain),
-        this::handleWorldStateUnavailable);
+        error -> CompletableFuture.failedFuture(error));
   }
 
   public void stop() {
@@ -88,18 +83,8 @@ public class BeamSyncDownloader<C> {
     }
   }
 
-  // TODO: Remove this as it is not applicable to BeamSync.
-  private CompletableFuture<BeamSyncState> handleWorldStateUnavailable(final Throwable error) {
-    trailingPeerRequirements = Optional.empty();
-    if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
-      LOG.warn(
-          "Beam sync was unable to download the world state. Retrying with a new pivot block.");
-      return start(BeamSyncState.EMPTY_SYNC_STATE);
-    } else {
-      return CompletableFuture.failedFuture(error);
-    }
-  }
-
+  // TODO: Trailing peers are likely not an issue for BeamSync, because all world state download is
+  // async. Confirm this.
   public TrailingPeerRequirements calculateTrailingPeerRequirements() {
     return syncState.isInSync()
         ? TrailingPeerRequirements.UNRESTRICTED
@@ -108,6 +93,8 @@ public class BeamSyncDownloader<C> {
             syncConfig.getMaxTrailingPeers());
   }
 
+  // TODO: Trailing peers are likely not an issue for BeamSync, because all world state download is
+  // async. Confirm this.
   private BeamSyncState updateMaxTrailingPeers(final BeamSyncState state) {
     if (state.getLaunchBlockNumber().isPresent()) {
       trailingPeerRequirements =
