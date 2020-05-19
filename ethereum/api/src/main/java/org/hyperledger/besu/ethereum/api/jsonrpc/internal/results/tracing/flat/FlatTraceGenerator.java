@@ -350,9 +350,7 @@ public class FlatTraceGenerator {
 
     final Action.Builder callingAction = tracesContexts.peekLast().getBuilder().getActionBuilder();
     final String actionAddress =
-        callingAction.getCallType().equals("call")
-            ? callingAction.getTo()
-            : callingAction.getFrom();
+        getActionAddress(callingAction, traceFrame.getRecipient().toHexString());
     final Action.Builder subTraceActionBuilder =
         Action.builder()
             .address(actionAddress)
@@ -368,6 +366,25 @@ public class FlatTraceGenerator {
       nextContext.getBuilder().incSubTraces();
     }
     return nextContext;
+  }
+
+  private static String getActionAddress(
+      final Action.Builder callingAction, final String recipient) {
+    if (callingAction.getCallType() != null) {
+      return callingAction.getCallType().equals("call")
+          ? callingAction.getTo()
+          : callingAction.getFrom();
+    }
+    return firstNonNull("", recipient, callingAction.getFrom(), callingAction.getTo());
+  }
+
+  private static String firstNonNull(final String defaultValue, final String... values) {
+    for (String value : values) {
+      if (value != null) {
+        return value;
+      }
+    }
+    return defaultValue;
   }
 
   private static FlatTrace.Context handleCreateOperation(

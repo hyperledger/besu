@@ -216,6 +216,7 @@ public class RocksDBColumnarKeyValueStorage
     if (closed.compareAndSet(false, true)) {
       txOptions.close();
       options.close();
+      tryDeleteOptions.close();
       columnHandlesByName.values().forEach(ColumnFamilyHandle::close);
       db.close();
     }
@@ -280,7 +281,6 @@ public class RocksDBColumnarKeyValueStorage
     }
 
     private void close() {
-      tryDeleteOptions.close();
       innerTx.close();
       options.close();
     }

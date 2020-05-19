@@ -24,6 +24,9 @@ import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 
 public class CommandLineUtils {
+  public static final String DEPENDENCY_WARNING_MSG =
+      "{} has been ignored because {} was not defined on the command line.";
+
   /**
    * Check if options are passed that require an option to be true to have any effect and log a
    * warning with the list of affected options.
@@ -60,10 +63,7 @@ public class CommandLineUtils {
                       Collectors.toList(), StringUtils.joiningWithLastDelimiter(", ", " and ")));
 
       if (!affectedOptions.isEmpty()) {
-        logger.warn(
-            "{} will have no effect unless {} is defined on the command line.",
-            affectedOptions,
-            mainOptionName);
+        logger.warn(DEPENDENCY_WARNING_MSG, affectedOptions, mainOptionName);
       }
     }
   }
