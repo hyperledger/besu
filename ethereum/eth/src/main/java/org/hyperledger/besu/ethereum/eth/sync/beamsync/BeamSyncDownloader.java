@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.beamsync;
 
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -97,7 +96,7 @@ public class BeamSyncDownloader<C> {
           "Beam sync was unable to download the world state. Retrying with a new pivot block.");
       return start(BeamSyncState.EMPTY_SYNC_STATE);
     } else {
-      return completedExceptionally(error);
+      return CompletableFuture.failedFuture(error);
     }
   }
 
@@ -130,7 +129,8 @@ public class BeamSyncDownloader<C> {
     // after the stop method had called cancel.
     synchronized (this) {
       if (!running.get()) {
-        return completedExceptionally(new CancellationException("BeamSyncDownloader stopped"));
+        return CompletableFuture.failedFuture(
+            new CancellationException("BeamSyncDownloader stopped"));
       }
       final ChainDownloader chainDownloader = beamSyncActions.createChainDownloader(currentState);
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
