@@ -43,7 +43,7 @@ public class BeginSubOperationTest {
   private static final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   private static final int CURRENT_PC = 1;
-  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(0);
+  private static final Gas BEGIN_SUB_GAS_COST = Gas.ZERO;
 
   private Blockchain blockchain;
   private Address address;

@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 
 public class BerlinGasCalculator extends IstanbulGasCalculator {
 
-  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(0);
+  private static final Gas BEGIN_SUB_GAS_COST = Gas.ZERO;
 
   @Override
   // as https://eips.ethereum.org/EIPS/eip-2315
