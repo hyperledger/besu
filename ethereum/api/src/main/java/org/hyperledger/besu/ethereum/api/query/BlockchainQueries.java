@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
@@ -50,6 +52,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -58,10 +63,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BlockchainQueries {
   private static final Logger LOG = LogManager.getLogger();
 
+  private static final int BLOCK_BODY_SOFT_CACHE_SIZE = 100;
+
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
+
+  private final LoadingCache<Hash, Optional<BlockBody>> blockBodySoftCache;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
@@ -87,6 +96,24 @@ public class BlockchainQueries {
             ? Optional.of(
                 new TransactionLogBloomCacher(blockchain, cachePath.get(), scheduler.get()))
             : Optional.empty();
+
+    blockBodySoftCache =
+        CacheBuilder.newBuilder()
+            .maximumSize(BLOCK_BODY_SOFT_CACHE_SIZE)
+            .softValues()
+            .build(CacheLoader.from(blockchain::getBlockBody));
+
+    blockchain.observeBlockAdded(this::onBlockAdded);
+    blockchain.observeChainReorg(this::onChainReorg);
+  }
+
+  private void onChainReorg(
+      final BlockWithReceipts blockWithReceipts, final Blockchain blockchain) {
+    blockBodySoftCache.invalidate(blockWithReceipts.getHash());
+  }
+
+  private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
+    blockBodySoftCache.invalidate(blockAddedEvent.getBlock().getHash());
   }
 
   public Blockchain getBlockchain() {
@@ -182,8 +209,8 @@ public class BlockchainQueries {
    * @return The number of transactions contained in the referenced block.
    */
   public Integer getTransactionCount(final Hash blockHeaderHash) {
-    return blockchain
-        .getBlockBody(blockHeaderHash)
+    return blockBodySoftCache
+        .getUnchecked(blockHeaderHash)
         .map(body -> body.getTransactions().size())
         .orElse(-1);
   }
@@ -230,7 +257,7 @@ public class BlockchainQueries {
    * @return The number of ommers in the referenced block.
    */
   public Optional<Integer> getOmmerCount(final Hash blockHeaderHash) {
-    return blockchain.getBlockBody(blockHeaderHash).map(b -> b.getOmmers().size());
+    return blockBodySoftCache.getUnchecked(blockHeaderHash).map(b -> b.getOmmers().size());
   }
 
   /**
@@ -250,7 +277,9 @@ public class BlockchainQueries {
    * @return The ommer at the given index belonging to the referenced block.
    */
   public Optional<BlockHeader> getOmmer(final Hash blockHeaderHash, final int index) {
-    return blockchain.getBlockBody(blockHeaderHash).map(blockBody -> getOmmer(blockBody, index));
+    return blockBodySoftCache
+        .getUnchecked(blockHeaderHash)
+        .map(blockBody -> getOmmer(blockBody, index));
   }
 
   private BlockHeader getOmmer(final BlockBody blockBody, final int index) {
@@ -297,8 +326,8 @@ public class BlockchainQueries {
         .getBlockHeader(blockHeaderHash)
         .flatMap(
             header ->
-                blockchain
-                    .getBlockBody(blockHeaderHash)
+                blockBodySoftCache
+                    .getUnchecked(blockHeaderHash)
                     .flatMap(
                         body ->
                             blockchain
@@ -352,8 +381,8 @@ public class BlockchainQueries {
         .getBlockHeader(blockHeaderHash)
         .flatMap(
             header ->
-                blockchain
-                    .getBlockBody(blockHeaderHash)
+                blockBodySoftCache
+                    .getUnchecked(blockHeaderHash)
                     .flatMap(
                         body ->
                             blockchain
@@ -471,7 +500,7 @@ public class BlockchainQueries {
       final BlockHeader header, final int txIndex) {
     final Hash blockHeaderHash = header.getHash();
     // headers should not exist w/o bodies, so not being present is exceptional
-    final BlockBody blockBody = blockchain.getBlockBody(blockHeaderHash).orElseThrow();
+    final BlockBody blockBody = blockBodySoftCache.getUnchecked(blockHeaderHash).orElseThrow();
     final List<Transaction> txs = blockBody.getTransactions();
     if (txIndex >= txs.size()) {
       return null;
@@ -500,7 +529,8 @@ public class BlockchainQueries {
     // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final BlockBody blockBody = blockchain.getBlockBody(location.getBlockHash()).orElseThrow();
+    final BlockBody blockBody =
+        blockBodySoftCache.getUnchecked(location.getBlockHash()).orElseThrow();
     final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
@@ -627,7 +657,7 @@ public class BlockchainQueries {
     // receipts and transactions should exist if the header exists, so throwing is ok.
     final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockHash).orElseThrow();
     final List<Transaction> transactions =
-        blockchain.getBlockBody(blockHash).orElseThrow().getTransactions();
+        blockBodySoftCache.getUnchecked(blockHash).orElseThrow().getTransactions();
     final long number = blockHeader.get().getNumber();
     final boolean removed = !blockchain.blockIsOnCanonicalChain(blockHash);
     return IntStream.range(0, receipts.size())
