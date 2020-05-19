@@ -96,19 +96,6 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
-    final Lock lock = rwLock.writeLock();
-    lock.lock();
-    try {
-      final long initialSize = storage.size();
-      storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
-      return initialSize - storage.size();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
   public boolean tryDelete(final byte[] key) {
     final Lock lock = rwLock.writeLock();
     if (lock.tryLock()) {
