@@ -25,7 +25,7 @@ import picocli.CommandLine;
 
 public class CommandLineUtils {
   public static final String DEPENDENCY_WARNING_MSG =
-      "{} has been ignored as {} was not defined on the command line.";
+      "{} has been ignored because {} was not defined on the command line.";
 
   /**
    * Check if options are passed that require an option to be true to have any effect and log a
