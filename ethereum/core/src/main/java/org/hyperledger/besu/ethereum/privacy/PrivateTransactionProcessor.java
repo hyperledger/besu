@@ -241,7 +241,7 @@ public class PrivateTransactionProcessor {
     final WorldUpdater mutablePrivateWorldStateUpdater =
         new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
 
-    final ReturnStack returnStack = ReturnStack.getInstance();
+    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
 
     if (transaction.isContractCreation()) {
       final Address privateContractAddress =

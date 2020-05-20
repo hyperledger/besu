@@ -256,7 +256,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final WorldUpdater worldUpdater = worldState.updater();
     final MessageFrame initialFrame;
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final ReturnStack returnStack = ReturnStack.getInstance();
+    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
 
     if (transaction.isContractCreation()) {
       final Address contractAddress =
