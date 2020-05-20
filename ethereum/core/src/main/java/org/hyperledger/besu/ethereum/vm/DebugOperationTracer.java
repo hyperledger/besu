@@ -108,7 +108,9 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
-    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
+    if (!traceFrames.isEmpty()) {
+      traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
+    }
   }
 
   @Override
