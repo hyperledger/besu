@@ -42,7 +42,7 @@ contract('Permissioning: Accounts', () => {
 
     // remove remaining account from whitelist
     await proxy.removeAccount(address1);
-    permitted = await proxy.transactionAllowed(address1, address1, value, gasPrice, gasLimit, payload);
+    permitted = await proxy.transactionAllowed(address2, address1, value, gasPrice, gasLimit, payload);
     assert.equal(permitted, true, 'whitelist now empty so ANY account now permitted to send tx');
 
     // first one still permitted
