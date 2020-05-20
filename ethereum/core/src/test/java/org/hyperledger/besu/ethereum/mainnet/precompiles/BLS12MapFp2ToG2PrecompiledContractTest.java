@@ -20,7 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.io.IOException;
@@ -35,11 +37,11 @@ import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 
 @RunWith(Parameterized.class)
-public class BLS12MapFp2ToG2PrecompiledContractTest {
-  private final BLS12MapFp2ToG2PrecompiledContract contract =
-      new BLS12MapFp2ToG2PrecompiledContract();
+public class BLS12MapFp2ToG2PrecompiledContractTest extends AbstractPrecompiledContractTest {
 
-  public BLS12MapFp2ToG2PrecompiledContractTest() {}
+  public BLS12MapFp2ToG2PrecompiledContractTest() {
+    super(MainnetPrecompiledContractRegistries::berlin, Address.BLS12_MAP_FP2_TO_G2);
+  }
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 

@@ -20,6 +20,15 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128AddPrecompiledC
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128MulPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.BLAKE2BFPrecompileContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G1AddPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G1MulPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G1MultiExpPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G2AddPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G2MulPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G2MultiExpPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12MapFp2ToG2PrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12MapFpToG1PrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12PairingPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
@@ -120,42 +129,28 @@ public abstract class MainnetPrecompiledContractRegistries {
       final GasCalculator gasCalculator,
       final int accountVersion) {
     populateForIstanbul(registry, gasCalculator, accountVersion);
-    registry.put(
-        Address.BLS12_G1ADD,
-        Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
-    registry.put(
-        Address.BLS12_G1MUL,
-        Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+    registry.put(Address.BLS12_G1ADD, Account.DEFAULT_VERSION, new BLS12G1AddPrecompiledContract());
+    registry.put(Address.BLS12_G1MUL, Account.DEFAULT_VERSION, new BLS12G1MulPrecompiledContract());
     registry.put(
         Address.BLS12_G1MULTIEXP,
         Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
-    registry.put(
-        Address.BLS12_G2ADD,
-        Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
-    registry.put(
-        Address.BLS12_G2MUL,
-        Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+        new BLS12G1MultiExpPrecompiledContract());
+    registry.put(Address.BLS12_G2ADD, Account.DEFAULT_VERSION, new BLS12G2AddPrecompiledContract());
+    registry.put(Address.BLS12_G2MUL, Account.DEFAULT_VERSION, new BLS12G2MulPrecompiledContract());
     registry.put(
         Address.BLS12_G2MULTIEXP,
         Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+        new BLS12G2MultiExpPrecompiledContract());
     registry.put(
-        Address.BLS12_PAIRING,
-        Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+        Address.BLS12_PAIRING, Account.DEFAULT_VERSION, new BLS12PairingPrecompiledContract());
     registry.put(
         Address.BLS12_MAP_FP_TO_G1,
         Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+        new BLS12MapFpToG1PrecompiledContract());
     registry.put(
         Address.BLS12_MAP_FP2_TO_G2,
         Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+        new BLS12MapFp2ToG2PrecompiledContract());
   }
 
   public static PrecompileContractRegistry berlin(
