@@ -75,7 +75,9 @@ public class ReturnSubOperationTest {
 
     final ReturnSubOperation operation = new ReturnSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(ReturnStack.getInstance()).build();
+        createMessageFrameBuilder(Gas.of(1))
+            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.cost(frame)).isEqualTo(RETURN_SUB_GAS_COST);
   }
@@ -84,7 +86,9 @@ public class ReturnSubOperationTest {
   public void shouldHaltWithInvalidRetSubWhenReturnStackIsEmpty() {
     final ReturnSubOperation operation = new ReturnSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(ReturnStack.getInstance()).build();
+        createMessageFrameBuilder(Gas.of(1))
+            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.exceptionalHaltCondition(frame, null, null))
         .contains(ExceptionalHaltReason.INVALID_RETSUB);
@@ -94,7 +98,7 @@ public class ReturnSubOperationTest {
   public void shouldReturnToTheLastLocation() {
     final int RETURN_LOCATION = 0;
     final ReturnSubOperation operation = new ReturnSubOperation(gasCalculator);
-    final ReturnStack returnStack = ReturnStack.getInstance();
+    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1)).returnStack(returnStack).build();
     frame.setPC(CURRENT_PC);

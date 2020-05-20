@@ -77,7 +77,9 @@ public class BeginSubOperationTest {
 
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(ReturnStack.getInstance()).build();
+        createMessageFrameBuilder(Gas.of(1))
+            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.cost(frame)).isEqualTo(BEGIN_SUB_GAS_COST);
   }
@@ -89,7 +91,7 @@ public class BeginSubOperationTest {
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0xFF"))
             .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
-            .returnStack(ReturnStack.getInstance())
+            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
             .build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.exceptionalHaltCondition(frame, null, null)).isNotPresent();
