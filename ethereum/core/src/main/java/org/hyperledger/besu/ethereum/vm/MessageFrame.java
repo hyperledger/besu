@@ -188,6 +188,9 @@ public class MessageFrame {
 
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
+  // as defined on https://eips.ethereum.org/EIPS/eip-2315
+  public static final int DEFAULT_MAX_RETURN_STACK_SIZE = 1023;
+
   // Global data fields.
   private final WorldUpdater worldState;
   private final Blockchain blockchain;
@@ -1076,7 +1079,7 @@ public class MessageFrame {
     private Boolean isPersistingPrivateState = false;
     private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
-    private ReturnStack returnStack = ReturnStack.getInstance();
+    private ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
 
     public Builder type(final Type type) {
       this.type = type;
