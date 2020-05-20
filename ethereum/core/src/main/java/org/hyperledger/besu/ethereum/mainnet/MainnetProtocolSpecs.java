@@ -351,7 +351,7 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::berlin)
         .name("Berlin");
   }
 
