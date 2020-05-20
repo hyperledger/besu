@@ -47,4 +47,12 @@ public interface StorageService {
    *     hasn't been registered.
    */
   Optional<KeyValueStorageFactory> getByName(String name);
+
+  /**
+   * Adds an identifier for the isolation segments.
+   *
+   * @param segmentIdentifier
+   * @return
+   */
+  boolean addSegmentIdentifier(SegmentIdentifier segmentIdentifier);
 }
