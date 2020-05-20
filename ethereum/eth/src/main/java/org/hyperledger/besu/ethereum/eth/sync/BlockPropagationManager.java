@@ -329,7 +329,12 @@ public class BlockPropagationManager<C> {
   private CompletableFuture<Block> runImportTask(final Block block) {
     final PersistBlockTask<C> importTask =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, ethContext, block, HeaderValidationMode.NONE, metricsSystem);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            block,
+            HeaderValidationMode.NONE,
+            metricsSystem);
     return importTask
         .run()
         .whenComplete(
