@@ -51,8 +51,8 @@ public interface StorageService {
   /**
    * Adds an identifier for the isolation segments.
    *
-   * @param segmentIdentifier
-   * @return
+   * @param segmentIdentifier the segment identifier to add
+   * @return true id added, false otherwise.
    */
   boolean addSegmentIdentifier(SegmentIdentifier segmentIdentifier);
 }
