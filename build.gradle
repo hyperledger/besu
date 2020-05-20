@@ -636,7 +636,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*/.gradle/.*)",
     "(.*/.idea/.*)",
     "(.*/out/.*)",
-    "(.*/build/*/.*)",
+    "(.*/build/.*)",
     "(.*/src/main/generated/.*)",
   ].join("|")
 
