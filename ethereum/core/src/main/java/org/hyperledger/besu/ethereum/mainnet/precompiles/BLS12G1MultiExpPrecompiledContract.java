@@ -29,6 +29,9 @@ public class BLS12G1MultiExpPrecompiledContract extends AbstractBLS12Precompiled
   @Override
   public Gas gasRequirement(final Bytes input) {
     final int k = input.size() / 160;
-    return Gas.of(k * 12_000 * DISCOUNT_TABLE[k] / 1000);
+    // `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`
+    // multiplication_cost and multiplier are folded into one constant as a long and placed first to
+    // prevent int32 overflow
+    return Gas.of(12L * k * DISCOUNT_TABLE[k]);
   }
 }
