@@ -95,4 +95,14 @@ public class NodeSmartContractPermissioningAcceptanceTest
     permissionedNode.verify(admin.addPeer(forbiddenNode));
     permissionedNode.verify(net.awaitPeerCount(3));
   }
+
+  @Test
+  public void onChainPermissioningWhitelistShouldPersistAcrossRestarts() {
+    permissionedCluster.stop();
+    permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
+
+    permissionedNode.verify(nodeIsAllowed(allowedNode));
+    permissionedNode.verify(nodeIsAllowed(bootnode));
+    permissionedNode.verify(nodeIsAllowed(permissionedNode));
+  }
 }
