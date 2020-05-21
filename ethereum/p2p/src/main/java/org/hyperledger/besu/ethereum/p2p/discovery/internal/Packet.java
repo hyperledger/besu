@@ -32,11 +32,15 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import io.vertx.core.buffer.Buffer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class Packet {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final int PACKET_TYPE_INDEX = 97;
   private static final int PACKET_DATA_INDEX = 98;
@@ -52,13 +56,23 @@ public class Packet {
   private Packet(final PacketType type, final PacketData data, final NodeKey nodeKey) {
     this.type = type;
     this.data = data;
-
+    final Long startMs = System.currentTimeMillis();
     final Bytes typeBytes = Bytes.of(this.type.getValue());
     final Bytes dataBytes = RLP.encode(this.data::writeTo);
+    final Long timeToRlp = System.currentTimeMillis() - startMs;
 
     this.signature = nodeKey.sign(keccak256(Bytes.wrap(typeBytes, dataBytes)));
+    final Long timeToSign = System.currentTimeMillis() - timeToRlp;
     this.hash = keccak256(Bytes.concatenate(encodeSignature(signature), typeBytes, dataBytes));
+    final Long timeToHash = System.currentTimeMillis() - timeToSign;
     this.publicKey = nodeKey.getPublicKey();
+    final Long timeForKey = System.currentTimeMillis() - timeToHash;
+    LOG.debug(
+        "rlp = {} : sign = {} : hash = {} : key = {}",
+        timeToRlp,
+        timeToSign,
+        timeToHash,
+        timeForKey);
   }
 
   private Packet(final PacketType packetType, final PacketData packetData, final Bytes message) {

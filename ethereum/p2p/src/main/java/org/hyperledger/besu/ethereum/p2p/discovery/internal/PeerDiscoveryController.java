@@ -454,14 +454,14 @@ public class PeerDiscoveryController {
                   final Bytes pingHash = pingPacket.getHash();
                   // Update the matching filter to only accept the PONG if it echoes the hash of our
                   // PING.
-                  LOG.debug("creatingn filter");
+                  LOG.debug("creating filter");
                   final Predicate<Packet> newFilter =
                       packet ->
                           packet
                               .getPacketData(PongPacketData.class)
                               .map(pong -> pong.getPingHash().equals(pingHash))
                               .orElse(false);
-                  LOG.debug("updating interatction filter");
+                  LOG.debug("updating interaction filter");
                   interaction.updateFilter(newFilter);
 
                   LOG.debug("sending packet");
