@@ -95,6 +95,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   @Override
   protected CompletableFuture<InetSocketAddress> listenForConnections() {
     CompletableFuture<InetSocketAddress> future = new CompletableFuture<>();
+    LOG.info("Starting listen for connections.");
     vertx
         .createDatagramSocket(new DatagramSocketOptions().setIpV6(NetworkUtility.isIPv6Available()))
         .listen(
@@ -208,11 +209,13 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
           try {
             future.complete(Packet.decode(datagram.data()));
           } catch (final Throwable t) {
+            LOG.error("Attempting to handle inbound packet failed");
             future.fail(t);
           }
         },
         event -> {
           if (event.succeeded()) {
+            LOG.info("Successfully decocded the disco packet.");
             // Acquire the senders coordinates to build a Peer representation from them.
             final String host = datagram.sender().host();
             final int port = datagram.sender().port();
