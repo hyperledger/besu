@@ -282,7 +282,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     // if (level != null) {
     //  params.add("--logging=" + level);
     // }
-    params.add("--logging=DEBUG");
+    params.add("--logging=TRACE");
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
