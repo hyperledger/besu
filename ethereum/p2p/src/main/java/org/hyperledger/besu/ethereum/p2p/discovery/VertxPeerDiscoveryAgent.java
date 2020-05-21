@@ -66,6 +66,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     super(nodeKey, config, peerPermissions, natService, metricsSystem);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
+    vertx.exceptionHandler(throwable -> LOG.error("Vertx threw!", throwable));
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -98,6 +99,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     LOG.info("Starting listen for connections.");
     vertx
         .createDatagramSocket(new DatagramSocketOptions().setIpV6(NetworkUtility.isIPv6Available()))
+        .exceptionHandler(this::handleException)
+        .handler(this::handlePacket)
         .listen(
             config.getBindPort(), config.getBindHost(), res -> handleListenerSetup(res, future));
     return future;
@@ -124,8 +127,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     this.socket = listenResult.result();
 
     // TODO: when using wildcard hosts (0.0.0.0), we need to handle multiple addresses by
-    // selecting
-    // the correct 'announce' address.
+    // selecting the correct 'announce' address.
     final String effectiveHost = socket.localAddress().host();
     final int effectivePort = socket.localAddress().port();
 
@@ -134,11 +136,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
         effectiveHost,
         effectivePort);
 
-    socket.exceptionHandler(this::handleException);
-    socket.handler(this::handlePacket);
-
-    InetSocketAddress address =
-        new InetSocketAddress(socket.localAddress().host(), socket.localAddress().port());
+    final InetSocketAddress address = new InetSocketAddress(effectiveHost, effectivePort);
     addressFuture.complete(address);
   }
 
