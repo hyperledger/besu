@@ -442,6 +442,7 @@ public class PeerDiscoveryController {
 
     final Consumer<PeerInteractionState> action =
         interaction -> {
+          LOG.debug("Getting ready to send a PING");
           final PingPacketData data =
               PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
           createPacket(
@@ -451,14 +452,17 @@ public class PeerDiscoveryController {
                 final Bytes pingHash = pingPacket.getHash();
                 // Update the matching filter to only accept the PONG if it echoes the hash of our
                 // PING.
+                LOG.debug("creatingn filter");
                 final Predicate<Packet> newFilter =
                     packet ->
                         packet
                             .getPacketData(PongPacketData.class)
                             .map(pong -> pong.getPingHash().equals(pingHash))
                             .orElse(false);
+                LOG.debug("updating interatction filter");
                 interaction.updateFilter(newFilter);
 
+                LOG.debug("sending packet");
                 sendPacket(peer, pingPacket);
               });
         };
@@ -489,7 +493,11 @@ public class PeerDiscoveryController {
     // Creating packets is quite expensive because they have to be cryptographically signed
     // So ensure the work is done on a worker thread to avoid blocking the vertx event thread.
     workerExecutor
-        .execute(() -> Packet.create(type, data, nodeKey))
+        .execute(
+            () -> {
+              LOG.trace("trying to create the PING packet");
+              return Packet.create(type, data, nodeKey);
+            })
         .thenAccept(handler)
         .exceptionally(
             error -> {
