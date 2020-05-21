@@ -28,6 +28,6 @@ public class BLS12G2AddPrecompiledContract extends AbstractBLS12PrecompiledContr
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    return Gas.of(4500);
+    return Gas.of(4_500);
   }
 }

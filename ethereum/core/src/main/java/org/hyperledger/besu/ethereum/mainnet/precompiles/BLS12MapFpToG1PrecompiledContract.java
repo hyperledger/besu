@@ -28,6 +28,6 @@ public class BLS12MapFpToG1PrecompiledContract extends AbstractBLS12PrecompiledC
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    return Gas.of(5500);
+    return Gas.of(5_500);
   }
 }
