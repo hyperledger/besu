@@ -449,21 +449,27 @@ public class PeerDiscoveryController {
               PacketType.PING,
               data,
               pingPacket -> {
-                final Bytes pingHash = pingPacket.getHash();
-                // Update the matching filter to only accept the PONG if it echoes the hash of our
-                // PING.
-                LOG.debug("creatingn filter");
-                final Predicate<Packet> newFilter =
-                    packet ->
-                        packet
-                            .getPacketData(PongPacketData.class)
-                            .map(pong -> pong.getPingHash().equals(pingHash))
-                            .orElse(false);
-                LOG.debug("updating interatction filter");
-                interaction.updateFilter(newFilter);
+                LOG.debug("Running handler");
+                try {
+                  final Bytes pingHash = pingPacket.getHash();
+                  // Update the matching filter to only accept the PONG if it echoes the hash of our
+                  // PING.
+                  LOG.debug("creatingn filter");
+                  final Predicate<Packet> newFilter =
+                      packet ->
+                          packet
+                              .getPacketData(PongPacketData.class)
+                              .map(pong -> pong.getPingHash().equals(pingHash))
+                              .orElse(false);
+                  LOG.debug("updating interatction filter");
+                  interaction.updateFilter(newFilter);
 
-                LOG.debug("sending packet");
-                sendPacket(peer, pingPacket);
+                  LOG.debug("sending packet");
+                  sendPacket(peer, pingPacket);
+                } catch (final Throwable t) {
+                  LOG.error("Yeah - this went bad", t);
+                  throw t;
+                }
               });
         };
 
@@ -496,7 +502,9 @@ public class PeerDiscoveryController {
         .execute(
             () -> {
               LOG.trace("trying to create the PING packet");
-              return Packet.create(type, data, nodeKey);
+              Packet result = Packet.create(type, data, nodeKey);
+              LOG.trace("Created PING packet.");
+              return result;
             })
         .thenAccept(handler)
         .exceptionally(
