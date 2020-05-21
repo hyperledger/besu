@@ -278,10 +278,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
 
-    String level = System.getProperty("root.log.level");
-    if (level != null) {
-      params.add("--logging=" + level);
-    }
+    // String level = System.getProperty("root.log.level");
+    // if (level != null) {
+    //  params.add("--logging=" + level);
+    // }
+    params.add("--logging=DEBUG");
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
