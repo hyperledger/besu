@@ -152,17 +152,22 @@ public class TransactionPool implements BlockAddedObserver {
     if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
       return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
     }
+    LOG.debug("after gas check");
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateTransaction(transaction);
+    LOG.debug("is Valid {}", validationResult.isValid());
     if (validationResult.isValid()) {
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction);
+      LOG.debug("txn added {}", transactionAddedStatus.equals(TransactionAddedStatus.ADDED));
       if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
         duplicateTransactionCounter.labels(LOCAL).inc();
         return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
       }
       final Collection<Transaction> txs = singletonList(transaction);
+      LOG.debug("pre on added");
       transactionBatchAddedListener.onTransactionsAdded(txs);
+      LOG.debug("post on added");
       pendingTransactionBatchAddedListener.ifPresent(it -> it.onTransactionsAdded(txs));
     }
 

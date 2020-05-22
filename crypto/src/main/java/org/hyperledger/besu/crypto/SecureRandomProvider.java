@@ -30,6 +30,10 @@ public class SecureRandomProvider {
 
   @SuppressWarnings("DoNotCreateSecureRandomDirectly")
   private static SecureRandom secureRandom() {
-    return new SecureRandom();
+    try {
+      return SecureRandom.getInstance("DRBG");
+    } catch(final Exception e) {
+      throw new RuntimeException("Didn't create a DRBG secureRandom");
+    }
   }
 }
