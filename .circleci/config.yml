@@ -148,7 +148,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 8
+    parallelism: 2
     executor: besu_executor_med_plus
     steps:
       - prepare
