@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import java.util.Iterator;
+import java.util.OptionalLong;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.SortedMap;
@@ -32,16 +33,14 @@ class TransactionsForSenderInfo {
 
   void addTransactionToTrack(
       final long nonce, final PendingTransactions.TransactionInfo transactionInfo) {
-    if (!transactionsInfos.isEmpty()) {
-      updateGapsOnNewTransaction(nonce);
-    }
-    transactionsInfos.put(nonce, transactionInfo);
-  }
-
-  private void updateGapsOnNewTransaction(final long nonce) {
-    final long highestNonce = transactionsInfos.lastKey();
-    if (nonce > (highestNonce + 1)) {
-      LongStream.range(highestNonce + 1, nonce).forEach(gaps::add);
+    synchronized (transactionsInfos) {
+      if (!transactionsInfos.isEmpty()) {
+        final long highestNonce = transactionsInfos.lastKey();
+        if (nonce > (highestNonce + 1)) {
+          LongStream.range(highestNonce + 1, nonce).forEach(gaps::add);
+        }
+      }
+      transactionsInfos.put(nonce, transactionInfo);
     }
   }
 
@@ -61,7 +60,9 @@ class TransactionsForSenderInfo {
     return transactionsInfos;
   }
 
-  Queue<Long> getGaps() {
-    return gaps;
+  OptionalLong maybeNextGap() {
+    synchronized (transactionsInfos) {
+      return gaps.isEmpty() ? OptionalLong.empty() : OptionalLong.of(gaps.poll());
+    }
   }
 }
