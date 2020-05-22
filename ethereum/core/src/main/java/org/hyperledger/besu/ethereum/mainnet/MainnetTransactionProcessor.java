@@ -208,7 +208,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams) {
-    LOG.trace("Starting execution of {}", transaction);
+    LOG.info("Starting execution of {}", transaction);
 
     ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
         transactionValidator.validate(transaction);

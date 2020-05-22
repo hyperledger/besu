@@ -134,6 +134,7 @@ public class AcceptanceTestBase {
   public void tearDownAcceptanceTestBase() {
     cluster.close();
     reportMemory();
+    reportNetworkStats();
   }
 
   public void reportMemory() {
@@ -159,6 +160,34 @@ public class AcceptanceTestBase {
       }
     } else {
       LOG.info("Don't know how to report memory for OS {}", os);
+    }
+  }
+
+  public void reportNetworkStats() {
+    // These counters run from boot, so this will only be useful inside a container.
+    // But that's where one might wonder about UDP sanity anyway.
+    String os = System.getProperty("os.name");
+    String[] command = null;
+    if (os.contains("Linux")) {
+      command = new String[] {"netstat", "-su"};
+    }
+    if (os.contains("Mac")) {
+      command = new String[] {"netstat", "-s", "-p", "udp"};
+    }
+    if (command != null) {
+      LOG.info("Network UDP counters at end of test:");
+      final ProcessBuilder processBuilder =
+          new ProcessBuilder(command).redirectErrorStream(true).redirectInput(Redirect.INHERIT);
+      try {
+        final Process netInfoProcess = processBuilder.start();
+        outputProcessorExecutor.execute(() -> printOutput(netInfoProcess));
+        netInfoProcess.waitFor();
+        LOG.debug("Net info process exited with code {}", netInfoProcess.exitValue());
+      } catch (final Exception e) {
+        LOG.warn("Error running net information process", e);
+      }
+    } else {
+      LOG.info("Don't know how to report net stats for OS {}", os);
     }
   }
 

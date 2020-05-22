@@ -32,7 +32,7 @@ import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-public class PrivacyAcceptanceTestBase {
+public class PrivacyAcceptanceTestBase extends AcceptanceTestBase {
   @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
   protected static final long POW_CHAIN_ID = 2018;
