@@ -62,11 +62,11 @@ public class Packet {
     final Long timeToRlp = System.currentTimeMillis() - startMs;
 
     this.signature = nodeKey.sign(keccak256(Bytes.wrap(typeBytes, dataBytes)));
-    final Long timeToSign = System.currentTimeMillis() - timeToRlp;
+    final Long timeToSign = System.currentTimeMillis() - startMs;
     this.hash = keccak256(Bytes.concatenate(encodeSignature(signature), typeBytes, dataBytes));
-    final Long timeToHash = System.currentTimeMillis() - timeToSign;
+    final Long timeToHash = System.currentTimeMillis() - startMs;
     this.publicKey = nodeKey.getPublicKey();
-    final Long timeForKey = System.currentTimeMillis() - timeToHash;
+    final Long timeForKey = System.currentTimeMillis() - startMs;
     LOG.debug(
         "rlp = {} : sign = {} : hash = {} : key = {}",
         timeToRlp,
