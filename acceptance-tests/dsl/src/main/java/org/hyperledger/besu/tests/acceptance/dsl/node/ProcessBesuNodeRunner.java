@@ -290,13 +290,14 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
             .directory(new File(System.getProperty("user.dir")).getParentFile().getParentFile())
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
+    final StringBuilder besuOptsBuilder = new StringBuilder();
+    besuOptsBuilder.append("-Djava.security.egd=file:/dev/./urandom");
     if (!node.getPlugins().isEmpty()) {
-      processBuilder
-          .environment()
-          .put(
-              "BESU_OPTS",
-              "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
+      besuOptsBuilder.append(
+          "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
     }
+
+    processBuilder.environment().put("BESU_OPTS", besuOptsBuilder.toString());
 
     try {
       checkState(
