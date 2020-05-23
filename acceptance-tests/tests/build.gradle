@@ -74,7 +74,7 @@ task acceptanceTest(type: Test) {
     File entropyFile = new File(entropyAvailablePath)
     String fileContents = "N/A"
     if(entropyFile.exists()) {
-      fileContents = new File(entropyAvailablePath).getText('UTF-8')
+      fileContents = new File(entropyAvailablePath).getText('UTF-8').trim()
     }
     logger.lifecycle(prefix + " " + testDesc.getClassName() + "." + testDesc.getName() + " ==> Entropy Avail = " + fileContents);
   }
