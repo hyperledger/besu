@@ -30,6 +30,11 @@ public class SecureRandomProvider {
 
   @SuppressWarnings("DoNotCreateSecureRandomDirectly")
   private static SecureRandom secureRandom() {
-    return new SecureRandom();
+    final SecureRandom secureRandom = new SecureRandom();
+    System.out.println(secureRandom.getAlgorithm());
+    System.out.println(secureRandom.getParameters());
+    System.out.println(secureRandom.getProvider());
+    System.out.println(secureRandom.toString());
+    return secureRandom;
   }
 }
