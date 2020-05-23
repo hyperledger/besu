@@ -76,6 +76,7 @@ task acceptanceTest(type: Test) {
     if(entropyFile.exists()) {
       return new File(entropyAvailablePath).getText('UTF-8').trim()
     }
+    return 0
   }
 
   ext.logEntropy = { prefix, testDesc ->
