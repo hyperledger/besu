@@ -91,7 +91,6 @@ task acceptanceTest(type: Test) {
       InputStream inStream = new FileInputStream(random)
       byte[] randomData = new byte[100] //appears each 100-byte read drains ~500 entropy
       inStream.read(randomData)
-      logger.lifecycle("Reduced entropy to " + getEntropy())
     }
     //empty entropy by cat /dev/random (200 at a time, get down to ~500)
     logEntropy("Before", descriptor) }
