@@ -86,10 +86,10 @@ task acceptanceTest(type: Test) {
   beforeTest { descriptor ->
     File random = new File("/dev/random");
     while(Integer.parseInt(getEntropy()) > 500) {
-      InputStream inStream = new FileInputStream(random);
+      InputStream inStream = new FileInputStream(random)
       byte[] randomData = new byte[200]
-      instream.read(randomData)
-      log.lifecycle("Reduced entropy to " + getEntropy())
+      inStream.read(randomData)
+      logger.lifecycle("Reduced entropy to " + getEntropy())
     }
     //empty entropy by cat /dev/random (200 at a time, get down to ~500)
     logEntropy("Before", descriptor) }
