@@ -67,6 +67,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     private final Status status;
 
+    private final long estimateGasUsedByTransaction;
+
     private final long gasRemaining;
 
     private final List<Log> logs;
@@ -79,16 +81,24 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     public static Result invalid(
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
       return new Result(
-          Status.INVALID, new ArrayList<>(), -1, Bytes.EMPTY, validationResult, Optional.empty());
+          Status.INVALID,
+          new ArrayList<>(),
+          -1,
+          -1,
+          Bytes.EMPTY,
+          validationResult,
+          Optional.empty());
     }
 
     public static Result failed(
+        final long gasUsedByTransaction,
         final long gasRemaining,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
         final Optional<Bytes> revertReason) {
       return new Result(
           Status.FAILED,
           new ArrayList<>(),
+          gasUsedByTransaction,
           gasRemaining,
           Bytes.EMPTY,
           validationResult,
@@ -97,22 +107,31 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     public static Result successful(
         final List<Log> logs,
+        final long gasUsedByTransaction,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
       return new Result(
-          Status.SUCCESSFUL, logs, gasRemaining, output, validationResult, Optional.empty());
+          Status.SUCCESSFUL,
+          logs,
+          gasUsedByTransaction,
+          gasRemaining,
+          output,
+          validationResult,
+          Optional.empty());
     }
 
     Result(
         final Status status,
         final List<Log> logs,
+        final long estimateGasUsedByTransaction,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
         final Optional<Bytes> revertReason) {
       this.status = status;
       this.logs = logs;
+      this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
       this.gasRemaining = gasRemaining;
       this.output = output;
       this.validationResult = validationResult;
@@ -127,6 +146,11 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     @Override
     public long getGasRemaining() {
       return gasRemaining;
+    }
+
+    @Override
+    public long getEstimateGasUsedByTransaction() {
+      return estimateGasUsedByTransaction;
     }
 
     @Override
@@ -309,6 +333,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       worldUpdater.commit();
     }
+
     if (LOG.isTraceEnabled()) {
       LOG.trace(
           "Gas used by transaction: {}, by message call/contract creation: {}",
@@ -325,12 +350,16 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final Wei refundedWei = refunded.priceFor(transactionGasPrice);
     senderMutableAccount.incrementBalance(refundedWei);
 
+    final Gas gasUsedByTransaction =
+        Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas());
+
     final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
     if (blockHeader.getBaseFee().isPresent()) {
       final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
       if (transactionGasPrice.compareTo(baseFee) < 0) {
         return Result.failed(
+            gasUsedByTransaction.toLong(),
             refunded.toLong(),
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
@@ -353,11 +382,16 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       return Result.successful(
           initialFrame.getLogs(),
+          gasUsedByTransaction.toLong(),
           refunded.toLong(),
           initialFrame.getOutputData(),
           validationResult);
     } else {
-      return Result.failed(refunded.toLong(), validationResult, initialFrame.getRevertReason());
+      return Result.failed(
+          gasUsedByTransaction.toLong(),
+          refunded.toLong(),
+          validationResult,
+          initialFrame.getRevertReason());
     }
   }
 

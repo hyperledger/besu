@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
@@ -761,7 +762,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--pruning-enabled"},
       description =
           "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
-  private Boolean pruningOverride;
+  private final Boolean pruningEnabled = false;
 
   @Option(
       names = {"--permissions-nodes-config-file-enabled"},
@@ -897,6 +898,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+
+  @Option(
+      names = {"--tx-pool-price-bump"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      converter = PercentageConverter.class,
+      description =
+          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -1311,8 +1321,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE) && nodePrivateKeyFile != null) {
       logger.warn(
-          "--node-private-key-file will have no effect unless --security-module={} is defined on the command line.",
-          DEFAULT_SECURITY_MODULE);
+          DEPENDENCY_WARNING_MSG,
+          "--node-private-key-file",
+          "--security-module=" + DEFAULT_SECURITY_MODULE);
     }
   }
 
@@ -1338,6 +1349,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 ensureAllNodesAreInWhitelist(
                     staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
     metricsConfiguration = metricsConfiguration();
+
+    logger.info("Security Module: {}", securityModuleName);
     return this;
   }
 
@@ -1854,11 +1867,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolMaxSize)
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
+        .priceBump(priceBump)
         .build();
   }
 
   private boolean isPruningEnabled() {
-    return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
+    return pruningEnabled;
   }
 
   // Blockchain synchronisation from peers.

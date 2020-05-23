@@ -281,7 +281,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
 
-    String level = System.getProperty("root.log.level");
+    final String level = System.getProperty("root.log.level");
     if (level != null) {
       params.add("--logging=" + level);
     }
@@ -299,7 +299,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
               "BESU_OPTS",
               "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
     }
-
+    // Use non-blocking randomness for acceptance tests
+    processBuilder
+        .environment()
+        .put(
+            "JAVA_OPTS",
+            "-Djava.security.properties="
+                + "acceptance-tests/tests/build/resources/test/acceptanceTesting.security");
     try {
       checkState(
           isNotAliveOrphan(node.getName()),

@@ -90,8 +90,9 @@ dependencyManagement {
     dependency 'org.bouncycastle:bcpkix-jdk15on:1.64'
     dependency 'org.bouncycastle:bcprov-jdk15on:1.64'
 
-    dependency 'org.hyperledger.besu:altbn128:0.1.0'
-    dependency 'org.hyperledger.besu:secp256k1:0.1.0'
+    dependency 'org.hyperledger.besu:altbn128:0.2.0'
+    dependency 'org.hyperledger.besu:bls12-381:0.2.0'
+    dependency 'org.hyperledger.besu:secp256k1:0.2.0'
 
     dependency 'org.java-websocket:Java-WebSocket:1.4.0'
 

@@ -8,7 +8,7 @@
     "eip158Block": 0,
     "byzantiumBlock": 0,
     "constantinopleBlock": 0,
-    "constantinopleFixBlock": 0,
+    "petersburgBlock": 0,
     "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100

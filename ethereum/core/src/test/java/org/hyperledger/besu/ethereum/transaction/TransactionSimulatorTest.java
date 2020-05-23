@@ -347,14 +347,14 @@ public class TransactionSimulatorTest {
     }
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any()))
+            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(result);
   }
 
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(), any(), any(), eq(expectedTransaction), any(), any(), anyBoolean(), any());
+            any(), any(), any(), eq(expectedTransaction), any(), any(), anyBoolean(), any(), any());
   }
 
   private CallParameter callParameter() {

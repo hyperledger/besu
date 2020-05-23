@@ -27,7 +27,7 @@ executors:
 
 notify:
   webhooks:
-    - url: https://hyperledger-rocket-chat-hubot.herokuapp.com/hubot/circleci
+    - url: $HUBOT_URL
 
 commands:
   prepare:
