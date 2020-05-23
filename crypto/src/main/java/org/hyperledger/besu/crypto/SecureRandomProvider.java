@@ -31,9 +31,9 @@ public class SecureRandomProvider {
   @SuppressWarnings("DoNotCreateSecureRandomDirectly")
   private static SecureRandom secureRandom() {
     try {
-      return SecureRandom.getInstance("DRBG");
+      return SecureRandom.getInstance("NativePRNGNonBlocking");
     } catch (final Exception e) {
-      throw new RuntimeException("Didn't create a DRBG secureRandom");
+      throw new RuntimeException("Didn't create a NativePRNGNonBlocking secureRandom");
     }
   }
 }
