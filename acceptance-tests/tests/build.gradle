@@ -69,6 +69,19 @@ task acceptanceTest(type: Test) {
   description = 'Runs Besu acceptance tests.'
   group = 'verification'
 
+  ext.logEntropy = { prefix, testDesc ->
+    String entropyAvailablePath = "/proc/sys/kernel/random/entropy_avail"
+    File entropyFile = new File(entropyAvailablePath)
+    String fileContents = "N/A"
+    if(entropyFile.exists()) {
+      fileContents = new File(entropyAvailablePath).getText('UTF-8')
+    }
+    logger.info(prefix + " " + testDesc.getClassName() + "." + testDesc.getName() + " ==> Entroy Avail = " + fileContents);
+  }
+
+  beforeTest { descriptor -> logEntropy("Before", descriptor) }
+  afterTest { descriptor -> logEntropy("After", descriptor) }
+
   testLogging {
     exceptionFormat = 'full'
     showStackTraces = true

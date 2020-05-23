@@ -246,11 +246,13 @@ public class TransactionPool implements BlockAddedObserver {
   private ValidationResult<TransactionInvalidReason> validateTransaction(
       final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
+    LOG.debug("Performing basic validation");
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
         getTransactionValidator().validate(transaction);
     if (!basicValidationResult.isValid()) {
       return basicValidationResult;
     }
+    LOG.debug("Basic validation complete");
 
     if (transaction.getGasLimit() > chainHeadBlockHeader.getGasLimit()) {
       return ValidationResult.invalid(
@@ -265,6 +267,7 @@ public class TransactionPool implements BlockAddedObserver {
         .get(chainHeadBlockHeader.getStateRoot())
         .map(
             worldState -> {
+              LOG.debug("Validating for sender");
               final Account senderAccount = worldState.get(transaction.getSender());
               return getTransactionValidator()
                   .validateForSender(
