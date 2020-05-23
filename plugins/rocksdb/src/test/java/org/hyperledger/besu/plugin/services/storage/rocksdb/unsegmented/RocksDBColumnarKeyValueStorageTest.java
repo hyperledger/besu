@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -62,7 +61,6 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
   }
 
   @Test
-  @Ignore
   public void canRemoveThroughSegmentIteration() throws Exception {
     // we're looping this in order to catch intermittent failures when rocksdb objects are not close
     // properly
