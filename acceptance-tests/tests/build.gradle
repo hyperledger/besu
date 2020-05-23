@@ -76,7 +76,7 @@ task acceptanceTest(type: Test) {
     if(entropyFile.exists()) {
       fileContents = new File(entropyAvailablePath).getText('UTF-8')
     }
-    logger.info(prefix + " " + testDesc.getClassName() + "." + testDesc.getName() + " ==> Entroy Avail = " + fileContents);
+    logger.lifecycle(prefix + " " + testDesc.getClassName() + "." + testDesc.getName() + " ==> Entropy Avail = " + fileContents);
   }
 
   beforeTest { descriptor -> logEntropy("Before", descriptor) }
