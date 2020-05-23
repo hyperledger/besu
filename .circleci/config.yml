@@ -30,6 +30,7 @@ notify:
     - url: $HUBOT_URL
 
 commands:
+
   prepare:
     description: "Prepare"
     steps:
@@ -39,12 +40,19 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -y libsodium18 libsodium-dev apt-transport-https
+      - run:
+          name: Boost Entropy
+          command: |
+            sudo apt-get install -y haveged
+            sudo /usr/local/sbin/haveged -w 1024 &
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
             - deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
             - deps-{{ checksum "gradle/versions.gradle" }}
             - deps-
+
+
 
   capture_test_results:
     description: "Capture test results"
