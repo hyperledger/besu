@@ -30,7 +30,6 @@ notify:
     - url: $HUBOT_URL
 
 commands:
-
   prepare:
     description: "Prepare"
     steps:
@@ -46,8 +45,6 @@ commands:
             - deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
             - deps-{{ checksum "gradle/versions.gradle" }}
             - deps-
-
-
 
   capture_test_results:
     description: "Capture test results"
