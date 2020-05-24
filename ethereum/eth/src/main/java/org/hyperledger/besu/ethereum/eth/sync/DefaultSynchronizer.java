@@ -157,21 +157,20 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       // We've been shutdown which will have triggered the fast sync future to complete
       return;
     }
+    fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
     final Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof FastSyncException) {
       LOG.error(
-          "Fast sync failed ({}), switching to full sync.",
-          ((FastSyncException) rootCause).getError());
+          "Fast sync failed ({}), please try again.", ((FastSyncException) rootCause).getError());
+      throw new FastSyncException(rootCause);
     } else if (error != null) {
-      LOG.error("Fast sync failed, switching to full sync.", error);
+      LOG.error("Fast sync failed, please try again.", error);
+      throw new FastSyncException(error);
     } else {
       LOG.info(
           "Fast sync completed successfully with pivot block {}",
           result.getPivotBlockNumber().getAsLong());
     }
-    fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
-
-    startFullSync();
   }
 
   private void startFullSync() {
