@@ -48,8 +48,7 @@ public class PingPacketData implements PacketData {
     return create(from, to, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
 
-  static PingPacketData create(
-      final Endpoint from, final Endpoint to, final long expirationMs) {
+  static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationMs) {
     return new PingPacketData(from, to, expirationMs);
   }
 

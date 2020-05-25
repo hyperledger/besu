@@ -29,8 +29,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 class MockPacketDataFactory {
 
-  static Packet mockNeighborsPacket(
-      final DiscoveryPeer from, final DiscoveryPeer... neighbors) {
+  static Packet mockNeighborsPacket(final DiscoveryPeer from, final DiscoveryPeer... neighbors) {
     final Packet packet = mock(Packet.class);
 
     final NeighborsPacketData packetData = NeighborsPacketData.create(Arrays.asList(neighbors));
