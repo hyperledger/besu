@@ -268,6 +268,36 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createIbft2NonValidatorBootnode(final String name, final String genesisFile)
+      throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                validators ->
+                    genesis.createIbft2GenesisConfigFilterBootnode(validators, genesisFile))
+            .bootnodeEligible(true)
+            .build());
+  }
+
+  public BesuNode createIbft2Node(final String name, final String genesisFile) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                validators ->
+                    genesis.createIbft2GenesisConfigFilterBootnode(validators, genesisFile))
+            .bootnodeEligible(false)
+            .build());
+  }
+
   public BesuNode createIbft2Node(final String name) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
