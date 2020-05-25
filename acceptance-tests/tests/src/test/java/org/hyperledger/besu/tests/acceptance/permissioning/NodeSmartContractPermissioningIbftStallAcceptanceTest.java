@@ -32,7 +32,7 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
 
   @Test
   public void restartedIbftClusterShouldNotStall() throws IOException {
-    final BesuNode bootnode = besu.createIbft2NonValidatorBootNode("bootnode", GENESIS_FILE);
+    final BesuNode bootnode = besu.createIbft2NonValidatorBootnode("bootnode", GENESIS_FILE);
     final BesuNode nodeA = besu.createIbft2Node("nodeA", GENESIS_FILE);
     final BesuNode nodeB = besu.createIbft2Node("nodeB", GENESIS_FILE);
     final BesuNode nodeC = besu.createIbft2Node("nodeC", GENESIS_FILE);

@@ -268,7 +268,7 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createIbft2NonValidatorBootNode(final String name, final String genesisFile)
+  public BesuNode createIbft2NonValidatorBootnode(final String name, final String genesisFile)
       throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
