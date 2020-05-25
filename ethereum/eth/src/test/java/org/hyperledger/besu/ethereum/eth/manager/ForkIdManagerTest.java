@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,7 +27,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -36,6 +36,8 @@ public class ForkIdManagerTest {
   private final Long[] forksMainnet = {1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L};
   private final String mainnetGenHash =
       "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
+  private final String consortiumNetworkGenHash =
+      "0x4109c6d17ca107e4de7565c94b429db8f5839593a9c57f3f31430b29b378b39d";
 
   private Blockchain mockBlockchain(final String genesisHash, final long chainHeight) {
     final Blockchain mockchain = mock(Blockchain.class);
@@ -50,7 +52,7 @@ public class ForkIdManagerTest {
   @Test
   public void checkItFunctionsWithPresentBehavior() {
     final ForkIdManager forkIdManager =
-        new ForkIdManager(mockBlockchain(mainnetGenHash, 0), Collections.emptyList());
+        new ForkIdManager(mockBlockchain(mainnetGenHash, 0), emptyList());
     assertThat(forkIdManager.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
     assertThat(forkIdManager.getLatestForkId()).isNull();
   }
@@ -376,5 +378,21 @@ public class ForkIdManagerTest {
     final BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
     final ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
     assertThat(forkIdEntry).isEqualTo(decodedEntry);
+  }
+
+  @Test
+  public void checkConsortiumNetworkAlwaysAcceptPeersIfOnlyZeroForkBlocks() {
+    final List<Long> list = Arrays.asList(0L, 0L, 0L, 0L);
+
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(consortiumNetworkGenHash, 0), list);
+    assertThat(forkIdManager.peerCheck(new ForkIdManager.ForkId(Bytes.random(32), 0))).isTrue();
+  }
+
+  @Test
+  public void checkAlwaysAcceptPeersIfNull() {
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(mockBlockchain(consortiumNetworkGenHash, 0), emptyList());
+    assertThat(forkIdManager.peerCheck((ForkIdManager.ForkId) null)).isTrue();
   }
 }

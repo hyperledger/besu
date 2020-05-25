@@ -36,16 +36,26 @@ public class ForkIdManager {
   private long forkNext;
   private final long highestKnownFork;
   private List<ForkId> forkAndHashList;
+  private final ForkIDChecker forkIDChecker;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
     this.blockchain = blockchain;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
+    // if the fork list contains only zeros then we may be in a consortium/dev network
+    if (onlyZerosForkBlocks(forks)) {
+      forkIDChecker = forkId -> true;
+    } else {
+      forkIDChecker = this::eip2124Checker;
+    }
     // de-dupe and sanitize forks
-    this.forks =
-        forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
+    this.forks = forks.stream().distinct().collect(Collectors.toUnmodifiableList());
     highestKnownFork = forks.size() > 0 ? forks.get(forks.size() - 1) : 0L;
     createForkIds();
-  };
+  }
+
+  private boolean onlyZerosForkBlocks(final List<Long> forks) {
+    return forks.stream().allMatch(value -> 0L == value);
+  }
 
   public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;
@@ -73,6 +83,10 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   boolean peerCheck(final ForkId forkId) {
+    return forkIDChecker.check(forkId);
+  }
+
+  private boolean eip2124Checker(final ForkId forkId) {
     if (forkId == null) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
@@ -256,5 +270,10 @@ public class ForkIdManager {
     bs[++off] = (byte) (n >>> 16);
     bs[++off] = (byte) (n >>> 8);
     bs[++off] = (byte) (n);
+  }
+
+  @FunctionalInterface
+  private interface ForkIDChecker {
+    boolean check(ForkId forkId);
   }
 }
