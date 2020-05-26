@@ -535,12 +535,18 @@ public class PeerDiscoveryController {
 
   private void respondToPing(
       final PingPacketData packetData, final Bytes pingHash, final DiscoveryPeer sender) {
+    if (packetData.getExpiration() < System.currentTimeMillis()) {
+      return;
+    }
     final PongPacketData data = PongPacketData.create(packetData.getFrom(), pingHash);
     sendPacket(sender, PacketType.PONG, data);
   }
 
   private void respondToFindNeighbors(
       final FindNeighborsPacketData packetData, final DiscoveryPeer sender) {
+    if (packetData.getExpiration() < System.currentTimeMillis()) {
+      return;
+    }
     // TODO: for now return 16 peers. Other implementations calculate how many
     // peers they can fit in a 1280-byte payload.
     final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);

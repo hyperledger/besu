@@ -125,7 +125,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .build(new MutableProtocolSchedule<>(CHAIN_ID));
 
-    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+    final ReturnStack returnStack = new ReturnStack();
 
     final TestBlockchain blockchain = new TestBlockchain(execEnv.getBlockHeader().getNumber());
     final MessageFrame frame =
