@@ -88,7 +88,7 @@ public class ForkIdManager {
   }
 
   private static long highestKnownFork(final List<Long> forks) {
-    return forks.size() > 0 ? forks.get(forks.size() - 1) : 0L;
+    return !forks.isEmpty() ? forks.get(forks.size() - 1) : 0L;
   }
 
   public List<ForkId> getForkAndHashList() {
