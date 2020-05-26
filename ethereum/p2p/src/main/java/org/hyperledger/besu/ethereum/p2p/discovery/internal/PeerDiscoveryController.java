@@ -102,11 +102,9 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class PeerDiscoveryController {
   private static final Logger LOG = LogManager.getLogger();
-  private static final long REFRESH_CHECK_INTERVAL_SEC = 30;
-  private static final long REFRESH_CHECK_INTERVAL_MILLIS =
-      MILLISECONDS.convert(REFRESH_CHECK_INTERVAL_SEC, SECONDS);
+  private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
-  private final TimerUtil timerUtil;
+  protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
@@ -206,7 +204,7 @@ public class PeerDiscoveryController {
         bootstrapNodes.stream()
             .filter(peerPermissions::isAllowedInPeerTable)
             .collect(Collectors.toList());
-    initialDiscoveryPeers.forEach(peerTable::tryAdd);
+    initialDiscoveryPeers.stream().forEach(peerTable::tryAdd);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
@@ -338,7 +336,7 @@ public class PeerDiscoveryController {
   private List<DiscoveryPeer> getPeersFromNeighborsPacket(final Packet packet) {
     final Optional<NeighborsPacketData> maybeNeighborsData =
         packet.getPacketData(NeighborsPacketData.class);
-    if (maybeNeighborsData.isEmpty()) {
+    if (!maybeNeighborsData.isPresent()) {
       return Collections.emptyList();
     }
     final NeighborsPacketData neighborsData = maybeNeighborsData.get();

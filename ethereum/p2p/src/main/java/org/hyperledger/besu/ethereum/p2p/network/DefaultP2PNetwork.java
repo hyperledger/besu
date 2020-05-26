@@ -153,7 +153,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    * @param reputationManager An object that inspect disconnections for misbehaving peers that can
    *     then be blacklisted.
    */
-  private DefaultP2PNetwork(
+  DefaultP2PNetwork(
       final MutableLocalNode localNode,
       final PeerDiscoveryAgent peerDiscoveryAgent,
       final RlpxAgent rlpxAgent,
@@ -206,7 +206,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     natService.ifNatEnvironment(
         NatMethod.UPNP,
         natManager -> {
-          final UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
+          UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
           upnpNatManager.requestPortForward(
               discoveryPort, NetworkProtocol.UDP, NatServiceType.DISCOVERY);
           upnpNatManager.requestPortForward(
@@ -285,7 +285,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
     maintainedPeers
         .streamPeers()
-        .filter(p -> rlpxAgent.getPeerConnection(p).isEmpty())
+        .filter(p -> !rlpxAgent.getPeerConnection(p).isPresent())
         .forEach(rlpxAgent::connect);
   }
 
@@ -443,7 +443,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx, nodeKey, config, peerPermissions, natService, metricsSystem);
+          vertx, nodeKey, config.getDiscovery(), peerPermissions, natService, metricsSystem);
     }
 
     private RlpxAgent createRlpxAgent(

@@ -21,14 +21,12 @@ import java.util.Objects;
 public class NetworkingConfiguration {
   public static final int DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC = 30;
   public static final int DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC = 60;
-  public static final int DEFAULT_TABLE_REFRESH_FREQUENCY_SEC = 30;
 
   private DiscoveryConfiguration discovery = new DiscoveryConfiguration();
   private RlpxConfiguration rlpx = new RlpxConfiguration();
   private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
   private int checkMaintainedConnectionsFrequencySec =
       DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
-  private int tableRefreshFrequencySec = DEFAULT_TABLE_REFRESH_FREQUENCY_SEC;
 
   public static NetworkingConfiguration create() {
     return new NetworkingConfiguration();
@@ -60,16 +58,6 @@ public class NetworkingConfiguration {
       final int initiateConnectionsFrequency) {
     checkArgument(initiateConnectionsFrequency > 0);
     this.initiateConnectionsFrequencySec = initiateConnectionsFrequency;
-    return this;
-  }
-
-  public int getPeerTableRefreshFrequency() {
-    return tableRefreshFrequencySec;
-  }
-
-  public NetworkingConfiguration setPeerTableRefreshFrequency(final int peerTableRefreshFrequency) {
-    checkArgument(peerTableRefreshFrequency > 0);
-    this.tableRefreshFrequencySec = peerTableRefreshFrequency;
     return this;
   }
 

@@ -20,7 +20,6 @@ import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
-import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
@@ -42,7 +41,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,7 +73,6 @@ public abstract class PeerDiscoveryAgent {
   protected final NodeKey nodeKey;
   private final Bytes id;
   protected final DiscoveryConfiguration config;
-  protected final NetworkingConfiguration networkingConfig;
 
   /* This is the {@link org.hyperledger.besu.ethereum.p2p.Peer} object representing our local node.
    * This value is empty on construction, and is set after the discovery agent is started.
@@ -88,23 +85,22 @@ public abstract class PeerDiscoveryAgent {
 
   public PeerDiscoveryAgent(
       final NodeKey nodeKey,
-      final NetworkingConfiguration networkingConfig,
+      final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
-    checkArgument(networkingConfig != null, "provided configuration cannot be null");
+    checkArgument(config != null, "provided configuration cannot be null");
 
-    validateConfiguration(networkingConfig.getDiscovery());
+    validateConfiguration(config);
 
     this.peerPermissions = peerPermissions;
     this.natService = natService;
-    this.networkingConfig = networkingConfig;
-    config = networkingConfig.getDiscovery();
     this.bootstrapPeers =
         config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
 
+    this.config = config;
     this.nodeKey = nodeKey;
 
     id = nodeKey.getPublicKey().getEncodedBytes();
@@ -178,8 +174,6 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
-        .tableRefreshIntervalMs(
-            TimeUnit.SECONDS.toMillis(networkingConfig.getPeerTableRefreshFrequency()))
         .build();
   }
 
@@ -197,14 +191,14 @@ public abstract class PeerDiscoveryAgent {
     }
 
     // Notify the peer controller.
-    final String host = sourceEndpoint.getHost();
-    final int port = sourceEndpoint.getUdpPort();
+    String host = sourceEndpoint.getHost();
+    int port = sourceEndpoint.getUdpPort();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
             EnodeURL.builder()
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
-                .listeningPort(tcpPort.orElse(sourceEndpoint.getTcpPort().orElse(port)))
+                .listeningPort(tcpPort.orElse(port))
                 .discoveryPort(port)
                 .build());
 
@@ -233,9 +227,6 @@ public abstract class PeerDiscoveryAgent {
                       err);
                 }
                 return;
-              } else {
-                LOG.debug(
-                    "Ping sent to Peer {} - packet: {}", peer, wrapBuffer(packet.encode()), err);
               }
               peer.setLastContacted(System.currentTimeMillis());
             });

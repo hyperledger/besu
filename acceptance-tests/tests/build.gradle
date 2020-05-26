@@ -70,33 +70,6 @@ task acceptanceTest(type: Test) {
   description = 'Runs Besu acceptance tests.'
   group = 'verification'
 
-  ext.getEntropy = {
-    String entropyAvailablePath = "/proc/sys/kernel/random/entropy_avail"
-    File entropyFile = new File(entropyAvailablePath)
-    String fileContents = "N/A"
-    if(entropyFile.exists()) {
-      return new File(entropyAvailablePath).getText('UTF-8').trim()
-    }
-    return 0
-  }
-
-  ext.logEntropy = { prefix, testDesc ->
-    def entropy = getEntropy()
-    logger.lifecycle(prefix + " " + testDesc.getClassName() + "." + testDesc.getName() + " ==> Entropy Avail = " + entropy);
-  }
-
-  beforeTest { descriptor ->
-    File random = new File("/dev/random");
-    // Reading 1 byte from random drops entry by ~5
-    while(Integer.parseInt(getEntropy()) > 500) {
-      InputStream inStream = new FileInputStream(random)
-      byte[] randomData = new byte[100] //appears each 100-byte read drains ~500 entropy
-      inStream.read(randomData)
-    }
-    //empty entropy by cat /dev/random (200 at a time, get down to ~500)
-    logEntropy("Before", descriptor) }
-  afterTest { descriptor -> logEntropy("After", descriptor) }
-
   testLogging {
     exceptionFormat = 'full'
     showStackTraces = true

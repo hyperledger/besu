@@ -49,7 +49,6 @@ public class BesuNodeConfiguration {
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
-  private final String natMethod;
   private final Optional<PrivacyParameters> privacyParameters;
   private final Optional<String> runCommand;
 
@@ -74,7 +73,6 @@ public class BesuNodeConfiguration {
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
-      final String natMethod,
       final Optional<PrivacyParameters> privacyParameters,
       final Optional<String> runCommand) {
     this.name = name;
@@ -97,7 +95,6 @@ public class BesuNodeConfiguration {
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
-    this.natMethod = natMethod;
     this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
   }
@@ -180,10 +177,6 @@ public class BesuNodeConfiguration {
 
   public List<String> getStaticNodes() {
     return staticNodes;
-  }
-
-  public String getNatMethod() {
-    return natMethod;
   }
 
   public Optional<PrivacyParameters> getPrivacyParameters() {

@@ -20,7 +20,6 @@ import static java.util.Arrays.asList;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
-import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
@@ -256,11 +255,8 @@ public class PeerDiscoveryTestHelper {
       config.setAdvertisedHost(advertisedHost);
       config.setBindPort(port);
       config.setActive(active);
-      final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
-      networkingConfiguration.setDiscovery(config);
 
-      return new MockPeerDiscoveryAgent(
-          nodeKey, networkingConfiguration, peerPermissions, agents, natService);
+      return new MockPeerDiscoveryAgent(nodeKey, config, peerPermissions, agents, natService);
     }
   }
 }
