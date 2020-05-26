@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -67,21 +68,30 @@ public class TransactionSimulator {
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final Hash blockHeaderHash) {
     final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
-    return process(callParams, header);
+    return process(callParams, OperationTracer.NO_TRACING, header);
   }
 
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final long blockNumber) {
+    return process(callParams, OperationTracer.NO_TRACING, blockNumber);
+  }
+
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams,
+      final OperationTracer operationTracer,
+      final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
-    return process(callParams, header);
+    return process(callParams, operationTracer, header);
   }
 
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
-    return process(callParams, blockchain.getChainHeadHeader());
+    return process(callParams, OperationTracer.NO_TRACING, blockchain.getChainHeadHeader());
   }
 
   private Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams, final BlockHeader header) {
+      final CallParameter callParams,
+      final OperationTracer operationTracer,
+      final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
     }
@@ -126,7 +136,8 @@ public class TransactionSimulator {
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             new BlockHashLookup(header, blockchain),
             false,
-            TransactionValidationParams.transactionSimulator());
+            TransactionValidationParams.transactionSimulator(),
+            operationTracer);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

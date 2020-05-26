@@ -41,6 +41,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -84,7 +85,10 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -135,7 +139,10 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -181,7 +188,10 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
@@ -243,7 +253,10 @@ public class EthHashBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(

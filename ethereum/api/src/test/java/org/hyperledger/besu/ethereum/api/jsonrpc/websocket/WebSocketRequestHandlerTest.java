@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -151,6 +152,34 @@ public class WebSocketRequestHandlerTest {
         new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+
+    final String websocketId = UUID.randomUUID().toString();
+
+    vertx
+        .eventBus()
+        .consumer(websocketId)
+        .handler(
+            msg -> {
+              context.assertEquals(Json.encode(expectedResponse), msg.body());
+              async.complete();
+            })
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
+
+    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void onInvalidJsonRpcParametersExceptionProcessingRequestShouldRespondInvalidParams(
+      final TestContext context) {
+    final Async async = context.async();
+
+    final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
+    final JsonRpcRequestContext expectedRequest =
+        new JsonRpcRequestContext(requestJson.mapTo(WebSocketRpcRequest.class));
+    when(jsonRpcMethodMock.response(eq(expectedRequest)))
+        .thenThrow(new InvalidJsonRpcParameters(""));
+    final JsonRpcErrorResponse expectedResponse =
+        new JsonRpcErrorResponse(1, JsonRpcError.INVALID_PARAMS);
 
     final String websocketId = UUID.randomUUID().toString();
 

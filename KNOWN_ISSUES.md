@@ -5,10 +5,6 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
-## Intrinsic gas exceeds gas limit
-
-Calling delete and set to 0 Solidity mapping in Solidity [fails with an intrinsic gas exceeds gas limit error.](https://github.com/hyperledger/besu/issues/696)
-
 ## Eth/65 not backwards compatible 
 
 From v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 
@@ -20,17 +16,6 @@ clients.
 * On mainnet, synchronizing eventually stalls.
 
 A fix for this issue is being actively worked on. 
-
-## Error full syncing with pruning
-
-- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#580](https://github.com/hyperledger/besu/issues/580)
-The associated error is `Unable to load trie node value for hash`.
-
-Workarounds:
-1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync. It is already disabled by default for full sync.
-2. If the `MerkleTrieException` occurs, delete the database and resync.
-
-A fix for this issue is being actively worked on.
 
 ## Fast sync when running Besu on cloud providers  
 

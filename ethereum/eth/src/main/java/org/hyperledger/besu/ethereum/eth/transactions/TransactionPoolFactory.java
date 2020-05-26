@@ -50,7 +50,10 @@ public class TransactionPoolFactory {
             transactionPoolConfiguration.getTxPoolMaxSize(),
             transactionPoolConfiguration.getPooledTransactionHashesSize(),
             clock,
-            metricsSystem);
+            metricsSystem,
+            protocolContext.getBlockchain()::getChainHeadHeader,
+            eip1559,
+            transactionPoolConfiguration.getPriceBump());
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =

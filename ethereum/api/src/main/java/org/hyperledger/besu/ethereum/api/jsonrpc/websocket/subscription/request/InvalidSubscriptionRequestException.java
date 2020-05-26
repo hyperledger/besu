@@ -20,6 +20,10 @@ public class InvalidSubscriptionRequestException extends RuntimeException {
     super();
   }
 
+  public InvalidSubscriptionRequestException(final String message) {
+    super(message);
+  }
+
   public InvalidSubscriptionRequestException(final String message, final Throwable cause) {
     super(message, cause);
   }

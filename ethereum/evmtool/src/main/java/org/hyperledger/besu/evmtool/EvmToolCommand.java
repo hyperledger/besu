@@ -24,21 +24,31 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetMessageCallProcessor;
+import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
+import org.hyperledger.besu.ethereum.vm.operations.CallOperation;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonArray;
@@ -134,12 +144,14 @@ public class EvmToolCommand implements Runnable {
   private final Integer repeat = 0;
 
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
+  private PrintStream out = System.out;
 
   void parse(
       final CommandLine.AbstractParseResultHandler<List<Object>> resultHandler,
       final CommandLine.DefaultExceptionHandler<List<Object>> exceptionHandler,
       final String[] args) {
 
+    out = resultHandler.out();
     final CommandLine commandLine = new CommandLine(this);
     commandLine.addMixin("Dagger Options", daggerOptions);
 
@@ -158,7 +170,7 @@ public class EvmToolCommand implements Runnable {
     try {
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
-              .dataStoreModule(new InMemoryDataStoreModule())
+              .dataStoreModule(new DataStoreModule())
               .genesisFileModule(
                   network == null
                       ? genesisFile == null
@@ -191,21 +203,29 @@ public class EvmToolCommand implements Runnable {
 
       Configurator.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int repeat = this.repeat;
+      final ProtocolSpec<?> protocolSpec = component.getProtocolSpec().apply(0);
+      final PrecompileContractRegistry precompileContractRegistry =
+          protocolSpec.getPrecompileContractRegistry();
+      final EVM evm = protocolSpec.getEvm();
+      final Stopwatch stopwatch = Stopwatch.createUnstarted();
+      long lastTime = 0;
       do {
+
         final boolean lastLoop = repeat == 0;
-        final MessageFrame messageFrame =
+        final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+        messageFrameStack.add(
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .messageFrameStack(new ArrayDeque<>())
+                .messageFrameStack(messageFrameStack)
                 .blockchain(component.getBlockchain())
                 .worldState(component.getWorldUpdater())
                 .initialGas(gas)
                 .contract(Address.ZERO)
                 .address(receiver)
                 .originator(sender)
+                .sender(sender)
                 .gasPrice(gasPriceGWei)
                 .inputData(callData)
-                .sender(Address.ZERO)
                 .value(ethValue)
                 .apparentValue(ethValue)
                 .code(new Code(codeHexString))
@@ -215,39 +235,69 @@ public class EvmToolCommand implements Runnable {
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new BlockHashLookup(blockHeader, component.getBlockchain()))
                 .contractAccountVersion(Account.DEFAULT_VERSION)
-                .build();
+                .build());
 
-        messageFrame.setState(MessageFrame.State.CODE_EXECUTING);
-        final EVM evm = component.getEvmAtBlock().apply(0);
+        final MainnetMessageCallProcessor mcp =
+            new MainnetMessageCallProcessor(evm, precompileContractRegistry);
+        stopwatch.start();
+        while (!messageFrameStack.isEmpty()) {
+          final MessageFrame messageFrame = messageFrameStack.peek();
+          mcp.process(
+              messageFrame, new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
+          if (lastLoop) {
+            if (!messageFrame.getExceptionalHaltReasons().isEmpty()) {
+              out.println(messageFrame.getExceptionalHaltReasons());
+            }
+            if (messageFrame.getRevertReason().isPresent()) {
+              out.println(
+                  new String(
+                      messageFrame.getRevertReason().get().toArray(), StandardCharsets.UTF_8));
+            }
+          }
+          if (messageFrameStack.isEmpty()) {
+            stopwatch.stop();
+            if (lastTime == 0) {
+              lastTime = stopwatch.elapsed().toNanos();
+            }
+          }
 
-        final Stopwatch stopwatch = Stopwatch.createStarted();
-        evm.runToHalt(
-            messageFrame,
-            (frame, currentGasCost, executeOperation) -> {
-              if (showJsonResults && lastLoop) {
-                System.out.println(createEvmTraceOperation(messageFrame));
-              }
-              executeOperation.execute();
-            });
-        stopwatch.stop();
+          if (lastLoop && messageFrameStack.isEmpty()) {
+            final Transaction tx =
+                new Transaction(
+                    0,
+                    Wei.ZERO,
+                    Long.MAX_VALUE,
+                    Optional.ofNullable(receiver),
+                    Wei.ZERO,
+                    null,
+                    callData,
+                    sender,
+                    Optional.empty());
 
-        if (lastLoop) {
-          System.out.println(
-              new JsonObject()
-                  .put(
-                      "gasUser",
-                      gas.minus(messageFrame.getRemainingGas()).asUInt256().toShortHexString())
-                  .put("timens", stopwatch.elapsed().toNanos())
-                  .put("time", stopwatch.elapsed().toNanos() / 1000));
+            final Gas intrinsicGasCost =
+                protocolSpec.getGasCalculator().transactionIntrinsicGasCost(tx);
+            final Gas evmGas = gas.minus(messageFrame.getRemainingGas());
+            out.println();
+            out.println(
+                new JsonObject()
+                    .put("gasUser", evmGas.asUInt256().toShortHexString())
+                    .put("timens", lastTime)
+                    .put("time", lastTime / 1000)
+                    .put("gasTotal", evmGas.plus(intrinsicGasCost).asUInt256().toShortHexString()));
+          }
         }
+        lastTime = stopwatch.elapsed().toNanos();
+        stopwatch.reset();
       } while (repeat-- > 0);
 
-    } catch (final IOException | ExceptionalHaltException e) {
+    } catch (final IOException e) {
       LOG.fatal(e);
     }
   }
 
-  private JsonObject createEvmTraceOperation(final MessageFrame messageFrame) {
+  private JsonObject createEvmTraceOperation(
+      final MessageFrame messageFrame,
+      final PrecompileContractRegistry precompileContractRegistry) {
     final JsonArray stack = new JsonArray();
     for (int i = 0; i < messageFrame.stackSize(); i++) {
       stack.add(messageFrame.getStackItem(i).toShortHexString());
@@ -263,13 +313,31 @@ public class EvmToolCommand implements Runnable {
                     .orElse(""));
 
     final JsonObject results = new JsonObject();
-    results.put("pc", messageFrame.getPC());
-    results.put("op", messageFrame.getCurrentOperation().getOpcode());
-    results.put("gas", messageFrame.getRemainingGas().asUInt256().toShortHexString());
+    final Operation currentOp = messageFrame.getCurrentOperation();
+    if (currentOp != null) {
+      results.put("pc", messageFrame.getPC());
+      results.put("op", Bytes.of(currentOp.getOpcode()).toHexString());
+      results.put("opName", currentOp.getName());
+      results.put("gasCost", currentOp.cost(messageFrame).asUInt256().toShortHexString());
+    } else {
+      final MessageFrame caller =
+          messageFrame.getMessageFrameStack().toArray(new MessageFrame[0])[1];
+      final CallOperation callOp = (CallOperation) caller.getCurrentOperation();
 
-    results.put(
-        "gasCost",
-        messageFrame.getCurrentOperation().cost(messageFrame).asUInt256().toShortHexString());
+      results.put("address", messageFrame.getContractAddress().toShortHexString());
+      results.put(
+          "contract",
+          precompileContractRegistry
+              .get(messageFrame.getContractAddress(), Account.DEFAULT_VERSION)
+              .getName());
+      results.put(
+          "gasCost",
+          callOp
+              .gasAvailableForChildCall(caller)
+              .minus(messageFrame.getRemainingGas())
+              .toHexString());
+    }
+    results.put("gas", messageFrame.getRemainingGas().asUInt256().toShortHexString());
     if (!showMemory) {
       results.put(
           "memory",
@@ -279,7 +347,46 @@ public class EvmToolCommand implements Runnable {
     results.put("depth", messageFrame.getMessageStackDepth() + 1);
     results.put("stack", stack);
     results.put("error", error);
-    results.put("opName", messageFrame.getCurrentOperation().getName());
     return results;
+  }
+
+  private class EvmToolOperationTracer implements OperationTracer {
+    private final boolean lastLoop;
+    private final PrecompileContractRegistry precompiledContractRegistries;
+
+    EvmToolOperationTracer(
+        final boolean lastLoop, final PrecompileContractRegistry precompiledContractRegistries) {
+      this.lastLoop = lastLoop;
+      this.precompiledContractRegistries = precompiledContractRegistries;
+    }
+
+    @Override
+    public void traceExecution(
+        final MessageFrame frame,
+        final Optional<Gas> currentGasCost,
+        final ExecuteOperation executeOperation)
+        throws ExceptionalHaltException {
+      if (showJsonResults && lastLoop) {
+        final JsonObject op =
+            EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);
+        final Stopwatch timer = Stopwatch.createStarted();
+        executeOperation.execute();
+        timer.stop();
+        op.put("timens", timer.elapsed().toNanos());
+        out.println(op);
+      } else {
+        executeOperation.execute();
+      }
+    }
+
+    @Override
+    public void tracePrecompileCall(
+        final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
+      if (showJsonResults && lastLoop) {
+        final JsonObject op =
+            EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);
+        out.println(op);
+      }
+    }
   }
 }
