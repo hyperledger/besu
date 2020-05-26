@@ -42,7 +42,7 @@ public class JumpSubOperation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
     frame.pushReturnStackItem(frame.getPC() + 1);
-    frame.setPC(location.intValue());
+    frame.setPC(location.intValue() + 1);
   }
 
   @Override
