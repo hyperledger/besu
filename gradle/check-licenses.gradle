@@ -118,7 +118,7 @@ downloadLicenses {
       // Explicitly declare that we are using the Apache v2.0 license
       (group('org.rocksdb'))      : apache,
 
-      // Logback is dual licensed under EPL v1.0 and LGPL v2.1
+      // Logback is dual licensed under EPL v1.0 or LGPL v2.1
       // Explicitly declare that we are using the EPL v1.0 license
       (group('ch.qos.logback'))   : epl1,
   ]
