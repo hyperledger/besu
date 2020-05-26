@@ -45,6 +45,6 @@ public class BeginSubOperation extends AbstractOperation {
       final MessageFrame frame,
       final EnumSet<ExceptionalHaltReason> previousReasons,
       final EVM evm) {
-    return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
+    return Optional.of(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
   }
 }

@@ -78,24 +78,22 @@ public class BeginSubOperationTest {
 
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
-            .build();
+        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.cost(frame)).isEqualTo(BEGIN_SUB_GAS_COST);
   }
 
   @Test
-  public void shouldHaltWithOutOfGasWhenBeginSubIsExecuted() {
+  public void shouldHaltWithInvalidSubRoutineEntryWhenBeginSubIsExecuted() {
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x04"))
             .code(new Code(Bytes.fromHexString("0x610400b2")))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.exceptionalHaltCondition(frame, null, null))
-        .contains(ExceptionalHaltReason.INSUFFICIENT_GAS);
+        .contains(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
   }
 }
