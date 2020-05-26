@@ -24,15 +24,15 @@ import java.util.ArrayDeque;
  */
 public class ReturnStack extends ArrayDeque<Integer> {
 
-  private final int capacity;
+  // as defined on https://eips.ethereum.org/EIPS/eip-2315
+  private static final int MAX_RETURN_STACK_SIZE = 1023;
 
-  public ReturnStack(final int numElements) {
-    super(numElements);
-    this.capacity = numElements;
+  public ReturnStack() {
+    super(MAX_RETURN_STACK_SIZE);
   }
 
   public boolean isFull() {
-    return this.size() >= capacity;
+    return this.size() >= MAX_RETURN_STACK_SIZE;
   }
 
   @Override

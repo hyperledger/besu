@@ -47,6 +47,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:altbn128'
+  implementation 'org.hyperledger.besu:bls12-381'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 

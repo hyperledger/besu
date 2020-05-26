@@ -2,25 +2,31 @@
 
 ## Breaking change upcoming in v1.5 
 
-To maintain best security practices, we're changing the `user:group` on the Docker containers to `besu/orion/etc` .
+To maintain best security practices, we're changing the `user:group` on the Docker container to `besu`.
 
 What this means for you:
 
-* If you are running Besu and Orion as binaries, there is no impact.
-* If you are running Besu and Orion as Docker containers *and* have volume mounts for data,  ensure that the 
+* If you are running Besu as a binary, there is no impact.
+* If you are running Besu as a Docker container *and* have a volume mount for data,  ensure that the 
 permissions on the directory allow other users and groups to r/w. Ideally this should be set to
-`besu:besu` and `orion:orion` as the owners. 
+`besu:besu` as the owner.
 
-## 1.4.6
+Note that the `besu` user only exists within the container not outside it. The same user ID may match
+a different user outside the image.
 
-### Additions and Improvements
+If you’re mounting local folders, it is best to set the user via the Docker `—user` argument. Use the
+UID because the username may not exist inside the docker container. Ensure the directory being mounted
+is owned by that user.
 
-- Implemented WebSocket logs subscription for private contracts (`priv_subscribe`/`priv_unsubscribe`) [#762]
+## Upcoming 1.5 release 
+
+The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
 
 ## 1.4.5
 
 ### Additions and Improvements
 
+- Implemented WebSocket logs subscription for private contracts (`priv_subscribe`/`priv_unsubscribe`) [#762]
 - Introduced SecurityModule plugin API. This allows use of a different security module as a plugin to 
   provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). KeyPairSecurityModule
   is registered and used by default. The CLI option `--security-module=<name> (defaults to localfile)` can be used 
@@ -32,6 +38,7 @@ permissions on the directory allow other users and groups to r/w. Ideally this s
 
 ### Bug Fixes
 
+- Fixed `eth_estimateGas` JSON RPC so it no longer returns gas estimates that are too low. [\#842](https://github.com/hyperledger/besu/pull/842) 
 - Full help not displayed unless explicitly requested. [\#437](https://github.com/hyperledger/besu/pull/437)
 - Compatibility with undocumented Geth `eth_subscribe` fields. [\#654](https://github.com/hyperledger/besu/pull/654)
 - Current block number included as part of `eth_getWork` response. [\#849](https://github.com/hyperledger/besu/pull/849) 
@@ -39,6 +46,12 @@ permissions on the directory allow other users and groups to r/w. Ideally this s
 ### Known Issues 
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+
+#### New known issues 
+
+* Scope of logs query causing Besu to crash. [\#944](https://github.com/hyperledger/besu/pull/944) 
+
+Workaround - Limit the number of blocks queried by each `eth_getLogs` call. 
 
 #### Previously identified known issues
 
