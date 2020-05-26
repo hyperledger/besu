@@ -70,17 +70,6 @@ public interface KeyValueStorage extends Closeable {
   Stream<byte[]> streamKeys() throws StorageException;
 
   /**
-   * Performs an evaluation against each key in the store, keeping the entries that pass, removing
-   * those that fail.
-   *
-   * @param retainCondition predicate to evaluate each key against, unless the result is {@code
-   *     null}, both the key and associated value must be removed.
-   * @return the number of keys removed.
-   * @throws StorageException problem encountered during the retrieval attempt.
-   */
-  long removeAllKeysUnless(Predicate<byte[]> retainCondition) throws StorageException;
-
-  /**
    * Delete the value corresponding to the given key if a write lock can be instantly acquired on
    * the underlying storage. Do nothing otherwise.
    *
