@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -394,5 +395,11 @@ public class ForkIdManagerTest {
     final ForkIdManager forkIdManager =
         new ForkIdManager(mockBlockchain(consortiumNetworkGenHash, 0), emptyList());
     assertThat(forkIdManager.peerCheck((ForkIdManager.ForkId) null)).isTrue();
+  }
+
+  @Test
+  public void assertThatConstructorParametersMustNotBeNull() {
+    assertThatThrownBy(() -> new ForkIdManager(mockBlockchain(consortiumNetworkGenHash, 0), null))
+        .isExactlyInstanceOf(AssertionError.class);
   }
 }

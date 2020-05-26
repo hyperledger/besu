@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static java.util.Collections.singletonList;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -36,16 +38,17 @@ public class ForkIdManager {
   private long forkNext;
   private final long highestKnownFork;
   private List<ForkId> forkAndHashList;
-  private final ForkIDChecker forkIDChecker;
+  private final List<ForkIDChecker> forkIDCheckers;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
+    assert blockchain != null && forks != null;
     this.blockchain = blockchain;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     // if the fork list contains only zeros then we may be in a consortium/dev network
     if (onlyZerosForkBlocks(forks)) {
-      forkIDChecker = forkId -> true;
+      this.forkIDCheckers = singletonList(forkId -> true);
     } else {
-      forkIDChecker = this::eip2124Checker;
+      this.forkIDCheckers = singletonList(this::eip2124Checker);
     }
     // de-dupe and sanitize forks
     this.forks = forks.stream().distinct().collect(Collectors.toUnmodifiableList());
@@ -83,7 +86,7 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   boolean peerCheck(final ForkId forkId) {
-    return forkIDChecker.check(forkId);
+    return forkIDCheckers.stream().anyMatch(checker -> checker.check(forkId));
   }
 
   private boolean eip2124Checker(final ForkId forkId) {
