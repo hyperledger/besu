@@ -84,15 +84,15 @@ public class Pruner {
   }
 
   public void start() {
-    if (state.compareAndSet(State.IDLE, State.RUNNING)) {
-      LOG.info("Starting Pruner.");
-      executorService = executorServiceSupplier.get();
-      execute(
-          () -> {
+    execute(
+        () -> {
+          if (state.compareAndSet(State.IDLE, State.RUNNING)) {
+            LOG.info("Starting Pruner.");
+            executorService = executorServiceSupplier.get();
             pruningStrategy.prepare();
             blockAddedObserverId = blockchain.observeBlockAdded(this::handleNewBlock);
-          });
-    }
+          }
+        });
   }
 
   public void stop() {
