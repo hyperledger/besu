@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static java.util.Collections.singletonList;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -36,16 +38,27 @@ public class ForkIdManager {
   private long forkNext;
   private final long highestKnownFork;
   private List<ForkId> forkAndHashList;
+  private final List<ForkIDChecker> forkIDCheckers;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
+    assert blockchain != null && forks != null;
     this.blockchain = blockchain;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
+    // if the fork list contains only zeros then we may be in a consortium/dev network
+    if (onlyZerosForkBlocks(forks)) {
+      this.forkIDCheckers = singletonList(forkId -> true);
+    } else {
+      this.forkIDCheckers = singletonList(this::eip2124Checker);
+    }
     // de-dupe and sanitize forks
-    this.forks =
-        forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
+    this.forks = forks.stream().distinct().collect(Collectors.toUnmodifiableList());
     highestKnownFork = forks.size() > 0 ? forks.get(forks.size() - 1) : 0L;
     createForkIds();
-  };
+  }
+
+  private boolean onlyZerosForkBlocks(final List<Long> forks) {
+    return forks.stream().allMatch(value -> 0L == value);
+  }
 
   public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;
@@ -73,6 +86,10 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   boolean peerCheck(final ForkId forkId) {
+    return forkIDCheckers.stream().anyMatch(checker -> checker.check(forkId));
+  }
+
+  private boolean eip2124Checker(final ForkId forkId) {
     if (forkId == null) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
@@ -256,5 +273,10 @@ public class ForkIdManager {
     bs[++off] = (byte) (n >>> 16);
     bs[++off] = (byte) (n >>> 8);
     bs[++off] = (byte) (n);
+  }
+
+  @FunctionalInterface
+  private interface ForkIDChecker {
+    boolean check(ForkId forkId);
   }
 }
