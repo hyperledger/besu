@@ -18,10 +18,10 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.consensus.clique.jsonrpc.CliqueRpcApis.CLIQUE;
 import static org.hyperledger.besu.consensus.ibft.jsonrpc.IbftRpcApis.IBFT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ADMIN;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -51,6 +51,10 @@ public class NodeConfigurationFactory {
     return createJsonRpcWithRpcApiEnabledConfig(IBFT);
   }
 
+  public JsonRpcConfiguration createJsonRpcWithIbft2AdminEnabledConfig() {
+    return createJsonRpcWithRpcApiEnabledConfig(IBFT, ADMIN);
+  }
+
   public JsonRpcConfiguration createJsonRpcEnabledConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setEnabled(true);
@@ -67,7 +71,7 @@ public class NodeConfigurationFactory {
   }
 
   public JsonRpcConfiguration jsonRpcConfigWithAdmin() {
-    return createJsonRpcWithRpcApiEnabledConfig(RpcApis.ADMIN);
+    return createJsonRpcWithRpcApiEnabledConfig(ADMIN);
   }
 
   public JsonRpcConfiguration createJsonRpcWithRpcApiEnabledConfig(final RpcApi... rpcApi) {

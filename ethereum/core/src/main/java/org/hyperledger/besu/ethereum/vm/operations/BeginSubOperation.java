@@ -16,8 +16,13 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+
+import java.util.EnumSet;
+import java.util.Optional;
 
 public class BeginSubOperation extends AbstractOperation {
 
@@ -34,4 +39,12 @@ public class BeginSubOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {}
+
+  @Override
+  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
+      final MessageFrame frame,
+      final EnumSet<ExceptionalHaltReason> previousReasons,
+      final EVM evm) {
+    return Optional.of(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
+  }
 }

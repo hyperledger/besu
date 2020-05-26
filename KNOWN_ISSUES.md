@@ -5,10 +5,6 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
-## Intrinsic gas exceeds gas limit
-
-Calling delete and set to 0 Solidity mapping in Solidity [fails with an intrinsic gas exceeds gas limit error.](https://github.com/hyperledger/besu/issues/696)
-
 ## Eth/65 not backwards compatible 
 
 From v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 
