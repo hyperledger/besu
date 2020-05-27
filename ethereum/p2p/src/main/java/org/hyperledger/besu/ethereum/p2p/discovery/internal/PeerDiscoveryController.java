@@ -301,12 +301,16 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
+          LOG.debug("Ping Accepting from peer {}", peer);
           addToPeerTable(peer);
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);
+        } else {
+          LOG.debug("Ping rejected due to permissions from peer {}", peer);
         }
         break;
       case PONG:
+        LOG.debug("Pong from peer {}", peer);
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
@@ -315,6 +319,7 @@ public class PeerDiscoveryController {
                 });
         break;
       case NEIGHBORS:
+        LOG.debug("Neighbors from peer {}", peer);
         matchInteraction(packet)
             .ifPresent(
                 interaction ->
@@ -323,9 +328,11 @@ public class PeerDiscoveryController {
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
+          LOG.debug("Find Neighbors rejected from peer {}", peer);
           break;
         }
 
+        LOG.debug("Find Neighbors accepted from peer {}", peer);
         final FindNeighborsPacketData fn =
             packet.getPacketData(FindNeighborsPacketData.class).get();
         respondToFindNeighbors(fn, peer);
