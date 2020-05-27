@@ -15,8 +15,12 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class VertxTimerUtil implements TimerUtil {
+
+  static final Logger LOG = LogManager.getLogger();
 
   private final Vertx vertx;
 
@@ -31,6 +35,7 @@ public class VertxTimerUtil implements TimerUtil {
 
   @Override
   public long setTimer(final long delayInMs, final TimerHandler handler) {
+    LOG.debug("calling VertxTimerUtil.setTimer {} delayInMs {} handelr", delayInMs, handler);
     return vertx.setTimer(delayInMs, (l) -> handler.handle());
   }
 

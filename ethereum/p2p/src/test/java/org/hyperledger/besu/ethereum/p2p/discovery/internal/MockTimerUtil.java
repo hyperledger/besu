@@ -20,7 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class MockTimerUtil implements TimerUtil {
+
+  static final Logger LOG = LogManager.getLogger();
+
   private final AtomicLong nextId = new AtomicLong(0);
   private final Map<Long, TimerHandler> timerHandlers = new HashMap<>();
   private final Map<Long, TimerHandler> periodicHandlers = new HashMap<>();
@@ -34,6 +40,7 @@ public class MockTimerUtil implements TimerUtil {
 
   @Override
   public long setTimer(final long delayInMs, final TimerHandler handler) {
+    LOG.debug("calling MockTimerUtil.setTimer {} delayInMs {} handelr", delayInMs, handler);
     long id = nextId.incrementAndGet();
     timerHandlers.put(id, handler);
     return id;
