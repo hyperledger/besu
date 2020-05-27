@@ -17,6 +17,8 @@ package org.hyperledger.besu.consensus.ibft;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -472,5 +474,14 @@ public class IbftExtraDataTest {
       vanity_bytes[i] = (byte) (i + 1);
     }
     return vanity_bytes;
+  }
+
+  @Test
+  public void testSecureRandom() throws NoSuchAlgorithmException {
+    final SecureRandom sr = new SecureRandom();
+    final SecureRandom otherSR = SecureRandom.getInstanceStrong();
+
+    final int i = sr.nextInt();
+
   }
 }
