@@ -28,22 +28,25 @@ public class EthRpcTimeoutHandler {
       final Map<String, TimeoutOptions> timeoutOptionsByMethod) {
     assert timeoutOptionsByMethod != null;
     return ctx -> {
-      final String bodyAsString = ctx.getBodyAsString();
-      if (bodyAsString != null) {
-        final String json = ctx.getBodyAsString().trim();
-        if (!json.isEmpty() && json.charAt(0) == '{') {
-          final JsonObject requestBodyJsonObject = new JsonObject(json);
-          ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), requestBodyJsonObject);
-          final String method = requestBodyJsonObject.getString("method");
-          if (timeoutOptionsByMethod.containsKey(method)) {
-            final TimeoutOptions options = timeoutOptionsByMethod.get(method);
-            long tid =
-                ctx.vertx().setTimer(options.getTimeout(), t -> ctx.fail(options.getErrorCode()));
-            ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
+      try {
+        final String bodyAsString = ctx.getBodyAsString();
+        if (bodyAsString != null) {
+          final String json = ctx.getBodyAsString().trim();
+          if (!json.isEmpty() && json.charAt(0) == '{') {
+            final JsonObject requestBodyJsonObject = new JsonObject(json);
+            ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), requestBodyJsonObject);
+            final String method = requestBodyJsonObject.getString("method");
+            if (timeoutOptionsByMethod.containsKey(method)) {
+              final TimeoutOptions options = timeoutOptionsByMethod.get(method);
+              long tid =
+                  ctx.vertx().setTimer(options.getTimeout(), t -> ctx.fail(options.getErrorCode()));
+              ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
+            }
           }
         }
+      } finally {
+        ctx.next();
       }
-      ctx.next();
     };
   }
 }
