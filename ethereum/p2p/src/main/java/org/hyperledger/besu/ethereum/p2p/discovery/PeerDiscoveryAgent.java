@@ -230,7 +230,11 @@ public abstract class PeerDiscoveryAgent {
               } else {
                 // FIXME remove
                 LOG.debug(
-                    "Ping sent to Peer {} - packet: {}", peer, wrapBuffer(packet.encode()), err);
+                    "{} sent to Peer {} - packet: {}",
+                    packet.getType(),
+                    peer,
+                    wrapBuffer(packet.encode()),
+                    err);
               }
               peer.setLastContacted(System.currentTimeMillis());
             });
