@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
 
 import java.util.List;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -42,7 +43,7 @@ public final class BodyValidation {
   }
 
   private static MerklePatriciaTrie<Bytes, Bytes> trie() {
-    return new SimpleMerklePatriciaTrie<>(b -> b);
+    return new SimpleMerklePatriciaTrie<>(Function.identity());
   }
 
   /**

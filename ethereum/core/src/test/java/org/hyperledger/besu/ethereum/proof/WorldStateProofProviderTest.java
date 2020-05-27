@@ -146,11 +146,11 @@ public class WorldStateProofProviderTest {
 
   private MerklePatriciaTrie<Bytes32, Bytes> emptyStorageTrie() {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);
+        worldStateStorage::getAccountStateTrieNode, Function.identity(), Function.identity());
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> emptyWorldStateTrie() {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, b -> b, b -> b);
+        worldStateStorage::getAccountStorageTrieNode, Function.identity(), Function.identity());
   }
 }

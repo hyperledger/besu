@@ -38,6 +38,7 @@ import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -86,12 +87,18 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
+        worldStateStorage::getAccountStateTrieNode,
+        rootHash,
+        Function.identity(),
+        Function.identity());
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, rootHash, b -> b, b -> b);
+        worldStateStorage::getAccountStorageTrieNode,
+        rootHash,
+        Function.identity(),
+        Function.identity());
   }
 
   @Override

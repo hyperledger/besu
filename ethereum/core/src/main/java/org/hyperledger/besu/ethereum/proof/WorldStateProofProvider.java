@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -77,11 +78,17 @@ public class WorldStateProofProvider {
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
+        worldStateStorage::getAccountStateTrieNode,
+        rootHash,
+        Function.identity(),
+        Function.identity());
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, rootHash, b -> b, b -> b);
+        worldStateStorage::getAccountStorageTrieNode,
+        rootHash,
+        Function.identity(),
+        Function.identity());
   }
 }
