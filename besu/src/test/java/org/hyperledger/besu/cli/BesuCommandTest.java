@@ -2923,6 +2923,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
   }
 
+  @Test
+  public void onchainPrivacyAndMultiTenancyCannotBeUsedTogether() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-onchain-groups-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file",
+        "--rpc-http-authentication-enabled");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Privacy multi-tenancy and onchain privacy groups cannot be used together");
+  }
+
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
     final Path genesisFile = Files.createTempFile("genesisFile", "");
     Files.write(genesisFile, encodeJsonGenesis(jsonGenesis).getBytes(UTF_8));
