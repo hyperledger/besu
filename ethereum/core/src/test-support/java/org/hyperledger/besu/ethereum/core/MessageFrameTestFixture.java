@@ -55,7 +55,7 @@ public class MessageFrameTestFixture {
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
-  private ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+  private ReturnStack returnStack = new ReturnStack();
   private ExecutionContextTestFixture executionContextTestFixture;
 
   public MessageFrameTestFixture type(final Type type) {
