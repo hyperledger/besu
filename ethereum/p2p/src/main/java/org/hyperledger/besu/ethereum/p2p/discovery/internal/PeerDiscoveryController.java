@@ -301,7 +301,7 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
-          LOG.debug("Ping Accepting from peer {}", peer);
+          LOG.debug("Ping Accepted from peer {}", peer);
           addToPeerTable(peer);
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);
@@ -443,17 +443,20 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void bond(final DiscoveryPeer peer) {
+    LOG.debug("bond called");
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 
     final Consumer<PeerInteractionState> action =
         interaction -> {
+          LOG.debug("bond action called");
           final PingPacketData data =
               PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
           createPacket(
               PacketType.PING,
               data,
               pingPacket -> {
+                LOG.debug("bond action handler called");
                 final Bytes pingHash = pingPacket.getHash();
                 // Update the matching filter to only accept the PONG if it echoes the hash of our
                 // PING.
@@ -486,16 +489,22 @@ public class PeerDiscoveryController {
   }
 
   private void sendPacket(final DiscoveryPeer peer, final Packet packet) {
+    LOG.debug("sendPacket called");
     discoveryProtocolLogger.logSendingPacket(peer, packet);
     outboundMessageHandler.send(peer, packet);
   }
 
   @VisibleForTesting
   void createPacket(final PacketType type, final PacketData data, final Consumer<Packet> handler) {
+    LOG.debug("createPacket called");
     // Creating packets is quite expensive because they have to be cryptographically signed
     // So ensure the work is done on a worker thread to avoid blocking the vertx event thread.
     workerExecutor
-        .execute(() -> Packet.create(type, data, nodeKey))
+        .execute(
+            () -> {
+              LOG.debug("createPacket lambda called");
+              return Packet.create(type, data, nodeKey);
+            })
         .thenAccept(handler)
         .exceptionally(
             error -> {
