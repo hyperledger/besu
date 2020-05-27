@@ -20,7 +20,6 @@ import static org.junit.Assume.assumeTrue;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Collection;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -47,8 +46,7 @@ public class TrieRefTest {
 
   @Test
   public void rootHashAfterInsertionsAndRemovals() {
-    final SimpleMerklePatriciaTrie<Bytes, Bytes> trie =
-        new SimpleMerklePatriciaTrie<>(Function.identity());
+    final SimpleMerklePatriciaTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>();
     for (final Bytes[] pair : spec.getIn()) {
       if (pair[1] == null) {
         trie.remove(pair[0]);

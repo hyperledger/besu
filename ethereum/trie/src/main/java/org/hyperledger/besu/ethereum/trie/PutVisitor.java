@@ -16,17 +16,17 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class PutVisitor<V> implements PathNodeVisitor<V> {
-  private final NodeFactory<V> nodeFactory;
-  private final V value;
+class PutVisitor implements PathNodeVisitor {
+  private final NodeFactory nodeFactory;
+  private final Bytes value;
 
-  PutVisitor(final NodeFactory<V> nodeFactory, final V value) {
+  PutVisitor(final NodeFactory nodeFactory, final Bytes value) {
     this.nodeFactory = nodeFactory;
     this.value = value;
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node visit(final ExtensionNode extensionNode, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
 
     final int commonPathLength = extensionPath.commonPrefixLength(path);
@@ -34,7 +34,7 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
         : "Visiting path doesn't end with a non-matching terminator";
 
     if (commonPathLength == extensionPath.size()) {
-      final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
+      final Node newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
       return extensionNode.replaceChild(newChild);
     }
 
@@ -44,11 +44,10 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
     final Bytes leafPath = path.slice(commonPathLength + 1);
 
     final byte extensionIndex = extensionPath.get(commonPathLength);
-    final Node<V> updatedExtension =
+    final Node updatedExtension =
         extensionNode.replacePath(extensionPath.slice(commonPathLength + 1));
-    final Node<V> leaf = nodeFactory.createLeaf(leafPath, value);
-    final Node<V> branch =
-        nodeFactory.createBranch(leafIndex, leaf, extensionIndex, updatedExtension);
+    final Node leaf = nodeFactory.createLeaf(leafPath, value);
+    final Node branch = nodeFactory.createBranch(leafIndex, leaf, extensionIndex, updatedExtension);
 
     if (commonPathLength > 0) {
       return nodeFactory.createExtension(extensionPath.slice(0, commonPathLength), branch);
@@ -58,7 +57,7 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node visit(final BranchNode branchNode, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
 
     final byte childIndex = path.get(0);
@@ -66,12 +65,12 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
       return branchNode.replaceValue(value);
     }
 
-    final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
+    final Node updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
     return branchNode.replaceChild(childIndex, updatedChild);
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node visit(final LeafNode leafNode, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
 
@@ -90,10 +89,9 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
 
     final byte updatedLeafIndex = leafPath.get(commonPathLength);
 
-    final Node<V> updatedLeaf = leafNode.replacePath(leafPath.slice(commonPathLength + 1));
-    final Node<V> leaf = nodeFactory.createLeaf(newLeafPath, value);
-    final Node<V> branch =
-        nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
+    final Node updatedLeaf = leafNode.replacePath(leafPath.slice(commonPathLength + 1));
+    final Node leaf = nodeFactory.createLeaf(newLeafPath, value);
+    final Node branch = nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
     if (commonPathLength > 0) {
       return nodeFactory.createExtension(leafPath.slice(0, commonPathLength), branch);
     } else {
@@ -102,7 +100,7 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+  public Node visit(final NullNode nullNode, final Bytes path) {
     return nodeFactory.createLeaf(path, value);
   }
 }

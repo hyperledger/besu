@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class CommitVisitor<V> implements NodeVisitor<V> {
+class CommitVisitor implements NodeVisitor {
 
   private final NodeUpdater nodeUpdater;
 
@@ -25,12 +25,12 @@ class CommitVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
-  public void visit(final ExtensionNode<V> extensionNode) {
+  public void visit(final ExtensionNode extensionNode) {
     if (!extensionNode.isDirty()) {
       return;
     }
 
-    final Node<V> child = extensionNode.getChild();
+    final Node child = extensionNode.getChild();
     if (child.isDirty()) {
       child.accept(this);
     }
@@ -39,13 +39,13 @@ class CommitVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
-  public void visit(final BranchNode<V> branchNode) {
+  public void visit(final BranchNode branchNode) {
     if (!branchNode.isDirty()) {
       return;
     }
 
     for (byte i = 0; i < BranchNode.RADIX; ++i) {
-      final Node<V> child = branchNode.child(i);
+      final Node child = branchNode.child(i);
       if (child.isDirty()) {
         child.accept(this);
       }
@@ -55,7 +55,7 @@ class CommitVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
-  public void visit(final LeafNode<V> leafNode) {
+  public void visit(final LeafNode leafNode) {
     if (!leafNode.isDirty()) {
       return;
     }
@@ -64,9 +64,9 @@ class CommitVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
-  public void visit(final NullNode<V> nullNode) {}
+  public void visit(final NullNode nullNode) {}
 
-  private void maybeStoreNode(final Node<V> node) {
+  private void maybeStoreNode(final Node node) {
     final Bytes nodeRLP = node.getRlp();
     if (nodeRLP.size() >= 32) {
       this.nodeUpdater.store(node.getHash(), nodeRLP);

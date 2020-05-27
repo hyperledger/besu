@@ -22,12 +22,12 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class StoredNode<V> implements Node<V> {
-  private final StoredNodeFactory<V> nodeFactory;
+class StoredNode implements Node {
+  private final StoredNodeFactory nodeFactory;
   private final Bytes32 hash;
-  private Node<V> loaded;
+  private Node loaded;
 
-  StoredNode(final StoredNodeFactory<V> nodeFactory, final Bytes32 hash) {
+  StoredNode(final StoredNodeFactory nodeFactory, final Bytes32 hash) {
     this.nodeFactory = nodeFactory;
     this.hash = hash;
   }
@@ -46,14 +46,14 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
-    final Node<V> node = load();
+  public Node accept(final PathNodeVisitor visitor, final Bytes path) {
+    final Node node = load();
     return node.accept(visitor, path);
   }
 
   @Override
-  public void accept(final NodeVisitor<V> visitor) {
-    final Node<V> node = load();
+  public void accept(final NodeVisitor visitor) {
+    final Node node = load();
     node.accept(visitor);
   }
 
@@ -63,12 +63,12 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<V> getValue() {
+  public Optional<Bytes> getValue() {
     return load().getValue();
   }
 
   @Override
-  public List<Node<V>> getChildren() {
+  public List<Node> getChildren() {
     return load().getChildren();
   }
 
@@ -95,11 +95,11 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> replacePath(final Bytes path) {
+  public Node replacePath(final Bytes path) {
     return load().replacePath(path);
   }
 
-  private Node<V> load() {
+  private Node load() {
     if (loaded == null) {
       loaded =
           nodeFactory

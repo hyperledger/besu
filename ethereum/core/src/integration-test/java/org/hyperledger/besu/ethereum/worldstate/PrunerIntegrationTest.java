@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -191,7 +190,7 @@ public class PrunerIntegrationTest {
 
   private Set<Bytes> collectWorldStateNodes(final Hash stateRootHash, final Set<Bytes> collector) {
     final List<Hash> storageRoots = new ArrayList<>();
-    final MerklePatriciaTrie<Bytes32, Bytes> stateTrie = createStateTrie(stateRootHash);
+    final MerklePatriciaTrie<Bytes32> stateTrie = createStateTrie(stateRootHash);
 
     // Collect storage roots and code
     stateTrie
@@ -210,7 +209,7 @@ public class PrunerIntegrationTest {
     collectTrieNodes(stateTrie, collector);
     // Collect storage nodes
     for (Hash storageRoot : storageRoots) {
-      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = createStorageTrie(storageRoot);
+      final MerklePatriciaTrie<Bytes32> storageTrie = createStorageTrie(storageRoot);
       collectTrieNodes(storageTrie, collector);
     }
 
@@ -218,7 +217,7 @@ public class PrunerIntegrationTest {
   }
 
   private void collectTrieNodes(
-      final MerklePatriciaTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
+      final MerklePatriciaTrie<Bytes32> trie, final Set<Bytes> collector) {
     final Bytes32 rootHash = trie.getRootHash();
     trie.visitAll(
         (node) -> {
@@ -228,20 +227,12 @@ public class PrunerIntegrationTest {
         });
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> createStateTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStateTrieNode, rootHash);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> createStorageTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStorageTrieNode, rootHash);
   }
 
   // Proxy class so that we have access to the constructor that takes our own map

@@ -40,7 +40,7 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
     valueSerializer =
         value -> (value != null) ? Bytes.wrap(value.getBytes(StandardCharsets.UTF_8)) : null;
     valueDeserializer = bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8);
-    return new StoredMerklePatriciaTrie<>(merkleStorage::get, valueSerializer, valueDeserializer);
+    return new StoredMerklePatriciaTrie<>(merkleStorage::get);
   }
 
   @Test
@@ -75,23 +75,17 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
 
     // Create new tries from root hashes and check that we find expected values
-    trie =
-        new StoredMerklePatriciaTrie<>(
-            merkleStorage::get, hash1, valueSerializer, valueDeserializer);
+    trie = new StoredMerklePatriciaTrie<>(merkleStorage::get, hash1);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.empty());
     assertThat(trie.get(key3)).isEqualTo(Optional.empty());
 
-    trie =
-        new StoredMerklePatriciaTrie<>(
-            merkleStorage::get, hash2, valueSerializer, valueDeserializer);
+    trie = new StoredMerklePatriciaTrie<>(merkleStorage::get, hash2);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
-    trie =
-        new StoredMerklePatriciaTrie<>(
-            merkleStorage::get, hash3, valueSerializer, valueDeserializer);
+    trie = new StoredMerklePatriciaTrie<>(merkleStorage::get, hash3);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
@@ -99,23 +93,17 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
     // Commit changes to storage, and create new tries from roothash and new storage instance
     merkleStorage.commit();
     final MerkleStorage newMerkleStorage = new KeyValueMerkleStorage(keyValueStore);
-    trie =
-        new StoredMerklePatriciaTrie<>(
-            newMerkleStorage::get, hash1, valueSerializer, valueDeserializer);
+    trie = new StoredMerklePatriciaTrie<>(newMerkleStorage::get, hash1);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.empty());
     assertThat(trie.get(key3)).isEqualTo(Optional.empty());
 
-    trie =
-        new StoredMerklePatriciaTrie<>(
-            newMerkleStorage::get, hash2, valueSerializer, valueDeserializer);
+    trie = new StoredMerklePatriciaTrie<>(newMerkleStorage::get, hash2);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
-    trie =
-        new StoredMerklePatriciaTrie<>(
-            newMerkleStorage::get, hash3, valueSerializer, valueDeserializer);
+    trie = new StoredMerklePatriciaTrie<>(newMerkleStorage::get, hash3);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));

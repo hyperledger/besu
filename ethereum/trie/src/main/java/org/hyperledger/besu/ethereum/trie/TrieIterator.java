@@ -21,18 +21,18 @@ import java.util.Iterator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class TrieIterator<V> implements PathNodeVisitor<V> {
+public class TrieIterator implements PathNodeVisitor {
 
   private final Deque<Bytes> paths = new ArrayDeque<>();
-  private final LeafHandler<V> leafHandler;
+  private final LeafHandler leafHandler;
   private State state = State.SEARCHING;
 
-  public TrieIterator(final LeafHandler<V> leafHandler) {
+  public TrieIterator(final LeafHandler leafHandler) {
     this.leafHandler = leafHandler;
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> node, final Bytes searchPath) {
+  public Node visit(final ExtensionNode node, final Bytes searchPath) {
     Bytes remainingPath = searchPath;
     if (state == State.SEARCHING) {
       final Bytes extensionPath = node.getPath();
@@ -47,7 +47,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> node, final Bytes searchPath) {
+  public Node visit(final BranchNode node, final Bytes searchPath) {
     byte iterateFrom = 0;
     Bytes remainingPath = searchPath;
     if (state == State.SEARCHING) {
@@ -68,7 +68,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> node, final Bytes path) {
+  public Node visit(final LeafNode node, final Bytes path) {
     paths.push(node.getPath());
     state = State.CONTINUE;
     state = leafHandler.onLeaf(keyHash(), node);
@@ -77,7 +77,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> node, final Bytes path) {
+  public Node visit(final NullNode node, final Bytes path) {
     state = State.CONTINUE;
     return node;
   }
@@ -93,9 +93,9 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
         : Bytes32.wrap(CompactEncoding.pathToBytes(fullPath), 0);
   }
 
-  public interface LeafHandler<V> {
+  public interface LeafHandler {
 
-    State onLeaf(Bytes32 keyHash, Node<V> node);
+    State onLeaf(Bytes32 keyHash, Node node);
   }
 
   public enum State {

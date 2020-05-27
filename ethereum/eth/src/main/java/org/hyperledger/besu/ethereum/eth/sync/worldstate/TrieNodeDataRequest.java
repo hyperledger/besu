@@ -37,7 +37,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       return Stream.empty();
     }
 
-    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(getData());
+    final List<Node> nodes = TrieNodeDecoder.decodeNodes(getData());
     return nodes.stream()
         .flatMap(
             node -> {
@@ -51,7 +51,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
             });
   }
 
-  private boolean nodeIsHashReferencedDescendant(final Node<Bytes> node) {
+  private boolean nodeIsHashReferencedDescendant(final Node node) {
     return !Objects.equals(node.getHash(), getHash()) && node.isReferencedByHash();
   }
 

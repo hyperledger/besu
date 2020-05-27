@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -68,27 +67,18 @@ public class WorldStateProofProvider {
 
   private SortedMap<UInt256, Proof<Bytes>> getStorageProofs(
       final StateTrieAccountValue account, final List<UInt256> accountStorageKeys) {
-    final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
-        newAccountStorageTrie(account.getStorageRoot());
+    final MerklePatriciaTrie<Bytes32> storageTrie = newAccountStorageTrie(account.getStorageRoot());
     final SortedMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
     accountStorageKeys.forEach(
         key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key.toBytes()))));
     return storageProofs;
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> newAccountStateTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStateTrieNode, rootHash);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> newAccountStorageTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStorageTrieNode, rootHash);
   }
 }

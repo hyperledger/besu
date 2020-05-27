@@ -20,17 +20,17 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public interface Node<V> {
+public interface Node {
 
-  Node<V> accept(PathNodeVisitor<V> visitor, Bytes path);
+  Node accept(PathNodeVisitor visitor, Bytes path);
 
-  void accept(NodeVisitor<V> visitor);
+  void accept(NodeVisitor visitor);
 
   Bytes getPath();
 
-  Optional<V> getValue();
+  Optional<Bytes> getValue();
 
-  List<Node<V>> getChildren();
+  List<Node> getChildren();
 
   Bytes getRlp();
 
@@ -49,7 +49,7 @@ public interface Node<V> {
 
   Bytes32 getHash();
 
-  Node<V> replacePath(Bytes path);
+  Node replacePath(Bytes path);
 
   /** Marks the node as needing to be persisted */
   void markDirty();

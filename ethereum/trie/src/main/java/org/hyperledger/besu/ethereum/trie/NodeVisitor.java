@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-interface NodeVisitor<V> {
+interface NodeVisitor {
 
-  void visit(ExtensionNode<V> extensionNode);
+  void visit(ExtensionNode extensionNode);
 
-  void visit(BranchNode<V> branchNode);
+  void visit(BranchNode branchNode);
 
-  void visit(LeafNode<V> leafNode);
+  void visit(LeafNode leafNode);
 
-  void visit(NullNode<V> nullNode);
+  void visit(NullNode nullNode);
 }

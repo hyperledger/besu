@@ -24,38 +24,31 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class LeafNode<V> implements Node<V> {
+class LeafNode implements Node {
   private final Bytes path;
-  private final V value;
-  private final NodeFactory<V> nodeFactory;
-  private final Function<V, Bytes> valueSerializer;
+  private final Bytes value;
+  private final NodeFactory nodeFactory;
   private WeakReference<Bytes> rlp;
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
-  LeafNode(
-      final Bytes path,
-      final V value,
-      final NodeFactory<V> nodeFactory,
-      final Function<V, Bytes> valueSerializer) {
+  LeafNode(final Bytes path, final Bytes value, final NodeFactory nodeFactory) {
     this.path = path;
     this.value = value;
     this.nodeFactory = nodeFactory;
-    this.valueSerializer = valueSerializer;
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
+  public Node accept(final PathNodeVisitor visitor, final Bytes path) {
     return visitor.visit(this, path);
   }
 
   @Override
-  public void accept(final NodeVisitor<V> visitor) {
+  public void accept(final NodeVisitor visitor) {
     visitor.visit(this);
   }
 
@@ -65,12 +58,12 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<V> getValue() {
+  public Optional<Bytes> getValue() {
     return Optional.of(value);
   }
 
   @Override
-  public List<Node<V>> getChildren() {
+  public List<Node> getChildren() {
     return Collections.emptyList();
   }
 
@@ -86,7 +79,7 @@ class LeafNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(CompactEncoding.encode(path));
-    out.writeBytes(valueSerializer.apply(value));
+    out.writeBytes(value);
     out.endList();
     final Bytes encoded = out.encoded();
     rlp = new WeakReference<>(encoded);
@@ -116,7 +109,7 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> replacePath(final Bytes path) {
+  public Node replacePath(final Bytes path) {
     return nodeFactory.createLeaf(path, value);
   }
 

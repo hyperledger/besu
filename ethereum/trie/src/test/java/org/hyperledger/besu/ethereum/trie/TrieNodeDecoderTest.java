@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -39,8 +38,7 @@ public class TrieNodeDecoderTest {
 
     // Build a small trie
     MerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(
-            new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(new BytesToByteNodeLoader(storage));
     trie.put(Bytes.fromHexString("0x100000"), Bytes.of(1));
     trie.put(Bytes.fromHexString("0x200000"), Bytes.of(2));
     trie.put(Bytes.fromHexString("0x300000"), Bytes.of(3));
@@ -59,7 +57,7 @@ public class TrieNodeDecoderTest {
 
     // Get and flatten root node
     final Bytes rootNodeRlp = Bytes.wrap(storage.get(trie.getRootHash().toArrayUnsafe()).get());
-    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(rootNodeRlp);
+    final List<Node> nodes = TrieNodeDecoder.decodeNodes(rootNodeRlp);
     // The full trie hold 10 nodes, the branch node starting with 0x3... holding 2 values will be a
     // hash
     // referenced node and so its 2 child nodes will be missing
@@ -83,8 +81,7 @@ public class TrieNodeDecoderTest {
 
     // Build a small trie
     MerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(
-            new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(new BytesToByteNodeLoader(storage));
     trie.put(Bytes.fromHexString("0x100000"), Bytes.of(1));
     trie.put(Bytes.fromHexString("0x200000"), Bytes.of(2));
     trie.put(Bytes.fromHexString("0x300000"), Bytes.of(3));
@@ -99,17 +96,17 @@ public class TrieNodeDecoderTest {
     tx.commit();
 
     // First layer should just be the root node
-    final List<Node<Bytes>> depth0Nodes =
+    final List<Node> depth0Nodes =
         TrieNodeDecoder.breadthFirstDecoder(
                 new BytesToByteNodeLoader(storage), trie.getRootHash(), 0)
             .collect(Collectors.toList());
 
     assertThat(depth0Nodes.size()).isEqualTo(1);
-    final Node<Bytes> rootNode = depth0Nodes.get(0);
+    final Node rootNode = depth0Nodes.get(0);
     assertThat(rootNode.getHash()).isEqualTo(trie.getRootHash());
 
     // Decode first 2 levels
-    final List<Node<Bytes>> depth0And1Nodes =
+    final List<Node> depth0And1Nodes =
         (TrieNodeDecoder.breadthFirstDecoder(
                 new BytesToByteNodeLoader(storage), trie.getRootHash(), 1)
             .collect(Collectors.toList()));
@@ -131,7 +128,7 @@ public class TrieNodeDecoderTest {
     assertThat(actualNodeHashes).isEqualTo(expectedNodesHashes);
 
     // Decode full trie
-    final List<Node<Bytes>> allNodes =
+    final List<Node> allNodes =
         TrieNodeDecoder.breadthFirstDecoder(new BytesToByteNodeLoader(storage), trie.getRootHash())
             .collect(Collectors.toList());
     assertThat(allNodes.size()).isEqualTo(10);
@@ -154,8 +151,7 @@ public class TrieNodeDecoderTest {
 
     // Build a small trie
     MerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(
-            new BytesToByteNodeLoader(fullStorage), Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(new BytesToByteNodeLoader(fullStorage));
     final Random random = new Random(1);
     for (int i = 0; i < 30; i++) {
       byte[] key = new byte[4];
@@ -169,7 +165,7 @@ public class TrieNodeDecoderTest {
     tx.commit();
 
     // Get root node
-    Node<Bytes> rootNode =
+    Node rootNode =
         TrieNodeDecoder.breadthFirstDecoder(
                 new BytesToByteNodeLoader(fullStorage), trie.getRootHash())
             .findFirst()
@@ -179,7 +175,7 @@ public class TrieNodeDecoderTest {
     final KeyValueStorageTransaction partialTx = partialStorage.startTransaction();
     partialTx.put(trie.getRootHash().toArrayUnsafe(), rootNode.getRlp().toArrayUnsafe());
     partialTx.commit();
-    final List<Node<Bytes>> allDecodableNodes =
+    final List<Node> allDecodableNodes =
         TrieNodeDecoder.breadthFirstDecoder(
                 new BytesToByteNodeLoader(partialStorage), trie.getRootHash())
             .collect(Collectors.toList());
@@ -189,7 +185,7 @@ public class TrieNodeDecoderTest {
 
   @Test
   public void breadthFirstDecode_emptyTrie() {
-    List<Node<Bytes>> result =
+    List<Node> result =
         TrieNodeDecoder.breadthFirstDecoder(
                 (h) -> Optional.empty(), MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)
             .collect(Collectors.toList());
@@ -201,8 +197,7 @@ public class TrieNodeDecoderTest {
     final InMemoryKeyValueStorage storage = new InMemoryKeyValueStorage();
 
     MerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(
-            new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(new BytesToByteNodeLoader(storage));
     trie.put(Bytes.fromHexString("0x100000"), Bytes.of(1));
 
     // Save nodes to storage
@@ -210,7 +205,7 @@ public class TrieNodeDecoderTest {
     trie.commit((key, value) -> tx.put(key.toArrayUnsafe(), value.toArrayUnsafe()));
     tx.commit();
 
-    List<Node<Bytes>> result =
+    List<Node> result =
         TrieNodeDecoder.breadthFirstDecoder(new BytesToByteNodeLoader(storage), trie.getRootHash())
             .collect(Collectors.toList());
     assertThat(result.size()).isEqualTo(1);
@@ -223,7 +218,7 @@ public class TrieNodeDecoderTest {
   public void breadthFirstDecode_unknownTrie() {
 
     Bytes32 randomRootHash = Bytes32.fromHexStringLenient("0x12");
-    List<Node<Bytes>> result =
+    List<Node> result =
         TrieNodeDecoder.breadthFirstDecoder((h) -> Optional.empty(), randomRootHash)
             .collect(Collectors.toList());
     assertThat(result.size()).isEqualTo(0);

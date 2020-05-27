@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class GetVisitor<V> implements PathNodeVisitor<V> {
-  private final Node<V> NULL_NODE_RESULT = NullNode.instance();
+class GetVisitor implements PathNodeVisitor {
+  private final Node NULL_NODE_RESULT = NullNode.instance();
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node visit(final ExtensionNode extensionNode, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
     final int commonPathLength = extensionPath.commonPrefixLength(path);
     assert commonPathLength < path.size()
@@ -35,7 +35,7 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node visit(final BranchNode branchNode, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
 
     final byte childIndex = path.get(0);
@@ -47,7 +47,7 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node visit(final LeafNode leafNode, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     if (leafPath.commonPrefixLength(path) != leafPath.size()) {
       return NULL_NODE_RESULT;
@@ -56,7 +56,7 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+  public Node visit(final NullNode nullNode, final Bytes path) {
     return NULL_NODE_RESULT;
   }
 }

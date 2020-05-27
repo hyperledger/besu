@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
@@ -30,8 +29,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class TrieNodeDecoder {
-  private static final StoredNodeFactory<Bytes> emptyNodeFactory =
-      new StoredNodeFactory<>((h) -> Optional.empty(), Function.identity(), Function.identity());
+  private static final StoredNodeFactory emptyNodeFactory =
+      new StoredNodeFactory(__ -> Optional.empty());
 
   // Hide constructor for static utility class
   private TrieNodeDecoder() {}
@@ -42,7 +41,7 @@ public class TrieNodeDecoder {
    * @param rlp The rlp-encoded node
    * @return A {@code Node} representation of the rlp data
    */
-  public static Node<Bytes> decode(final Bytes rlp) {
+  public static Node decode(final Bytes rlp) {
     return emptyNodeFactory.decode(rlp);
   }
 
@@ -52,15 +51,15 @@ public class TrieNodeDecoder {
    * @param nodeRlp The bytes of the trie node to be decoded.
    * @return A list of nodes and node references embedded in the given rlp.
    */
-  public static List<Node<Bytes>> decodeNodes(final Bytes nodeRlp) {
-    Node<Bytes> node = decode(nodeRlp);
-    List<Node<Bytes>> nodes = new ArrayList<>();
+  public static List<Node> decodeNodes(final Bytes nodeRlp) {
+    Node node = decode(nodeRlp);
+    List<Node> nodes = new ArrayList<>();
     nodes.add(node);
 
-    final List<Node<Bytes>> toProcess = new ArrayList<>();
+    final List<Node> toProcess = new ArrayList<>();
     toProcess.addAll(node.getChildren());
     while (!toProcess.isEmpty()) {
-      final Node<Bytes> currentNode = toProcess.remove(0);
+      final Node currentNode = toProcess.remove(0);
       if (Objects.equals(NullNode.instance(), currentNode)) {
         // Skip null nodes
         continue;
@@ -86,7 +85,7 @@ public class TrieNodeDecoder {
    *     only.
    * @return A stream non-null nodes in the breadth-first traversal order.
    */
-  public static Stream<Node<Bytes>> breadthFirstDecoder(
+  public static Stream<Node> breadthFirstDecoder(
       final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
     checkArgument(maxDepth >= 0);
     return Streams.stream(new BreadthFirstIterator(nodeLoader, rootHash, maxDepth));
@@ -100,24 +99,23 @@ public class TrieNodeDecoder {
    * @param rootHash The hash of the root node
    * @return A stream non-null nodes in the breadth-first traversal order.
    */
-  public static Stream<Node<Bytes>> breadthFirstDecoder(
+  public static Stream<Node> breadthFirstDecoder(
       final NodeLoader nodeLoader, final Bytes32 rootHash) {
     return breadthFirstDecoder(nodeLoader, rootHash, Integer.MAX_VALUE);
   }
 
-  private static class BreadthFirstIterator implements Iterator<Node<Bytes>> {
+  private static class BreadthFirstIterator implements Iterator<Node> {
 
     private final int maxDepth;
-    private final StoredNodeFactory<Bytes> nodeFactory;
+    private final StoredNodeFactory nodeFactory;
 
     private int currentDepth = 0;
-    private final List<Node<Bytes>> currentNodes = new ArrayList<>();
-    private final List<Node<Bytes>> nextNodes = new ArrayList<>();
+    private final List<Node> currentNodes = new ArrayList<>();
+    private final List<Node> nextNodes = new ArrayList<>();
 
     BreadthFirstIterator(final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
       this.maxDepth = maxDepth;
-      this.nodeFactory =
-          new StoredNodeFactory<>(nodeLoader, Function.identity(), Function.identity());
+      this.nodeFactory = new StoredNodeFactory(nodeLoader);
 
       nodeLoader.getNode(rootHash).map(TrieNodeDecoder::decode).ifPresent(currentNodes::add);
     }
@@ -133,24 +131,24 @@ public class TrieNodeDecoder {
     }
 
     @Override
-    public Node<Bytes> next() {
+    public Node next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
 
-      final Node<Bytes> nextNode = currentNodes.remove(0);
+      final Node nextNode = currentNodes.remove(0);
 
-      final List<Node<Bytes>> children = new ArrayList<>();
+      final List<Node> children = new ArrayList<>();
       children.addAll(nextNode.getChildren());
       while (!children.isEmpty()) {
-        Node<Bytes> child = children.remove(0);
+        Node child = children.remove(0);
         if (Objects.equals(child, NullNode.instance())) {
           // Ignore null nodes
           continue;
         }
         if (child.isReferencedByHash()) {
           // Retrieve hash-referenced child
-          final Optional<Node<Bytes>> maybeChildNode = nodeFactory.retrieve(child.getHash());
+          final Optional<Node> maybeChildNode = nodeFactory.retrieve(child.getHash());
           if (!maybeChildNode.isPresent()) {
             continue;
           }

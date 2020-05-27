@@ -16,18 +16,18 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class RemoveVisitor<V> implements PathNodeVisitor<V> {
-  private final Node<V> NULL_NODE_RESULT = NullNode.instance();
+class RemoveVisitor implements PathNodeVisitor {
+  private final Node NULL_NODE_RESULT = NullNode.instance();
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node visit(final ExtensionNode extensionNode, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
     final int commonPathLength = extensionPath.commonPrefixLength(path);
     assert commonPathLength < path.size()
         : "Visiting path doesn't end with a non-matching terminator";
 
     if (commonPathLength == extensionPath.size()) {
-      final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
+      final Node newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
       return extensionNode.replaceChild(newChild);
     }
 
@@ -37,7 +37,7 @@ class RemoveVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node visit(final BranchNode branchNode, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
 
     final byte childIndex = path.get(0);
@@ -45,19 +45,19 @@ class RemoveVisitor<V> implements PathNodeVisitor<V> {
       return branchNode.removeValue();
     }
 
-    final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
+    final Node updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
     return branchNode.replaceChild(childIndex, updatedChild);
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node visit(final LeafNode leafNode, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
     return (commonPathLength == leafPath.size()) ? NULL_NODE_RESULT : leafNode;
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+  public Node visit(final NullNode nullNode, final Bytes path) {
     return NULL_NODE_RESULT;
   }
 }

@@ -28,15 +28,15 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class ExtensionNode<V> implements Node<V> {
+class ExtensionNode implements Node {
   private final Bytes path;
-  private final Node<V> child;
-  private final NodeFactory<V> nodeFactory;
+  private final Node child;
+  private final NodeFactory nodeFactory;
   private WeakReference<Bytes> rlp;
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
-  ExtensionNode(final Bytes path, final Node<V> child, final NodeFactory<V> nodeFactory) {
+  ExtensionNode(final Bytes path, final Node child, final NodeFactory nodeFactory) {
     assert (path.size() > 0);
     assert (path.get(path.size() - 1) != CompactEncoding.LEAF_TERMINATOR)
         : "Extension path ends in a leaf terminator";
@@ -46,12 +46,12 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
+  public Node accept(final PathNodeVisitor visitor, final Bytes path) {
     return visitor.visit(this, path);
   }
 
   @Override
-  public void accept(final NodeVisitor<V> visitor) {
+  public void accept(final NodeVisitor visitor) {
     visitor.visit(this);
   }
 
@@ -61,16 +61,16 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<V> getValue() {
+  public Optional<Bytes> getValue() {
     return Optional.empty();
   }
 
   @Override
-  public List<Node<V>> getChildren() {
+  public List<Node> getChildren() {
     return Collections.singletonList(child);
   }
 
-  public Node<V> getChild() {
+  public Node getChild() {
     return child;
   }
 
@@ -115,13 +115,13 @@ class ExtensionNode<V> implements Node<V> {
     return hashed;
   }
 
-  public Node<V> replaceChild(final Node<V> updatedChild) {
+  public Node replaceChild(final Node updatedChild) {
     // collapse this extension - if the child is a branch, it will create a new extension
     return updatedChild.replacePath(Bytes.concatenate(path, updatedChild.getPath()));
   }
 
   @Override
-  public Node<V> replacePath(final Bytes path) {
+  public Node replacePath(final Bytes path) {
     if (path.size() == 0) {
       return child;
     }

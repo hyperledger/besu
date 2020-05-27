@@ -21,24 +21,22 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class NullNode<V> implements Node<V> {
-  @SuppressWarnings("rawtypes")
+class NullNode implements Node {
   private static final NullNode instance = new NullNode();
 
   private NullNode() {}
 
-  @SuppressWarnings("unchecked")
-  static <V> NullNode<V> instance() {
+  static NullNode instance() {
     return instance;
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
+  public Node accept(final PathNodeVisitor visitor, final Bytes path) {
     return visitor.visit(this, path);
   }
 
   @Override
-  public void accept(final NodeVisitor<V> visitor) {
+  public void accept(final NodeVisitor visitor) {
     visitor.visit(this);
   }
 
@@ -48,12 +46,12 @@ class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<V> getValue() {
+  public Optional<Bytes> getValue() {
     return Optional.empty();
   }
 
   @Override
-  public List<Node<V>> getChildren() {
+  public List<Node> getChildren() {
     return Collections.emptyList();
   }
 
@@ -73,7 +71,7 @@ class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> replacePath(final Bytes path) {
+  public Node replacePath(final Bytes path) {
     return this;
   }
 

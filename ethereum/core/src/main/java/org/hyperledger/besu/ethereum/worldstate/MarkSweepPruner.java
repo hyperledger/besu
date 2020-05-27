@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
@@ -171,20 +170,12 @@ public class MarkSweepPruner {
     return pendingMarks.contains(Bytes32.wrap(key)) || markStorage.containsKey(key);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> createStateTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStateTrieNode, rootHash);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> createStorageTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStorageTrieNode, rootHash);
   }
 
   private void processAccountState(final Bytes value) {

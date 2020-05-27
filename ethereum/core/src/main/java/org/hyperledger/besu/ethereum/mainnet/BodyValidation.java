@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
 
 import java.util.List;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -42,8 +41,8 @@ public final class BodyValidation {
     return RLP.encodeOne(UInt256.valueOf(i).toBytes().trimLeadingZeros());
   }
 
-  private static MerklePatriciaTrie<Bytes, Bytes> trie() {
-    return new SimpleMerklePatriciaTrie<>(Function.identity());
+  private static MerklePatriciaTrie<Bytes> trie() {
+    return new SimpleMerklePatriciaTrie<>();
   }
 
   /**
@@ -53,7 +52,7 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash transactionsRoot(final List<Transaction> transactions) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerklePatriciaTrie<Bytes> trie = trie();
 
     for (int i = 0; i < transactions.size(); ++i) {
       trie.put(indexKey(i), RLP.encode(transactions.get(i)::writeTo));
@@ -69,7 +68,7 @@ public final class BodyValidation {
    * @return the receipt root
    */
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerklePatriciaTrie<Bytes> trie = trie();
 
     for (int i = 0; i < receipts.size(); ++i) {
       trie.put(indexKey(i), RLP.encode(receipts.get(i)::writeTo));

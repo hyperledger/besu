@@ -19,13 +19,13 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-interface NodeFactory<V> {
+interface NodeFactory {
 
-  Node<V> createExtension(Bytes path, Node<V> child);
+  Node createExtension(Bytes path, Node child);
 
-  Node<V> createBranch(byte leftIndex, Node<V> left, byte rightIndex, Node<V> right);
+  Node createBranch(byte leftIndex, Node left, byte rightIndex, Node right);
 
-  Node<V> createBranch(ArrayList<Node<V>> newChildren, Optional<V> value);
+  Node createBranch(ArrayList<Node> newChildren, Optional<Bytes> value);
 
-  Node<V> createLeaf(Bytes path, V value);
+  Node createLeaf(Bytes path, Bytes value);
 }

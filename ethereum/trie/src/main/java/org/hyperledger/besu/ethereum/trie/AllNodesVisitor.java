@@ -16,35 +16,35 @@ package org.hyperledger.besu.ethereum.trie;
 
 import java.util.function.Consumer;
 
-public class AllNodesVisitor<V> implements NodeVisitor<V> {
+public class AllNodesVisitor implements NodeVisitor {
 
-  private final Consumer<Node<V>> handler;
+  private final Consumer<Node> handler;
 
-  AllNodesVisitor(final Consumer<Node<V>> handler) {
+  AllNodesVisitor(final Consumer<Node> handler) {
     this.handler = handler;
   }
 
   @Override
-  public void visit(final ExtensionNode<V> extensionNode) {
+  public void visit(final ExtensionNode extensionNode) {
     handler.accept(extensionNode);
     acceptAndUnload(extensionNode.getChild());
   }
 
   @Override
-  public void visit(final BranchNode<V> branchNode) {
+  public void visit(final BranchNode branchNode) {
     handler.accept(branchNode);
     branchNode.getChildren().forEach(this::acceptAndUnload);
   }
 
   @Override
-  public void visit(final LeafNode<V> leafNode) {
+  public void visit(final LeafNode leafNode) {
     handler.accept(leafNode);
   }
 
   @Override
-  public void visit(final NullNode<V> nullNode) {}
+  public void visit(final NullNode nullNode) {}
 
-  private void acceptAndUnload(final Node<V> storedNode) {
+  private void acceptAndUnload(final Node storedNode) {
     storedNode.accept(this);
     storedNode.unload();
   }

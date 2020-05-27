@@ -38,7 +38,6 @@ import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -50,9 +49,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final WorldStateStorage worldStateStorage;
   private final WorldStatePreimageStorage preimageStorage;
 
-  private final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie;
-  private final Map<Address, MerklePatriciaTrie<Bytes32, Bytes>> updatedStorageTries =
-      new HashMap<>();
+  private final MerklePatriciaTrie<Bytes32> accountStateTrie;
+  private final Map<Address, MerklePatriciaTrie<Bytes32>> updatedStorageTries = new HashMap<>();
   private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
@@ -85,20 +83,12 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> newAccountStateTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStateTrieNode, rootHash);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
-        rootHash,
-        Function.identity(),
-        Function.identity());
+  private MerklePatriciaTrie<Bytes32> newAccountStorageTrie(final Bytes32 rootHash) {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStorageTrieNode, rootHash);
   }
 
   @Override
@@ -179,7 +169,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       stateUpdater.putCode(code);
     }
     // Commit account storage tries
-    for (final MerklePatriciaTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
+    for (final MerklePatriciaTrie<Bytes32> updatedStorage : updatedStorageTries.values()) {
       updatedStorage.commit(stateUpdater::putAccountStorageTrieNode);
     }
     // Commit account updates
@@ -220,7 +210,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     final StateTrieAccountValue accountValue;
 
     // Lazily initialized since we don't always access storage.
-    private volatile MerklePatriciaTrie<Bytes32, Bytes> storageTrie;
+    private volatile MerklePatriciaTrie<Bytes32> storageTrie;
 
     private WorldStateAccount(
         final Address address, final Hash addressHash, final StateTrieAccountValue accountValue) {
@@ -230,8 +220,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
       this.accountValue = accountValue;
     }
 
-    private MerklePatriciaTrie<Bytes32, Bytes> storageTrie() {
-      final MerklePatriciaTrie<Bytes32, Bytes> updatedTrie = updatedStorageTries.get(address);
+    private MerklePatriciaTrie<Bytes32> storageTrie() {
+      final MerklePatriciaTrie<Bytes32> updatedTrie = updatedStorageTries.get(address);
       if (updatedTrie != null) {
         storageTrie = updatedTrie;
       }
@@ -408,7 +398,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
         if (!updatedStorage.isEmpty()) {
           // Apply any storage updates
-          final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
+          final MerklePatriciaTrie<Bytes32> storageTrie =
               freshState
                   ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();

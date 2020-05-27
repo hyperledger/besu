@@ -82,7 +82,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -536,11 +535,7 @@ public class WorldStateDownloaderTest {
 
     // Seed local storage with some trie node values
     final List<Bytes32> storageRootHashes =
-        new StoredMerklePatriciaTrie<>(
-                remoteStorage::getNodeData,
-                remoteWorldState.rootHash(),
-                Function.identity(),
-                Function.identity())
+        new StoredMerklePatriciaTrie<>(remoteStorage::getNodeData, remoteWorldState.rootHash())
             .entriesFrom(Bytes32.ZERO, 5).values().stream()
                 .map(RLP::input)
                 .map(StateTrieAccountValue::readFrom)

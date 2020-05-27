@@ -19,43 +19,43 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
+class ProofVisitor extends GetVisitor implements PathNodeVisitor {
 
-  private final Node<V> rootNode;
-  private final List<Node<V>> proof = new ArrayList<>();
+  private final Node rootNode;
+  private final List<Node> proof = new ArrayList<>();
 
-  ProofVisitor(final Node<V> rootNode) {
+  ProofVisitor(final Node rootNode) {
     this.rootNode = rootNode;
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node visit(final ExtensionNode extensionNode, final Bytes path) {
     maybeTrackNode(extensionNode);
     return super.visit(extensionNode, path);
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node visit(final BranchNode branchNode, final Bytes path) {
     maybeTrackNode(branchNode);
     return super.visit(branchNode, path);
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node visit(final LeafNode leafNode, final Bytes path) {
     maybeTrackNode(leafNode);
     return super.visit(leafNode, path);
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+  public Node visit(final NullNode nullNode, final Bytes path) {
     return super.visit(nullNode, path);
   }
 
-  public List<Node<V>> getProof() {
+  public List<Node> getProof() {
     return proof;
   }
 
-  private void maybeTrackNode(final Node<V> node) {
+  private void maybeTrackNode(final Node node) {
     if (node.equals(rootNode) || node.isReferencedByHash()) {
       proof.add(node);
     }

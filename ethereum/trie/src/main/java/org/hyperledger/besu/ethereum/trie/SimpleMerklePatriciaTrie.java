@@ -21,55 +21,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/**
- * An in-memory {@link MerklePatriciaTrie}.
- *
- * @param <V> The type of values stored by this trie.
- */
-public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
-  private final PathNodeVisitor<V> getVisitor = new GetVisitor<>();
-  private final PathNodeVisitor<V> removeVisitor = new RemoveVisitor<>();
-  private final DefaultNodeFactory<V> nodeFactory;
+/** An in-memory {@link MerklePatriciaTrie}. */
+public class SimpleMerklePatriciaTrie<K extends Bytes> implements MerklePatriciaTrie<K> {
+  private final PathNodeVisitor getVisitor = new GetVisitor();
+  private final PathNodeVisitor removeVisitor = new RemoveVisitor();
+  private final DefaultNodeFactory nodeFactory;
 
-  private Node<V> root;
+  private Node root;
 
-  /**
-   * Create a trie.
-   *
-   * @param valueSerializer A function for serializing values to bytes.
-   */
-  public SimpleMerklePatriciaTrie(final Function<V, Bytes> valueSerializer) {
-    this.nodeFactory = new DefaultNodeFactory<>(valueSerializer);
+  /** Create a trie. */
+  public SimpleMerklePatriciaTrie() {
+    this.nodeFactory = new DefaultNodeFactory();
     this.root = NullNode.instance();
   }
 
   @Override
-  public Optional<V> get(final K key) {
+  public Optional<Bytes> get(final K key) {
     checkNotNull(key);
     return root.accept(getVisitor, bytesToPath(key)).getValue();
   }
 
   @Override
-  public Proof<V> getValueWithProof(final K key) {
+  public Proof<Bytes> getValueWithProof(final K key) {
     checkNotNull(key);
-    final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
-    final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
+    final ProofVisitor proofVisitor = new ProofVisitor(root);
+    final Optional<Bytes> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
     final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
-    return new Proof<>(value, proof);
+    return new Proof<Bytes>(value, proof);
   }
 
   @Override
-  public void put(final K key, final V value) {
+  public void put(final K key, final Bytes value) {
     checkNotNull(key);
     checkNotNull(value);
-    this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+    this.root = root.accept(new PutVisitor(nodeFactory, value), bytesToPath(key));
   }
 
   @Override
@@ -94,12 +85,12 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final int limit) {
+  public Map<Bytes32, Bytes> entriesFrom(final Bytes32 startKeyHash, final int limit) {
     return StorageEntriesCollector.collectEntries(root, startKeyHash, limit);
   }
 
   @Override
-  public void visitAll(final Consumer<Node<V>> visitor) {
-    root.accept(new AllNodesVisitor<>(visitor));
+  public void visitAll(final Consumer<Node> visitor) {
+    root.accept(new AllNodesVisitor(visitor));
   }
 }

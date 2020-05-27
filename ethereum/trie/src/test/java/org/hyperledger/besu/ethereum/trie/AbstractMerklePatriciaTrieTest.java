@@ -295,8 +295,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
     final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     final MerkleStorage merkleStorage = new KeyValueMerkleStorage(keyValueStorage);
     final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(
-            merkleStorage::get, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(merkleStorage::get);
 
     // Both of these can be inlined in its parent branch and the branch
     // itself can be inlined into its parent extension.
@@ -307,8 +306,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
     // Ensure the extension branch can be loaded correct with its inlined child.
     final Bytes32 rootHash = trie.getRootHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> newTrie =
-        new StoredMerklePatriciaTrie<>(
-            merkleStorage::get, rootHash, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(merkleStorage::get, rootHash);
     newTrie.get(Bytes.fromHexString("0x0401"));
   }
 
@@ -319,8 +317,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
     final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     final MerkleStorage merkleStorage = new KeyValueMerkleStorage(keyValueStorage);
     final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(
-            merkleStorage::get, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(merkleStorage::get);
 
     // Both of these can be inlined in its parent branch.
     trie.put(Bytes.fromHexString("0x0400"), Bytes.of(1));
@@ -329,8 +326,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
 
     final Bytes32 rootHash = trie.getRootHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> newTrie =
-        new StoredMerklePatriciaTrie<>(
-            merkleStorage::get, rootHash, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(merkleStorage::get, rootHash);
 
     newTrie.put(Bytes.fromHexString("0x0800"), Bytes.of(3));
     newTrie.get(Bytes.fromHexString("0x0401"));
@@ -367,8 +363,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
     assertThat(valueWithProof.getProofRelatedNodes()).hasSize(2);
     assertThat(valueWithProof.getValue()).contains(value1);
 
-    List<Node<Bytes>> nodes =
-        TrieNodeDecoder.decodeNodes(valueWithProof.getProofRelatedNodes().get(1));
+    List<Node> nodes = TrieNodeDecoder.decodeNodes(valueWithProof.getProofRelatedNodes().get(1));
 
     assertThat(new String(nodes.get(1).getValue().get().toArray(), UTF_8)).isEqualTo(value1);
     assertThat(new String(nodes.get(2).getValue().get().toArray(), UTF_8)).isEqualTo(value2);
@@ -405,8 +400,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
     assertThat(valueWithProof.getValue()).contains(value1);
     assertThat(valueWithProof.getProofRelatedNodes()).hasSize(1);
 
-    List<Node<Bytes>> nodes =
-        TrieNodeDecoder.decodeNodes(valueWithProof.getProofRelatedNodes().get(0));
+    List<Node> nodes = TrieNodeDecoder.decodeNodes(valueWithProof.getProofRelatedNodes().get(0));
 
     assertThat(nodes.size()).isEqualTo(1);
     final String nodeValue = new String(nodes.get(0).getValue().get().toArray(), UTF_8);

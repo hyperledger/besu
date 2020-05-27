@@ -17,24 +17,25 @@ package org.hyperledger.besu.ethereum.trie;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
+public class StorageEntriesCollector implements TrieIterator.LeafHandler {
 
   private final Bytes32 startKeyHash;
   private final int limit;
-  private final Map<Bytes32, V> values = new TreeMap<>();
+  private final Map<Bytes32, Bytes> values = new TreeMap<>();
 
   public StorageEntriesCollector(final Bytes32 startKeyHash, final int limit) {
     this.startKeyHash = startKeyHash;
     this.limit = limit;
   }
 
-  public static <V> Map<Bytes32, V> collectEntries(
-      final Node<V> root, final Bytes32 startKeyHash, final int limit) {
-    final StorageEntriesCollector<V> entriesCollector =
-        new StorageEntriesCollector<>(startKeyHash, limit);
-    final TrieIterator<V> visitor = new TrieIterator<>(entriesCollector);
+  public static Map<Bytes32, Bytes> collectEntries(
+      final Node root, final Bytes32 startKeyHash, final int limit) {
+    final StorageEntriesCollector entriesCollector =
+        new StorageEntriesCollector(startKeyHash, limit);
+    final TrieIterator visitor = new TrieIterator(entriesCollector);
     root.accept(visitor, CompactEncoding.bytesToPath(startKeyHash));
     return entriesCollector.getValues();
   }
@@ -44,14 +45,14 @@ public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
   }
 
   @Override
-  public TrieIterator.State onLeaf(final Bytes32 keyHash, final Node<V> node) {
+  public TrieIterator.State onLeaf(final Bytes32 keyHash, final Node node) {
     if (keyHash.compareTo(startKeyHash) >= 0) {
       node.getValue().ifPresent(value -> values.put(keyHash, value));
     }
     return limitReached() ? TrieIterator.State.STOP : TrieIterator.State.CONTINUE;
   }
 
-  public Map<Bytes32, V> getValues() {
+  public Map<Bytes32, Bytes> getValues() {
     return values;
   }
 }

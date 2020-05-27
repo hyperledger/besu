@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** An Merkle Patricial Trie. */
-public interface MerklePatriciaTrie<K, V> {
+public interface MerklePatriciaTrie<K> {
 
   Bytes EMPTY_TRIE_NODE = RLP.NULL;
   Bytes32 EMPTY_TRIE_NODE_HASH = keccak256(EMPTY_TRIE_NODE);
@@ -37,7 +37,7 @@ public interface MerklePatriciaTrie<K, V> {
    * @param key The key for the value.
    * @return an {@code Optional} of value mapped to the hash if it exists; otherwise empty
    */
-  Optional<V> get(K key);
+  Optional<Bytes> get(K key);
 
   /**
    * Returns value and ordered proof-related nodes mapped to the hash if it exists; otherwise empty.
@@ -45,7 +45,7 @@ public interface MerklePatriciaTrie<K, V> {
    * @param key The key for the value.
    * @return value and ordered proof-related nodes
    */
-  Proof<V> getValueWithProof(K key);
+  Proof<Bytes> getValueWithProof(K key);
 
   /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
@@ -54,7 +54,7 @@ public interface MerklePatriciaTrie<K, V> {
    * @param key The key that corresponds to the value to be updated.
    * @param value The value to associate the key with.
    */
-  void put(K key, V value);
+  void put(K key, Bytes value);
 
   /**
    * Deletes the value mapped to the specified key, if such a value exists (Optional operation).
@@ -85,7 +85,7 @@ public interface MerklePatriciaTrie<K, V> {
    * @param limit the maximum number of entries to return.
    * @return the requested storage entries as a map of key hash to value.
    */
-  Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, int limit);
+  Map<Bytes32, Bytes> entriesFrom(Bytes32 startKeyHash, int limit);
 
-  void visitAll(Consumer<Node<V>> visitor);
+  void visitAll(Consumer<Node> visitor);
 }

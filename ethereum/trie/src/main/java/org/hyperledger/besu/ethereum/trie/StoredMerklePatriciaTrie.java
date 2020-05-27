@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,28 +28,21 @@ import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * A {@link MerklePatriciaTrie} that persists trie nodes to a {@link MerkleStorage} key/value store.
- *
- * @param <V> The type of values stored by this trie.
  */
-public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
-  private final GetVisitor<V> getVisitor = new GetVisitor<>();
-  private final RemoveVisitor<V> removeVisitor = new RemoveVisitor<>();
-  private final StoredNodeFactory<V> nodeFactory;
+public class StoredMerklePatriciaTrie<K extends Bytes> implements MerklePatriciaTrie<K> {
+  private final GetVisitor getVisitor = new GetVisitor();
+  private final RemoveVisitor removeVisitor = new RemoveVisitor();
+  private final StoredNodeFactory nodeFactory;
 
-  private Node<V> root;
+  private Node root;
 
   /**
    * Create a trie.
    *
    * @param nodeLoader The {@link NodeLoader} to retrieve node data from.
-   * @param valueSerializer A function for serializing values to bytes.
-   * @param valueDeserializer A function for deserializing values from bytes.
    */
-  public StoredMerklePatriciaTrie(
-      final NodeLoader nodeLoader,
-      final Function<V, Bytes> valueSerializer,
-      final Function<Bytes, V> valueDeserializer) {
-    this(nodeLoader, EMPTY_TRIE_NODE_HASH, valueSerializer, valueDeserializer);
+  public StoredMerklePatriciaTrie(final NodeLoader nodeLoader) {
+    this(nodeLoader, EMPTY_TRIE_NODE_HASH);
   }
 
   /**
@@ -59,42 +51,36 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
    * @param nodeLoader The {@link NodeLoader} to retrieve node data from.
    * @param rootHash The initial root has for the trie, which should be already present in {@code
    *     storage}.
-   * @param valueSerializer A function for serializing values to bytes.
-   * @param valueDeserializer A function for deserializing values from bytes.
    */
-  public StoredMerklePatriciaTrie(
-      final NodeLoader nodeLoader,
-      final Bytes32 rootHash,
-      final Function<V, Bytes> valueSerializer,
-      final Function<Bytes, V> valueDeserializer) {
-    this.nodeFactory = new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer);
+  public StoredMerklePatriciaTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
+    this.nodeFactory = new StoredNodeFactory(nodeLoader);
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()
-            : new StoredNode<>(nodeFactory, rootHash);
+            : new StoredNode(nodeFactory, rootHash);
   }
 
   @Override
-  public Optional<V> get(final K key) {
+  public Optional<Bytes> get(final K key) {
     checkNotNull(key);
     return root.accept(getVisitor, bytesToPath(key)).getValue();
   }
 
   @Override
-  public Proof<V> getValueWithProof(final K key) {
+  public Proof<Bytes> getValueWithProof(final K key) {
     checkNotNull(key);
-    final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
-    final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
+    final ProofVisitor proofVisitor = new ProofVisitor(root);
+    final Optional<Bytes> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
     final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
-    return new Proof<>(value, proof);
+    return new Proof<Bytes>(value, proof);
   }
 
   @Override
-  public void put(final K key, final V value) {
+  public void put(final K key, final Bytes value) {
     checkNotNull(key);
     checkNotNull(value);
-    this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+    this.root = root.accept(new PutVisitor(nodeFactory, value), bytesToPath(key));
   }
 
   @Override
@@ -105,7 +91,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
 
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
-    final CommitVisitor<V> commitVisitor = new CommitVisitor<>(nodeUpdater);
+    final CommitVisitor commitVisitor = new CommitVisitor(nodeUpdater);
     root.accept(commitVisitor);
     // Make sure root node was stored
     if (root.isDirty() && root.getRlpRef().size() < 32) {
@@ -116,17 +102,17 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()
-            : new StoredNode<>(nodeFactory, rootHash);
+            : new StoredNode(nodeFactory, rootHash);
   }
 
   @Override
-  public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final int limit) {
+  public Map<Bytes32, Bytes> entriesFrom(final Bytes32 startKeyHash, final int limit) {
     return StorageEntriesCollector.collectEntries(root, startKeyHash, limit);
   }
 
   @Override
-  public void visitAll(final Consumer<Node<V>> visitor) {
-    root.accept(new AllNodesVisitor<>(visitor));
+  public void visitAll(final Consumer<Node> visitor) {
+    root.accept(new AllNodesVisitor(visitor));
   }
 
   @Override

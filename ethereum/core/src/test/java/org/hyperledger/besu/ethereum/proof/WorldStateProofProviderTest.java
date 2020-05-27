@@ -67,8 +67,8 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenWorldStateAvailable() {
-    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
-    final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
+    final MerklePatriciaTrie<Bytes32> worldStateTrie = emptyWorldStateTrie();
+    final MerklePatriciaTrie<Bytes32> storageTrie = emptyStorageTrie();
 
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
 
@@ -120,7 +120,7 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenStateTrieAccountUnavailable() {
-    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
+    final MerklePatriciaTrie<Bytes32> worldStateTrie = emptyWorldStateTrie();
 
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
@@ -130,9 +130,7 @@ public class WorldStateProofProviderTest {
   }
 
   private void writeStorageValue(
-      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie,
-      final UInt256 key,
-      final UInt256 value) {
+      final MerklePatriciaTrie<Bytes32> storageTrie, final UInt256 key, final UInt256 value) {
     storageTrie.put(storageKeyHash(key), encodeStorageValue(value));
   }
 
@@ -144,13 +142,11 @@ public class WorldStateProofProviderTest {
     return RLP.encode(out -> out.writeBytes(storageValue.toMinimalBytes()));
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> emptyStorageTrie() {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, Function.identity(), Function.identity());
+  private MerklePatriciaTrie<Bytes32> emptyStorageTrie() {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStateTrieNode);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> emptyWorldStateTrie() {
-    return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, Function.identity(), Function.identity());
+  private MerklePatriciaTrie<Bytes32> emptyWorldStateTrie() {
+    return new StoredMerklePatriciaTrie<>(worldStateStorage::getAccountStorageTrieNode);
   }
 }
