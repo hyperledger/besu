@@ -21,6 +21,7 @@ import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
+import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -33,6 +34,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResp
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.timeout.EthRpcTimeoutHandler;
+import org.hyperledger.besu.ethereum.api.jsonrpc.timeout.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -58,6 +61,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.CompositeFuture;
@@ -252,6 +256,10 @@ public class JsonRpcHttpService {
         .route("/")
         .method(HttpMethod.POST)
         .produces(APPLICATION_JSON)
+        .handler(
+            EthRpcTimeoutHandler.handler(
+                ImmutableMap.of(
+                    RpcMethod.ETH_GET_LOGS.getMethodName(), TimeoutOptions.defaultOptions())))
         .handler(this::handleJsonRPCRequest);
 
     if (authenticationService.isPresent()) {
@@ -429,10 +437,13 @@ public class JsonRpcHttpService {
       try {
         final String json = routingContext.getBodyAsString().trim();
         if (!json.isEmpty() && json.charAt(0) == '{') {
+          final JsonObject requestBodyJsonObject =
+              ContextKey.REQUEST_BODY_AS_JSON_OBJECT.extractFrom(
+                  routingContext, () -> new JsonObject(json));
           AuthenticationUtils.getUser(
               authenticationService,
               token,
-              user -> handleJsonSingleRequest(routingContext, new JsonObject(json), user));
+              user -> handleJsonSingleRequest(routingContext, requestBodyJsonObject, user));
         } else {
           final JsonArray array = new JsonArray(json);
           if (array.size() < 1) {
@@ -465,13 +476,14 @@ public class JsonRpcHttpService {
         },
         false,
         (res) -> {
-          if (res.failed()) {
-            response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
-            return;
-          }
+          if (!response.closed() && !response.headWritten()) {
+            if (res.failed()) {
+              response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
+              return;
+            }
 
-          final JsonRpcResponse jsonRpcResponse = (JsonRpcResponse) res.result();
-          if (!response.closed()) {
+            final JsonRpcResponse jsonRpcResponse = (JsonRpcResponse) res.result();
+
             response
                 .setStatusCode(status(jsonRpcResponse).code())
                 .putHeader("Content-Type", APPLICATION_JSON)
@@ -536,7 +548,7 @@ public class JsonRpcHttpService {
         .setHandler(
             (res) -> {
               final HttpServerResponse response = routingContext.response();
-              if (response.closed()) {
+              if (response.closed() || response.headWritten()) {
                 return;
               }
               if (res.failed()) {
