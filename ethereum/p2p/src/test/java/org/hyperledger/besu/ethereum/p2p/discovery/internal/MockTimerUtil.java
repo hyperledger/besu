@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
 
 public class MockTimerUtil implements TimerUtil {
 
-  static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private final AtomicLong nextId = new AtomicLong(0);
   private final Map<Long, TimerHandler> timerHandlers = new HashMap<>();
@@ -40,7 +40,7 @@ public class MockTimerUtil implements TimerUtil {
 
   @Override
   public long setTimer(final long delayInMs, final TimerHandler handler) {
-    LOG.debug("calling MockTimerUtil.setTimer {} delayInMs {} handelr", delayInMs, handler);
+    LOG.debug("calling MockTimerUtil.setTimer {} delayInMs {} handler", delayInMs, handler);
     long id = nextId.incrementAndGet();
     timerHandlers.put(id, handler);
     return id;
