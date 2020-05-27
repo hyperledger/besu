@@ -22,6 +22,12 @@ is owned by that user.
 
 The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
 
+## 1.4.6
+
+### Bug Fixes
+
+- Fixed case where networks using onchain permissioning could stall when the bootnodes were not validators. [\#969](https://github.com/hyperledger/besu/pull/969)
+
 ## 1.4.5
 
 ### Additions and Improvements
@@ -59,7 +65,6 @@ Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
 - [Eth/65 not backwards compatible](KNOWN_ISSUES.md#eth65-not-backwards-compatible)
 - [Error full syncing with pruning](KNOWN_ISSUES.md#error-full-syncing-with-pruning)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
-- [Bootnodes must be validators when using onchain permissioning](KNOWN_ISSUES.md#bootnodes-must-be-validators-when-using-onchain-permissioning)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
 ## 1.4.4
