@@ -228,7 +228,7 @@ public abstract class PeerDiscoveryAgent {
                 }
                 return;
               } else {
-                //FIXME remove
+                // FIXME remove
                 LOG.debug(
                     "Ping sent to Peer {} - packet: {}", peer, wrapBuffer(packet.encode()), err);
               }
