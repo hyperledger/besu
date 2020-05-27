@@ -227,6 +227,9 @@ public abstract class PeerDiscoveryAgent {
                       err);
                 }
                 return;
+              } else {
+                LOG.debug(
+                    "Ping sent to Peer {} - packet: {}", peer, wrapBuffer(packet.encode()), err);
               }
               peer.setLastContacted(System.currentTimeMillis());
             });
