@@ -180,6 +180,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
           "Fast sync completed successfully with pivot block {}",
           result.getPivotBlockNumber().getAsLong());
     }
+    startFullSync();
   }
 
   private void startFullSync() {
