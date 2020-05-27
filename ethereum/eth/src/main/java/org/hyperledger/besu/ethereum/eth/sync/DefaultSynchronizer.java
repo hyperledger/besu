@@ -126,7 +126,16 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       LOG.info("Starting synchronizer.");
       blockPropagationManager.start();
       if (fastSyncDownloader.isPresent()) {
-        fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
+        fastSyncDownloader
+            .get()
+            .start()
+            .whenComplete(this::handleFastSyncResult)
+            .exceptionally(
+                ex -> {
+                  System.exit(0);
+                  return null;
+                });
+
       } else {
         startFullSync();
       }
