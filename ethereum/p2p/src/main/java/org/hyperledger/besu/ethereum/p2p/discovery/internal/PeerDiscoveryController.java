@@ -652,6 +652,13 @@ public class PeerDiscoveryController {
                 timerUtil.setTimer(
                     newTimeout,
                     () -> {
+                      LOG.atDebug()
+                          .withThrowable(new Throwable())
+                          .log(
+                              "Executing lastTimeout {} retycount {} action {}",
+                              lastTimeout,
+                              retryCount,
+                              action);
                       retryCounter.inc();
                       execute(newTimeout, retryCount + 1);
                     }));
