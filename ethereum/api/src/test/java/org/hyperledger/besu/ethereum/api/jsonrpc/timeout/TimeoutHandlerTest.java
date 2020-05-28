@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Handler;
@@ -51,15 +52,25 @@ public class TimeoutHandlerTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {Optional.empty(), ETH_GET_LOGS, body(ETH_GET_LOGS), DEFAULT_OPTS.getTimeout(), true},
           {
-            Optional.empty(), ETH_GET_LOGS, body(ETH_BLOCK_NUMBER), DEFAULT_OPTS.getTimeout(), false
+            Optional.empty(),
+            ETH_GET_LOGS,
+            body(ETH_GET_LOGS),
+            DEFAULT_OPTS.getTimeoutSeconds(),
+            true
+          },
+          {
+            Optional.empty(),
+            ETH_GET_LOGS,
+            body(ETH_BLOCK_NUMBER),
+            DEFAULT_OPTS.getTimeoutSeconds(),
+            false
           },
           {
             Optional.of(DEFAULT_OPTS),
             ETH_GET_LOGS,
             body(ETH_BLOCK_NUMBER),
-            DEFAULT_OPTS.getTimeout(),
+            DEFAULT_OPTS.getTimeoutSeconds(),
             true
           }
         });
@@ -69,19 +80,19 @@ public class TimeoutHandlerTest {
   private final Optional<TimeoutOptions> globalOptions;
   private final String body;
   private final RpcMethod method;
-  private final long timeout;
+  private final long timeoutSec;
   private final boolean timerMustBeSet;
 
   public TimeoutHandlerTest(
       final Optional<TimeoutOptions> globalOptions,
       final RpcMethod method,
       final String body,
-      final long timeout,
+      final long timeoutSec,
       final boolean timerMustBeSet) {
     this.globalOptions = globalOptions;
     this.body = body;
     this.method = method;
-    this.timeout = timeout;
+    this.timeoutSec = timeoutSec;
     this.timerMustBeSet = timerMustBeSet;
   }
 
@@ -89,7 +100,7 @@ public class TimeoutHandlerTest {
   public void test() {
     final Map<String, TimeoutOptions> options =
         ImmutableMap.of(
-            method.getMethodName(), new TimeoutOptions(timeout, DEFAULT_OPTS.getErrorCode()));
+            method.getMethodName(), new TimeoutOptions(timeoutSec, DEFAULT_OPTS.getErrorCode()));
     final Handler<RoutingContext> handler = TimeoutHandler.handler(globalOptions, options, true);
     final RoutingContext ctx = Mockito.spy(RoutingContext.class);
     final Vertx vertx = Mockito.spy(Vertx.class);
@@ -97,7 +108,8 @@ public class TimeoutHandlerTest {
     when(ctx.vertx()).thenReturn(vertx);
     handler.handle(ctx);
     verify(ctx).put(eq(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()), any());
-    verify(vertx, times(timerMustBeSet ? 1 : 0)).setTimer(eq(timeout), any());
+    verify(vertx, times(timerMustBeSet ? 1 : 0))
+        .setTimer(eq(TimeUnit.SECONDS.toMillis(timeoutSec)), any());
     verify(ctx, times(timerMustBeSet ? 1 : 0)).addBodyEndHandler(any());
   }
 
