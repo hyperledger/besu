@@ -23,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /*
  * In May of 2020 we had issues with some combination of vertx, circleci, and
@@ -35,7 +33,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class IndirectVertxTimerUtil implements TimerUtil {
 
-  private final ScheduledExecutorService secheduledExecutor =
+  private final ScheduledExecutorService scheduledExecutor =
       Executors.newSingleThreadScheduledExecutor();
   private final AtomicLong nextId = new AtomicLong(0);
   private final Map<Long, ScheduledFuture<?>> timers = new HashMap<>();
@@ -47,10 +45,10 @@ public class IndirectVertxTimerUtil implements TimerUtil {
 
   @Override
   public long setPeriodic(final long delayInMs, final TimerHandler handler) {
-    final long id = nextId.get();
+    final long id = nextId.incrementAndGet();
     timers.put(
         id,
-        secheduledExecutor.scheduleAtFixedRate(
+        scheduledExecutor.scheduleAtFixedRate(
             () -> vertx.executeBlocking(e -> handler.handle(), r -> {}),
             delayInMs,
             delayInMs,
@@ -60,10 +58,10 @@ public class IndirectVertxTimerUtil implements TimerUtil {
 
   @Override
   public long setTimer(final long delayInMs, final TimerHandler handler) {
-    final long id = nextId.get();
+    final long id = nextId.incrementAndGet();
     timers.put(
         id,
-        secheduledExecutor.schedule(
+        scheduledExecutor.schedule(
             () -> vertx.executeBlocking(e -> handler.handle(), r -> timers.remove(id)),
             delayInMs,
             TimeUnit.MILLISECONDS));
