@@ -12,19 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.timeout;
+package org.hyperledger.besu.ethereum.api.handlers;
+
+import static java.util.Collections.emptyMap;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 
 import java.util.Map;
+import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
-public class EthRpcTimeoutHandler {
+public class TimeoutHandler {
+
+  public static Handler<RoutingContext> handler(final Optional<TimeoutOptions> globalOptions) {
+    return handler(globalOptions, emptyMap());
+  }
 
   public static Handler<RoutingContext> handler(
+      final Optional<TimeoutOptions> globalOptions,
       final Map<String, TimeoutOptions> timeoutOptionsByMethod) {
     assert timeoutOptionsByMethod != null;
     return ctx -> {
@@ -36,12 +44,17 @@ public class EthRpcTimeoutHandler {
             final JsonObject requestBodyJsonObject = new JsonObject(json);
             ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), requestBodyJsonObject);
             final String method = requestBodyJsonObject.getString("method");
-            if (timeoutOptionsByMethod.containsKey(method)) {
-              final TimeoutOptions options = timeoutOptionsByMethod.get(method);
-              long tid =
-                  ctx.vertx().setTimer(options.getTimeout(), t -> ctx.fail(options.getErrorCode()));
-              ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
-            }
+            Optional.ofNullable(timeoutOptionsByMethod.get(method))
+                .or(() -> globalOptions)
+                .ifPresent(
+                    timeoutOptions -> {
+                      long tid =
+                          ctx.vertx()
+                              .setTimer(
+                                  timeoutOptions.getTimeout(),
+                                  t -> ctx.fail(timeoutOptions.getErrorCode()));
+                      ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
+                    });
           }
         }
       } finally {

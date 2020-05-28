@@ -19,6 +19,8 @@ import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
 
+import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
@@ -34,8 +36,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResp
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.timeout.EthRpcTimeoutHandler;
-import org.hyperledger.besu.ethereum.api.jsonrpc.timeout.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -61,7 +61,6 @@ import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.CompositeFuture;
@@ -256,10 +255,7 @@ public class JsonRpcHttpService {
         .route("/")
         .method(HttpMethod.POST)
         .produces(APPLICATION_JSON)
-        .handler(
-            EthRpcTimeoutHandler.handler(
-                ImmutableMap.of(
-                    RpcMethod.ETH_GET_LOGS.getMethodName(), TimeoutOptions.defaultOptions())))
+        .handler(HandlerFactory.timeout(TimeoutOptions.defaultOptions(), rpcMethods))
         .handler(this::handleJsonRPCRequest);
 
     if (authenticationService.isPresent()) {

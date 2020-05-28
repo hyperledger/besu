@@ -22,6 +22,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutHandler;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -29,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Handler;
@@ -42,37 +45,52 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mockito;
 
 @RunWith(Parameterized.class)
-public class EthRpcTimeoutHandlerTest {
+public class TimeoutHandlerTest {
 
-  public EthRpcTimeoutHandlerTest(
-      final RpcMethod method, final String body, final long timeout, final boolean timerMustBeSet) {
+  @Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(
+        new Object[][] {
+          {Optional.empty(), ETH_GET_LOGS, body(ETH_GET_LOGS), DEFAULT_OPTS.getTimeout(), true},
+          {
+            Optional.empty(), ETH_GET_LOGS, body(ETH_BLOCK_NUMBER), DEFAULT_OPTS.getTimeout(), false
+          },
+          {
+            Optional.of(DEFAULT_OPTS),
+            ETH_GET_LOGS,
+            body(ETH_BLOCK_NUMBER),
+            DEFAULT_OPTS.getTimeout(),
+            true
+          }
+        });
+  }
+
+  private static final TimeoutOptions DEFAULT_OPTS = TimeoutOptions.defaultOptions();
+  private final Optional<TimeoutOptions> globalOptions;
+  private final String body;
+  private final RpcMethod method;
+  private final long timeout;
+  private final boolean timerMustBeSet;
+
+  public TimeoutHandlerTest(
+      final Optional<TimeoutOptions> globalOptions,
+      final RpcMethod method,
+      final String body,
+      final long timeout,
+      final boolean timerMustBeSet) {
+    this.globalOptions = globalOptions;
     this.body = body;
     this.method = method;
     this.timeout = timeout;
     this.timerMustBeSet = timerMustBeSet;
   }
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {ETH_GET_LOGS, body(ETH_GET_LOGS), DEFAULT_OPTS.getTimeout(), true},
-          {ETH_GET_LOGS, body(ETH_BLOCK_NUMBER), DEFAULT_OPTS.getTimeout(), false}
-        });
-  }
-
-  private static final TimeoutOptions DEFAULT_OPTS = TimeoutOptions.defaultOptions();
-  private final String body;
-  private final RpcMethod method;
-  private final long timeout;
-  private final boolean timerMustBeSet;
-
   @Test
   public void test() {
     final Map<String, TimeoutOptions> options =
         ImmutableMap.of(
             method.getMethodName(), new TimeoutOptions(timeout, DEFAULT_OPTS.getErrorCode()));
-    final Handler<RoutingContext> handler = EthRpcTimeoutHandler.handler(options);
+    final Handler<RoutingContext> handler = TimeoutHandler.handler(globalOptions, options);
     final RoutingContext ctx = Mockito.spy(RoutingContext.class);
     final Vertx vertx = Mockito.spy(Vertx.class);
     when(ctx.getBodyAsString()).thenReturn(body);
