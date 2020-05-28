@@ -30,6 +30,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.OptionalInt;
@@ -93,7 +94,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   protected CompletableFuture<InetSocketAddress> listenForConnections() {
-    final CompletableFuture<InetSocketAddress> future = new CompletableFuture<>();
+    CompletableFuture<InetSocketAddress> future = new CompletableFuture<>();
     vertx
         .createDatagramSocket(new DatagramSocketOptions().setIpV6(NetworkUtility.isIPv6Available()))
         .listen(
@@ -101,14 +102,14 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     return future;
   }
 
-  private void handleListenerSetup(
+  protected void handleListenerSetup(
       final AsyncResult<DatagramSocket> listenResult,
       final CompletableFuture<InetSocketAddress> addressFuture) {
     if (listenResult.failed()) {
       Throwable cause = listenResult.cause();
       LOG.error("An exception occurred when starting the peer discovery agent", cause);
 
-      if (cause instanceof SocketException) {
+      if (cause instanceof BindException || cause instanceof SocketException) {
         cause =
             new PeerDiscoveryServiceException(
                 String.format(
@@ -135,7 +136,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     socket.exceptionHandler(this::handleException);
     socket.handler(this::handlePacket);
 
-    final InetSocketAddress address =
+    InetSocketAddress address =
         new InetSocketAddress(socket.localAddress().host(), socket.localAddress().port());
     addressFuture.complete(address);
   }
@@ -143,7 +144,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
       final DiscoveryPeer peer, final Packet packet) {
-    final CompletableFuture<Void> result = new CompletableFuture<>();
+    CompletableFuture<Void> result = new CompletableFuture<>();
     socket.send(
         packet.encode(),
         peer.getEndpoint().getUdpPort(),
