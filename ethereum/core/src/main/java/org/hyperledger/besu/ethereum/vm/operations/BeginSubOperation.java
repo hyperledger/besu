@@ -34,7 +34,7 @@ public class BeginSubOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBeginSubGasCost();
+    return gasCalculator().getBaseTierGasCost();
   }
 
   @Override

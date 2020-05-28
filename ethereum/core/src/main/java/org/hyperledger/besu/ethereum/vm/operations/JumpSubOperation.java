@@ -35,7 +35,7 @@ public class JumpSubOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getMidTierGasCost();
+    return gasCalculator().getHighTierGasCost();
   }
 
   @Override

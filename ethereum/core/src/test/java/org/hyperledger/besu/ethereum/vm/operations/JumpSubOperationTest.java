@@ -26,11 +26,10 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -44,10 +43,10 @@ import org.junit.Test;
 
 public class JumpSubOperationTest {
 
-  private static final GasCalculator gasCalculator = new BerlinGasCalculator();
+  private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
 
   private static final int CURRENT_PC = 1;
-  private static final Gas JUMP_SUB_GAS_COST = Gas.of(8);
+  private static final Gas JUMP_SUB_GAS_COST = Gas.of(10);
 
   private Blockchain blockchain;
   private Address address;

@@ -32,7 +32,7 @@ public class ReturnSubOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
+    return gasCalculator().getLowTierGasCost();
   }
 
   @Override

@@ -347,7 +347,6 @@ public abstract class MainnetProtocolSpecs {
     }
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
-        .gasCalculator(BerlinGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
