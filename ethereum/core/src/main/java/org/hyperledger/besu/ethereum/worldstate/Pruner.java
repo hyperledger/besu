@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -47,18 +46,17 @@ public class Pruner {
   private final long blockConfirmations;
 
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
-  private final Supplier<ExecutorService> executorServiceSupplier;
-  private ExecutorService executorService;
+  private final ExecutorService executorService;
 
   @VisibleForTesting
   Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration,
-      final Supplier<ExecutorService> executorServiceSupplier) {
+      final ExecutorService executorService) {
     this.pruningStrategy = pruningStrategy;
     this.blockchain = blockchain;
-    this.executorServiceSupplier = executorServiceSupplier;
+    this.executorService = executorService;
     this.blocksRetained = prunerConfiguration.getBlocksRetained();
     this.blockConfirmations = prunerConfiguration.getBlockConfirmations();
     checkArgument(
@@ -70,17 +68,16 @@ public class Pruner {
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration) {
-    this(pruningStrategy, blockchain, prunerConfiguration, getDefaultExecutorSupplier());
-  }
-
-  private static Supplier<ExecutorService> getDefaultExecutorSupplier() {
-    return () ->
+    this(
+        pruningStrategy,
+        blockchain,
+        prunerConfiguration,
         Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
                 .setNameFormat("StatePruning-%d")
-                .build());
+                .build()));
   }
 
   public void start() {
@@ -88,7 +85,6 @@ public class Pruner {
         () -> {
           if (state.compareAndSet(State.IDLE, State.RUNNING)) {
             LOG.info("Starting Pruner.");
-            executorService = executorServiceSupplier.get();
             pruningStrategy.prepare();
             blockAddedObserverId = blockchain.observeBlockAdded(this::handleNewBlock);
           }
