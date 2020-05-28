@@ -643,6 +643,7 @@ public class PeerDiscoveryController {
      *     executed.
      */
     void execute(final long lastTimeout, final int retryCount) {
+      LOG.debug("Executing lastTimeout {} retycount {} action {}", lastTimeout, retryCount, action);
       action.accept(this);
       if (retryable && retryCount < MAX_RETRIES) {
         final long newTimeout = retryDelayFunction.apply(lastTimeout);
