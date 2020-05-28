@@ -42,7 +42,7 @@ public class JsonRpcConfiguration {
   private String authenticationCredentialsFile;
   private File authenticationPublicKeyFile;
   private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
-  private Long httpTimeout = TimeoutOptions.defaultOptions().getTimeout();
+  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -50,7 +50,7 @@ public class JsonRpcConfiguration {
     config.setPort(DEFAULT_JSON_RPC_PORT);
     config.setHost(DEFAULT_JSON_RPC_HOST);
     config.rpcApis = RpcApis.DEFAULT_JSON_RPC_APIS;
-    config.httpTimeout = TimeoutOptions.defaultOptions().getTimeout();
+    config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
     return config;
   }
 
@@ -143,12 +143,12 @@ public class JsonRpcConfiguration {
     this.tlsConfiguration = tlsConfiguration;
   }
 
-  public Long getHttpTimeout() {
-    return httpTimeout;
+  public long getHttpTimeoutSec() {
+    return httpTimeoutSec;
   }
 
-  public void setHttpTimeout(final Long httpTimeout) {
-    this.httpTimeout = httpTimeout;
+  public void setHttpTimeoutSec(final long httpTimeoutSec) {
+    this.httpTimeoutSec = httpTimeoutSec;
   }
 
   @Override
@@ -164,7 +164,7 @@ public class JsonRpcConfiguration {
         .add("authenticationCredentialsFile", authenticationCredentialsFile)
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
         .add("tlsConfiguration", tlsConfiguration)
-        .add("httpTimeout", httpTimeout)
+        .add("httpTimeoutSec", httpTimeoutSec)
         .toString();
   }
 
