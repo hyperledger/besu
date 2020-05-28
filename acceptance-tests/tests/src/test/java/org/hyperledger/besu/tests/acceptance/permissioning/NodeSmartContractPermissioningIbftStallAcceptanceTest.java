@@ -78,5 +78,6 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
 
     // Verify blockchain is progressing
     waitForBlockHeight(bootnode, 15);
+    throw new RuntimeException("Make it fail");
   }
 }
