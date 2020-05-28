@@ -15,29 +15,34 @@
 package org.hyperledger.besu.ethereum.api.handlers;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 public class TimeoutOptions {
-  private static final long DEFAULT_TIMEOUT = Duration.ofDays(2).toMillis();
+  private static final long DEFAULT_TIMEOUT_SECONDS = Duration.ofMinutes(5).toSeconds();
   private static final int DEFAULT_ERROR_CODE = 504;
-  private final long timeout;
+  private final long timeoutSec;
 
   private final int errorCode;
 
-  public TimeoutOptions(final long timeout, final int errorCode) {
-    this.timeout = timeout;
+  public TimeoutOptions(final long timeoutSec, final int errorCode) {
+    this.timeoutSec = timeoutSec;
     this.errorCode = errorCode;
   }
 
-  public TimeoutOptions(final long timeout) {
-    this(timeout, DEFAULT_ERROR_CODE);
+  public TimeoutOptions(final long timeoutSec) {
+    this(timeoutSec, DEFAULT_ERROR_CODE);
   }
 
   public static TimeoutOptions defaultOptions() {
-    return new TimeoutOptions(DEFAULT_TIMEOUT, DEFAULT_ERROR_CODE);
+    return new TimeoutOptions(DEFAULT_TIMEOUT_SECONDS, DEFAULT_ERROR_CODE);
   }
 
-  public long getTimeout() {
-    return timeout;
+  public long getTimeoutSeconds() {
+    return timeoutSec;
+  }
+
+  public long getTimeoutMillis() {
+    return TimeUnit.SECONDS.toMillis(timeoutSec);
   }
 
   public int getErrorCode() {

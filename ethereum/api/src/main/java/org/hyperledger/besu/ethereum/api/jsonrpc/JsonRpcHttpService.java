@@ -256,7 +256,7 @@ public class JsonRpcHttpService {
         .method(HttpMethod.POST)
         .produces(APPLICATION_JSON)
         .handler(
-            HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeout()), rpcMethods, true))
+            HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods, true))
         .handler(this::handleJsonRPCRequest);
 
     if (authenticationService.isPresent()) {

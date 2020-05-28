@@ -981,10 +981,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xhttp-timeout"},
-      description = "HTTP timeout (default: ${DEFAULT-VALUE})",
+      names = {"--Xhttp-timeout-seconds"},
+      description = "HTTP timeout in seconds (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Long httpTimeout = TimeoutOptions.defaultOptions().getTimeout();
+  private final Long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -1441,7 +1441,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration.setPort(graphQLHttpPort);
     graphQLConfiguration.setHostsWhitelist(hostsWhitelist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
-    graphQLConfiguration.setHttpTimeout(httpTimeout);
+    graphQLConfiguration.setHttpTimeoutSec(httpTimeoutSec);
 
     return graphQLConfiguration;
   }
@@ -1490,7 +1490,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
-    jsonRpcConfiguration.setHttpTimeout(httpTimeout);
+    jsonRpcConfiguration.setHttpTimeoutSec(httpTimeoutSec);
     return jsonRpcConfiguration;
   }
 
