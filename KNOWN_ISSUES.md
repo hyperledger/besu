@@ -5,6 +5,14 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
+## Scope of logs query causing Besu to hang
+
+`eth_getLogs` queries that are too large or too broad can cause Besu to hang. 
+
+Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
+
+A fix for this issue is being actively worked on.
+
 ## Eth/65 loses peers 
 
 From v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 
