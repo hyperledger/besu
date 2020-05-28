@@ -29,6 +29,10 @@ The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July.
 - Print node address on startup. [\#938](https://github.com/hyperledger/besu/pull/938)
 - Transaction pool: price bump replacement mechanism configurable through CLI. [\#928](https://github.com/hyperledger/besu/pull/928) [\#930](https://github.com/hyperledger/besu/pull/930)
 
+### Bug Fixes
+
+- Fixed case where networks using onchain permissioning could stall when the bootnodes were not validators. [\#969](https://github.com/hyperledger/besu/pull/969)
+
 ## 1.4.5
 
 ### Additions and Improvements
