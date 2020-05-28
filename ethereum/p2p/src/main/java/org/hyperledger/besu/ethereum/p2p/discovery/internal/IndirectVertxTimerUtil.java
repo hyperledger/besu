@@ -26,9 +26,14 @@ import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/*
+ * In May of 2020 we had issues with some combination of vertx, circleci, and
+ * the machines it was running on no respecting timer delays.  The solution was
+ * to use JDK executors for those timer delays.
+ *
+ * This should be revisited at a future date to see if we still need this.
+ */
 public class IndirectVertxTimerUtil implements TimerUtil {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final ScheduledExecutorService secheduledExecutor =
       Executors.newSingleThreadScheduledExecutor();
@@ -55,7 +60,6 @@ public class IndirectVertxTimerUtil implements TimerUtil {
 
   @Override
   public long setTimer(final long delayInMs, final TimerHandler handler) {
-    LOG.debug("calling VertxTimerUtil.setTimer {} delayInMs {} handler", delayInMs, handler);
     final long id = nextId.get();
     timers.put(
         id,

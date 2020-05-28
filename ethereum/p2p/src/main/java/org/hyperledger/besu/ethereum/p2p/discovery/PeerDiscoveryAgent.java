@@ -227,14 +227,6 @@ public abstract class PeerDiscoveryAgent {
                       err);
                 }
                 return;
-              } else {
-                // FIXME remove
-                LOG.debug(
-                    "{} sent to Peer {} - packet: {}",
-                    packet.getType(),
-                    peer,
-                    wrapBuffer(packet.encode()),
-                    err);
               }
               peer.setLastContacted(System.currentTimeMillis());
             });

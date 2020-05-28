@@ -301,16 +301,12 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
-          LOG.debug("Ping Accepted from peer {}", peer);
           addToPeerTable(peer);
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);
-        } else {
-          LOG.debug("Ping rejected due to permissions from peer {}", peer);
         }
         break;
       case PONG:
-        LOG.debug("Pong from peer {}", peer);
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
@@ -319,7 +315,6 @@ public class PeerDiscoveryController {
                 });
         break;
       case NEIGHBORS:
-        LOG.debug("Neighbors from peer {}", peer);
         matchInteraction(packet)
             .ifPresent(
                 interaction ->
@@ -328,11 +323,9 @@ public class PeerDiscoveryController {
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
-          LOG.debug("Find Neighbors rejected from peer {}", peer);
           break;
         }
 
-        LOG.debug("Find Neighbors accepted from peer {}", peer);
         final FindNeighborsPacketData fn =
             packet.getPacketData(FindNeighborsPacketData.class).get();
         respondToFindNeighbors(fn, peer);
@@ -443,20 +436,17 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void bond(final DiscoveryPeer peer) {
-    LOG.debug("bond called");
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 
     final Consumer<PeerInteractionState> action =
         interaction -> {
-          LOG.debug("bond action called");
           final PingPacketData data =
               PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
           createPacket(
               PacketType.PING,
               data,
               pingPacket -> {
-                LOG.debug("bond action handler called");
                 final Bytes pingHash = pingPacket.getHash();
                 // Update the matching filter to only accept the PONG if it echoes the hash of our
                 // PING.
@@ -489,22 +479,16 @@ public class PeerDiscoveryController {
   }
 
   private void sendPacket(final DiscoveryPeer peer, final Packet packet) {
-    LOG.debug("sendPacket called");
     discoveryProtocolLogger.logSendingPacket(peer, packet);
     outboundMessageHandler.send(peer, packet);
   }
 
   @VisibleForTesting
   void createPacket(final PacketType type, final PacketData data, final Consumer<Packet> handler) {
-    LOG.debug("createPacket called");
     // Creating packets is quite expensive because they have to be cryptographically signed
     // So ensure the work is done on a worker thread to avoid blocking the vertx event thread.
     workerExecutor
-        .execute(
-            () -> {
-              LOG.debug("createPacket lambda called");
-              return Packet.create(type, data, nodeKey);
-            })
+        .execute(() -> Packet.create(type, data, nodeKey))
         .thenAccept(handler)
         .exceptionally(
             error -> {
@@ -643,7 +627,6 @@ public class PeerDiscoveryController {
      *     executed.
      */
     void execute(final long lastTimeout, final int retryCount) {
-      LOG.debug("Executing lastTimeout {} retycount {} action {}", lastTimeout, retryCount, action);
       action.accept(this);
       if (retryable && retryCount < MAX_RETRIES) {
         final long newTimeout = retryDelayFunction.apply(lastTimeout);
@@ -652,13 +635,6 @@ public class PeerDiscoveryController {
                 timerUtil.setTimer(
                     newTimeout,
                     () -> {
-                      LOG.atDebug()
-                          .withThrowable(new Throwable())
-                          .log(
-                              "Executing lastTimeout {} retycount {} action {}",
-                              lastTimeout,
-                              retryCount,
-                              action);
                       retryCounter.inc();
                       execute(newTimeout, retryCount + 1);
                     }));

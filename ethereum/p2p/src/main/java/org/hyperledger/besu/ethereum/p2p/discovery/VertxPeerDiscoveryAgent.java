@@ -231,12 +231,10 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
     @Override
     public <T> CompletableFuture<T> execute(final Supplier<T> action) {
-      LOG.debug("execute called");
       final CompletableFuture<T> result = new CompletableFuture<>();
       vertx.<T>executeBlocking(
           future -> {
             try {
-              LOG.debug("execute future called");
               future.complete(action.get());
             } catch (final Throwable t) {
               future.fail(t);
@@ -244,7 +242,6 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
           },
           false,
           event -> {
-            LOG.debug("execute result called");
             if (event.succeeded()) {
               result.complete(event.result());
             } else {
