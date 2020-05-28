@@ -29,7 +29,9 @@ public class HandlerFactory {
       new ConcurrentHashMap<>();
 
   public static Handler<RoutingContext> timeout(
-      final TimeoutOptions globalOptions, final Map<String, JsonRpcMethod> methods) {
+      final TimeoutOptions globalOptions,
+      final Map<String, JsonRpcMethod> methods,
+      final boolean decodeJSON) {
     assert methods != null && globalOptions != null;
     return HANDLERS.computeIfAbsent(
         HandlerName.TIMEOUT,
@@ -37,6 +39,7 @@ public class HandlerFactory {
             TimeoutHandler.handler(
                 Optional.of(globalOptions),
                 methods.keySet().stream()
-                    .collect(Collectors.toMap(String::new, ignored -> (globalOptions)))));
+                    .collect(Collectors.toMap(String::new, ignored -> globalOptions)),
+                decodeJSON));
   }
 }

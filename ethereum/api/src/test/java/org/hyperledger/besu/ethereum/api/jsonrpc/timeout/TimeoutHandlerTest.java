@@ -90,7 +90,7 @@ public class TimeoutHandlerTest {
     final Map<String, TimeoutOptions> options =
         ImmutableMap.of(
             method.getMethodName(), new TimeoutOptions(timeout, DEFAULT_OPTS.getErrorCode()));
-    final Handler<RoutingContext> handler = TimeoutHandler.handler(globalOptions, options);
+    final Handler<RoutingContext> handler = TimeoutHandler.handler(globalOptions, options, true);
     final RoutingContext ctx = Mockito.spy(RoutingContext.class);
     final Vertx vertx = Mockito.spy(Vertx.class);
     when(ctx.getBodyAsString()).thenReturn(body);

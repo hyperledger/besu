@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 
 import java.io.File;
@@ -41,6 +42,7 @@ public class JsonRpcConfiguration {
   private String authenticationCredentialsFile;
   private File authenticationPublicKeyFile;
   private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
+  private Long httpTimeout = TimeoutOptions.defaultOptions().getTimeout();
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -48,6 +50,7 @@ public class JsonRpcConfiguration {
     config.setPort(DEFAULT_JSON_RPC_PORT);
     config.setHost(DEFAULT_JSON_RPC_HOST);
     config.rpcApis = RpcApis.DEFAULT_JSON_RPC_APIS;
+    config.httpTimeout = TimeoutOptions.defaultOptions().getTimeout();
     return config;
   }
 
@@ -140,6 +143,14 @@ public class JsonRpcConfiguration {
     this.tlsConfiguration = tlsConfiguration;
   }
 
+  public Long getHttpTimeout() {
+    return httpTimeout;
+  }
+
+  public void setHttpTimeout(final Long httpTimeout) {
+    this.httpTimeout = httpTimeout;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -153,6 +164,7 @@ public class JsonRpcConfiguration {
         .add("authenticationCredentialsFile", authenticationCredentialsFile)
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
         .add("tlsConfiguration", tlsConfiguration)
+        .add("httpTimeout", httpTimeout)
         .toString();
   }
 
