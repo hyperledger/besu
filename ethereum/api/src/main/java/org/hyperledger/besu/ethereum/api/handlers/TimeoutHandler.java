@@ -37,33 +37,39 @@ public class TimeoutHandler {
       final Map<String, TimeoutOptions> timeoutOptionsByMethod,
       final boolean decodeJSON) {
     assert timeoutOptionsByMethod != null;
-    return ctx -> {
-      try {
-        final String bodyAsString = ctx.getBodyAsString();
-        if (bodyAsString != null) {
-          final String json = ctx.getBodyAsString().trim();
-          Optional<TimeoutOptions> methodTimeoutOptions = Optional.empty();
-          if (decodeJSON && !json.isEmpty() && json.charAt(0) == '{') {
-            final JsonObject requestBodyJsonObject = new JsonObject(json);
-            ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), requestBodyJsonObject);
-            final String method = requestBodyJsonObject.getString("method");
-            methodTimeoutOptions = Optional.ofNullable(timeoutOptionsByMethod.get(method));
-          }
-          methodTimeoutOptions
-              .or(() -> globalOptions)
-              .ifPresent(
-                  timeoutOptions -> {
-                    long tid =
-                        ctx.vertx()
-                            .setTimer(
-                                timeoutOptions.getTimeout(),
-                                t -> ctx.fail(timeoutOptions.getErrorCode()));
-                    ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
-                  });
+    return ctx -> processHandler(ctx, globalOptions, timeoutOptionsByMethod, decodeJSON);
+  }
+
+  private static void processHandler(
+      final RoutingContext ctx,
+      final Optional<TimeoutOptions> globalOptions,
+      final Map<String, TimeoutOptions> timeoutOptionsByMethod,
+      final boolean decodeJSON) {
+    try {
+      final String bodyAsString = ctx.getBodyAsString();
+      if (bodyAsString != null) {
+        final String json = ctx.getBodyAsString().trim();
+        Optional<TimeoutOptions> methodTimeoutOptions = Optional.empty();
+        if (decodeJSON && !json.isEmpty() && json.charAt(0) == '{') {
+          final JsonObject requestBodyJsonObject = new JsonObject(json);
+          ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), requestBodyJsonObject);
+          final String method = requestBodyJsonObject.getString("method");
+          methodTimeoutOptions = Optional.ofNullable(timeoutOptionsByMethod.get(method));
         }
-      } finally {
-        ctx.next();
+        methodTimeoutOptions
+            .or(() -> globalOptions)
+            .ifPresent(
+                timeoutOptions -> {
+                  long tid =
+                      ctx.vertx()
+                          .setTimer(
+                              timeoutOptions.getTimeout(),
+                              t -> ctx.fail(timeoutOptions.getErrorCode()));
+                  ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
+                });
       }
-    };
+    } finally {
+      ctx.next();
+    }
   }
 }
