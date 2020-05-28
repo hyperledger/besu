@@ -36,12 +36,6 @@ Workaround -> On AWS, a full restart of the AWS VM is required to restart the fa
 Fast sync is not currently supported on Digital Ocean. We are investigating options to 
 [add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
 
-## Bootnodes must be validators when using onchain permissioning
-
-- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#528](https://github.com/hyperledger/besu/issues/528)
-
-Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
-
 ## Privacy users with private transactions created using v1.3.4 or earlier 
 
 A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4 
