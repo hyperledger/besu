@@ -22,7 +22,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -72,7 +73,14 @@ public class Pruner {
         pruningStrategy,
         blockchain,
         prunerConfiguration,
-        Executors.newSingleThreadExecutor(
+        // This is basically the out-of-the-box `Executors.newSingleThreadExecutor` except we want
+        // the `corePoolSize` to be 0
+        new ThreadPoolExecutor(
+            0,
+            1,
+            0L,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
