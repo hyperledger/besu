@@ -27,6 +27,7 @@ The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July.
 ### Additions and Improvements
 
 - Print node address on startup. [\#938](https://github.com/hyperledger/besu/pull/938)
+- Transaction pool: price bump replacement mechanism configurable through CLI. [\#928](https://github.com/hyperledger/besu/pull/928) [\#930](https://github.com/hyperledger/besu/pull/930)
 
 ## 1.4.5
 
