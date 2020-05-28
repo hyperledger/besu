@@ -150,7 +150,8 @@ public class GraphQLHttpService {
         .method(POST)
         .produces(APPLICATION_JSON)
         .handler(
-            TimeoutHandler.handler(Optional.of(new TimeoutOptions(config.getHttpTimeout())), false))
+            TimeoutHandler.handler(
+                Optional.of(new TimeoutOptions(config.getHttpTimeoutSec())), false))
         .handler(this::handleGraphQLRequest);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
