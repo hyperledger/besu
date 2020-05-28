@@ -5,15 +5,11 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
-## Eth/65 not backwards compatible 
+## Eth/65 loses peers 
 
 From v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 
 
-The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723). 
-This has the following impact: 
-* In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
-clients. 
-* On mainnet, synchronizing eventually stalls.
+If enabled, peers will slowly drop off and eventually Besu will fall out of sync or stop syncing.
 
 A fix for this issue is being actively worked on. 
 
