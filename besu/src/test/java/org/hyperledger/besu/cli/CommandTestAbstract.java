@@ -267,7 +267,7 @@ public abstract class CommandTestAbstract {
     return nodeKey;
   }
 
-  protected void setEnvironemntVariable(final String name, final String value) {
+  protected void setEnvironmentVariable(final String name, final String value) {
     environment.put(name, value);
   }
 
