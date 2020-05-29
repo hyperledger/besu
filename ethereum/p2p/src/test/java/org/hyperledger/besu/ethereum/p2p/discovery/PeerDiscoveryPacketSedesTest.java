@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 
@@ -73,9 +72,7 @@ public class PeerDiscoveryPacketSedesTest {
     assertThat(deserialized.getTarget()).isEqualTo(target);
     // Fuzziness: allow a skew of 2 seconds between the time the message was generated until the
     // assertion.
-    assertThat(deserialized.getExpiration())
-        .isCloseTo(
-            Instant.now().getEpochSecond() + PacketData.DEFAULT_EXPIRATION_PERIOD_SEC, offset(2L));
+    assertThat(deserialized.getExpiration()).isCloseTo(PacketData.defaultExpiration(), offset(2L));
   }
 
   @Test
@@ -90,9 +87,7 @@ public class PeerDiscoveryPacketSedesTest {
     assertThat(deserialized.getNodes()).isEqualTo(peers);
     // Fuzziness: allow a skew of 2 seconds between the time the message was generated until the
     // assertion.
-    assertThat(deserialized.getExpiration())
-        .isCloseTo(
-            Instant.now().getEpochSecond() + PacketData.DEFAULT_EXPIRATION_PERIOD_SEC, offset(2L));
+    assertThat(deserialized.getExpiration()).isCloseTo(PacketData.defaultExpiration(), offset(2L));
   }
 
   @Test(expected = RLPException.class)

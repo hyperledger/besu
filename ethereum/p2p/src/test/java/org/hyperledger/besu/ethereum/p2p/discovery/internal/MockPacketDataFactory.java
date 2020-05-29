@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -58,8 +57,7 @@ class MockPacketDataFactory {
   }
 
   static Packet mockFindNeighborsPacket(final Peer from) {
-    return mockFindNeighborsPacket(
-        from, Instant.now().getEpochSecond() + PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
+    return mockFindNeighborsPacket(from, PacketData.defaultExpiration());
   }
 
   static Packet mockFindNeighborsPacket(final Peer from, final long exparationMs) {

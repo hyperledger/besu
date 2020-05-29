@@ -894,7 +894,7 @@ public class PeerDiscoveryControllerTest {
 
     final Packet findNeighborsPacket =
         MockPacketDataFactory.mockFindNeighborsPacket(
-            discoPeer, System.currentTimeMillis() - 20_000);
+            discoPeer, Instant.now().getEpochSecond() - PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
     controller.onMessage(findNeighborsPacket, discoPeer);
 
     verify(outboundMessageHandler, times(0))

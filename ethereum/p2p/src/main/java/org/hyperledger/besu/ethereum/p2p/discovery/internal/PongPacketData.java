@@ -18,8 +18,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.time.Instant;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public class PongPacketData implements PacketData {
@@ -40,8 +38,7 @@ public class PongPacketData implements PacketData {
   }
 
   public static PongPacketData create(final Endpoint to, final Bytes pingHash) {
-    return new PongPacketData(
-        to, pingHash, Instant.now().getEpochSecond() + PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
+    return new PongPacketData(to, pingHash, PacketData.defaultExpiration());
   }
 
   public static PongPacketData readFrom(final RLPInput in) {
