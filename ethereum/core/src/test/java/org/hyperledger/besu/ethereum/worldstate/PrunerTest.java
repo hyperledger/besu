@@ -184,7 +184,6 @@ public class PrunerTest {
     final Pruner pruner =
         new Pruner(markSweepPruner, blockchain, new PrunerConfiguration(0, 1), mockExecutorService);
     pruner.start();
-    Thread.sleep(1);
     pruner.stop();
     verify(markSweepPruner).cleanup();
   }
