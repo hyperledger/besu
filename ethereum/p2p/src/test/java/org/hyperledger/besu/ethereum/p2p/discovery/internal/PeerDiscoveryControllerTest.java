@@ -256,6 +256,63 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
+  public void shouldRespondToPingRequest() {
+    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
+
+    final DiscoveryPeer discoPeer = peers.get(0);
+
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller =
+        getControllerBuilder()
+            .peers(discoPeer)
+            .outboundMessageHandler(outboundMessageHandler)
+            .build();
+
+    final Endpoint localEndpoint = localPeer.getEndpoint();
+
+    // Setup ping to be sent to discoPeer
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final PingPacketData pingPacketData =
+        PingPacketData.create(localEndpoint, discoPeer.getEndpoint());
+    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
+    mockPacketCreation(PacketType.PING, discoPeer, discoPeerPing);
+
+    controller.onMessage(discoPeerPing, discoPeer);
+
+    verify(outboundMessageHandler, times(1))
+        .send(eq(discoPeer), matchPacketOfType(PacketType.PONG));
+  }
+
+  @Test
+  public void shouldNotRespondToExpiredPingRequest() {
+    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
+
+    final DiscoveryPeer discoPeer = peers.get(0);
+
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller =
+        getControllerBuilder()
+            .peers(discoPeer)
+            .outboundMessageHandler(outboundMessageHandler)
+            .build();
+
+    final Endpoint localEndpoint = localPeer.getEndpoint();
+
+    // Setup ping to be sent to discoPeer
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final PingPacketData pingPacketData =
+        PingPacketData.create(
+            localEndpoint, discoPeer.getEndpoint(), System.currentTimeMillis() - 20_000);
+    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
+    mockPacketCreation(PacketType.PING, discoPeer, discoPeerPing);
+
+    controller.onMessage(discoPeerPing, discoPeer);
+
+    verify(outboundMessageHandler, times(0))
+        .send(eq(discoPeer), matchPacketOfType(PacketType.PONG));
+  }
+
+  @Test
   public void bootstrapPeersPongReceived_HashMatched() {
     // Create peers.
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(3);
@@ -430,7 +487,7 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void peerSeenTwice() throws InterruptedException {
+  public void peerSeenTwice() {
     // Create three peers, out of which the first two are bootstrap peers.
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(3);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
@@ -798,6 +855,47 @@ public class PeerDiscoveryControllerTest {
 
     verify(outboundMessageHandler, times(0))
         .send(eq(otherPeer), matchPacketOfType(PacketType.NEIGHBORS));
+  }
+
+  @Test
+  public void shouldNotRespondToExpiredNeighborsRequest() {
+    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
+
+    final DiscoveryPeer discoPeer = peers.get(0);
+
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller =
+        getControllerBuilder()
+            .peers(discoPeer)
+            .outboundMessageHandler(outboundMessageHandler)
+            .build();
+
+    final Endpoint localEndpoint = localPeer.getEndpoint();
+
+    // Setup ping to be sent to discoPeer
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final PingPacketData pingPacketData =
+        PingPacketData.create(localEndpoint, discoPeer.getEndpoint());
+    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
+    mockPacketCreation(PacketType.PING, discoPeer, discoPeerPing);
+
+    controller.start();
+    verify(outboundMessageHandler, times(1)).send(any(), matchPacketOfType(PacketType.PING));
+
+    final Packet pongFromDiscoPeer =
+        MockPacketDataFactory.mockPongPacket(discoPeer, discoPeerPing.getHash());
+    controller.onMessage(pongFromDiscoPeer, discoPeer);
+
+    verify(outboundMessageHandler, times(1))
+        .send(eq(discoPeer), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+
+    final Packet findNeighborsPacket =
+        MockPacketDataFactory.mockFindNeighborsPacket(
+            discoPeer, System.currentTimeMillis() - 20_000);
+    controller.onMessage(findNeighborsPacket, discoPeer);
+
+    verify(outboundMessageHandler, times(0))
+        .send(eq(discoPeer), matchPacketOfType(PacketType.NEIGHBORS));
   }
 
   @Test
@@ -1321,7 +1419,7 @@ public class PeerDiscoveryControllerTest {
       return true;
     }
 
-    public void testDispatchUpdate(
+    void testDispatchUpdate(
         final boolean permissionsRestricted, final Optional<List<Peer>> affectedPeers) {
       this.dispatchUpdate(permissionsRestricted, affectedPeers);
     }
