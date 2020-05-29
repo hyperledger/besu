@@ -14,38 +14,30 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import java.util.function.Function;
 import org.hyperledger.besu.enclave.EnclaveClientException;
-import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
@@ -77,111 +69,29 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName());
 
     final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
-    final TransactionWithMetadata resultTransaction =
-        blockchain.transactionByHash(hash).orElse(null);
-
-    if (resultTransaction == null) {
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
-    }
-
-    final String payloadKey =
-        resultTransaction.getTransaction().getPayload().slice(0, 32).toBase64String();
     final String enclaveKey = enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
-    final Optional<PrivateTransaction> privateTransaction;
+
+    final Optional<PrivateTransaction> maybePrivateTx;
     try {
-      privateTransaction =
-          findPrivateTransactionInEnclave(
-              payloadKey,
-              resultTransaction.getTransaction().getHash(),
-              enclaveKey,
-              resultTransaction.getBlockHash().get());
-    } catch (final EnclaveClientException e) {
-      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND.getMessage())) {
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
-      } else {
-        return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(),
-            JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
-      }
+      maybePrivateTx = privacyController.findPrivateTransactionByPmtHash(hash, enclaveKey)
+          .map(PrivateTransaction.class::cast);
+    } catch (EnclaveClientException e) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(),
+          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
-    if (privateTransaction.isPresent()) {
-      if (privateTransaction.get().getPrivacyGroupId().isPresent()) {
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new PrivateTransactionGroupResult(privateTransaction.get()));
-      } else {
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new PrivateTransactionLegacyResult(privateTransaction.get()));
-      }
+    return maybePrivateTx
+        .map(this::mapTransactionResult)
+        .map(result -> new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result))
+        .orElse(new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null));
+  }
+
+  private PrivateTransactionResult mapTransactionResult(
+      final PrivateTransaction privateTransaction) {
+    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+      return new PrivateTransactionGroupResult(privateTransaction);
     } else {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+      return new PrivateTransactionLegacyResult(privateTransaction);
     }
-  }
-
-  private Optional<PrivateTransaction> findPrivateTransactionInEnclave(
-      final String payloadKey,
-      final Hash pmtTransactionHash,
-      final String enclaveKey,
-      final Bytes32 blockHash) {
-    PrivateTransaction privateTransaction;
-    try {
-      LOG.trace("Fetching transaction information");
-      final ReceiveResponse receiveResponse =
-          privacyController.retrieveTransaction(payloadKey, enclaveKey);
-
-      final BytesValueRLPInput input =
-          new BytesValueRLPInput(
-              Bytes.fromBase64String(new String(receiveResponse.getPayload(), UTF_8)), false);
-      input.enterList();
-      if (input.nextIsList()) {
-        privateTransaction = PrivateTransaction.readFrom(input);
-        input.leaveListLenient();
-      } else {
-        input.reset();
-        privateTransaction = PrivateTransaction.readFrom(input);
-      }
-      LOG.trace("Received transaction information");
-    } catch (final EnclaveClientException e) {
-      Optional<PrivateTransaction> privateTransactionOptional = Optional.empty();
-      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND.getMessage())) {
-        privateTransactionOptional = fetchPayloadFromAddBlob(blockHash, pmtTransactionHash);
-      }
-      if (privateTransactionOptional.isEmpty()) {
-        throw e;
-      } else {
-        privateTransaction = privateTransactionOptional.get();
-      }
-    }
-    return Optional.ofNullable(privateTransaction);
-  }
-
-  private Optional<PrivateTransaction> fetchPayloadFromAddBlob(
-      final Bytes32 blockHash, final Hash expectedPrivacyMarkerTransactionHash) {
-    LOG.trace("Fetching transaction information from add blob");
-    final Optional<PrivacyGroupHeadBlockMap> privacyGroupHeadBlockMapOptional =
-        privateStateStorage.getPrivacyGroupHeadBlockMap(blockHash);
-    if (privacyGroupHeadBlockMapOptional.isPresent()) {
-      for (final Bytes32 privacyGroupId : privacyGroupHeadBlockMapOptional.get().keySet()) {
-        final Optional<Bytes32> addDataKey = privateStateStorage.getAddDataKey(privacyGroupId);
-        if (addDataKey.isPresent()) {
-          final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
-              privacyController.retrieveAddBlob(addDataKey.get().toBase64String());
-          for (final PrivateTransactionWithMetadata privateTransactionWithMetadata :
-              privateTransactionWithMetadataList) {
-            final Hash actualPrivacyMarkerTransactionHash =
-                privateTransactionWithMetadata
-                    .getPrivateTransactionMetadata()
-                    .getPrivacyMarkerTransactionHash();
-            if (expectedPrivacyMarkerTransactionHash.equals(actualPrivacyMarkerTransactionHash)) {
-              return Optional.of(privateTransactionWithMetadata.getPrivateTransaction());
-            }
-          }
-        }
-      }
-    }
-    return Optional.empty();
   }
 }

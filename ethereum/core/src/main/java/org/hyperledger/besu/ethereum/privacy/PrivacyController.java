@@ -31,6 +31,9 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivacyController {
 
+  Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(final Hash pmtHash,
+      final String enclaveKey);
+
   String sendTransaction(
       PrivateTransaction privateTransaction,
       String enclavePublicKey,
