@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -47,18 +47,17 @@ public class Pruner {
   private final long blockConfirmations;
 
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
-  private final Supplier<ExecutorService> executorServiceSupplier;
-  private ExecutorService executorService;
+  private final ExecutorService executorService;
 
   @VisibleForTesting
   Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration,
-      final Supplier<ExecutorService> executorServiceSupplier) {
+      final ExecutorService executorService) {
     this.pruningStrategy = pruningStrategy;
     this.blockchain = blockchain;
-    this.executorServiceSupplier = executorServiceSupplier;
+    this.executorService = executorService;
     this.blocksRetained = prunerConfiguration.getBlocksRetained();
     this.blockConfirmations = prunerConfiguration.getBlockConfirmations();
     checkArgument(
@@ -70,27 +69,34 @@ public class Pruner {
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration) {
-    this(pruningStrategy, blockchain, prunerConfiguration, getDefaultExecutorSupplier());
-  }
-
-  private static Supplier<ExecutorService> getDefaultExecutorSupplier() {
-    return () ->
-        Executors.newSingleThreadExecutor(
+    this(
+        pruningStrategy,
+        blockchain,
+        prunerConfiguration,
+        // This is basically the out-of-the-box `Executors.newSingleThreadExecutor` except we want
+        // the `corePoolSize` to be 0
+        new ThreadPoolExecutor(
+            0,
+            1,
+            0L,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
                 .setNameFormat("StatePruning-%d")
-                .build());
+                .build()));
   }
 
   public void start() {
-
-    if (state.compareAndSet(State.IDLE, State.RUNNING)) {
-      LOG.info("Starting Pruner.");
-      executorService = executorServiceSupplier.get();
-      pruningStrategy.prepare();
-      blockAddedObserverId = blockchain.observeBlockAdded(this::handleNewBlock);
-    }
+    execute(
+        () -> {
+          if (state.compareAndSet(State.IDLE, State.RUNNING)) {
+            LOG.info("Starting Pruner.");
+            pruningStrategy.prepare();
+            blockAddedObserverId = blockchain.observeBlockAdded(this::handleNewBlock);
+          }
+        });
   }
 
   public void stop() {
@@ -158,7 +164,7 @@ public class Pruner {
     try {
       executorService.execute(action);
     } catch (final Throwable t) {
-      LOG.error("Pruning failed", t);
+      LOG.error("Pruner failed", t);
       pruningStrategy.cleanup();
       pruningPhase.set(PruningPhase.IDLE);
     }
