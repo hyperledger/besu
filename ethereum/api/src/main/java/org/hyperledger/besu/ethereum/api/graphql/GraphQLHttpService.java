@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLJsonRe
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponse;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponseType;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLSuccessResponse;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutHandler;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
@@ -147,6 +149,9 @@ public class GraphQLHttpService {
         .method(GET)
         .method(POST)
         .produces(APPLICATION_JSON)
+        .handler(
+            TimeoutHandler.handler(
+                Optional.of(new TimeoutOptions(config.getHttpTimeoutSec())), false))
         .handler(this::handleGraphQLRequest);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
