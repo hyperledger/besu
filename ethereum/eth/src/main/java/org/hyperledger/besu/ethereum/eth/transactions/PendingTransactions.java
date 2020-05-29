@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Queue;
@@ -75,7 +74,8 @@ public class PendingTransactions {
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private final Map<Address, TransactionsForSenderInfo> transactionsBySender = new HashMap<>();
+  private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
+      new ConcurrentHashMap<>();
 
   private final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
       Subscribers.create();
@@ -154,7 +154,7 @@ public class PendingTransactions {
   }
 
   boolean addTransactionHash(final Hash transactionHash) {
-    boolean hashAdded;
+    final boolean hashAdded;
     synchronized (newPooledHashes) {
       hashAdded = newPooledHashes.add(transactionHash);
     }
@@ -184,7 +184,7 @@ public class PendingTransactions {
   }
 
   private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (pendingTransactions) {
+    synchronized (prioritizedTransactions) {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
@@ -203,14 +203,8 @@ public class PendingTransactions {
     transactionRemovedCounter.labels(location, operation).inc();
   }
 
-  /*
-   * The BlockTransaction selection process (part of block mining) requires synchronised access to
-   * all pendingTransactions - this allows it to iterate over the available transactions without
-   * releasing the lock in between items.
-   *
-   */
   public void selectTransactions(final TransactionSelector selector) {
-    synchronized (pendingTransactions) {
+    synchronized (prioritizedTransactions) {
       final List<Transaction> transactionsToRemove = new ArrayList<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       for (final TransactionInfo transactionInfo : prioritizedTransactions) {
@@ -248,7 +242,7 @@ public class PendingTransactions {
 
   private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
     Optional<Transaction> droppedTransaction = Optional.empty();
-    synchronized (pendingTransactions) {
+    synchronized (prioritizedTransactions) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
         return ALREADY_KNOWN;
       }
@@ -361,16 +355,15 @@ public class PendingTransactions {
   }
 
   public OptionalLong getNextNonceForSender(final Address sender) {
-    synchronized (pendingTransactions) {
-      final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
-      if (transactionsForSenderInfo == null
-          || transactionsForSenderInfo.getTransactionsInfos().isEmpty()) {
-        return OptionalLong.empty();
-      } else if (!transactionsForSenderInfo.getGaps().isEmpty()) {
-        return OptionalLong.of(Objects.requireNonNull(transactionsForSenderInfo.getGaps().poll()));
-      } else {
-        return OptionalLong.of(transactionsForSenderInfo.getTransactionsInfos().lastKey() + 1);
-      }
+    final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
+    if (transactionsForSenderInfo == null
+        || transactionsForSenderInfo.getTransactionsInfos().isEmpty()) {
+      return OptionalLong.empty();
+    } else {
+      final OptionalLong maybeNextGap = transactionsForSenderInfo.maybeNextGap();
+      return maybeNextGap.isEmpty()
+          ? OptionalLong.of(transactionsForSenderInfo.getTransactionsInfos().lastKey() + 1)
+          : maybeNextGap;
     }
   }
 
@@ -380,7 +373,7 @@ public class PendingTransactions {
     }
   }
 
-  public Collection<Hash> getNewPooledHashes() {
+  Collection<Hash> getNewPooledHashes() {
     return newPooledHashes;
   }
 
