@@ -99,7 +99,7 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x05"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
+            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
@@ -113,7 +113,7 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x04"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
+            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
@@ -129,7 +129,7 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0xFFFFFFFF"))
-            .code(new Code(Bytes.fromHexString("0x6801000000000000000cb300b26011b3b7b2b7")))
+            .code(new Code(Bytes.fromHexString("0x6801000000000000000c5e005c60115e5d5c5d")))
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);

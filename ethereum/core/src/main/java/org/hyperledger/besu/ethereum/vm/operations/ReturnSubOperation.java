@@ -27,7 +27,7 @@ import java.util.Optional;
 public class ReturnSubOperation extends AbstractOperation {
 
   public ReturnSubOperation(final GasCalculator gasCalculator) {
-    super(0xb7, "RETURNSUB", 0, 0, true, 1, gasCalculator);
+    super(0x5d, "RETURNSUB", 0, 0, true, 1, gasCalculator);
   }
 
   @Override

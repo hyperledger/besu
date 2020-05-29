@@ -88,7 +88,7 @@ public class BeginSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x04"))
-            .code(new Code(Bytes.fromHexString("0x610400b2")))
+            .code(new Code(Bytes.fromHexString("0x6104005c")))
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
