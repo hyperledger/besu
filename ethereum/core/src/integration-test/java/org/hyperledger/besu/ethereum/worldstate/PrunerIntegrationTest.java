@@ -108,7 +108,7 @@ public class PrunerIntegrationTest {
             markSweepPruner,
             blockchain,
             new PrunerConfiguration(blockConfirmations, numBlocksToKeep),
-            new MockExecutorService());
+            MockExecutorService::new);
 
     pruner.start();
 
