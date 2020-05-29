@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
 import java.util.List;
 
 public class NeighborsPacketData implements PacketData {
@@ -40,7 +41,7 @@ public class NeighborsPacketData implements PacketData {
   @SuppressWarnings("unchecked")
   public static NeighborsPacketData create(final List<DiscoveryPeer> peers) {
     return new NeighborsPacketData(
-        peers, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+        peers, Instant.now().getEpochSecond() + PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
   }
 
   public static NeighborsPacketData readFrom(final RLPInput in) {

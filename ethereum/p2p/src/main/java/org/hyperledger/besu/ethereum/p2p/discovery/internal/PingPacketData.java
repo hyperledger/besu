@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
+
 public class PingPacketData implements PacketData {
 
   /* Fixed value that represents we're using v5 of the P2P discovery protocol. */
@@ -45,11 +47,12 @@ public class PingPacketData implements PacketData {
   }
 
   public static PingPacketData create(final Endpoint from, final Endpoint to) {
-    return create(from, to, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+    return create(
+        from, to, Instant.now().getEpochSecond() + PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
   }
 
-  static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationMs) {
-    return new PingPacketData(from, to, expirationMs);
+  static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationSec) {
+    return new PingPacketData(from, to, expirationSec);
   }
 
   public static PingPacketData readFrom(final RLPInput in) {

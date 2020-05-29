@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -302,7 +303,9 @@ public class PeerDiscoveryControllerTest {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final PingPacketData pingPacketData =
         PingPacketData.create(
-            localEndpoint, discoPeer.getEndpoint(), System.currentTimeMillis() - 20_000);
+            localEndpoint,
+            discoPeer.getEndpoint(),
+            Instant.now().getEpochSecond() - PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
     final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
     mockPacketCreation(PacketType.PING, discoPeer, discoPeerPing);
 

@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class FindNeighborsPacketData implements PacketData {
@@ -39,11 +41,12 @@ public class FindNeighborsPacketData implements PacketData {
   }
 
   public static FindNeighborsPacketData create(final Bytes target) {
-    return create(target, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+    return create(
+        target, Instant.now().getEpochSecond() + PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
   }
 
-  static FindNeighborsPacketData create(final Bytes target, final long expirationMs) {
-    return new FindNeighborsPacketData(target, expirationMs);
+  static FindNeighborsPacketData create(final Bytes target, final long expirationSec) {
+    return new FindNeighborsPacketData(target, expirationSec);
   }
 
   @Override
