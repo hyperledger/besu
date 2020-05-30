@@ -16,13 +16,15 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
+
 public interface PacketData {
 
   /**
    * Expiration is not standardised. We use Geth's expiration period (60 seconds); whereas Parity's
    * is 20 seconds.
    */
-  long DEFAULT_EXPIRATION_PERIOD_MS = 60000;
+  long DEFAULT_EXPIRATION_PERIOD_SEC = 60;
 
   /**
    * Serializes the implementing packet data onto the provided RLP output buffer.
@@ -30,4 +32,8 @@ public interface PacketData {
    * @param out The RLP output buffer.
    */
   void writeTo(RLPOutput out);
+
+  static long defaultExpiration() {
+    return Instant.now().getEpochSecond() + DEFAULT_EXPIRATION_PERIOD_SEC;
+  }
 }
