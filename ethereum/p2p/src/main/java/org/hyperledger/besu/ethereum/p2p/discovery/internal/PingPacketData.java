@@ -45,11 +45,11 @@ public class PingPacketData implements PacketData {
   }
 
   public static PingPacketData create(final Endpoint from, final Endpoint to) {
-    return create(from, to, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+    return create(from, to, PacketData.defaultExpiration());
   }
 
-  static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationMs) {
-    return new PingPacketData(from, to, expirationMs);
+  static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationSec) {
+    return new PingPacketData(from, to, expirationSec);
   }
 
   public static PingPacketData readFrom(final RLPInput in) {
