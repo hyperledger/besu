@@ -87,11 +87,13 @@ task acceptanceTest(type: Test) {
   beforeTest { descriptor ->
     File random = new File("/dev/random");
     // Reading 1 byte from random drops entry by ~5
-    while(Integer.parseInt(getEntropy()) > 500) {
-      InputStream inStream = new FileInputStream(random)
-      byte[] randomData = new byte[100] //appears each 100-byte read drains ~500 entropy
-      inStream.read(randomData)
-    }
+    /*
+     while(Integer.parseInt(getEntropy()) > 500) {
+     InputStream inStream = new FileInputStream(random)
+     byte[] randomData = new byte[100] //appears each 100-byte read drains ~500 entropy
+     inStream.read(randomData)
+     }
+     */
     //empty entropy by cat /dev/random (200 at a time, get down to ~500)
     logEntropy("Before", descriptor) }
   afterTest { descriptor -> logEntropy("After", descriptor) }
