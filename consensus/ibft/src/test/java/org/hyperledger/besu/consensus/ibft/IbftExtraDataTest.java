@@ -26,8 +26,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -474,13 +472,5 @@ public class IbftExtraDataTest {
       vanity_bytes[i] = (byte) (i + 1);
     }
     return vanity_bytes;
-  }
-
-  @Test
-  public void testSecureRandom() throws NoSuchAlgorithmException {
-    final SecureRandom sr = new SecureRandom();
-    final SecureRandom otherSR = SecureRandom.getInstanceStrong();
-
-    final int i = sr.nextInt();
   }
 }
