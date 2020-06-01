@@ -18,11 +18,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.IndirectVertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatService;
@@ -84,7 +84,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   protected TimerUtil createTimer() {
-    return new IndirectVertxTimerUtil(vertx);
+    return new VertxTimerUtil(vertx);
   }
 
   @Override
