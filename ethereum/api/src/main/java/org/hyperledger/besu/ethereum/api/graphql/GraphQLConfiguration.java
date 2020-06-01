@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,12 +35,14 @@ public class GraphQLConfiguration {
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   public static GraphQLConfiguration createDefault() {
     final GraphQLConfiguration config = new GraphQLConfiguration();
     config.setEnabled(false);
     config.setPort(DEFAULT_GRAPHQL_HTTP_PORT);
     config.setHost(DEFAULT_GRAPHQL_HTTP_HOST);
+    config.setHttpTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     return config;
   }
 
@@ -86,6 +90,14 @@ public class GraphQLConfiguration {
     this.hostsWhitelist = hostsWhitelist;
   }
 
+  public Long getHttpTimeoutSec() {
+    return httpTimeoutSec;
+  }
+
+  public void setHttpTimeoutSec(final long httpTimeoutSec) {
+    this.httpTimeoutSec = httpTimeoutSec;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -94,6 +106,7 @@ public class GraphQLConfiguration {
         .add("host", host)
         .add("corsAllowedDomains", corsAllowedDomains)
         .add("hostsWhitelist", hostsWhitelist)
+        .add("httpTimeoutSec", httpTimeoutSec)
         .toString();
   }
 

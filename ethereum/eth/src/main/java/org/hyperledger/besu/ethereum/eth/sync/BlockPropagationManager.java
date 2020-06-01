@@ -129,6 +129,7 @@ public class BlockPropagationManager<C> {
           PersistBlockTask.forUnorderedBlocks(
               protocolSchedule,
               protocolContext,
+              ethContext,
               readyForImport,
               HeaderValidationMode.FULL,
               metricsSystem);
@@ -328,7 +329,12 @@ public class BlockPropagationManager<C> {
   private CompletableFuture<Block> runImportTask(final Block block) {
     final PersistBlockTask<C> importTask =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            block,
+            HeaderValidationMode.NONE,
+            metricsSystem);
     return importTask
         .run()
         .whenComplete(
@@ -339,19 +345,6 @@ public class BlockPropagationManager<C> {
                     "Failed to import announced block {} ({}).",
                     block.getHeader().getNumber(),
                     block.getHash());
-              } else {
-                final double timeInS = importTask.getTaskTimeInSec();
-                LOG.info(
-                    String.format(
-                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
-                        block.getHeader().getNumber(),
-                        block.getBody().getTransactions().size(),
-                        block.getBody().getOmmers().size(),
-                        block.getHeader().getGasUsed(),
-                        (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                        block.getHash().toHexString(),
-                        timeInS,
-                        ethContext.getEthPeers().peerCount()));
               }
             });
   }
