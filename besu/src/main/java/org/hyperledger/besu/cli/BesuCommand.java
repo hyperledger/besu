@@ -72,6 +72,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -978,6 +979,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Boolean nativeAltbn128 = Boolean.TRUE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xhttp-timeout-seconds"},
+      description = "HTTP timeout in seconds (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1433,6 +1441,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration.setPort(graphQLHttpPort);
     graphQLConfiguration.setHostsWhitelist(hostsWhitelist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+    graphQLConfiguration.setHttpTimeoutSec(httpTimeoutSec);
 
     return graphQLConfiguration;
   }
@@ -1481,6 +1490,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+    jsonRpcConfiguration.setHttpTimeoutSec(httpTimeoutSec);
     return jsonRpcConfiguration;
   }
 
@@ -1773,6 +1783,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
+
+      if (isPrivacyMultiTenancyEnabled && isOnchainPrivacyGroupEnabled) {
+        throw new ParameterException(
+            commandLine,
+            "Privacy multi-tenancy and onchain privacy groups cannot be used together");
+      }
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {

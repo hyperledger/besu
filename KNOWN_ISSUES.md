@@ -5,19 +5,19 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
-## Intrinsic gas exceeds gas limit
+## Scope of logs query causing Besu to hang
 
-Calling delete and set to 0 Solidity mapping in Solidity [fails with an intrinsic gas exceeds gas limit error.](https://github.com/hyperledger/besu/issues/696)
+[`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944). 
 
-## Eth/65 not backwards compatible 
+Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
+
+A fix for this issue is being actively worked on.
+
+## Eth/65 loses peers 
 
 From v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 
 
-The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723). 
-This has the following impact: 
-* In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
-clients. 
-* On mainnet, synchronizing eventually stalls.
+If enabled, peers will slowly drop off and eventually Besu will fall out of sync or stop syncing.
 
 A fix for this issue is being actively worked on. 
 
@@ -39,12 +39,6 @@ Workaround -> On AWS, a full restart of the AWS VM is required to restart the fa
 
 Fast sync is not currently supported on Digital Ocean. We are investigating options to 
 [add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
-
-## Bootnodes must be validators when using onchain permissioning
-
-- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#528](https://github.com/hyperledger/besu/issues/528)
-
-Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
 
 ## Privacy users with private transactions created using v1.3.4 or earlier 
 
