@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,6 +70,8 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     }
 
     if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
+      LOG.info("Invalid block RLP : {}",block.toRlp().toHexString());
+      receipts.forEach(receipt -> LOG.info("Transaction receipt found in the invalid block {}",receipt.toString()));
       return false;
     }
 
