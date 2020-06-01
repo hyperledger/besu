@@ -35,14 +35,14 @@ public class GraphQLConfiguration {
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
-  private Long httpTimeout = TimeoutOptions.defaultOptions().getTimeout();
+  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   public static GraphQLConfiguration createDefault() {
     final GraphQLConfiguration config = new GraphQLConfiguration();
     config.setEnabled(false);
     config.setPort(DEFAULT_GRAPHQL_HTTP_PORT);
     config.setHost(DEFAULT_GRAPHQL_HTTP_HOST);
-    config.httpTimeout = TimeoutOptions.defaultOptions().getTimeout();
+    config.setHttpTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     return config;
   }
 
@@ -90,12 +90,12 @@ public class GraphQLConfiguration {
     this.hostsWhitelist = hostsWhitelist;
   }
 
-  public Long getHttpTimeout() {
-    return httpTimeout;
+  public Long getHttpTimeoutSec() {
+    return httpTimeoutSec;
   }
 
-  public void setHttpTimeout(final Long httpTimeout) {
-    this.httpTimeout = httpTimeout;
+  public void setHttpTimeoutSec(final long httpTimeoutSec) {
+    this.httpTimeoutSec = httpTimeoutSec;
   }
 
   @Override
@@ -106,7 +106,7 @@ public class GraphQLConfiguration {
         .add("host", host)
         .add("corsAllowedDomains", corsAllowedDomains)
         .add("hostsWhitelist", hostsWhitelist)
-        .add("httpTimeout", httpTimeout)
+        .add("httpTimeoutSec", httpTimeoutSec)
         .toString();
   }
 

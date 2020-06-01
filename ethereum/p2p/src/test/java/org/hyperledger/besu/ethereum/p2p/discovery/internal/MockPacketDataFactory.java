@@ -57,8 +57,7 @@ class MockPacketDataFactory {
   }
 
   static Packet mockFindNeighborsPacket(final Peer from) {
-    return mockFindNeighborsPacket(
-        from, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+    return mockFindNeighborsPacket(from, PacketData.defaultExpiration());
   }
 
   static Packet mockFindNeighborsPacket(final Peer from, final long exparationMs) {
