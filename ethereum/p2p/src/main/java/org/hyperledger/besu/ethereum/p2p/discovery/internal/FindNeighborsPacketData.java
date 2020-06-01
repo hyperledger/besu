@@ -39,11 +39,11 @@ public class FindNeighborsPacketData implements PacketData {
   }
 
   public static FindNeighborsPacketData create(final Bytes target) {
-    return create(target, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+    return create(target, PacketData.defaultExpiration());
   }
 
-  static FindNeighborsPacketData create(final Bytes target, final long expirationMs) {
-    return new FindNeighborsPacketData(target, expirationMs);
+  static FindNeighborsPacketData create(final Bytes target, final long expirationSec) {
+    return new FindNeighborsPacketData(target, expirationSec);
   }
 
   @Override

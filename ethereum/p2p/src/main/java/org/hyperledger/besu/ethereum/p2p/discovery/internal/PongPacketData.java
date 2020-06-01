@@ -38,8 +38,7 @@ public class PongPacketData implements PacketData {
   }
 
   public static PongPacketData create(final Endpoint to, final Bytes pingHash) {
-    return new PongPacketData(
-        to, pingHash, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+    return new PongPacketData(to, pingHash, PacketData.defaultExpiration());
   }
 
   public static PongPacketData readFrom(final RLPInput in) {
