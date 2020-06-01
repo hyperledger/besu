@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -43,8 +45,6 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE;
 
 public class MainnetTransactionProcessor implements TransactionProcessor {
 
@@ -227,9 +227,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     validationResult =
         transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
-      if(INCORRECT_NONCE.equals(validationResult.getInvalidReason())){
+      if (INCORRECT_NONCE.equals(validationResult.getInvalidReason())) {
         LOG.debug("Invalid nonce: {}", validationResult.getErrorMessage());
-      }else{
+      } else {
         LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
       }
       return Result.invalid(validationResult);
