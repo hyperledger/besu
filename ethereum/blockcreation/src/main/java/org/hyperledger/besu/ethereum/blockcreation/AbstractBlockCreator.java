@@ -318,7 +318,11 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     if (skipZeroBlockRewards && blockReward.isZero()) {
       return true;
     }
-    final Wei coinbaseReward = blockReward.add(blockReward.multiply(ommers.size()).divide(32));
+
+    final Wei coinbaseReward =
+        protocolSpec
+            .getBlockProcessor()
+            .getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
     final DefaultEvmAccount beneficiary = updater.getOrCreate(miningBeneficiary);
 
@@ -334,8 +338,10 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       }
 
       final DefaultEvmAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
-      final long distance = header.getNumber() - ommerHeader.getNumber();
-      final Wei ommerReward = blockReward.subtract(blockReward.multiply(distance).divide(8));
+      final Wei ommerReward =
+          protocolSpec
+              .getBlockProcessor()
+              .getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
       ommerCoinbase.getMutable().incrementBalance(ommerReward);
     }
 
