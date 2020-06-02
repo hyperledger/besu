@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
@@ -38,14 +39,14 @@ public class ForkIdManager {
   private final Hash genesisHash;
   private final List<ForkId> forkAndHashList;
 
-  private final List<ForkIDChecker> forkIDCheckers;
+  private final List<Predicate<ForkId>> forkIDCheckers;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
     checkNotNull(blockchain);
     checkNotNull(forks);
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     this.forkAndHashList = new ArrayList<>();
-    final ForkIDChecker legacyForkIdChecker =
+    final Predicate<ForkId> legacyForkIdChecker =
         createForkIDChecker(
             blockchain,
             genesisHash,
@@ -60,7 +61,7 @@ public class ForkIdManager {
     if (onlyZerosForkBlocks(forks)) {
       this.forkIDCheckers = singletonList(forkId -> true);
     } else {
-      final ForkIDChecker newForkIdChecker =
+      final Predicate<ForkId> newForkIdChecker =
           createForkIDChecker(
               blockchain,
               genesisHash,
@@ -71,7 +72,7 @@ public class ForkIdManager {
     }
   }
 
-  private static ForkIDChecker createForkIDChecker(
+  private static Predicate<ForkId> createForkIDChecker(
       final Blockchain blockchain,
       final Hash genesisHash,
       final List<Long> forks,
@@ -116,10 +117,10 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   boolean peerCheck(final ForkId forkId) {
-    return forkIDCheckers.stream().anyMatch(checker -> checker.check(forkId));
+    return forkIDCheckers.stream().anyMatch(checker -> checker.test(forkId));
   }
 
-  private static ForkIDChecker eip2124(
+  private static Predicate<ForkId> eip2124(
       final Blockchain blockchain,
       final long forkNext,
       final List<ForkId> forkAndHashList,
@@ -315,10 +316,5 @@ public class ForkIdManager {
     bs[++off] = (byte) (n >>> 16);
     bs[++off] = (byte) (n >>> 8);
     bs[++off] = (byte) (n);
-  }
-
-  @FunctionalInterface
-  private interface ForkIDChecker {
-    boolean check(ForkId forkId);
   }
 }
