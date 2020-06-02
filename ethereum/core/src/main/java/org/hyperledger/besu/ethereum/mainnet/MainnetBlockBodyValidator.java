@@ -69,6 +69,10 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     }
 
     if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
+      LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
+      receipts.forEach(
+          receipt ->
+              LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
       return false;
     }
 
