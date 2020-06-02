@@ -12,28 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.discovery.internal;
+package org.hyperledger.besu.ethereum.api.jsonrpc.context;
 
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import java.util.function.Supplier;
 
-import java.time.Instant;
+import io.vertx.ext.web.RoutingContext;
 
-public interface PacketData {
+public enum ContextKey {
+  REQUEST_BODY_AS_JSON_OBJECT;
 
-  /**
-   * Expiration is not standardised. We use Geth's expiration period (60 seconds); whereas Parity's
-   * is 20 seconds.
-   */
-  long DEFAULT_EXPIRATION_PERIOD_SEC = 60;
-
-  /**
-   * Serializes the implementing packet data onto the provided RLP output buffer.
-   *
-   * @param out The RLP output buffer.
-   */
-  void writeTo(RLPOutput out);
-
-  static long defaultExpiration() {
-    return Instant.now().getEpochSecond() + DEFAULT_EXPIRATION_PERIOD_SEC;
+  public <T> T extractFrom(final RoutingContext ctx, final Supplier<T> defaultSupplier) {
+    final T value = ctx.get(this.name());
+    return value != null ? value : defaultSupplier.get();
   }
 }

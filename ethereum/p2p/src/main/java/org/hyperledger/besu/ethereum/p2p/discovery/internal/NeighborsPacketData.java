@@ -39,8 +39,7 @@ public class NeighborsPacketData implements PacketData {
 
   @SuppressWarnings("unchecked")
   public static NeighborsPacketData create(final List<DiscoveryPeer> peers) {
-    return new NeighborsPacketData(
-        peers, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+    return new NeighborsPacketData(peers, PacketData.defaultExpiration());
   }
 
   public static NeighborsPacketData readFrom(final RLPInput in) {
