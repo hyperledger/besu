@@ -57,11 +57,16 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
+    // NOTE: This temporary fix is necessary to make certain options be treated as a multi-value.
+    // This can be done automatically by picocli if the object implements Collection.
+    final boolean isArray =
+        getKeyName(optionSpec).map(keyName -> result.isArray(keyName)).orElse(false);
     final String defaultValue;
+
     // Convert config values to the right string representation for default string value
     if (optionSpec.type().equals(Boolean.class)) {
       defaultValue = getBooleanEntryAsString(optionSpec);
-    } else if (optionSpec.isMultiValue()) {
+    } else if (optionSpec.isMultiValue() || isArray) {
       defaultValue = getListEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Integer.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
