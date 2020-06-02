@@ -30,8 +30,10 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.stream.LongStream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
@@ -42,11 +44,9 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class MarkSweepPruner {
 
-  private static final int DEFAULT_OPS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LogManager.getLogger();
   private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
 
-  private final int operationsPerTransaction;
   private final WorldStateStorage worldStateStorage;
   private final MutableBlockchain blockchain;
   private final KeyValueStorage markStorage;
@@ -64,19 +64,9 @@ public class MarkSweepPruner {
       final MutableBlockchain blockchain,
       final KeyValueStorage markStorage,
       final ObservableMetricsSystem metricsSystem) {
-    this(worldStateStorage, blockchain, markStorage, metricsSystem, DEFAULT_OPS_PER_TRANSACTION);
-  }
-
-  public MarkSweepPruner(
-      final WorldStateStorage worldStateStorage,
-      final MutableBlockchain blockchain,
-      final KeyValueStorage markStorage,
-      final ObservableMetricsSystem metricsSystem,
-      final int operationsPerTransaction) {
     this.worldStateStorage = worldStateStorage;
     this.markStorage = markStorage;
     this.blockchain = blockchain;
-    this.operationsPerTransaction = operationsPerTransaction;
 
     markedNodesCounter =
         metricsSystem.createCounter(
@@ -138,29 +128,20 @@ public class MarkSweepPruner {
     LOG.debug("Sweeping unused nodes");
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
     // storage
-    long prunedNodeCount = 0;
+    final AtomicLong prunedNodeCount = new AtomicLong(0);
     WorldStateStorage.Updater updater = worldStateStorage.updater();
-    for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
-      final Hash candidateStateRootHash =
-          blockchain.getBlockHeader(blockNumber).get().getStateRoot();
-
-      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash)) {
-        break;
-      }
-
-      if (!isMarked(candidateStateRootHash)) {
-        updater.removeAccountStateTrieNode(candidateStateRootHash);
-        prunedNodeCount++;
-        if (prunedNodeCount % operationsPerTransaction == 0) {
-          updater.commit();
-          updater = worldStateStorage.updater();
-        }
-      }
-    }
+    LongStream.rangeClosed(markedBlockNumber - 1, 0)
+        .mapToObj(blockNumber -> blockchain.getBlockHeader(blockNumber).get().getStateRoot())
+        .takeWhile(worldStateStorage::isWorldStateAvailable)
+        .filter(stateRootHash -> !isMarked(stateRootHash))
+        .forEach(
+            stateRootHash -> {
+              updater.removeAccountStateTrieNode(stateRootHash);
+              prunedNodeCount.incrementAndGet();
+            });
     updater.commit();
     // Sweep non-state-root nodes
-    prunedNodeCount += worldStateStorage.prune(this::isMarked);
-    sweptNodesCounter.inc(prunedNodeCount);
+    sweptNodesCounter.inc(prunedNodeCount.addAndGet(worldStateStorage.prune(this::isMarked)));
     clearMarks();
     LOG.debug("Completed sweeping unused nodes");
   }
@@ -213,7 +194,6 @@ public class MarkSweepPruner {
     markLock.lock();
     try {
       pendingMarks.add(hash);
-      maybeFlushPendingMarks();
     } finally {
       markLock.unlock();
     }
@@ -224,15 +204,9 @@ public class MarkSweepPruner {
     markLock.lock();
     try {
       pendingMarks.addAll(nodeHashes);
-      maybeFlushPendingMarks();
+      flushPendingMarks();
     } finally {
       markLock.unlock();
-    }
-  }
-
-  private void maybeFlushPendingMarks() {
-    if (pendingMarks.size() > operationsPerTransaction) {
-      flushPendingMarks();
     }
   }
 
