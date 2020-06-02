@@ -34,6 +34,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -533,12 +534,18 @@ public class PeerDiscoveryController {
 
   private void respondToPing(
       final PingPacketData packetData, final Bytes pingHash, final DiscoveryPeer sender) {
+    if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
+      return;
+    }
     final PongPacketData data = PongPacketData.create(packetData.getFrom(), pingHash);
     sendPacket(sender, PacketType.PONG, data);
   }
 
   private void respondToFindNeighbors(
       final FindNeighborsPacketData packetData, final DiscoveryPeer sender) {
+    if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
+      return;
+    }
     // TODO: for now return 16 peers. Other implementations calculate how many
     // peers they can fit in a 1280-byte payload.
     final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);

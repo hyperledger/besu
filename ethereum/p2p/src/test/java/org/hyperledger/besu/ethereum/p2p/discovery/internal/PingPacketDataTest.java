@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Instant;
 import java.util.OptionalInt;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,7 +30,7 @@ public class PingPacketDataTest {
 
   @Test
   public void serializeDeserialize() {
-    final long currentTime = System.currentTimeMillis();
+    final long currentTimeSec = Instant.now().getEpochSecond();
 
     final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
@@ -39,7 +40,7 @@ public class PingPacketDataTest {
 
     assertThat(deserialized.getFrom()).isEqualTo(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
-    assertThat(deserialized.getExpiration()).isGreaterThan(currentTime);
+    assertThat(deserialized.getExpiration()).isGreaterThan(currentTimeSec);
   }
 
   @Test
