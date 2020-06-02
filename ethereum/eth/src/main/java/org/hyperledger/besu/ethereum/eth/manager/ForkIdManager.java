@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -40,7 +41,8 @@ public class ForkIdManager {
   private final List<ForkIDChecker> forkIDCheckers;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
-    assert blockchain != null && forks != null;
+    checkNotNull(blockchain);
+    checkNotNull(forks);
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     this.forkAndHashList = new ArrayList<>();
     final ForkIDChecker legacyForkIdChecker =

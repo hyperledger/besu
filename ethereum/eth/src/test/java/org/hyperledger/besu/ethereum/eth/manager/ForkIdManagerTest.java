@@ -384,6 +384,6 @@ public class ForkIdManagerTest {
   @Test
   public void assertThatConstructorParametersMustNotBeNull() {
     assertThatThrownBy(() -> new ForkIdManager(mockBlockchain(consortiumNetworkGenHash, 0), null))
-        .isExactlyInstanceOf(AssertionError.class);
+        .isExactlyInstanceOf(NullPointerException.class);
   }
 }
