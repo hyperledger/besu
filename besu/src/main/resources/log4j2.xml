@@ -17,7 +17,7 @@
 
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n" />
+            <PatternLayout noConsoleNoAnsi="true" pattern="%style{%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | }{DIM}%highlight{%t | %-5level | %c{1} | %msg%n}{TRACE=normal}"/>
         </Console>
 
         <Routing name="Router">
