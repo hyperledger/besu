@@ -102,7 +102,7 @@ public class MarkSweepPruner {
     metricsSystem.createLongGauge(
         BesuMetricCategory.PRUNER,
         "mark_time_duration",
-        "Total number of seconds spent marking the state trie",
+        "Cumulative number of seconds spent marking the state trie across all pruning cycles",
         () -> markStopwatch.elapsed(TimeUnit.SECONDS));
   }
 
