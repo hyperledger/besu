@@ -33,6 +33,7 @@ The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July.
 
 - Added timeout to queries. [\#986](https://github.com/hyperledger/besu/pull/986)
 - Fixed issue where networks using onchain permissioning could stall when the bootnodes were not validators. [\#969](https://github.com/hyperledger/besu/pull/969)
+- Update getForks method to ignore ClassicForkBlock chain parameter to fix issue with ETC syncing. [\#1014](https://github.com/hyperledger/besu/pull/1014)
 
 ### Known Issues 
 
