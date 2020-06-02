@@ -65,44 +65,42 @@ public class PrunerIntegrationTest {
 
   @Test
   public void pruner_smallState_manyOpsPerTx() {
-    testPruner(3, 1, 1, 4, 1000);
+    testPruner(3, 1, 1, 4);
   }
 
   @Test
   public void pruner_largeState_fewOpsPerTx() {
-    testPruner(2, 5, 5, 6, 5);
+    testPruner(2, 5, 5, 6);
   }
 
   @Test
   public void pruner_emptyBlocks() {
-    testPruner(5, 0, 2, 5, 10);
+    testPruner(5, 0, 2, 5);
   }
 
   @Test
   public void pruner_markChainhead() {
-    testPruner(4, 2, 1, 10, 20);
+    testPruner(4, 2, 1, 10);
   }
 
   @Test
   public void pruner_lowRelativeBlockConfirmations() {
-    testPruner(3, 2, 1, 4, 20);
+    testPruner(3, 2, 1, 4);
   }
 
   @Test
   public void pruner_highRelativeBlockConfirmations() {
-    testPruner(3, 2, 9, 10, 20);
+    testPruner(3, 2, 9, 10);
   }
 
   private void testPruner(
       final int numCycles,
       final int accountsPerBlock,
       final int blockConfirmations,
-      final int numBlocksToKeep,
-      final int opsPerTransaction) {
+      final int numBlocksToKeep) {
 
     final var markSweepPruner =
-        new MarkSweepPruner(
-            worldStateStorage, blockchain, markStorage, metricsSystem, opsPerTransaction);
+        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
     final var pruner =
         new Pruner(
             markSweepPruner,
