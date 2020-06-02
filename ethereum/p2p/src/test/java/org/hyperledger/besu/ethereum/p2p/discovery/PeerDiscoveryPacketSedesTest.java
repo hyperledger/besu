@@ -70,11 +70,9 @@ public class PeerDiscoveryPacketSedesTest {
     final FindNeighborsPacketData deserialized =
         FindNeighborsPacketData.readFrom(RLP.input(serialized));
     assertThat(deserialized.getTarget()).isEqualTo(target);
-    // Fuzziness: allow a skew of 1.5 seconds between the time the message was generated until the
+    // Fuzziness: allow a skew of 2 seconds between the time the message was generated until the
     // assertion.
-    assertThat(deserialized.getExpiration())
-        .isCloseTo(
-            System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS, offset(1500L));
+    assertThat(deserialized.getExpiration()).isCloseTo(PacketData.defaultExpiration(), offset(2L));
   }
 
   @Test
@@ -87,11 +85,9 @@ public class PeerDiscoveryPacketSedesTest {
 
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
     assertThat(deserialized.getNodes()).isEqualTo(peers);
-    // Fuzziness: allow a skew of 1.5 seconds between the time the message was generated until the
+    // Fuzziness: allow a skew of 2 seconds between the time the message was generated until the
     // assertion.
-    assertThat(deserialized.getExpiration())
-        .isCloseTo(
-            System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS, offset(1500L));
+    assertThat(deserialized.getExpiration()).isCloseTo(PacketData.defaultExpiration(), offset(2L));
   }
 
   @Test(expected = RLPException.class)

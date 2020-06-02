@@ -132,8 +132,8 @@ public class AcceptanceTestBase {
 
   @After
   public void tearDownAcceptanceTestBase() {
-    cluster.close();
     reportMemory();
+    cluster.close();
   }
 
   public void reportMemory() {

@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthGetWorkTransaction;
@@ -30,8 +31,13 @@ public class SanityCheckEthGetWorkValues implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final String[] response = node.execute(transaction);
-    assertThat(response).hasSize(3);
-    assertThat(response).doesNotContainNull();
+    // EthGetWork _can_ return "no work" error, if the next block solution is yet to be calculated.
+    WaitUtils.waitFor(
+        5,
+        () -> {
+          final String[] response = node.execute(transaction);
+          assertThat(response).hasSize(3);
+          assertThat(response).doesNotContainNull();
+        });
   }
 }
