@@ -225,7 +225,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     validationResult =
         transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
-      LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
+      LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
       return Result.invalid(validationResult);
     }
 
