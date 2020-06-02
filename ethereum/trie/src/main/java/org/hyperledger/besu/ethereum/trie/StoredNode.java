@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -43,6 +44,16 @@ class StoredNode implements Node {
   public void markDirty() {
     throw new IllegalStateException(
         "A stored node cannot ever be dirty since it's loaded from storage");
+  }
+
+  /**
+   * TODO: This is added to appease the compile Gods. If everything works, this entire class goes
+   * away.
+   */
+  @Override
+  public Stream<Bytes32> accept(final StreamNodesVisitor visitor) {
+    final Node node = load();
+    return node.accept(visitor);
   }
 
   @Override

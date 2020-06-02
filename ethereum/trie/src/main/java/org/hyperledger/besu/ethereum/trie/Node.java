@@ -16,11 +16,14 @@ package org.hyperledger.besu.ethereum.trie;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public interface Node {
+
+  Stream<Bytes32> accept(StreamNodesVisitor visitor);
 
   Node accept(PathNodeVisitor visitor, Bytes path);
 

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -28,6 +29,11 @@ class NullNode implements Node {
 
   static NullNode instance() {
     return instance;
+  }
+
+  @Override
+  public Stream<Bytes32> accept(final StreamNodesVisitor visitor) {
+    return visitor.visit(this);
   }
 
   @Override

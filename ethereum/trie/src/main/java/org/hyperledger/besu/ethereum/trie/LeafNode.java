@@ -24,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -40,6 +41,11 @@ class LeafNode implements Node {
     this.path = path;
     this.value = value;
     this.nodeFactory = nodeFactory;
+  }
+
+  @Override
+  public Stream<Bytes32> accept(final StreamNodesVisitor visitor) {
+    return visitor.visit(this);
   }
 
   @Override

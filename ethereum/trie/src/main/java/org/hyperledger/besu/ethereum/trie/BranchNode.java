@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -50,6 +51,11 @@ class BranchNode implements Node {
     this.children = children;
     this.value = value;
     this.nodeFactory = nodeFactory;
+  }
+
+  @Override
+  public Stream<Bytes32> accept(final StreamNodesVisitor visitor) {
+    return visitor.visit(this);
   }
 
   @Override
