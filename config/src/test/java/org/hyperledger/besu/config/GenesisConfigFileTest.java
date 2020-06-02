@@ -338,6 +338,26 @@ public class GenesisConfigFileTest {
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
   }
 
+  @Test
+  public void shouldLoadForksIgnoreClassicForkBlock() throws IOException {
+    final ObjectNode configNode =
+        new ObjectMapper()
+            .createObjectNode()
+            .set(
+                "config",
+                JsonUtil.objectNodeFromString(
+                    Resources.toString(
+                        Resources.getResource(
+                            // If you inspect this config, you should see that classicForkBlock is
+                            // declared (which we want to ignore)
+                            "valid_config_with_etc_forks.json"),
+                        StandardCharsets.UTF_8)));
+    final GenesisConfigFile config = fromConfig(configNode);
+
+    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 3L, 1035301L);
+    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(61));
+  }
+
   private GenesisConfigFile configWithProperty(final String key, final String value) {
     return fromConfig("{\"" + key + "\":\"" + value + "\"}");
   }

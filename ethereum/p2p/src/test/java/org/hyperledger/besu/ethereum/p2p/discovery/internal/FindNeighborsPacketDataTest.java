@@ -20,13 +20,15 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Instant;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class FindNeighborsPacketDataTest {
   @Test
   public void serializeDeserialize() {
-    final long time = System.currentTimeMillis();
+    final long timeSec = Instant.now().getEpochSecond();
     final Bytes target = Peer.randomId();
 
     final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
@@ -35,7 +37,7 @@ public class FindNeighborsPacketDataTest {
         FindNeighborsPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getTarget()).isEqualTo(target);
-    assertThat(deserialized.getExpiration()).isGreaterThan(time);
+    assertThat(deserialized.getExpiration()).isGreaterThan(timeSec);
   }
 
   @Test
