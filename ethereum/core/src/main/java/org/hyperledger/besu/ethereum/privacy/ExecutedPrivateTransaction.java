@@ -30,20 +30,25 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
   private final long blockNumber;
   private final Hash pmtHash;
   private final int pmtIndex;
+  private final String internalPrivacyGroup;
 
   ExecutedPrivateTransaction(final BlockHeader blockHeader, final Transaction pmt,
-      final TransactionLocation pmtLocation, final PrivateTransaction privateTransaction) {
+      final TransactionLocation pmtLocation, final String internalPrivacyGroup,
+      final PrivateTransaction privateTransaction) {
     this(blockHeader.getHash(), blockHeader.getNumber(), pmt.getHash(),
-        pmtLocation.getTransactionIndex(), privateTransaction);
+        pmtLocation.getTransactionIndex(), internalPrivacyGroup, privateTransaction);
   }
 
   ExecutedPrivateTransaction(final Hash blockHash, final long blockNumber,
-      final Hash pmtHash, final int pmtIndex, final PrivateTransaction privateTransaction) {
+      final Hash pmtHash, final int pmtIndex, final String internalPrivacyGroupId,
+      final PrivateTransaction privateTransaction) {
     super(privateTransaction);
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.pmtHash = pmtHash;
     this.pmtIndex = pmtIndex;
+    this.internalPrivacyGroup = internalPrivacyGroupId;
+
   }
 
   public Hash getBlockHash() {
@@ -60,6 +65,17 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
 
   public int getPmtIndex() {
     return pmtIndex;
+  }
+
+  /**
+   * Legacy transactions don't have the privacyGroupId as part of their RLP data. The internal
+   * privacy group id is returned from the Enclave. We are keeping it separate from the
+   * 'getPrivacyGroup()' to differentiate legacy transactions.
+   *
+   * @return the privacy group id
+   */
+  public String getInternalPrivacyGroup() {
+    return internalPrivacyGroup;
   }
 
   @Override
@@ -79,11 +95,13 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
     return blockNumber == that.blockNumber &&
         pmtIndex == that.pmtIndex &&
         blockHash.equals(that.blockHash) &&
-        pmtHash.equals(that.pmtHash);
+        pmtHash.equals(that.pmtHash) &&
+        internalPrivacyGroup.equals((that.internalPrivacyGroup));
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), blockHash, blockNumber, pmtHash, pmtIndex);
+    return Objects
+        .hash(super.hashCode(), blockHash, blockNumber, pmtHash, pmtIndex, internalPrivacyGroup);
   }
 }

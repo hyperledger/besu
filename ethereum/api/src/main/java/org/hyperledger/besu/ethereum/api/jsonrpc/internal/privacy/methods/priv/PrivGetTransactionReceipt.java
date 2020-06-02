@@ -146,15 +146,17 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   }
 
   private String calculateContractAddress(final ExecutedPrivateTransaction privateTransaction) {
-    if (privateTransaction.getPrivacyGroupId().isEmpty()) {
-      LOG.warn(">>> NO PRIVACY GROUP ID <<<");
+    if (privateTransaction.getTo().isEmpty()) {
+      final Address sender = privateTransaction.getSender();
+      final long nonce = privateTransaction.getNonce();
+      final Bytes privacyGroupId = privateTransaction.getPrivacyGroupId().orElse(Bytes
+          .fromBase64String(privateTransaction.getInternalPrivacyGroup()));
+      final Address contractAddress = Address.privateContractAddress(sender, nonce, privacyGroupId);
+
+      return contractAddress.toString();
+    } else {
+      return null;
     }
-    return privateTransaction.getTo().isEmpty()
-        ? Address.privateContractAddress(
-        privateTransaction.getSender(),
-        privateTransaction.getNonce(),
-        privateTransaction.getPrivacyGroupId().orElse(Bytes32.EMPTY)).toString()
-        : null;
   }
 
   private Optional<? extends PrivateTransactionReceipt> findPrivateReceiptByPrivateTxHash(

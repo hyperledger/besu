@@ -80,14 +80,15 @@ public class PrivateTransactionLocator {
       Therefore, using orElseThrow here makes sense
      */
     final TransactionLocation pmtLocation = maybePmtLocation.get();
+    final Transaction pmt = blockchain.getTransactionByHash(pmtHash).orElseThrow();
     final BlockHeader blockHeader = blockchain.getBlockHeader(pmtLocation.getBlockHash())
         .orElseThrow();
-    final Transaction pmt = blockchain.getTransactionByHash(pmtHash).orElseThrow();
     final String payloadKey = readPayloadKeyFromPmt(pmt);
 
     return tryFetchingPrivateTransactionFromEnclave(payloadKey, enclaveKey)
         .or(() -> tryFetchingTransactionFromAddBlob(blockHeader.getHash(), pmtHash, enclaveKey))
-        .map(tx -> new ExecutedPrivateTransaction(blockHeader, pmt, pmtLocation, tx));
+        .map(tx -> new ExecutedPrivateTransaction(blockHeader, pmt, pmtLocation,
+            tx.getExternalPrivacyGroupId(), tx.getPrivateTransaction()));
   }
 
   private String readPayloadKeyFromPmt(final Transaction privacyMarkerTx) {
@@ -103,9 +104,8 @@ public class PrivateTransactionLocator {
    * @return an optional containing the private transaction, if found. Or an empty optional if the
    * private transaction couldnt' be found.
    */
-  private Optional<PrivateTransaction> tryFetchingPrivateTransactionFromEnclave(
-      final String payloadKey,
-      final String enclaveKey) {
+  private Optional<TransactionFromEnclave> tryFetchingPrivateTransactionFromEnclave(
+      final String payloadKey, final String enclaveKey) {
     return retrievePayloadFromEnclave(payloadKey, enclaveKey)
         .map(this::readPrivateTransactionFromPayload);
   }
@@ -124,7 +124,7 @@ public class PrivateTransactionLocator {
     }
   }
 
-  private PrivateTransaction readPrivateTransactionFromPayload(
+  private TransactionFromEnclave readPrivateTransactionFromPayload(
       final ReceiveResponse receiveResponse) {
     final PrivateTransaction privateTransaction;
     final BytesValueRLPInput input = new BytesValueRLPInput(
@@ -151,10 +151,11 @@ public class PrivateTransactionLocator {
       throw e;
     }
 
-    return privateTransaction;
+    return new TransactionFromEnclave(privateTransaction, receiveResponse.getPrivacyGroupId());
   }
 
-  private Optional<PrivateTransaction> tryFetchingTransactionFromAddBlob(final Bytes32 blockHash,
+  private Optional<TransactionFromEnclave> tryFetchingTransactionFromAddBlob(
+      final Bytes32 blockHash,
       final Hash expectedPmtHash, final String enclaveKey) {
     LOG.trace("Fetching transaction information from add blob");
 
@@ -186,7 +187,8 @@ public class PrivateTransactionLocator {
                     .getPrivacyMarkerTransactionHash();
 
             if (expectedPmtHash.equals(actualPrivacyMarkerTransactionHash)) {
-              return Optional.of(privateTx.getPrivateTransaction());
+              return Optional.of(new TransactionFromEnclave(privateTx.getPrivateTransaction(),
+                  receiveResponse.get().getPrivacyGroupId()));
             }
           }
         }
@@ -207,5 +209,24 @@ public class PrivateTransactionLocator {
     }
     bytesValueRLPInput.leaveList();
     return deserializedResponse;
+  }
+
+  private class TransactionFromEnclave {
+    private final PrivateTransaction privateTransaction;
+    private final String externalPrivacyGroupId;
+
+    public TransactionFromEnclave(final PrivateTransaction privateTransaction,
+        final String externalPrivacyGroupId) {
+      this.privateTransaction = privateTransaction;
+      this.externalPrivacyGroupId = externalPrivacyGroupId;
+    }
+
+    public PrivateTransaction getPrivateTransaction() {
+      return privateTransaction;
+    }
+
+    public String getExternalPrivacyGroupId() {
+      return externalPrivacyGroupId;
+    }
   }
 }
