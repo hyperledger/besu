@@ -19,7 +19,7 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContractConfiguration;
@@ -36,7 +36,7 @@ public class AbstractPrecompiledContractTest {
         registryFactory
             .apply(
                 new PrecompiledContractConfiguration(
-                    new BerlinGasCalculator(), PrivacyParameters.DEFAULT))
+                    new IstanbulGasCalculator(), PrivacyParameters.DEFAULT))
             .get(precompiledAddress, Account.DEFAULT_VERSION);
   }
 }
