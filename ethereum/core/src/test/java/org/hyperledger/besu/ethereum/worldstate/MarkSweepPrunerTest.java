@@ -117,7 +117,7 @@ public class MarkSweepPrunerTest {
   @Test
   public void sweepBefore_shouldSweepStateRootFirst() {
     final MarkSweepPruner pruner =
-        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem, 1);
+        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
 
     // Generate accounts and save corresponding state root
     final int numBlocks = 15;
@@ -148,7 +148,7 @@ public class MarkSweepPrunerTest {
   @Test
   public void sweepBefore_shouldNotRemoveMarkedStateRoots() {
     final MarkSweepPruner pruner =
-        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem, 1);
+        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
 
     // Generate accounts and save corresponding state root
     final int numBlocks = 15;
