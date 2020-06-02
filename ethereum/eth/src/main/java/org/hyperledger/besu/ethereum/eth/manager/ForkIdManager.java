@@ -43,21 +43,21 @@ public class ForkIdManager {
     assert blockchain != null && forks != null;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     this.forkAndHashList = new ArrayList<>();
+    final ForkIDChecker legacyForkIdChecker =
+        createForkIDChecker(
+            blockchain,
+            genesisHash,
+            forks,
+            fs ->
+                fs.stream()
+                    .filter(fork -> fork > 0)
+                    .distinct()
+                    .collect(Collectors.toUnmodifiableList()),
+            forkAndHashList);
     // if the fork list contains only zeros then we may be in a consortium/dev network
     if (onlyZerosForkBlocks(forks)) {
       this.forkIDCheckers = singletonList(forkId -> true);
     } else {
-      final ForkIDChecker legacyForkIdChecker =
-          createForkIDChecker(
-              blockchain,
-              genesisHash,
-              forks,
-              fs ->
-                  fs.stream()
-                      .filter(fork -> fork > 0)
-                      .distinct()
-                      .collect(Collectors.toUnmodifiableList()),
-              forkAndHashList);
       final ForkIDChecker newForkIdChecker =
           createForkIDChecker(
               blockchain,
