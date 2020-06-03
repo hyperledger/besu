@@ -87,7 +87,7 @@ public class Code {
     if (!destination.fitsInt()) return false;
 
     final int jumpDestination = destination.intValue();
-    if (jumpDestination > getSize()) return false;
+    if (jumpDestination >= getSize()) return false;
 
     if (validJumpDestinations == null) {
       // Calculate valid jump destinations
@@ -116,7 +116,7 @@ public class Code {
       final EVM evm, final MessageFrame frame, final UInt256 destination) {
     if (!destination.fitsInt()) return false;
     final int jumpDestination = destination.intValue();
-    if (jumpDestination > getSize()) return false;
+    if (jumpDestination >= getSize()) return false;
 
     if (validJumpSubDestinations == null) {
       // Calculate valid jump destinations
