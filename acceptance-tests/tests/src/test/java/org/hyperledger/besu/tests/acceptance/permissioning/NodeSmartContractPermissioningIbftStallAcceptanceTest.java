@@ -31,7 +31,6 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
   private static final String GENESIS_FILE =
       "/permissioning/simple_permissioning_ibft_genesis.json";
 
-  @Ignore("Temorarily disabled: See hyperledger/besu#1011")
   @Test
   public void restartedIbftClusterShouldNotStall() throws IOException {
     final BesuNode bootnode = besu.createIbft2NonValidatorBootnode("bootnode", GENESIS_FILE);
