@@ -22,7 +22,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class NodeSmartContractPermissioningIbftStallAcceptanceTest
