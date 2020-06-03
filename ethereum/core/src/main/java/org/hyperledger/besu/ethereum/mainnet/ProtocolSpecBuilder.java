@@ -213,39 +213,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder changeConsensusContextType(
-      final BlockHeaderValidator.Builder blockHeaderValidatorBuilder,
-      final BlockHeaderValidator.Builder ommerHeaderValidatorBuilder,
-      final Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder,
-      final BlockValidatorBuilder blockValidatorBuilder,
-      final BlockImporterBuilder blockImporterBuilder,
-      final DifficultyCalculator difficultyCalculator) {
-    return new ProtocolSpecBuilder()
-        .gasCalculator(gasCalculatorBuilder)
-        .evmBuilder(evmBuilder)
-        .transactionValidatorBuilder(transactionValidatorBuilder)
-        .privateTransactionValidatorBuilder(privateTransactionValidatorBuilder)
-        .contractCreationProcessorBuilder(contractCreationProcessorBuilder)
-        .privacyParameters(privacyParameters)
-        .precompileContractRegistryBuilder(precompileContractRegistryBuilder)
-        .messageCallProcessorBuilder(messageCallProcessorBuilder)
-        .transactionProcessorBuilder(transactionProcessorBuilder)
-        .privateTransactionProcessorBuilder(privateTransactionProcessorBuilder)
-        .blockHeaderValidatorBuilder(blockHeaderValidatorBuilder)
-        .ommerHeaderValidatorBuilder(ommerHeaderValidatorBuilder)
-        .blockBodyValidatorBuilder(blockBodyValidatorBuilder)
-        .blockProcessorBuilder(blockProcessorBuilder)
-        .blockValidatorBuilder(blockValidatorBuilder)
-        .blockImporterBuilder(blockImporterBuilder)
-        .blockHeaderFunctions(blockHeaderFunctions)
-        .blockReward(blockReward)
-        .skipZeroBlockRewards(skipZeroBlockRewards)
-        .difficultyCalculator(difficultyCalculator)
-        .transactionReceiptFactory(transactionReceiptFactory)
-        .miningBeneficiaryCalculator(miningBeneficiaryCalculator)
-        .name(name);
-  }
-
   public ProtocolSpecBuilder transactionPriceCalculator(
       final TransactionPriceCalculator transactionPriceCalculator) {
     this.transactionPriceCalculator = transactionPriceCalculator;
