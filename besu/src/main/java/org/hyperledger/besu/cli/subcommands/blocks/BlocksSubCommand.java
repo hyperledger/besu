@@ -44,7 +44,11 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
@@ -56,6 +60,7 @@ import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
@@ -79,17 +84,16 @@ public class BlocksSubCommand implements Runnable {
   @Spec
   private CommandSpec spec; // Picocli injects reference to command spec
 
-  private final RlpBlockImporter rlpBlockImporter;
-  private final JsonBlockImporterFactory jsonBlockImporterFactory;
-
-  private final RlpBlockExporterFactory rlpBlockExporterFactory;
+  private final Supplier<RlpBlockImporter> rlpBlockImporter;
+  private final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory;
+  private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   private final PrintStream out;
 
   public BlocksSubCommand(
-      final RlpBlockImporter rlpBlockImporter,
-      final JsonBlockImporterFactory jsonBlockImporterFactory,
-      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final Supplier<RlpBlockImporter> rlpBlockImporter,
+      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final PrintStream out) {
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -116,13 +120,18 @@ public class BlocksSubCommand implements Runnable {
     @ParentCommand
     private BlocksSubCommand parentCommand; // Picocli injects reference to parent command
 
+    @Parameters(
+        paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+        description = "Files containing blocks to import.",
+        arity = "0..*")
+    private final List<Path> blockImportFiles = new ArrayList<>();
+
     @Option(
         names = "--from",
-        required = true,
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File containing blocks to import.",
-        arity = "1..1")
-    private final File blocksImportFile = null;
+        arity = "0..*")
+    private final List<Path> blockImportFileOption = blockImportFiles;
 
     @Option(
         names = "--format",
@@ -150,37 +159,48 @@ public class BlocksSubCommand implements Runnable {
     @Override
     public void run() {
       parentCommand.parentCommand.configureLogging(false);
-      LOG.info("Import {} block data from {}", format, blocksImportFile);
 
       checkCommand(parentCommand);
       checkNotNull(parentCommand.rlpBlockImporter);
       checkNotNull(parentCommand.jsonBlockImporterFactory);
-
+      if (blockImportFileOption.isEmpty()) {
+        throw new ParameterException(spec.commandLine(), "No files specified to import.");
+      }
+      LOG.info("Import {} block data from {} files", format, blockImportFiles.size());
       final Optional<MetricsService> metricsService = initMetrics(parentCommand);
 
-      try {
-        // As blocksImportFile even if initialized as null is injected by PicoCLI and param is
-        // mandatory. So we are sure it's always not null, we can remove the warning.
-        //noinspection ConstantConditions
-        final Path path = blocksImportFile.toPath();
-        final BesuController<?> controller = createController();
-        switch (format) {
-          case RLP:
-            importRlpBlocks(controller, path);
-            break;
-          case JSON:
-            importJsonBlocks(controller, path);
-            break;
-          default:
-            throw new ParameterException(
-                spec.commandLine(), "Unsupported format: " + format.toString());
+      try (final BesuController<?> controller = createController()) {
+        for (final Path path : blockImportFiles) {
+          try {
+            LOG.info("Importing from {}", path);
+
+            switch (format) {
+              case RLP:
+                importRlpBlocks(controller, path);
+                break;
+              case JSON:
+                importJsonBlocks(controller, path);
+                break;
+              default:
+                throw new ParameterException(
+                    spec.commandLine(), "Unsupported format: " + format.toString());
+            }
+          } catch (final FileNotFoundException e) {
+            if (blockImportFiles.size() == 1) {
+              throw new ExecutionException(
+                  spec.commandLine(), "Could not find file to import: " + path);
+            } else {
+              LOG.error("Could not find file to import: {}", path);
+            }
+          } catch (final Exception e) {
+            if (blockImportFiles.size() == 1) {
+              throw new ExecutionException(
+                  spec.commandLine(), "Unable to import blocks from " + path, e);
+            } else {
+              LOG.error("Unable to import blocks from " + path, e);
+            }
+          }
         }
-      } catch (final FileNotFoundException e) {
-        throw new ExecutionException(
-            spec.commandLine(), "Could not find file to import: " + blocksImportFile);
-      } catch (final IOException e) {
-        throw new ExecutionException(
-            spec.commandLine(), "Unable to import blocks from " + blocksImportFile, e);
       } finally {
         metricsService.ifPresent(MetricsService::stop);
       }
@@ -224,17 +244,20 @@ public class BlocksSubCommand implements Runnable {
           0.0);
     }
 
-    private <T> void importJsonBlocks(final BesuController<T> controller, final Path path)
+    private void importJsonBlocks(final BesuController<?> controller, final Path path)
         throws IOException {
 
-      final JsonBlockImporter<T> importer = parentCommand.jsonBlockImporterFactory.get(controller);
+      final JsonBlockImporter<?> importer =
+          parentCommand.jsonBlockImporterFactory.apply(controller);
       final String jsonData = Files.readString(path);
       importer.importChain(jsonData);
     }
 
-    private <T> void importRlpBlocks(final BesuController<T> controller, final Path path)
+    private void importRlpBlocks(final BesuController<?> controller, final Path path)
         throws IOException {
-      parentCommand.rlpBlockImporter.importBlockchain(path, controller, skipPow);
+      try (final RlpBlockImporter rlpBlockImporter = parentCommand.rlpBlockImporter.get()) {
+        rlpBlockImporter.importBlockchain(path, controller, skipPow);
+      }
     }
   }
 
@@ -318,7 +341,7 @@ public class BlocksSubCommand implements Runnable {
     private void exportRlpFormat(final BesuController<?> controller) throws IOException {
       final ProtocolContext<?> context = controller.getProtocolContext();
       final RlpBlockExporter exporter =
-          parentCommand.rlpBlockExporterFactory.get(context.getBlockchain());
+          parentCommand.rlpBlockExporterFactory.apply(context.getBlockchain());
       exporter.exportBlocks(blocksExportFile, getStartBlock(), getEndBlock());
     }
 
@@ -401,15 +424,5 @@ public class BlocksSubCommand implements Runnable {
       metricsService.ifPresent(MetricsService::start);
     }
     return metricsService;
-  }
-
-  @FunctionalInterface
-  public interface JsonBlockImporterFactory {
-    <T> JsonBlockImporter<T> get(BesuController<T> controller);
-  }
-
-  @FunctionalInterface
-  public interface RlpBlockExporterFactory {
-    RlpBlockExporter get(Blockchain blockchain);
   }
 }
