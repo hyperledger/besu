@@ -26,7 +26,7 @@ import java.util.Optional;
 
 public class BeginSubOperation extends AbstractOperation {
 
-  public static final int OPCODE = 0xb2;
+  public static final int OPCODE = 0x5c;
 
   public BeginSubOperation(final GasCalculator gasCalculator) {
     super(OPCODE, "BEGINSUB", 0, 0, false, 1, gasCalculator);
@@ -34,7 +34,7 @@ public class BeginSubOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBeginSubGasCost();
+    return gasCalculator().getBaseTierGasCost();
   }
 
   @Override

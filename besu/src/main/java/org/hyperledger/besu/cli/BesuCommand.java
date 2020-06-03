@@ -33,6 +33,8 @@ import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAU
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -54,8 +56,6 @@ import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImporterFactory;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.RlpBlockExporterFactory;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
@@ -72,6 +72,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -79,6 +80,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -149,6 +151,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -194,9 +197,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private CommandLine commandLine;
 
-  private final RlpBlockImporter rlpBlockImporter;
-  private final JsonBlockImporterFactory jsonBlockImporterFactory;
-  private final RlpBlockExporterFactory rlpBlockExporterFactory;
+  private final Supplier<RlpBlockImporter> rlpBlockImporter;
+  private final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory;
+  private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   final NetworkingOptions networkingOptions = NetworkingOptions.create();
   final SynchronizerOptions synchronizerOptions = SynchronizerOptions.create();
@@ -978,6 +981,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Boolean nativeAltbn128 = Boolean.TRUE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xhttp-timeout-seconds"},
+      description = "HTTP timeout in seconds (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -993,9 +1003,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuCommand(
       final Logger logger,
-      final RlpBlockImporter rlpBlockImporter,
-      final JsonBlockImporterFactory jsonBlockImporterFactory,
-      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final Supplier<RlpBlockImporter> rlpBlockImporter,
+      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
@@ -1016,9 +1026,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @VisibleForTesting
   protected BesuCommand(
       final Logger logger,
-      final RlpBlockImporter rlpBlockImporter,
-      final JsonBlockImporterFactory jsonBlockImporterFactory,
-      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final Supplier<RlpBlockImporter> rlpBlockImporter,
+      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
@@ -1433,6 +1443,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration.setPort(graphQLHttpPort);
     graphQLConfiguration.setHostsWhitelist(hostsWhitelist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+    graphQLConfiguration.setHttpTimeoutSec(httpTimeoutSec);
 
     return graphQLConfiguration;
   }
@@ -1481,6 +1492,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+    jsonRpcConfiguration.setHttpTimeoutSec(httpTimeoutSec);
     return jsonRpcConfiguration;
   }
 
@@ -1773,6 +1785,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
+
+      if (isPrivacyMultiTenancyEnabled && isOnchainPrivacyGroupEnabled) {
+        throw new ParameterException(
+            commandLine,
+            "Privacy multi-tenancy and onchain privacy groups cannot be used together");
+      }
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {

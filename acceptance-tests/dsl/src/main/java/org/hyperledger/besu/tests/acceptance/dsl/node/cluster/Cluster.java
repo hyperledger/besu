@@ -95,6 +95,7 @@ public class Cluster implements AutoCloseable {
         node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
       }
     }
+    LOG.info("Cluster startup complete.");
   }
 
   private Optional<? extends RunnableNode> selectAndStartBootnode(

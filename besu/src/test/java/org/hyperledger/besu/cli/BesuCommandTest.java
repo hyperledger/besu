@@ -752,7 +752,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void envVariableOverridesValueFromConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
-    setEnvironemntVariable("BESU_MINER_COINBASE", expectedCoinbase);
+    setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
     parseCommand("--config-file", configFile);
 
     verify(mockControllerBuilder)
@@ -768,7 +768,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void cliOptionOverridesEnvVariableAndConfig() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
-    setEnvironemntVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
+    setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
     parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
 
     verify(mockControllerBuilder)
@@ -2921,6 +2921,20 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
     assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void onchainPrivacyAndMultiTenancyCannotBeUsedTogether() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-onchain-groups-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file",
+        "--rpc-http-authentication-enabled");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Privacy multi-tenancy and onchain privacy groups cannot be used together");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {

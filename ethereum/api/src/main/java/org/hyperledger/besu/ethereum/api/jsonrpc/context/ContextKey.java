@@ -12,17 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.api.jsonrpc.context;
 
-import org.hyperledger.besu.ethereum.core.Gas;
+import java.util.function.Supplier;
 
-public class BerlinGasCalculator extends IstanbulGasCalculator {
+import io.vertx.ext.web.RoutingContext;
 
-  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(1);
+public enum ContextKey {
+  REQUEST_BODY_AS_JSON_OBJECT;
 
-  @Override
-  // as https://eips.ethereum.org/EIPS/eip-2315
-  public Gas getBeginSubGasCost() {
-    return BEGIN_SUB_GAS_COST;
+  public <T> T extractFrom(final RoutingContext ctx, final Supplier<T> defaultSupplier) {
+    final T value = ctx.get(this.name());
+    return value != null ? value : defaultSupplier.get();
   }
 }

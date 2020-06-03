@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Logger;
 
 /** Tool for importing rlp-encoded block data from files. */
-public class RlpBlockImporter {
+public class RlpBlockImporter implements Closeable {
   private static final Logger LOG = getLogger();
 
   private final Semaphore blockBacklog = new Semaphore(2);
@@ -133,20 +134,6 @@ public class RlpBlockImporter {
       }
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
-    } finally {
-      validationExecutor.shutdownNow();
-      try {
-        validationExecutor.awaitTermination(5, SECONDS);
-      } catch (final Exception e) {
-        LOG.error("Error shutting down validatorExecutor.", e);
-      }
-      importExecutor.shutdownNow();
-      try {
-        importExecutor.awaitTermination(5, SECONDS);
-      } catch (final Exception e) {
-        LOG.error("Error shutting down importExecutor", e);
-      }
-      besuController.close();
     }
   }
 
@@ -216,6 +203,23 @@ public class RlpBlockImporter {
                     String.format(
                         "Block %s does not connect to the existing chain. Current chain head %s",
                         header.getNumber(), blockchain.getChainHeadBlockNumber())));
+  }
+
+  @Override
+  public void close() {
+    validationExecutor.shutdownNow();
+    try {
+      validationExecutor.awaitTermination(5, SECONDS);
+    } catch (final Exception e) {
+      LOG.error("Error shutting down validatorExecutor.", e);
+    }
+
+    importExecutor.shutdownNow();
+    try {
+      importExecutor.awaitTermination(5, SECONDS);
+    } catch (final Exception e) {
+      LOG.error("Error shutting down importExecutor", e);
+    }
   }
 
   public static final class ImportResult {
