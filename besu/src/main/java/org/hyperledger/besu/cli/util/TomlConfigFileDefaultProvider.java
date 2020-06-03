@@ -20,11 +20,13 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlArray;
 import org.apache.tuweni.toml.TomlParseError;
 import org.apache.tuweni.toml.TomlParseResult;
 import picocli.CommandLine;
@@ -55,11 +57,16 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
+    // NOTE: This temporary fix is necessary to make certain options be treated as a multi-value.
+    // This can be done automatically by picocli if the object implements Collection.
+    final boolean isArray =
+        getKeyName(optionSpec).map(keyName -> result.isArray(keyName)).orElse(false);
     final String defaultValue;
+
     // Convert config values to the right string representation for default string value
     if (optionSpec.type().equals(Boolean.class)) {
       defaultValue = getBooleanEntryAsString(optionSpec);
-    } else if (optionSpec.isMultiValue()) {
+    } else if (optionSpec.isMultiValue() || isArray) {
       defaultValue = getListEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Integer.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
@@ -93,12 +100,22 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     // returns the string representation of the array value of the config line in CLI format
     // corresponding to the option in toml file
     // or null if not present in the config
-    return getKeyName(spec)
-        .map(result::getArray)
+    return decodeTomlArray(
+        getKeyName(spec).map(result::getArray).map(tomlArray -> tomlArray.toList()).orElse(null));
+  }
+
+  private String decodeTomlArray(final List<Object> tomlArrayElements) {
+    if (tomlArrayElements == null) return null;
+    return tomlArrayElements.stream()
         .map(
-            tomlArray ->
-                tomlArray.toList().stream().map(Object::toString).collect(Collectors.joining(",")))
-        .orElse(null);
+            tomlObject -> {
+              if (tomlObject instanceof TomlArray) {
+                return "[".concat(decodeTomlArray(((TomlArray) tomlObject).toList())).concat("]");
+              } else {
+                return tomlObject.toString();
+              }
+            })
+        .collect(Collectors.joining(","));
   }
 
   private String getBooleanEntryAsString(final OptionSpec spec) {
