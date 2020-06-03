@@ -70,6 +70,7 @@ public class PrivateTransactionLocator {
    * @param pmtHash the hash of the PMT associated with the private transaction
    * @param enclaveKey participant public key that must match the private key used to decrypt the
    *     payload
+   * @return An executed private transaction
    */
   public Optional<ExecutedPrivateTransaction> findByPmtHash(
       final Hash pmtHash, final String enclaveKey) {
