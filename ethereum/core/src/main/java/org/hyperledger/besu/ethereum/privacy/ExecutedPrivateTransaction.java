@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * This class represents a private transaction that has been executed. Therefore, it contains the
  * original private transaction data plus information about the associated PMT and its block.
@@ -48,7 +50,8 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
         privateTransaction);
   }
 
-  ExecutedPrivateTransaction(
+  @VisibleForTesting
+  public ExecutedPrivateTransaction(
       final Hash blockHash,
       final long blockNumber,
       final Hash pmtHash,
