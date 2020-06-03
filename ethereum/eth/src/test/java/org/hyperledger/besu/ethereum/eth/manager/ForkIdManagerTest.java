@@ -384,27 +384,6 @@ public class ForkIdManagerTest {
   @Test
   public void assertThatConstructorParametersMustNotBeNull() {
     assertThatThrownBy(() -> new ForkIdManager(mockBlockchain(consortiumNetworkGenHash, 0), null))
-        .isExactlyInstanceOf(AssertionError.class);
-  }
-
-  @Test
-  public void checkBackwardCompatibility() {
-    final List<Long> list = Arrays.asList(0L, 1L, 2L, 0L, 3L, 4L);
-    final ForkIdManager forkIdManager = new ForkIdManager(mockBlockchain(mainnetGenHash, 0), list);
-    assertThat(forkIdManager.getLegacyForkAndHashList())
-        .containsExactly(
-            new ForkId(Bytes.fromHexString("0xfc64ec04"), 1),
-            new ForkId(Bytes.fromHexString("0x4ccedd76"), 2),
-            new ForkId(Bytes.fromHexString("0x9de68e5b"), 3),
-            new ForkId(Bytes.fromHexString("0xc5c5ebd2"), 4),
-            new ForkId(Bytes.fromHexString("0x47007050"), 0));
-    assertThat(forkIdManager.getForkAndHashList())
-        .containsExactly(
-            new ForkId(Bytes.fromHexString("0xfc64ec04"), 0),
-            new ForkId(Bytes.fromHexString("0x3bc9ede0"), 1),
-            new ForkId(Bytes.fromHexString("0x1394cba2"), 2),
-            new ForkId(Bytes.fromHexString("0x0ce92cc2"), 3),
-            new ForkId(Bytes.fromHexString("0x380e3a3a"), 4),
-            new ForkId(Bytes.fromHexString("0xd10a3cee"), 0));
+        .isExactlyInstanceOf(NullPointerException.class);
   }
 }

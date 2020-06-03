@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
@@ -35,44 +37,42 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ForkIdManager {
 
   private final Hash genesisHash;
-
-  private final List<ForkId> legacyForkAndHashList;
   private final List<ForkId> forkAndHashList;
 
-  private final List<ForkIDChecker> forkIDCheckers;
+  private final List<Predicate<ForkId>> forkIDCheckers;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
-    assert blockchain != null && forks != null;
+    checkNotNull(blockchain);
+    checkNotNull(forks);
     this.genesisHash = blockchain.getGenesisBlock().getHash();
-    this.legacyForkAndHashList = new ArrayList<>();
     this.forkAndHashList = new ArrayList<>();
+    final Predicate<ForkId> legacyForkIdChecker =
+        createForkIDChecker(
+            blockchain,
+            genesisHash,
+            forks,
+            fs ->
+                fs.stream()
+                    .filter(fork -> fork > 0)
+                    .distinct()
+                    .collect(Collectors.toUnmodifiableList()),
+            forkAndHashList);
     // if the fork list contains only zeros then we may be in a consortium/dev network
     if (onlyZerosForkBlocks(forks)) {
       this.forkIDCheckers = singletonList(forkId -> true);
     } else {
-      final ForkIDChecker legacyForkIdChecker =
-          createForkIDChecker(
-              blockchain,
-              genesisHash,
-              forks,
-              fs ->
-                  fs.stream()
-                      .filter(fork -> fork > 0)
-                      .distinct()
-                      .collect(Collectors.toUnmodifiableList()),
-              legacyForkAndHashList);
-      final ForkIDChecker newForkIdChecker =
+      final Predicate<ForkId> newForkIdChecker =
           createForkIDChecker(
               blockchain,
               genesisHash,
               forks,
               fs -> fs.stream().distinct().collect(Collectors.toUnmodifiableList()),
-              forkAndHashList);
+              new ArrayList<>());
       this.forkIDCheckers = Arrays.asList(newForkIdChecker, legacyForkIdChecker);
     }
   }
 
-  private static ForkIDChecker createForkIDChecker(
+  private static Predicate<ForkId> createForkIDChecker(
       final Blockchain blockchain,
       final Hash genesisHash,
       final List<Long> forks,
@@ -93,10 +93,6 @@ public class ForkIdManager {
 
   public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;
-  }
-
-  public List<ForkId> getLegacyForkAndHashList() {
-    return legacyForkAndHashList;
   }
 
   ForkId getLatestForkId() {
@@ -121,10 +117,10 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   boolean peerCheck(final ForkId forkId) {
-    return forkIDCheckers.stream().anyMatch(checker -> checker.check(forkId));
+    return forkIDCheckers.stream().anyMatch(checker -> checker.test(forkId));
   }
 
-  private static ForkIDChecker eip2124(
+  private static Predicate<ForkId> eip2124(
       final Blockchain blockchain,
       final long forkNext,
       final List<ForkId> forkAndHashList,
@@ -320,10 +316,5 @@ public class ForkIdManager {
     bs[++off] = (byte) (n >>> 16);
     bs[++off] = (byte) (n >>> 8);
     bs[++off] = (byte) (n);
-  }
-
-  @FunctionalInterface
-  private interface ForkIDChecker {
-    boolean check(ForkId forkId);
   }
 }

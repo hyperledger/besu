@@ -26,11 +26,10 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -44,10 +43,10 @@ import org.junit.Test;
 
 public class JumpSubOperationTest {
 
-  private static final GasCalculator gasCalculator = new BerlinGasCalculator();
+  private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
 
   private static final int CURRENT_PC = 1;
-  private static final Gas JUMP_SUB_GAS_COST = Gas.of(8);
+  private static final Gas JUMP_SUB_GAS_COST = Gas.of(10);
 
   private Blockchain blockchain;
   private Address address;
@@ -100,7 +99,7 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x05"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
+            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
@@ -114,7 +113,7 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x04"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
+            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
@@ -130,7 +129,7 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0xFFFFFFFF"))
-            .code(new Code(Bytes.fromHexString("0x6801000000000000000cb300b26011b3b7b2b7")))
+            .code(new Code(Bytes.fromHexString("0x6801000000000000000c5e005c60115e5d5c5d")))
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
