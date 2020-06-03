@@ -39,6 +39,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FastDownloaderFactory {
+
+  private static final String FAST_SYNC_FOLDER = "fastsync";
+
   private static final Logger LOG = LogManager.getLogger();
 
   public static <C> Optional<FastSyncDownloader<C>> create(
@@ -51,13 +54,22 @@ public class FastDownloaderFactory {
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
       final Clock clock) {
-    if (syncConfig.getSyncMode() != SyncMode.FAST) {
-      return Optional.empty();
-    }
 
-    final Path fastSyncDataDirectory = getFastSyncDataDirectory(dataDirectory);
+    final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
         new FastSyncStateStorage(fastSyncDataDirectory);
+
+    if (syncConfig.getSyncMode() != SyncMode.FAST) {
+      if (fastSyncStateStorage.isFastSyncInProgress()) {
+        throw new IllegalStateException(
+            "Unable to change the sync mode when fast sync is incomplete, please restart with fast sync mode");
+      } else {
+        return Optional.empty();
+      }
+    }
+
+    ensureDirectoryExists(fastSyncDataDirectory.toFile());
+
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     if (fastSyncState.getPivotBlockHeader().isEmpty()
@@ -109,7 +121,7 @@ public class FastDownloaderFactory {
   }
 
   private static Path getFastSyncDataDirectory(final Path dataDirectory) {
-    final Path fastSyncDataDir = dataDirectory.resolve("fastsync");
+    final Path fastSyncDataDir = dataDirectory.resolve(FAST_SYNC_FOLDER);
     ensureDirectoryExists(fastSyncDataDir.toFile());
     return fastSyncDataDir;
   }

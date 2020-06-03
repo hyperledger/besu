@@ -26,11 +26,10 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -44,10 +43,10 @@ import org.junit.Test;
 
 public class JumpSubOperationTest {
 
-  private static final GasCalculator gasCalculator = new BerlinGasCalculator();
+  private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
 
   private static final int CURRENT_PC = 1;
-  private static final Gas JUMP_SUB_GAS_COST = Gas.of(8);
+  private static final Gas JUMP_SUB_GAS_COST = Gas.of(10);
 
   private Blockchain blockchain;
   private Address address;
@@ -89,9 +88,7 @@ public class JumpSubOperationTest {
 
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
-            .build();
+        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.cost(frame)).isEqualTo(JUMP_SUB_GAS_COST);
   }
@@ -102,8 +99,8 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x05"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
+            .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.exceptionalHaltCondition(frame, null, evm))
@@ -116,8 +113,24 @@ public class JumpSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0x04"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
+            .returnStack(new ReturnStack())
+            .build();
+    frame.setPC(CURRENT_PC);
+
+    assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
+    operation.execute(frame);
+    assertThat(frame.popReturnStackItem()).isEqualTo(CURRENT_PC + 1);
+  }
+
+  @Test
+  public void shouldJumpWhenLocationIsBeginSubAndAtEndOfCode() {
+    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
+    final MessageFrame frame =
+        createMessageFrameBuilder(Gas.of(1))
+            .pushStackItem(Bytes32.fromHexString("0x04"))
+            .code(new Code(Bytes.fromHexString("0x60045e005c")))
+            .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -129,15 +142,26 @@ public class JumpSubOperationTest {
   @Test
   public void shouldHaltWithInvalidJumDestinationWhenLocationIsOutsideOfCodeRange() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
-    final MessageFrame frame =
+    final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0xFFFFFFFF"))
-            .code(new Code(Bytes.fromHexString("0x6801000000000000000cb300b26011b3b7b2b7")))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .code(new Code(Bytes.fromHexString("0x6801000000000000000c5e005c60115e5d5c5d")))
+            .returnStack(new ReturnStack())
             .build();
-    frame.setPC(CURRENT_PC);
+    frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
+    assertThat(operation.exceptionalHaltCondition(frameDestinationGreaterThanCodeSize, null, null))
+        .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+
+    final MessageFrame frameDestinationEqualsToCodeSize =
+        createMessageFrameBuilder(Gas.of(1))
+            .pushStackItem(Bytes32.fromHexString("0x05"))
+            .code(new Code(Bytes.fromHexString("0x60045e005c")))
+            .returnStack(new ReturnStack())
+            .build();
+    frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
+
+    assertThat(operation.exceptionalHaltCondition(frameDestinationEqualsToCodeSize, null, null))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 
@@ -145,9 +169,7 @@ public class JumpSubOperationTest {
   public void shouldHaltWithInvalidJumDestinationWhenLocationIsNotAvailable() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
-            .build();
+        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
 
     assertThat(operation.exceptionalHaltCondition(frame, null, null))
@@ -157,17 +179,16 @@ public class JumpSubOperationTest {
   @Test
   public void shouldHaltWithTooManyStackItemsWhenReturnStackIsFull() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
-    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+    final ReturnStack returnStack = new ReturnStack();
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1)).returnStack(returnStack).build();
     frame.setPC(CURRENT_PC);
 
     assertThat(frame.isReturnStackFull()).isFalse();
 
-    IntStream.rangeClosed(1, MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE)
-        .forEach(frame::pushReturnStackItem);
+    IntStream.range(0, 1023).forEach(frame::pushReturnStackItem);
     assertThat(frame.isReturnStackFull()).isTrue();
-    assertThat(returnStack.size()).isEqualTo(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+    assertThat(returnStack.size()).isEqualTo(1023);
     assertThat(operation.exceptionalHaltCondition(frame, null, null))
         .contains(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
   }

@@ -10,10 +10,10 @@ var gasLimit = 77;
 var payload = "0x1234";
 
 contract('Permissioning: Accounts', () => {
-  it('Should NOT permit any transaction when account whitelist is empty', async () => {
+  it('TEST CONTRACT permits ANY transaction when account whitelist is empty', async () => {
     proxy = await TestPermissioning.new();
     let permitted = await proxy.transactionAllowed(address1, address2, value, gasPrice, gasLimit, payload);
-    assert.equal(permitted, false, 'expected tx NOT permitted');
+    assert.equal(permitted, true, 'expected ANY tx to be permitted since whitelist is empty');
   });
 
   it('Should add an account to the whitelist and then permit that node', async () => {
@@ -35,6 +35,15 @@ contract('Permissioning: Accounts', () => {
     await proxy.removeAccount(address2);
     let permitted = await proxy.transactionAllowed(address2, address1, value, gasPrice, gasLimit, payload);
     assert.equal(permitted, false, 'expected removed account (address2) NOT permitted to send tx');
+
+    // first one still permitted
+    permitted = await proxy.transactionAllowed(address1, address2, value, gasPrice, gasLimit, payload);
+    assert.equal(permitted, true, 'expected tx from address1 to still be permitted');
+
+    // remove remaining account from whitelist
+    await proxy.removeAccount(address1);
+    permitted = await proxy.transactionAllowed(address2, address1, value, gasPrice, gasLimit, payload);
+    assert.equal(permitted, true, 'whitelist now empty so ANY account now permitted to send tx');
 
     // first one still permitted
     permitted = await proxy.transactionAllowed(address1, address2, value, gasPrice, gasLimit, payload);

@@ -35,7 +35,6 @@ import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -76,6 +76,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -267,7 +269,7 @@ public abstract class CommandTestAbstract {
     return nodeKey;
   }
 
-  protected void setEnvironemntVariable(final String name, final String value) {
+  protected void setEnvironmentVariable(final String name, final String value) {
     environment.put(name, value);
   }
 
@@ -289,7 +291,7 @@ public abstract class CommandTestAbstract {
             mockLogger,
             nodeKey,
             keyPair,
-            rlpBlockImporter,
+            () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
@@ -323,9 +325,9 @@ public abstract class CommandTestAbstract {
         final Logger mockLogger,
         final NodeKey mockNodeKey,
         final SECP256K1.KeyPair keyPair,
-        final RlpBlockImporter mockBlockImporter,
-        final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
-        final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
+        final Supplier<RlpBlockImporter> mockBlockImporter,
+        final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+        final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,

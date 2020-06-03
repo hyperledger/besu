@@ -11,18 +11,24 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
-public class BerlinGasCalculator extends IstanbulGasCalculator {
+import org.apache.tuweni.bytes.Bytes;
 
-  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(1);
+public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledContract {
+
+  public BLS12PairingPrecompiledContract() {
+    super("BLS12_PAIRING", LibEthPairings.BLS12_PAIR_OPERATION_RAW_VALUE);
+  }
 
   @Override
-  // as https://eips.ethereum.org/EIPS/eip-2315
-  public Gas getBeginSubGasCost() {
-    return BEGIN_SUB_GAS_COST;
+  public Gas gasRequirement(final Bytes input) {
+    final int k = input.size() / 384;
+    return Gas.of(23_000L * k + 115_000);
   }
 }

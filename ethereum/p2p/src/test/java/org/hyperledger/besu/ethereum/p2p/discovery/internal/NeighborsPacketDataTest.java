@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class NeighborsPacketDataTest {
 
   @Test
   public void serializeDeserialize() {
-    final long time = System.currentTimeMillis();
+    final long timeSec = Instant.now().getEpochSecond();
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
@@ -40,25 +41,25 @@ public class NeighborsPacketDataTest {
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getNodes()).isEqualTo(peers);
-    assertThat(deserialized.getExpiration()).isGreaterThan(time);
+    assertThat(deserialized.getExpiration()).isGreaterThan(timeSec);
   }
 
   @Test
   public void readFrom() {
-    final long time = System.currentTimeMillis();
+    final long timeSec = Instant.now().getEpochSecond();
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeList(peers, DiscoveryPeer::writeTo);
-    out.writeLongScalar(time);
+    out.writeLongScalar(timeSec);
     out.endList();
     Bytes encoded = out.encoded();
 
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getNodes()).isEqualTo(peers);
-    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getExpiration()).isEqualTo(timeSec);
   }
 
   @Test
