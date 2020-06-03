@@ -38,6 +38,7 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
     final BesuNode nodeC = besu.createIbft2Node("nodeC", GENESIS_FILE);
     final BesuNode nodeD = besu.createIbft2Node("nodeD", GENESIS_FILE);
 
+    // start cluster
     permissionedCluster.start(bootnode, nodeA, nodeB, nodeC, nodeD);
 
     bootnode.verify(net.awaitPeerCount(4));
