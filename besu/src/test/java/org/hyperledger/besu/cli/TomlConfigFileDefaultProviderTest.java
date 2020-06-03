@@ -101,6 +101,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--an-int-value-option", null);
     validOptionsMap.put("--a-wei-value-option", null);
     validOptionsMap.put("--a-string-value-option", null);
+    validOptionsMap.put("--a-nested-multi-value-option", null);
 
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
@@ -119,6 +120,9 @@ public class TomlConfigFileDefaultProviderTest {
       fileWriter.write("a-wei-value-option=1");
       fileWriter.newLine();
       fileWriter.write("a-string-value-option='my value'");
+      fileWriter.newLine();
+      fileWriter.write(
+          "a-nested-multi-value-option=[ [\"value1\", \"value2\"], [\"value3\", \"value4\"] ]");
       fileWriter.flush();
 
       final TomlConfigFileDefaultProvider providerUnderTest =
@@ -153,6 +157,11 @@ public class TomlConfigFileDefaultProviderTest {
               providerUnderTest.defaultValue(
                   OptionSpec.builder("a-string-value-option").type(String.class).build()))
           .isEqualTo("my value");
+
+      assertThat(
+              providerUnderTest.defaultValue(
+                  OptionSpec.builder("a-nested-multi-value-option").type(Collection.class).build()))
+          .isEqualTo("[value1,value2],[value3,value4]");
     }
   }
 
