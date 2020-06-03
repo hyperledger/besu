@@ -173,7 +173,6 @@ public class BlocksSubCommand implements Runnable {
         for (final Path path : blockImportFiles) {
           try {
             LOG.info("Importing from {}", path);
-
             switch (format) {
               case RLP:
                 importRlpBlocks(controller, path);
@@ -181,9 +180,6 @@ public class BlocksSubCommand implements Runnable {
               case JSON:
                 importJsonBlocks(controller, path);
                 break;
-              default:
-                throw new ParameterException(
-                    spec.commandLine(), "Unsupported format: " + format.toString());
             }
           } catch (final FileNotFoundException e) {
             if (blockImportFiles.size() == 1) {
