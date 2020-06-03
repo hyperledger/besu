@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -83,7 +82,6 @@ public class PrivGetTransactionReceiptTest {
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);
-  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
 
@@ -100,8 +98,6 @@ public class PrivGetTransactionReceiptTest {
     when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(mockBlockHeader));
     when(mockBlockHeader.getNumber()).thenReturn(0L);
 
-    when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyParameters.getPrivateStateStorage()).thenReturn(privateStateStorage);
     final PrivateTransactionReceipt receipt =
         new PrivateTransactionReceipt(1, Collections.emptyList(), Bytes.EMPTY, Optional.empty());
     when(privateStateStorage.getTransactionReceipt(any(Bytes32.class), any(Bytes32.class)))
@@ -167,7 +163,7 @@ public class PrivGetTransactionReceiptTest {
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+            privateStateStorage, privacyController, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
@@ -184,7 +180,7 @@ public class PrivGetTransactionReceiptTest {
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+            privateStateStorage, privacyController, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
@@ -202,7 +198,7 @@ public class PrivGetTransactionReceiptTest {
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+            privateStateStorage, privacyController, enclavePublicKeyProvider);
     final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));
     assertThat(t).isInstanceOf(RuntimeException.class);
   }
@@ -224,7 +220,7 @@ public class PrivGetTransactionReceiptTest {
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+            privateStateStorage, privacyController, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
@@ -243,7 +239,7 @@ public class PrivGetTransactionReceiptTest {
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+            privateStateStorage, privacyController, enclavePublicKeyProvider);
     final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));
 
     assertThat(t).isInstanceOf(EnclaveClientException.class);
@@ -284,7 +280,7 @@ public class PrivGetTransactionReceiptTest {
       final PrivateTransactionReceiptResult expectedResult, final int i) {
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
+            privateStateStorage, privacyController, enclavePublicKeyProvider);
 
     final JsonRpcRequestContext request = createRequestContext();
 

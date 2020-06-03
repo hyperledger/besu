@@ -107,13 +107,13 @@ public class DefaultPrivacyController implements PrivacyController {
     this.privateTransactionSimulator = privateTransactionSimulator;
     this.privateNonceProvider = privateNonceProvider;
     this.privateWorldStateReader = privateWorldStateReader;
-    this.privateTransactionLocator = new PrivateTransactionLocator(blockchain, enclave,
-        privateStateStorage);
+    this.privateTransactionLocator =
+        new PrivateTransactionLocator(blockchain, enclave, privateStateStorage);
   }
 
   @Override
-  public Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(final Hash pmtHash,
-      final String enclaveKey) {
+  public Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
+      final Hash pmtHash, final String enclaveKey) {
     return privateTransactionLocator.findByPmtHash(pmtHash, enclaveKey);
   }
 

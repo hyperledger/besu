@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import java.util.function.Function;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -29,11 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionResult;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 
 import java.util.Optional;
 
@@ -43,19 +40,13 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
-  private final BlockchainQueries blockchain;
   private final PrivacyController privacyController;
-  private final PrivateStateStorage privateStateStorage;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetPrivateTransaction(
-      final BlockchainQueries blockchain,
       final PrivacyController privacyController,
-      final PrivateStateStorage privateStateStorage,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    this.blockchain = blockchain;
     this.privacyController = privacyController;
-    this.privateStateStorage = privateStateStorage;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
@@ -73,10 +64,13 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
     final Optional<PrivateTransaction> maybePrivateTx;
     try {
-      maybePrivateTx = privacyController.findPrivateTransactionByPmtHash(hash, enclaveKey)
-          .map(PrivateTransaction.class::cast);
+      maybePrivateTx =
+          privacyController
+              .findPrivateTransactionByPmtHash(hash, enclaveKey)
+              .map(PrivateTransaction.class::cast);
     } catch (EnclaveClientException e) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(),
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 

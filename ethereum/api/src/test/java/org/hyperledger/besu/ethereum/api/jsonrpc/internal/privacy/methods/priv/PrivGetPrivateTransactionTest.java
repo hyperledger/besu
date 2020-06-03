@@ -115,8 +115,7 @@ public class PrivGetPrivateTransactionTest {
 
   protected PrivateTransactionResult makeRequest(final JsonRpcRequestContext request) {
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(
-            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     return (PrivateTransactionResult) response.getResult();
@@ -188,8 +187,7 @@ public class PrivGetPrivateTransactionTest {
     final JsonRpcRequestContext request = createRequestContext();
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(
-            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
 
@@ -204,8 +202,7 @@ public class PrivGetPrivateTransactionTest {
         .thenThrow(new EnclaveClientException(500, "enclave failure"));
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(
-            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
     final JsonRpcResponse response = privGetPrivateTransaction.response(request);
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);

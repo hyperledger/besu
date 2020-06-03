@@ -154,8 +154,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(
-            blockchain, privacyController, privateStateStorage, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
 
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));

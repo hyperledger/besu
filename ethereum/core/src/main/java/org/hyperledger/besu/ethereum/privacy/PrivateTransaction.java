@@ -214,12 +214,19 @@ public class PrivateTransaction {
   }
 
   protected PrivateTransaction(final PrivateTransaction privateTransaction) {
-    this(privateTransaction.getNonce(), privateTransaction.getGasPrice(),
-        privateTransaction.getGasLimit(), privateTransaction.getTo(), privateTransaction.getValue(),
-        privateTransaction.getSignature(), privateTransaction.getPayload(),
-        privateTransaction.getSender(), privateTransaction.getChainId(),
+    this(
+        privateTransaction.getNonce(),
+        privateTransaction.getGasPrice(),
+        privateTransaction.getGasLimit(),
+        privateTransaction.getTo(),
+        privateTransaction.getValue(),
+        privateTransaction.getSignature(),
+        privateTransaction.getPayload(),
+        privateTransaction.getSender(),
+        privateTransaction.getChainId(),
         privateTransaction.getPrivateFrom(),
-        privateTransaction.getPrivateFor(), privateTransaction.getPrivacyGroupId(),
+        privateTransaction.getPrivateFor(),
+        privateTransaction.getPrivacyGroupId(),
         privateTransaction.getRestriction());
   }
 

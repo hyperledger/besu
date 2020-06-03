@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import java.util.Objects;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+
+import java.util.Objects;
 
 /**
  * This class represents a private transaction that has been executed. Therefore, it contains the
@@ -32,15 +33,27 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
   private final int pmtIndex;
   private final String internalPrivacyGroup;
 
-  ExecutedPrivateTransaction(final BlockHeader blockHeader, final Transaction pmt,
-      final TransactionLocation pmtLocation, final String internalPrivacyGroup,
+  ExecutedPrivateTransaction(
+      final BlockHeader blockHeader,
+      final Transaction pmt,
+      final TransactionLocation pmtLocation,
+      final String internalPrivacyGroup,
       final PrivateTransaction privateTransaction) {
-    this(blockHeader.getHash(), blockHeader.getNumber(), pmt.getHash(),
-        pmtLocation.getTransactionIndex(), internalPrivacyGroup, privateTransaction);
+    this(
+        blockHeader.getHash(),
+        blockHeader.getNumber(),
+        pmt.getHash(),
+        pmtLocation.getTransactionIndex(),
+        internalPrivacyGroup,
+        privateTransaction);
   }
 
-  ExecutedPrivateTransaction(final Hash blockHash, final long blockNumber,
-      final Hash pmtHash, final int pmtIndex, final String internalPrivacyGroupId,
+  ExecutedPrivateTransaction(
+      final Hash blockHash,
+      final long blockNumber,
+      final Hash pmtHash,
+      final int pmtIndex,
+      final String internalPrivacyGroupId,
       final PrivateTransaction privateTransaction) {
     super(privateTransaction);
     this.blockHash = blockHash;
@@ -48,7 +61,6 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
     this.pmtHash = pmtHash;
     this.pmtIndex = pmtIndex;
     this.internalPrivacyGroup = internalPrivacyGroupId;
-
   }
 
   public Hash getBlockHash() {
@@ -92,16 +104,16 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
 
     final ExecutedPrivateTransaction that = (ExecutedPrivateTransaction) o;
 
-    return blockNumber == that.blockNumber &&
-        pmtIndex == that.pmtIndex &&
-        blockHash.equals(that.blockHash) &&
-        pmtHash.equals(that.pmtHash) &&
-        internalPrivacyGroup.equals((that.internalPrivacyGroup));
+    return blockNumber == that.blockNumber
+        && pmtIndex == that.pmtIndex
+        && blockHash.equals(that.blockHash)
+        && pmtHash.equals(that.pmtHash)
+        && internalPrivacyGroup.equals((that.internalPrivacyGroup));
   }
 
   @Override
   public int hashCode() {
-    return Objects
-        .hash(super.hashCode(), blockHash, blockNumber, pmtHash, pmtIndex, internalPrivacyGroup);
+    return Objects.hash(
+        super.hashCode(), blockHash, blockNumber, pmtHash, pmtIndex, internalPrivacyGroup);
   }
 }

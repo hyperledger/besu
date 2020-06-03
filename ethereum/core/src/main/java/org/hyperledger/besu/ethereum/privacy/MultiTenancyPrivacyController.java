@@ -49,8 +49,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(final Hash pmtHash,
-      final String enclaveKey) {
+  public Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
+      final Hash pmtHash, final String enclaveKey) {
     return privacyController.findPrivateTransactionByPmtHash(pmtHash, enclaveKey);
   }
 
