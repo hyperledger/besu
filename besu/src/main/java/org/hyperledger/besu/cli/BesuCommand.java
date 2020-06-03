@@ -198,7 +198,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private CommandLine commandLine;
 
   private final Supplier<RlpBlockImporter> rlpBlockImporter;
-  private final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory;
+  private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   final NetworkingOptions networkingOptions = NetworkingOptions.create();
@@ -995,7 +995,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
-  private BesuController<?> besuController;
+  private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
@@ -1004,7 +1004,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuCommand(
       final Logger logger,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
-      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
@@ -1027,7 +1027,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   protected BesuCommand(
       final Logger logger,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
-      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
@@ -1386,7 +1386,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
-  public BesuController<?> buildController() {
+  public BesuController buildController() {
     try {
       return getControllerBuilder().build();
     } catch (final Exception e) {
@@ -1394,7 +1394,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public BesuControllerBuilder<?> getControllerBuilder() {
+  public BesuControllerBuilder getControllerBuilder() {
     addConfigurationService();
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
@@ -1895,7 +1895,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Blockchain synchronisation from peers.
   private void synchronize(
-      final BesuController<?> controller,
+      final BesuController controller,
       final boolean p2pEnabled,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,

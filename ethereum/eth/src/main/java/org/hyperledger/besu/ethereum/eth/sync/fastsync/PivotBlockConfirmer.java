@@ -45,15 +45,13 @@ import org.apache.tuweni.bytes.Bytes;
  * peers disagree on the block at this number, the task fails with a {@code
  * ContestedPivotBlockException}. The task will succeed only if {@code numberOfPeersToQuery}
  * distinct peers all return matching block headers for the specified block number.
- *
- * @param <C> The consensus context
  */
-class PivotBlockConfirmer<C> {
+class PivotBlockConfirmer {
   private static final Logger LOG = LogManager.getLogger();
 
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   // The number of peers we need to query to confirm our pivot block
   private final int numberOfPeersToQuery;
@@ -72,7 +70,7 @@ class PivotBlockConfirmer<C> {
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
   PivotBlockConfirmer(
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,

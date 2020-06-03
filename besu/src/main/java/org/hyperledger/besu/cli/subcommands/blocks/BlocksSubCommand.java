@@ -85,14 +85,14 @@ public class BlocksSubCommand implements Runnable {
   private CommandSpec spec; // Picocli injects reference to command spec
 
   private final Supplier<RlpBlockImporter> rlpBlockImporter;
-  private final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory;
+  private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   private final PrintStream out;
 
   public BlocksSubCommand(
       final Supplier<RlpBlockImporter> rlpBlockImporter,
-      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final PrintStream out) {
     this.rlpBlockImporter = rlpBlockImporter;
@@ -169,7 +169,7 @@ public class BlocksSubCommand implements Runnable {
       LOG.info("Import {} block data from {} files", format, blockImportFiles.size());
       final Optional<MetricsService> metricsService = initMetrics(parentCommand);
 
-      try (final BesuController<?> controller = createController()) {
+      try (final BesuController controller = createController()) {
         for (final Path path : blockImportFiles) {
           try {
             LOG.info("Importing from {}", path);
@@ -207,7 +207,7 @@ public class BlocksSubCommand implements Runnable {
       checkNotNull(parentCommand.parentCommand);
     }
 
-    private BesuController<?> createController() {
+    private BesuController createController() {
       try {
         // Set some defaults
         return parentCommand
@@ -240,16 +240,15 @@ public class BlocksSubCommand implements Runnable {
           0.0);
     }
 
-    private void importJsonBlocks(final BesuController<?> controller, final Path path)
+    private void importJsonBlocks(final BesuController controller, final Path path)
         throws IOException {
 
-      final JsonBlockImporter<?> importer =
-          parentCommand.jsonBlockImporterFactory.apply(controller);
+      final JsonBlockImporter importer = parentCommand.jsonBlockImporterFactory.apply(controller);
       final String jsonData = Files.readString(path);
       importer.importChain(jsonData);
     }
 
-    private void importRlpBlocks(final BesuController<?> controller, final Path path)
+    private void importRlpBlocks(final BesuController controller, final Path path)
         throws IOException {
       try (final RlpBlockImporter rlpBlockImporter = parentCommand.rlpBlockImporter.get()) {
         rlpBlockImporter.importBlockchain(path, controller, skipPow);
@@ -314,7 +313,7 @@ public class BlocksSubCommand implements Runnable {
       checkCommand(this, startBlock, endBlock);
       final Optional<MetricsService> metricsService = initMetrics(parentCommand);
 
-      final BesuController<?> controller = createBesuController();
+      final BesuController controller = createBesuController();
       try {
         if (format == BlockExportFormat.RLP) {
           exportRlpFormat(controller);
@@ -330,12 +329,12 @@ public class BlocksSubCommand implements Runnable {
       }
     }
 
-    private BesuController<?> createBesuController() {
+    private BesuController createBesuController() {
       return parentCommand.parentCommand.buildController();
     }
 
-    private void exportRlpFormat(final BesuController<?> controller) throws IOException {
-      final ProtocolContext<?> context = controller.getProtocolContext();
+    private void exportRlpFormat(final BesuController controller) throws IOException {
+      final ProtocolContext context = controller.getProtocolContext();
       final RlpBlockExporter exporter =
           parentCommand.rlpBlockExporterFactory.apply(context.getBlockchain());
       exporter.exportBlocks(blocksExportFile, getStartBlock(), getEndBlock());

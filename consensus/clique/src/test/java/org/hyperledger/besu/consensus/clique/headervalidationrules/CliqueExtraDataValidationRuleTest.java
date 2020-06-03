@@ -48,7 +48,7 @@ public class CliqueExtraDataValidationRuleTest {
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   private final List<Address> validatorList = Lists.newArrayList();
-  private ProtocolContext<CliqueContext> cliqueProtocolContext;
+  private ProtocolContext cliqueProtocolContext;
 
   @Before
   public void setup() {
@@ -62,7 +62,7 @@ public class CliqueExtraDataValidationRuleTest {
 
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, null, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
   }
 
   @Test

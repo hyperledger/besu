@@ -37,11 +37,12 @@ public class CliqueHelpers {
   }
 
   public static boolean addressIsAllowedToProduceNextBlock(
-      final Address candidate,
-      final ProtocolContext<CliqueContext> protocolContext,
-      final BlockHeader parent) {
+      final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final VoteTally validatorProvider =
-        protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+        protocolContext
+            .getConsensusState(CliqueContext.class)
+            .getVoteTallyCache()
+            .getVoteTallyAfterBlock(parent);
 
     if (!validatorProvider.getValidators().contains(candidate)) {
       return false;

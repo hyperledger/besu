@@ -91,11 +91,11 @@ public class BlockchainReferenceTestTools {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
-    final ProtocolSchedule<Void> schedule =
+    final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
-    final ProtocolContext<Void> context = spec.getProtocolContext();
+    final ProtocolContext context = spec.getProtocolContext();
 
     for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
         spec.getCandidateBlocks()) {
@@ -106,9 +106,8 @@ public class BlockchainReferenceTestTools {
       try {
         final Block block = candidateBlock.getBlock();
 
-        final ProtocolSpec<Void> protocolSpec =
-            schedule.getByBlockNumber(block.getHeader().getNumber());
-        final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
+        final ProtocolSpec protocolSpec = schedule.getByBlockNumber(block.getHeader().getNumber());
+        final BlockImporter blockImporter = protocolSpec.getBlockImporter();
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT

@@ -30,17 +30,17 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.math.BigInteger;
 import java.util.Optional;
 
-public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
+public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
 
-  private final ProtocolSchedule<C> delegate;
+  private final ProtocolSchedule delegate;
 
-  NoRewardProtocolScheduleWrapper(final ProtocolSchedule<C> delegate) {
+  NoRewardProtocolScheduleWrapper(final ProtocolSchedule delegate) {
     this.delegate = delegate;
   }
 
   @Override
-  public ProtocolSpec<C> getByBlockNumber(final long number) {
-    final ProtocolSpec<C> original = delegate.getByBlockNumber(number);
+  public ProtocolSpec getByBlockNumber(final long number) {
+    final ProtocolSpec original = delegate.getByBlockNumber(number);
     final BlockProcessor noRewardBlockProcessor =
         new MainnetBlockProcessor(
             original.getTransactionProcessor(),
@@ -49,14 +49,13 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
             original.getMiningBeneficiaryCalculator(),
             original.isSkipZeroBlockRewards(),
             TransactionGasBudgetCalculator.frontier());
-    final BlockValidator<C> noRewardBlockValidator =
-        new MainnetBlockValidator<>(
+    final BlockValidator noRewardBlockValidator =
+        new MainnetBlockValidator(
             original.getBlockHeaderValidator(),
             original.getBlockBodyValidator(),
             noRewardBlockProcessor);
-    final BlockImporter<C> noRewardBlockImporter =
-        new MainnetBlockImporter<>(noRewardBlockValidator);
-    return new ProtocolSpec<>(
+    final BlockImporter noRewardBlockImporter = new MainnetBlockImporter(noRewardBlockValidator);
+    return new ProtocolSpec(
         original.getName(),
         original.getEvm(),
         original.getTransactionValidator(),

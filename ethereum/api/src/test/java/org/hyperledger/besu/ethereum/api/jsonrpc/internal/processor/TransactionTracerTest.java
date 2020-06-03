@@ -50,7 +50,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TransactionTracerTest {
 
-  @Mock private ProtocolSchedule<Void> protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
 
   @Mock private WorldStateArchive worldStateArchive;
@@ -67,7 +67,7 @@ public class TransactionTracerTest {
 
   @Mock private DebugOperationTracer tracer;
 
-  @Mock private ProtocolSpec<Void> protocolSpec;
+  @Mock private ProtocolSpec protocolSpec;
 
   @Mock private MutableWorldState mutableWorldState;
 

@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
+public class CliqueBlockCreator extends AbstractBlockCreator {
 
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
@@ -48,8 +48,8 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<CliqueContext> protocolContext,
-      final ProtocolSchedule<CliqueContext> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final Function<Long, Long> gasLimitCalculator,
       final NodeKey nodeKey,
       final Wei minTransactionGasPrice,
@@ -105,7 +105,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
     if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
       return Optional.empty();
     } else {
-      final CliqueContext cliqueContext = protocolContext.getConsensusState();
+      final CliqueContext cliqueContext = protocolContext.getConsensusState(CliqueContext.class);
       final VoteTally voteTally =
           cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
       return cliqueContext

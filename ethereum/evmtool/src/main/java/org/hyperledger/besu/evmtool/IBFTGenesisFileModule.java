@@ -30,7 +30,7 @@ class IBFTGenesisFileModule extends GenesisFileModule {
   }
 
   @Override
-  ProtocolSchedule<?> provideProtocolSchedule(
+  ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     return IbftProtocolSchedule.create(configOptions);

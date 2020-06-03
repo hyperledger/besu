@@ -41,18 +41,18 @@ public final class MainnetBlockHeaderValidator {
   public static final Bytes CLASSIC_FORK_BLOCK_HEADER =
       Bytes.fromHexString("0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
-  public static BlockHeaderValidator.Builder<Void> create() {
+  public static BlockHeaderValidator.Builder create() {
     return createValidator();
   }
 
-  public static BlockHeaderValidator.Builder<Void> createDaoValidator() {
+  public static BlockHeaderValidator.Builder createDaoValidator() {
     return createValidator()
         .addRule(
             new ConstantFieldValidationRule<>(
                 "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA));
   }
 
-  public static BlockHeaderValidator.Builder<Void> createClassicValidator() {
+  public static BlockHeaderValidator.Builder createClassicValidator() {
     return createValidator()
         .addRule(
             new ConstantFieldValidationRule<>(
@@ -69,8 +69,8 @@ public final class MainnetBlockHeaderValidator {
     return header.getNumber() != 1_920_000 || header.getHash().equals(CLASSIC_FORK_BLOCK_HEADER);
   }
 
-  static BlockHeaderValidator.Builder<Void> createOmmerValidator() {
-    return new BlockHeaderValidator.Builder<Void>()
+  static BlockHeaderValidator.Builder createOmmerValidator() {
+    return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
@@ -80,8 +80,8 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ProofOfWorkValidationRule());
   }
 
-  private static BlockHeaderValidator.Builder<Void> createValidator() {
-    return new BlockHeaderValidator.Builder<Void>()
+  private static BlockHeaderValidator.Builder createValidator() {
+    return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
@@ -92,9 +92,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ProofOfWorkValidationRule());
   }
 
-  static BlockHeaderValidator.Builder<Void> createEip1559Validator(final EIP1559 eip1559) {
+  static BlockHeaderValidator.Builder createEip1559Validator(final EIP1559 eip1559) {
     ExperimentalEIPs.eip1559MustBeEnabled();
-    return new BlockHeaderValidator.Builder<Void>()
+    return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
@@ -106,9 +106,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
-  static BlockHeaderValidator.Builder<Void> createEip1559OmmerValidator(final EIP1559 eip1559) {
+  static BlockHeaderValidator.Builder createEip1559OmmerValidator(final EIP1559 eip1559) {
     ExperimentalEIPs.eip1559MustBeEnabled();
-    return new BlockHeaderValidator.Builder<Void>()
+    return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())

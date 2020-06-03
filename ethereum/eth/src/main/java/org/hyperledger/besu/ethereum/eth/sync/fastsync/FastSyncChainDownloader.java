@@ -28,23 +28,23 @@ public class FastSyncChainDownloader {
 
   private FastSyncChainDownloader() {}
 
-  public static <C> ChainDownloader create(
+  public static ChainDownloader create(
       final SynchronizerConfiguration config,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final BlockHeader pivotBlockHeader) {
 
-    final FastSyncTargetManager<C> syncTargetManager =
-        new FastSyncTargetManager<>(
+    final FastSyncTargetManager syncTargetManager =
+        new FastSyncTargetManager(
             config, protocolSchedule, protocolContext, ethContext, metricsSystem, pivotBlockHeader);
 
-    return new PipelineChainDownloader<>(
+    return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
-        new FastSyncDownloadPipelineFactory<>(
+        new FastSyncDownloadPipelineFactory(
             config, protocolSchedule, protocolContext, ethContext, pivotBlockHeader, metricsSystem),
         ethContext.getScheduler(),
         metricsSystem);
