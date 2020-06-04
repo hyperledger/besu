@@ -52,14 +52,20 @@ public class EthGetLogs implements JsonRpcMethod {
     final List<LogWithMetadata> matchingLogs =
         filter
             .getBlockHash()
-            .map(blockHash -> blockchain.matchingLogs(blockHash, filter.getLogsQuery()))
+            .map(
+                blockHash ->
+                    blockchain.matchingLogs(
+                        blockHash, filter.getLogsQuery(), requestContext.isAlive()))
             .orElseGet(
                 () -> {
                   final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
                   final long toBlockNumber =
                       filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
                   return blockchain.matchingLogs(
-                      fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+                      fromBlockNumber,
+                      toBlockNumber,
+                      filter.getLogsQuery(),
+                      requestContext.isAlive());
                 });
 
     return new JsonRpcSuccessResponse(

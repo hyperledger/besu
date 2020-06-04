@@ -12,23 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.context;
+package org.hyperledger.besu.ethereum.api.query;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
-import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public enum ContextKey {
-  REQUEST_BODY_AS_JSON_OBJECT,
-  ALIVE;
+public class BackendQuery {
+  private static final Logger LOG = LogManager.getLogger();
 
-  public <T> T extractFrom(final RoutingContext ctx, final Supplier<T> defaultSupplier) {
-    final T value = ctx.get(this.name());
-    return value != null ? value : defaultSupplier.get();
+  public static <T> T runIfAlive(final Callable<T> task, final AtomicBoolean alive)
+      throws Exception {
+    if (!alive.get()) {
+      LOG.warn("Zombie backend query detected, aborting process.");
+      throw new RuntimeException("Timeout expired");
+    }
+    return task.call();
   }
 
-  public AtomicBoolean isAlive(final RoutingContext ctx) {
-    return extractFrom(ctx, () -> new AtomicBoolean(true));
+  public static void stopIfExpired(final AtomicBoolean alive) throws Exception {
+    runIfAlive(() -> null, alive);
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -48,6 +49,7 @@ public class TimeoutHandler {
     try {
       final String bodyAsString = ctx.getBodyAsString();
       if (bodyAsString != null) {
+        ctx.put(ContextKey.ALIVE.name(), new AtomicBoolean(true));
         final String json = ctx.getBodyAsString().trim();
         Optional<TimeoutOptions> methodTimeoutOptions = Optional.empty();
         if (decodeJSON && !json.isEmpty() && json.charAt(0) == '{') {
@@ -64,7 +66,12 @@ public class TimeoutHandler {
                       ctx.vertx()
                           .setTimer(
                               timeoutOptions.getTimeoutMillis(),
-                              t -> ctx.fail(timeoutOptions.getErrorCode()));
+                              t -> {
+                                // If the request has expired, we set the alive value to false to
+                                // stop backend queries
+                                ContextKey.ALIVE.isAlive(ctx).set(false);
+                                ctx.fail(timeoutOptions.getErrorCode());
+                              });
                   ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
                 });
       }

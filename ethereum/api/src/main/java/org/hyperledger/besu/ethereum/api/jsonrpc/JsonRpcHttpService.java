@@ -469,7 +469,7 @@ public class JsonRpcHttpService {
     final HttpServerResponse response = routingContext.response();
     vertx.executeBlocking(
         future -> {
-          final JsonRpcResponse jsonRpcResponse = process(request, user);
+          final JsonRpcResponse jsonRpcResponse = process(routingContext, request, user);
           future.complete(jsonRpcResponse);
         },
         false,
@@ -529,7 +529,7 @@ public class JsonRpcHttpService {
                   final JsonObject req = (JsonObject) obj;
                   final Future<JsonRpcResponse> fut = Future.future();
                   vertx.executeBlocking(
-                      future -> future.complete(process(req, user)),
+                      future -> future.complete(process(routingContext, req, user)),
                       false,
                       ar -> {
                         if (ar.failed()) {
@@ -567,7 +567,8 @@ public class JsonRpcHttpService {
     return result.getType() != JsonRpcResponseType.NONE;
   }
 
-  private JsonRpcResponse process(final JsonObject requestJson, final Optional<User> user) {
+  private JsonRpcResponse process(
+      final RoutingContext ctx, final JsonObject requestJson, final Optional<User> user) {
     final JsonRpcRequest requestBody;
     Object id = null;
     try {
@@ -594,9 +595,11 @@ public class JsonRpcHttpService {
       try (final OperationTimer.TimingContext ignored =
           requestTimer.labels(requestBody.getMethod()).startTimer()) {
         if (user.isPresent()) {
-          return method.response(new JsonRpcRequestContext(requestBody, user.get()));
+          return method.response(
+              new JsonRpcRequestContext(requestBody, user.get(), ContextKey.ALIVE.isAlive(ctx)));
         }
-        return method.response(new JsonRpcRequestContext(requestBody));
+        return method.response(
+            new JsonRpcRequestContext(requestBody, ContextKey.ALIVE.isAlive(ctx)));
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug("Invalid Params", e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);

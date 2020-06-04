@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AbstractVerticle;
@@ -296,7 +297,8 @@ public class FilterManager extends AbstractVerticle {
                       filter.getLogsQuery()))
           .orElse(emptyList());
     } else {
-      return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+      return blockchainQueries.matchingLogs(
+          fromBlockNumber, toBlockNumber, filter.getLogsQuery(), new AtomicBoolean(true));
     }
   }
 }

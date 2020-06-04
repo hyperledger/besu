@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -321,7 +322,8 @@ public class BlockchainQueriesTest {
 
     // check that logs have removed = false
     List<LogWithMetadata> logs =
-        data.blockchainQueries.matchingLogs(targetBlock.getHash(), new LogsQuery.Builder().build());
+        data.blockchainQueries.matchingLogs(
+            targetBlock.getHash(), new LogsQuery.Builder().build(), new AtomicBoolean(true));
     assertThat(logs).isNotEmpty();
     assertThat(logs).allMatch(l -> !l.isRemoved());
 
@@ -342,7 +344,8 @@ public class BlockchainQueriesTest {
 
     // check that logs have removed = true
     logs =
-        data.blockchainQueries.matchingLogs(targetBlock.getHash(), new LogsQuery.Builder().build());
+        data.blockchainQueries.matchingLogs(
+            targetBlock.getHash(), new LogsQuery.Builder().build(), new AtomicBoolean(true));
     assertThat(logs).isNotEmpty();
     assertThat(logs).allMatch(LogWithMetadata::isRemoved);
   }
@@ -351,7 +354,8 @@ public class BlockchainQueriesTest {
   public void matchingLogsShouldReturnAnEmptyListWhenGivenAnInvalidBlockHash() {
     final BlockchainWithData data = setupBlockchain(3);
     final BlockchainQueries queries = data.blockchainQueries;
-    List<LogWithMetadata> logs = queries.matchingLogs(Hash.ZERO, new LogsQuery.Builder().build());
+    List<LogWithMetadata> logs =
+        queries.matchingLogs(Hash.ZERO, new LogsQuery.Builder().build(), new AtomicBoolean(true));
     assertThat(logs).isEmpty();
   }
 
