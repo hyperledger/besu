@@ -93,7 +93,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
-  private final Optional<PermissioningConfiguration> permissioningConfiguration;
+  private Optional<PermissioningConfiguration> permissioningConfiguration;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean devMode;
   private final boolean discoveryEnabled;
@@ -583,6 +583,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   Optional<PermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
+  }
+
+  public void setPermissioningConfiguration(
+      final PermissioningConfiguration permissioningConfiguration) {
+    this.permissioningConfiguration = Optional.of(permissioningConfiguration);
   }
 
   public List<String> getPlugins() {

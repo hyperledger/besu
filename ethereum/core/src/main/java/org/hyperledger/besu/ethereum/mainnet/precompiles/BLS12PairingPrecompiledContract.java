@@ -13,15 +13,22 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
-class InMemoryDataStoreModule extends DataStoreModule {
+import org.apache.tuweni.bytes.Bytes;
+
+public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledContract {
+
+  public BLS12PairingPrecompiledContract() {
+    super("BLS12_PAIRING", LibEthPairings.BLS12_PAIR_OPERATION_RAW_VALUE);
+  }
 
   @Override
-  KeyValueStorage provideKeyValueStorage() {
-    return new InMemoryKeyValueStorage();
+  public Gas gasRequirement(final Bytes input) {
+    final int k = input.size() / 384;
+    return Gas.of(23_000L * k + 115_000);
   }
 }

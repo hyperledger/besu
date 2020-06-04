@@ -16,9 +16,13 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
+import java.util.Optional;
+
 @FunctionalInterface
 public interface TransactionPoolReplacementRule {
 
   boolean shouldReplace(
-      TransactionInfo existingTransactionInfo, TransactionInfo newTransactionInfo);
+      TransactionInfo existingTransactionInfo,
+      TransactionInfo newTransactionInfo,
+      Optional<Long> baseFee);
 }

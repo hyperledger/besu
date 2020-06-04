@@ -19,12 +19,12 @@ contract('Permissioning: Nodes', () => {
   });
 
   it('Should compute key', async () => {
-    let key1 = await proxy.computeKey(node1High, node1Low, node1Host, node1Port);
-    let key2 = await proxy.computeKey(node1High, node1Low, node1Host, node1Port);
+    let key1 = await proxy.computeKey(node1High, node1Low, node1Host);
+    let key2 = await proxy.computeKey(node1High, node1Low, node1Host);
     assert.equal(key1, key2, "computed keys should be the same");
 
-    let key3 = await proxy.computeKey(node1High, node1Low, node1Host, node2Port);
-    assert(key3 != key2, "keys for different ports should be different");
+    let key3 = await proxy.computeKey(node2High, node2Low, node2Host);
+    assert(key3 != key2, "computed keys for different nodes should be different");
   });
 
   it('Should add a node to the whitelist and then permit that node', async () => {
@@ -54,6 +54,5 @@ contract('Permissioning: Nodes', () => {
 
     permitted = await proxy.connectionAllowed(node1High, node1Low, node1Host, node1Port, node2High, node2Low, node2Host, node2Port);
     assert.equal(permitted, '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'expected source disallowed since it was removed');
-    
   });
 });

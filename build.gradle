@@ -123,7 +123,7 @@ allprojects {
     jcenter()
     mavenCentral()
     mavenLocal()
-    maven {url "https://hyperledger-org.bintray.com/besu-repo"}
+    maven { url "https://hyperledger-org.bintray.com/besu-repo" }
     maven { url "https://consensys.bintray.com/pegasys-repo" }
     maven { url "https://repo.spring.io/libs-release" }
   }
@@ -473,7 +473,13 @@ applicationDefaultJvmArgs = [
   'java.base/sun.security.provider=ALL-UNNAMED',
   // Jackson likes to access java.util.OptionalLong's constructor
   '--add-opens',
-  'java.base/java.util=ALL-UNNAMED'
+  'java.base/java.util=ALL-UNNAMED',
+  // suppress netty specific module warnings in debug
+  "-Dio.netty.tryReflectionSetAccessible=true",
+  "--add-exports",
+  "java.base/jdk.internal.misc=ALL-UNNAMED",
+  "--add-opens",
+  "java.base/java.nio=ALL-UNNAMED"
 ]
 
 run {
@@ -631,7 +637,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*/.idea/.*)",
     "(.*/out/.*)",
     "(.*/build/.*)",
-    "(.*/src/main/generated/.*)",
+    "(.*/src/[^/]+/generated/.*)",
   ].join("|")
 
 }

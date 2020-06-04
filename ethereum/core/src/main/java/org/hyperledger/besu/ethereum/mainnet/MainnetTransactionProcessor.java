@@ -225,7 +225,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     validationResult =
         transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
-      LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
+      LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
       return Result.invalid(validationResult);
     }
 
@@ -256,7 +256,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final WorldUpdater worldUpdater = worldState.updater();
     final MessageFrame initialFrame;
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final ReturnStack returnStack = new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE);
+    final ReturnStack returnStack = new ReturnStack();
 
     if (transaction.isContractCreation()) {
       final Address contractAddress =

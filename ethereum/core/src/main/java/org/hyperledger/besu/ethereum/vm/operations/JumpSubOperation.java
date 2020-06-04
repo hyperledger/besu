@@ -30,19 +30,19 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class JumpSubOperation extends AbstractOperation {
 
   public JumpSubOperation(final GasCalculator gasCalculator) {
-    super(0xb3, "JUMPSUB", 1, 0, true, 1, gasCalculator);
+    super(0x5e, "JUMPSUB", 1, 0, true, 1, gasCalculator);
   }
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getMidTierGasCost();
+    return gasCalculator().getHighTierGasCost();
   }
 
   @Override
   public void execute(final MessageFrame frame) {
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
     frame.pushReturnStackItem(frame.getPC() + 1);
-    frame.setPC(location.intValue());
+    frame.setPC(location.intValue() + 1);
   }
 
   @Override

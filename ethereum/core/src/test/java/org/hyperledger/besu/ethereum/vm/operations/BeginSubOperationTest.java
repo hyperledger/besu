@@ -26,9 +26,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -39,10 +39,10 @@ import org.junit.Test;
 
 public class BeginSubOperationTest {
 
-  private static final GasCalculator gasCalculator = new BerlinGasCalculator();
+  private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
 
   private static final int CURRENT_PC = 1;
-  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(1);
+  private static final Gas BEGIN_SUB_GAS_COST = Gas.of(2);
 
   private Blockchain blockchain;
   private Address address;
@@ -77,25 +77,22 @@ public class BeginSubOperationTest {
 
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
-            .build();
+        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
     assertThat(operation.cost(frame)).isEqualTo(BEGIN_SUB_GAS_COST);
   }
 
   @Test
-  public void shouldNotConsumeStackItem() {
+  public void shouldHaltWithInvalidSubRoutineEntryWhenBeginSubIsExecuted() {
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
-            .pushStackItem(Bytes32.fromHexString("0xFF"))
-            .code(new Code(Bytes.fromHexString("0x6004b300b2b7")))
-            .returnStack(new ReturnStack(MessageFrame.DEFAULT_MAX_RETURN_STACK_SIZE))
+            .pushStackItem(Bytes32.fromHexString("0x04"))
+            .code(new Code(Bytes.fromHexString("0x6104005c")))
+            .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null)).isNotPresent();
-    operation.execute(frame);
-    assertThat(frame.stackSize()).isEqualTo(1);
+    assertThat(operation.exceptionalHaltCondition(frame, null, null))
+        .contains(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
   }
 }

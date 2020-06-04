@@ -69,14 +69,17 @@ public class BlockTransactionSelectorTest {
   private static final KeyPair keyPair = KeyPair.generate();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
+  private final Blockchain blockchain = new TestBlockchain();
   private final PendingTransactions pendingTransactions =
       new PendingTransactions(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
           5,
           TestClock.fixed(),
-          metricsSystem);
-  private final Blockchain blockchain = new TestBlockchain();
+          metricsSystem,
+          blockchain::getChainHeadHeader,
+          Optional.empty(),
+          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
   private final Supplier<Boolean> isCancelled = () -> false;
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);

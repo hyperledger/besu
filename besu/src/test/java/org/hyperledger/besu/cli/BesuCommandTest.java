@@ -25,6 +25,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -751,7 +752,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void envVariableOverridesValueFromConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
-    setEnvironemntVariable("BESU_MINER_COINBASE", expectedCoinbase);
+    setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
     parseCommand("--config-file", configFile);
 
     verify(mockControllerBuilder)
@@ -767,7 +768,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void cliOptionOverridesEnvVariableAndConfig() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
-    setEnvironemntVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
+    setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
     parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
 
     verify(mockControllerBuilder)
@@ -2922,6 +2923,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
   }
 
+  @Test
+  public void onchainPrivacyAndMultiTenancyCannotBeUsedTogether() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-onchain-groups-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file",
+        "--rpc-http-authentication-enabled");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Privacy multi-tenancy and onchain privacy groups cannot be used together");
+  }
+
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
     final Path genesisFile = Files.createTempFile("genesisFile", "");
     Files.write(genesisFile, encodeJsonGenesis(jsonGenesis).getBytes(UTF_8));
@@ -2967,8 +2982,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             stringArgumentCaptor.capture(),
             stringArgumentCaptor.capture(),
             stringArgumentCaptor.capture());
-    assertThat(stringArgumentCaptor.getAllValues().get(0))
-        .isEqualTo("{} will have no effect unless {} is defined on the command line.");
+    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
 
     for (final String option : dependentOptions) {
       assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
@@ -3044,6 +3058,26 @@ public class BesuCommandTest extends CommandTestAbstract {
         .isEqualTo(pendingTxRetentionHours);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void transactionPoolPriceBump() {
+    final Percentage priceBump = Percentage.fromInt(13);
+    parseCommand("--tx-pool-price-bump", priceBump.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getPriceBump()).isEqualTo(priceBump);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void invalidTansactionPoolPriceBumpShouldFail() {
+    parseCommand("--tx-pool-price-bump", "101");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Invalid value for option '--tx-pool-price-bump'",
+            "should be a number between 0 and 100 inclusive");
   }
 
   @Test
