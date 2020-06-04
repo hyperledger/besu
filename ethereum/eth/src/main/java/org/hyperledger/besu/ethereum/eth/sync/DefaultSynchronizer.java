@@ -132,6 +132,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             .whenComplete(this::handleFastSyncResult)
             .exceptionally(
                 ex -> {
+                  LOG.warn("Exiting FastSync process");
                   System.exit(0);
                   return null;
                 });
