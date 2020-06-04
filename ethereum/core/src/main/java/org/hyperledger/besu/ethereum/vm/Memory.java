@@ -31,7 +31,7 @@ import org.apache.tuweni.units.bigints.UInt256s;
 public class Memory {
 
   // See below.
-  private static final long MAX_BYTES = 32L * Integer.MAX_VALUE;
+  private static final long MAX_BYTES = Integer.MAX_VALUE;
 
   /**
    * The data stored within the memory.
@@ -284,17 +284,21 @@ public class Memory {
    * @param taintedValue the bytes to copy to memory from {@code location}.
    */
   public void setBytes(final UInt256 location, final UInt256 numBytes, final Bytes taintedValue) {
-    final int copySize = numBytes.intValue();
-    if (copySize > 0) {
-      final int srcLength = taintedValue.size();
-      final int locationInt = location.intValue();
-      ensureCapacityForBytes(locationInt, copySize);
-      if (srcLength >= copySize) {
-        System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, locationInt, copySize);
-      } else {
-        Arrays.fill(data, locationInt, locationInt + copySize, (byte) 0);
-        System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, locationInt, srcLength);
-      }
+    if (numBytes.isZero()) {
+      return;
+    }
+
+    final int start = asByteIndex(location);
+    final int length = asByteLength(numBytes);
+    final int srcLength = taintedValue.size();
+    final int end = Math.addExact(start, length);
+
+    ensureCapacityForBytes(start, length);
+    if (srcLength >= length) {
+      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, start, length);
+    } else {
+      Arrays.fill(data, start, end, (byte) 0);
+      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, start, srcLength);
     }
   }
 
