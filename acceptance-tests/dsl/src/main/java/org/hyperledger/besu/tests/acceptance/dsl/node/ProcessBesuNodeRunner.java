@@ -85,6 +85,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("DEV");
     }
 
+    params.add("--sync-mode");
+    params.add("FULL");
+
     params.add("--discovery-enabled");
     params.add(Boolean.toString(node.isDiscoveryEnabled()));
 
