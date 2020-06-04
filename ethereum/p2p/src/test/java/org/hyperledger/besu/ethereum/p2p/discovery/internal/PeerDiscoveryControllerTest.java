@@ -646,36 +646,6 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldIgnorePeerWhenReceivedInvalidReplyToken() {
-    // test spoofs a ping from a different ip address('victim ip')
-    startPeerDiscoveryController();
-
-    final DiscoveryPeer peer =
-        spy(
-            DiscoveryPeer.fromEnode(
-                EnodeURL.builder()
-                    .nodeId(Peer.randomId())
-                    .ipAddress("10.20.30.40")
-                    .discoveryAndListeningPorts(30303)
-                    .build()));
-
-    final DiscoveryPeer victimPeer =
-        spy(
-            DiscoveryPeer.fromEnode(
-                EnodeURL.builder()
-                    .nodeId(Peer.randomId())
-                    .ipAddress("10.20.30.41")
-                    .discoveryAndListeningPorts(30303)
-                    .build()));
-
-    final Packet pingPacket = mockPingPacket(peer, this.localPeer);
-    controller.onMessage(pingPacket, victimPeer);
-
-    assertThat(controller.streamDiscoveredPeers()).doesNotContain(victimPeer);
-    assertThat(controller.streamDiscoveredPeers()).doesNotContain(peer);
-  }
-
-  @Test
   public void shouldNotAddNewPeerWhenReceivedPongFromBlacklistedPeer() {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
 

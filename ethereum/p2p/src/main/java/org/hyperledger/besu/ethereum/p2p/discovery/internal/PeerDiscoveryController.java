@@ -293,18 +293,6 @@ public class PeerDiscoveryController {
       return;
     }
 
-    //  Message from spoofed IP should be ignored
-    if (packet.getType().equals(PacketType.PING)
-        && packet
-            .getPacketData(PingPacketData.class)
-            .map(
-                pingPacketData ->
-                    !sender.getEndpoint().getHost().equals(pingPacketData.getFrom().getHost()))
-            .orElse(false)) {
-      LOG.debug("Rejecting ping attempt from IP {}", sender.getEndpoint().getHost());
-      return;
-    }
-
     // Load the peer from the table, or use the instance that comes in.
     final Optional<DiscoveryPeer> maybeKnownPeer =
         peerTable.get(sender).filter(known -> known.discoveryEndpointMatches(sender));
@@ -328,6 +316,12 @@ public class PeerDiscoveryController {
                 });
         break;
       case NEIGHBORS:
+        if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
+          LOG.info(
+              "Rejecting NEIGHBORS request for unbonded nodes, sender: {}", sender.getEndpoint());
+          break;
+        }
+
         matchInteraction(packet)
             .ifPresent(
                 interaction ->
@@ -335,7 +329,12 @@ public class PeerDiscoveryController {
                         peer, getPeersFromNeighborsPacket(packet)));
         break;
       case FIND_NEIGHBORS:
-        if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
+        if (!peerKnown
+            || !peerPermissions.allowInboundNeighborsRequest(peer)
+            || (peer.getStatus() != PeerDiscoveryStatus.BONDED)) {
+          LOG.info(
+              "Rejecting FIND_NEIGHBORS request for unbonded nodes, sender: {}",
+              sender.getEndpoint());
           break;
         }
 
