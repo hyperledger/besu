@@ -37,7 +37,7 @@ public class Memory {
    * The data stored within the memory.
    *
    * <p>Note that the current Ethereum spec don't put a limit on memory, so we could theoretically
-   * overflow this. A byte array implementation limits us to 2GiB.  But that would cost over 51
+   * overflow this. A byte array implementation limits us to 2GiB. But that would cost over 51
    * trillion gas. So this is likely a reasonable limitation, at least at first.
    */
   private byte[] data;
@@ -290,12 +290,10 @@ public class Memory {
       final int locationInt = location.intValue();
       ensureCapacityForBytes(locationInt, copySize);
       if (srcLength >= copySize) {
-        System.arraycopy(
-            taintedValue.toArrayUnsafe(), 0, data, locationInt, copySize);
+        System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, locationInt, copySize);
       } else {
-        Arrays.fill(data, locationInt, locationInt + copySize, (byte)0);
-        System.arraycopy(
-            taintedValue.toArrayUnsafe(), 0, data, locationInt, srcLength);
+        Arrays.fill(data, locationInt, locationInt + copySize, (byte) 0);
+        System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, locationInt, srcLength);
       }
     }
   }
