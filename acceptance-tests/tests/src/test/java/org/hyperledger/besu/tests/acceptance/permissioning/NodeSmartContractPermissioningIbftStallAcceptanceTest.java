@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
-import com.sun.java.accessibility.util.Translator;
-import java.math.BigInteger;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
@@ -24,7 +22,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthBlockNumberTransaction;
 import org.junit.Test;
 
 public class NodeSmartContractPermissioningIbftStallAcceptanceTest
