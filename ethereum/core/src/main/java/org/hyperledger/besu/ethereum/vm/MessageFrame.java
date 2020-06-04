@@ -553,7 +553,7 @@ public class MessageFrame {
    * @param offset The offset in memory
    * @param length The length of the memory access
    */
-  public void expandMemory(final long offset, final int length) {
+  public void expandMemory(final int offset, final int length) {
     memory.ensureCapacityForBytes(offset, length);
   }
 

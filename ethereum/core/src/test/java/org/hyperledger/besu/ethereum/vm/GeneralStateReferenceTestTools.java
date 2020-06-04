@@ -95,7 +95,6 @@ public class GeneralStateReferenceTestTools {
 
     // Don't do time consuming tests
     params.blacklist("CALLBlake2f_MaxRounds.*");
-    params.blacklist(".*\\w50000[-_].*");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
