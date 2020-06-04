@@ -228,7 +228,7 @@ public class Memory {
     final int start = asByteIndex(location);
 
     ensureCapacityForBytes(start, length);
-    return Bytes.wrap(data, location.intValue(), numBytes.intValue()).copy();
+    return Bytes.of(Arrays.copyOfRange(data, start, start + numBytes.intValue()));
   }
 
   /**
@@ -349,7 +349,7 @@ public class Memory {
   public Bytes32 getWord(final UInt256 location) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-    return Bytes32.wrap(data, location.intValue()).copy();
+    return Bytes32.wrap(Arrays.copyOfRange(data, start, start + Bytes32.SIZE));
   }
 
   /**
