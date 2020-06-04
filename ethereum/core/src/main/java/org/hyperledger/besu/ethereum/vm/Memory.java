@@ -74,9 +74,9 @@ public class Memory {
 
   private int asByteIndex(final UInt256 w) {
     try {
-      final int v = w.intValue();
+      final long v = w.toLong();
       checkByteIndex(v);
-      return v;
+      return (int) v;
     } catch (final IllegalStateException e) {
       throw overflow(w.toString());
     }
@@ -91,11 +91,6 @@ public class Memory {
     } catch (final IllegalStateException e) {
       throw overflow(l.toString());
     }
-  }
-
-  private int wordForByte(final int byteIndex) {
-    checkByteIndex(byteIndex);
-    return (byteIndex / Bytes32.SIZE);
   }
 
   /**
@@ -117,8 +112,8 @@ public class Memory {
 
     if (location.fitsInt() && numBytes.fitsInt()) {
       // Fast common path (note that we work on int but use long arithmetic to avoid issues)
-      final long byteSize = (long) location.intValue() + (long) numBytes.intValue();
-      int wordSize = (int) (byteSize / Bytes32.SIZE);
+      final int byteSize = Math.addExact(location.intValue(), numBytes.intValue());
+      int wordSize = (byteSize / Bytes32.SIZE);
       if (byteSize % Bytes32.SIZE != 0) wordSize += 1;
       return wordSize > dataSize256 ? UInt256.valueOf(wordSize) : activeWords;
     } else {
@@ -149,7 +144,8 @@ public class Memory {
     if (numBytes == 0) {
       return;
     }
-    final int lastWordRequired = wordForByte(address + numBytes - 1);
+    final int lastByteIndex = Math.addExact(address, numBytes);
+    final int lastWordRequired = ((lastByteIndex - 1) / Bytes32.SIZE);
     maybeExpandCapacity(lastWordRequired + 1);
   }
 
@@ -194,8 +190,8 @@ public class Memory {
    *
    * @return The current number of active bytes stored in memory.
    */
-  long getActiveBytes() {
-    return (long) data.length;
+  int getActiveBytes() {
+    return data.length;
   }
 
   /**
