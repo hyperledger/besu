@@ -22,6 +22,10 @@ is owned by that user.
 
 The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
 
+### Additions and Improvements
+
+- Remove MANUAL nat manager method. It is now necessary to use the NONE method which has the same behavior. [\#1041](https://github.com/hyperledger/besu/pull/1041)
+
 ## 1.4.6
 
 ### Additions and Improvements
