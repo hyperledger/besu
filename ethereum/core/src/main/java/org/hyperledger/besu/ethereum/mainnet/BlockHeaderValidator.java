@@ -26,20 +26,20 @@ import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BlockHeaderValidator<C> {
+public class BlockHeaderValidator {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final List<Rule<C>> rules;
+  private final List<Rule> rules;
 
-  private BlockHeaderValidator(final List<Rule<C>> rules) {
+  private BlockHeaderValidator(final List<Rule> rules) {
     this.rules = rules;
   }
 
   public boolean validateHeader(
       final BlockHeader header,
       final BlockHeader parent,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolContext protocolContext,
       final HeaderValidationMode mode) {
     switch (mode) {
       case NONE:
@@ -70,7 +70,7 @@ public class BlockHeaderValidator<C> {
 
   public boolean validateHeader(
       final BlockHeader header,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolContext protocolContext,
       final HeaderValidationMode mode) {
     if (mode == HeaderValidationMode.NONE) {
       return true;
@@ -83,15 +83,14 @@ public class BlockHeaderValidator<C> {
   private boolean applyRules(
       final BlockHeader header,
       final BlockHeader parent,
-      final ProtocolContext<C> protocolContext,
-      final Predicate<Rule<C>> filter) {
+      final ProtocolContext protocolContext,
+      final Predicate<Rule> filter) {
     return rules.stream()
         .filter(filter)
         .allMatch(rule -> rule.validate(header, parent, protocolContext));
   }
 
-  private Optional<BlockHeader> getParent(
-      final BlockHeader header, final ProtocolContext<C> context) {
+  private Optional<BlockHeader> getParent(final BlockHeader header, final ProtocolContext context) {
     final Optional<BlockHeader> parent =
         context.getBlockchain().getBlockHeader(header.getParentHash());
     if (parent.isEmpty()) {
@@ -100,60 +99,57 @@ public class BlockHeaderValidator<C> {
     return parent;
   }
 
-  private static class Rule<C> {
+  private static class Rule {
     private final boolean detachedSupported;
-    private final AttachedBlockHeaderValidationRule<C> rule;
+    private final AttachedBlockHeaderValidationRule rule;
     private final boolean includeInLightValidation;
 
     private Rule(
         final boolean detachedSupported,
-        final AttachedBlockHeaderValidationRule<C> rule,
+        final AttachedBlockHeaderValidationRule rule,
         final boolean includeInLightValidation) {
       this.detachedSupported = detachedSupported;
       this.rule = rule;
       this.includeInLightValidation = includeInLightValidation;
     }
 
-    public boolean isDetachedSupported() {
+    boolean isDetachedSupported() {
       return detachedSupported;
     }
 
     public boolean validate(
-        final BlockHeader header,
-        final BlockHeader parent,
-        final ProtocolContext<C> protocolContext) {
+        final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
       return this.rule.validate(header, parent, protocolContext);
     }
 
-    public boolean includeInLightValidation() {
+    boolean includeInLightValidation() {
       return includeInLightValidation;
     }
   }
 
-  public static class Builder<C> {
-    private final List<Function<DifficultyCalculator<C>, Rule<C>>> rulesBuilder = new ArrayList<>();
-    private DifficultyCalculator<C> difficultyCalculator;
+  public static class Builder {
+    private final List<Function<DifficultyCalculator, Rule>> rulesBuilder = new ArrayList<>();
+    private DifficultyCalculator difficultyCalculator;
 
-    public Builder<C> addRule(
-        final Function<DifficultyCalculator<C>, AttachedBlockHeaderValidationRule<C>> ruleBuilder) {
+    public Builder addRule(
+        final Function<DifficultyCalculator, AttachedBlockHeaderValidationRule> ruleBuilder) {
       this.rulesBuilder.add(
           difficultyCalculator -> {
-            final AttachedBlockHeaderValidationRule<C> rule =
-                ruleBuilder.apply(difficultyCalculator);
-            return new Rule<>(false, rule, rule.includeInLightValidation());
+            final AttachedBlockHeaderValidationRule rule = ruleBuilder.apply(difficultyCalculator);
+            return new Rule(false, rule, rule.includeInLightValidation());
           });
       return this;
     }
 
-    public Builder<C> addRule(final AttachedBlockHeaderValidationRule<C> rule) {
-      this.rulesBuilder.add(ignored -> new Rule<>(false, rule, rule.includeInLightValidation()));
+    public Builder addRule(final AttachedBlockHeaderValidationRule rule) {
+      this.rulesBuilder.add(ignored -> new Rule(false, rule, rule.includeInLightValidation()));
       return this;
     }
 
-    public Builder<C> addRule(final DetachedBlockHeaderValidationRule rule) {
+    public Builder addRule(final DetachedBlockHeaderValidationRule rule) {
       this.rulesBuilder.add(
           ignored -> {
-            return new Rule<>(
+            return new Rule(
                 true,
                 (header, parent, protocolContext) -> rule.validate(header, parent),
                 rule.includeInLightValidation());
@@ -161,17 +157,17 @@ public class BlockHeaderValidator<C> {
       return this;
     }
 
-    public Builder<C> difficultyCalculator(final DifficultyCalculator<C> difficultyCalculator) {
+    public Builder difficultyCalculator(final DifficultyCalculator difficultyCalculator) {
       this.difficultyCalculator = difficultyCalculator;
       return this;
     }
 
-    public BlockHeaderValidator<C> build() {
-      final List<Rule<C>> rules = new ArrayList<>();
+    public BlockHeaderValidator build() {
+      final List<Rule> rules = new ArrayList<>();
       rulesBuilder.stream()
           .map(ruleBuilder -> ruleBuilder.apply(difficultyCalculator))
           .forEach(rules::add);
-      return new BlockHeaderValidator<>(rules);
+      return new BlockHeaderValidator(rules);
     }
   }
 }

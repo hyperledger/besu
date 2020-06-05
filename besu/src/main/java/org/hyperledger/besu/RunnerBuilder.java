@@ -126,7 +126,7 @@ public class RunnerBuilder {
   private static final Logger LOG = LogManager.getLogger();
 
   private Vertx vertx;
-  private BesuController<?> besuController;
+  private BesuController besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
@@ -159,7 +159,7 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder besuController(final BesuController<?> besuController) {
+  public RunnerBuilder besuController(final BesuController besuController) {
     this.besuController = besuController;
     return this;
   }
@@ -316,8 +316,8 @@ public class RunnerBuilder {
     final SubProtocolConfiguration subProtocolConfiguration =
         besuController.getSubProtocolConfiguration();
 
-    final ProtocolSchedule<?> protocolSchedule = besuController.getProtocolSchedule();
-    final ProtocolContext<?> context = besuController.getProtocolContext();
+    final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
+    final ProtocolContext context = besuController.getProtocolContext();
 
     final List<SubProtocol> subProtocols = subProtocolConfiguration.getSubProtocols();
     final List<ProtocolManager> protocolManagers = subProtocolConfiguration.getProtocolManagers();
@@ -597,7 +597,7 @@ public class RunnerBuilder {
 
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final BesuController<?> besuController,
+      final BesuController besuController,
       final TransactionSimulator transactionSimulator) {
 
     if (permissioningConfiguration.isPresent()) {
@@ -646,8 +646,8 @@ public class RunnerBuilder {
   }
 
   private Map<String, JsonRpcMethod> jsonRpcMethods(
-      final ProtocolSchedule<?> protocolSchedule,
-      final BesuController<?> besuController,
+      final ProtocolSchedule protocolSchedule,
+      final BesuController besuController,
       final P2PNetwork network,
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -756,7 +756,7 @@ public class RunnerBuilder {
       final SubscriptionManager subscriptionManager,
       final Map<String, JsonRpcMethod> jsonRpcMethods,
       final PrivacyParameters privacyParameters,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool) {
 

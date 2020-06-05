@@ -42,10 +42,10 @@ public class BlockHeaderValidationRulesetFactory {
    * @param epochManager an object which determines if a given block is an epoch block.
    * @return the header validator.
    */
-  public static BlockHeaderValidator.Builder<CliqueContext> cliqueBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
       final long secondsBetweenBlocks, final EpochManager epochManager) {
 
-    return new BlockHeaderValidator.Builder<CliqueContext>()
+    return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))

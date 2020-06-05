@@ -65,7 +65,7 @@ public final class BlockHeadersMessage extends AbstractMessageData {
     return EthPV62.BLOCK_HEADERS;
   }
 
-  public <C> List<BlockHeader> getHeaders(final ProtocolSchedule<C> protocolSchedule) {
+  public List<BlockHeader> getHeaders(final ProtocolSchedule protocolSchedule) {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)

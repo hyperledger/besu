@@ -32,7 +32,7 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   public EeaJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);

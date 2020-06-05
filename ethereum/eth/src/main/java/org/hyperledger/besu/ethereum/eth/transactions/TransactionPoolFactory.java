@@ -33,8 +33,8 @@ import java.util.Optional;
 public class TransactionPoolFactory {
 
   public static TransactionPool createTransactionPool(
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final Clock clock,
       final MetricsSystem metricsSystem,
@@ -86,8 +86,8 @@ public class TransactionPoolFactory {
   }
 
   static TransactionPool createTransactionPool(
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final SyncState syncState,

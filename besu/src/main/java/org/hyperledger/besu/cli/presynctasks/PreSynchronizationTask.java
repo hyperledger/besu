@@ -23,5 +23,5 @@ import org.hyperledger.besu.controller.BesuController;
  */
 public interface PreSynchronizationTask {
 
-  void run(final BesuController<?> besuController);
+  void run(final BesuController besuController);
 }

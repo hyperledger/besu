@@ -80,15 +80,15 @@ public class BesuEventsImplTest {
   private static final org.hyperledger.besu.ethereum.core.Transaction TX1 = createTransaction(1);
   private static final org.hyperledger.besu.ethereum.core.Transaction TX2 = createTransaction(2);
 
-  @Mock private ProtocolSchedule<Void> mockProtocolSchedule;
-  @Mock private ProtocolContext<Void> mockProtocolContext;
+  @Mock private ProtocolSchedule mockProtocolSchedule;
+  @Mock private ProtocolContext mockProtocolContext;
   private SyncState syncState;
   @Mock private EthPeers mockEthPeers;
   @Mock private EthContext mockEthContext;
   @Mock private EthMessages mockEthMessages;
   @Mock private EthScheduler mockEthScheduler;
   @Mock private TransactionValidator mockTransactionValidator;
-  @Mock private ProtocolSpec<Void> mockProtocolSpec;
+  @Mock private ProtocolSpec mockProtocolSpec;
   @Mock private WorldStateArchive mockWorldStateArchive;
   @Mock private WorldState mockWorldState;
   private TransactionPool transactionPool;

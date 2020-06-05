@@ -35,10 +35,8 @@ import org.apache.logging.log4j.Logger;
  * number is pushed back and the confirmation process repeats. If a maximum number of retries is
  * reached, the task fails with a {@code FastSyncException} containing {@code
  * FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH}.
- *
- * @param <C> The consensus context
  */
-public class PivotBlockRetriever<C> {
+public class PivotBlockRetriever {
 
   private static final Logger LOG = LogManager.getLogger();
   public static final int MAX_QUERY_RETRIES_PER_PEER = 3;
@@ -47,7 +45,7 @@ public class PivotBlockRetriever<C> {
 
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   // The number of peers we need to query to confirm our pivot block
   private final int peersToQuery;
@@ -59,12 +57,12 @@ public class PivotBlockRetriever<C> {
   AtomicLong pivotBlockNumber;
 
   private final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
-  private final Map<Long, PivotBlockConfirmer<C>> confirmationTasks = new ConcurrentHashMap<>();
+  private final Map<Long, PivotBlockConfirmer> confirmationTasks = new ConcurrentHashMap<>();
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
 
   PivotBlockRetriever(
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,
@@ -82,7 +80,7 @@ public class PivotBlockRetriever<C> {
   }
 
   public PivotBlockRetriever(
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,
@@ -108,15 +106,15 @@ public class PivotBlockRetriever<C> {
   }
 
   private void confirmBlock(final long blockNumber) {
-    final PivotBlockConfirmer<C> pivotBlockConfirmationTask =
-        new PivotBlockConfirmer<>(
+    final PivotBlockConfirmer pivotBlockConfirmationTask =
+        new PivotBlockConfirmer(
             protocolSchedule,
             ethContext,
             metricsSystem,
             pivotBlockNumber.get(),
             peersToQuery,
             MAX_QUERY_RETRIES_PER_PEER);
-    final PivotBlockConfirmer<C> preexistingTask =
+    final PivotBlockConfirmer preexistingTask =
         confirmationTasks.putIfAbsent(blockNumber, pivotBlockConfirmationTask);
     if (preexistingTask != null) {
       // We already set up a task to confirm this block

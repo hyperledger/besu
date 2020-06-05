@@ -26,22 +26,22 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 public class FullSyncChainDownloader {
   private FullSyncChainDownloader() {}
 
-  public static <C> ChainDownloader create(
+  public static ChainDownloader create(
       final SynchronizerConfiguration config,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem) {
 
-    final FullSyncTargetManager<C> syncTargetManager =
-        new FullSyncTargetManager<>(
+    final FullSyncTargetManager syncTargetManager =
+        new FullSyncTargetManager(
             config, protocolSchedule, protocolContext, ethContext, metricsSystem);
 
-    return new PipelineChainDownloader<>(
+    return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
-        new FullSyncDownloadPipelineFactory<>(
+        new FullSyncDownloadPipelineFactory(
             config, protocolSchedule, protocolContext, ethContext, metricsSystem),
         ethContext.getScheduler(),
         metricsSystem);

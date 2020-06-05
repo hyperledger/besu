@@ -46,10 +46,9 @@ import org.junit.runners.Parameterized.Parameters;
 public class DifficultyCalculatorTests {
 
   private final String testFile;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
-  public DifficultyCalculatorTests(
-      final String testFile, final ProtocolSchedule<?> protocolSchedule) {
+  public DifficultyCalculatorTests(final String testFile, final ProtocolSchedule protocolSchedule) {
     this.testFile = testFile;
     this.protocolSchedule = protocolSchedule;
   }

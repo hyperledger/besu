@@ -31,7 +31,7 @@ public class PrivateDatabaseMigrationPreSyncTask implements PreSynchronizationTa
   }
 
   @Override
-  public void run(final BesuController<?> besuController) {
+  public void run(final BesuController besuController) {
     final PrivateStorageMigrationBuilder privateStorageMigrationBuilder =
         new PrivateStorageMigrationBuilder(besuController, privacyParameters);
     final PrivateStorageMigrationService privateStorageMigrationService =

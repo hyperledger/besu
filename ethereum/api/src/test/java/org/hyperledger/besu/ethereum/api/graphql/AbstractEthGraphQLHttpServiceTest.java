@@ -70,7 +70,7 @@ import org.mockito.Mockito;
 public abstract class AbstractEthGraphQLHttpServiceTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
-  private static ProtocolSchedule<Void> PROTOCOL_SCHEDULE;
+  private static ProtocolSchedule PROTOCOL_SCHEDULE;
 
   static List<Block> BLOCKS;
 
@@ -89,7 +89,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
 
-  private ProtocolContext<Void> context;
+  private ProtocolContext context;
 
   @BeforeClass
   public static void setupConstants() throws Exception {
@@ -150,7 +150,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
     final MutableBlockchain blockchain =
         InMemoryStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
-    context = new ProtocolContext<>(blockchain, stateArchive, null);
+    context = new ProtocolContext(blockchain, stateArchive, null);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
 
@@ -191,9 +191,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   void importBlock(final int n) {
     final Block block = BLOCKS.get(n);
-    final ProtocolSpec<Void> protocolSpec =
+    final ProtocolSpec protocolSpec =
         PROTOCOL_SCHEDULE.getByBlockNumber(block.getHeader().getNumber());
-    final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
+    final BlockImporter blockImporter = protocolSpec.getBlockImporter();
     blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
   }
 }

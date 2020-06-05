@@ -36,7 +36,7 @@ class CliqueGenesisFileModule extends GenesisFileModule {
   }
 
   @Override
-  ProtocolSchedule<?> provideProtocolSchedule(
+  ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     // dagger can handle this magic one day

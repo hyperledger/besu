@@ -32,7 +32,7 @@ public class ReferenceTestProtocolSchedules {
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
 
   public static ReferenceTestProtocolSchedules create() {
-    final ImmutableMap.Builder<String, ProtocolSchedule<Void>> builder = ImmutableMap.builder();
+    final ImmutableMap.Builder<String, ProtocolSchedule> builder = ImmutableMap.builder();
     builder.put("Frontier", createSchedule(new StubGenesisConfigOptions()));
     builder.put(
         "FrontierToHomesteadAt5", createSchedule(new StubGenesisConfigOptions().homesteadBlock(5)));
@@ -62,18 +62,18 @@ public class ReferenceTestProtocolSchedules {
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
-  private final Map<String, ProtocolSchedule<Void>> schedules;
+  private final Map<String, ProtocolSchedule> schedules;
 
-  private ReferenceTestProtocolSchedules(final Map<String, ProtocolSchedule<Void>> schedules) {
+  private ReferenceTestProtocolSchedules(final Map<String, ProtocolSchedule> schedules) {
     this.schedules = schedules;
   }
 
-  public ProtocolSchedule<Void> getByName(final String name) {
+  public ProtocolSchedule getByName(final String name) {
     return schedules.get(name);
   }
 
-  private static ProtocolSchedule<Void> createSchedule(final GenesisConfigOptions options) {
-    return new ProtocolScheduleBuilder<>(
+  private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
+    return new ProtocolScheduleBuilder(
             options, CHAIN_ID, Function.identity(), PrivacyParameters.DEFAULT, false)
         .createProtocolSchedule();
   }

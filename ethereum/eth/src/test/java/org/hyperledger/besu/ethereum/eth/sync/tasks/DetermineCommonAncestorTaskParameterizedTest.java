@@ -58,7 +58,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class DetermineCommonAncestorTaskParameterizedTest {
-  private final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+  private final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
@@ -158,8 +158,8 @@ public class DetermineCommonAncestorTaskParameterizedTest {
     final AtomicBoolean done = new AtomicBoolean(false);
 
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final ProtocolContext<Void> protocolContext =
-        new ProtocolContext<>(localBlockchain, worldStateArchive, null);
+    final ProtocolContext protocolContext =
+        new ProtocolContext(localBlockchain, worldStateArchive, null);
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(

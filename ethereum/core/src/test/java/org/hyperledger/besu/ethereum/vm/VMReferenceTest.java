@@ -119,11 +119,11 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final MutableWorldState worldState = new DefaultMutableWorldState(spec.getInitialWorldState());
     final EnvironmentInformation execEnv = spec.getExec();
 
-    final ProtocolSpec<Void> protocolSpec =
+    final ProtocolSpec protocolSpec =
         MainnetProtocolSpecs.frontierDefinition(OptionalInt.empty(), OptionalInt.empty())
             .privacyParameters(PrivacyParameters.DEFAULT)
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
-            .build(new MutableProtocolSchedule<>(CHAIN_ID));
+            .build(new MutableProtocolSchedule(CHAIN_ID));
 
     final ReturnStack returnStack = new ReturnStack();
 
