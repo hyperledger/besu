@@ -74,7 +74,6 @@ public class BlockchainReferenceTestTools {
 
     // Don't do time consuming tests
     params.blacklist("CALLBlake2f_MaxRounds.*");
-    params.blacklist(".*\\w50000[-_].*");
 
     // Insane amount of ether
     params.blacklist("sha3_memSizeNoQuadraticCost[0-9][0-9]_Istanbul");
