@@ -80,7 +80,7 @@ public class ForkIdManagerTest {
 
   @Test
   public void checkCorrectRopstenForkIdHashesGenerated() {
-    final Long[] forks = {10L, 1700000L, 4230000L, 4939394L};
+    final Long[] forks = {10L, 1700000L, 4230000L, 4939394L, 6485846L, 7117117L};
     final String genHash = "0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d";
     final ForkId[] checkIds = {
       new ForkId(
@@ -89,7 +89,9 @@ public class ForkIdManagerTest {
       new ForkId(Bytes.fromHexString("0x63760190"), 1700000L), // First Spurious block
       new ForkId(Bytes.fromHexString("0x3ea159c7"), 4230000L), // First Byzantium block
       new ForkId(Bytes.fromHexString("0x97b544f3"), 4939394L), // First Constantinople block
-      new ForkId(Bytes.fromHexString("0xd6e2149b"), 0L) // Today Petersburg block
+      new ForkId(Bytes.fromHexString("0xd6e2149b"), 6485846L),
+      new ForkId(Bytes.fromHexString("0x4bc66396"), 7117117L),
+      new ForkId(Bytes.fromHexString("0x6727ef90"), 0L),
     };
     final List<Long> list = Arrays.asList(forks);
     final ForkIdManager forkIdManager = new ForkIdManager(mockBlockchain(genHash, 0), list);
@@ -97,7 +99,9 @@ public class ForkIdManagerTest {
 
     assertThat(entries).containsExactly(checkIds);
     assertThat(forkIdManager.getLatestForkId()).isNotNull();
-    assertThat(forkIdManager.getLatestForkId()).isEqualTo(checkIds[4]);
+    assertThat(forkIdManager.getLatestForkId()).isEqualTo(checkIds[checkIds.length - 1]);
+    assertThat(forkIdManager.computeForkId())
+        .isEqualTo(new ForkId(Bytes.fromHexString("0x30c7ddbc"), 10L));
   }
 
   @Test

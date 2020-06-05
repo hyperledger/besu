@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.LongSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
@@ -40,23 +41,25 @@ public class ForkIdManager {
   private final List<ForkId> forkAndHashList;
 
   private final List<Predicate<ForkId>> forkIDCheckers;
+  private final List<Long> forks;
+  private final LongSupplier chainHeadSupplier;
+  private long lastHead;
+  private ForkId lastComputedForkId;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
     checkNotNull(blockchain);
     checkNotNull(forks);
+    this.chainHeadSupplier = blockchain::getChainHeadBlockNumber;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     this.forkAndHashList = new ArrayList<>();
+    this.forks =
+        forks.stream()
+            .filter(fork -> fork > 0)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toUnmodifiableList());
     final Predicate<ForkId> legacyForkIdChecker =
-        createForkIDChecker(
-            blockchain,
-            genesisHash,
-            forks,
-            fs ->
-                fs.stream()
-                    .filter(fork -> fork > 0)
-                    .distinct()
-                    .collect(Collectors.toUnmodifiableList()),
-            forkAndHashList);
+        createForkIDChecker(blockchain, genesisHash, forks, fs -> forks, forkAndHashList);
     // if the fork list contains only zeros then we may be in a consortium/dev network
     if (onlyZerosForkBlocks(forks)) {
       this.forkIDCheckers = singletonList(forkId -> true);
@@ -70,6 +73,35 @@ public class ForkIdManager {
               new ArrayList<>());
       this.forkIDCheckers = Arrays.asList(newForkIdChecker, legacyForkIdChecker);
     }
+  }
+
+  public ForkId computeForkId() {
+    final long head = chainHeadSupplier.getAsLong();
+    if (head == lastHead && lastComputedForkId != null) {
+      return lastComputedForkId;
+    }
+    lastHead = head;
+
+    final CRC32 crc = new CRC32();
+    long next = 0;
+    crc.update(genesisHash.toArray());
+    for (final Long fork : forks) {
+      if (fork <= head) {
+        updateCrc(crc, fork);
+        continue;
+      }
+      next = fork;
+      break;
+    }
+    lastComputedForkId = new ForkId(getCurrentCrcHash(crc), next);
+    return lastComputedForkId;
+  }
+
+  ForkId getLatestForkId() {
+    if (forkAndHashList.size() > 0) {
+      return forkAndHashList.get(forkAndHashList.size() - 1);
+    }
+    return null;
   }
 
   private static Predicate<ForkId> createForkIDChecker(
@@ -93,13 +125,6 @@ public class ForkIdManager {
 
   public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;
-  }
-
-  ForkId getLatestForkId() {
-    if (forkAndHashList.size() > 0) {
-      return forkAndHashList.get(forkAndHashList.size() - 1);
-    }
-    return null;
   }
 
   public static ForkId readFrom(final RLPInput in) {
