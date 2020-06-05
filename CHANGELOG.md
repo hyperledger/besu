@@ -1,6 +1,6 @@
 # Changelog
 
-## Breaking change upcoming in v1.5 
+## Breaking change upcoming in v1.5
 
 To maintain best security practices, we're changing the `user:group` on the Docker container to `besu`.
 
@@ -17,6 +17,11 @@ a different user outside the image.
 If you’re mounting local folders, it is best to set the user via the Docker `—user` argument. Use the
 UID because the username may not exist inside the docker container. Ensure the directory being mounted
 is owned by that user.
+
+### Fast Sync by Default for Named Networks
+The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets is now FAST.
+The default is unchanged for private networks.
+This default is what most users want when they are syncing but if you want to full sync, you can still do so with `--sync-mode=FULL`
 
 ## Upcoming 1.5 release 
 
