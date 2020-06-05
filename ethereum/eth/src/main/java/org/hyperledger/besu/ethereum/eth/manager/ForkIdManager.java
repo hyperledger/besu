@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.LongSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
@@ -35,28 +36,22 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class ForkIdManager {
-
   private final Hash genesisHash;
   private final List<ForkId> forkAndHashList;
-
   private final List<Predicate<ForkId>> forkIDCheckers;
+  private final List<Long> forks;
+  private final LongSupplier chainHeadSupplier;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
     checkNotNull(blockchain);
     checkNotNull(forks);
+    this.chainHeadSupplier = blockchain::getChainHeadBlockNumber;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     this.forkAndHashList = new ArrayList<>();
+    this.forks =
+        forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
     final Predicate<ForkId> legacyForkIdChecker =
-        createForkIDChecker(
-            blockchain,
-            genesisHash,
-            forks,
-            fs ->
-                fs.stream()
-                    .filter(fork -> fork > 0)
-                    .distinct()
-                    .collect(Collectors.toUnmodifiableList()),
-            forkAndHashList);
+        createForkIDChecker(blockchain, genesisHash, forks, fs -> forks, forkAndHashList);
     // if the fork list contains only zeros then we may be in a consortium/dev network
     if (onlyZerosForkBlocks(forks)) {
       this.forkIDCheckers = singletonList(forkId -> true);
@@ -95,11 +90,20 @@ public class ForkIdManager {
     return this.forkAndHashList;
   }
 
-  ForkId getLatestForkId() {
-    if (forkAndHashList.size() > 0) {
-      return forkAndHashList.get(forkAndHashList.size() - 1);
+  public ForkId getLatestForkId() {
+    final CRC32 crc = new CRC32();
+    long next = 0;
+    crc.update(genesisHash.toArray());
+    final long head = chainHeadSupplier.getAsLong();
+    for (final Long fork : forks) {
+      if (fork <= head) {
+        updateCrc(crc, fork);
+        continue;
+      }
+      next = fork;
+      break;
     }
-    return null;
+    return new ForkId(getCurrentCrcHash(crc), next);
   }
 
   public static ForkId readFrom(final RLPInput in) {
@@ -109,7 +113,6 @@ public class ForkIdManager {
     in.leaveList();
     return new ForkId(hash, next);
   }
-
   /**
    * EIP-2124 behaviour
    *
@@ -300,7 +303,6 @@ public class ForkIdManager {
       return super.hashCode();
     }
   }
-
   // next two methods adopted from:
   // https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/Pack.java
   private static byte[] longToBigEndian(final long n) {
