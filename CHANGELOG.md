@@ -18,6 +18,10 @@ If youâ€™re mounting local folders, it is best to set the user via the Docker `â
 UID because the username may not exist inside the docker container. Ensure the directory being mounted
 is owned by that user.
 
+### Remove Manual NAT method
+The NAT manager's `MANUAL` method has been removed. 
+It is now necessary to use the `NONE` method which has the same behavior.
+
 ### Fast Sync by Default for Named Networks
 The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets is now FAST.
 The default is unchanged for private networks.
