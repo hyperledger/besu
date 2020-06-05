@@ -77,7 +77,7 @@ public class ForkIdManager {
 
   public ForkId computeForkId() {
     final long head = chainHeadSupplier.getAsLong();
-    if (head == lastHead && lastComputedForkId != null) {
+    if (lastHead != 0 && head == lastHead && lastComputedForkId != null) {
       return lastComputedForkId;
     }
     lastHead = head;
