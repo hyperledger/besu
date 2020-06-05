@@ -16,7 +16,6 @@ package org.hyperledger.besu.nat;
 
 public enum NatMethod {
   UPNP,
-  MANUAL,
   DOCKER,
   KUBERNETES,
   AUTO,
