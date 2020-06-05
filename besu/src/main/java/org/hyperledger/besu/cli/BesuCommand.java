@@ -368,8 +368,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
-          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE})")
-  private final SyncMode syncMode = DEFAULT_SYNC_MODE;
+          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: FAST if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
+  private SyncMode syncMode = null;
 
   @Option(
       names = {"--fast-sync-min-peers"},
@@ -1338,6 +1338,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private BesuCommand configure() throws Exception {
+    syncMode =
+        Optional.ofNullable(syncMode)
+            .orElse(genesisFile == null && !isPrivacyEnabled ? SyncMode.FAST : SyncMode.FULL);
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();

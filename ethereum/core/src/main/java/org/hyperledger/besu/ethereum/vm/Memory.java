@@ -15,14 +15,10 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.Arrays;
 
-import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
 
@@ -35,50 +31,28 @@ import org.apache.tuweni.units.bigints.UInt256s;
 public class Memory {
 
   // See below.
-  private static final long MAX_BYTES = 32L * Integer.MAX_VALUE;
+  private static final long MAX_BYTES = Integer.MAX_VALUE;
 
   /**
    * The data stored within the memory.
    *
    * <p>Note that the current Ethereum spec don't put a limit on memory, so we could theoretically
-   * overflow this. That said we can already store up to 64GB and:
-   *
-   * <ul>
-   *   <li>that's 64GB of underlying bytes, but *a lot* more physical memory use in practice,
-   *       because ... Java; worth testing but I suspect all but the beefiest servers would OOM
-   *       before we come close to his in the first place.
-   *   <li>the price of a transaction needing more than that is likely prohibitive.
-   * </ul>
-   *
-   * So this is likely a reasonable limitation, at least at first (and possibly ever if I'm to bet).
+   * overflow this. A byte array implementation limits us to 2GiB. But that would cost over 51
+   * trillion gas. So this is likely a reasonable limitation, at least at first.
    */
-  /*
-   * Implementation note: using an array of word have a bunch of advantages: - it can make
-   * expansions cheaper (less bytes to copy on resize). - it makes word-related operations simple. -
-   * it's an easy way to put a higher limit on addressable memory (Integer.MAX_VALUE word is 32
-   * times more capacity than Integer.MAX_VALUE bytes). but it's not without downsides either: -
-   * non-word aligned operations (on more than 1 byte) are currently more expansive (could be
-   * improved, but with more works). - sequential access, even word-aligned, might be slower than if
-   * we allocated larger byte arrays underneath due to cache effects. This is likely good enough
-   * initially, but a page-based design (with a page being X word, X to be determined) could be
-   * worth exploring as a future improvement.
-   *
-   * Lastly note that we may want to share the underlying implementation with the VM Stack: the
-   * stack is really just growable memory that is grown/accessed from the end and on by fully word,
-   * but the same page-based design probably make sense.
-   */
-  private final ArrayList<Bytes32> data;
+  private byte[] data;
 
-  // Really data.size(), but cached as a UInt256 to avoid recomputing it each time.
   private UInt256 activeWords;
+  private int dataSize256;
 
   public Memory() {
-    this(new ArrayList<>());
+    data = new byte[0];
+    updateSize();
   }
 
-  private Memory(final ArrayList<Bytes32> data) {
-    this.data = data;
-    this.activeWords = UInt256.valueOf(data.size());
+  private void updateSize() {
+    dataSize256 = data.length / Bytes32.SIZE;
+    activeWords = UInt256.valueOf(dataSize256);
   }
 
   private static RuntimeException overflow(final long v) {
@@ -98,11 +72,11 @@ public class Memory {
     if (v < 0 || v >= MAX_BYTES) throw overflow(v);
   }
 
-  private long asByteIndex(final UInt256 w) {
+  private int asByteIndex(final UInt256 w) {
     try {
       final long v = w.toLong();
       checkByteIndex(v);
-      return v;
+      return (int) v;
     } catch (final IllegalStateException e) {
       throw overflow(w.toString());
     }
@@ -117,16 +91,6 @@ public class Memory {
     } catch (final IllegalStateException e) {
       throw overflow(l.toString());
     }
-  }
-
-  private int wordForByte(final long byteIndex) {
-    checkByteIndex(byteIndex);
-    return (int) (byteIndex / Bytes32.SIZE);
-  }
-
-  private int indexInWord(final long byteIndex) {
-    checkByteIndex(byteIndex);
-    return (int) (byteIndex - ((byteIndex / Bytes32.SIZE) * Bytes32.SIZE));
   }
 
   /**
@@ -148,10 +112,10 @@ public class Memory {
 
     if (location.fitsInt() && numBytes.fitsInt()) {
       // Fast common path (note that we work on int but use long arithmetic to avoid issues)
-      final long byteSize = (long) location.intValue() + (long) numBytes.intValue();
-      int wordSize = (int) (byteSize / Bytes32.SIZE);
+      final int byteSize = Math.addExact(location.intValue(), numBytes.intValue());
+      int wordSize = (byteSize / Bytes32.SIZE);
       if (byteSize % Bytes32.SIZE != 0) wordSize += 1;
-      return wordSize > data.size() ? UInt256.valueOf(wordSize) : activeWords;
+      return wordSize > dataSize256 ? UInt256.valueOf(wordSize) : activeWords;
     } else {
       // Slow, rare path
 
@@ -174,13 +138,14 @@ public class Memory {
    * @param address The location in memory to start with.
    * @param numBytes The number of bytes to get.
    */
-  void ensureCapacityForBytes(final long address, final int numBytes) {
+  void ensureCapacityForBytes(final int address, final int numBytes) {
     // Do not increase the memory capacity if no bytes are being written
     // regardless of what the address may be.
     if (numBytes == 0) {
       return;
     }
-    final int lastWordRequired = wordForByte(address + numBytes - 1);
+    final int lastByteIndex = Math.addExact(address, numBytes);
+    final int lastWordRequired = ((lastByteIndex - 1) / Bytes32.SIZE);
     maybeExpandCapacity(lastWordRequired + 1);
   }
 
@@ -190,15 +155,13 @@ public class Memory {
    * @param newActiveWords The new number of active words to expand to.
    */
   private void maybeExpandCapacity(final int newActiveWords) {
-    if (data.size() >= newActiveWords) return;
+    if (dataSize256 >= newActiveWords) return;
 
     // Require full capacity to guarantee we don't resize more than once.
-    data.ensureCapacity(newActiveWords);
-    final int toAdd = newActiveWords - data.size();
-    for (int i = 0; i < toAdd; i++) {
-      data.add(MutableBytes32.create());
-    }
-    this.activeWords = UInt256.valueOf(data.size());
+    final byte[] newData = new byte[newActiveWords * Bytes32.SIZE];
+    System.arraycopy(data, 0, newData, 0, data.length);
+    data = newData;
+    updateSize();
   }
 
   /**
@@ -214,12 +177,12 @@ public class Memory {
     if (!(other instanceof Memory)) return false;
 
     final Memory that = (Memory) other;
-    return this.data.equals(that.data);
+    return Arrays.equals(this.data, that.data);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(data);
+    return Arrays.hashCode(data);
   }
 
   /**
@@ -227,8 +190,8 @@ public class Memory {
    *
    * @return The current number of active bytes stored in memory.
    */
-  long getActiveBytes() {
-    return (long) data.size() * Bytes32.SIZE;
+  int getActiveBytes() {
+    return data.length;
   }
 
   /**
@@ -258,42 +221,10 @@ public class Memory {
       return Bytes.EMPTY;
     }
 
-    final long start = asByteIndex(location);
+    final int start = asByteIndex(location);
 
     ensureCapacityForBytes(start, length);
-
-    // Index of last byte to set.
-    final long end = start + length - 1;
-
-    final int startWord = wordForByte(start);
-    final int idxInStart = indexInWord(start);
-    final int endWord = wordForByte(end);
-    final int idxInEnd = indexInWord(end);
-
-    if (startWord == endWord) {
-      // Bytes within a word, fast-path.
-      final Bytes bytes = data.get(startWord);
-      return idxInStart == 0 && length == Bytes32.SIZE
-          //          ? bytes.copy()
-          //          : bytes.slice(idxInStart, length).copy();
-          ? bytes
-          : bytes.slice(idxInStart, length);
-    }
-
-    // Spans multiple word, slower path.
-    final int bytesInStartWord = Bytes32.SIZE - idxInStart;
-    final int bytesInEndWord = idxInEnd + 1;
-
-    final MutableBytes result = MutableBytes.create(length);
-    int resultIdx = 0;
-    data.get(startWord).slice(idxInStart).copyTo(result, resultIdx);
-    resultIdx += bytesInStartWord;
-    for (int i = startWord + 1; i < endWord; i++) {
-      data.get(i).copyTo(result, resultIdx);
-      resultIdx += Bytes32.SIZE;
-    }
-    data.get(endWord).slice(0, bytesInEndWord).copyTo(result, resultIdx);
-    return result;
+    return Bytes.of(Arrays.copyOfRange(data, start, start + numBytes.intValue()));
   }
 
   /**
@@ -341,7 +272,7 @@ public class Memory {
    * @param location the location in memory at which to start copying the bytes of {@code value}.
    * @param numBytes the number of bytes to set in memory. Note that this value may differ from
    *     {@code value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will
-   *     be copied from {@code value}; if {@code numBytes < value.size()}, then only the bytes in
+   *     be copied from {@code value}; if {@code numBytes > value.size()}, then only the bytes in
    *     {@code value} will be copied, but the memory will be expanded if necessary to cover {@code
    *     numBytes} (in other words, {@link #getActiveWords()} will return a value consistent with
    *     having set {@code numBytes} bytes, even if less than that have been concretely set due to
@@ -353,60 +284,18 @@ public class Memory {
       return;
     }
 
-    final long start = asByteIndex(location);
+    final int start = asByteIndex(location);
     final int length = asByteLength(numBytes);
+    final int srcLength = taintedValue.size();
+    final int end = Math.addExact(start, length);
 
     ensureCapacityForBytes(start, length);
-
-    // We've properly expanded memory as needed. We now have simply have to copy the
-    // min(length, value.size()) first bytes of value and clear any bytes that exceed value's length
-    if (taintedValue.isEmpty()) {
-      clearBytes(location, numBytes);
-      return;
-    }
-    final Bytes value;
-    if (taintedValue.size() > length) {
-      value = taintedValue.slice(0, length);
-    } else if (taintedValue.size() < length) {
-      value = taintedValue;
-      clearBytes(location.add(taintedValue.size()), numBytes.subtract(taintedValue.size()));
+    if (srcLength >= length) {
+      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, start, length);
     } else {
-      value = taintedValue;
+      Arrays.fill(data, start, end, (byte) 0);
+      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, start, srcLength);
     }
-
-    // Index of last byte to set.
-    final long end = start + value.size() - 1;
-
-    final int startWord = wordForByte(start);
-    final int idxInStart = indexInWord(start);
-    final int endWord = wordForByte(end);
-
-    if (startWord == endWord) {
-      // Bytes within a word, fast-path.
-      final MutableBytes mb = data.get(startWord).mutableCopy();
-
-      value.copyTo(mb, idxInStart);
-      data.set(startWord, (Bytes32) mb.copy());
-      return;
-    }
-
-    // Spans multiple word, slower path.
-    final int bytesInStartWord = Bytes32.SIZE - idxInStart;
-
-    int valueIdx = 0;
-    final MutableBytes startMutable = data.get(startWord).mutableCopy();
-    value.slice(valueIdx, bytesInStartWord).copyTo(startMutable, idxInStart);
-    data.set(startWord, (Bytes32) startMutable.copy());
-    valueIdx += bytesInStartWord;
-    for (int i = startWord + 1; i < endWord; i++) {
-      final MutableBytes mb = data.get(i).mutableCopy();
-      value.slice(valueIdx, Bytes32.SIZE).copyTo(mb);
-      data.set(i, (Bytes32) mb.copy());
-      valueIdx += Bytes32.SIZE;
-    }
-    final MutableBytes endMutable = data.get(endWord).mutableCopy();
-    value.slice(valueIdx).copyTo(endMutable, 0);
-    data.set(endWord, (Bytes32) endMutable.copy());
   }
 
   /**
@@ -416,7 +305,7 @@ public class Memory {
    * @param numBytes The number of bytes to clear.
    */
   private void clearBytes(final UInt256 location, final UInt256 numBytes) {
-    // See getBytes for why we checki length == 0 first, before calling asByteIndex(location).
+    // See getBytes for why we check length == 0 first, before calling asByteIndex(location).
     final int length = asByteLength(numBytes);
     if (length == 0) {
       return;
@@ -430,46 +319,13 @@ public class Memory {
    * @param location The location in memory from which to start clearing the bytes.
    * @param numBytes The number of bytes to clear.
    */
-  private void clearBytes(final long location, final int numBytes) {
+  private void clearBytes(final int location, final int numBytes) {
     if (numBytes == 0) {
       return;
     }
 
     ensureCapacityForBytes(location, numBytes);
-
-    // Index of last byte to set.
-    final long end = location + numBytes - 1;
-
-    final int startWord = wordForByte(location);
-    final int idxInStart = indexInWord(location);
-    final int endWord = wordForByte(end);
-    final int idxInEnd = indexInWord(end);
-
-    if (startWord == endWord) {
-      // Bytes within a word, fast-path.
-      final MutableBytes storingBytes = data.get(startWord).mutableCopy();
-      final MutableBytes bytes =
-          (idxInStart != 0 || numBytes != Bytes32.SIZE)
-              ? storingBytes.mutableSlice(idxInStart, numBytes)
-              : storingBytes;
-      bytes.clear();
-      data.set(startWord, (Bytes32) storingBytes);
-      return;
-    }
-
-    // Spans multiple word, slower path.
-    final int bytesInStartWord = Bytes32.SIZE - idxInStart;
-    final int bytesInEndWord = idxInEnd + 1;
-
-    final MutableBytes startMutable = data.get(startWord).mutableCopy();
-    startMutable.mutableSlice(idxInStart, bytesInStartWord).clear();
-    data.set(startWord, (Bytes32) startMutable.copy());
-    for (int i = startWord + 1; i < endWord; i++) {
-      data.set(i, Bytes32.ZERO);
-    }
-    final MutableBytes endMutable = data.get(endWord).mutableCopy();
-    endMutable.mutableSlice(0, bytesInEndWord).clear();
-    data.set(endWord, (Bytes32) endMutable.copy());
+    Arrays.fill(data, location, location + numBytes, (byte) 0);
   }
 
   /**
@@ -479,15 +335,9 @@ public class Memory {
    * @param value the value to set for the byte at {@code location}.
    */
   void setByte(final UInt256 location, final byte value) {
-    final long start = asByteIndex(location);
+    final int start = asByteIndex(location);
     ensureCapacityForBytes(start, 1);
-
-    final int word = wordForByte(start);
-    final int idxInWord = indexInWord(start);
-
-    final MutableBytes mb = data.get(word).mutableCopy();
-    mb.set(idxInWord, value);
-    data.set(word, (Bytes32) mb.copy());
+    data[start] = value;
   }
 
   /**
@@ -497,25 +347,9 @@ public class Memory {
    * @return a copy of the 32-bytes word that begins at the specified memory location.
    */
   public Bytes32 getWord(final UInt256 location) {
-    final long start = asByteIndex(location);
+    final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-
-    final int startWord = wordForByte(start);
-    final int idxInStart = indexInWord(start);
-
-    if (idxInStart == 0) {
-      // Word-aligned. Fast-path.
-      return data.get(startWord).copy();
-    }
-
-    // Spans 2 memory word, slower path.
-    final MutableBytes32 result = MutableBytes32.create();
-    final int sizeInFirstWord = Bytes32.SIZE - idxInStart;
-    data.get(startWord).slice(idxInStart, sizeInFirstWord).copyTo(result, 0);
-    data.get(startWord + 1)
-        .slice(0, Bytes32.SIZE - sizeInFirstWord)
-        .copyTo(result, sizeInFirstWord);
-    return result;
+    return Bytes32.wrap(Arrays.copyOfRange(data, start, start + Bytes32.SIZE));
   }
 
   /**
@@ -528,34 +362,14 @@ public class Memory {
    * @param bytes the 32 bytes to copy at {@code location}.
    */
   public void setWord(final UInt256 location, final Bytes32 bytes) {
-    final long start = asByteIndex(location);
+    final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
 
-    final int startWord = wordForByte(start);
-    final int idxInStart = indexInWord(start);
-
-    if (idxInStart == 0) {
-      // Word-aligned. Fast-path.
-      data.set(startWord, bytes);
-      return;
-    }
-
-    // Spans 2 memory word, slower path.
-    final int sizeInFirstWord = Bytes32.SIZE - idxInStart;
-    final MutableBytes firstWord = data.get(startWord).mutableCopy();
-    bytes.slice(0, sizeInFirstWord).copyTo(firstWord, idxInStart);
-    final MutableBytes secondWord = data.get(startWord + 1).mutableCopy();
-    bytes.slice(sizeInFirstWord).copyTo(secondWord, 0);
-    data.set(startWord, (Bytes32) firstWord);
-    data.set(startWord + 1, (Bytes32) secondWord);
+    System.arraycopy(bytes.toArrayUnsafe(), 0, data, start, Bytes32.SIZE);
   }
 
   @Override
   public String toString() {
-    if (data.isEmpty()) {
-      return "";
-    }
-
-    return '\n' + Joiner.on("\n").join(data);
+    return Bytes.wrap(data).toHexString();
   }
 }

@@ -152,6 +152,9 @@ public class BlocksSubCommand implements Runnable {
         description = "Skip proof of work validation when importing.")
     private final Boolean skipPow = false;
 
+    @Option(names = "--run", description = "Start besu after importing.")
+    private final Boolean runBesu = false;
+
     @SuppressWarnings("unused")
     @Spec
     private CommandSpec spec;
@@ -196,6 +199,10 @@ public class BlocksSubCommand implements Runnable {
               LOG.error("Unable to import blocks from " + path, e);
             }
           }
+        }
+
+        if (runBesu) {
+          parentCommand.parentCommand.run();
         }
       } finally {
         metricsService.ifPresent(MetricsService::stop);

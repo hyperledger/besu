@@ -40,7 +40,7 @@ public class PivotBlockRetriever {
 
   private static final Logger LOG = LogManager.getLogger();
   public static final int MAX_QUERY_RETRIES_PER_PEER = 3;
-  private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 50;
+  private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 250;
   private static final int SUSPICIOUS_NUMBER_OF_RETRIES = 5;
 
   private final EthContext ethContext;

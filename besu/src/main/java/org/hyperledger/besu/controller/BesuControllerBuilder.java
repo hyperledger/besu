@@ -249,7 +249,7 @@ public abstract class BesuControllerBuilder {
             metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
-    final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
+    final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
     final Optional<EIP1559> eip1559;
     final GenesisConfigOptions genesisConfigOptions =

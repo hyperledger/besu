@@ -57,7 +57,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_BLOCK_IMPORT_USAGE =
-      "Usage: besu blocks import [-hV] [--skip-pow-validation-enabled]\n"
+      "Usage: besu blocks import [-hV] [--run] [--skip-pow-validation-enabled]\n"
           + "                          [--format=<format>] [--start-time=<startTime>] [--from\n"
           + "                          [=<FILE>...]]... [<FILE>...]\n"
           + "This command imports blocks from a file into the database.\n"
@@ -66,6 +66,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + "                             are: RLP, JSON (default: RLP).\n"
           + "      --from[=<FILE>...]   File containing blocks to import.\n"
           + "  -h, --help               Show this help message and exit.\n"
+          + "      --run                Start besu after importing.\n"
           + "      --skip-pow-validation-enabled\n"
           + "                           Skip proof of work validation when importing.\n"
           + "      --start-time=<startTime>\n"

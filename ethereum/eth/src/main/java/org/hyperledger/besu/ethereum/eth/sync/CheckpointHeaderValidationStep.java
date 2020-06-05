@@ -47,14 +47,20 @@ public class CheckpointHeaderValidationStep
     if (isValid(rangeStart, firstHeaderToImport)) {
       return checkpointRangeHeaders.getHeadersToImport().stream();
     } else {
-      final BlockHeader rangeEnd = checkpointRangeHeaders.getCheckpointRange().getEnd();
+      final String rangeEndDescription;
+      if (checkpointRangeHeaders.getCheckpointRange().hasEnd()) {
+        final BlockHeader rangeEnd = checkpointRangeHeaders.getCheckpointRange().getEnd();
+        rangeEndDescription =
+            String.format("#%d (%s)", rangeEnd.getNumber(), rangeEnd.getBlockHash());
+      } else {
+        rangeEndDescription = "chain head";
+      }
       final String errorMessage =
           String.format(
-              "Invalid checkpoint headers.  Headers downloaded between #%d (%s) and #%d (%s) do not connect at #%d (%s)",
+              "Invalid checkpoint headers.  Headers downloaded between #%d (%s) and %s do not connect at #%d (%s)",
               rangeStart.getNumber(),
               rangeStart.getHash(),
-              rangeEnd.getNumber(),
-              rangeEnd.getHash(),
+              rangeEndDescription,
               firstHeaderToImport.getNumber(),
               firstHeaderToImport.getHash());
       throw new InvalidBlockException(
