@@ -18,7 +18,7 @@ If youâ€™re mounting local folders, it is best to set the user via the Docker `â
 UID because the username may not exist inside the docker container. Ensure the directory being mounted
 is owned by that user.
 
-The NAT manager's `MANUAL` method has been removed. It is now necessary to use the `NONE method which has the same behavior. [\#1041](https://github.com/hyperledger/besu/pull/1041)
+The NAT manager's `MANUAL` method has been removed. It is now necessary to use the `NONE` method which has the same behavior. [\#1041](https://github.com/hyperledger/besu/pull/1041)
 
 
 ## Upcoming 1.5 release 
