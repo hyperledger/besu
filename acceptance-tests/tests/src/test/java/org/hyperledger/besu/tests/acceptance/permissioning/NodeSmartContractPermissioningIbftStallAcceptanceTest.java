@@ -71,6 +71,6 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
     permissionedCluster.start(bootnode, nodeA, nodeB);
 
     // Verify blockchain is progressing
-    bootnode.verify(blockchain.reachesHeight(bootnode, 1, 120));
+    permissionedCluster.verify(blockchain.reachesHeight(bootnode, 1, 120));
   }
 }
