@@ -215,7 +215,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public OptionalLong getBerlinBlockNumber() {
     if (ExperimentalEIPs.berlinEnabled) {
       final OptionalLong berlinBlock = getOptionalLong("berlinblock");
-      final OptionalLong yolov1Block = getOptionalLong("yoloV1Block");
+      final OptionalLong yolov1Block = getOptionalLong("yolov1block");
       if (yolov1Block.isPresent()) {
         if (berlinBlock.isPresent()) {
           throw new RuntimeException(
