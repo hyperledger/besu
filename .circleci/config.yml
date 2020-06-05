@@ -140,7 +140,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 3
+    parallelism: 4
     executor: besu_executor_xl
     steps:
       - prepare
