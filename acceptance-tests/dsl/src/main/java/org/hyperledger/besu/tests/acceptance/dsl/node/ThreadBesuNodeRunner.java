@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
+import java.util.concurrent.ConcurrentHashMap;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -70,7 +71,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private static final Logger LOG = LogManager.getLogger();
   private final Map<String, Runner> besuRunners = new HashMap<>();
 
-  private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new HashMap<>();
+  private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new ConcurrentHashMap<>();
 
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
