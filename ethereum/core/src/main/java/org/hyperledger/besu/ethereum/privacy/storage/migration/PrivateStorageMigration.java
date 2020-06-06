@@ -46,23 +46,23 @@ public class PrivateStorageMigration {
 
   private final Blockchain blockchain;
   private final Address privacyPrecompileAddress;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final WorldStateArchive publicWorldStateArchive;
   private final PrivateStateStorage privateStateStorage;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final LegacyPrivateStateStorage legacyPrivateStateStorage;
-  private final Function<ProtocolSpec<?>, PrivateMigrationBlockProcessor>
+  private final Function<ProtocolSpec, PrivateMigrationBlockProcessor>
       privateMigrationBlockProcessorBuilder;
 
   public PrivateStorageMigration(
       final Blockchain blockchain,
       final Address privacyPrecompileAddress,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final WorldStateArchive publicWorldStateArchive,
       final PrivateStateStorage privateStateStorage,
       final PrivateStateRootResolver privateStateRootResolver,
       final LegacyPrivateStateStorage legacyPrivateStateStorage,
-      final Function<ProtocolSpec<?>, PrivateMigrationBlockProcessor>
+      final Function<ProtocolSpec, PrivateMigrationBlockProcessor>
           privateMigrationBlockProcessorBuilder) {
     this.privateStateStorage = privateStateStorage;
     this.blockchain = blockchain;
@@ -93,7 +93,7 @@ public class PrivateStorageMigration {
 
       final int lastPmtIndex = findLastPMTIndexInBlock(block);
       if (lastPmtIndex >= 0) {
-        final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
         final PrivateMigrationBlockProcessor privateMigrationBlockProcessor =
             privateMigrationBlockProcessorBuilder.apply(protocolSpec);
 

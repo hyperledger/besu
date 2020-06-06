@@ -37,20 +37,20 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class FullImportBlockStepTest {
 
-  @Mock private ProtocolSchedule<Void> protocolSchedule;
-  @Mock private ProtocolSpec<Void> protocolSpec;
-  @Mock private ProtocolContext<Void> protocolContext;
-  @Mock private BlockImporter<Void> blockImporter;
+  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private ProtocolContext protocolContext;
+  @Mock private BlockImporter blockImporter;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-  private FullImportBlockStep<Void> importBlocksStep;
+  private FullImportBlockStep importBlocksStep;
 
   @Before
   public void setUp() {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
-    importBlocksStep = new FullImportBlockStep<>(protocolSchedule, protocolContext, null);
+    importBlocksStep = new FullImportBlockStep(protocolSchedule, protocolContext, null);
   }
 
   @Test

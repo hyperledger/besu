@@ -37,7 +37,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
   private static final Logger LOG = LogManager.getLogger();
   static long DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER = 10L;
 
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final MetricsSystem metricsSystem;
 
   final long blockNumber;
@@ -45,7 +45,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
   private final long chainHeightEstimationBuffer;
 
   AbstractPeerBlockValidator(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long blockNumber,
       final long chainHeightEstimationBuffer) {
@@ -57,7 +57,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
   }
 
   public AbstractPeerBlockValidator(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long blockNumber) {
     this(protocolSchedule, metricsSystem, blockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);

@@ -23,17 +23,17 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import java.util.List;
 import java.util.Optional;
 
-public class MainnetBlockImporter<C> implements BlockImporter<C> {
+public class MainnetBlockImporter implements BlockImporter {
 
-  final BlockValidator<C> blockValidator;
+  final BlockValidator blockValidator;
 
-  public MainnetBlockImporter(final BlockValidator<C> blockValidator) {
+  public MainnetBlockImporter(final BlockValidator blockValidator) {
     this.blockValidator = blockValidator;
   }
 
   @Override
   public synchronized boolean importBlock(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
@@ -54,7 +54,7 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
 
   @Override
   public boolean fastImportBlock(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
       final HeaderValidationMode headerValidationMode,

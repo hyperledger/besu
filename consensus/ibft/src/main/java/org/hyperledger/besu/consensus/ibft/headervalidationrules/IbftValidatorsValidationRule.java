@@ -35,19 +35,19 @@ import org.apache.logging.log4j.Logger;
  * Ensures the Validators listed in the block header match that tracked in memory (which was in-turn
  * created by tracking votes included on the block chain).
  */
-public class IbftValidatorsValidationRule
-    implements AttachedBlockHeaderValidationRule<IbftContext> {
+public class IbftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger();
 
   @Override
   public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<IbftContext> context) {
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
     try {
       final ValidatorProvider validatorProvider =
-          context.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+          context
+              .getConsensusState(IbftContext.class)
+              .getVoteTallyCache()
+              .getVoteTallyAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
       final SortedSet<Address> sortedReportedValidators =

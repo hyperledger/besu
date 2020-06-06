@@ -41,11 +41,11 @@ public class ExecutionContextTestFixture {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive stateArchive;
 
-  private final ProtocolSchedule<Void> protocolSchedule;
-  private final ProtocolContext<Void> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
 
   private ExecutionContextTestFixture(
-      final ProtocolSchedule<Void> protocolSchedule, final KeyValueStorage keyValueStorage) {
+      final ProtocolSchedule protocolSchedule, final KeyValueStorage keyValueStorage) {
     final GenesisState genesisState =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule);
     this.genesis = genesisState.getBlock();
@@ -58,7 +58,7 @@ public class ExecutionContextTestFixture {
             new NoOpMetricsSystem());
     this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
-    this.protocolContext = new ProtocolContext<>(blockchain, stateArchive, null);
+    this.protocolContext = new ProtocolContext(blockchain, stateArchive, null);
     genesisState.writeStateTo(stateArchive.getMutable());
   }
 
@@ -86,25 +86,25 @@ public class ExecutionContextTestFixture {
     return stateArchive;
   }
 
-  public ProtocolSchedule<Void> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
-  public ProtocolContext<Void> getProtocolContext() {
+  public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
   public static class Builder {
 
     private KeyValueStorage keyValueStorage;
-    private ProtocolSchedule<Void> protocolSchedule;
+    private ProtocolSchedule protocolSchedule;
 
     public Builder keyValueStorage(final KeyValueStorage keyValueStorage) {
       this.keyValueStorage = keyValueStorage;
       return this;
     }
 
-    public Builder protocolSchedule(final ProtocolSchedule<Void> protocolSchedule) {
+    public Builder protocolSchedule(final ProtocolSchedule protocolSchedule) {
       this.protocolSchedule = protocolSchedule;
       return this;
     }
@@ -112,7 +112,7 @@ public class ExecutionContextTestFixture {
     public ExecutionContextTestFixture build() {
       if (protocolSchedule == null) {
         protocolSchedule =
-            new ProtocolScheduleBuilder<>(
+            new ProtocolScheduleBuilder(
                     new StubGenesisConfigOptions().constantinopleFixBlock(0),
                     BigInteger.valueOf(42),
                     Function.identity(),

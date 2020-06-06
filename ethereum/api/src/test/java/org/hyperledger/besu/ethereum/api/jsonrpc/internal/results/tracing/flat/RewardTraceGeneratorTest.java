@@ -50,8 +50,8 @@ public class RewardTraceGeneratorTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-  @Mock private ProtocolSchedule<Void> protocolSchedule;
-  @Mock private ProtocolSpec<Void> protocolSpec;
+  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
   @Mock private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   @Mock private TransactionProcessor transactionProcessor;
 

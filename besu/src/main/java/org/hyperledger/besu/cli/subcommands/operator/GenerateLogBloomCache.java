@@ -90,7 +90,7 @@ public class GenerateLogBloomCache implements Runnable {
         BLOCKS_PER_BLOOM_CACHE);
   }
 
-  private BesuController<?> createBesuController() {
+  private BesuController createBesuController() {
     return parentCommand.parentCommand.buildController();
   }
 }

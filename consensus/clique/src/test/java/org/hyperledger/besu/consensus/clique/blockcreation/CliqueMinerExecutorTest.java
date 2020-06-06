@@ -65,7 +65,7 @@ public class CliqueMinerExecutorTest {
   private final Random random = new Random(21341234L);
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();
-  private ProtocolContext<CliqueContext> cliqueProtocolContext;
+  private ProtocolContext cliqueProtocolContext;
   private BlockHeaderTestFixture blockHeaderBuilder;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
@@ -84,7 +84,7 @@ public class CliqueMinerExecutorTest {
 
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

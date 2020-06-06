@@ -58,16 +58,16 @@ import org.junit.Test;
 
 public class FullSyncChainDownloaderTest {
 
-  protected ProtocolSchedule<Void> protocolSchedule;
+  protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
-  protected ProtocolContext<Void> protocolContext;
+  protected ProtocolContext protocolContext;
   private SyncState syncState;
 
   private BlockDataGenerator gen;
-  private BlockchainSetupUtil<Void> localBlockchainSetup;
+  private BlockchainSetupUtil localBlockchainSetup;
   protected MutableBlockchain localBlockchain;
-  private BlockchainSetupUtil<Void> otherBlockchainSetup;
+  private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 

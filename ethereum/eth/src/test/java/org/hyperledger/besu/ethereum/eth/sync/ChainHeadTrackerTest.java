@@ -35,7 +35,7 @@ import org.junit.Test;
 
 public class ChainHeadTrackerTest {
 
-  private final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+  private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
   private final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
   private final EthProtocolManager ethProtocolManager =
       EthProtocolManagerTestUtil.create(blockchain);
@@ -46,7 +46,7 @@ public class ChainHeadTrackerTest {
           .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
           .estimatedHeight(0)
           .build();
-  private final ProtocolSchedule<Void> protocolSchedule =
+  private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
           GenesisConfigFile.development().getConfigOptions(), false);
 
