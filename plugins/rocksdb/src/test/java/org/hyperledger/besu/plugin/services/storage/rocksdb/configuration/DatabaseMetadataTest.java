@@ -16,9 +16,6 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.plugin.services.helper.Conditions.FILE_DOES_NOT_EXIST;
-import static org.hyperledger.besu.plugin.services.helper.Conditions.FILE_EXISTS;
-import static org.hyperledger.besu.plugin.services.helper.Conditions.shouldContain;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,19 +54,6 @@ public class DatabaseMetadataTest {
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
-  }
-
-  @Test
-  public void metaFileNotFoundInDataDirShouldLookupIntoDbDir() throws Exception {
-    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
-    Files.createDirectories(tempDataDir);
-    final Path metadataPathInDataDir = tempDataDir.resolve("DATABASE_METADATA.json");
-    assertThat(metadataPathInDataDir).is(FILE_DOES_NOT_EXIST);
-    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata).isNotNull();
-    assertThat(databaseMetadata.getVersion()).isEqualTo(42);
-    assertThat(metadataPathInDataDir).is(FILE_EXISTS);
-    assertThat(metadataPathInDataDir).is(shouldContain("{\"version\":42}"));
   }
 
   private Path createAndWrite(final String dir, final String file, final String content)
