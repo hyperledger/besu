@@ -69,7 +69,7 @@ public class ForkIdManager {
               blockchain,
               genesisHash,
               forks,
-              fs -> fs.stream().distinct().collect(Collectors.toUnmodifiableList()),
+              fs -> fs.stream().distinct().sorted().collect(Collectors.toUnmodifiableList()),
               new ArrayList<>());
       this.forkIDCheckers = Arrays.asList(newForkIdChecker, legacyForkIdChecker);
     }
@@ -230,16 +230,20 @@ public class ForkIdManager {
     final CRC32 crc = new CRC32();
     crc.update(genesisHash.toArray());
     final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
-    for (final Long fork : forks) {
-      updateCrc(crc, fork);
-      forkHashes.add(getCurrentCrcHash(crc));
-    }
+    final List<Long> filteredForks =
+        forks.stream().filter(v -> v > 0).distinct().collect(Collectors.toUnmodifiableList());
+    filteredForks.forEach(
+        fork -> {
+          updateCrc(crc, fork);
+          forkHashes.add(getCurrentCrcHash(crc));
+        });
+
     // This loop is for all the fork hashes that have an associated "next fork"
-    for (int i = 0; i < forks.size(); i++) {
-      forkIds.add(new ForkId(forkHashes.get(i), forks.get(i)));
+    for (int i = 0; i < filteredForks.size(); i++) {
+      forkIds.add(new ForkId(forkHashes.get(i), filteredForks.get(i)));
     }
     long forkNext = 0;
-    if (!forks.isEmpty()) {
+    if (!filteredForks.isEmpty()) {
       forkNext = forkIds.get(forkIds.size() - 1).getNext();
       forkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }

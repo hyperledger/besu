@@ -390,4 +390,21 @@ public class ForkIdManagerTest {
     assertThatThrownBy(() -> new ForkIdManager(mockBlockchain(consortiumNetworkGenHash, 0), null))
         .isExactlyInstanceOf(NullPointerException.class);
   }
+
+  @Test
+  public void checkCorrectMordorForkIdHashesGenerated() {
+    final Long[] forks = {0L, 301243L, 999983L};
+    final String genHash = "0xa68ebde7932eccb177d38d55dcc6461a019dd795a681e59b5a3e4f3a7259a3f1";
+    final ForkId[] checkIds = {
+      new ForkId(Bytes.fromHexString("0x175782aa"), 301243L),
+      new ForkId(Bytes.fromHexString("0x604f6ee1"), 999983L),
+      new ForkId(Bytes.fromHexString("0xf42f5539"), 0L),
+    };
+    final List<Long> list = Arrays.asList(forks);
+    final ForkIdManager forkIdManager = new ForkIdManager(mockBlockchain(genHash, 0), list);
+    final List<ForkId> entries = forkIdManager.getForkAndHashList();
+    assertThat(entries).containsExactly(checkIds);
+    assertThat(forkIdManager.getLatestForkId()).isNotNull();
+    assertThat(forkIdManager.getLatestForkId()).isEqualTo(checkIds[checkIds.length - 1]);
+  }
 }
