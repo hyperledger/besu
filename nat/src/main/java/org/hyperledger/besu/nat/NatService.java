@@ -87,7 +87,10 @@ public class NatService {
       try {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
-        LOG.debug("Caught exception while trying to start the manager or service.", e);
+        LOG.debug(
+            "Nat manager failed to configure itself automatically due to the following reason "
+                + e.getMessage()
+                + ". NONE mode will be used");
         disableNatManager();
       }
     } else {
@@ -185,7 +188,6 @@ public class NatService {
 
   /** Disable the natManager */
   private void disableNatManager() {
-    LOG.warn("Unable to use NAT. Disabling NAT manager");
     currentNatMethod = NatMethod.NONE;
     currentNatManager = Optional.empty();
   }
