@@ -92,7 +92,6 @@ public class RocksDBKeyValueStorageFactoryTest {
   public void shouldDetectCorrectVersionIfMetadataFileExists() throws Exception {
     final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
-    Files.createDirectories(tempDatabaseDir);
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
@@ -137,7 +136,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    new DatabaseMetadata(-1).writeToDirectory(tempDatabaseDir);
+    new DatabaseMetadata(-1).writeToDirectory(tempDataDir);
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(
@@ -175,7 +174,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     final String badVersion = "{\"🦄\":1}";
     Files.write(
-        tempDatabaseDir.resolve(METADATA_FILENAME), badVersion.getBytes(Charset.defaultCharset()));
+        tempDataDir.resolve(METADATA_FILENAME), badVersion.getBytes(Charset.defaultCharset()));
 
     assertThatThrownBy(
             () ->
