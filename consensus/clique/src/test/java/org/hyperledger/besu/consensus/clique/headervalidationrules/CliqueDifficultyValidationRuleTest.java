@@ -44,7 +44,7 @@ public class CliqueDifficultyValidationRuleTest {
 
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
-  private ProtocolContext<CliqueContext> cliqueProtocolContext;
+  private ProtocolContext cliqueProtocolContext;
   private BlockHeaderTestFixture blockHeaderBuilder;
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
@@ -60,7 +60,7 @@ public class CliqueDifficultyValidationRuleTest {
 
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

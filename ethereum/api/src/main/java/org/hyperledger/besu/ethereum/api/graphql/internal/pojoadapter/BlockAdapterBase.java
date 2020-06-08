@@ -191,7 +191,7 @@ public class BlockAdapterBase extends AdapterBase {
     final Bytes data = (Bytes) callData.get("data");
 
     final BlockchainQueries query = getBlockchainQueries(environment);
-    final ProtocolSchedule<?> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
     final long bn = header.getNumber();
 

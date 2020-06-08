@@ -21,7 +21,7 @@ import java.math.BigInteger;
 
 /** Calculates block difficulties. */
 @FunctionalInterface
-public interface DifficultyCalculator<C> {
+public interface DifficultyCalculator {
 
   /**
    * Calculates the block difficulty for a block.
@@ -31,5 +31,5 @@ public interface DifficultyCalculator<C> {
    * @param context the context in which the difficulty calculator should operate
    * @return the block difficulty
    */
-  BigInteger nextDifficulty(long time, BlockHeader parent, ProtocolContext<C> context);
+  BigInteger nextDifficulty(long time, BlockHeader parent, ProtocolContext context);
 }

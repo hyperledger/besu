@@ -80,8 +80,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_unsupportedConsensusAlgorithm() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("clique", "blocks-import-valid.json");
 
@@ -108,8 +108,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_validJson_withBlockNumbers() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-valid.json");
       importer.importChain(jsonData);
@@ -199,8 +199,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_validJson_noBlockIdentifiers() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-valid-no-block-identifiers.json");
       importer.importChain(jsonData);
@@ -290,8 +290,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_validJson_withParentHashes() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       String jsonData = getFileContents("blocks-import-valid.json");
 
@@ -341,8 +341,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_invalidParent() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-invalid-bad-parent.json");
 
@@ -353,8 +353,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_invalidTransaction() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-invalid-bad-tx.json");
 
@@ -366,8 +366,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_specialFields() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-special-fields.json");
 
@@ -404,11 +404,11 @@ public abstract class JsonBlockImporterTest {
     return Resources.toString(fileURL, UTF_8);
   }
 
-  protected BesuController<?> createController() throws IOException {
+  protected BesuController createController() throws IOException {
     return createController(genesisConfigFile);
   }
 
-  protected BesuController<?> createController(final GenesisConfigFile genesisConfigFile)
+  protected BesuController createController(final GenesisConfigFile genesisConfigFile)
       throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()

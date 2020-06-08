@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import java.util.Optional;
 
 /** A protocol specification. */
-public class ProtocolSpec<C> {
+public class ProtocolSpec {
 
   private final String name;
   private final EVM evm;
@@ -40,15 +40,15 @@ public class ProtocolSpec<C> {
 
   private final TransactionProcessor transactionProcessor;
 
-  private final BlockHeaderValidator<C> blockHeaderValidator;
+  private final BlockHeaderValidator blockHeaderValidator;
 
-  private final BlockHeaderValidator<C> ommerHeaderValidator;
+  private final BlockHeaderValidator ommerHeaderValidator;
 
-  private final BlockBodyValidator<C> blockBodyValidator;
+  private final BlockBodyValidator blockBodyValidator;
 
-  private final BlockImporter<C> blockImporter;
+  private final BlockImporter blockImporter;
 
-  private final BlockValidator<C> blockValidator;
+  private final BlockValidator blockValidator;
 
   private final BlockProcessor blockProcessor;
 
@@ -56,7 +56,7 @@ public class ProtocolSpec<C> {
 
   private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
-  private final DifficultyCalculator<C> difficultyCalculator;
+  private final DifficultyCalculator difficultyCalculator;
 
   private final Wei blockReward;
 
@@ -106,15 +106,15 @@ public class ProtocolSpec<C> {
       final TransactionValidator transactionValidator,
       final TransactionProcessor transactionProcessor,
       final PrivateTransactionProcessor privateTransactionProcessor,
-      final BlockHeaderValidator<C> blockHeaderValidator,
-      final BlockHeaderValidator<C> ommerHeaderValidator,
-      final BlockBodyValidator<C> blockBodyValidator,
+      final BlockHeaderValidator blockHeaderValidator,
+      final BlockHeaderValidator ommerHeaderValidator,
+      final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor,
-      final BlockImporter<C> blockImporter,
-      final BlockValidator<C> blockValidator,
+      final BlockImporter blockImporter,
+      final BlockValidator blockValidator,
       final BlockHeaderFunctions blockHeaderFunctions,
       final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final DifficultyCalculator<C> difficultyCalculator,
+      final DifficultyCalculator difficultyCalculator,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final PrecompileContractRegistry precompileContractRegistry,
@@ -188,7 +188,7 @@ public class ProtocolSpec<C> {
    *
    * @return the block importer
    */
-  public BlockImporter<C> getBlockImporter() {
+  public BlockImporter getBlockImporter() {
     return blockImporter;
   }
 
@@ -197,7 +197,7 @@ public class ProtocolSpec<C> {
    *
    * @return the block validator
    */
-  public BlockValidator<C> getBlockValidator() {
+  public BlockValidator getBlockValidator() {
     return blockValidator;
   }
 
@@ -206,7 +206,7 @@ public class ProtocolSpec<C> {
    *
    * @return the block header validator
    */
-  public BlockHeaderValidator<C> getBlockHeaderValidator() {
+  public BlockHeaderValidator getBlockHeaderValidator() {
     return blockHeaderValidator;
   }
 
@@ -215,7 +215,7 @@ public class ProtocolSpec<C> {
    *
    * @return the block ommer header validator
    */
-  public BlockHeaderValidator<C> getOmmerHeaderValidator() {
+  public BlockHeaderValidator getOmmerHeaderValidator() {
     return ommerHeaderValidator;
   }
 
@@ -224,7 +224,7 @@ public class ProtocolSpec<C> {
    *
    * @return the block body validator
    */
-  public BlockBodyValidator<C> getBlockBodyValidator() {
+  public BlockBodyValidator getBlockBodyValidator() {
     return blockBodyValidator;
   }
 
@@ -260,7 +260,7 @@ public class ProtocolSpec<C> {
    *
    * @return the difficulty calculator.
    */
-  public DifficultyCalculator<C> getDifficultyCalculator() {
+  public DifficultyCalculator getDifficultyCalculator() {
     return difficultyCalculator;
   }
 

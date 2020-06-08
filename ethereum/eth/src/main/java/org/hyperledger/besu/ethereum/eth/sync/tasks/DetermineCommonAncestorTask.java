@@ -42,8 +42,8 @@ import org.apache.logging.log4j.Logger;
 public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
-  private final ProtocolSchedule<?> protocolSchedule;
-  private final ProtocolContext<?> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthPeer peer;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
@@ -54,8 +54,8 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private boolean initialQuery = true;
 
   private DetermineCommonAncestorTask(
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
@@ -75,8 +75,8 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   }
 
   public static DetermineCommonAncestorTask create(
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,

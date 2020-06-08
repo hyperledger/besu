@@ -34,23 +34,19 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.stream.IntStream;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
-public class JumpSubOperationTest {
+public class JumpOperationTest {
 
   private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
 
   private static final int CURRENT_PC = 1;
-  private static final Gas JUMP_SUB_GAS_COST = Gas.of(10);
 
   private Blockchain blockchain;
   private Address address;
-  private WorldStateArchive worldStateArchive;
   private WorldUpdater worldStateUpdater;
   private EVM evm;
 
@@ -70,83 +66,53 @@ public class JumpSubOperationTest {
 
     address = Address.fromHexString("0x18675309");
 
-    worldStateArchive = createInMemoryWorldStateArchive();
+    WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     worldStateUpdater = worldStateArchive.getMutable().updater();
     worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
     worldStateUpdater.commit();
 
     final OperationRegistry registry = new OperationRegistry();
-    registry.put(new BeginSubOperation(gasCalculator), 0);
-    registry.put(new JumpSubOperation(gasCalculator), 0);
-    registry.put(new ReturnOperation(gasCalculator), 0);
+    registry.put(new JumpOperation(gasCalculator), 0);
+    registry.put(new JumpDestOperation(gasCalculator), 0);
     evm = new EVM(registry, gasCalculator);
   }
 
   @Test
-  public void shouldCalculateGasPrice() {
-
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
-    final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
-    frame.setPC(CURRENT_PC);
-    assertThat(operation.cost(frame)).isEqualTo(JUMP_SUB_GAS_COST);
-  }
-
-  @Test
-  public void shouldHaltWithInvalidJumDestinationWhenLocationIsNotBeginSub() {
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
+  public void shouldJumpWhenLocationIsJumpDest() {
+    final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
-            .pushStackItem(Bytes32.fromHexString("0x05"))
-            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
-            .returnStack(new ReturnStack())
-            .build();
-    frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm))
-        .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  }
-
-  @Test
-  public void shouldJumpWhenLocationIsBeginSub() {
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
-    final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
-            .pushStackItem(Bytes32.fromHexString("0x04"))
-            .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
-            .returnStack(new ReturnStack())
+            .pushStackItem(Bytes32.fromHexString("0x03"))
+            .code(new Code(Bytes.fromHexString("0x6003565b00")))
             .build();
     frame.setPC(CURRENT_PC);
 
     assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
     operation.execute(frame);
-    assertThat(frame.popReturnStackItem()).isEqualTo(CURRENT_PC + 1);
   }
 
   @Test
-  public void shouldJumpWhenLocationIsBeginSubAndAtEndOfCode() {
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
+  public void shouldJumpWhenLocationIsJumpDestAndAtEndOfCode() {
+    final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1))
-            .pushStackItem(Bytes32.fromHexString("0x04"))
-            .code(new Code(Bytes.fromHexString("0x60045e005c")))
-            .returnStack(new ReturnStack())
+            .pushStackItem(Bytes32.fromHexString("0x03"))
+            .code(new Code(Bytes.fromHexString("0x6003565b")))
             .build();
     frame.setPC(CURRENT_PC);
 
     assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
     operation.execute(frame);
-    assertThat(frame.popReturnStackItem()).isEqualTo(CURRENT_PC + 1);
   }
 
   @Test
   public void shouldHaltWithInvalidJumDestinationWhenLocationIsOutsideOfCodeRange() {
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
+    final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(Gas.of(1))
             .pushStackItem(Bytes32.fromHexString("0xFFFFFFFF"))
-            .code(new Code(Bytes.fromHexString("0x6801000000000000000c5e005c60115e5d5c5d")))
-            .returnStack(new ReturnStack())
+            .code(new Code(Bytes.fromHexString("0x6801000000000000000c565b00")))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
@@ -155,41 +121,13 @@ public class JumpSubOperationTest {
 
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(Gas.of(1))
-            .pushStackItem(Bytes32.fromHexString("0x05"))
-            .code(new Code(Bytes.fromHexString("0x60045e005c")))
+            .pushStackItem(Bytes32.fromHexString("0x04"))
+            .code(new Code(Bytes.fromHexString("0x60045600")))
             .returnStack(new ReturnStack())
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
     assertThat(operation.exceptionalHaltCondition(frameDestinationEqualsToCodeSize, null, null))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  }
-
-  @Test
-  public void shouldHaltWithInvalidJumDestinationWhenLocationIsNotAvailable() {
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
-    final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
-    frame.setPC(CURRENT_PC);
-
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
-        .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  }
-
-  @Test
-  public void shouldHaltWithTooManyStackItemsWhenReturnStackIsFull() {
-    final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
-    final ReturnStack returnStack = new ReturnStack();
-    final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(returnStack).build();
-    frame.setPC(CURRENT_PC);
-
-    assertThat(frame.isReturnStackFull()).isFalse();
-
-    IntStream.range(0, 1023).forEach(frame::pushReturnStackItem);
-    assertThat(frame.isReturnStackFull()).isTrue();
-    assertThat(returnStack.size()).isEqualTo(1023);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
-        .contains(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
   }
 }

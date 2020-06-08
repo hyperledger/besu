@@ -75,7 +75,7 @@ public class PrivateStorageMigrationTest {
   private static final Address PRIVACY_ADDRESS = Address.DEFAULT_PRIVACY;
 
   @Mock private Blockchain blockchain;
-  @Mock private ProtocolSchedule<?> protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WorldStateArchive publicWorldStateArchive;
   @Mock private MutableWorldState publicMutableWorldState;

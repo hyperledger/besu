@@ -57,7 +57,7 @@ public final class RlpBlockImporterTest {
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("1000.blocks");
     BlockTestUtil.write1000Blocks(source);
-    final BesuController<?> targetController =
+    final BesuController targetController =
         new BesuController.Builder()
             .fromGenesisConfig(GenesisConfigFile.mainnet())
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
@@ -85,7 +85,7 @@ public final class RlpBlockImporterTest {
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("badpow.blocks");
     BlockTestUtil.writeBadPowBlocks(source);
-    final BesuController<?> targetController =
+    final BesuController targetController =
         new BesuController.Builder()
             .fromGenesisConfig(GenesisConfigFile.mainnet())
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
@@ -113,7 +113,7 @@ public final class RlpBlockImporterTest {
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("badpow.blocks");
     BlockTestUtil.writeBadPowBlocks(source);
-    final BesuController<?> targetController =
+    final BesuController targetController =
         new BesuController.Builder()
             .fromGenesisConfig(GenesisConfigFile.mainnet())
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
@@ -153,7 +153,7 @@ public final class RlpBlockImporterTest {
       throw new IllegalStateException(ex);
     }
 
-    final BesuController<?> controller =
+    final BesuController controller =
         new BesuController.Builder()
             .fromGenesisConfig(GenesisConfigFile.fromConfig(config))
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())

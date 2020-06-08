@@ -65,7 +65,7 @@ public class TransactionSimulatorTest {
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private MutableWorldState worldState;
-  @Mock private ProtocolSchedule<?> protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private TransactionProcessor transactionProcessor;
 

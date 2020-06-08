@@ -53,14 +53,14 @@ public class PrivateTransactionSimulator {
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final PrivacyParameters privacyParameters;
   private final PrivateStateRootResolver privateStateRootResolver;
 
   public PrivateTransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final PrivacyParameters privacyParameters) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
@@ -110,7 +110,7 @@ public class PrivateTransactionSimulator {
     final PrivateTransaction transaction =
         getPrivateTransaction(callParams, header, privacyGroupId, disposablePrivateState);
 
-    final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final PrivateTransactionProcessor privateTransactionProcessor =
         protocolSpec.getPrivateTransactionProcessor();

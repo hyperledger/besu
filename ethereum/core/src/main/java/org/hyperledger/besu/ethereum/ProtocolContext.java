@@ -32,29 +32,27 @@ import java.util.function.BiFunction;
  * Holds the mutable state used to track the current context of the protocol. This is primarily the
  * blockchain and world state archive, but can also hold arbitrary context required by a particular
  * consensus algorithm.
- *
- * @param <C> the type of the consensus algorithm context
  */
-public class ProtocolContext<C> {
+public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final C consensusState;
+  private final Object consensusState;
 
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final C consensusState) {
+      final Object consensusState) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusState = consensusState;
   }
 
-  public static <T> ProtocolContext<T> init(
+  public static ProtocolContext init(
       final StorageProvider storageProvider,
       final GenesisState genesisState,
-      final ProtocolSchedule<T> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
-      final BiFunction<Blockchain, WorldStateArchive, T> consensusContextFactory) {
+      final BiFunction<Blockchain, WorldStateArchive, Object> consensusContextFactory) {
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
     final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
@@ -68,7 +66,7 @@ public class ProtocolContext<C> {
         new WorldStateArchive(worldStateStorage, preimageStorage);
     genesisState.writeStateTo(worldStateArchive.getMutable());
 
-    return new ProtocolContext<>(
+    return new ProtocolContext(
         blockchain,
         worldStateArchive,
         consensusContextFactory.apply(blockchain, worldStateArchive));
@@ -82,7 +80,7 @@ public class ProtocolContext<C> {
     return worldStateArchive;
   }
 
-  public C getConsensusState() {
-    return consensusState;
+  public <C> C getConsensusState(final Class<C> klass) {
+    return klass.cast(consensusState);
   }
 }

@@ -31,7 +31,7 @@ public abstract class ClassicDifficultyCalculators {
   private static final long CONTINUE_BLOCK = 5_000_000L;
   private static final long DELAY = (CONTINUE_BLOCK - PAUSE_BLOCK) / EXPONENTIAL_DIFF_PERIOD;
 
-  public static DifficultyCalculator<Void> DIFFICULTY_BOMB_PAUSED =
+  public static DifficultyCalculator DIFFICULTY_BOMB_PAUSED =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger difficulty =
@@ -42,7 +42,7 @@ public abstract class ClassicDifficultyCalculators {
         return adjustForDifficultyPause(FIXED_DIFF, difficulty);
       };
 
-  public static DifficultyCalculator<Void> DIFFICULTY_BOMB_DELAYED =
+  public static DifficultyCalculator DIFFICULTY_BOMB_DELAYED =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger difficulty =
@@ -54,7 +54,7 @@ public abstract class ClassicDifficultyCalculators {
         return adjustForDifficultyDelay(periodCount, difficulty);
       };
 
-  public static DifficultyCalculator<Void> DIFFICULTY_BOMB_REMOVED =
+  public static DifficultyCalculator DIFFICULTY_BOMB_REMOVED =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger difficulty =
@@ -65,7 +65,7 @@ public abstract class ClassicDifficultyCalculators {
         return difficulty;
       };
 
-  public static DifficultyCalculator<Void> EIP100 =
+  public static DifficultyCalculator EIP100 =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final boolean hasOmmers = !parent.getOmmersHash().equals(Hash.EMPTY_LIST_HASH);

@@ -72,7 +72,7 @@ import java.util.OptionalLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class BesuControllerBuilder<C> {
+public abstract class BesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
 
   protected GenesisConfigFile genesisConfig;
@@ -94,102 +94,101 @@ public abstract class BesuControllerBuilder<C> {
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
 
-  public BesuControllerBuilder<C> storageProvider(final StorageProvider storageProvider) {
+  public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
     return this;
   }
 
-  public BesuControllerBuilder<C> genesisConfigFile(final GenesisConfigFile genesisConfig) {
+  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
     this.genesisConfig = genesisConfig;
     return this;
   }
 
-  public BesuControllerBuilder<C> synchronizerConfiguration(
+  public BesuControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfig) {
     this.syncConfig = synchronizerConfig;
     return this;
   }
 
-  public BesuControllerBuilder<C> ethProtocolConfiguration(
+  public BesuControllerBuilder ethProtocolConfiguration(
       final EthProtocolConfiguration ethProtocolConfiguration) {
     this.ethereumWireProtocolConfiguration = ethProtocolConfiguration;
     return this;
   }
 
-  public BesuControllerBuilder<C> networkId(final BigInteger networkId) {
+  public BesuControllerBuilder networkId(final BigInteger networkId) {
     this.networkId = networkId;
     return this;
   }
 
-  public BesuControllerBuilder<C> miningParameters(final MiningParameters miningParameters) {
+  public BesuControllerBuilder miningParameters(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
     return this;
   }
 
-  public BesuControllerBuilder<C> nodeKey(final NodeKey nodeKey) {
+  public BesuControllerBuilder nodeKey(final NodeKey nodeKey) {
     this.nodeKey = nodeKey;
     return this;
   }
 
-  public BesuControllerBuilder<C> metricsSystem(final ObservableMetricsSystem metricsSystem) {
+  public BesuControllerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     return this;
   }
 
-  public BesuControllerBuilder<C> privacyParameters(final PrivacyParameters privacyParameters) {
+  public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = privacyParameters;
     return this;
   }
 
-  public BesuControllerBuilder<C> dataDirectory(final Path dataDirectory) {
+  public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
     this.dataDirectory = dataDirectory;
     return this;
   }
 
-  public BesuControllerBuilder<C> clock(final Clock clock) {
+  public BesuControllerBuilder clock(final Clock clock) {
     this.clock = clock;
     return this;
   }
 
-  public BesuControllerBuilder<C> transactionPoolConfiguration(
+  public BesuControllerBuilder transactionPoolConfiguration(
       final TransactionPoolConfiguration transactionPoolConfiguration) {
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     return this;
   }
 
-  public BesuControllerBuilder<C> isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
+  public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     return this;
   }
 
-  public BesuControllerBuilder<C> isPruningEnabled(final boolean isPruningEnabled) {
+  public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
     this.isPruningEnabled = isPruningEnabled;
     return this;
   }
 
-  public BesuControllerBuilder<C> pruningConfiguration(
-      final PrunerConfiguration prunerConfiguration) {
+  public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
     this.prunerConfiguration = prunerConfiguration;
     return this;
   }
 
-  public BesuControllerBuilder<C> genesisConfigOverrides(
+  public BesuControllerBuilder genesisConfigOverrides(
       final Map<String, String> genesisConfigOverrides) {
     this.genesisConfigOverrides = genesisConfigOverrides;
     return this;
   }
 
-  public BesuControllerBuilder<C> targetGasLimit(final Optional<Long> targetGasLimit) {
+  public BesuControllerBuilder targetGasLimit(final Optional<Long> targetGasLimit) {
     this.gasLimitCalculator = new GasLimitCalculator(targetGasLimit);
     return this;
   }
 
-  public BesuControllerBuilder<C> requiredBlocks(final Map<Long, Hash> requiredBlocks) {
+  public BesuControllerBuilder requiredBlocks(final Map<Long, Hash> requiredBlocks) {
     this.requiredBlocks = requiredBlocks;
     return this;
   }
 
-  public BesuController<C> build() {
+  public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
@@ -206,9 +205,9 @@ public abstract class BesuControllerBuilder<C> {
 
     prepForBuild();
 
-    final ProtocolSchedule<C> protocolSchedule = createProtocolSchedule();
+    final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
-    final ProtocolContext<C> protocolContext =
+    final ProtocolContext protocolContext =
         ProtocolContext.init(
             storageProvider,
             genesisState,
@@ -250,7 +249,7 @@ public abstract class BesuControllerBuilder<C> {
             metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
-    final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
+    final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
     final Optional<EIP1559> eip1559;
     final GenesisConfigOptions genesisConfigOptions =
@@ -287,7 +286,7 @@ public abstract class BesuControllerBuilder<C> {
             createPeerValidators(protocolSchedule));
 
     final Synchronizer synchronizer =
-        new DefaultSynchronizer<>(
+        new DefaultSynchronizer(
             syncConfig,
             protocolSchedule,
             protocolContext,
@@ -324,7 +323,7 @@ public abstract class BesuControllerBuilder<C> {
       closeables.add(privacyParameters.getPrivateStorageProvider());
     }
 
-    return new BesuController<>(
+    return new BesuController(
         protocolSchedule,
         protocolContext,
         ethProtocolManager,
@@ -345,7 +344,7 @@ public abstract class BesuControllerBuilder<C> {
   protected void prepForBuild() {}
 
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext<C> protocolContext) {
+      final ProtocolContext protocolContext) {
     return apis -> Collections.emptyMap();
   }
 
@@ -355,18 +354,18 @@ public abstract class BesuControllerBuilder<C> {
   }
 
   protected abstract MiningCoordinator createMiningCoordinator(
-      ProtocolSchedule<C> protocolSchedule,
-      ProtocolContext<C> protocolContext,
+      ProtocolSchedule protocolSchedule,
+      ProtocolContext protocolContext,
       TransactionPool transactionPool,
       MiningParameters miningParameters,
       SyncState syncState,
       EthProtocolManager ethProtocolManager);
 
-  protected abstract ProtocolSchedule<C> createProtocolSchedule();
+  protected abstract ProtocolSchedule createProtocolSchedule();
 
-  protected void validateContext(final ProtocolContext<C> context) {}
+  protected void validateContext(final ProtocolContext context) {}
 
-  protected abstract C createConsensusContext(
+  protected abstract Object createConsensusContext(
       Blockchain blockchain, WorldStateArchive worldStateArchive);
 
   protected String getSupportedProtocol() {
@@ -374,7 +373,7 @@ public abstract class BesuControllerBuilder<C> {
   }
 
   protected EthProtocolManager createEthProtocolManager(
-      final ProtocolContext<C> protocolContext,
+      final ProtocolContext protocolContext,
       final boolean fastSyncEnabled,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
@@ -398,7 +397,7 @@ public abstract class BesuControllerBuilder<C> {
         genesisConfig.getForks());
   }
 
-  private List<PeerValidator> createPeerValidators(final ProtocolSchedule<C> protocolSchedule) {
+  private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock =

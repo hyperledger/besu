@@ -57,8 +57,8 @@ import org.junit.Test;
  */
 public abstract class AbstractMessageTaskTest<T, R> {
   protected static Blockchain blockchain;
-  protected static ProtocolSchedule<Void> protocolSchedule;
-  protected static ProtocolContext<Void> protocolContext;
+  protected static ProtocolSchedule protocolSchedule;
+  protected static ProtocolContext protocolContext;
   protected static MetricsSystem metricsSystem = new NoOpMetricsSystem();
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
@@ -68,7 +68,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
 
   @BeforeClass
   public static void setup() {
-    final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();

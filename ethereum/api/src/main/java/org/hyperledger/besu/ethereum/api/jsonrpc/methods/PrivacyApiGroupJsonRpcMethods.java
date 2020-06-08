@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final TransactionPool transactionPool;
   private final PrivacyParameters privacyParameters;
   private final PrivateNonceProvider privateNonceProvider;
@@ -53,7 +53,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   public PrivacyApiGroupJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     this.blockchainQueries = blockchainQueries;
@@ -75,7 +75,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return blockchainQueries;
   }
 
-  public ProtocolSchedule<?> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 

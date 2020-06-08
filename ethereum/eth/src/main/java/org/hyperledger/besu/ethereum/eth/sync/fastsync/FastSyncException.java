@@ -26,4 +26,9 @@ public class FastSyncException extends RuntimeException {
   public FastSyncError getError() {
     return error;
   }
+
+  public FastSyncException(final Throwable error) {
+    super(error);
+    this.error = FastSyncError.UNEXPECTED_ERROR;
+  }
 }

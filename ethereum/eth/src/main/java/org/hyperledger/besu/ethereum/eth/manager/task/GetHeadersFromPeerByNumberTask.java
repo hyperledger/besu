@@ -32,7 +32,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
 
   @VisibleForTesting
   GetHeadersFromPeerByNumberTask(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final long blockNumber,
       final int count,
@@ -44,7 +44,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtNumber(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final long firstBlockNumber,
       final int segmentLength,
@@ -54,7 +54,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
   }
 
   public static AbstractGetHeadersFromPeerTask endingAtNumber(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final long lastlockNumber,
       final int segmentLength,
@@ -65,7 +65,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
   }
 
   public static AbstractGetHeadersFromPeerTask forSingleNumber(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final long blockNumber,
       final MetricsSystem metricsSystem) {

@@ -29,10 +29,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -52,6 +54,7 @@ public class MarkSweepPruner {
   private final Counter markOperationCounter;
   private final Counter sweepOperationCounter;
   private final Counter sweptNodesCounter;
+  private final Stopwatch markStopwatch;
   private volatile long nodeAddedListenerId;
   private final ReentrantLock markLock = new ReentrantLock(true);
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -94,6 +97,13 @@ public class MarkSweepPruner {
             BesuMetricCategory.PRUNER,
             "sweep_operations_total",
             "Total number of sweep operations performed");
+
+    markStopwatch = Stopwatch.createUnstarted();
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.PRUNER,
+        "mark_time_duration",
+        "Cumulative number of seconds spent marking the state trie across all pruning cycles",
+        () -> markStopwatch.elapsed(TimeUnit.SECONDS));
   }
 
   public void prepare() {
@@ -107,6 +117,7 @@ public class MarkSweepPruner {
 
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
+    markStopwatch.start();
     createStateTrie(rootHash)
         .visitAll(
             node -> {
@@ -118,6 +129,7 @@ public class MarkSweepPruner {
               markNode(node.getHash());
               node.getValue().ifPresent(this::processAccountState);
             });
+    markStopwatch.stop();
     LOG.debug("Completed marking used nodes for pruning");
   }
 

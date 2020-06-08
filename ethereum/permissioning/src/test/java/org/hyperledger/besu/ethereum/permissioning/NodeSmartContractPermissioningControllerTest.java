@@ -55,7 +55,7 @@ public class NodeSmartContractPermissioningControllerTest {
 
   private NodeSmartContractPermissioningController setupController(
       final String resourceName, final String contractAddressString) throws IOException {
-    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
 
     final String emptyContractFile =
         Resources.toString(this.getClass().getResource(resourceName), UTF_8);

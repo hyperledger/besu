@@ -57,8 +57,8 @@ public class TestMineBlocks implements JsonRpcMethod {
 
   private boolean mineNewBlock() {
     final RetestethClock retesethClock = context.getRetestethClock();
-    final ProtocolSchedule<Void> protocolSchedule = context.getProtocolSchedule();
-    final ProtocolContext<Void> protocolContext = context.getProtocolContext();
+    final ProtocolSchedule protocolSchedule = context.getProtocolSchedule();
+    final ProtocolContext protocolContext = context.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     final HeaderValidationMode headerValidationMode = context.getHeaderValidationMode();
     final EthHashBlockCreator blockCreator =
@@ -78,7 +78,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     // advance clock so next mine won't hit the same timestamp
     retesethClock.advanceSeconds(1);
 
-    final BlockImporter<Void> blockImporter =
+    final BlockImporter blockImporter =
         protocolSchedule.getByBlockNumber(blockchain.getChainHeadBlockNumber()).getBlockImporter();
     return blockImporter.importBlock(
         protocolContext, block, headerValidationMode, headerValidationMode);

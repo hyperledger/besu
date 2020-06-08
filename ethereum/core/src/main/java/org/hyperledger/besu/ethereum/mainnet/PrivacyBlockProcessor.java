@@ -49,16 +49,16 @@ public class PrivacyBlockProcessor implements BlockProcessor {
   private static final Logger LOG = LogManager.getLogger();
 
   private final BlockProcessor blockProcessor;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final Enclave enclave;
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
   private WorldStateArchive publicWorldStateArchive;
 
-  public <C> PrivacyBlockProcessor(
+  public PrivacyBlockProcessor(
       final BlockProcessor blockProcessor,
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final Enclave enclave,
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,
