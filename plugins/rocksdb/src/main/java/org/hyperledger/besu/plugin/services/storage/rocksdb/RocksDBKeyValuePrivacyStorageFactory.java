@@ -88,13 +88,11 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   private int readDatabaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
     final Path privacyDatabaseDir =
         commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH);
-    final Path databaseDir = commonConfiguration.getStoragePath();
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean privacyDatabaseExists = privacyDatabaseDir.resolve("IDENTITY").toFile().exists();
     final int privacyDatabaseVersion;
     if (privacyDatabaseExists) {
-      privacyDatabaseVersion =
-          DatabaseMetadata.lookUpFrom(databaseDir, dataDir).maybePrivacyVersion().orElse(0);
+      privacyDatabaseVersion = DatabaseMetadata.lookUpFrom(dataDir).maybePrivacyVersion().orElse(0);
       LOG.info(
           "Existing private database detected at {}. Version {}", dataDir, privacyDatabaseVersion);
     } else {
