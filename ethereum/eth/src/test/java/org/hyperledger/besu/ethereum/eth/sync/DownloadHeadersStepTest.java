@@ -42,18 +42,18 @@ import org.junit.Test;
 public class DownloadHeadersStepTest {
 
   private static final int HEADER_REQUEST_SIZE = 200;
-  private static ProtocolSchedule<Void> protocolSchedule;
-  private static ProtocolContext<Void> protocolContext;
+  private static ProtocolSchedule protocolSchedule;
+  private static ProtocolContext protocolContext;
   private static MutableBlockchain blockchain;
 
   private final EthPeer syncTarget = mock(EthPeer.class);
   private EthProtocolManager ethProtocolManager;
-  private DownloadHeadersStep<Void> downloader;
+  private DownloadHeadersStep downloader;
   private CheckpointRange checkpointRange;
 
   @BeforeClass
   public static void setUpClass() {
-    final BlockchainSetupUtil<Void> setupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting();
     setupUtil.importFirstBlocks(20);
     protocolSchedule = setupUtil.getProtocolSchedule();
     protocolContext = setupUtil.getProtocolContext();
@@ -64,7 +64,7 @@ public class DownloadHeadersStepTest {
   public void setUp() {
     ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
     downloader =
-        new DownloadHeadersStep<>(
+        new DownloadHeadersStep(
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),

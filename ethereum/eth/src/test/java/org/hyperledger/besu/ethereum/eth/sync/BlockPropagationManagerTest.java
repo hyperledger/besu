@@ -65,13 +65,13 @@ public class BlockPropagationManagerTest {
 
   private static Blockchain fullBlockchain;
 
-  private BlockchainSetupUtil<Void> blockchainUtil;
-  private ProtocolSchedule<Void> protocolSchedule;
-  private ProtocolContext<Void> protocolContext;
+  private BlockchainSetupUtil blockchainUtil;
+  private ProtocolSchedule protocolSchedule;
+  private ProtocolContext protocolContext;
   private MutableBlockchain blockchain;
   private BlockBroadcaster blockBroadcaster;
   private EthProtocolManager ethProtocolManager;
-  private BlockPropagationManager<Void> blockPropagationManager;
+  private BlockPropagationManager blockPropagationManager;
   private SynchronizerConfiguration syncConfig;
   private final PendingBlocks pendingBlocks = new PendingBlocks();
   private SyncState syncState;
@@ -87,12 +87,12 @@ public class BlockPropagationManagerTest {
     blockchainUtil = BlockchainSetupUtil.forTesting();
     blockchain = blockchainUtil.getBlockchain();
     protocolSchedule = blockchainUtil.getProtocolSchedule();
-    final ProtocolContext<Void> tempProtocolContext = blockchainUtil.getProtocolContext();
+    final ProtocolContext tempProtocolContext = blockchainUtil.getProtocolContext();
     protocolContext =
-        new ProtocolContext<>(
+        new ProtocolContext(
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
-            tempProtocolContext.getConsensusState());
+            tempProtocolContext.getConsensusState(Object.class));
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
@@ -103,7 +103,7 @@ public class BlockPropagationManagerTest {
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockBroadcaster = mock(BlockBroadcaster.class);
     blockPropagationManager =
-        new BlockPropagationManager<>(
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
@@ -308,13 +308,13 @@ public class BlockPropagationManagerTest {
 
   @Test
   public void handlesDuplicateAnnouncements() {
-    final ProtocolSchedule<Void> stubProtocolSchedule = spy(protocolSchedule);
-    final ProtocolSpec<Void> stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
-    final BlockImporter<Void> stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
+    final ProtocolSchedule stubProtocolSchedule = spy(protocolSchedule);
+    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final BlockImporter stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
     doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
     doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             stubProtocolSchedule,
             protocolContext,
@@ -360,13 +360,13 @@ public class BlockPropagationManagerTest {
 
   @Test
   public void handlesPendingDuplicateAnnouncements() {
-    final ProtocolSchedule<Void> stubProtocolSchedule = spy(protocolSchedule);
-    final ProtocolSpec<Void> stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
-    final BlockImporter<Void> stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
+    final ProtocolSchedule stubProtocolSchedule = spy(protocolSchedule);
+    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final BlockImporter stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
     doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
     doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             stubProtocolSchedule,
             protocolContext,
@@ -466,7 +466,7 @@ public class BlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
 
-    final BlockPropagationManager<Void> propManager = spy(blockPropagationManager);
+    final BlockPropagationManager propManager = spy(blockPropagationManager);
     propManager.start();
 
     // Setup peer and messages
@@ -496,7 +496,7 @@ public class BlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
 
-    final BlockPropagationManager<Void> propManager = spy(blockPropagationManager);
+    final BlockPropagationManager propManager = spy(blockPropagationManager);
     propManager.start();
 
     // Setup peer and messages
@@ -517,8 +517,8 @@ public class BlockPropagationManagerTest {
     final int oldBlocksToImport = 3;
     syncConfig =
         SynchronizerConfiguration.builder().blockPropagationRange(-oldBlocksToImport, 5).build();
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
@@ -600,8 +600,8 @@ public class BlockPropagationManagerTest {
     final EthContext ethContext =
         new EthContext(
             new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,

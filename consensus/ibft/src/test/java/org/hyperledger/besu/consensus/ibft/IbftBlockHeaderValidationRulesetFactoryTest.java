@@ -40,8 +40,8 @@ import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
 
-  private final ProtocolContext<IbftContext> protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext<>(null, null, setupContextWithValidators(validators));
+  private final ProtocolContext protocolContext(final Collection<Address> validators) {
+    return new ProtocolContext(null, null, setupContextWithValidators(validators));
   }
 
   @Test
@@ -56,7 +56,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader =
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -77,7 +77,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader =
         getPresetHeaderBuilder(2, proposerNodeKey, emptyList(), parentHeader).buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -103,7 +103,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .coinbase(nonProposerAddress)
             .buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -124,7 +124,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader =
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).nonce(3).buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -147,7 +147,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .timestamp(100)
             .buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -170,7 +170,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .mixHash(Hash.EMPTY_TRIE_HASH)
             .buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -193,7 +193,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .ommersHash(Hash.EMPTY_TRIE_HASH)
             .buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -216,7 +216,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .difficulty(Difficulty.of(5))
             .buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -237,7 +237,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader =
         getPresetHeaderBuilder(2, proposerNodeKey, validators, null).buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -261,7 +261,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .gasUsed(6_000)
             .buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -284,7 +284,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .gasLimit(4999)
             .buildHeader();
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(

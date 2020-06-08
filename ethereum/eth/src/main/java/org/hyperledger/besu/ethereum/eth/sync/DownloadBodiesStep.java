@@ -25,15 +25,15 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class DownloadBodiesStep<C>
+public class DownloadBodiesStep
     implements Function<List<BlockHeader>, CompletableFuture<List<Block>>> {
 
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
   public DownloadBodiesStep(
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;

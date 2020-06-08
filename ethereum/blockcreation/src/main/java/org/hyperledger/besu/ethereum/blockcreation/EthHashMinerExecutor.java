@@ -29,15 +29,15 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlockMiner> {
+public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMiner> {
 
   private volatile Optional<Address> coinbase;
   private boolean stratumMiningEnabled;
   private final Iterable<Long> nonceGenerator;
 
   public EthHashMinerExecutor(
-      final ProtocolContext<Void> protocolContext,
-      final ProtocolSchedule<Void> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,

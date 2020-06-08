@@ -97,7 +97,7 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void emptyPendingTransactionsResultsInEmptyVettingResult() {
-    final ProtocolSchedule<Void> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(GenesisConfigFile.development().getConfigOptions());
     final TransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockNumber(0).getTransactionProcessor();

@@ -104,7 +104,7 @@ public class EthGetFilterChangesIntegrationTest {
             blockchain::getChainHeadHeader,
             Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
-    final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
+    final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
     PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     PeerPendingTransactionTracker peerPendingTransactionTracker =

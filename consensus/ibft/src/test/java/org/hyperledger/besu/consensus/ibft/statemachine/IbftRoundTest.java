@@ -30,7 +30,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
@@ -74,11 +73,11 @@ public class IbftRoundTest {
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
-  private ProtocolContext<IbftContext> protocolContext;
+  private ProtocolContext protocolContext;
 
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
-  @Mock private BlockImporter<IbftContext> blockImporter;
+  @Mock private BlockImporter blockImporter;
   @Mock private IbftMessageTransmitter transmitter;
   @Mock private MinedBlockObserver minedBlockObserver;
   @Mock private IbftBlockCreator blockCreator;
@@ -96,8 +95,7 @@ public class IbftRoundTest {
   @Before
   public void setup() {
     protocolContext =
-        new ProtocolContext<>(
-            blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
+        new ProtocolContext(blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);

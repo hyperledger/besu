@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
@@ -80,13 +79,13 @@ public class IbftBlockCreatorTest {
             Address.fromHexString(String.format("%020d", 4)),
             localAddr);
 
-    final ProtocolSchedule<IbftContext> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
             false);
-    final ProtocolContext<IbftContext> protContext =
-        new ProtocolContext<>(
+    final ProtocolContext protContext =
+        new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithValidators(initialValidatorList));
@@ -117,7 +116,7 @@ public class IbftBlockCreatorTest {
 
     final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
 
-    final BlockHeaderValidator<IbftContext> rules =
+    final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0).build();
 
     final boolean validationResult =

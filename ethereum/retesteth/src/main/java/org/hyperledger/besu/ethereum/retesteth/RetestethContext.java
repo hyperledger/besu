@@ -75,9 +75,9 @@ public class RetestethContext {
   private Address coinbase;
   private Bytes extraData;
   private MutableBlockchain blockchain;
-  private ProtocolContext<Void> protocolContext;
+  private ProtocolContext protocolContext;
   private BlockchainQueries blockchainQueries;
-  private ProtocolSchedule<Void> protocolSchedule;
+  private ProtocolSchedule protocolSchedule;
   private HeaderValidationMode headerValidationMode;
   private BlockReplay blockReplay;
   private RetestethClock retestethClock;
@@ -125,7 +125,7 @@ public class RetestethContext {
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule = MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
-      protocolSchedule = new NoRewardProtocolScheduleWrapper<>(protocolSchedule);
+      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
     }
 
     final GenesisState genesisState = GenesisState.fromJson(genesisConfigString, protocolSchedule);
@@ -140,7 +140,7 @@ public class RetestethContext {
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext = new ProtocolContext<>(blockchain, worldStateArchive, null);
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null);
 
     blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
 
@@ -207,11 +207,11 @@ public class RetestethContext {
         new NoOpMetricsSystem());
   }
 
-  public ProtocolSchedule<Void> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
-  public ProtocolContext<Void> getProtocolContext() {
+  public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
@@ -219,7 +219,7 @@ public class RetestethContext {
     return blockchain.getChainHeadBlockNumber();
   }
 
-  public ProtocolSpec<Void> getProtocolSpec(final long blockNumber) {
+  public ProtocolSpec getProtocolSpec(final long blockNumber) {
     return getProtocolSchedule().getByBlockNumber(blockNumber);
   }
 

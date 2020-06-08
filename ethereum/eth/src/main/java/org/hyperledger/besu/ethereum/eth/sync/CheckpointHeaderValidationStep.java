@@ -23,16 +23,16 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class CheckpointHeaderValidationStep<C>
+public class CheckpointHeaderValidationStep
     implements Function<CheckpointRangeHeaders, Stream<BlockHeader>> {
 
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final ValidationPolicy validationPolicy;
 
   public CheckpointHeaderValidationStep(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final ValidationPolicy validationPolicy) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -69,7 +69,7 @@ public class CheckpointHeaderValidationStep<C>
   }
 
   private boolean isValid(final BlockHeader expectedParent, final BlockHeader firstHeaderToImport) {
-    final BlockHeaderValidator<C> validator =
+    final BlockHeaderValidator validator =
         protocolSchedule
             .getByBlockNumber(firstHeaderToImport.getNumber())
             .getBlockHeaderValidator();

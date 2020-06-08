@@ -44,20 +44,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
 
-/**
- * Requests bodies from a peer by header, matches up headers to bodies, and returns blocks.
- *
- * @param <C> the consensus algorithm context
- */
-public class GetBodiesFromPeerTask<C> extends AbstractPeerRequestTask<List<Block>> {
+/** Requests bodies from a peer by header, matches up headers to bodies, and returns blocks. */
+public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final List<BlockHeader> headers;
   private final Map<BodyIdentifier, List<BlockHeader>> bodyToHeaders = new HashMap<>();
 
   private GetBodiesFromPeerTask(
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final List<BlockHeader> headers,
       final MetricsSystem metricsSystem) {
@@ -74,12 +70,12 @@ public class GetBodiesFromPeerTask<C> extends AbstractPeerRequestTask<List<Block
         });
   }
 
-  public static <C> GetBodiesFromPeerTask<C> forHeaders(
-      final ProtocolSchedule<C> protocolSchedule,
+  public static GetBodiesFromPeerTask forHeaders(
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final List<BlockHeader> headers,
       final MetricsSystem metricsSystem) {
-    return new GetBodiesFromPeerTask<>(protocolSchedule, ethContext, headers, metricsSystem);
+    return new GetBodiesFromPeerTask(protocolSchedule, ethContext, headers, metricsSystem);
   }
 
   @Override

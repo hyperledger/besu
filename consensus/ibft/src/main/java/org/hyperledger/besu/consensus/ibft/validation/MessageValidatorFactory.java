@@ -29,13 +29,13 @@ import java.util.Collection;
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
-  private final ProtocolContext<IbftContext> protocolContext;
-  private final ProtocolSchedule<IbftContext> protocolSchedule;
+  private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
 
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
-      final ProtocolSchedule<IbftContext> protocolSchedule,
-      final ProtocolContext<IbftContext> protocolContext) {
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext) {
     this.proposerSelector = proposerSelector;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -43,7 +43,7 @@ public class MessageValidatorFactory {
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     return protocolContext
-        .getConsensusState()
+        .getConsensusState(IbftContext.class)
         .getVoteTallyCache()
         .getVoteTallyAfterBlock(parentHeader)
         .getValidators();
@@ -60,7 +60,7 @@ public class MessageValidatorFactory {
 
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
-    final BlockValidator<IbftContext> blockValidator =
+    final BlockValidator blockValidator =
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 

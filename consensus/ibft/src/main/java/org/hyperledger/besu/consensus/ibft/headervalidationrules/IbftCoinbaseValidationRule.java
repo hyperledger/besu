@@ -30,18 +30,19 @@ import org.apache.logging.log4j.Logger;
  * Ensures that the coinbase (which corresponds to the block proposer) is included in the list of
  * validators
  */
-public class IbftCoinbaseValidationRule implements AttachedBlockHeaderValidationRule<IbftContext> {
+public class IbftCoinbaseValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger(IbftCoinbaseValidationRule.class);
 
   @Override
   public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<IbftContext> context) {
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
 
     final ValidatorProvider validatorProvider =
-        context.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+        context
+            .getConsensusState(IbftContext.class)
+            .getVoteTallyCache()
+            .getVoteTallyAfterBlock(parent);
     final Address proposer = header.getCoinbase();
 
     final Collection<Address> storedValidators = validatorProvider.getValidators();

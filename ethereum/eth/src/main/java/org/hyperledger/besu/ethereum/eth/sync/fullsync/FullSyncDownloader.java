@@ -26,18 +26,18 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FullSyncDownloader<C> {
+public class FullSyncDownloader {
 
   private static final Logger LOG = LogManager.getLogger();
   private final ChainDownloader chainDownloader;
   private final SynchronizerConfiguration syncConfig;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolContext protocolContext;
   private final SyncState syncState;
 
   public FullSyncDownloader(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem) {

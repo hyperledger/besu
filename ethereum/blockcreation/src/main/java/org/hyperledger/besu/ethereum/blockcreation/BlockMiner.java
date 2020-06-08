@@ -43,24 +43,24 @@ import org.apache.logging.log4j.Logger;
  * <p>This class is responsible for mining a single block only - the AbstractBlockCreator maintains
  * state so must be destroyed between block mining activities.
  */
-public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnable {
+public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
   protected final Function<BlockHeader, M> blockCreatorFactory;
   protected final M minerBlockCreator;
 
-  protected final ProtocolContext<C> protocolContext;
+  protected final ProtocolContext protocolContext;
   protected final BlockHeader parentHeader;
 
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> observers;
   private final AbstractBlockScheduler scheduler;
 
   public BlockMiner(
       final Function<BlockHeader, M> blockCreatorFactory,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final Subscribers<MinedBlockObserver> observers,
       final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader) {
@@ -125,7 +125,7 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
         "Block created, importing to local chain, block includes {} transactions",
         block.getBody().getTransactions().size());
 
-    final BlockImporter<C> importer =
+    final BlockImporter importer =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getBlockImporter();
     final boolean blockImported =
         importer.importBlock(protocolContext, block, HeaderValidationMode.FULL);

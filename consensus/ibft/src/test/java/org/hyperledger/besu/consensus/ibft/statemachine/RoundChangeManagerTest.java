@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -72,9 +71,7 @@ public class RoundChangeManagerTest {
     validators.add(Util.publicKeyToAddress(validator1Key.getPublicKey()));
     validators.add(Util.publicKeyToAddress(validator2Key.getPublicKey()));
 
-    @SuppressWarnings("unchecked")
-    final BlockValidator<IbftContext> blockValidator =
-        (BlockValidator<IbftContext>) mock(BlockValidator.class);
+    final BlockValidator blockValidator = mock(BlockValidator.class);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
