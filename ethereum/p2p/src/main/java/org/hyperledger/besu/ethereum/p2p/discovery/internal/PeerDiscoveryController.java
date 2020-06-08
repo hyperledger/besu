@@ -301,7 +301,8 @@ public class PeerDiscoveryController {
 
     switch (packet.getType()) {
       case PING:
-        if (peerPermissions.allowInboundBonding(peer)) {
+        if (peerPermissions.allowInboundBonding(peer)
+            && (sender.getEnodeURL().getNodeId().equals(packet.getNodeId()))) {
           addToPeerTable(peer);
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);

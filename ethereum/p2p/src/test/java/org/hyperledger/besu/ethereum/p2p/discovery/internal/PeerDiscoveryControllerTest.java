@@ -604,6 +604,72 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
+  public void shouldNotBondWhenReceivingSpoofedPing() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+
+    DiscoveryPeer victim = peers.get(0);
+    DiscoveryPeer badGuy = peers.get(1);
+
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller = getControllerBuilder().outboundMessageHandler(outboundMessageHandler).build();
+
+    controller.start();
+
+    final PingPacketData pingPacketData =
+        PingPacketData.create(badGuy.getEndpoint(), localPeer.getEndpoint());
+    final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(1));
+    controller.onMessage(pingPacket, victim);
+    assertThat(controller.streamDiscoveredPeers()).doesNotContain(victim);
+    assertThat(controller.streamDiscoveredPeers()).doesNotContain(badGuy);
+  }
+
+  /*
+  udpPorts NOT equal
+  tcpPorts NOT equal
+    */
+  @Test
+  public void shouldNotBondWhenReceivingSpoofedPing1() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+
+    DiscoveryPeer victim = peers.get(0);
+    DiscoveryPeer badGuy = peers.get(1);
+
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller = getControllerBuilder().outboundMessageHandler(outboundMessageHandler).build();
+
+    controller.start();
+
+    final PingPacketData pingPacketData =
+        PingPacketData.create(badGuy.getEndpoint(), localPeer.getEndpoint());
+    final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
+    controller.onMessage(pingPacket, victim);
+    assertThat(controller.streamDiscoveredPeers()).contains(victim);
+  }
+
+  @Test
+  public void shouldNotBondWhenReceivingSpoofedPing2() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+
+    DiscoveryPeer victim = peers.get(0);
+    DiscoveryPeer badGuy = peers.get(1);
+
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller = getControllerBuilder().outboundMessageHandler(outboundMessageHandler).build();
+
+    controller.start();
+
+    final PingPacketData pingPacketData =
+        PingPacketData.create(victim.getEndpoint(), localPeer.getEndpoint());
+    final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(1));
+    controller.onMessage(pingPacket, victim);
+    assertThat(controller.streamDiscoveredPeers()).doesNotContain(victim);
+    assertThat(controller.streamDiscoveredPeers()).doesNotContain(badGuy);
+  }
+
+  @Test
   public void shouldNotAddSelfWhenReceivedPingFromSelf() {
     startPeerDiscoveryController();
     final DiscoveryPeer localPeer = DiscoveryPeer.fromEnode(this.localPeer.getEnodeURL());
