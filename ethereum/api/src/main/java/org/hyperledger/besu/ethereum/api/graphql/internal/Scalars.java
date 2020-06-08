@@ -55,8 +55,13 @@ public class Scalars {
           if (!(input instanceof StringValue)) {
             throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
           }
+          String inputValue = ((StringValue) input).getValue();
+          if (!inputValue.startsWith("0x")) {
+            throw new CoercingParseLiteralException(
+                "Address value '" + inputValue + "' is not prefixed with 0x");
+          }
           try {
-            return Address.fromHexStringStrict(((StringValue) input).getValue());
+            return Address.fromHexStringStrict(inputValue);
           } catch (final IllegalArgumentException e) {
             throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
           }
@@ -121,8 +126,13 @@ public class Scalars {
           if (!(input instanceof StringValue)) {
             throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
           }
+          String inputValue = ((StringValue) input).getValue();
+          if (!inputValue.startsWith("0x")) {
+            throw new CoercingParseLiteralException(
+                "Bytes value '" + inputValue + "' is not prefixed with 0x");
+          }
           try {
-            return Bytes.fromHexStringLenient(((StringValue) input).getValue());
+            return Bytes.fromHexStringLenient(inputValue);
           } catch (final IllegalArgumentException e) {
             throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
           }
@@ -156,8 +166,13 @@ public class Scalars {
           if (!(input instanceof StringValue)) {
             throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
           }
+          String inputValue = ((StringValue) input).getValue();
+          if (!inputValue.startsWith("0x")) {
+            throw new CoercingParseLiteralException(
+                "Bytes32 value '" + inputValue + "' is not prefixed with 0x");
+          }
           try {
-            return Bytes32.fromHexStringLenient(((StringValue) input).getValue());
+            return Bytes32.fromHexStringLenient(inputValue);
           } catch (final IllegalArgumentException e) {
             throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
           }

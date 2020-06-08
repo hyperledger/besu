@@ -1,0 +1,20 @@
+{
+  "request": "{account(blockNumber:\"0x19\", address: \"6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance } }",
+  "response": {
+    "errors": [
+      {
+        "message": "Validation error of type WrongType: argument 'address' with value 'StringValue{value='6295ee1b4f6dd65047762f924ecd367c17eabf8f'}' is not a valid 'Address' @ 'account'",
+        "locations": [
+          {
+            "line": 1,
+            "column": 30
+          }
+        ],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ]
+  },
+  "statusCode": 400
+}
