@@ -82,8 +82,7 @@ public class KubernetesNatManager extends AbstractNatManager {
               .orElseThrow(() -> new NatInitializationException("Service not found"));
       updateUsingBesuService(service);
     } catch (Exception e) {
-      throw new NatInitializationException(
-          "Failed update information using Kubernetes client SDK.", e);
+      throw new NatInitializationException(e.getMessage(), e);
     }
   }
 
@@ -134,7 +133,8 @@ public class KubernetesNatManager extends AbstractNatManager {
                 }
               });
     } catch (Exception e) {
-      throw new RuntimeException("Failed update information using pod metadata.", e);
+      throw new RuntimeException(
+          "Failed update information using pod metadata : " + e.getMessage(), e);
     }
   }
 
