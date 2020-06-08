@@ -43,10 +43,8 @@ public class DatabaseMetadataTest {
     final Path tempDataDir =
         createAndWrite(
             "data", "DATABASE_METADATA.json", "{\"version\":42 , \"privacyVersion\":55}");
-    final Path tempDatabaseDir = createAndWrite("db", "DATABASE_METADATA.json", "{\"version\":99}");
 
-    final DatabaseMetadata databaseMetadata =
-        DatabaseMetadata.lookUpFrom(tempDatabaseDir, tempDataDir);
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
     assertThat(databaseMetadata.maybePrivacyVersion()).isNotEmpty();
@@ -56,9 +54,7 @@ public class DatabaseMetadataTest {
   @Test
   public void metaFileShouldBeSoughtIntoDataDirFirst() throws Exception {
     final Path tempDataDir = createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":42}");
-    final Path tempDatabaseDir = createAndWrite("db", "DATABASE_METADATA.json", "{\"version\":99}");
-    final DatabaseMetadata databaseMetadata =
-        DatabaseMetadata.lookUpFrom(tempDatabaseDir, tempDataDir);
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
   }
@@ -67,11 +63,9 @@ public class DatabaseMetadataTest {
   public void metaFileNotFoundInDataDirShouldLookupIntoDbDir() throws Exception {
     final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
     Files.createDirectories(tempDataDir);
-    final Path tempDatabaseDir = createAndWrite("db", "DATABASE_METADATA.json", "{\"version\":42}");
     final Path metadataPathInDataDir = tempDataDir.resolve("DATABASE_METADATA.json");
     assertThat(metadataPathInDataDir).is(FILE_DOES_NOT_EXIST);
-    final DatabaseMetadata databaseMetadata =
-        DatabaseMetadata.lookUpFrom(tempDatabaseDir, tempDataDir);
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
     assertThat(metadataPathInDataDir).is(FILE_EXISTS);
