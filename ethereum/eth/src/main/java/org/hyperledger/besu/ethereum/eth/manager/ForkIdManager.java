@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -24,7 +23,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
@@ -32,6 +30,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -40,38 +39,30 @@ public class ForkIdManager {
   private final Hash genesisHash;
   private final List<ForkId> forkAndHashList;
 
-  private final List<Predicate<ForkId>> forkIDCheckers;
+  private final Predicate<ForkId> forkIDChecker;
   private final List<Long> forks;
   private final LongSupplier chainHeadSupplier;
   private long lastHead;
   private ForkId lastComputedForkId;
 
-  public ForkIdManager(final Blockchain blockchain, final List<Long> forks) {
+  public ForkIdManager(final Blockchain blockchain, final List<Long> nonFilteredForks) {
     checkNotNull(blockchain);
-    checkNotNull(forks);
+    checkNotNull(nonFilteredForks);
     this.chainHeadSupplier = blockchain::getChainHeadBlockNumber;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     this.forkAndHashList = new ArrayList<>();
     this.forks =
-        forks.stream()
+        nonFilteredForks.stream()
             .filter(fork -> fork > 0)
             .distinct()
             .sorted()
             .collect(Collectors.toUnmodifiableList());
-    final Predicate<ForkId> legacyForkIdChecker =
-        createForkIDChecker(blockchain, genesisHash, forks, fs -> forks, forkAndHashList);
-    // if the fork list contains only zeros then we may be in a consortium/dev network
-    if (onlyZerosForkBlocks(forks)) {
-      this.forkIDCheckers = singletonList(forkId -> true);
+    if (onlyZerosForkBlocks(nonFilteredForks)) {
+      this.forkIDChecker = forkId -> true;
     } else {
-      final Predicate<ForkId> newForkIdChecker =
+      this.forkIDChecker =
           createForkIDChecker(
-              blockchain,
-              genesisHash,
-              forks,
-              fs -> fs.stream().distinct().sorted().collect(Collectors.toUnmodifiableList()),
-              new ArrayList<>());
-      this.forkIDCheckers = Arrays.asList(newForkIdChecker, legacyForkIdChecker);
+              blockchain, genesisHash, nonFilteredForks, fs -> this.forks, forkAndHashList);
     }
   }
 
@@ -97,6 +88,7 @@ public class ForkIdManager {
     return lastComputedForkId;
   }
 
+  @VisibleForTesting
   ForkId getLatestForkId() {
     if (forkAndHashList.size() > 0) {
       return forkAndHashList.get(forkAndHashList.size() - 1);
@@ -142,7 +134,7 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   boolean peerCheck(final ForkId forkId) {
-    return forkIDCheckers.stream().anyMatch(checker -> checker.test(forkId));
+    return forkIDChecker.test(forkId);
   }
 
   private static Predicate<ForkId> eip2124(
@@ -230,20 +222,18 @@ public class ForkIdManager {
     final CRC32 crc = new CRC32();
     crc.update(genesisHash.toArray());
     final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
-    final List<Long> filteredForks =
-        forks.stream().filter(v -> v > 0).distinct().collect(Collectors.toUnmodifiableList());
-    filteredForks.forEach(
+    forks.forEach(
         fork -> {
           updateCrc(crc, fork);
           forkHashes.add(getCurrentCrcHash(crc));
         });
 
     // This loop is for all the fork hashes that have an associated "next fork"
-    for (int i = 0; i < filteredForks.size(); i++) {
-      forkIds.add(new ForkId(forkHashes.get(i), filteredForks.get(i)));
+    for (int i = 0; i < forks.size(); i++) {
+      forkIds.add(new ForkId(forkHashes.get(i), forks.get(i)));
     }
     long forkNext = 0;
-    if (!filteredForks.isEmpty()) {
+    if (!forks.isEmpty()) {
       forkNext = forkIds.get(forkIds.size() - 1).getNext();
       forkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
