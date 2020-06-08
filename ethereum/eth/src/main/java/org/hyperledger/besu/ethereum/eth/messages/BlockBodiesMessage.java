@@ -58,7 +58,7 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     return EthPV62.BLOCK_BODIES;
   }
 
-  public <C> List<BlockBody> bodies(final ProtocolSchedule<C> protocolSchedule) {
+  public List<BlockBody> bodies(final ProtocolSchedule protocolSchedule) {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)

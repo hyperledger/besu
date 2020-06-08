@@ -50,20 +50,20 @@ public class FullSyncTargetManagerTest {
   private MutableBlockchain localBlockchain;
   private final WorldStateArchive localWorldState = mock(WorldStateArchive.class);
   private RespondingEthPeer.Responder responder;
-  private FullSyncTargetManager<Void> syncTargetManager;
+  private FullSyncTargetManager syncTargetManager;
 
   @Before
   public void setup() {
-    final BlockchainSetupUtil<Void> otherBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil otherBlockchainSetup = BlockchainSetupUtil.forTesting();
     final Blockchain otherBlockchain = otherBlockchainSetup.getBlockchain();
     responder = RespondingEthPeer.blockchainResponder(otherBlockchain);
 
-    final BlockchainSetupUtil<Void> localBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = localBlockchainSetup.getBlockchain();
 
-    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
-    final ProtocolContext<Void> protocolContext =
-        new ProtocolContext<>(localBlockchain, localWorldState, null);
+    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolContext protocolContext =
+        new ProtocolContext(localBlockchain, localWorldState, null);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             localBlockchain,
@@ -75,7 +75,7 @@ public class FullSyncTargetManagerTest {
     localBlockchainSetup.importFirstBlocks(5);
     otherBlockchainSetup.importFirstBlocks(20);
     syncTargetManager =
-        new FullSyncTargetManager<>(
+        new FullSyncTargetManager(
             SynchronizerConfiguration.builder().build(),
             protocolSchedule,
             protocolContext,

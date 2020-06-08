@@ -35,16 +35,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MainnetBlockImporterTest {
-  @Mock private BlockValidator<Object> blockValidator;
-  @Mock private ProtocolContext<Object> context;
+  @Mock private BlockValidator blockValidator;
+  @Mock private ProtocolContext context;
   @Mock private MutableBlockchain blockchain;
   @Mock private Block block;
   @Mock private Hash hash;
-  private MainnetBlockImporter<Object> blockImporter;
+  private MainnetBlockImporter blockImporter;
 
   @Before
   public void setup() {
-    blockImporter = new MainnetBlockImporter<>(blockValidator);
+    blockImporter = new MainnetBlockImporter(blockValidator);
     when(context.getBlockchain()).thenReturn(blockchain);
     when(block.getHash()).thenReturn(hash);
   }

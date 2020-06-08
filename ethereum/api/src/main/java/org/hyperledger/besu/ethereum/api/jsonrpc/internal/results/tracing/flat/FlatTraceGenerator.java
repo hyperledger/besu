@@ -64,7 +64,7 @@ public class FlatTraceGenerator {
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
       final AtomicInteger traceCounter,
@@ -186,7 +186,7 @@ public class FlatTraceGenerator {
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
       final AtomicInteger traceCounter) {
@@ -208,7 +208,7 @@ public class FlatTraceGenerator {
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTraceAndBlock(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block) {
     return generateFromTransactionTrace(
@@ -269,7 +269,7 @@ public class FlatTraceGenerator {
   }
 
   private static FlatTrace.Context handleReturn(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
       final TraceFrame traceFrame,

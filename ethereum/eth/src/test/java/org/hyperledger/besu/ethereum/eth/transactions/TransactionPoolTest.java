@@ -91,10 +91,10 @@ public class TransactionPoolTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @SuppressWarnings("unchecked")
-  private final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
+  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
 
   @SuppressWarnings("unchecked")
-  private final ProtocolSpec<Void> protocolSpec = mock(ProtocolSpec.class);
+  private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
   private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
   private MutableBlockchain blockchain;
@@ -103,7 +103,7 @@ public class TransactionPoolTest {
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
-  private final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
+  private final ProtocolContext protocolContext = executionContext.getProtocolContext();
   private TransactionPool transactionPool;
   private long genesisBlockGasLimit;
   private SyncState syncState;

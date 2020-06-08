@@ -47,16 +47,14 @@ import org.apache.logging.log4j.Logger;
 /**
  * Retrieves a sequence of headers, sending out requests repeatedly until all headers are fulfilled.
  * Validates headers as they are received.
- *
- * @param <C> the consensus algorithm context
  */
-public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List<BlockHeader>> {
+public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<BlockHeader>> {
   private static final Logger LOG = LogManager.getLogger();
   private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;
-  private final ProtocolContext<C> protocolContext;
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
 
   private final BlockHeader[] headers;
   private final BlockHeader referenceHeader;
@@ -68,8 +66,8 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   private int lastFilledHeaderIndex;
 
   private DownloadHeaderSequenceTask(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
@@ -91,16 +89,16 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
     lastFilledHeaderIndex = segmentLength;
   }
 
-  public static <C> DownloadHeaderSequenceTask<C> endingAtHeader(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static DownloadHeaderSequenceTask endingAtHeader(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
       final int maxRetries,
       final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
-    return new DownloadHeaderSequenceTask<>(
+    return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
         ethContext,
@@ -111,15 +109,15 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
         metricsSystem);
   }
 
-  public static <C> DownloadHeaderSequenceTask<C> endingAtHeader(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static DownloadHeaderSequenceTask endingAtHeader(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
       final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
-    return new DownloadHeaderSequenceTask<>(
+    return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
         ethContext,
@@ -229,8 +227,8 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       return false;
     }
 
-    final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
-    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+    final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return blockHeaderValidator.validateHeader(
         child, header, protocolContext, validationPolicy.getValidationModeForNextBlock());
   }

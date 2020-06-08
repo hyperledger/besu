@@ -1,6 +1,6 @@
 # Changelog
 
-## Breaking change upcoming in v1.5 
+## Breaking change upcoming in v1.5
 
 To maintain best security practices, we're changing the `user:group` on the Docker container to `besu`.
 
@@ -18,6 +18,15 @@ If youâ€™re mounting local folders, it is best to set the user via the Docker `â
 UID because the username may not exist inside the docker container. Ensure the directory being mounted
 is owned by that user.
 
+### Remove Manual NAT method
+The NAT manager's `MANUAL` method has been removed. 
+It is now necessary to use the `NONE` method which has the same behavior.
+
+### Fast Sync by Default for Named Networks
+The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets is now FAST.
+The default is unchanged for private networks.
+This default is what most users want when they are syncing but if you want to full sync, you can still do so with `--sync-mode=FULL`
+
 ## Upcoming 1.5 release 
 
 The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
@@ -33,6 +42,7 @@ The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July.
 
 - Added timeout to queries. [\#986](https://github.com/hyperledger/besu/pull/986)
 - Fixed issue where networks using onchain permissioning could stall when the bootnodes were not validators. [\#969](https://github.com/hyperledger/besu/pull/969)
+- Update getForks method to ignore ClassicForkBlock chain parameter to fix issue with ETC syncing. [\#1014](https://github.com/hyperledger/besu/pull/1014)
 
 ### Known Issues 
 

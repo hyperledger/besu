@@ -31,19 +31,19 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 
-public class MainnetBlockValidator<C> implements BlockValidator<C> {
+public class MainnetBlockValidator implements BlockValidator {
 
   private static final Logger LOG = getLogger();
 
-  private final BlockHeaderValidator<C> blockHeaderValidator;
+  private final BlockHeaderValidator blockHeaderValidator;
 
-  private final BlockBodyValidator<C> blockBodyValidator;
+  private final BlockBodyValidator blockBodyValidator;
 
   private final BlockProcessor blockProcessor;
 
   public MainnetBlockValidator(
-      final BlockHeaderValidator<C> blockHeaderValidator,
-      final BlockBodyValidator<C> blockBodyValidator,
+      final BlockHeaderValidator blockHeaderValidator,
+      final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
@@ -52,7 +52,7 @@ public class MainnetBlockValidator<C> implements BlockValidator<C> {
 
   @Override
   public Optional<BlockProcessingOutputs> validateAndProcessBlock(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
@@ -101,7 +101,7 @@ public class MainnetBlockValidator<C> implements BlockValidator<C> {
 
   @Override
   public boolean fastBlockValidation(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
       final HeaderValidationMode headerValidationMode,

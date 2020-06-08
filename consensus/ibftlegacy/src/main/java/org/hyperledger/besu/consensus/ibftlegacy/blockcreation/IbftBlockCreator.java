@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy.blockcreation;
 
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftHelpers;
@@ -41,7 +40,7 @@ import java.util.function.Function;
  * commit seals). Transactions and associated Hashes (stateroot, receipts etc.) are loaded into the
  * Block in the base class as part of the transaction selection process.
  */
-public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
+public class IbftBlockCreator extends AbstractBlockCreator {
 
   private final KeyPair nodeKeys;
 
@@ -49,8 +48,8 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<IbftContext> protocolContext,
-      final ProtocolSchedule<IbftContext> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final Function<Long, Long> gasLimitCalculator,
       final KeyPair nodeKeys,
       final Wei minTransactionGasPrice,

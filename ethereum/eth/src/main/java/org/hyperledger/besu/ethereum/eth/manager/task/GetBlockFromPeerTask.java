@@ -33,13 +33,13 @@ import org.apache.logging.log4j.Logger;
 public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final Hash hash;
   private final long blockNumber;
   private final MetricsSystem metricsSystem;
 
   protected GetBlockFromPeerTask(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash hash,
       final long blockNumber,
@@ -52,7 +52,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   }
 
   public static GetBlockFromPeerTask create(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash hash,
       final long blockNumber,
@@ -105,7 +105,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
     return executeSubTask(
         () -> {
-          final GetBodiesFromPeerTask<?> task =
+          final GetBodiesFromPeerTask task =
               GetBodiesFromPeerTask.forHeaders(
                   protocolSchedule, ethContext, headerResult.getResult(), metricsSystem);
           task.assignPeer(headerResult.getPeer());

@@ -28,7 +28,7 @@ import java.util.Optional;
  * Responsible for determining when a block mining operation should be started/stopped, then
  * creating an appropriate miner and starting it running in a thread.
  */
-public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, EthHashBlockMiner>
+public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashBlockMiner>
     implements BlockAddedObserver {
 
   private final EthHashMinerExecutor executor;

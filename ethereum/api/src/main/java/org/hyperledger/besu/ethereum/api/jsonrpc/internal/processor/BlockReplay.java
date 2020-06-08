@@ -34,12 +34,12 @@ import java.util.stream.Collectors;
 
 public class BlockReplay {
 
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
 
   public BlockReplay(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive) {
     this.protocolSchedule = protocolSchedule;
@@ -85,7 +85,7 @@ public class BlockReplay {
                   action.performAction(
                       transaction, header, blockchain, mutableWorldState, transactionProcessor));
             } else {
-              final ProtocolSpec<?> spec = protocolSchedule.getByBlockNumber(header.getNumber());
+              final ProtocolSpec spec = protocolSchedule.getByBlockNumber(header.getNumber());
               transactionProcessor.processTransaction(
                   blockchain,
                   mutableWorldState.updater(),
@@ -107,7 +107,7 @@ public class BlockReplay {
         blockHash,
         transactionHash,
         (transaction, blockHeader, blockchain, worldState, transactionProcessor) -> {
-          final ProtocolSpec<?> spec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+          final ProtocolSpec spec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
           transactionProcessor.processTransaction(
               blockchain,
               worldState.updater(),
@@ -136,7 +136,7 @@ public class BlockReplay {
     if (body == null) {
       return Optional.empty();
     }
-    final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
     final TransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final BlockHeader previous = blockchain.getBlockHeader(header.getParentHash()).orElse(null);
     if (previous == null) {

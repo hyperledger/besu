@@ -136,7 +136,7 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   private BlockHeaderFunctions mainnetBlockHashFunction() {
-    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
     return ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 }

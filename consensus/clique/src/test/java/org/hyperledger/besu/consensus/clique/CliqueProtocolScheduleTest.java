@@ -43,13 +43,13 @@ public class CliqueProtocolScheduleTest {
             + "}";
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
-    final ProtocolSchedule<CliqueContext> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(config, NODE_KEY, false);
 
-    final ProtocolSpec<CliqueContext> homesteadSpec = protocolSchedule.getByBlockNumber(1);
-    final ProtocolSpec<CliqueContext> tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
-    final ProtocolSpec<CliqueContext> spuriousDragonSpec = protocolSchedule.getByBlockNumber(3);
-    final ProtocolSpec<CliqueContext> byzantiumSpec = protocolSchedule.getByBlockNumber(1035301);
+    final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
+    final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
+    final ProtocolSpec spuriousDragonSpec = protocolSchedule.getByBlockNumber(3);
+    final ProtocolSpec byzantiumSpec = protocolSchedule.getByBlockNumber(1035301);
 
     assertThat(homesteadSpec.equals(tangerineWhistleSpec)).isFalse();
     assertThat(tangerineWhistleSpec.equals(spuriousDragonSpec)).isFalse();
@@ -58,7 +58,7 @@ public class CliqueProtocolScheduleTest {
 
   @Test
   public void parametersAlignWithMainnetWithAdjustments() {
-    final ProtocolSpec<CliqueContext> homestead =
+    final ProtocolSpec homestead =
         CliqueProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEY, false)
             .getByBlockNumber(0);
 
