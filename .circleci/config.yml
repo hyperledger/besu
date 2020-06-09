@@ -106,7 +106,7 @@ jobs:
       - prepare
       - run:
           name: Analyze on SonarCloud
-          command: gradle build sonarqube"
+          command: gradle build sonarqube
 
   unitTests:
     executor: besu_executor_xl
