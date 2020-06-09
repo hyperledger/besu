@@ -318,6 +318,7 @@ public class EthPeer {
       if (callback == null) {
         return;
       }
+      LOG.debug("Triggering peer connection callback for {}", connection.getPeerInfo().getNodeId());
       callback.accept(this);
     }
   }

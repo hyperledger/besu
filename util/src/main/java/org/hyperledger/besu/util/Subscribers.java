@@ -15,6 +15,7 @@
 package org.hyperledger.besu.util;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -101,10 +102,13 @@ public class Subscribers<T> {
    * @param action the action to perform for each subscriber
    */
   public void forEach(final Consumer<T> action) {
+    final Random rand = new Random();
+    final int thisIteration = rand.nextInt();
     subscribers
         .values()
         .forEach(
             subscriber -> {
+              LOG.debug("Executing subscriber in executor {}", thisIteration);
               try {
                 action.accept(subscriber);
               } catch (Throwable throwable) {
