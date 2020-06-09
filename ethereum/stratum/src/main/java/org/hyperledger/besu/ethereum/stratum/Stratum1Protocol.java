@@ -159,10 +159,8 @@ public class Stratum1Protocol implements StratumProtocol {
       } else if ("mining.submit".equals(req.getMethod())) {
         handleMiningSubmit(conn, req);
       } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
-
         final String hashRate = req.getRequiredParameter(0, String.class);
         final String id = req.getRequiredParameter(1, String.class);
-        LOG.info("hashRate " + hashRate + " " + id);
         handleHashrateSubmit(mapper, miningCoordinator, conn, req);
       }
     } catch (IllegalArgumentException | IOException e) {
