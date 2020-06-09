@@ -74,7 +74,7 @@ public abstract class AbstractMiningCoordinator<
 
   public AbstractMiningCoordinator(
       final Blockchain blockchain,
-      final AbstractMinerExecutor<C, M> executor,
+      final AbstractMinerExecutor<M> executor,
       final SyncState syncState,
       final int remoteSealersLimit) {
     this.executor = executor;

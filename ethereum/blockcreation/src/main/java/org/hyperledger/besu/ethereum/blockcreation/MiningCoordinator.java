@@ -81,10 +81,22 @@ public interface MiningCoordinator {
         "Current consensus mechanism prevents submission of work solutions.");
   }
 
+  /**
+   * Allows to submit the hashrate of a sealer with a specific id
+   *
+   * @param id of the sealer
+   * @param hashrate of the sealer
+   * @return true if the hashrate has been added otherwise false
+   */
   default boolean submitHashRate(final String id, final Long hashrate) {
     return false;
   }
 
+  /**
+   * Returns a list of the current sealers
+   *
+   * @return a list of {@link SealerInfo}
+   */
   default Map<String, SealerInfo> getSealerInfos() {
     return emptyMap();
   }
