@@ -69,6 +69,7 @@ public class DefaultPrivacyController implements PrivacyController {
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
+  private final PrivateTransactionLocator privateTransactionLocator;
 
   public DefaultPrivacyController(
       final Blockchain blockchain,
@@ -106,6 +107,14 @@ public class DefaultPrivacyController implements PrivacyController {
     this.privateTransactionSimulator = privateTransactionSimulator;
     this.privateNonceProvider = privateNonceProvider;
     this.privateWorldStateReader = privateWorldStateReader;
+    this.privateTransactionLocator =
+        new PrivateTransactionLocator(blockchain, enclave, privateStateStorage);
+  }
+
+  @Override
+  public Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
+      final Hash pmtHash, final String enclaveKey) {
+    return privateTransactionLocator.findByPmtHash(pmtHash, enclaveKey);
   }
 
   @Override
@@ -413,7 +422,7 @@ public class DefaultPrivacyController implements PrivacyController {
   @Override
   public List<PrivateTransactionWithMetadata> retrieveAddBlob(final String addDataKey) {
     final ReceiveResponse addReceiveResponse = enclave.receive(addDataKey);
-    return deserializeAddToGroupPayload(
+    return PrivateTransactionWithMetadata.readListFromPayload(
         Bytes.wrap(Base64.getDecoder().decode(addReceiveResponse.getPayload())));
   }
 
@@ -427,19 +436,6 @@ public class DefaultPrivacyController implements PrivacyController {
     rlpOutput.endList();
 
     return rlpOutput.encoded();
-  }
-
-  private List<PrivateTransactionWithMetadata> deserializeAddToGroupPayload(
-      final Bytes encodedAddToGroupPayload) {
-    final ArrayList<PrivateTransactionWithMetadata> deserializedResponse = new ArrayList<>();
-    final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(encodedAddToGroupPayload, false);
-    final int noOfEntries = bytesValueRLPInput.enterList();
-    for (int i = 0; i < noOfEntries; i++) {
-      deserializedResponse.add(PrivateTransactionWithMetadata.readFrom(bytesValueRLPInput));
-    }
-    bytesValueRLPInput.leaveList();
-    return deserializedResponse;
   }
 
   private SendResponse sendRequest(
