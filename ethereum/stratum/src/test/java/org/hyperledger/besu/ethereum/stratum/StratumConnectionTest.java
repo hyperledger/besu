@@ -32,11 +32,10 @@ import org.mockito.Mockito;
 
 public class StratumConnectionTest {
 
-  @Mock
-  MiningCoordinator miningCoordinator;
+  @Mock MiningCoordinator miningCoordinator;
 
   @Before
-  public void setup(){
+  public void setup() {
     miningCoordinator = Mockito.mock(MiningCoordinator.class);
   }
 
@@ -54,7 +53,9 @@ public class StratumConnectionTest {
     AtomicBoolean called = new AtomicBoolean(false);
     StratumConnection conn =
         new StratumConnection(
-            new StratumProtocol[] {new Stratum1Protocol("", miningCoordinator)}, () -> called.set(true), bytes -> {});
+            new StratumProtocol[] {new Stratum1Protocol("", miningCoordinator)},
+            () -> called.set(true),
+            bytes -> {});
     conn.handleBuffer(Buffer.buffer("{}\n"));
     assertThat(called.get()).isTrue();
   }
@@ -68,7 +69,9 @@ public class StratumConnectionTest {
 
     StratumConnection conn =
         new StratumConnection(
-            new StratumProtocol[] {new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd")},
+            new StratumProtocol[] {
+              new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd")
+            },
             () -> called.set(true),
             message::set);
     conn.handleBuffer(
@@ -94,7 +97,8 @@ public class StratumConnectionTest {
 
     AtomicReference<String> message = new AtomicReference<>();
 
-    Stratum1Protocol protocol = new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd");
+    Stratum1Protocol protocol =
+        new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd");
 
     StratumConnection conn =
         new StratumConnection(
@@ -128,7 +132,6 @@ public class StratumConnectionTest {
             "{\"jsonrpc\":\"2.0\",\"method\":\"mining.notify\",\"params\":[\"abcd\",\"0xdeadbeef\",\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"0x0000000000000000000000000000000000000000000000000000000000000003\",true],\"id\":null}\n");
   }
 
-
   @Test
   public void testStratum1SubmitHashrate() {
 
@@ -136,35 +139,34 @@ public class StratumConnectionTest {
 
     AtomicReference<String> message = new AtomicReference<>();
 
-    Stratum1Protocol protocol = new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd");
+    Stratum1Protocol protocol =
+        new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd");
 
     Mockito.when(miningCoordinator.submitHashRate("0x02", 3L)).thenReturn(true);
 
     StratumConnection conn =
-            new StratumConnection(
-                    new StratumProtocol[]{protocol}, () -> called.set(true), message::set);
+        new StratumConnection(
+            new StratumProtocol[] {protocol}, () -> called.set(true), message::set);
     conn.handleBuffer(
-            Buffer.buffer(
-                    "{"
-                            + "  \"id\": 23,"
-                            + "  \"method\": \"mining.subscribe\", "
-                            + "  \"params\": [ "
-                            + "    \"MinerName/1.0.0\", \"EthereumStratum/1.0.0\" "
-                            + "  ]"
-                            + "}\n"));
+        Buffer.buffer(
+            "{"
+                + "  \"id\": 23,"
+                + "  \"method\": \"mining.subscribe\", "
+                + "  \"params\": [ "
+                + "    \"MinerName/1.0.0\", \"EthereumStratum/1.0.0\" "
+                + "  ]"
+                + "}\n"));
     conn.handleBuffer(
-            Buffer.buffer(
-                    "{"
-                            + "  \"id\": 23,"
-                            + "  \"method\": \"eth_submitHashrate\", "
-                            + "  \"params\": [ "
-                            + "    \"0x03\",\"0x02\" "
-                            + "  ]"
-                            + "}\n"));
+        Buffer.buffer(
+            "{"
+                + "  \"id\": 23,"
+                + "  \"method\": \"eth_submitHashrate\", "
+                + "  \"params\": [ "
+                + "    \"0x03\",\"0x02\" "
+                + "  ]"
+                + "}\n"));
     assertThat(called.get()).isFalse();
 
-    assertThat(message.get())
-            .isEqualTo("{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":true}\n");
-
+    assertThat(message.get()).isEqualTo("{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":true}\n");
   }
 }

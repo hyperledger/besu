@@ -50,7 +50,6 @@ public class Stratum1Protocol implements StratumProtocol {
   private static final JsonMapper mapper = new JsonMapper();
   private static final String STRATUM_1 = "EthereumStratum/1.0.0";
 
-
   private static String createSubscriptionID() {
     byte[] subscriptionBytes = new byte[16];
     new Random().nextBytes(subscriptionBytes);

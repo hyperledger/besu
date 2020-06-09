@@ -83,7 +83,7 @@ final class StratumConnection {
   }
 
   private void handleMessage(final String message) {
-    System.out.println("ici"+protocol);
+    System.out.println("ici" + protocol);
     if (protocol == null) {
       for (StratumProtocol protocol : protocols) {
         if (protocol.canHandle(message, this)) {
