@@ -21,6 +21,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class MiningParameters {
 
+  public static final int DEFAULT_REMOTE_SEALERS_LIMIT = 1000;
+
   private final Optional<Address> coinbase;
   private final Wei minTransactionGasPrice;
   private final Bytes extraData;
@@ -31,6 +33,7 @@ public class MiningParameters {
   private final String stratumExtranonce;
   private final Optional<Iterable<Long>> maybeNonceGenerator;
   private final Double minBlockOccupancyRatio;
+  private final int remoteSealersLimit;
 
   public MiningParameters(
       final Address coinbase,
@@ -47,7 +50,8 @@ public class MiningParameters {
         8008,
         "080c",
         Optional.empty(),
-        0.8);
+        0.8,
+        DEFAULT_REMOTE_SEALERS_LIMIT);
   }
 
   public MiningParameters(
@@ -60,7 +64,8 @@ public class MiningParameters {
       final int stratumPort,
       final String stratumExtranonce,
       final Optional<Iterable<Long>> maybeNonceGenerator,
-      final Double minBlockOccupancyRatio) {
+      final Double minBlockOccupancyRatio,
+      final int remoteSealersLimit) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
@@ -71,6 +76,7 @@ public class MiningParameters {
     this.stratumExtranonce = stratumExtranonce;
     this.maybeNonceGenerator = maybeNonceGenerator;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
+    this.remoteSealersLimit = remoteSealersLimit;
   }
 
   public Optional<Address> getCoinbase() {
@@ -113,6 +119,10 @@ public class MiningParameters {
     return minBlockOccupancyRatio;
   }
 
+  public int getRemoteSealersLimit() {
+    return remoteSealersLimit;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -126,7 +136,8 @@ public class MiningParameters {
         && Objects.equals(stratumMiningEnabled, that.stratumMiningEnabled)
         && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
         && Objects.equals(stratumExtranonce, that.stratumExtranonce)
-        && Objects.equals(minBlockOccupancyRatio, that.minBlockOccupancyRatio);
+        && Objects.equals(minBlockOccupancyRatio, that.minBlockOccupancyRatio)
+        && Objects.equals(remoteSealersLimit, that.remoteSealersLimit);
   }
 
   @Override
@@ -140,7 +151,8 @@ public class MiningParameters {
         stratumNetworkInterface,
         stratumPort,
         stratumExtranonce,
-        minBlockOccupancyRatio);
+        minBlockOccupancyRatio,
+        remoteSealersLimit);
   }
 
   @Override
@@ -164,6 +176,12 @@ public class MiningParameters {
         + ", stratumExtranonce='"
         + stratumExtranonce
         + '\''
+        + ", maybeNonceGenerator="
+        + maybeNonceGenerator
+        + ", minBlockOccupancyRatio="
+        + minBlockOccupancyRatio
+        + ", remoteSealersLimit="
+        + remoteSealersLimit
         + '}';
   }
 }

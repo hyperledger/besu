@@ -52,7 +52,11 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
             gasLimitCalculator);
 
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);
+        new EthHashMiningCoordinator(
+            protocolContext.getBlockchain(),
+            executor,
+            syncState,
+            miningParameters.getRemoteSealersLimit());
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     miningCoordinator.setStratumMiningEnabled(miningParameters.isStratumMiningEnabled());
     if (miningParameters.isMiningEnabled()) {

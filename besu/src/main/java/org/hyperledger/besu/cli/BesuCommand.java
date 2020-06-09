@@ -724,6 +724,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Stratum port binding (default: ${DEFAULT-VALUE})")
   private final Integer stratumPort = 8008;
 
+  @Option(
+      names = {"--miner-remote-sealers-limit"},
+      description =
+          "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
+  private final Integer remoteSealersLimit = 1000;
+
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       hidden = true,
@@ -1320,7 +1326,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--min-gas-price",
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
-            "--miner-stratum-enabled"));
+            "--miner-stratum-enabled",
+            "--miner-remote-sealers-limit"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1415,7 +1422,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumPort,
                 stratumExtranonce,
                 Optional.empty(),
-                minBlockOccupancyRatio))
+                minBlockOccupancyRatio,
+                remoteSealersLimit))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())

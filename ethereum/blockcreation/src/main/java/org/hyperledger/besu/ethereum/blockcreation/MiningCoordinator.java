@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static java.util.Collections.emptyMap;
+
+import org.hyperledger.besu.ethereum.blockcreation.sealer.SealerInfo;
 import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -24,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -75,6 +79,14 @@ public interface MiningCoordinator {
   default boolean submitWork(final EthHashSolution solution) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents submission of work solutions.");
+  }
+
+  default boolean submitHashRate(final String id, final Long hashrate) {
+    return false;
+  }
+
+  default Map<String, SealerInfo> getSealerInfos() {
+    return emptyMap();
   }
 
   /**

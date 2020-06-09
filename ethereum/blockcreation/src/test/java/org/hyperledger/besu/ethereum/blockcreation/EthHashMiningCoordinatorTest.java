@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -45,7 +46,8 @@ public class EthHashMiningCoordinatorTest {
   @Test
   public void miningCoordinatorIsCreatedDisabledWithNoReportableMiningStatistics() {
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
+        new EthHashMiningCoordinator(
+            executionContext.getBlockchain(), executor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT);
     final EthHashSolution solution = new EthHashSolution(1L, Hash.EMPTY, new byte[Bytes32.SIZE]);
 
     assertThat(miningCoordinator.isMining()).isFalse();
@@ -66,7 +68,8 @@ public class EthHashMiningCoordinatorTest {
     when(executor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(miner));
 
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
+        new EthHashMiningCoordinator(
+            executionContext.getBlockchain(), executor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT);
 
     // Must enable prior returning data
     miningCoordinator.enable();

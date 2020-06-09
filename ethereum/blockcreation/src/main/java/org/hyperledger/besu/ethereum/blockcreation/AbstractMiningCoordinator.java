@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.blockcreation.sealer.SealerInfo;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -30,7 +31,9 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
@@ -39,6 +42,8 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractMiningCoordinator<
         C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
     implements BlockAddedObserver, MiningCoordinator {
+
+  private final Map<String, SealerInfo> sealerInfos;
 
   private enum State {
     IDLE,
@@ -53,6 +58,7 @@ public abstract class AbstractMiningCoordinator<
   private final AbstractMinerExecutor<C, M> executor;
   private final SyncState syncState;
   private final Blockchain blockchain;
+  private final int remoteSealersLimit;
 
   private State state = State.IDLE;
   private boolean isEnabled = false;
@@ -61,12 +67,15 @@ public abstract class AbstractMiningCoordinator<
   public AbstractMiningCoordinator(
       final Blockchain blockchain,
       final AbstractMinerExecutor<C, M> executor,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final int remoteSealersLimit) {
     this.executor = executor;
     this.blockchain = blockchain;
     this.syncState = syncState;
     this.blockchain.observeBlockAdded(this);
     syncState.subscribeInSync(this::inSyncChanged);
+    this.sealerInfos = new ConcurrentHashMap<>();
+    this.remoteSealersLimit = remoteSealersLimit;
   }
 
   @Override
@@ -215,4 +224,28 @@ public abstract class AbstractMiningCoordinator<
 
   protected abstract boolean newChainHeadInvalidatesMiningOperation(
       final BlockHeader newChainHeadHeader);
+
+  @Override
+  public Map<String, SealerInfo> getSealerInfos() {
+    return sealerInfos;
+  }
+
+  @Override
+  public boolean submitHashRate(final String id, final Long hashrate) {
+    if (hashrate == 0) {
+      return false;
+    }
+    LOG.info("Hashrate submitted id {} hashrate {}", id, hashrate);
+    addSealerInfo(new SealerInfo(id, hashrate));
+    return true;
+  }
+
+  private void addSealerInfo(final SealerInfo sealerInfo) {
+    if (sealerInfos.size() >= remoteSealersLimit) {
+      sealerInfos.values().stream()
+          .min(SealerInfo::compareTo)
+          .ifPresent(toRemove -> sealerInfos.remove(toRemove.getId()));
+    }
+    sealerInfos.put(sealerInfo.getId(), sealerInfo);
+  }
 }

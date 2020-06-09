@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
@@ -54,6 +56,7 @@ public class Stratum1Protocol implements StratumProtocol {
     return Bytes.wrap(subscriptionBytes).toShortHexString();
   }
 
+  private final MiningCoordinator miningCoordinator;
   private final String extranonce;
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
@@ -61,9 +64,10 @@ public class Stratum1Protocol implements StratumProtocol {
   private final Supplier<String> subscriptionIdCreator;
   private final List<StratumConnection> activeConnections = new ArrayList<>();
 
-  public Stratum1Protocol(final String extranonce) {
+  public Stratum1Protocol(final String extranonce, final MiningCoordinator miningCoordinator) {
     this(
         extranonce,
+        miningCoordinator,
         () -> {
           Bytes timeValue = Bytes.minimalBytes(Instant.now().toEpochMilli());
           return timeValue.slice(timeValue.size() - 4, 4).toShortHexString();
@@ -73,9 +77,11 @@ public class Stratum1Protocol implements StratumProtocol {
 
   Stratum1Protocol(
       final String extranonce,
+      final MiningCoordinator miningCoordinator,
       final Supplier<String> jobIdSupplier,
       final Supplier<String> subscriptionIdCreator) {
     this.extranonce = extranonce;
+    this.miningCoordinator = miningCoordinator;
     this.jobIdSupplier = jobIdSupplier;
     this.subscriptionIdCreator = subscriptionIdCreator;
   }
@@ -152,6 +158,11 @@ public class Stratum1Protocol implements StratumProtocol {
         handleMiningAuthorize(conn, req);
       } else if ("mining.submit".equals(req.getMethod())) {
         handleMiningSubmit(conn, req);
+      } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
+        final String hashRate = req.getRequiredParameter(0, String.class);
+        final String id = req.getRequiredParameter(1, String.class);
+        LOG.info("hashRate " + hashRate + " " + id);
+        handleHashrateSubmit(mapper, miningCoordinator, conn, req);
       }
     } catch (IllegalArgumentException | IOException e) {
       LOG.debug(e.getMessage(), e);

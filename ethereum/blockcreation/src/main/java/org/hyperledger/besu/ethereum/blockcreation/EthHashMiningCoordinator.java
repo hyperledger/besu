@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.ethereum.blockcreation.sealer.SealerInfo;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -35,8 +36,11 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
 
   public EthHashMiningCoordinator(
-      final Blockchain blockchain, final EthHashMinerExecutor executor, final SyncState syncState) {
-    super(blockchain, executor, syncState);
+      final Blockchain blockchain,
+      final EthHashMinerExecutor executor,
+      final SyncState syncState,
+      final int remoteSealersLimit) {
+    super(blockchain, executor, syncState, remoteSealersLimit);
     this.executor = executor;
   }
 
@@ -51,6 +55,22 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
 
   @Override
   public Optional<Long> hashesPerSecond() {
+    if (getSealerInfos().isEmpty()) {
+      return localHashesPerSecond();
+    } else {
+      return remoteHashesPerSecond();
+    }
+  }
+
+  private Optional<Long> remoteHashesPerSecond() {
+    return Optional.of(
+        getSealerInfos().values().stream()
+            .filter(sealerInfo -> !sealerInfo.getHashRate().equals(0L))
+            .mapToLong(SealerInfo::getHashRate)
+            .sum());
+  }
+
+  private Optional<Long> localHashesPerSecond() {
     final Optional<Long> currentHashesPerSecond =
         currentRunningMiner.flatMap(EthHashBlockMiner::getHashesPerSecond);
 

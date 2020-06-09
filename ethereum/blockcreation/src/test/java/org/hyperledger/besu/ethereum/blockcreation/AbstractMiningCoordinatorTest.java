@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -230,7 +231,7 @@ public class AbstractMiningCoordinatorTest {
         final Blockchain blockchain,
         final AbstractMinerExecutor<Void, EthHashBlockMiner> executor,
         final SyncState syncState) {
-      super(blockchain, executor, syncState);
+      super(blockchain, executor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT);
     }
 
     @Override

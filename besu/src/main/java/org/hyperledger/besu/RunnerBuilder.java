@@ -418,6 +418,7 @@ public class RunnerBuilder {
           Optional.of(
               new StratumServer(
                   vertx,
+                  miningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
                   miningParameters.getStratumExtranonce()));
