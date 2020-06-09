@@ -98,7 +98,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             protocolContext.getBlockchain(),
             miningExecutor,
             syncState,
-            miningParameters.getRemoteSealersLimit(),
             new CliqueMiningTracker(localAddress, protocolContext));
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 

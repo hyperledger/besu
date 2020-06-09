@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -107,8 +106,7 @@ public class CliqueMiningCoordinatorTest {
     // Note also - validators is an hard-ordered LIST, thus in-turn will follow said list - block_1
     // should be created by proposer.
     final CliqueMiningCoordinator coordinator =
-        new CliqueMiningCoordinator(
-            blockChain, minerExecutor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT, miningTracker);
+        new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
     coordinator.start();
@@ -135,8 +133,7 @@ public class CliqueMiningCoordinatorTest {
     // Note also - validators is an hard-ordered LIST, thus in-turn will follow said list - block_1
     // should be created by proposer.
     final CliqueMiningCoordinator coordinator =
-        new CliqueMiningCoordinator(
-            blockChain, minerExecutor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT, miningTracker);
+        new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
     coordinator.start();
@@ -167,8 +164,7 @@ public class CliqueMiningCoordinatorTest {
     // Note also - validators is an hard-ordered LIST, thus in-turn will follow said list - block_2
     // should be created by 'validator', thus Proposer is out-of-turn.
     final CliqueMiningCoordinator coordinator =
-        new CliqueMiningCoordinator(
-            blockChain, minerExecutor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT, miningTracker);
+        new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
     coordinator.start();
@@ -199,8 +195,7 @@ public class CliqueMiningCoordinatorTest {
     // Note also - validators is an hard-ordered LIST, thus in-turn will follow said list - block_2
     // should be created by 'validator', thus Proposer is out-of-turn.
     final CliqueMiningCoordinator coordinator =
-        new CliqueMiningCoordinator(
-            blockChain, minerExecutor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT, miningTracker);
+        new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
     coordinator.start();
@@ -226,8 +221,7 @@ public class CliqueMiningCoordinatorTest {
     // Note also - validators is an hard-ordered LIST, thus in-turn will follow said list - block_1
     // should be created by Proposer, and thus will be in-turn.
     final CliqueMiningCoordinator coordinator =
-        new CliqueMiningCoordinator(
-            blockChain, minerExecutor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT, miningTracker);
+        new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
     coordinator.start();

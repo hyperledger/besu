@@ -30,9 +30,8 @@ public class CliqueMiningCoordinator
       final Blockchain blockchain,
       final CliqueMinerExecutor executor,
       final SyncState syncState,
-      final int remoteSealersLimit,
       final CliqueMiningTracker miningTracker) {
-    super(blockchain, executor, syncState, remoteSealersLimit);
+    super(blockchain, executor, syncState);
     this.miningTracker = miningTracker;
   }
 

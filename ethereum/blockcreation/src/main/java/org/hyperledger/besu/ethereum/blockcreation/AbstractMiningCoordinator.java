@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 
 import org.hyperledger.besu.ethereum.blockcreation.sealer.SealerInfo;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -63,6 +64,13 @@ public abstract class AbstractMiningCoordinator<
   private State state = State.IDLE;
   private boolean isEnabled = false;
   protected Optional<M> currentRunningMiner = Optional.empty();
+
+  public AbstractMiningCoordinator(
+      final Blockchain blockchain,
+      final AbstractMinerExecutor<C, M> executor,
+      final SyncState syncState) {
+    this(blockchain, executor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT);
+  }
 
   public AbstractMiningCoordinator(
       final Blockchain blockchain,
