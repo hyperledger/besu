@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import java.util.Random;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +46,9 @@ public class WaitForPeerTask extends AbstractEthTask<Void> {
     final int thisFuture = rand.nextInt();
     final EthPeers ethPeers = ethContext.getEthPeers();
     LOG.debug(
-        "{} - Waiting for new peer connection. {} peers currently connected.", thisFuture, ethPeers.peerCount());
+        "{} - Waiting for new peer connection. {} peers currently connected.",
+        thisFuture,
+        ethPeers.peerCount());
     // Listen for peer connections and complete task when we hit our target
     peerListenerId =
         ethPeers.subscribeConnect(

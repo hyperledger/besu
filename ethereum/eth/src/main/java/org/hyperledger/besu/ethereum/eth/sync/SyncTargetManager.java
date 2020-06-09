@@ -102,7 +102,7 @@ public abstract class SyncTargetManager {
                                 .orElseGet(this::waitForPeerAndThenSetSyncTarget));
               } else {
                 return waitForPeerAndThenSetSyncTarget();
-            }
+              }
             });
   }
 

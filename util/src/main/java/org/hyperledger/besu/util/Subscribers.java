@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.util;
 
-import com.google.common.collect.Lists;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -23,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -110,20 +109,19 @@ public class Subscribers<T> {
     final List<T> callbacks = Lists.newArrayList();
     subscribers.values().forEach(callbacks::add);
 
-    callbacks
-        .forEach(
-            subscriber -> {
-              LOG.debug("Executing subscriber in executor {}", thisIteration);
-              try {
-                action.accept(subscriber);
-              } catch (Throwable throwable) {
-                if (suppressCallbackExceptions) {
-                  LOG.error("Error in callback: ", throwable);
-                } else {
-                  throw throwable;
-                }
-              }
-            });
+    callbacks.forEach(
+        subscriber -> {
+          LOG.debug("Executing subscriber in executor {}", thisIteration);
+          try {
+            action.accept(subscriber);
+          } catch (Throwable throwable) {
+            if (suppressCallbackExceptions) {
+              LOG.error("Error in callback: ", throwable);
+            } else {
+              throw throwable;
+            }
+          }
+        });
   }
 
   /**
