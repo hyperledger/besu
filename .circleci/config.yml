@@ -100,6 +100,14 @@ jobs:
           destination: distributions
           when: always
 
+  sonarqube:
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - run:
+          name: Analyze on SonarCloud
+          command: gradle build sonarqube"
+
   unitTests:
     executor: besu_executor_xl
     steps:
