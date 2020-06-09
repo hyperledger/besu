@@ -38,11 +38,10 @@ public class ForkIdManager {
 
   private final List<Long> forks;
   private final LongSupplier chainHeadSupplier;
-  private long lastHead;
-  private ForkId lastComputedForkId;
   private final long forkNext;
   private final boolean onlyZerosForkBlocks;
   private final long highestKnownFork;
+  private Bytes genesisHashCrc;
 
   public ForkIdManager(final Blockchain blockchain, final List<Long> nonFilteredForks) {
     checkNotNull(blockchain);
@@ -63,24 +62,14 @@ public class ForkIdManager {
 
   public ForkId computeForkId() {
     final long head = chainHeadSupplier.getAsLong();
-    if (lastHead != 0 && head == lastHead && lastComputedForkId != null) {
-      return lastComputedForkId;
-    }
-    lastHead = head;
-
-    final CRC32 crc = new CRC32();
-    long next = 0;
-    crc.update(genesisHash.toArray());
-    for (final Long fork : forks) {
-      if (fork <= head) {
-        updateCrc(crc, fork);
-        continue;
+    for (final ForkId forkId : forkAndHashList) {
+      if (head < forkId.getNext()) {
+        return forkId;
       }
-      next = fork;
-      break;
     }
-    lastComputedForkId = new ForkId(getCurrentCrcHash(crc), next);
-    return lastComputedForkId;
+    return forkAndHashList.isEmpty()
+        ? new ForkId(genesisHashCrc, 0)
+        : forkAndHashList.get(forkAndHashList.size() - 1);
   }
 
   @VisibleForTesting
@@ -167,7 +156,8 @@ public class ForkIdManager {
   private long createForkIds() {
     final CRC32 crc = new CRC32();
     crc.update(genesisHash.toArray());
-    final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
+    genesisHashCrc = getCurrentCrcHash(crc);
+    final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
     forks.forEach(
         fork -> {
           updateCrc(crc, fork);
