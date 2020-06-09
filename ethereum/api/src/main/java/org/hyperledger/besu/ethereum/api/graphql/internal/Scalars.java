@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -56,7 +57,7 @@ public class Scalars {
             throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
           }
           String inputValue = ((StringValue) input).getValue();
-          if (!inputValue.startsWith("0x")) {
+          if (!Quantity.isValid(inputValue)) {
             throw new CoercingParseLiteralException(
                 "Address value '" + inputValue + "' is not prefixed with 0x");
           }
@@ -127,7 +128,7 @@ public class Scalars {
             throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
           }
           String inputValue = ((StringValue) input).getValue();
-          if (!inputValue.startsWith("0x")) {
+          if (!Quantity.isValid(inputValue)) {
             throw new CoercingParseLiteralException(
                 "Bytes value '" + inputValue + "' is not prefixed with 0x");
           }
@@ -167,7 +168,7 @@ public class Scalars {
             throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
           }
           String inputValue = ((StringValue) input).getValue();
-          if (!inputValue.startsWith("0x")) {
+          if (!Quantity.isValid(inputValue)) {
             throw new CoercingParseLiteralException(
                 "Bytes32 value '" + inputValue + "' is not prefixed with 0x");
           }
