@@ -228,9 +228,9 @@ workflows:
   version: 2
   default:
     jobs:
+      - assemble
       - sonarqube:
           context: SonarCloud
-      - assemble
       - unitTests:
           requires:
             - assemble
