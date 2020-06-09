@@ -223,12 +223,11 @@ public class AbstractMiningCoordinatorTest {
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
 
-  public static class TestMiningCoordinator
-      extends AbstractMiningCoordinator<Void, EthHashBlockMiner> {
+  public static class TestMiningCoordinator extends AbstractMiningCoordinator<EthHashBlockMiner> {
 
     public TestMiningCoordinator(
         final Blockchain blockchain,
-        final AbstractMinerExecutor<Void, EthHashBlockMiner> executor,
+        final AbstractMinerExecutor<EthHashBlockMiner> executor,
         final SyncState syncState) {
       super(blockchain, executor, syncState);
     }

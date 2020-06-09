@@ -38,13 +38,13 @@ import org.junit.Test;
 
 public class FullSyncDownloaderTest {
 
-  protected ProtocolSchedule<Void> protocolSchedule;
+  protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
-  protected ProtocolContext<Void> protocolContext;
+  protected ProtocolContext protocolContext;
   private SyncState syncState;
 
-  private BlockchainSetupUtil<Void> localBlockchainSetup;
+  private BlockchainSetupUtil localBlockchainSetup;
   protected MutableBlockchain localBlockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
@@ -71,8 +71,8 @@ public class FullSyncDownloaderTest {
     ethProtocolManager.stop();
   }
 
-  private FullSyncDownloader<Void> downloader(final SynchronizerConfiguration syncConfig) {
-    return new FullSyncDownloader<>(
+  private FullSyncDownloader downloader(final SynchronizerConfiguration syncConfig) {
+    return new FullSyncDownloader(
         syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
   }
 
@@ -80,7 +80,7 @@ public class FullSyncDownloaderTest {
   public void shouldLimitTrailingPeersWhenBehindChain() {
     localBlockchainSetup.importFirstBlocks(2);
     final int maxTailingPeers = 5;
-    final FullSyncDownloader<Void> synchronizer =
+    final FullSyncDownloader synchronizer =
         downloader(SynchronizerConfiguration.builder().maxTrailingPeers(maxTailingPeers).build());
 
     final RespondingEthPeer bestPeer =
@@ -96,7 +96,7 @@ public class FullSyncDownloaderTest {
   public void shouldNotLimitTrailingPeersWhenInSync() {
     localBlockchainSetup.importFirstBlocks(2);
     final int maxTailingPeers = 5;
-    final FullSyncDownloader<Void> synchronizer =
+    final FullSyncDownloader synchronizer =
         downloader(SynchronizerConfiguration.builder().maxTrailingPeers(maxTailingPeers).build());
 
     final RespondingEthPeer bestPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);

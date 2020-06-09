@@ -35,19 +35,19 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DownloadHeadersStep<C>
+public class DownloadHeadersStep
     implements Function<CheckpointRange, CompletableFuture<CheckpointRangeHeaders>> {
   private static final Logger LOG = LogManager.getLogger();
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final ValidationPolicy validationPolicy;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
 
   public DownloadHeadersStep(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final ValidationPolicy validationPolicy,
       final int headerRequestSize,

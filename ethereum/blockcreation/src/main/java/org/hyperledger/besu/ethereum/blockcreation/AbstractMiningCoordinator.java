@@ -41,7 +41,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMiningCoordinator<
-        C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
+        M extends BlockMiner<? extends AbstractBlockCreator>>
     implements BlockAddedObserver, MiningCoordinator {
 
   private final Map<String, SealerInfo> sealerInfos;
@@ -56,7 +56,7 @@ public abstract class AbstractMiningCoordinator<
 
   private final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
   private final Subscribers<EthHashObserver> ethHashObservers = Subscribers.create();
-  private final AbstractMinerExecutor<C, M> executor;
+  private final AbstractMinerExecutor<M> executor;
   private final SyncState syncState;
   private final Blockchain blockchain;
   private final int remoteSealersLimit;
@@ -67,7 +67,7 @@ public abstract class AbstractMiningCoordinator<
 
   public AbstractMiningCoordinator(
       final Blockchain blockchain,
-      final AbstractMinerExecutor<C, M> executor,
+      final AbstractMinerExecutor<M> executor,
       final SyncState syncState) {
     this(blockchain, executor, syncState, DEFAULT_REMOTE_SEALERS_LIMIT);
   }

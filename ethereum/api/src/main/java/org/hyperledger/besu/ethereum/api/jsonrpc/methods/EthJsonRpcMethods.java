@@ -76,7 +76,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final Synchronizer synchronizer;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final FilterManager filterManager;
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
@@ -85,7 +85,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,

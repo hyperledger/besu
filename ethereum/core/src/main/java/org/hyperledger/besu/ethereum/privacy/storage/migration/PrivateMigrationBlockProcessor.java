@@ -63,7 +63,7 @@ public class PrivateMigrationBlockProcessor {
     this.skipZeroBlockRewards = skipZeroBlockRewards;
   }
 
-  public PrivateMigrationBlockProcessor(final ProtocolSpec<?> protocolSpec) {
+  public PrivateMigrationBlockProcessor(final ProtocolSpec protocolSpec) {
     this(
         protocolSpec.getTransactionProcessor(),
         protocolSpec.getTransactionReceiptFactory(),

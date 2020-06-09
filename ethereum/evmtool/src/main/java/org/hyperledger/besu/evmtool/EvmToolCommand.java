@@ -203,7 +203,7 @@ public class EvmToolCommand implements Runnable {
 
       Configurator.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int repeat = this.repeat;
-      final ProtocolSpec<?> protocolSpec = component.getProtocolSpec().apply(0);
+      final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();

@@ -43,14 +43,14 @@ public class PrivateWebSocketMethodsFactory {
 
   private final PrivacyParameters privacyParameters;
   private final SubscriptionManager subscriptionManager;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
   private final TransactionPool transactionPool;
 
   public PrivateWebSocketMethodsFactory(
       final PrivacyParameters privacyParameters,
       final SubscriptionManager subscriptionManager,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool) {
     this.privacyParameters = privacyParameters;

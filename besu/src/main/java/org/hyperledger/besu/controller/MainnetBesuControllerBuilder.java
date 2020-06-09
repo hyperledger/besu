@@ -29,12 +29,12 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
+public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
-      final ProtocolSchedule<Void> protocolSchedule,
-      final ProtocolContext<Void> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final SyncState syncState,
@@ -78,7 +78,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
   }
 
   @Override
-  protected ProtocolSchedule<Void> createProtocolSchedule() {
+  protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,

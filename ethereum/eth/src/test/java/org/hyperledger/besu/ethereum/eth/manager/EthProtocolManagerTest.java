@@ -97,15 +97,15 @@ public final class EthProtocolManagerTest {
 
   private static Blockchain blockchain;
   private static TransactionPool transactionPool;
-  private static ProtocolSchedule<Void> protocolSchedule;
+  private static ProtocolSchedule protocolSchedule;
   private static BlockDataGenerator gen;
-  private static ProtocolContext<Void> protocolContext;
+  private static ProtocolContext protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @BeforeClass
   public static void setup() {
     gen = new BlockDataGenerator(0);
-    final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     transactionPool = blockchainSetupUtil.getTransactionPool();
@@ -880,7 +880,7 @@ public final class EthProtocolManagerTest {
           .isEqualTo(Collections.singletonList(EthProtocol.ETH63));
 
       // assert that all messages transmitted contain the expected block & total difficulty.
-      final ProtocolSchedule<Void> protocolSchdeule = MainnetProtocolSchedule.create();
+      final ProtocolSchedule protocolSchdeule = MainnetProtocolSchedule.create();
       for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
         assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
         assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);

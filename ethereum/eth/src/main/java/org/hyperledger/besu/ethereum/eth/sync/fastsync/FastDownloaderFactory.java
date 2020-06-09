@@ -44,11 +44,11 @@ public class FastDownloaderFactory {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public static <C> Optional<FastSyncDownloader<C>> create(
+  public static Optional<FastSyncDownloader> create(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
@@ -96,9 +96,9 @@ public class FastDownloaderFactory {
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
             metricsSystem);
-    final FastSyncDownloader<C> fastSyncDownloader =
-        new FastSyncDownloader<>(
-            new FastSyncActions<>(
+    final FastSyncDownloader fastSyncDownloader =
+        new FastSyncDownloader(
+            new FastSyncActions(
                 syncConfig,
                 protocolSchedule,
                 protocolContext,

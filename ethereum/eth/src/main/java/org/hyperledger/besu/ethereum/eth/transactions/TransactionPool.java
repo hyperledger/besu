@@ -69,8 +69,8 @@ public class TransactionPool implements BlockAddedObserver {
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
   private final PendingTransactions pendingTransactions;
-  private final ProtocolSchedule<?> protocolSchedule;
-  private final ProtocolContext<?> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private final Optional<TransactionBatchAddedListener> pendingTransactionBatchAddedListener;
   private final SyncState syncState;
@@ -86,8 +86,8 @@ public class TransactionPool implements BlockAddedObserver {
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final TransactionBatchAddedListener transactionBatchAddedListener,
       final Optional<TransactionBatchAddedListener> pendingTransactionBatchAddedListener,
       final SyncState syncState,

@@ -97,7 +97,6 @@ import org.hyperledger.besu.nat.docker.DockerDetector;
 import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
 import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
-import org.hyperledger.besu.nat.manual.ManualNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -127,7 +126,7 @@ public class RunnerBuilder {
   private static final Logger LOG = LogManager.getLogger();
 
   private Vertx vertx;
-  private BesuController<?> besuController;
+  private BesuController besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
@@ -160,7 +159,7 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder besuController(final BesuController<?> besuController) {
+  public RunnerBuilder besuController(final BesuController besuController) {
     this.besuController = besuController;
     return this;
   }
@@ -317,8 +316,8 @@ public class RunnerBuilder {
     final SubProtocolConfiguration subProtocolConfiguration =
         besuController.getSubProtocolConfiguration();
 
-    final ProtocolSchedule<?> protocolSchedule = besuController.getProtocolSchedule();
-    final ProtocolContext<?> context = besuController.getProtocolContext();
+    final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
+    final ProtocolContext context = besuController.getProtocolContext();
 
     final List<SubProtocol> subProtocols = subProtocolConfiguration.getSubProtocols();
     final List<ProtocolManager> protocolManagers = subProtocolConfiguration.getProtocolManagers();
@@ -599,7 +598,7 @@ public class RunnerBuilder {
 
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final BesuController<?> besuController,
+      final BesuController besuController,
       final TransactionSimulator transactionSimulator) {
 
     if (permissioningConfiguration.isPresent()) {
@@ -628,9 +627,6 @@ public class RunnerBuilder {
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
-      case MANUAL:
-        return Optional.of(
-            new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case DOCKER:
         return Optional.of(
             new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
@@ -651,8 +647,8 @@ public class RunnerBuilder {
   }
 
   private Map<String, JsonRpcMethod> jsonRpcMethods(
-      final ProtocolSchedule<?> protocolSchedule,
-      final BesuController<?> besuController,
+      final ProtocolSchedule protocolSchedule,
+      final BesuController besuController,
       final P2PNetwork network,
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -761,7 +757,7 @@ public class RunnerBuilder {
       final SubscriptionManager subscriptionManager,
       final Map<String, JsonRpcMethod> jsonRpcMethods,
       final PrivacyParameters privacyParameters,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool) {
 

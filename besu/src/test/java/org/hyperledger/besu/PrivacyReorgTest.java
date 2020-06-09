@@ -178,7 +178,7 @@ public class PrivacyReorgTest {
   @Test
   public void privacyGroupHeadIsTracked() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
 
@@ -220,7 +220,7 @@ public class PrivacyReorgTest {
   @Test
   public void reorgToChainAtEqualHeight() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
     final Block firstBlock =
@@ -253,7 +253,7 @@ public class PrivacyReorgTest {
   @Test
   public void reorgToShorterChain() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
     final String firstBlockStateRoot =
@@ -308,7 +308,7 @@ public class PrivacyReorgTest {
   @Test
   public void reorgToLongerChain() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
     final Block firstBlock =
@@ -377,7 +377,7 @@ public class PrivacyReorgTest {
   private void appendBlock(
       final BesuController besuController,
       final DefaultBlockchain blockchain,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolContext protocolContext,
       final Block block) {
     besuController
         .getProtocolSchedule()

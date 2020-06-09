@@ -281,11 +281,11 @@ public class RespondingEthPeer {
    *
    * @param portion The portion of the available data to return, from 0 to 1
    */
-  public static <C> Responder partialResponder(
+  public static Responder partialResponder(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final float portion) {
     checkArgument(portion >= 0.0 && portion <= 1.0, "Portion is in the range [0.0..1.0]");
 

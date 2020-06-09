@@ -43,21 +43,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DefaultSynchronizer<C> implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<Pruner> maybePruner;
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
-  private final BlockPropagationManager<C> blockPropagationManager;
-  private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
-  private final FullSyncDownloader<C> fullSyncDownloader;
+  private final BlockPropagationManager blockPropagationManager;
+  private final Optional<FastSyncDownloader> fastSyncDownloader;
+  private final FullSyncDownloader fullSyncDownloader;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
       final BlockBroadcaster blockBroadcaster,
       final Optional<Pruner> maybePruner,
@@ -77,7 +77,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
         metricsSystem);
 
     this.blockPropagationManager =
-        new BlockPropagationManager<>(
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
@@ -88,7 +88,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             blockBroadcaster);
 
     this.fullSyncDownloader =
-        new FullSyncDownloader<>(
+        new FullSyncDownloader(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
     this.fastSyncDownloader =
         FastDownloaderFactory.create(

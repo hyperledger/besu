@@ -54,12 +54,12 @@ public class TransactionSimulator {
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   public TransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule<?> protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
@@ -123,7 +123,7 @@ public class TransactionSimulator {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final TransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();

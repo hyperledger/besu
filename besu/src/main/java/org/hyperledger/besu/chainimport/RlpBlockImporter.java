@@ -61,15 +61,14 @@ public class RlpBlockImporter implements Closeable {
    * @param blocks Path to the file containing the blocks
    * @param besuController the BesuController that defines blockchain behavior
    * @param skipPowValidation Skip proof of work validation (correct mix hash and difficulty)
-   * @param <C> the consensus context type
    * @return the import result
    * @throws IOException On Failure
    */
-  public <C> RlpBlockImporter.ImportResult importBlockchain(
-      final Path blocks, final BesuController<C> besuController, final boolean skipPowValidation)
+  public RlpBlockImporter.ImportResult importBlockchain(
+      final Path blocks, final BesuController besuController, final boolean skipPowValidation)
       throws IOException {
-    final ProtocolSchedule<C> protocolSchedule = besuController.getProtocolSchedule();
-    final ProtocolContext<C> context = besuController.getProtocolContext();
+    final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
+    final ProtocolContext context = besuController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     int count = 0;
 
@@ -96,7 +95,7 @@ public class RlpBlockImporter implements Closeable {
         if (previousHeader == null) {
           previousHeader = lookupPreviousHeader(blockchain, header);
         }
-        final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
         final BlockHeader lastHeader = previousHeader;
 
         final CompletableFuture<Void> validationFuture =
@@ -148,13 +147,13 @@ public class RlpBlockImporter implements Closeable {
     }
   }
 
-  private <C> void validateBlock(
-      final ProtocolSpec<C> protocolSpec,
-      final ProtocolContext<C> context,
+  private void validateBlock(
+      final ProtocolSpec protocolSpec,
+      final ProtocolContext context,
       final BlockHeader previousHeader,
       final BlockHeader header,
       final boolean skipPowValidation) {
-    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     final boolean validHeader =
         blockHeaderValidator.validateHeader(
             header,
@@ -168,14 +167,14 @@ public class RlpBlockImporter implements Closeable {
     }
   }
 
-  private <C> void evaluateBlock(
-      final ProtocolContext<C> context,
+  private void evaluateBlock(
+      final ProtocolContext context,
       final Block block,
       final BlockHeader header,
-      final ProtocolSpec<C> protocolSpec,
+      final ProtocolSpec protocolSpec,
       final boolean skipPowValidation) {
     try {
-      final BlockImporter<C> blockImporter = protocolSpec.getBlockImporter();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final boolean blockImported =
           blockImporter.importBlock(
               context,
