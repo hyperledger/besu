@@ -116,7 +116,12 @@ public class PrivateTransactionLocatorTest {
     mockEnclaveForExistingPayload(privacyGroupId, pmt, privateTransaction, Optional.empty());
 
     return new ExecutedPrivateTransaction(
-        blockHeader, pmt, pmtLocation, privacyGroupId, privateTransaction);
+        blockHeader.getHash(),
+        blockHeader.getNumber(),
+        pmt.getHash(),
+        pmtLocation.getTransactionIndex(),
+        privacyGroupId,
+        privateTransaction);
   }
 
   @Test
@@ -145,7 +150,12 @@ public class PrivateTransactionLocatorTest {
     mockEnclaveForExistingPayload(privacyGroupId, pmt, privateTransaction, Optional.of(txVersion));
 
     return new ExecutedPrivateTransaction(
-        blockHeader, pmt, pmtLocation, privacyGroupId, privateTransaction);
+        blockHeader.getHash(),
+        blockHeader.getNumber(),
+        pmt.getHash(),
+        pmtLocation.getTransactionIndex(),
+        privacyGroupId,
+        privateTransaction);
   }
 
   @Test
@@ -220,7 +230,12 @@ public class PrivateTransactionLocatorTest {
     mockEnclaveForAddBlob(pmt, privateTransaction, addDataKey);
 
     return new ExecutedPrivateTransaction(
-        blockHeader, pmt, pmtLocation, privacyGroupId, privateTransaction);
+        blockHeader.getHash(),
+        blockHeader.getNumber(),
+        pmt.getHash(),
+        pmtLocation.getTransactionIndex(),
+        privacyGroupId,
+        privateTransaction);
   }
 
   private void mockEnclaveForExistingPayload(

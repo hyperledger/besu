@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -80,10 +79,6 @@ public class PrivateTransactionLocator {
       return Optional.empty();
     }
 
-    /*
-     If tx location isn't empty it is safe to assume that the block header and transaction exist.
-     Therefore, using orElseThrow here makes sense
-    */
     final TransactionLocation pmtLocation = maybePmtLocation.get();
     final Transaction pmt = blockchain.getTransactionByHash(pmtHash).orElseThrow();
     final BlockHeader blockHeader =
@@ -95,10 +90,11 @@ public class PrivateTransactionLocator {
         .map(
             tx ->
                 new ExecutedPrivateTransaction(
-                    blockHeader,
-                    pmt,
-                    pmtLocation,
-                    tx.getExternalPrivacyGroupId(),
+                    blockHeader.getHash(),
+                    blockHeader.getNumber(),
+                    pmt.getHash(),
+                    pmtLocation.getTransactionIndex(),
+                    tx.getInternalPrivacyGroupId(),
                     tx.getPrivateTransaction()));
   }
 
@@ -158,7 +154,7 @@ public class PrivateTransactionLocator {
         input.reset();
         privateTransaction = PrivateTransaction.readFrom(input);
       }
-    } catch (RLPException e) {
+    } catch (final RLPException e) {
       LOG.debug("Error de-serializing private transaction from enclave", e);
       throw e;
     }
@@ -180,16 +176,19 @@ public class PrivateTransactionLocator {
         final Optional<Bytes32> addDataKey = privateStateStorage.getAddDataKey(privacyGroupId);
 
         if (addDataKey.isPresent()) {
+          final String payloadKey = addDataKey.get().toBase64String();
           final Optional<ReceiveResponse> receiveResponse =
-              retrievePayloadFromEnclave(addDataKey.get().toBase64String(), enclaveKey);
+              retrievePayloadFromEnclave(payloadKey, enclaveKey);
           if (receiveResponse.isEmpty()) {
+            LOG.warn(
+                "Unable to find private transaction with payloadKey = {} on AddBlob", payloadKey);
             return Optional.empty();
           }
 
           final Bytes payload =
               Bytes.wrap(Base64.getDecoder().decode(receiveResponse.get().getPayload()));
           final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
-              deserializeAddToGroupPayload(payload);
+              PrivateTransactionWithMetadata.readListFromPayload(payload);
 
           for (final PrivateTransactionWithMetadata privateTx :
               privateTransactionWithMetadataList) {
@@ -210,35 +209,22 @@ public class PrivateTransactionLocator {
     return Optional.empty();
   }
 
-  private List<PrivateTransactionWithMetadata> deserializeAddToGroupPayload(
-      final Bytes encodedAddToGroupPayload) {
-    final ArrayList<PrivateTransactionWithMetadata> deserializedResponse = new ArrayList<>();
-    final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(encodedAddToGroupPayload, false);
-    final int noOfEntries = bytesValueRLPInput.enterList();
-    for (int i = 0; i < noOfEntries; i++) {
-      deserializedResponse.add(PrivateTransactionWithMetadata.readFrom(bytesValueRLPInput));
-    }
-    bytesValueRLPInput.leaveList();
-    return deserializedResponse;
-  }
-
   private static class TransactionFromEnclave {
     private final PrivateTransaction privateTransaction;
-    private final String externalPrivacyGroupId;
+    private final String internalPrivacyGroupId;
 
     public TransactionFromEnclave(
-        final PrivateTransaction privateTransaction, final String externalPrivacyGroupId) {
+        final PrivateTransaction privateTransaction, final String internalPrivacyGroupId) {
       this.privateTransaction = privateTransaction;
-      this.externalPrivacyGroupId = externalPrivacyGroupId;
+      this.internalPrivacyGroupId = internalPrivacyGroupId;
     }
 
     public PrivateTransaction getPrivateTransaction() {
       return privateTransaction;
     }
 
-    public String getExternalPrivacyGroupId() {
-      return externalPrivacyGroupId;
+    public String getInternalPrivacyGroupId() {
+      return internalPrivacyGroupId;
     }
   }
 }

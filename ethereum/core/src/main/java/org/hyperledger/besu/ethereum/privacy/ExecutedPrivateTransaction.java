@@ -14,14 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.ethereum.chain.TransactionLocation;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
-
-import java.util.Objects;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This class represents a private transaction that has been executed. Therefore, it contains the
@@ -35,22 +28,6 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
   private final int pmtIndex;
   private final String internalPrivacyGroup;
 
-  ExecutedPrivateTransaction(
-      final BlockHeader blockHeader,
-      final Transaction pmt,
-      final TransactionLocation pmtLocation,
-      final String internalPrivacyGroup,
-      final PrivateTransaction privateTransaction) {
-    this(
-        blockHeader.getHash(),
-        blockHeader.getNumber(),
-        pmt.getHash(),
-        pmtLocation.getTransactionIndex(),
-        internalPrivacyGroup,
-        privateTransaction);
-  }
-
-  @VisibleForTesting
   public ExecutedPrivateTransaction(
       final Hash blockHash,
       final long blockNumber,
@@ -91,32 +68,5 @@ public class ExecutedPrivateTransaction extends PrivateTransaction {
    */
   public String getInternalPrivacyGroup() {
     return internalPrivacyGroup;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    final ExecutedPrivateTransaction that = (ExecutedPrivateTransaction) o;
-
-    return blockNumber == that.blockNumber
-        && pmtIndex == that.pmtIndex
-        && blockHash.equals(that.blockHash)
-        && pmtHash.equals(that.pmtHash)
-        && internalPrivacyGroup.equals((that.internalPrivacyGroup));
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        super.hashCode(), blockHash, blockNumber, pmtHash, pmtIndex, internalPrivacyGroup);
   }
 }

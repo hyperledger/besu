@@ -422,7 +422,7 @@ public class DefaultPrivacyController implements PrivacyController {
   @Override
   public List<PrivateTransactionWithMetadata> retrieveAddBlob(final String addDataKey) {
     final ReceiveResponse addReceiveResponse = enclave.receive(addDataKey);
-    return deserializeAddToGroupPayload(
+    return PrivateTransactionWithMetadata.readListFromPayload(
         Bytes.wrap(Base64.getDecoder().decode(addReceiveResponse.getPayload())));
   }
 
@@ -436,19 +436,6 @@ public class DefaultPrivacyController implements PrivacyController {
     rlpOutput.endList();
 
     return rlpOutput.encoded();
-  }
-
-  private List<PrivateTransactionWithMetadata> deserializeAddToGroupPayload(
-      final Bytes encodedAddToGroupPayload) {
-    final ArrayList<PrivateTransactionWithMetadata> deserializedResponse = new ArrayList<>();
-    final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(encodedAddToGroupPayload, false);
-    final int noOfEntries = bytesValueRLPInput.enterList();
-    for (int i = 0; i < noOfEntries; i++) {
-      deserializedResponse.add(PrivateTransactionWithMetadata.readFrom(bytesValueRLPInput));
-    }
-    bytesValueRLPInput.leaveList();
-    return deserializedResponse;
   }
 
   private SendResponse sendRequest(
