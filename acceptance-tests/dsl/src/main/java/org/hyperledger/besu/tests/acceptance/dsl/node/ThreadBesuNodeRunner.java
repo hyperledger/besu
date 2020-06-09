@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -70,7 +71,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private static final Logger LOG = LogManager.getLogger();
   private final Map<String, Runner> besuRunners = new HashMap<>();
 
-  private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new HashMap<>();
+  private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new ConcurrentHashMap<>();
 
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
