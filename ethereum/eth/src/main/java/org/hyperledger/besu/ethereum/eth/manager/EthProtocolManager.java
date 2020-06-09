@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager.ForkId;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
