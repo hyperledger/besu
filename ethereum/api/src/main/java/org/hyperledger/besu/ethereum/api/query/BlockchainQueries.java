@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -51,10 +52,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
 public class BlockchainQueries {
   private static final Logger LOG = LogManager.getLogger();
@@ -651,22 +650,30 @@ public class BlockchainQueries {
       final Hash blockHash, final LogsQuery query, final AtomicBoolean isQueryAlive) {
     try {
       final Optional<BlockHeader> blockHeader =
-          BackendQuery.runIfAlive(() -> blockchain.getBlockHeader(blockHash), isQueryAlive);
+          BackendQuery.runIfAlive(
+              "matchingLogs - getBlockHeader",
+              () -> blockchain.getBlockHeader(blockHash),
+              isQueryAlive);
       if (blockHeader.isEmpty()) {
         return Collections.emptyList();
       }
       // receipts and transactions should exist if the header exists, so throwing is ok.
       final List<TransactionReceipt> receipts =
           BackendQuery.runIfAlive(
-              () -> blockchain.getTxReceipts(blockHash).orElseThrow(), isQueryAlive);
+              "matchingLogs - getTxReceipts",
+              () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
+              isQueryAlive);
       final List<Transaction> transactions =
           BackendQuery.runIfAlive(
+              "matchingLogs - getBlockBody",
               () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
               isQueryAlive);
       final long number = blockHeader.get().getNumber();
       final boolean removed =
           BackendQuery.runIfAlive(
-              () -> !blockchain.blockIsOnCanonicalChain(blockHash), isQueryAlive);
+              "matchingLogs - blockIsOnCanonicalChain",
+              () -> !blockchain.blockIsOnCanonicalChain(blockHash),
+              isQueryAlive);
       return IntStream.range(0, receipts.size())
           .mapToObj(
               i -> {

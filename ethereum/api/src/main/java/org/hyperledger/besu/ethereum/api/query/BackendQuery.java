@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,8 +26,20 @@ public class BackendQuery {
 
   public static <T> T runIfAlive(final Callable<T> task, final AtomicBoolean alive)
       throws Exception {
+    return runIfAlive(Optional.empty(), task, alive);
+  }
+
+  public static <T> T runIfAlive(
+      final String taskName, final Callable<T> task, final AtomicBoolean alive) throws Exception {
+    return runIfAlive(Optional.ofNullable(taskName), task, alive);
+  }
+
+  public static <T> T runIfAlive(
+      final Optional<String> taskName, final Callable<T> task, final AtomicBoolean alive)
+      throws Exception {
     if (!alive.get()) {
-      LOG.warn("Zombie backend query detected, aborting process.");
+      LOG.warn(
+          "Zombie backend query detected [ {} ], aborting process.", taskName.orElse("unnamed"));
       throw new RuntimeException("Timeout expired");
     }
     return task.call();
