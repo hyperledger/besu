@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -157,10 +156,8 @@ public class DebugOperationTracerTest {
 
   @Test
   public void shouldCaptureFrameWhenExceptionalHaltOccurs() throws Exception {
-    final EnumSet<ExceptionalHaltReason> expectedHaltReasons =
-        EnumSet.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
     final ExceptionalHaltException expectedException =
-        new ExceptionalHaltException(expectedHaltReasons);
+        new ExceptionalHaltException(ExceptionalHaltReason.INSUFFICIENT_GAS);
     doThrow(expectedException).when(executeOperationAction).execute();
     final MessageFrame frame = validMessageFrame();
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);

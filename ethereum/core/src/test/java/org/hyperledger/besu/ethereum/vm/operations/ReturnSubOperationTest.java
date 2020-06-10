@@ -85,7 +85,7 @@ public class ReturnSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
+    assertThat(operation.exceptionalHaltCondition(frame, null))
         .contains(ExceptionalHaltReason.INVALID_RETSUB);
   }
 
@@ -98,7 +98,7 @@ public class ReturnSubOperationTest {
         createMessageFrameBuilder(Gas.of(1)).returnStack(returnStack).build();
     frame.setPC(CURRENT_PC);
     returnStack.push(RETURN_LOCATION);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null)).isNotPresent();
+    assertThat(operation.exceptionalHaltCondition(frame, null)).isNotPresent();
     operation.execute(frame);
     assertThat(frame.getPC()).isEqualTo(RETURN_LOCATION);
   }

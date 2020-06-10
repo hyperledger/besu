@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,8 +56,7 @@ public class DebugOperationTracer implements OperationTracer {
     final String opcode = currentOperation.getName();
     final int pc = frame.getPC();
     final Gas gasRemaining = frame.getRemainingGas();
-    final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
-        EnumSet.copyOf(frame.getExceptionalHaltReasons());
+    final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
     final Bytes inputData = frame.getInputData();
     final Optional<Bytes32[]> stack = captureStack(frame);
     final WorldUpdater worldUpdater = frame.getWorldState();
@@ -83,7 +81,7 @@ public class DebugOperationTracer implements OperationTracer {
               currentGasCost,
               frame.getGasRefund(),
               depth,
-              exceptionalHaltReasons,
+              exceptionalHaltReason,
               frame.getRecipientAddress(),
               frame.getApparentValue(),
               inputData,
@@ -127,7 +125,7 @@ public class DebugOperationTracer implements OperationTracer {
               }
               frameIndex--;
             } while (foundTraceFrame == null);
-            foundTraceFrame.addExceptionalHaltReason(exceptionalHaltReason);
+            foundTraceFrame.setExceptionalHaltReason(exceptionalHaltReason);
           }
         });
   }

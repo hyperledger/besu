@@ -92,7 +92,7 @@ public class BeginSubOperationTest {
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
+    assertThat(operation.exceptionalHaltCondition(frame, null))
         .contains(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
   }
 }

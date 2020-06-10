@@ -15,12 +15,10 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltPredicate;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
-public interface Operation extends ExceptionalHaltPredicate {
+public interface Operation {
 
   /**
    * @param frame The frame for execution of this operation.
@@ -40,16 +38,12 @@ public interface Operation extends ExceptionalHaltPredicate {
    * Check if an exceptional halt condition should apply
    *
    * @param frame the current frame
-   * @param previousReasons any existing exceptional halt conditions
    * @param evm the currently executing EVM
    * @return an {@link Optional} containing the {@link ExceptionalHaltReason} that applies or empty
    *     if no exceptional halt condition applies.
    */
-  @Override
   default Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
+      final MessageFrame frame, final EVM evm) {
     return Optional.empty();
   }
 
