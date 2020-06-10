@@ -27,7 +27,7 @@ public class PreSynchronizationTaskRunner {
     tasks.add(task);
   }
 
-  public void runTasks(final BesuController<?> besuController) {
+  public void runTasks(final BesuController besuController) {
     tasks.forEach(t -> t.run(besuController));
   }
 }

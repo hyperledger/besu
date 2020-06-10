@@ -38,9 +38,9 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
-  public static BlockHeaderValidator.Builder<IbftContext> ibftBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
       final long secondsBetweenBlocks) {
-    return new BlockHeaderValidator.Builder<IbftContext>()
+    return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))

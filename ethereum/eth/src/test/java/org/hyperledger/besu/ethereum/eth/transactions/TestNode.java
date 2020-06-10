@@ -103,7 +103,7 @@ public class TestNode implements Closeable {
                     .setSupportedProtocols(EthProtocol.get()));
 
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
-    final ProtocolSchedule<Void> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
             GenesisConfigFile.development().getConfigOptions(), false);
 
@@ -114,8 +114,8 @@ public class TestNode implements Closeable {
         createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
-    final ProtocolContext<Void> protocolContext =
-        new ProtocolContext<>(blockchain, worldStateArchive, null);
+    final ProtocolContext protocolContext =
+        new ProtocolContext(blockchain, worldStateArchive, null);
 
     final SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);

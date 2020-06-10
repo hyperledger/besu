@@ -33,14 +33,14 @@ import java.util.Map;
 public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final P2PNetwork p2pNetwork;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
 
   public NetJsonRpcMethods(
       final P2PNetwork p2pNetwork,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration) {

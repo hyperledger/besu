@@ -28,11 +28,11 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ProtocolScheduleBuilder<C> {
+public class ProtocolScheduleBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private final GenesisConfigOptions config;
-  private final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter;
+  private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter;
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
@@ -41,7 +41,7 @@ public class ProtocolScheduleBuilder<C> {
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
-      final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
     this(
@@ -54,7 +54,7 @@ public class ProtocolScheduleBuilder<C> {
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
-      final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
     this(config, Optional.empty(), protocolSpecAdapter, privacyParameters, isRevertReasonEnabled);
@@ -63,7 +63,7 @@ public class ProtocolScheduleBuilder<C> {
   private ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Optional<BigInteger> defaultChainId,
-      final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
     this.config = config;
@@ -73,10 +73,10 @@ public class ProtocolScheduleBuilder<C> {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
   }
 
-  public ProtocolSchedule<C> createProtocolSchedule() {
+  public ProtocolSchedule createProtocolSchedule() {
     final Optional<BigInteger> chainId =
         config.getChainId().map(Optional::of).orElse(defaultChainId);
-    final MutableProtocolSchedule<C> protocolSchedule = new MutableProtocolSchedule<>(chainId);
+    final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(chainId);
 
     validateForkOrdering();
 
@@ -95,7 +95,7 @@ public class ProtocolScheduleBuilder<C> {
         .getDaoForkBlock()
         .ifPresent(
             daoBlockNumber -> {
-              final ProtocolSpec<C> originalProtocolSpec =
+              final ProtocolSpec originalProtocolSpec =
                   protocolSchedule.getByBlockNumber(daoBlockNumber);
               addProtocolSpec(
                   protocolSchedule,
@@ -205,7 +205,7 @@ public class ProtocolScheduleBuilder<C> {
         .getClassicForkBlock()
         .ifPresent(
             classicBlockNumber -> {
-              final ProtocolSpec<C> originalProtocolSpce =
+              final ProtocolSpec originalProtocolSpce =
                   protocolSchedule.getByBlockNumber(classicBlockNumber);
               addProtocolSpec(
                   protocolSchedule,
@@ -265,9 +265,9 @@ public class ProtocolScheduleBuilder<C> {
   }
 
   private void addProtocolSpec(
-      final MutableProtocolSchedule<C> protocolSchedule,
+      final MutableProtocolSchedule protocolSchedule,
       final OptionalLong blockNumber,
-      final ProtocolSpecBuilder<Void> definition) {
+      final ProtocolSpecBuilder definition) {
     blockNumber.ifPresent(
         number ->
             protocolSchedule.putMilestone(

@@ -38,11 +38,11 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final Supplier<BlockTracer> blockTracerSupplier;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   public TraceBlock(
       final Supplier<BlockTracer> blockTracerSupplier,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockchainQueries queries) {
     super(queries);
     this.blockTracerSupplier = blockTracerSupplier;

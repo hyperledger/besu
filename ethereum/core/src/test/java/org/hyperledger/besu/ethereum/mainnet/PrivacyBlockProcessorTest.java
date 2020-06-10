@@ -60,7 +60,7 @@ public class PrivacyBlockProcessorTest {
   private AbstractBlockProcessor blockProcessor;
   private WorldStateArchive privateWorldStateArchive;
   private Enclave enclave;
-  private ProtocolSchedule<?> protocolSchedule;
+  private ProtocolSchedule protocolSchedule;
   private WorldStateArchive publicWorldStateArchive;
 
   @Before

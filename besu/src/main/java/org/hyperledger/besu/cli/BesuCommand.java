@@ -33,6 +33,8 @@ import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAU
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -54,8 +56,6 @@ import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImporterFactory;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.RlpBlockExporterFactory;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
@@ -80,6 +80,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -150,6 +151,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -195,9 +197,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private CommandLine commandLine;
 
-  private final RlpBlockImporter rlpBlockImporter;
-  private final JsonBlockImporterFactory jsonBlockImporterFactory;
-  private final RlpBlockExporterFactory rlpBlockExporterFactory;
+  private final Supplier<RlpBlockImporter> rlpBlockImporter;
+  private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
+  private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   final NetworkingOptions networkingOptions = NetworkingOptions.create();
   final SynchronizerOptions synchronizerOptions = SynchronizerOptions.create();
@@ -366,8 +368,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
-          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE})")
-  private final SyncMode syncMode = DEFAULT_SYNC_MODE;
+          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: FAST if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
+  private SyncMode syncMode = null;
 
   @Option(
       names = {"--fast-sync-min-peers"},
@@ -993,7 +995,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
-  private BesuController<?> besuController;
+  private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
@@ -1001,9 +1003,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuCommand(
       final Logger logger,
-      final RlpBlockImporter rlpBlockImporter,
-      final JsonBlockImporterFactory jsonBlockImporterFactory,
-      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final Supplier<RlpBlockImporter> rlpBlockImporter,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+      final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
@@ -1024,9 +1026,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @VisibleForTesting
   protected BesuCommand(
       final Logger logger,
-      final RlpBlockImporter rlpBlockImporter,
-      final JsonBlockImporterFactory jsonBlockImporterFactory,
-      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final Supplier<RlpBlockImporter> rlpBlockImporter,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+      final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
@@ -1336,6 +1338,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private BesuCommand configure() throws Exception {
+    syncMode =
+        Optional.ofNullable(syncMode)
+            .orElse(genesisFile == null && !isPrivacyEnabled ? SyncMode.FAST : SyncMode.FULL);
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
@@ -1384,7 +1389,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
-  public BesuController<?> buildController() {
+  public BesuController buildController() {
     try {
       return getControllerBuilder().build();
     } catch (final Exception e) {
@@ -1392,7 +1397,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public BesuControllerBuilder<?> getControllerBuilder() {
+  public BesuControllerBuilder getControllerBuilder() {
     addConfigurationService();
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
@@ -1893,7 +1898,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Blockchain synchronisation from peers.
   private void synchronize(
-      final BesuController<?> controller,
+      final BesuController controller,
       final boolean p2pEnabled,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,

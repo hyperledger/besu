@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointHeaderFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointHeaderValidationStep;
+import org.hyperledger.besu.ethereum.eth.sync.CheckpointRange;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
@@ -43,10 +44,10 @@ import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.Optional;
 
-public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFactory {
+public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   private final SynchronizerConfiguration syncConfig;
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final BlockHeader pivotBlockHeader;
   private final MetricsSystem metricsSystem;
@@ -56,8 +57,8 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader pivotBlockHeader,
       final MetricsSystem metricsSystem) {
@@ -94,7 +95,7 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
   }
 
   @Override
-  public Pipeline<?> createDownloadPipelineForSyncTarget(final SyncTarget target) {
+  public Pipeline<CheckpointRange> createDownloadPipelineForSyncTarget(final SyncTarget target) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
@@ -111,23 +112,23 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             target.peer(),
             target.commonAncestor(),
             syncConfig.getDownloaderCheckpointTimeoutsPermitted());
-    final DownloadHeadersStep<C> downloadHeadersStep =
-        new DownloadHeadersStep<>(
+    final DownloadHeadersStep downloadHeadersStep =
+        new DownloadHeadersStep(
             protocolSchedule,
             protocolContext,
             ethContext,
             detachedValidationPolicy,
             headerRequestSize,
             metricsSystem);
-    final CheckpointHeaderValidationStep<C> validateHeadersJoinUpStep =
-        new CheckpointHeaderValidationStep<>(
+    final CheckpointHeaderValidationStep validateHeadersJoinUpStep =
+        new CheckpointHeaderValidationStep(
             protocolSchedule, protocolContext, detachedValidationPolicy);
-    final DownloadBodiesStep<C> downloadBodiesStep =
-        new DownloadBodiesStep<>(protocolSchedule, ethContext, metricsSystem);
+    final DownloadBodiesStep downloadBodiesStep =
+        new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(ethContext, metricsSystem);
-    final FastImportBlocksStep<C> importBlockStep =
-        new FastImportBlocksStep<>(
+    final FastImportBlocksStep importBlockStep =
+        new FastImportBlocksStep(
             protocolSchedule,
             protocolContext,
             attachedValidationPolicy,

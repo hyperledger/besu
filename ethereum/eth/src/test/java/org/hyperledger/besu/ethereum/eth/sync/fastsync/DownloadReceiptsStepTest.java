@@ -41,7 +41,7 @@ import org.junit.Test;
 
 public class DownloadReceiptsStepTest {
 
-  private static ProtocolContext<Void> protocolContext;
+  private static ProtocolContext protocolContext;
   private static MutableBlockchain blockchain;
 
   private EthProtocolManager ethProtocolManager;
@@ -49,7 +49,7 @@ public class DownloadReceiptsStepTest {
 
   @BeforeClass
   public static void setUpClass() {
-    final BlockchainSetupUtil<Void> setupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting();
     setupUtil.importFirstBlocks(20);
     protocolContext = setupUtil.getProtocolContext();
     blockchain = setupUtil.getBlockchain();

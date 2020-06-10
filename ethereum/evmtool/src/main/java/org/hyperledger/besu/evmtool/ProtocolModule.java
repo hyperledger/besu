@@ -28,7 +28,7 @@ import dagger.Provides;
 public class ProtocolModule {
 
   @Provides
-  Function<Integer, ProtocolSpec<?>> getProtocolSpec(final ProtocolSchedule<?> protocolSchedule) {
+  Function<Integer, ProtocolSpec> getProtocolSpec(final ProtocolSchedule protocolSchedule) {
     return protocolSchedule::getByBlockNumber;
   }
 }

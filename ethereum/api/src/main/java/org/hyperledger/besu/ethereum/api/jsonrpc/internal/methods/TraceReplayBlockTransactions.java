@@ -52,11 +52,11 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<StateDiffGenerator> stateDiffGenerator =
       Suppliers.memoize(StateDiffGenerator::new);
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   public TraceReplayBlockTransactions(
       final Supplier<BlockTracer> blockTracerSupplier,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockchainQueries queries) {
     super(queries);
     this.blockTracerSupplier = blockTracerSupplier;
@@ -171,7 +171,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
 
   private void generateTracesFromTransactionTrace(
       final TraceWriter writer,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
       final TraceFormatter formatter,

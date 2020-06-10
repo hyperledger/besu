@@ -43,21 +43,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DefaultSynchronizer<C> implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<Pruner> maybePruner;
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
-  private final BlockPropagationManager<C> blockPropagationManager;
-  private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
-  private final FullSyncDownloader<C> fullSyncDownloader;
+  private final BlockPropagationManager blockPropagationManager;
+  private final Optional<FastSyncDownloader> fastSyncDownloader;
+  private final FullSyncDownloader fullSyncDownloader;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
       final BlockBroadcaster blockBroadcaster,
       final Optional<Pruner> maybePruner,
@@ -77,7 +77,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
         metricsSystem);
 
     this.blockPropagationManager =
-        new BlockPropagationManager<>(
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
@@ -88,7 +88,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             blockBroadcaster);
 
     this.fullSyncDownloader =
-        new FullSyncDownloader<>(
+        new FullSyncDownloader(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
     this.fastSyncDownloader =
         FastDownloaderFactory.create(
@@ -126,7 +126,17 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       LOG.info("Starting synchronizer.");
       blockPropagationManager.start();
       if (fastSyncDownloader.isPresent()) {
-        fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
+        fastSyncDownloader
+            .get()
+            .start()
+            .whenComplete(this::handleFastSyncResult)
+            .exceptionally(
+                ex -> {
+                  LOG.warn("Exiting FastSync process");
+                  System.exit(0);
+                  return null;
+                });
+
       } else {
         startFullSync();
       }
@@ -157,20 +167,20 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       // We've been shutdown which will have triggered the fast sync future to complete
       return;
     }
+    fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
     final Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof FastSyncException) {
       LOG.error(
-          "Fast sync failed ({}), switching to full sync.",
-          ((FastSyncException) rootCause).getError());
+          "Fast sync failed ({}), please try again.", ((FastSyncException) rootCause).getError());
+      throw new FastSyncException(rootCause);
     } else if (error != null) {
-      LOG.error("Fast sync failed, switching to full sync.", error);
+      LOG.error("Fast sync failed, please try again.", error);
+      throw new FastSyncException(error);
     } else {
       LOG.info(
           "Fast sync completed successfully with pivot block {}",
           result.getPivotBlockNumber().getAsLong());
     }
-    fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
-
     startFullSync();
   }
 

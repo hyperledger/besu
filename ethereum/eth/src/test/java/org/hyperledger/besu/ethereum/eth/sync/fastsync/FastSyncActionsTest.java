@@ -50,14 +50,14 @@ import org.junit.Test;
 
 public class FastSyncActionsTest {
 
-  private final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+  private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
   private final SynchronizerConfiguration.Builder syncConfigBuilder =
       new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).fastSyncPivotDistance(1000);
 
   private final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private SynchronizerConfiguration syncConfig = syncConfigBuilder.build();
-  private FastSyncActions<Void> fastSyncActions;
+  private FastSyncActions fastSyncActions;
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
 
@@ -388,11 +388,11 @@ public class FastSyncActionsTest {
     assertThat(result).isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(1).get()));
   }
 
-  private FastSyncActions<Void> createFastSyncActions(final SynchronizerConfiguration syncConfig) {
-    final ProtocolSchedule<Void> protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
-    final ProtocolContext<Void> protocolContext = blockchainSetupUtil.getProtocolContext();
+  private FastSyncActions createFastSyncActions(final SynchronizerConfiguration syncConfig) {
+    final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
+    final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    return new FastSyncActions<>(
+    return new FastSyncActions(
         syncConfig,
         protocolSchedule,
         protocolContext,

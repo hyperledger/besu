@@ -213,6 +213,23 @@ public class PrivateTransaction {
     this.restriction = restriction;
   }
 
+  protected PrivateTransaction(final PrivateTransaction privateTransaction) {
+    this(
+        privateTransaction.getNonce(),
+        privateTransaction.getGasPrice(),
+        privateTransaction.getGasLimit(),
+        privateTransaction.getTo(),
+        privateTransaction.getValue(),
+        privateTransaction.getSignature(),
+        privateTransaction.getPayload(),
+        privateTransaction.getSender(),
+        privateTransaction.getChainId(),
+        privateTransaction.getPrivateFrom(),
+        privateTransaction.getPrivateFor(),
+        privateTransaction.getPrivacyGroupId(),
+        privateTransaction.getRestriction());
+  }
+
   /**
    * Returns the transaction nonce.
    *

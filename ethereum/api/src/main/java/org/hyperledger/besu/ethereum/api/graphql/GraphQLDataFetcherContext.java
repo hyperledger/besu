@@ -25,12 +25,12 @@ public class GraphQLDataFetcherContext {
   private final BlockchainQueries blockchainQueries;
   private final MiningCoordinator miningCoordinator;
   private final Synchronizer synchronizer;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final TransactionPool transactionPool;
 
   public GraphQLDataFetcherContext(
       final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Synchronizer synchronizer) {
@@ -57,7 +57,7 @@ public class GraphQLDataFetcherContext {
     return synchronizer;
   }
 
-  public ProtocolSchedule<?> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 }

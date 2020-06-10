@@ -77,8 +77,8 @@ public class EthGetTransactionReceiptTest {
   private final TransactionReceiptWithMetadata rootReceiptWithMetaData =
       TransactionReceiptWithMetadata.create(rootReceipt, transaction, hash, 1, 2, blockHash, 4);
 
-  private final ProtocolSpec<Void> rootTransactionTypeSpec =
-      new ProtocolSpec<>(
+  private final ProtocolSpec rootTransactionTypeSpec =
+      new ProtocolSpec(
           "root",
           null,
           null,
@@ -101,8 +101,8 @@ public class EthGetTransactionReceiptTest {
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
           TransactionGasBudgetCalculator.frontier());
-  private final ProtocolSpec<Void> statusTransactionTypeSpec =
-      new ProtocolSpec<>(
+  private final ProtocolSpec statusTransactionTypeSpec =
+      new ProtocolSpec(
           "status",
           null,
           null,
@@ -127,7 +127,7 @@ public class EthGetTransactionReceiptTest {
           TransactionGasBudgetCalculator.frontier());
 
   @SuppressWarnings("unchecked")
-  private final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
+  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
 
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final EthGetTransactionReceipt ethGetTransactionReceipt =
