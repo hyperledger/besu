@@ -230,8 +230,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
-    // TODO Remove yolov1Block after berlin fork
-    getBerlinBlockNumber().ifPresent(l -> builder.put("yolov1Block", l));
     // TODO EIP-1559 change for the actual fork name when known
     getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
