@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
@@ -137,12 +138,18 @@ public class MarkSweepPrunerTest {
     pruner.mark(markBlock.getStateRoot());
     pruner.sweepBefore(markBlock.getNumber());
 
-    // Check stateRoots are marked first
-    InOrder inOrder = inOrder(hashValueStore, worldStateStorage);
+    // we have this map of orders because we only want to make sure we remove a state root before
+    // the full prune but without enforcing an ordering between the state root removals
+    final Map<Bytes32, InOrder> orders =
+        stateRoots.stream()
+            .collect(
+                toUnmodifiableMap(
+                    Function.identity(), __ -> inOrder(hashValueStore, worldStateStorage)));
     for (Bytes32 stateRoot : stateRoots) {
-      inOrder.verify(hashValueStore).remove(stateRoot);
+      final InOrder thisRootsOrdering = orders.get(stateRoot);
+      thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+      thisRootsOrdering.verify(worldStateStorage).prune(any());
     }
-    inOrder.verify(worldStateStorage).prune(any());
   }
 
   @Test
@@ -172,12 +179,18 @@ public class MarkSweepPrunerTest {
     // Sweep
     pruner.sweepBefore(markBlock.getNumber());
 
-    // Check stateRoots are marked first
-    InOrder inOrder = inOrder(hashValueStore, worldStateStorage);
+    // we have this map of orders because we only want to make sure we remove a state root before
+    // the full prune but without enforcing an ordering between the state root removals
+    final Map<Bytes32, InOrder> orders =
+        stateRoots.stream()
+            .collect(
+                toUnmodifiableMap(
+                    Function.identity(), __ -> inOrder(hashValueStore, worldStateStorage)));
     for (Bytes32 stateRoot : stateRoots) {
-      inOrder.verify(hashValueStore).remove(stateRoot);
+      final InOrder thisRootsOrdering = orders.get(stateRoot);
+      thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+      thisRootsOrdering.verify(worldStateStorage).prune(any());
     }
-    inOrder.verify(worldStateStorage).prune(any());
 
     assertThat(stateStorage.containsKey(markedRoot.toArray())).isTrue();
   }
