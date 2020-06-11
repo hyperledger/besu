@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -131,9 +133,10 @@ public class MarkSweepPruner {
     final AtomicLong prunedNodeCount = new AtomicLong(0);
     WorldStateStorage.Updater updater = worldStateStorage.updater();
     LongStream.rangeClosed(markedBlockNumber - 1, 0)
-        .mapToObj(blockNumber -> blockchain.getBlockHeader(blockNumber).get().getStateRoot())
+        .mapToObj(
+            blockNumber -> blockchain.getBlockHeader(blockNumber).map(BlockHeader::getStateRoot))
+        .flatMap(Optional::stream)
         .takeWhile(worldStateStorage::isWorldStateAvailable)
-        .filter(stateRootHash -> !isMarked(stateRootHash))
         .forEach(
             stateRootHash -> {
               updater.removeAccountStateTrieNode(stateRootHash);
