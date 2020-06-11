@@ -330,9 +330,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   private void printOutput(final BesuNode node, final Process process) {
     try (final BufferedReader in =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
-      if (ThreadContext.containsKey("node")) {
-        LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
-      }
+
       ThreadContext.put("node", node.getName());
 
       String line = in.readLine();
