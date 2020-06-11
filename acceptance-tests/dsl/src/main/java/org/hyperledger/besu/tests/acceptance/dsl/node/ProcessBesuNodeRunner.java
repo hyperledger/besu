@@ -65,11 +65,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   @Override
   public void startNode(final BesuNode node) {
 
-    if (ThreadContext.containsKey("node")) {
-      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
-    }
-    ThreadContext.put("node", node.getName());
-
     final Path dataDir = node.homeDirectory();
 
     final List<String> params = new ArrayList<>();
@@ -335,6 +330,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   private void printOutput(final BesuNode node, final Process process) {
     try (final BufferedReader in =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
+
+      ThreadContext.put("node", node.getName());
+
       String line = in.readLine();
       while (line != null) {
         // would be nice to pass up the log level of the incoming log line
