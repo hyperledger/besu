@@ -52,7 +52,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
@@ -240,7 +239,7 @@ public class GraphQLDataFetchers {
           new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
 
       final List<LogWithMetadata> logs =
-          blockchainQuery.matchingLogs(fromBlock, toBlock, query, new AtomicBoolean(true));
+          blockchainQuery.matchingLogs(fromBlock, toBlock, query, () -> true);
       final List<LogAdapter> results = new ArrayList<>();
       for (final LogWithMetadata log : logs) {
         results.add(new LogAdapter(log));

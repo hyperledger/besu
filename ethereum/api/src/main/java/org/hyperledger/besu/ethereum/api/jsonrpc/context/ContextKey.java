@@ -14,21 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.context;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import io.vertx.ext.web.RoutingContext;
 
 public enum ContextKey {
-  REQUEST_BODY_AS_JSON_OBJECT,
-  ALIVE;
+  REQUEST_BODY_AS_JSON_OBJECT;
 
   public <T> T extractFrom(final RoutingContext ctx, final Supplier<T> defaultSupplier) {
     final T value = ctx.get(this.name());
     return value != null ? value : defaultSupplier.get();
-  }
-
-  public AtomicBoolean isAlive(final RoutingContext ctx) {
-    return extractFrom(ctx, () -> new AtomicBoolean(true));
   }
 }

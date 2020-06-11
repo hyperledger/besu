@@ -45,8 +45,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -545,7 +545,7 @@ public class BlockchainQueries {
       final long fromBlockNumber,
       final long toBlockNumber,
       final LogsQuery query,
-      final AtomicBoolean isQueryAlive) {
+      final Supplier<Boolean> isQueryAlive) {
     try {
       final List<LogWithMetadata> result = new ArrayList<>();
       final long startSegment = fromBlockNumber / BLOCKS_PER_BLOOM_CACHE;
@@ -594,7 +594,7 @@ public class BlockchainQueries {
       final long fromBlockNumber,
       final long toBlockNumber,
       final LogsQuery query,
-      final AtomicBoolean isQueryAlive) {
+      final Supplier<Boolean> isQueryAlive) {
     // rangeClosed handles the inverted from/to situations automatically with zero results.
     return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
         .mapToObj(blockchain::getBlockHeader)
@@ -614,7 +614,7 @@ public class BlockchainQueries {
       final long endOffset,
       final LogsQuery query,
       final Path cacheFile,
-      final AtomicBoolean isQueryAlive)
+      final Supplier<Boolean> isQueryAlive)
       throws Exception {
     final List<LogWithMetadata> results = new ArrayList<>();
     try (final RandomAccessFile raf = new RandomAccessFile(cacheFile.toFile(), "r")) {
@@ -648,7 +648,7 @@ public class BlockchainQueries {
   }
 
   public List<LogWithMetadata> matchingLogs(
-      final Hash blockHash, final LogsQuery query, final AtomicBoolean isQueryAlive) {
+      final Hash blockHash, final LogsQuery query, final Supplier<Boolean> isQueryAlive) {
     try {
       final Optional<BlockHeader> blockHeader =
           BackendQuery.runIfAlive(

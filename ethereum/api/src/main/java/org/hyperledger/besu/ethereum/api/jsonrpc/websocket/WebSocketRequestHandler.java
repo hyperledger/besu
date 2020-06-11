@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcR
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -80,7 +79,7 @@ public class WebSocketRequestHandler {
             request.setConnectionId(id);
             if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
               final JsonRpcRequestContext requestContext =
-                  new JsonRpcRequestContext(request, user, new AtomicBoolean(true));
+                  new JsonRpcRequestContext(request, user, () -> true);
               future.complete(method.response(requestContext));
             } else {
               future.complete(

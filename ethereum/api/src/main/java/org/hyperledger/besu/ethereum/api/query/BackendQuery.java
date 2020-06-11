@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,18 +24,19 @@ import org.apache.logging.log4j.Logger;
 public class BackendQuery {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static <T> T runIfAlive(final Callable<T> task, final AtomicBoolean alive)
+  public static <T> T runIfAlive(final Callable<T> task, final Supplier<Boolean> alive)
       throws Exception {
     return runIfAlive(Optional.empty(), task, alive);
   }
 
   public static <T> T runIfAlive(
-      final String taskName, final Callable<T> task, final AtomicBoolean alive) throws Exception {
+      final String taskName, final Callable<T> task, final Supplier<Boolean> alive)
+      throws Exception {
     return runIfAlive(Optional.ofNullable(taskName), task, alive);
   }
 
   public static <T> T runIfAlive(
-      final Optional<String> taskName, final Callable<T> task, final AtomicBoolean alive)
+      final Optional<String> taskName, final Callable<T> task, final Supplier<Boolean> alive)
       throws Exception {
     if (!alive.get()) {
       LOG.warn(
@@ -45,7 +46,7 @@ public class BackendQuery {
     return task.call();
   }
 
-  public static void stopIfExpired(final AtomicBoolean alive) throws Exception {
+  public static void stopIfExpired(final Supplier<Boolean> alive) throws Exception {
     runIfAlive(() -> null, alive);
   }
 }

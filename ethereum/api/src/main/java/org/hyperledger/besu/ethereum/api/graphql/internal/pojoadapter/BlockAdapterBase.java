@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.google.common.primitives.Longs;
@@ -165,8 +164,7 @@ public class BlockAdapterBase extends AdapterBase {
     final BlockchainQueries blockchain = getBlockchainQueries(environment);
 
     final Hash hash = header.getHash();
-    final List<LogWithMetadata> logs =
-        blockchain.matchingLogs(hash, query, new AtomicBoolean(true));
+    final List<LogWithMetadata> logs = blockchain.matchingLogs(hash, query, () -> true);
     final List<LogAdapter> results = new ArrayList<>();
     for (final LogWithMetadata log : logs) {
       results.add(new LogAdapter(log));

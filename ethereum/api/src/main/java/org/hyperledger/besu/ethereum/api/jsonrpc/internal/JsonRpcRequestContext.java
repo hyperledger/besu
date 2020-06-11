@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import io.vertx.ext.auth.User;
 
@@ -24,27 +24,29 @@ public class JsonRpcRequestContext {
 
   private final JsonRpcRequest jsonRpcRequest;
   private final Optional<User> user;
-  private final AtomicBoolean alive;
+  private final Supplier<Boolean> alive;
 
   public JsonRpcRequestContext(final JsonRpcRequest jsonRpcRequest) {
-    this(jsonRpcRequest, new AtomicBoolean(true));
+    this(jsonRpcRequest, () -> true);
   }
 
-  public JsonRpcRequestContext(final JsonRpcRequest jsonRpcRequest, final AtomicBoolean alive) {
+  public JsonRpcRequestContext(final JsonRpcRequest jsonRpcRequest, final Supplier<Boolean> alive) {
     this(jsonRpcRequest, Optional.empty(), alive);
   }
 
   public JsonRpcRequestContext(final JsonRpcRequest jsonRpcRequest, final User user) {
-    this(jsonRpcRequest, Optional.of(user), new AtomicBoolean(true));
+    this(jsonRpcRequest, Optional.of(user), () -> true);
   }
 
   public JsonRpcRequestContext(
-      final JsonRpcRequest jsonRpcRequest, final User user, final AtomicBoolean alive) {
+      final JsonRpcRequest jsonRpcRequest, final User user, final Supplier<Boolean> alive) {
     this(jsonRpcRequest, Optional.of(user), alive);
   }
 
   public JsonRpcRequestContext(
-      final JsonRpcRequest jsonRpcRequest, final Optional<User> user, final AtomicBoolean alive) {
+      final JsonRpcRequest jsonRpcRequest,
+      final Optional<User> user,
+      final Supplier<Boolean> alive) {
     this.jsonRpcRequest = jsonRpcRequest;
     this.user = user;
     this.alive = alive;
@@ -83,7 +85,7 @@ public class JsonRpcRequestContext {
     return Objects.hash(jsonRpcRequest, user);
   }
 
-  public AtomicBoolean isAlive() {
-    return alive;
+  public boolean isAlive() {
+    return alive.get();
   }
 }
