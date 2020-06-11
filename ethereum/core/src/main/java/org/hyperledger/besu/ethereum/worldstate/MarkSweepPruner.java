@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -28,14 +27,11 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
-import java.util.stream.LongStream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
@@ -130,21 +126,25 @@ public class MarkSweepPruner {
     LOG.debug("Sweeping unused nodes");
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
     // storage
-    final AtomicLong prunedNodeCount = new AtomicLong(0);
+    long prunedNodeCount = 0;
     WorldStateStorage.Updater updater = worldStateStorage.updater();
-    LongStream.rangeClosed(markedBlockNumber - 1, 0)
-        .mapToObj(
-            blockNumber -> blockchain.getBlockHeader(blockNumber).map(BlockHeader::getStateRoot))
-        .flatMap(Optional::stream)
-        .takeWhile(worldStateStorage::isWorldStateAvailable)
-        .forEach(
-            stateRootHash -> {
-              updater.removeAccountStateTrieNode(stateRootHash);
-              prunedNodeCount.incrementAndGet();
-            });
+    for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
+      final Hash candidateStateRootHash =
+          blockchain.getBlockHeader(blockNumber).get().getStateRoot();
+
+      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash)) {
+        break;
+      }
+
+      if (!isMarked(candidateStateRootHash)) {
+        updater.removeAccountStateTrieNode(candidateStateRootHash);
+        prunedNodeCount++;
+      }
+    }
     updater.commit();
     // Sweep non-state-root nodes
-    sweptNodesCounter.inc(prunedNodeCount.addAndGet(worldStateStorage.prune(this::isMarked)));
+    prunedNodeCount += worldStateStorage.prune(this::isMarked);
+    sweptNodesCounter.inc(prunedNodeCount);
     clearMarks();
     LOG.debug("Completed sweeping unused nodes");
   }
