@@ -103,7 +103,7 @@ public class PeerDiscoveryAgentTest {
     // hedge against missing one and duplicating another.
     assertThat(agent.streamDiscoveredPeers()).contains(otherPeers.toArray(new DiscoveryPeer[20]));
     assertThat(agent.streamDiscoveredPeers())
-        .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+        .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDING);
 
     // Use additional agent to exchange messages with agent
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
@@ -353,7 +353,7 @@ public class PeerDiscoveryAgentTest {
 
     // Remote agent should have bonded with agent
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-    assertThat(agent.streamDiscoveredPeers()).contains(remoteAgent.getAdvertisedPeer().get());
+    assertThat(agent.streamDiscoveredPeers()).contains(remotePeer);
 
     // Create a new remote agent with same id, and new endpoint
     remoteAgent.stop();

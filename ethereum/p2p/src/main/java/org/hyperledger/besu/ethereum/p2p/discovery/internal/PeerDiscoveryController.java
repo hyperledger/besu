@@ -301,11 +301,10 @@ public class PeerDiscoveryController {
 
     switch (packet.getType()) {
       case PING:
-        if (peerPermissions.allowInboundBonding(peer)
-            && (sender.getEnodeURL().getNodeId().equals(packet.getNodeId()))) {
-          addToPeerTable(peer);
+        if (peerPermissions.allowInboundBonding(peer)) {
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);
+          bond(peer);
         }
         break;
       case PONG:
@@ -317,12 +316,6 @@ public class PeerDiscoveryController {
                 });
         break;
       case NEIGHBORS:
-        if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
-          LOG.info(
-              "Rejecting NEIGHBORS request for unbonded nodes, sender: {}", sender.getEndpoint());
-          break;
-        }
-
         matchInteraction(packet)
             .ifPresent(
                 interaction ->
@@ -330,12 +323,7 @@ public class PeerDiscoveryController {
                         peer, getPeersFromNeighborsPacket(packet)));
         break;
       case FIND_NEIGHBORS:
-        if (!peerKnown
-            || !peerPermissions.allowInboundNeighborsRequest(peer)
-            || (peer.getStatus() != PeerDiscoveryStatus.BONDED)) {
-          LOG.info(
-              "Rejecting FIND_NEIGHBORS request for unbonded nodes, sender: {}",
-              sender.getEndpoint());
+        if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
           break;
         }
 
