@@ -213,7 +213,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getBerlinBlockNumber() {
-    return ExperimentalEIPs.berlinEnabled ? getOptionalLong("berlinblock") : OptionalLong.empty();
+    if (ExperimentalEIPs.berlinEnabled) {
+      final OptionalLong berlinBlock = getOptionalLong("berlinblock");
+      final OptionalLong yolov1Block = getOptionalLong("yolov1block");
+      if (yolov1Block.isPresent()) {
+        if (berlinBlock.isPresent()) {
+          throw new RuntimeException(
+              "Genesis files cannot specify both berlinblock and yoloV1Block.");
+        }
+        return yolov1Block;
+      }
+      return berlinBlock;
+    }
+    return OptionalLong.empty();
   }
 
   @Override

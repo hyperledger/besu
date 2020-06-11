@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -96,6 +97,12 @@ public class PrivateTransactionDataFixture {
         .signAndBuild(KEY_PAIR);
   }
 
+  public static PrivateTransaction privateTransactionLegacy() {
+    return new PrivateTransactionTestFixture()
+        .privateFor(Collections.singletonList(VALID_BASE64_ENCLAVE_KEY))
+        .createTransaction(KEY_PAIR);
+  }
+
   public static PrivateTransaction privateContractDeploymentTransactionLegacy() {
     return new PrivateTransactionTestFixture()
         .payload(VALID_CONTRACT_DEPLOYMENT_PAYLOAD)
@@ -154,9 +161,7 @@ public class PrivateTransactionDataFixture {
     rlpOutput.endList();
     return new ReceiveResponse(
         rlpOutput.encoded().toBase64String().getBytes(UTF_8),
-        privateTransaction.getPrivacyGroupId().isPresent()
-            ? privateTransaction.getPrivacyGroupId().get().toBase64String()
-            : "",
+        privateTransaction.getPrivacyGroupId().orElse(Bytes.EMPTY).toBase64String(),
         null);
   }
 
@@ -182,5 +187,18 @@ public class PrivateTransactionDataFixture {
 
   public static PrivateBlockMetadata generatePrivateBlockMetadata(final int numberOfTransactions) {
     return new PrivateBlockMetadata(generatePrivateTransactionMetadataList(numberOfTransactions));
+  }
+
+  public static Bytes encodePrivateTransaction(
+      final PrivateTransaction privateTransaction, final Optional<Bytes32> version) {
+    final BytesValueRLPOutput output = new BytesValueRLPOutput();
+    if (version.isEmpty()) {
+      privateTransaction.writeTo(output);
+    } else {
+      final VersionedPrivateTransaction versionedPrivateTransaction =
+          new VersionedPrivateTransaction(privateTransaction, Bytes32.ZERO);
+      versionedPrivateTransaction.writeTo(output);
+    }
+    return output.encoded();
   }
 }

@@ -15,11 +15,16 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivateTransactionWithMetadata {
   private final PrivateTransaction privateTransaction;
@@ -54,6 +59,17 @@ public class PrivateTransactionWithMetadata {
 
   public PrivateTransactionMetadata getPrivateTransactionMetadata() {
     return privateTransactionMetadata;
+  }
+
+  public static List<PrivateTransactionWithMetadata> readListFromPayload(final Bytes payload) {
+    final ArrayList<PrivateTransactionWithMetadata> deserializedResponse = new ArrayList<>();
+    final BytesValueRLPInput bytesValueRLPInput = new BytesValueRLPInput(payload, false);
+    final int noOfEntries = bytesValueRLPInput.enterList();
+    for (int i = 0; i < noOfEntries; i++) {
+      deserializedResponse.add(PrivateTransactionWithMetadata.readFrom(bytesValueRLPInput));
+    }
+    bytesValueRLPInput.leaveList();
+    return deserializedResponse;
   }
 
   @Override
