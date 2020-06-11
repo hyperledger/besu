@@ -64,12 +64,12 @@ public class PrunerIntegrationTest {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
 
   @Test
-  public void pruner_smallState_manyOpsPerTx() {
+  public void pruner_smallState() {
     testPruner(3, 1, 1, 4);
   }
 
   @Test
-  public void pruner_largeState_fewOpsPerTx() {
+  public void pruner_largeState() {
     testPruner(2, 5, 5, 6);
   }
 
