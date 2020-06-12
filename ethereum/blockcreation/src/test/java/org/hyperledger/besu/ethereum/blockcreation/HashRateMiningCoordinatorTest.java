@@ -15,17 +15,14 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.ethereum.blockcreation.AbstractMiningCoordinatorTest.TestMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,51 +36,47 @@ public class HashRateMiningCoordinatorTest {
   private final EthHashMinerExecutor minerExecutor = mock(EthHashMinerExecutor.class);
   private final String id;
   private final Long hashRate;
+  private final Long wantTotalHashrate;
   private final int startSealersSize;
   private final boolean wantAdded;
-  private final int wantSize;
-  private final boolean wantCheckSealerInfo;
-  private final String wantSealerID;
 
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {"1", 1L, 0, true, 1, false, null},
-          {"1", 0L, 0, false, 0, false, null},
-          {"1", 1L, DEFAULT_REMOTE_SEALERS_LIMIT, true, DEFAULT_REMOTE_SEALERS_LIMIT, true, "1"},
+          {"1", 1L, 2L, 1, true},
+          {"1", 1L, 1L, 0, true},
+          {"1", 0L, 0L, 0, false},
+          {"1", 1L, 501L, 500, true},
         });
   }
 
   public HashRateMiningCoordinatorTest(
       final String id,
-      final Long hashRate,
+      final long hashRate,
+      final long wantTotalHashrate,
       final int startSealersSize,
-      final boolean wantAdded,
-      final int wantSize,
-      final boolean wantCheckSealerInfo,
-      final String wantSealerID) {
+      final boolean wantAdded) {
     this.id = id;
     this.hashRate = hashRate;
     this.startSealersSize = startSealersSize;
     this.wantAdded = wantAdded;
-    this.wantSize = wantSize;
-    this.wantCheckSealerInfo = wantCheckSealerInfo;
-    this.wantSealerID = wantSealerID;
+    this.wantTotalHashrate = wantTotalHashrate;
   }
 
   @Test
-  public void test() {
-    final TestMiningCoordinator miningCoordinator =
-        new TestMiningCoordinator(blockchain, minerExecutor, syncState);
+  public void test() throws InterruptedException {
+    final EthHashMiningCoordinator miningCoordinator =
+        new EthHashMiningCoordinator(blockchain, minerExecutor, syncState, 1000);
+    EthHashMiningCoordinator.i.set(0);
     for (int i = 0; i < startSealersSize; i++) {
-      miningCoordinator.submitHashRate(
-          UUID.randomUUID().toString(), ThreadLocalRandom.current().nextLong());
+      miningCoordinator.submitHashRate(UUID.randomUUID().toString(), 1L);
     }
     assertThat(miningCoordinator.submitHashRate(id, hashRate)).isEqualTo(wantAdded);
-    assertThat(miningCoordinator.getSealerInfos().size()).isEqualTo(wantSize);
-    if (wantCheckSealerInfo) {
-      assertThat(miningCoordinator.getSealerInfos()).containsKey(wantSealerID);
+    if (wantTotalHashrate == 0L) {
+      assertThat(miningCoordinator.hashesPerSecond()).isEmpty();
+    } else {
+      assertThat(miningCoordinator.hashesPerSecond()).contains(wantTotalHashrate);
     }
   }
 }

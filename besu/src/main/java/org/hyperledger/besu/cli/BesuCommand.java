@@ -725,7 +725,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer stratumPort = 8008;
 
   @Option(
-      names = {"--miner-remote-sealers-limit"},
+      names = {"--Xminer-remote-sealers-limit"},
       description =
           "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
   private final Integer remoteSealersLimit = 1000;

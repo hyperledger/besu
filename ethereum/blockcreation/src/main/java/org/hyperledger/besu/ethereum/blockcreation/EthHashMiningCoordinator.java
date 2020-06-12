@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.ethereum.blockcreation.sealer.SealerInfo;
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -23,7 +24,13 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Responsible for determining when a block mining operation should be started/stopped, then
@@ -32,7 +39,14 @@ import java.util.Optional;
 public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashBlockMiner>
     implements BlockAddedObserver {
 
+  private static final long SEALER_INFO_TTL = Duration.ofMinutes(10).toMinutes();
+
+  private static final Logger LOG = getLogger();
+
   private final EthHashMinerExecutor executor;
+
+  private final Cache<String, Long> sealerHashRate;
+
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
 
   public EthHashMiningCoordinator(
@@ -40,8 +54,13 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
       final EthHashMinerExecutor executor,
       final SyncState syncState,
       final int remoteSealersLimit) {
-    super(blockchain, executor, syncState, remoteSealersLimit);
+    super(blockchain, executor, syncState);
     this.executor = executor;
+    this.sealerHashRate =
+        CacheBuilder.newBuilder()
+            .maximumSize(remoteSealersLimit)
+            .expireAfterWrite(SEALER_INFO_TTL, TimeUnit.SECONDS)
+            .build();
   }
 
   @Override
@@ -55,7 +74,7 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
 
   @Override
   public Optional<Long> hashesPerSecond() {
-    if (getSealerInfos().isEmpty()) {
+    if (sealerHashRate.size() <= 0) {
       return localHashesPerSecond();
     } else {
       return remoteHashesPerSecond();
@@ -64,9 +83,9 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
 
   private Optional<Long> remoteHashesPerSecond() {
     return Optional.of(
-        getSealerInfos().values().stream()
-            .filter(sealerInfo -> !sealerInfo.getHashRate().equals(0L))
-            .mapToLong(SealerInfo::getHashRate)
+        sealerHashRate.asMap().values().stream()
+            .filter(sealerHashRate -> !sealerHashRate.equals(0L))
+            .mapToLong(Long::longValue)
             .sum());
   }
 
@@ -80,6 +99,16 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
     } else {
       return cachedHashesPerSecond;
     }
+  }
+
+  @Override
+  public boolean submitHashRate(final String id, final Long hashrate) {
+    if (hashrate == 0) {
+      return false;
+    }
+    LOG.info("Hashrate submitted id {} hashrate {}", id, hashrate);
+    sealerHashRate.put(id, hashrate);
+    return true;
   }
 
   @Override

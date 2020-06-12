@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import static java.util.Collections.emptyMap;
-
-import org.hyperledger.besu.ethereum.blockcreation.sealer.SealerInfo;
 import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -27,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -90,15 +86,6 @@ public interface MiningCoordinator {
    */
   default boolean submitHashRate(final String id, final Long hashrate) {
     return false;
-  }
-
-  /**
-   * Returns a list of the current sealers
-   *
-   * @return a list of {@link SealerInfo}
-   */
-  default Map<String, SealerInfo> getSealerInfos() {
-    return emptyMap();
   }
 
   /**
