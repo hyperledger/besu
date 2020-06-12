@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,14 +29,14 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class BackendQueryTest<T> {
 
-  private final AtomicBoolean alive;
+  private final Supplier<Boolean> alive;
   private final Object wantReturn;
   private final boolean wantException;
   private final Class<T> wantExceptionClass;
   private final String wantExceptionMessage;
 
   public BackendQueryTest(
-      final AtomicBoolean alive,
+      final Supplier<Boolean> alive,
       final Object wantReturn,
       final boolean wantException,
       final Class<T> wantExceptionClass,
@@ -52,9 +52,13 @@ public class BackendQueryTest<T> {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {new AtomicBoolean(false), null, true, RuntimeException.class, "Timeout expired"},
-          {new AtomicBoolean(true), "expected return", false, null, null}
+          {supplierOf(false), null, true, RuntimeException.class, "Timeout expired"},
+          {supplierOf(true), "expected return", false, null, null}
         });
+  }
+
+  private static Supplier<Boolean> supplierOf(final boolean val) {
+    return () -> val;
   }
 
   @Test
