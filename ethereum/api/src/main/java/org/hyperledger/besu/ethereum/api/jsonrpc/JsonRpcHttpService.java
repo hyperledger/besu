@@ -596,9 +596,10 @@ public class JsonRpcHttpService {
           requestTimer.labels(requestBody.getMethod()).startTimer()) {
         if (user.isPresent()) {
           return method.response(
-              new JsonRpcRequestContext(requestBody, user.get(), ctx.response()::closed));
+              new JsonRpcRequestContext(requestBody, user.get(), () -> !ctx.response().closed()));
         }
-        return method.response(new JsonRpcRequestContext(requestBody, ctx.response()::closed));
+        return method.response(
+            new JsonRpcRequestContext(requestBody, () -> !ctx.response().closed()));
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug("Invalid Params", e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);
