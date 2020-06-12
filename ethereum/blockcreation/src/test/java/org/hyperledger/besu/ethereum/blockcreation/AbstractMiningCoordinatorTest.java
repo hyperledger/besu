@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -69,33 +68,6 @@ public class AbstractMiningCoordinatorTest {
     miningCoordinator.enable();
     miningCoordinator.start();
     verify(minerExecutor).startAsyncMining(any(), any(), any());
-    verifyNoMoreInteractions(minerExecutor, blockMiner);
-  }
-
-  @Test
-  public void shouldStartMiningWhenEnabledAndBecomeInSync() {
-    when(syncState.isInSync()).thenReturn(false);
-    miningCoordinator.enable();
-    miningCoordinator.start();
-    verify(minerExecutor, never()).startAsyncMining(any(), any(), any());
-
-    when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.inSyncChanged(true);
-
-    verify(minerExecutor).startAsyncMining(any(), any(), any());
-    verifyNoMoreInteractions(minerExecutor, blockMiner);
-  }
-
-  @Test
-  public void shouldHaltMiningWhenBecomingOutOfSync() {
-    when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.enable();
-    miningCoordinator.start();
-    verify(minerExecutor).startAsyncMining(any(), any(), any());
-
-    miningCoordinator.inSyncChanged(false);
-
-    verify(blockMiner).cancel();
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
 
@@ -231,6 +203,9 @@ public class AbstractMiningCoordinatorTest {
         final SyncState syncState) {
       super(blockchain, executor, syncState);
     }
+
+    @Override
+    protected void inSyncChanged(final boolean inSync) {}
 
     @Override
     public boolean newChainHeadInvalidatesMiningOperation(final BlockHeader newChainHeadHeader) {

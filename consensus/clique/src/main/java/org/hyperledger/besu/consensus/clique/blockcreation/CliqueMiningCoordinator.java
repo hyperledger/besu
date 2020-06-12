@@ -50,18 +50,18 @@ public class CliqueMiningCoordinator extends AbstractMiningCoordinator<CliqueBlo
               .getConsensusState(CliqueContext.class)
               .getVoteTallyCache()
               .getVoteTallyAfterBlock(blockchain.getChainHeadHeader());
-      getCoinbase()
-          .ifPresent(
-              coinbase -> {
-                if (validatorProvider.getValidators().contains(coinbase)) {
-                  if (inSync && startMiningIfPossible()) {
-                    LOG.info("Resuming mining operations");
-                  }
-                  if (!inSync && haltCurrentMiningOperation()) {
-                    LOG.info("Pausing mining while behind chain head");
-                  }
-                }
-              });
+      final boolean isValidator =
+          getCoinbase()
+              .filter(coinbase -> validatorProvider.getValidators().contains(coinbase))
+              .isPresent();
+
+      if (inSync && startMiningIfPossible() && isValidator) {
+        LOG.info("Resuming mining operations");
+      }
+
+      if (!inSync && haltCurrentMiningOperation() && isValidator) {
+        LOG.info("Pausing mining while behind chain head");
+      }
     }
   }
 
