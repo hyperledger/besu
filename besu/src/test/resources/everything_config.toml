@@ -105,7 +105,7 @@ min-block-occupancy-ratio=0.7
 miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
 Xminer-remote-sealers-limit=1000
-
+Xminer-remote-sealers-hashrate-ttl=10
 # Pruning
 pruning-enabled=true
 pruning-blocks-retained=1024

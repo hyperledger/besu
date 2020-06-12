@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +38,6 @@ import org.apache.logging.log4j.Logger;
 public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashBlockMiner>
     implements BlockAddedObserver {
 
-  private static final long SEALER_INFO_TTL = Duration.ofMinutes(10).toMinutes();
-
   private static final Logger LOG = getLogger();
 
   private final EthHashMinerExecutor executor;
@@ -53,13 +50,14 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
       final Blockchain blockchain,
       final EthHashMinerExecutor executor,
       final SyncState syncState,
-      final int remoteSealersLimit) {
+      final int remoteSealersLimit,
+      final long remoteSealersTimeToLive) {
     super(blockchain, executor, syncState);
     this.executor = executor;
     this.sealerHashRate =
         CacheBuilder.newBuilder()
             .maximumSize(remoteSealersLimit)
-            .expireAfterWrite(SEALER_INFO_TTL, TimeUnit.MINUTES)
+            .expireAfterWrite(remoteSealersTimeToLive, TimeUnit.MINUTES)
             .build();
   }
 

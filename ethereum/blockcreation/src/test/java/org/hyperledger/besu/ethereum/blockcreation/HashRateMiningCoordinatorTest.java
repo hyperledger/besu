@@ -65,10 +65,9 @@ public class HashRateMiningCoordinatorTest {
   }
 
   @Test
-  public void test() throws InterruptedException {
+  public void test() {
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(blockchain, minerExecutor, syncState, 1000);
-    EthHashMiningCoordinator.i.set(0);
+        new EthHashMiningCoordinator(blockchain, minerExecutor, syncState, 1000, 10);
     for (int i = 0; i < startSealersSize; i++) {
       miningCoordinator.submitHashRate(UUID.randomUUID().toString(), 1L);
     }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.subcommands.blocks;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -246,7 +247,8 @@ public class BlocksSubCommand implements Runnable {
           "080c",
           Optional.of(new IncrementingNonceGenerator(0)),
           0.0,
-          DEFAULT_REMOTE_SEALERS_LIMIT);
+          DEFAULT_REMOTE_SEALERS_LIMIT,
+          DEFAULT_REMOTE_SEALERS_TTL);
     }
 
     private void importJsonBlocks(final BesuController controller, final Path path)

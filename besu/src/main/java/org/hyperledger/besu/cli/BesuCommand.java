@@ -731,6 +731,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
   private final Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
 
+  @Option(
+      names = {"--Xminer-remote-sealers-hashrate-ttl"},
+      description =
+          "pecifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
+  private final Integer remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_LIMIT;
+
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       hidden = true,
@@ -1328,7 +1334,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
             "--miner-stratum-enabled",
-            "--Xminer-remote-sealers-limit"));
+            "--Xminer-remote-sealers-limit",
+            "--Xminer-remote-sealers-hashrate-ttl"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1424,7 +1431,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumExtranonce,
                 Optional.empty(),
                 minBlockOccupancyRatio,
-                remoteSealersLimit))
+                remoteSealersLimit,
+                remoteSealersTimeToLive))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())

@@ -56,7 +56,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext.getBlockchain(),
             executor,
             syncState,
-            miningParameters.getRemoteSealersLimit());
+            miningParameters.getRemoteSealersLimit(),
+            miningParameters.getRemoteSealersTimeToLive());
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     miningCoordinator.setStratumMiningEnabled(miningParameters.isStratumMiningEnabled());
     if (miningParameters.isMiningEnabled()) {
