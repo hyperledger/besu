@@ -104,7 +104,7 @@ min-gas-price=1
 min-block-occupancy-ratio=0.7
 miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
-miner-remote-sealers-limit=1000
+Xminer-remote-sealers-limit=1000
 
 # Pruning
 pruning-enabled=true

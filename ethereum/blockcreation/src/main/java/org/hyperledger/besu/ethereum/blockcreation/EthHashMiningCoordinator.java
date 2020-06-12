@@ -59,7 +59,7 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
     this.sealerHashRate =
         CacheBuilder.newBuilder()
             .maximumSize(remoteSealersLimit)
-            .expireAfterWrite(SEALER_INFO_TTL, TimeUnit.SECONDS)
+            .expireAfterWrite(SEALER_INFO_TTL, TimeUnit.MINUTES)
             .build();
   }
 

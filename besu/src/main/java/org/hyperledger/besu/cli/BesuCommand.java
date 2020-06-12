@@ -1327,7 +1327,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
             "--miner-stratum-enabled",
-            "--miner-remote-sealers-limit"));
+            "--Xminer-remote-sealers-limit"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
