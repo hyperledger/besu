@@ -82,11 +82,7 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
   }
 
   private Optional<Long> remoteHashesPerSecond() {
-    return Optional.of(
-        sealerHashRate.asMap().values().stream()
-            .filter(sealerHashRate -> !sealerHashRate.equals(0L))
-            .mapToLong(Long::longValue)
-            .sum());
+    return Optional.of(sealerHashRate.asMap().values().stream().mapToLong(Long::longValue).sum());
   }
 
   private Optional<Long> localHashesPerSecond() {
