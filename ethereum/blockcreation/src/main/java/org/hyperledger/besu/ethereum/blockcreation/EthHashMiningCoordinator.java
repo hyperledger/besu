@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -24,12 +26,16 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
+
 /**
  * Responsible for determining when a block mining operation should be started/stopped, then
  * creating an appropriate miner and starting it running in a thread.
  */
 public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashBlockMiner>
     implements BlockAddedObserver {
+
+  private static final Logger LOG = getLogger();
 
   private final EthHashMinerExecutor executor;
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
@@ -47,6 +53,18 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
 
   public void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
     executor.setStratumMiningEnabled(stratumMiningEnabled);
+  }
+
+  @Override
+  protected void inSyncChanged(final boolean inSync) {
+    synchronized (this) {
+      if (inSync && startMiningIfPossible()) {
+        LOG.info("Resuming mining operations");
+      }
+      if (!inSync && haltCurrentMiningOperation()) {
+        LOG.info("Pausing mining while behind chain head");
+      }
+    }
   }
 
   @Override

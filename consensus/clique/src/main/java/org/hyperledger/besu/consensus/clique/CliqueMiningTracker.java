@@ -42,4 +42,8 @@ public class CliqueMiningTracker {
   public boolean blockCreatedLocally(final BlockHeader header) {
     return CliqueHelpers.getProposerOfBlock(header).equals(localAddress);
   }
+
+  public ProtocolContext getProtocolContext() {
+    return protocolContext;
+  }
 }

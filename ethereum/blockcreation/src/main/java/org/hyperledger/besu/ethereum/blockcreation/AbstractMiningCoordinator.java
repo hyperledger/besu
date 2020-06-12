@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMiningCoordinator<
@@ -46,13 +43,11 @@ public abstract class AbstractMiningCoordinator<
     STOPPED
   }
 
-  private static final Logger LOG = getLogger();
-
   private final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
   private final Subscribers<EthHashObserver> ethHashObservers = Subscribers.create();
   private final AbstractMinerExecutor<M> executor;
   private final SyncState syncState;
-  private final Blockchain blockchain;
+  protected final Blockchain blockchain;
 
   private State state = State.IDLE;
   private boolean isEnabled = false;
@@ -137,7 +132,7 @@ public abstract class AbstractMiningCoordinator<
     }
   }
 
-  private synchronized boolean startMiningIfPossible() {
+  protected synchronized boolean startMiningIfPossible() {
     if ((state != State.RUNNING) || !isEnabled || !syncState.isInSync() || isMining()) {
       return false;
     }
@@ -152,7 +147,7 @@ public abstract class AbstractMiningCoordinator<
         executor.startAsyncMining(minedBlockObservers, ethHashObservers, parentHeader);
   }
 
-  private synchronized boolean haltCurrentMiningOperation() {
+  protected synchronized boolean haltCurrentMiningOperation() {
     final AtomicBoolean wasHalted = new AtomicBoolean(false);
     currentRunningMiner.ifPresent(
         (miner) -> {
@@ -174,17 +169,6 @@ public abstract class AbstractMiningCoordinator<
           && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {
         haltCurrentMiningOperation();
         startMiningIfPossible();
-      }
-    }
-  }
-
-  void inSyncChanged(final boolean inSync) {
-    synchronized (this) {
-      if (inSync && startMiningIfPossible()) {
-        LOG.info("Resuming mining operations");
-      }
-      if (!inSync && haltCurrentMiningOperation()) {
-        LOG.info("Pausing mining while behind chain head");
       }
     }
   }
@@ -212,6 +196,8 @@ public abstract class AbstractMiningCoordinator<
   public Optional<Address> getCoinbase() {
     return executor.getCoinbase();
   }
+
+  protected abstract void inSyncChanged(final boolean inSync);
 
   protected abstract boolean newChainHeadInvalidatesMiningOperation(
       final BlockHeader newChainHeadHeader);
