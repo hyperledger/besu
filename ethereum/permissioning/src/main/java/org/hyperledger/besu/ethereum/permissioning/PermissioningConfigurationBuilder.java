@@ -33,7 +33,7 @@ public class PermissioningConfigurationBuilder {
       final Address address, final boolean smartContractPermissionedNodeEnabled) {
     SmartContractPermissioningConfiguration config = new SmartContractPermissioningConfiguration();
     config.setNodeSmartContractAddress(address);
-    config.setSmartContractNodeWhitelistEnabled(smartContractPermissionedNodeEnabled);
+    config.setSmartContractNodeAllowlistEnabled(smartContractPermissionedNodeEnabled);
     return config;
   }
 
@@ -78,7 +78,7 @@ public class PermissioningConfigurationBuilder {
                 .map(Object::toString)
                 .map(EnodeURL::asURI)
                 .collect(Collectors.toList());
-        permissioningConfiguration.setNodeWhitelist(nodesWhitelistToml);
+        permissioningConfiguration.setNodeAllowlist(nodesWhitelistToml);
       } else {
         throw new Exception(
             NODES_WHITELIST_KEY
@@ -119,7 +119,7 @@ public class PermissioningConfigurationBuilder {
                   throw new IllegalArgumentException("Invalid account " + s);
                 });
 
-        permissioningConfiguration.setAccountWhitelist(accountsWhitelistToml);
+        permissioningConfiguration.setAccountAllowlist(accountsWhitelistToml);
       } else {
         throw new Exception(
             ACCOUNTS_WHITELIST_KEY

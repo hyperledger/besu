@@ -52,11 +52,11 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
   }
 
   @Override
-  public void send(final MessageData message, final Collection<Address> blackList) {
+  public void send(final MessageData message, final Collection<Address> denylist) {
     if (gossipedMessageTracker.hasSeenMessage(message)) {
       return;
     }
-    multicaster.send(message, blackList);
+    multicaster.send(message, denylist);
     gossipedMessageTracker.addSeenMessage(message);
   }
 }

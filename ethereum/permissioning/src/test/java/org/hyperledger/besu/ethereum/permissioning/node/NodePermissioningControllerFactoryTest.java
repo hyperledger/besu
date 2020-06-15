@@ -78,7 +78,7 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration = new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
             Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
@@ -104,7 +104,7 @@ public class NodePermissioningControllerFactoryTest {
   @Test
   public void testCreateWithLocalNodePermissioningEnabledOnly() {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
-    localPermissioningConfig.setNodeWhitelist(Collections.emptyList());
+    localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
     config =
         new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
@@ -130,13 +130,13 @@ public class NodePermissioningControllerFactoryTest {
   @Test
   public void testCreateWithLocalNodeAndSmartContractPermissioningEnabled() {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
-    localPermissioningConfig.setNodeWhitelist(Collections.emptyList());
+    localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
 
     smartContractPermissioningConfiguration = new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
             Optional.of(localPermissioningConfig),
@@ -173,7 +173,7 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration = new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
             Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
@@ -196,7 +196,7 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration = new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
             Optional.empty(), Optional.of(smartContractPermissioningConfiguration));

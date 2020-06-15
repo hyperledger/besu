@@ -44,7 +44,7 @@ import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.RpcApisConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
-import org.hyperledger.besu.cli.custom.JsonRPCWhitelistHostsProperty;
+import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
@@ -692,12 +692,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String metricsPrometheusJob = "besu-client";
 
   @Option(
-      names = {"--host-whitelist"},
+      names = {"--host-allowlist", "--host-whitelist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to whitelist for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
-  private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
+  private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
       names = {"--logging", "-l"},
@@ -1369,13 +1369,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         ethNetworkConfig.getBootNodes().stream().map(EnodeURL::toURI).collect(Collectors.toList());
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(p -> ensureAllNodesAreInWhitelist(enodeURIs, p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
 
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
             p ->
-                ensureAllNodesAreInWhitelist(
+                ensureAllNodesAreInAllowlist(
                     staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
     metricsConfiguration = metricsConfiguration();
 
@@ -1389,11 +1389,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return network == null ? MAINNET : network;
   }
 
-  private void ensureAllNodesAreInWhitelist(
+  private void ensureAllNodesAreInAllowlist(
       final Collection<URI> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
     try {
-      PermissioningConfigurationValidator.areAllNodesAreInWhitelist(
+      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           enodeAddresses, permissioningConfiguration);
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage());
@@ -1462,7 +1462,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
     graphQLConfiguration.setHost(graphQLHttpHost);
     graphQLConfiguration.setPort(graphQLHttpPort);
-    graphQLConfiguration.setHostsWhitelist(hostsWhitelist);
+    graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
     graphQLConfiguration.setHttpTimeoutSec(httpTimeoutSec);
 
@@ -1508,7 +1508,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setPort(rpcHttpPort);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
+    jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
@@ -1631,7 +1631,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
     return webSocketConfiguration;
   }
@@ -1672,7 +1672,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pushHost(metricsPushHost)
         .pushPort(metricsPushPort)
         .pushInterval(metricsPushInterval)
-        .hostsWhitelist(hostsWhitelist)
+        .hostsAllowlist(hostsAllowlist)
         .prometheusJob(metricsPrometheusJob)
         .build();
   }
@@ -1724,7 +1724,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
       } else {
-        smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(
+        smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
             permissionsNodesContractEnabled);
         smartContractPermissioningConfiguration.setNodeSmartContractAddress(
             permissionsNodesContractAddress);
@@ -1741,7 +1741,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
       } else {
-        smartContractPermissioningConfiguration.setSmartContractAccountWhitelistEnabled(
+        smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
             permissionsAccountsContractEnabled);
         smartContractPermissioningConfiguration.setAccountSmartContractAddress(
             permissionsAccountsContractAddress);

@@ -58,7 +58,7 @@ public class UniqueMessageMulticasterTest {
   }
 
   @Test
-  public void messagesSentWithABlackListAreNotRetransmitted() {
+  public void messagesSentWithADenylistAreNotRetransmitted() {
     when(messageTracker.hasSeenMessage(messageSent)).thenReturn(false);
     uniqueMessageMulticaster.send(messageSent, emptyList());
     verify(multicaster, times(1)).send(messageSent, emptyList());
@@ -71,10 +71,10 @@ public class UniqueMessageMulticasterTest {
   }
 
   @Test
-  public void passedInBlackListIsPassedToUnderlyingValidator() {
-    final List<Address> blackList =
+  public void passedInDenylistIsPassedToUnderlyingValidator() {
+    final List<Address> denylist =
         Lists.newArrayList(AddressHelpers.ofValue(0), AddressHelpers.ofValue(1));
-    uniqueMessageMulticaster.send(messageSent, blackList);
-    verify(multicaster, times(1)).send(messageSent, blackList);
+    uniqueMessageMulticaster.send(messageSent, denylist);
+    verify(multicaster, times(1)).send(messageSent, denylist);
   }
 }

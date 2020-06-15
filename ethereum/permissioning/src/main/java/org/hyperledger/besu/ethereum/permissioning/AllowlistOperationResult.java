@@ -14,4 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-public class WhitelistFileSyncException extends Exception {}
+public enum AllowlistOperationResult {
+  SUCCESS,
+  ERROR_DUPLICATED_ENTRY,
+  ERROR_EMPTY_ENTRY,
+  ERROR_EXISTING_ENTRY,
+  ERROR_INVALID_ENTRY,
+  ERROR_ABSENT_ENTRY,
+  ERROR_FIXED_NODE_CANNOT_BE_REMOVED,
+  ERROR_WHITELIST_PERSIST_FAIL,
+  ERROR_WHITELIST_FILE_SYNC
+}

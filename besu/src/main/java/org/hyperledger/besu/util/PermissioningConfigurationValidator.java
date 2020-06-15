@@ -24,26 +24,26 @@ import java.util.stream.Collectors;
 
 public class PermissioningConfigurationValidator {
 
-  public static void areAllNodesAreInWhitelist(
+  public static void areAllNodesAreInAllowlist(
       final Collection<URI> nodeURIs,
       final LocalPermissioningConfiguration permissioningConfiguration)
       throws Exception {
 
-    if (permissioningConfiguration.isNodeWhitelistEnabled() && nodeURIs != null) {
-      final List<URI> whitelistNodesWithoutQueryParam =
-          permissioningConfiguration.getNodeWhitelist().stream()
+    if (permissioningConfiguration.isNodeAllowlistEnabled() && nodeURIs != null) {
+      final List<URI> allowlistNodesWithoutQueryParam =
+          permissioningConfiguration.getNodeAllowlist().stream()
               .map(PermissioningConfigurationValidator::removeQueryFromURI)
               .collect(Collectors.toList());
 
-      final List<URI> nodeURIsNotInWhitelist =
+      final List<URI> nodeURIsNotInAllowlist =
           nodeURIs.stream()
               .map(PermissioningConfigurationValidator::removeQueryFromURI)
-              .filter(uri -> !whitelistNodesWithoutQueryParam.contains(uri))
+              .filter(uri -> !allowlistNodesWithoutQueryParam.contains(uri))
               .collect(Collectors.toList());
 
-      if (!nodeURIsNotInWhitelist.isEmpty()) {
+      if (!nodeURIsNotInAllowlist.isEmpty()) {
         throw new Exception(
-            "Specified node(s) not in nodes-whitelist " + enodesAsStrings(nodeURIsNotInWhitelist));
+            "Specified node(s) not in nodes-whitelist " + enodesAsStrings(nodeURIsNotInAllowlist));
       }
     }
   }
@@ -63,8 +63,8 @@ public class PermissioningConfigurationValidator {
     }
   }
 
-  private static Collection<String> enodesAsStrings(final List<URI> bootnodesNotInWhitelist) {
-    return bootnodesNotInWhitelist
+  private static Collection<String> enodesAsStrings(final List<URI> enodes) {
+    return enodes
         .parallelStream()
         .map(URI::toASCIIString)
         .collect(Collectors.toList());

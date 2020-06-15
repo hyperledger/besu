@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 
 import java.util.Collections;
 import java.util.List;
@@ -146,7 +146,7 @@ public class PeerDiscoveryAgentTest {
 
   @Test
   public void shouldEvictPeerWhenPermissionsRevoked() {
-    final PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     final MockPeerDiscoveryAgent peerDiscoveryAgent1 = helper.startDiscoveryAgent();
     peerDiscoveryAgent1.start(BROADCAST_TCP_PORT).join();
     final DiscoveryPeer peer = peerDiscoveryAgent1.getAdvertisedPeer().get();
