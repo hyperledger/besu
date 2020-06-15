@@ -64,9 +64,6 @@ public class PermissioningConfigurationValidator {
   }
 
   private static Collection<String> enodesAsStrings(final List<URI> enodes) {
-    return enodes
-        .parallelStream()
-        .map(URI::toASCIIString)
-        .collect(Collectors.toList());
+    return enodes.parallelStream().map(URI::toASCIIString).collect(Collectors.toList());
   }
 }
