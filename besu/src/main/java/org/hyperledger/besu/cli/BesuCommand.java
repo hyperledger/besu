@@ -422,7 +422,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
-      names = {"--Xnat-manager-pod-name"},
+      names = {"--Xnat-kube-pod-name"},
       description =
           "Specify the name of the pod that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
   private String natManagerPodName = DEFAULT_BESU_POD_NAME_FILTER;
@@ -1321,7 +1321,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && !natManagerPodName.equals(DEFAULT_BESU_POD_NAME_FILTER)) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xnat-manager-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-manager-pod-name"
+          "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name"
               + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
     }
   }
