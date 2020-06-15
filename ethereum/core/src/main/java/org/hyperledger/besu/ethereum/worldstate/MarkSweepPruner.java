@@ -118,12 +118,12 @@ public class MarkSweepPruner {
               node.getValue().ifPresent(this::processAccountState);
             });
     markStopwatch.stop();
-    LOG.debug("Completed marking used nodes for pruning");
+    LOG.info("Completed marking used nodes for pruning");
   }
 
   public void sweepBefore(final long markedBlockNumber) {
     sweepOperationCounter.inc();
-    LOG.debug("Sweeping unused nodes");
+    LOG.info("Sweeping unused nodes");
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
     // storage
     long prunedNodeCount = 0;
@@ -146,7 +146,7 @@ public class MarkSweepPruner {
     prunedNodeCount += worldStateStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
     clearMarks();
-    LOG.debug("Completed sweeping unused nodes");
+    LOG.info("Completed sweeping unused nodes");
   }
 
   public void cleanup() {
@@ -213,12 +213,22 @@ public class MarkSweepPruner {
     }
   }
 
+  final Stopwatch stopwatch = Stopwatch.createUnstarted();
+
   private void flushPendingMarks() {
     markLock.lock();
     try {
       final KeyValueStorageTransaction transaction = markStorage.startTransaction();
       pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
+      final long flushSize = pendingMarks.size();
+      stopwatch.start();
       transaction.commit();
+      stopwatch.stop();
+      final long elapsed = stopwatch.elapsed().toMillis();
+      if (elapsed > 0) {
+        LOG.info("Flushed {} nodes: {}ms", flushSize, elapsed);
+      }
+      stopwatch.reset();
       pendingMarks.clear();
     } finally {
       markLock.unlock();
