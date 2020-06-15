@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -23,6 +25,11 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Responsible for determining when a block mining operation should be started/stopped, then
@@ -31,13 +38,27 @@ import java.util.Optional;
 public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashBlockMiner>
     implements BlockAddedObserver {
 
+  private static final Logger LOG = getLogger();
+
   private final EthHashMinerExecutor executor;
+
+  private final Cache<String, Long> sealerHashRate;
+
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
 
   public EthHashMiningCoordinator(
-      final Blockchain blockchain, final EthHashMinerExecutor executor, final SyncState syncState) {
+      final Blockchain blockchain,
+      final EthHashMinerExecutor executor,
+      final SyncState syncState,
+      final int remoteSealersLimit,
+      final long remoteSealersTimeToLive) {
     super(blockchain, executor, syncState);
     this.executor = executor;
+    this.sealerHashRate =
+        CacheBuilder.newBuilder()
+            .maximumSize(remoteSealersLimit)
+            .expireAfterWrite(remoteSealersTimeToLive, TimeUnit.MINUTES)
+            .build();
   }
 
   @Override
@@ -51,6 +72,18 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
 
   @Override
   public Optional<Long> hashesPerSecond() {
+    if (sealerHashRate.size() <= 0) {
+      return localHashesPerSecond();
+    } else {
+      return remoteHashesPerSecond();
+    }
+  }
+
+  private Optional<Long> remoteHashesPerSecond() {
+    return Optional.of(sealerHashRate.asMap().values().stream().mapToLong(Long::longValue).sum());
+  }
+
+  private Optional<Long> localHashesPerSecond() {
     final Optional<Long> currentHashesPerSecond =
         currentRunningMiner.flatMap(EthHashBlockMiner::getHashesPerSecond);
 
@@ -60,6 +93,16 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
     } else {
       return cachedHashesPerSecond;
     }
+  }
+
+  @Override
+  public boolean submitHashRate(final String id, final Long hashrate) {
+    if (hashrate == 0) {
+      return false;
+    }
+    LOG.info("Hashrate submitted id {} hashrate {}", id, hashrate);
+    sealerHashRate.put(id, hashrate);
+    return true;
   }
 
   @Override
