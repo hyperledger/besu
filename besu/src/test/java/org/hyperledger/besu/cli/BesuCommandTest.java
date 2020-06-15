@@ -1357,9 +1357,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
-            .contains(
-                    "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-
+        .contains(
+            "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
   }
 
   @Test
@@ -1368,9 +1367,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
-            .contains(
-                    "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-
+        .contains(
+            "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
   }
 
   @Test
