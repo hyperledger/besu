@@ -56,15 +56,13 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
   }
 
   @Override
-  protected void inSyncChanged(final boolean inSync) {
-    synchronized (this) {
-      if (inSync && startMiningIfPossible()) {
-        LOG.info("Resuming mining operations");
-      }
-      if (!inSync && haltCurrentMiningOperation()) {
-        LOG.info("Pausing mining while behind chain head");
-      }
-    }
+  public void onResumeMining() {
+    LOG.info("Resuming mining operations");
+  }
+
+  @Override
+  public void onPauseMining() {
+    LOG.info("Pausing mining while behind chain head");
   }
 
   @Override

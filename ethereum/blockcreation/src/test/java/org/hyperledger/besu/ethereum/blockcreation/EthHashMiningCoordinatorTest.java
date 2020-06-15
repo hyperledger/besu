@@ -17,9 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
@@ -78,38 +75,5 @@ public class EthHashMiningCoordinatorTest {
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate1);
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate1);
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate3);
-  }
-
-  @Test
-  public void shouldHaltMiningWhenBecomingOutOfSync() {
-    final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
-    when(executor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(miner));
-    when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.enable();
-    miningCoordinator.start();
-    verify(executor).startAsyncMining(any(), any(), any());
-
-    miningCoordinator.inSyncChanged(false);
-
-    verify(miner).cancel();
-    verify(miner).getHashesPerSecond();
-    verifyNoMoreInteractions(executor, miner);
-  }
-
-  @Test
-  public void shouldStartMiningWhenEnabledAndBecomeInSync() {
-    final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
-    when(syncState.isInSync()).thenReturn(false);
-    miningCoordinator.enable();
-    miningCoordinator.start();
-    verify(executor, never()).startAsyncMining(any(), any(), any());
-
-    when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.inSyncChanged(true);
-
-    verify(executor).startAsyncMining(any(), any(), any());
-    verifyNoMoreInteractions(executor, miner);
   }
 }

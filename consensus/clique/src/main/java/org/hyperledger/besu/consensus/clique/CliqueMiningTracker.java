@@ -35,15 +35,15 @@ public class CliqueMiningTracker {
     return localAddress.equals(nextProposer);
   }
 
+  public boolean isSigner(final BlockHeader header) {
+    return CliqueHelpers.isSigner(localAddress, protocolContext, header);
+  }
+
   public boolean canMakeBlockNextRound(final BlockHeader header) {
     return CliqueHelpers.addressIsAllowedToProduceNextBlock(localAddress, protocolContext, header);
   }
 
   public boolean blockCreatedLocally(final BlockHeader header) {
     return CliqueHelpers.getProposerOfBlock(header).equals(localAddress);
-  }
-
-  public ProtocolContext getProtocolContext() {
-    return protocolContext;
   }
 }

@@ -16,9 +16,7 @@ package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
-import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -42,26 +40,16 @@ public class CliqueMiningCoordinator extends AbstractMiningCoordinator<CliqueBlo
   }
 
   @Override
-  protected void inSyncChanged(final boolean inSync) {
-    synchronized (this) {
-      final VoteTally validatorProvider =
-          miningTracker
-              .getProtocolContext()
-              .getConsensusState(CliqueContext.class)
-              .getVoteTallyCache()
-              .getVoteTallyAfterBlock(blockchain.getChainHeadHeader());
-      final boolean isValidator =
-          getCoinbase()
-              .filter(coinbase -> validatorProvider.getValidators().contains(coinbase))
-              .isPresent();
+  public void onResumeMining() {
+    if (miningTracker.isSigner(blockchain.getChainHeadHeader())) {
+      LOG.info("Resuming block production operations");
+    }
+  }
 
-      if (inSync && startMiningIfPossible() && isValidator) {
-        LOG.info("Resuming mining operations");
-      }
-
-      if (!inSync && haltCurrentMiningOperation() && isValidator) {
-        LOG.info("Pausing mining while behind chain head");
-      }
+  @Override
+  public void onPauseMining() {
+    if (miningTracker.isSigner(blockchain.getChainHeadHeader())) {
+      LOG.info("Pausing block production while behind chain head");
     }
   }
 

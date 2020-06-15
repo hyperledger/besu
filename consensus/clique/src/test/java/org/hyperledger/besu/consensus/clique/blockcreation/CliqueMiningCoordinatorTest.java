@@ -22,7 +22,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
@@ -248,39 +247,5 @@ public class CliqueMiningCoordinatorTest {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerTestFixture, signer, validators);
     return new Block(header, new BlockBody(Lists.emptyList(), Lists.emptyList()));
-  }
-
-  @Test
-  public void shouldHaltMiningWhenBecomingOutOfSync() {
-    final CliqueMiningCoordinator coordinator =
-        new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
-    when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
-    when(syncState.isInSync()).thenReturn(true);
-    coordinator.enable();
-    coordinator.start();
-    verify(minerExecutor).startAsyncMining(any(), any(), any());
-
-    coordinator.inSyncChanged(false);
-
-    verify(blockMiner).cancel();
-    verify(minerExecutor).getCoinbase();
-    verifyNoMoreInteractions(minerExecutor, blockMiner);
-  }
-
-  @Test
-  public void shouldStartMiningWhenEnabledAndBecomeInSync() {
-    final CliqueMiningCoordinator coordinator =
-        new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
-    when(syncState.isInSync()).thenReturn(false);
-    coordinator.enable();
-    coordinator.start();
-    verify(minerExecutor, never()).startAsyncMining(any(), any(), any());
-
-    when(syncState.isInSync()).thenReturn(true);
-    coordinator.inSyncChanged(true);
-
-    verify(minerExecutor).getCoinbase();
-    verify(minerExecutor).startAsyncMining(any(), any(), any());
-    verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
 }

@@ -132,7 +132,7 @@ public abstract class AbstractMiningCoordinator<
     }
   }
 
-  protected synchronized boolean startMiningIfPossible() {
+  private synchronized boolean startMiningIfPossible() {
     if ((state != State.RUNNING) || !isEnabled || !syncState.isInSync() || isMining()) {
       return false;
     }
@@ -147,7 +147,7 @@ public abstract class AbstractMiningCoordinator<
         executor.startAsyncMining(minedBlockObservers, ethHashObservers, parentHeader);
   }
 
-  protected synchronized boolean haltCurrentMiningOperation() {
+  private synchronized boolean haltCurrentMiningOperation() {
     final AtomicBoolean wasHalted = new AtomicBoolean(false);
     currentRunningMiner.ifPresent(
         (miner) -> {
@@ -169,6 +169,17 @@ public abstract class AbstractMiningCoordinator<
           && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {
         haltCurrentMiningOperation();
         startMiningIfPossible();
+      }
+    }
+  }
+
+  void inSyncChanged(final boolean inSync) {
+    synchronized (this) {
+      if (inSync && startMiningIfPossible()) {
+        onResumeMining();
+      }
+      if (!inSync && haltCurrentMiningOperation()) {
+        onPauseMining();
       }
     }
   }
@@ -196,8 +207,6 @@ public abstract class AbstractMiningCoordinator<
   public Optional<Address> getCoinbase() {
     return executor.getCoinbase();
   }
-
-  protected abstract void inSyncChanged(final boolean inSync);
 
   protected abstract boolean newChainHeadInvalidatesMiningOperation(
       final BlockHeader newChainHeadHeader);
