@@ -778,7 +778,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
+          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
   private final Boolean pruningEnabled = false;
 
   @Option(
