@@ -78,6 +78,17 @@ public interface MiningCoordinator {
   }
 
   /**
+   * Allows to submit the hashrate of a sealer with a specific id
+   *
+   * @param id of the sealer
+   * @param hashrate of the sealer
+   * @return true if the hashrate has been added otherwise false
+   */
+  default boolean submitHashRate(final String id, final Long hashrate) {
+    return false;
+  }
+
+  /**
    * Creates a block if possible, otherwise return an empty result
    *
    * @param parentHeader The parent block's header

@@ -26,6 +26,8 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
@@ -724,6 +726,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Stratum port binding (default: ${DEFAULT-VALUE})")
   private final Integer stratumPort = 8008;
 
+  @Option(
+      names = {"--Xminer-remote-sealers-limit"},
+      description =
+          "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
+  private final Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
+
+  @Option(
+      names = {"--Xminer-remote-sealers-hashrate-ttl"},
+      description =
+          "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
+  private final Long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
+
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       hidden = true,
@@ -764,7 +778,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
+          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
   private final Boolean pruningEnabled = false;
 
   @Option(
@@ -1320,7 +1334,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--min-gas-price",
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
-            "--miner-stratum-enabled"));
+            "--miner-stratum-enabled",
+            "--Xminer-remote-sealers-limit",
+            "--Xminer-remote-sealers-hashrate-ttl"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1415,7 +1431,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumPort,
                 stratumExtranonce,
                 Optional.empty(),
-                minBlockOccupancyRatio))
+                minBlockOccupancyRatio,
+                remoteSealersLimit,
+                remoteSealersTimeToLive))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
