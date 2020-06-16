@@ -26,12 +26,12 @@ import java.util.Set;
 import io.vertx.core.impl.ConcurrentHashSet;
 import org.apache.tuweni.bytes.Bytes;
 
-public class PeerPermissionsBlacklist extends PeerPermissions {
+public class PeerPermissionsDenylist extends PeerPermissions {
   private static final int DEFAULT_INITIAL_CAPACITY = 20;
 
   private final Set<Bytes> blacklist;
 
-  private PeerPermissionsBlacklist(final int initialCapacity, final OptionalInt maxSize) {
+  private PeerPermissionsDenylist(final int initialCapacity, final OptionalInt maxSize) {
     if (maxSize.isPresent()) {
       blacklist =
           LimitedSet.create(initialCapacity, maxSize.getAsInt(), Mode.DROP_LEAST_RECENTLY_ACCESSED);
@@ -40,16 +40,16 @@ public class PeerPermissionsBlacklist extends PeerPermissions {
     }
   }
 
-  private PeerPermissionsBlacklist(final OptionalInt maxSize) {
+  private PeerPermissionsDenylist(final OptionalInt maxSize) {
     this(DEFAULT_INITIAL_CAPACITY, maxSize);
   }
 
-  public static PeerPermissionsBlacklist create() {
-    return new PeerPermissionsBlacklist(OptionalInt.empty());
+  public static PeerPermissionsDenylist create() {
+    return new PeerPermissionsDenylist(OptionalInt.empty());
   }
 
-  public static PeerPermissionsBlacklist create(final int maxSize) {
-    return new PeerPermissionsBlacklist(OptionalInt.of(maxSize));
+  public static PeerPermissionsDenylist create(final int maxSize) {
+    return new PeerPermissionsDenylist(OptionalInt.of(maxSize));
   }
 
   @Override

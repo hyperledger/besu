@@ -101,7 +101,7 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder jsonRpcEnabled() {
     this.jsonRpcConfiguration.setEnabled(true);
     this.jsonRpcConfiguration.setPort(0);
-    this.jsonRpcConfiguration.setHostsWhitelist(singletonList("*"));
+    this.jsonRpcConfiguration.setHostsAllowlist(singletonList("*"));
 
     return this;
   }
@@ -111,7 +111,7 @@ public class BesuNodeConfigurationBuilder {
         MetricsConfiguration.builder()
             .enabled(true)
             .port(0)
-            .hostsWhitelist(singletonList("*"))
+            .hostsAllowlist(singletonList("*"))
             .build();
 
     return this;
@@ -168,7 +168,7 @@ public class BesuNodeConfigurationBuilder {
     final WebSocketConfiguration config = WebSocketConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singletonList("*"));
+    config.setHostsAllowlist(Collections.singletonList("*"));
 
     this.webSocketConfiguration = config;
     return this;

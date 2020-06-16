@@ -56,20 +56,20 @@ public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTes
   }
 
   @Test
-  public void manipulatingAccountsWhitelistViaJsonRpc() {
+  public void manipulatingAccountsAllowlistViaJsonRpc() {
     Account beneficiary = accounts.createAccount("beneficiary");
     node.verify(beneficiary.balanceEquals(0));
 
     verifyTransferForbidden(senderB, beneficiary);
 
-    node.execute(permissioningTransactions.addAccountsToWhitelist(senderB.getAddress()));
-    node.verify(perm.expectAccountsWhitelist(senderA.getAddress(), senderB.getAddress()));
+    node.execute(permissioningTransactions.addAccountsToAllowlist(senderB.getAddress()));
+    node.verify(perm.expectAccountsAllowlist(senderA.getAddress(), senderB.getAddress()));
 
     node.execute(accountTransactions.createTransfer(senderB, beneficiary, 1));
     node.verify(beneficiary.balanceEquals(1));
 
-    node.execute(permissioningTransactions.removeAccountsFromWhitelist(senderB.getAddress()));
-    node.verify(perm.expectAccountsWhitelist(senderA.getAddress()));
+    node.execute(permissioningTransactions.removeAccountsFromAllowlist(senderB.getAddress()));
+    node.verify(perm.expectAccountsAllowlist(senderA.getAddress()));
     verifyTransferForbidden(senderB, beneficiary);
   }
 

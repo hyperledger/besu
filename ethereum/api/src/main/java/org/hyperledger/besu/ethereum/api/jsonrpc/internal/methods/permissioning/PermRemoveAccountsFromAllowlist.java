@@ -22,18 +22,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistOperationResult;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 
 import java.util.List;
 import java.util.Optional;
 
-public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
+public class PermRemoveAccountsFromAllowlist implements JsonRpcMethod {
 
-  private final Optional<AccountLocalConfigPermissioningController> whitelistController;
+  private final Optional<AccountLocalConfigPermissioningController> allowlistController;
 
-  public PermRemoveAccountsFromWhitelist(
-      final Optional<AccountLocalConfigPermissioningController> whitelistController) {
-    this.whitelistController = whitelistController;
+  public PermRemoveAccountsFromAllowlist(
+      final Optional<AccountLocalConfigPermissioningController> allowlistController) {
+    this.allowlistController = allowlistController;
   }
 
   @Override
@@ -45,9 +45,9 @@ public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
   @SuppressWarnings("unchecked")
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final List<String> accountsList = requestContext.getRequiredParameter(0, List.class);
-    if (whitelistController.isPresent()) {
-      final WhitelistOperationResult removeResult =
-          whitelistController.get().removeAccounts(accountsList);
+    if (allowlistController.isPresent()) {
+      final AllowlistOperationResult removeResult =
+          allowlistController.get().removeAccounts(accountsList);
 
       switch (removeResult) {
         case ERROR_EMPTY_ENTRY:

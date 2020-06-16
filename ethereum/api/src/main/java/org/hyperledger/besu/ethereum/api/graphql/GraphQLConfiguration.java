@@ -85,7 +85,7 @@ public class GraphQLConfiguration {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 
-  public void setHostsWhitelist(final List<String> hostsWhitelist) {
+  public void setHostsAllowlist(final List<String> hostsWhitelist) {
     checkNotNull(hostsWhitelist);
     this.hostsWhitelist = hostsWhitelist;
   }

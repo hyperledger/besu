@@ -29,8 +29,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistOperationResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,7 +110,7 @@ public class PermAddNodesToWhitelistTest {
             request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(eq(Lists.emptyList())))
-        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.ERROR_EMPTY_ENTRY));
+        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -125,7 +125,7 @@ public class PermAddNodesToWhitelistTest {
             request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(any()))
-        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY));
+        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -140,7 +140,7 @@ public class PermAddNodesToWhitelistTest {
             request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(eq(new ArrayList<>())))
-        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.ERROR_EMPTY_ENTRY));
+        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -153,7 +153,7 @@ public class PermAddNodesToWhitelistTest {
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
 
     when(nodeLocalConfigPermissioningController.addNodes(any()))
-        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.SUCCESS));
+        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -169,7 +169,7 @@ public class PermAddNodesToWhitelistTest {
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
 
     when(nodeLocalConfigPermissioningController.addNodes(any()))
-        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.SUCCESS));
+        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
 
     final JsonRpcResponse actual = method.response(request);
 

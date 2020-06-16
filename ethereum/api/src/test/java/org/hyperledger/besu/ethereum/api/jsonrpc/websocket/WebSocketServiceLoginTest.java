@@ -81,7 +81,7 @@ public class WebSocketServiceLoginTest {
     websocketConfiguration.setPort(0);
     websocketConfiguration.setAuthenticationEnabled(true);
     websocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
-    websocketConfiguration.setHostsWhitelist(Collections.singletonList("*"));
+    websocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(
