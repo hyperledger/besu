@@ -72,46 +72,26 @@ public class DatabaseMetadata {
     return privacyVersion;
   }
 
-  public static DatabaseMetadata lookUpFrom(final Path databaseDir, final Path dataDir)
-      throws IOException {
+  public static DatabaseMetadata lookUpFrom(final Path dataDir) throws IOException {
     LOG.info("Lookup database metadata file in data directory: {}", dataDir.toString());
-    File metadataFile = getDefaultMetadataFile(dataDir);
-    final boolean shouldLookupInDatabaseDir = !metadataFile.exists();
-    if (shouldLookupInDatabaseDir) {
-      LOG.info(
-          "Database metadata file not found in data directory. Lookup in database directory: {}",
-          databaseDir.toString());
-      metadataFile = getDefaultMetadataFile(databaseDir);
-    }
-    final DatabaseMetadata databaseMetadata = resolveDatabaseMetadata(metadataFile);
-    if (shouldLookupInDatabaseDir) {
-      LOG.warn(
-          "Database metadata file has been copied from old location (database directory). Be aware that the old file might be removed in future release.");
-      writeToDirectory(databaseMetadata, dataDir);
-    }
-    return databaseMetadata;
+    return resolveDatabaseMetadata(getDefaultMetadataFile(dataDir));
   }
 
-  public void writeToDirectory(final Path databaseDir) throws IOException {
-    writeToDirectory(this, databaseDir);
-  }
-
-  private static void writeToDirectory(
-      final DatabaseMetadata databaseMetadata, final Path databaseDir) throws IOException {
+  public void writeToDirectory(final Path dataDir) throws IOException {
     try {
-      final DatabaseMetadata curremtMetadata =
-          MAPPER.readValue(getDefaultMetadataFile(databaseDir), DatabaseMetadata.class);
-      if (curremtMetadata.maybePrivacyVersion().isPresent()) {
-        databaseMetadata.setPrivacyVersion(curremtMetadata.getPrivacyVersion());
+      final DatabaseMetadata currentMetadata =
+          MAPPER.readValue(getDefaultMetadataFile(dataDir), DatabaseMetadata.class);
+      if (currentMetadata.maybePrivacyVersion().isPresent()) {
+        setPrivacyVersion(currentMetadata.getPrivacyVersion());
       }
-      MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+      MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
     } catch (FileNotFoundException fnfe) {
-      MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+      MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
     }
   }
 
-  private static File getDefaultMetadataFile(final Path databaseDir) {
-    return databaseDir.resolve(METADATA_FILENAME).toFile();
+  private static File getDefaultMetadataFile(final Path dataDir) {
+    return dataDir.resolve(METADATA_FILENAME).toFile();
   }
 
   private static DatabaseMetadata resolveDatabaseMetadata(final File metadataFile)
