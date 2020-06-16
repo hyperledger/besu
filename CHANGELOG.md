@@ -1,6 +1,10 @@
 # Changelog
 
-## Breaking change upcoming in v1.5
+## 1.5 Breaking changes
+
+When upgrading to 1.5, ensure you've taken into account the following breaking changes. 
+
+### Docker users with volume mounts 
 
 To maintain best security practices, we're changing the `user:group` on the Docker container to `besu`.
 
@@ -19,17 +23,37 @@ UID because the username may not exist inside the docker container. Ensure the d
 is owned by that user.
 
 ### Remove Manual NAT method
-The NAT manager's `MANUAL` method has been removed. 
-It is now necessary to use the `NONE` method which has the same behavior.
 
-### Fast Sync by Default for Named Networks
-The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets is now FAST.
-The default is unchanged for private networks.
-This default is what most users want when they are syncing but if you want to full sync, you can still do so with `--sync-mode=FULL`
+The NAT manager `MANUAL` method has been removed. 
+If you have have been using the `MANUAL` method, use the `NONE` method instead. The behavior of the 
+`NONE` method is the same as the previously support `MANUAL` methods.
 
-## Upcoming 1.5 release 
+### Privacy users 
 
-The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
+Besu minor version upgrades require upgrading Orion to the latest minor version. That is, for 
+Besu <> Orion node pairs, when upgrading Besu to v1.5, it is required that Orion is upgraded to 
+v1.6. Older versions of Orion will no longer work with Besu v1.5.  
+
+## 1.5 
+
+### Additions and Improvements 
+
+- The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets, is now `FAST`.
+  The default is unchanged for private networks. That is, the sync mode defaults to `FULL` for private networks. 
+  Use the [`--sync-mode` command line option](https://besu.hyperledger.org/Reference/CLI/CLI-Syntax/#sync-mode) to change the sync mode. [\#384](https://github.com/hyperledger/besu/pull/384)
+
+### Bug fixes 
+
+### Known Issues 
+
+Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+
+#### Previously identified known issues
+ 
+- [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
 ## 1.4.6
 
