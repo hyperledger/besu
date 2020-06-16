@@ -399,7 +399,7 @@ public final class RunnerTest {
     final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
     configuration.setPort(0);
     configuration.setEnabled(true);
-    configuration.setHostsWhitelist(Collections.singletonList("*"));
+    configuration.setHostsAllowlist(Collections.singletonList("*"));
     return configuration;
   }
 
@@ -414,7 +414,7 @@ public final class RunnerTest {
     final WebSocketConfiguration configuration = WebSocketConfiguration.createDefault();
     configuration.setPort(0);
     configuration.setEnabled(true);
-    configuration.setHostsWhitelist(Collections.singletonList("*"));
+    configuration.setHostsAllowlist(Collections.singletonList("*"));
     return configuration;
   }
 

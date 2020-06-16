@@ -72,7 +72,7 @@ import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -343,7 +343,7 @@ public class RunnerBuilder {
             .setFractionRemoteWireConnectionsAllowed(fractionRemoteConnectionsAllowed);
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
-    final PeerPermissionsBlacklist bannedNodes = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
 
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();

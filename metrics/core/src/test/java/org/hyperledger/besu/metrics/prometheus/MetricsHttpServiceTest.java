@@ -66,7 +66,7 @@ public class MetricsHttpServiceTest {
   }
 
   private static MetricsConfiguration.Builder createMetricsConfigBuilder() {
-    return MetricsConfiguration.builder().enabled(true).port(0).hostsWhitelist(singletonList("*"));
+    return MetricsConfiguration.builder().enabled(true).port(0).hostsAllowlist(singletonList("*"));
   }
 
   /** Tears down the HTTP server. */

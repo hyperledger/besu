@@ -58,12 +58,12 @@ public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBa
   }
 
   @Test
-  public void permissionedNodeShouldDisconnectFromNodeRemovedFromWhitelist() {
+  public void permissionedNodeShouldDisconnectFromNodeRemovedFromAllowlist() {
     permissionedNode.verify(net.awaitPeerCount(2));
 
-    // remove node from the whitelist
-    permissionedNode.verify(perm.removeNodesFromWhitelist(allowedNode));
-    permissionedNode.verify(perm.getNodesWhitelist(1));
+    // remove node from the allowlist
+    permissionedNode.verify(perm.removeNodesFromAllowlist(allowedNode));
+    permissionedNode.verify(perm.getNodesAllowlist(1));
 
     permissionedNode.verify(net.awaitPeerCount(1));
   }
@@ -72,9 +72,9 @@ public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBa
   public void forbiddenNodeAddedToWhitelistCanConnectToPermissionedNode() {
     permissionedNode.verify(net.awaitPeerCount(2));
 
-    // add node to the whitelist
-    permissionedNode.verify(perm.addNodesToWhitelist(forbiddenNode));
-    permissionedNode.verify(perm.getNodesWhitelist(3));
+    // add node to the allowlist
+    permissionedNode.verify(perm.addNodesToAllowlist(forbiddenNode));
+    permissionedNode.verify(perm.getNodesAllowlist(3));
 
     permissionedNode.verify(admin.addPeer(forbiddenNode));
     permissionedNode.verify(net.awaitPeerCount(3));
