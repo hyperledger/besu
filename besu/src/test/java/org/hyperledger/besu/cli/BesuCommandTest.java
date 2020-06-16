@@ -31,6 +31,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
@@ -1330,6 +1331,47 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void natManagerPodNamePropertyDefaultIsBesu() {
+    parseCommand();
+
+    verify(mockRunnerBuilder).natManagerPodName(eq(DEFAULT_BESU_POD_NAME_FILTER));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natManagerPodNamePropertyIsCorrectlyUpdated() {
+    final String podName = "besu-updated";
+    parseCommand("--Xnat-kube-pod-name", podName);
+
+    verify(mockRunnerBuilder).natManagerPodName(eq(podName));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natManagerPodNameCannotBeUsedWithNatDockerMethod() {
+    parseCommand("--nat-method", "DOCKER", "--Xnat-kube-pod-name", "besu-updated");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+  }
+
+  @Test
+  public void natManagerPodNameCannotBeUsedWithNatNoneMethod() {
+    parseCommand("--nat-method", "NONE", "--Xnat-kube-pod-name", "besu-updated");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+  }
+
+  @Test
   public void rpcHttpEnabledPropertyDefaultIsFalse() {
     parseCommand();
 
@@ -1961,7 +2003,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpCorsOriginsEmtyValueFails() {
+  public void rpcHttpCorsOriginsEmptyValueFails() {
     parseCommand("--rpc-http-cors-origins=");
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
