@@ -1961,7 +1961,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpCorsOriginsEmtyValueFails() {
+  public void rpcHttpCorsOriginsEmptyValueFails() {
     parseCommand("--rpc-http-cors-origins=");
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
