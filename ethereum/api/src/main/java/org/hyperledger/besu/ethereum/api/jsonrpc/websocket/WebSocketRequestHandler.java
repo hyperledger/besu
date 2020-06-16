@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
+import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -102,6 +103,9 @@ public class WebSocketRequestHandler {
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug("Invalid Params", e);
         future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS));
+      } catch (final RpcMethodTimeoutException e) {
+        LOG.error(JsonRpcError.TIMEOUT_ERROR.getMessage(), e);
+        future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.TIMEOUT_ERROR));
       } catch (final Exception e) {
         LOG.error(JsonRpcError.INTERNAL_ERROR.getMessage(), e);
         future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));

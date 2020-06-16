@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
+import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -584,6 +585,9 @@ public class BlockchainQueries {
         currentStep = nextStep;
       }
       return result;
+    } catch (RpcMethodTimeoutException e) {
+      LOG.error("Error retrieving matching logs", e);
+      throw e;
     } catch (Exception e) {
       LOG.error("Error retrieving matching logs", e);
       throw new RuntimeException(e);

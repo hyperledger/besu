@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
+import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
+
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -41,7 +43,7 @@ public class BackendQuery {
     if (!alive.get()) {
       LOG.warn(
           "Zombie backend query detected [ {} ], aborting process.", taskName.orElse("unnamed"));
-      throw new RuntimeException("Timeout expired");
+      throw new RpcMethodTimeoutException();
     }
     return task.call();
   }
