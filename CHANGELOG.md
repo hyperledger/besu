@@ -26,7 +26,7 @@ is owned by that user.
 
 The NAT manager `MANUAL` method has been removed. 
 If you have have been using the `MANUAL` method, use the `NONE` method instead. The behavior of the 
-`NONE` method is the same as the previously support `MANUAL` methods.
+`NONE` method is the same as the previously supported `MANUAL` methods.
 
 ### Privacy users 
 
