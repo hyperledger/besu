@@ -59,7 +59,7 @@ public class NodeConfigurationFactory {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
-    config.setHostsWhitelist(singletonList("*"));
+    config.setHostsAllowlist(singletonList("*"));
     return config;
   }
 

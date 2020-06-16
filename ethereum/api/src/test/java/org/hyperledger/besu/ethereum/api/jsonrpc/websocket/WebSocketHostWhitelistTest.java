@@ -116,21 +116,21 @@ public class WebSocketHostWhitelistTest {
 
   @Test
   public void websocketRequestWithAnyHostnameAndWildcardConfigIsAccepted() {
-    webSocketConfiguration.setHostsWhitelist(Collections.singletonList("*"));
+    webSocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("ally"))).isTrue();
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("foe"))).isTrue();
   }
 
   @Test
   public void httpRequestWithAnyHostnameAndWildcardConfigIsAccepted(final TestContext context) {
-    webSocketConfiguration.setHostsWhitelist(Collections.singletonList("*"));
+    webSocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
     doHttpRequestAndVerify(context, "ally", 400);
     doHttpRequestAndVerify(context, "foe", 400);
   }
 
   @Test
   public void websocketRequestWithWhitelistedHostIsAccepted() {
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsWhitelist);
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("ally"))).isTrue();
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("ally:12345"))).isTrue();
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("friend"))).isTrue();
@@ -138,7 +138,7 @@ public class WebSocketHostWhitelistTest {
 
   @Test
   public void httpRequestWithWhitelistedHostIsAccepted(final TestContext context) {
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsWhitelist);
     doHttpRequestAndVerify(context, "ally", 400);
     doHttpRequestAndVerify(context, "ally:12345", 400);
     doHttpRequestAndVerify(context, "friend", 400);
@@ -146,20 +146,20 @@ public class WebSocketHostWhitelistTest {
 
   @Test
   public void websocketRequestWithUnknownHostIsRejected() {
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsWhitelist);
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("foe"))).isFalse();
   }
 
   @Test
   public void httpRequestWithUnknownHostIsRejected(final TestContext context) {
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsWhitelist);
     doHttpRequestAndVerify(context, "foe", 403);
   }
 
   @Test
   public void websocketRequestWithMalformedHostIsRejected() {
     webSocketConfiguration.setAuthenticationEnabled(false);
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsWhitelist);
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("ally:friend"))).isFalse();
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("ally:123456"))).isFalse();
     assertThat(websocketService.hasWhitelistedHostnameHeader(Optional.of("ally:friend:1234")))
@@ -169,7 +169,7 @@ public class WebSocketHostWhitelistTest {
   @Test
   public void httpRequestWithMalformedHostIsRejected(final TestContext context) {
     webSocketConfiguration.setAuthenticationEnabled(false);
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsWhitelist);
     doHttpRequestAndVerify(context, "ally:friend", 403);
     doHttpRequestAndVerify(context, "ally:123456", 403);
     doHttpRequestAndVerify(context, "ally:friend:1234", 403);

@@ -30,10 +30,8 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -113,7 +111,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
               try {
                 final ReceiveResponse receiveResponse = enclave.receive(addKey.toBase64String());
                 final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
-                    deserializeAddToGroupPayload(
+                    PrivateTransactionWithMetadata.readListFromPayload(
                         Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())));
                 final Bytes32 privacyGroupId =
                     Bytes32.wrap(
@@ -214,18 +212,5 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       }
     }
     return actualList;
-  }
-
-  private List<PrivateTransactionWithMetadata> deserializeAddToGroupPayload(
-      final Bytes encodedAddToGroupPayload) {
-    final ArrayList<PrivateTransactionWithMetadata> deserializedResponse = new ArrayList<>();
-    final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(encodedAddToGroupPayload, false);
-    final int noOfEntries = bytesValueRLPInput.enterList();
-    for (int i = 0; i < noOfEntries; i++) {
-      deserializedResponse.add(PrivateTransactionWithMetadata.readFrom(bytesValueRLPInput));
-    }
-    bytesValueRLPInput.leaveList();
-    return deserializedResponse;
   }
 }

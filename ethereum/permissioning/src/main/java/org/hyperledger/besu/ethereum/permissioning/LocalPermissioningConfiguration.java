@@ -20,48 +20,48 @@ import java.util.Collection;
 import java.util.List;
 
 public class LocalPermissioningConfiguration {
-  private List<URI> nodeWhitelist;
-  private List<String> accountWhitelist;
-  private boolean nodeWhitelistEnabled;
+  private List<URI> nodeAllowlist;
+  private List<String> accountAllowlist;
+  private boolean nodeAllowlistEnabled;
   private String nodePermissioningConfigFilePath;
-  private boolean accountWhitelistEnabled;
+  private boolean accountAllowlistEnabled;
   private String accountPermissioningConfigFilePath;
 
-  public List<URI> getNodeWhitelist() {
-    return nodeWhitelist;
+  public List<URI> getNodeAllowlist() {
+    return nodeAllowlist;
   }
 
   public static LocalPermissioningConfiguration createDefault() {
     final LocalPermissioningConfiguration config = new LocalPermissioningConfiguration();
-    config.nodeWhitelist = new ArrayList<>();
-    config.accountWhitelist = new ArrayList<>();
+    config.nodeAllowlist = new ArrayList<>();
+    config.accountAllowlist = new ArrayList<>();
     return config;
   }
 
-  public void setNodeWhitelist(final Collection<URI> nodeWhitelist) {
-    if (nodeWhitelist != null) {
-      this.nodeWhitelist.addAll(nodeWhitelist);
-      this.nodeWhitelistEnabled = true;
+  public void setNodeAllowlist(final Collection<URI> nodeAllowlist) {
+    if (nodeAllowlist != null) {
+      this.nodeAllowlist.addAll(nodeAllowlist);
+      this.nodeAllowlistEnabled = true;
     }
   }
 
-  public boolean isNodeWhitelistEnabled() {
-    return nodeWhitelistEnabled;
+  public boolean isNodeAllowlistEnabled() {
+    return nodeAllowlistEnabled;
   }
 
-  public List<String> getAccountWhitelist() {
-    return accountWhitelist;
+  public List<String> getAccountAllowlist() {
+    return accountAllowlist;
   }
 
-  public void setAccountWhitelist(final Collection<String> accountWhitelist) {
-    if (accountWhitelist != null) {
-      this.accountWhitelist.addAll(accountWhitelist);
-      this.accountWhitelistEnabled = true;
+  public void setAccountAllowlist(final Collection<String> accountAllowlist) {
+    if (accountAllowlist != null) {
+      this.accountAllowlist.addAll(accountAllowlist);
+      this.accountAllowlistEnabled = true;
     }
   }
 
-  public boolean isAccountWhitelistEnabled() {
-    return accountWhitelistEnabled;
+  public boolean isAccountAllowlistEnabled() {
+    return accountAllowlistEnabled;
   }
 
   public String getNodePermissioningConfigFilePath() {

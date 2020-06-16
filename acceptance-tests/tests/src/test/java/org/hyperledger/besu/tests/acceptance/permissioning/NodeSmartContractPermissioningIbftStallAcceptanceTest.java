@@ -41,7 +41,7 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
     // make sure we are producing blocks before sending any transactions
     waitForBlockHeight(bootnode, 1);
 
-    // update onchain smart contract to whitelist nodes
+    // allow nodes in onchain smart contract
     nodeA.execute(allowNode(bootnode));
     nodeA.execute(allowNode(nodeA));
     nodeA.execute(allowNode(nodeB));
@@ -56,7 +56,7 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
     // Create permissioning config
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         new SmartContractPermissioningConfiguration();
-    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString(CONTRACT_ADDRESS));
     final PermissioningConfiguration permissioningConfiguration =

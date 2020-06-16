@@ -64,11 +64,11 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     final String defaultValue;
 
     // Convert config values to the right string representation for default string value
-    if (optionSpec.type().equals(Boolean.class)) {
+    if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(boolean.class)) {
       defaultValue = getBooleanEntryAsString(optionSpec);
     } else if (optionSpec.isMultiValue() || isArray) {
       defaultValue = getListEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Integer.class)) {
+    } else if (optionSpec.type().equals(Integer.class) || optionSpec.type().equals(int.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Wei.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);

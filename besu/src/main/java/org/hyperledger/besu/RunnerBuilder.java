@@ -72,7 +72,7 @@ import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -136,6 +136,7 @@ public class RunnerBuilder {
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
   private NatMethod natMethod = NatMethod.AUTO;
+  private String natManagerPodName;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -203,6 +204,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder natMethod(final NatMethod natMethod) {
     this.natMethod = natMethod;
+    return this;
+  }
+
+  public RunnerBuilder natManagerPodName(final String natManagerPodName) {
+    this.natManagerPodName = natManagerPodName;
     return this;
   }
 
@@ -337,7 +343,7 @@ public class RunnerBuilder {
             .setFractionRemoteWireConnectionsAllowed(fractionRemoteConnectionsAllowed);
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
-    final PeerPermissionsBlacklist bannedNodes = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
 
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
@@ -417,6 +423,7 @@ public class RunnerBuilder {
           Optional.of(
               new StratumServer(
                   vertx,
+                  miningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
                   miningParameters.getStratumExtranonce()));
@@ -630,7 +637,7 @@ public class RunnerBuilder {
         return Optional.of(
             new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case KUBERNETES:
-        return Optional.of(new KubernetesNatManager());
+        return Optional.of(new KubernetesNatManager(natManagerPodName));
       case NONE:
       default:
         return Optional.empty();

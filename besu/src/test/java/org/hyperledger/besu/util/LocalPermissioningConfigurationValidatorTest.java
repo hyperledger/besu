@@ -41,7 +41,7 @@ public class LocalPermissioningConfigurationValidatorTest {
   static final String PERMISSIONING_CONFIG = "/permissioning_config.toml";
 
   @Test
-  public void ropstenWithNodesWhitelistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
+  public void ropstenWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
       throws Exception {
 
     EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
@@ -56,12 +56,12 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     final List<URI> enodeURIs =
         ethNetworkConfig.getBootNodes().stream().map(EnodeURL::toURI).collect(Collectors.toList());
-    PermissioningConfigurationValidator.areAllNodesAreInWhitelist(
+    PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
         enodeURIs, permissioningConfiguration);
   }
 
   @Test
-  public void nodesWhitelistOptionWhichDoesNotIncludeBootnodesMustError() throws Exception {
+  public void nodesAllowlistOptionWhichDoesNotIncludeBootnodesMustError() throws Exception {
 
     EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
 
@@ -79,7 +79,7 @@ public class LocalPermissioningConfigurationValidatorTest {
           ethNetworkConfig.getBootNodes().stream()
               .map(EnodeURL::toURI)
               .collect(Collectors.toList());
-      PermissioningConfigurationValidator.areAllNodesAreInWhitelist(
+      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           enodeURIs, permissioningConfiguration);
       fail("expected exception because ropsten bootnodes are not in node-whitelist");
     } catch (Exception e) {
@@ -94,7 +94,7 @@ public class LocalPermissioningConfigurationValidatorTest {
   }
 
   @Test
-  public void nodeWhitelistCheckShouldIgnoreDiscoveryPortParam() throws Exception {
+  public void nodeAllowlistCheckShouldIgnoreDiscoveryPortParam() throws Exception {
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG);
     final Path toml = Files.createTempFile("toml", "");
     toml.toFile().deleteOnExit();
@@ -110,17 +110,17 @@ public class LocalPermissioningConfigurationValidatorTest {
             "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567?discport=30303");
 
     // In an URI comparison the URLs should not match
-    boolean isInWhitelist = permissioningConfiguration.getNodeWhitelist().contains(enodeURL);
-    assertThat(isInWhitelist).isFalse();
+    boolean isInAllowlist = permissioningConfiguration.getNodeAllowlist().contains(enodeURL);
+    assertThat(isInAllowlist).isFalse();
 
-    // However, for the whitelist validation, we should ignore the discovery port and don't throw an
+    // However, for the allowlist validation, we should ignore the discovery port and don't throw an
     // error
     try {
-      PermissioningConfigurationValidator.areAllNodesAreInWhitelist(
+      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           Lists.newArrayList(enodeURL), permissioningConfiguration);
     } catch (Exception e) {
       fail(
-          "Exception not expected. Validation of nodes in whitelist should ignore the optional discovery port param.");
+          "Exception not expected. Validation of nodes in allowlist should ignore the optional discovery port param.");
     }
   }
 }

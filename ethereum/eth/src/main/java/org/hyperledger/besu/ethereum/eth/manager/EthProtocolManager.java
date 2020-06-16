@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager.ForkId;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -271,7 +270,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
 
     final Capability cap = connection.capability(getSupportedProtocol());
-    final ForkId latestForkId = cap.getVersion() >= 64 ? forkIdManager.getLatestForkId() : null;
+    final ForkId latestForkId = cap.getVersion() >= 64 ? forkIdManager.computeForkId() : null;
     // TODO: look to consolidate code below if possible
     // making status non-final and implementing it above would be one way.
     final StatusMessage status =

@@ -68,17 +68,12 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
     if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
       return mapOf(
           new PrivGetTransactionReceipt(
-              getBlockchainQueries(),
-              getPrivacyParameters(),
+              getPrivacyParameters().getPrivateStateStorage(),
               privacyController,
               enclavePublicKeyProvider),
           new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
           new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider),
-          new PrivGetPrivateTransaction(
-              getBlockchainQueries(),
-              privacyController,
-              getPrivacyParameters().getPrivateStateStorage(),
-              enclavePublicKeyProvider),
+          new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider),
           new PrivDistributeRawTransaction(
               privacyController,
               enclavePublicKeyProvider,
@@ -97,8 +92,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
     } else {
       return mapOf(
           new PrivGetTransactionReceipt(
-              getBlockchainQueries(),
-              getPrivacyParameters(),
+              getPrivacyParameters().getPrivateStateStorage(),
               privacyController,
               enclavePublicKeyProvider),
           new PrivCreatePrivacyGroup(privacyController, enclavePublicKeyProvider),
@@ -106,11 +100,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
           new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider),
           new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
           new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider),
-          new PrivGetPrivateTransaction(
-              getBlockchainQueries(),
-              privacyController,
-              getPrivacyParameters().getPrivateStateStorage(),
-              enclavePublicKeyProvider),
+          new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider),
           new PrivDistributeRawTransaction(
               privacyController,
               enclavePublicKeyProvider,

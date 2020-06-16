@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistOperationResult;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +47,7 @@ public class PermAddAccountsToWhitelist implements JsonRpcMethod {
     final List<String> accountsList = requestContext.getRequiredParameter(0, List.class);
 
     if (whitelistController.isPresent()) {
-      final WhitelistOperationResult addResult =
+      final AllowlistOperationResult addResult =
           whitelistController.get().addAccounts(accountsList);
 
       switch (addResult) {

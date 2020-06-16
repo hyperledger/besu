@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
@@ -201,7 +201,7 @@ public class P2PNetworkTest {
 
   @Test
   public void rejectIncomingConnectionFromBlacklistedPeer() throws Exception {
-    final PeerPermissionsBlacklist localBlacklist = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist localBlacklist = PeerPermissionsDenylist.create();
 
     try (final P2PNetwork localNetwork = builder().peerPermissions(localBlacklist).build();
         final P2PNetwork remoteNetwork = builder().build()) {
