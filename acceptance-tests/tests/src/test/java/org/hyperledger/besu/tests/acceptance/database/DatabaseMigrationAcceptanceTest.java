@@ -16,6 +16,7 @@
 package org.hyperledger.besu.tests.acceptance.database;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -34,7 +35,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -79,7 +79,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         "Before versioning was enabled",
         "version0",
         0xA,
-        Arrays.asList(
+        singletonList(
             new AccountData(
                 "0xd1aeb42885a43b72b518182ef893125814811048",
                 BigInteger.valueOf(0xA),
@@ -89,7 +89,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         "After versioning was enabled and using multiple RocksDB columns",
         "version1",
         0xA,
-        Arrays.asList(
+        singletonList(
             new AccountData(
                 "0xd1aeb42885a43b72b518182ef893125814811048",
                 BigInteger.valueOf(0xA),

@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistOperationResult;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,14 +41,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PermRemoveAccountsFromWhitelistTest {
+public class PermRemoveAccountsFromAllowlistTest {
 
   @Mock private AccountLocalConfigPermissioningController accountWhitelist;
-  private PermRemoveAccountsFromWhitelist method;
+  private PermRemoveAccountsFromAllowlist method;
 
   @Before
   public void before() {
-    method = new PermRemoveAccountsFromWhitelist(java.util.Optional.of(accountWhitelist));
+    method = new PermRemoveAccountsFromAllowlist(java.util.Optional.of(accountWhitelist));
   }
 
   @Test
@@ -61,7 +61,7 @@ public class PermRemoveAccountsFromWhitelistTest {
     List<String> accounts = Arrays.asList("0x0", "0x1");
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null);
     when(accountWhitelist.removeAccounts(eq(accounts)))
-        .thenReturn(WhitelistOperationResult.SUCCESS);
+        .thenReturn(AllowlistOperationResult.SUCCESS);
 
     JsonRpcResponse actualResponse = method.response(request(accounts));
 
@@ -73,7 +73,7 @@ public class PermRemoveAccountsFromWhitelistTest {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
     when(accountWhitelist.removeAccounts(any()))
-        .thenReturn(WhitelistOperationResult.ERROR_INVALID_ENTRY);
+        .thenReturn(AllowlistOperationResult.ERROR_INVALID_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
@@ -85,7 +85,7 @@ public class PermRemoveAccountsFromWhitelistTest {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_ABSENT_ENTRY);
     when(accountWhitelist.removeAccounts(any()))
-        .thenReturn(WhitelistOperationResult.ERROR_ABSENT_ENTRY);
+        .thenReturn(AllowlistOperationResult.ERROR_ABSENT_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
@@ -97,7 +97,7 @@ public class PermRemoveAccountsFromWhitelistTest {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
     when(accountWhitelist.removeAccounts(any()))
-        .thenReturn(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
+        .thenReturn(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
@@ -110,7 +110,7 @@ public class PermRemoveAccountsFromWhitelistTest {
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
 
     when(accountWhitelist.removeAccounts(eq(new ArrayList<>())))
-        .thenReturn(WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+        .thenReturn(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 

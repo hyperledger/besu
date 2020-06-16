@@ -118,14 +118,14 @@ public class GraphQLHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithAnyHostnameAndWildcardConfigIsAccepted() throws IOException {
-    graphQLConfig.setHostsWhitelist(Collections.singletonList("*"));
+    graphQLConfig.setHostsAllowlist(Collections.singletonList("*"));
     Assertions.assertThat(doRequest("ally")).isEqualTo(200);
     Assertions.assertThat(doRequest("foe")).isEqualTo(200);
   }
 
   @Test
   public void requestWithWhitelistedHostIsAccepted() throws IOException {
-    graphQLConfig.setHostsWhitelist(hostsWhitelist);
+    graphQLConfig.setHostsAllowlist(hostsWhitelist);
     Assertions.assertThat(doRequest("ally")).isEqualTo(200);
     Assertions.assertThat(doRequest("ally:12345")).isEqualTo(200);
     Assertions.assertThat(doRequest("friend")).isEqualTo(200);
@@ -133,7 +133,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithUnknownHostIsRejected() throws IOException {
-    graphQLConfig.setHostsWhitelist(hostsWhitelist);
+    graphQLConfig.setHostsAllowlist(hostsWhitelist);
     Assertions.assertThat(doRequest("foe")).isEqualTo(403);
   }
 
@@ -151,7 +151,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithMalformedHostIsRejected() throws IOException {
-    graphQLConfig.setHostsWhitelist(hostsWhitelist);
+    graphQLConfig.setHostsAllowlist(hostsWhitelist);
     Assertions.assertThat(doRequest("ally:friend")).isEqualTo(403);
     Assertions.assertThat(doRequest("ally:123456")).isEqualTo(403);
     Assertions.assertThat(doRequest("ally:friend:1234")).isEqualTo(403);

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -31,9 +31,9 @@ public class PeerReputationManager implements DisconnectCallback {
   private static final Set<DisconnectReason> remotelyTriggeredDisconnectReasons =
       ImmutableSet.of(DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION);
 
-  private final PeerPermissionsBlacklist blacklist;
+  private final PeerPermissionsDenylist blacklist;
 
-  public PeerReputationManager(final PeerPermissionsBlacklist blacklist) {
+  public PeerReputationManager(final PeerPermissionsDenylist blacklist) {
     this.blacklist = blacklist;
   }
 

@@ -61,11 +61,11 @@ public class LocalPermissioningConfigurationBuilderTest {
 
     LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
 
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist())
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getAccountAllowlist())
         .containsExactly("0x0000000000000000000000000000000000000009");
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist())
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist())
         .containsExactly(URI.create(uri), URI.create(uri2));
   }
 
@@ -80,9 +80,9 @@ public class LocalPermissioningConfigurationBuilderTest {
         PermissioningConfigurationBuilder.permissioningConfiguration(
             true, toml.toAbsolutePath().toString(), false, toml.toAbsolutePath().toString());
 
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isFalse();
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist()).containsExactly(URI.create(uri));
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isFalse();
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist()).containsExactly(URI.create(uri));
   }
 
   @Test
@@ -94,9 +94,9 @@ public class LocalPermissioningConfigurationBuilderTest {
         PermissioningConfigurationBuilder.permissioningConfiguration(
             false, toml.toAbsolutePath().toString(), true, toml.toAbsolutePath().toString());
 
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isFalse();
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist())
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isFalse();
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getAccountAllowlist())
         .containsExactly("0x0000000000000000000000000000000000000009");
   }
 
@@ -131,10 +131,10 @@ public class LocalPermissioningConfigurationBuilderTest {
 
     LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
 
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist()).isEmpty();
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist()).isEmpty();
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist()).isEmpty();
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getAccountAllowlist()).isEmpty();
   }
 
   @Test
@@ -203,8 +203,8 @@ public class LocalPermissioningConfigurationBuilderTest {
         PermissioningConfigurationBuilder.permissioningConfiguration(
             true, configFile.getPath(), false, configFile.getPath());
 
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist().size()).isEqualTo(5);
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist().size()).isEqualTo(5);
   }
 
   private LocalPermissioningConfiguration accountOnlyPermissioningConfig(final Path toml)
