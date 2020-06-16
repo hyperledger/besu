@@ -16,24 +16,25 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.perm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.permissioning.WhitelistPersistor;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import java.nio.file.Path;
 import java.util.Collection;
 
-public class WhiteListContainsKeyAndValue implements Condition {
-  private final WhitelistPersistor.WHITELIST_TYPE whitelistType;
-  private final Collection<String> whitelistValues;
+public class AllowListContainsKeyAndValue implements Condition {
+  private final ALLOWLIST_TYPE allowlistType;
+  private final Collection<String> allowlistValues;
   private final Path configFilePath;
 
-  public WhiteListContainsKeyAndValue(
-      final WhitelistPersistor.WHITELIST_TYPE whitelistType,
-      final Collection<String> whitelistValues,
+  public AllowListContainsKeyAndValue(
+      final ALLOWLIST_TYPE allowlistType,
+      final Collection<String> allowlistValues,
       final Path configFilePath) {
-    this.whitelistType = whitelistType;
-    this.whitelistValues = whitelistValues;
+    this.allowlistType = allowlistType;
+    this.allowlistValues = allowlistValues;
     this.configFilePath = configFilePath;
   }
 
@@ -42,8 +43,8 @@ public class WhiteListContainsKeyAndValue implements Condition {
     boolean result;
     try {
       result =
-          WhitelistPersistor.verifyConfigFileMatchesState(
-              whitelistType, whitelistValues, configFilePath);
+          AllowlistPersistor.verifyConfigFileMatchesState(
+              allowlistType, allowlistValues, configFilePath);
     } catch (final Exception e) {
       result = false;
     }

@@ -49,7 +49,7 @@ public class NodePermissioningControllerFactory {
     if (permissioningConfiguration.getLocalConfig().isPresent()) {
       LocalPermissioningConfiguration localPermissioningConfiguration =
           permissioningConfiguration.getLocalConfig().get();
-      if (localPermissioningConfiguration.isNodeWhitelistEnabled()) {
+      if (localPermissioningConfiguration.isNodeAllowlistEnabled()) {
         NodeLocalConfigPermissioningController localProvider =
             new NodeLocalConfigPermissioningController(
                 localPermissioningConfiguration,
@@ -63,7 +63,7 @@ public class NodePermissioningControllerFactory {
     if (permissioningConfiguration.getSmartContractConfig().isPresent()) {
       SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
           permissioningConfiguration.getSmartContractConfig().get();
-      if (smartContractPermissioningConfiguration.isSmartContractNodeWhitelistEnabled()) {
+      if (smartContractPermissioningConfiguration.isSmartContractNodeAllowlistEnabled()) {
         NodeSmartContractPermissioningController smartContractProvider =
             new NodeSmartContractPermissioningController(
                 smartContractPermissioningConfiguration.getNodeSmartContractAddress(),

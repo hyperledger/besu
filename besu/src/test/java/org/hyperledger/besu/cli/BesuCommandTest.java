@@ -408,7 +408,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString(smartContractAddress));
-    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
 
     verify(mockRunnerBuilder)
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
@@ -483,7 +483,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setAccountSmartContractAddress(
         Address.fromHexString(smartContractAddress));
-    smartContractPermissioningConfiguration.setSmartContractAccountWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(true);
 
     verify(mockRunnerBuilder)
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
@@ -493,7 +493,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SmartContractPermissioningConfiguration effectiveSmartContractConfig =
         permissioningConfiguration.getSmartContractConfig().get();
-    assertThat(effectiveSmartContractConfig.isSmartContractAccountWhitelistEnabled()).isTrue();
+    assertThat(effectiveSmartContractConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
     assertThat(effectiveSmartContractConfig.getAccountSmartContractAddress())
         .isEqualTo(Address.fromHexString(smartContractAddress));
 
@@ -588,7 +588,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void nodePermissioningTomlPathMustUseOption() throws IOException {
-    final List<URI> whitelistedNodes =
+    final List<URI> allowlistedNodes =
         Lists.newArrayList(
             URI.create(
                 "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567"),
@@ -598,18 +598,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
     final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
 
-    final String whitelistedNodesString =
-        whitelistedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
+    final String allowlistedNodesString =
+        allowlistedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
     parseCommand(
         "--permissions-nodes-config-file-enabled",
         "--permissions-nodes-config-file",
         permToml.toString(),
         "--bootnodes",
-        whitelistedNodesString);
+        allowlistedNodesString);
     final LocalPermissioningConfiguration localPermissioningConfiguration =
         LocalPermissioningConfiguration.createDefault();
     localPermissioningConfiguration.setNodePermissioningConfigFilePath(permToml.toString());
-    localPermissioningConfiguration.setNodeWhitelist(whitelistedNodes);
+    localPermissioningConfiguration.setNodeAllowlist(allowlistedNodes);
 
     verify(mockRunnerBuilder)
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
@@ -636,7 +636,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final LocalPermissioningConfiguration localPermissioningConfiguration =
         LocalPermissioningConfiguration.createDefault();
     localPermissioningConfiguration.setAccountPermissioningConfigFilePath(permToml.toString());
-    localPermissioningConfiguration.setAccountWhitelist(
+    localPermissioningConfiguration.setAccountAllowlist(
         Collections.singletonList("0x0000000000000000000000000000000000000009"));
 
     verify(mockRunnerBuilder)
@@ -647,7 +647,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final LocalPermissioningConfiguration effectiveLocalPermissioningConfig =
         permissioningConfiguration.getLocalConfig().get();
-    assertThat(effectiveLocalPermissioningConfig.isAccountWhitelistEnabled()).isTrue();
+    assertThat(effectiveLocalPermissioningConfig.isAccountAllowlistEnabled()).isTrue();
     assertThat(effectiveLocalPermissioningConfig.getAccountPermissioningConfigFilePath())
         .isEqualTo(permToml.toString());
 
@@ -1978,9 +1978,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist().size()).isEqualTo(1);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist()).contains("a");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist())
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(1);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a");
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("localhost");
 
     assertThat(commandOutput.toString()).isEmpty();
@@ -1994,9 +1994,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist())
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
 
     assertThat(commandOutput.toString()).isEmpty();
@@ -2010,9 +2010,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist())
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
 
     assertThat(commandOutput.toString()).isEmpty();
@@ -2026,9 +2026,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist())
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
 
     assertThat(commandOutput.toString()).isEmpty();
@@ -2079,7 +2079,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsWhitelist()).isEmpty();
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).isEmpty();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3010,7 +3010,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
 
   @Test
-  public void errorIsRaisedIfStaticNodesAreNotWhitelisted() throws IOException {
+  public void errorIsRaisedIfStaticNodesAreNotAllowlisted() throws IOException {
     final File staticNodesFile = testFolder.newFile("static-nodes.json");
     staticNodesFile.deleteOnExit();
     final File permissioningConfig = testFolder.newFile("permissioning");
@@ -3024,7 +3024,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             .useDefaultPorts()
             .build();
 
-    final EnodeURL whiteListedNode =
+    final EnodeURL allowedNode =
         EnodeURL.builder()
             .nodeId(
                 "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
@@ -3037,7 +3037,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         staticNodesFile.toPath(), ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
     Files.write(
         permissioningConfig.toPath(),
-        ("nodes-whitelist=[\"" + whiteListedNode.toString() + "\"]").getBytes(UTF_8));
+        ("nodes-whitelist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
 
     parseCommand(
         "--data-path=" + testFolder.getRoot().getPath(),
