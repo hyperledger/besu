@@ -43,7 +43,7 @@ public class PermissioningConfigurationValidator {
 
       if (!nodeURIsNotInAllowlist.isEmpty()) {
         throw new Exception(
-            "Specified node(s) not in nodes-whitelist " + enodesAsStrings(nodeURIsNotInAllowlist));
+            "Specified node(s) not in nodes-allowlist " + enodesAsStrings(nodeURIsNotInAllowlist));
       }
     }
   }

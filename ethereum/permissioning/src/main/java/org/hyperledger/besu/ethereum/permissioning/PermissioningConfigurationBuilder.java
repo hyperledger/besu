@@ -26,8 +26,8 @@ import org.apache.tuweni.toml.TomlParseResult;
 
 public class PermissioningConfigurationBuilder {
 
-  public static final String ACCOUNTS_WHITELIST_KEY = "accounts-whitelist";
-  public static final String NODES_WHITELIST_KEY = "nodes-whitelist";
+  public static final String ACCOUNTS_WHITELIST_KEY = "accounts-allowlist";
+  public static final String NODES_WHITELIST_KEY = "nodes-allowlist";
 
   public static SmartContractPermissioningConfiguration smartContractPermissioningConfiguration(
       final Address address, final boolean smartContractPermissionedNodeEnabled) {
