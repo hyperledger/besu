@@ -32,21 +32,21 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   private static final String PERMISSIONING_CONFIG_VALID = "/permissioning_config.toml";
   private static final String PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY =
-      "/permissioning_config_account_whitelist_only.toml";
+      "/permissioning_config_account_allowlist_only.toml";
   private static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY =
-      "/permissioning_config_node_whitelist_only.toml";
+      "/permissioning_config_node_allowlist_only.toml";
   private static final String PERMISSIONING_CONFIG_INVALID_ENODE =
       "/permissioning_config_invalid_enode.toml";
   private static final String PERMISSIONING_CONFIG_INVALID_ACCOUNT =
       "/permissioning_config_invalid_account.toml";
   private static final String PERMISSIONING_CONFIG_EMPTY_WHITELISTS =
-      "/permissioning_config_empty_whitelists.toml";
+      "/permissioning_config_empty_allowlists.toml";
   private static final String PERMISSIONING_CONFIG_ABSENT_WHITELISTS =
-      "/permissioning_config_absent_whitelists.toml";
+      "/permissioning_config_absent_allowlists.toml";
   private static final String PERMISSIONING_CONFIG_UNRECOGNIZED_KEY =
       "/permissioning_config_unrecognized_key.toml";
   private static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE =
-      "/permissioning_config_node_whitelist_only_multiline.toml";
+      "/permissioning_config_node_allowlist_only_multiline.toml";
 
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
