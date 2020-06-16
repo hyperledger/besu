@@ -54,7 +54,7 @@ class BranchNode implements Node {
   }
 
   @Override
-  public Stream<Bytes32> accept(final StreamNodesVisitor visitor) {
+  public Stream<Bytes32> accept(final NodeHashStreamer visitor) {
     return visitor.visit(this);
   }
 

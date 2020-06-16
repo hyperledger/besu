@@ -51,7 +51,7 @@ class StoredNode implements Node {
    * away.
    */
   @Override
-  public Stream<Bytes32> accept(final StreamNodesVisitor visitor) {
+  public Stream<Bytes32> accept(final NodeHashStreamer visitor) {
     final Node node = load();
     return node.accept(visitor);
   }

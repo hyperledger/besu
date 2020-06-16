@@ -23,7 +23,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface Node {
 
-  Stream<Bytes32> accept(StreamNodesVisitor visitor);
+  Stream<Bytes32> accept(NodeHashStreamer visitor);
 
   Node accept(PathNodeVisitor visitor, Bytes path);
 
