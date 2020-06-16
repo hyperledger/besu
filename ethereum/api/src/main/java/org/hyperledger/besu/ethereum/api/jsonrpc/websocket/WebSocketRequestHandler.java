@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -27,6 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcR
 import java.util.Map;
 import java.util.Optional;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
@@ -41,10 +45,13 @@ public class WebSocketRequestHandler {
 
   private final Vertx vertx;
   private final Map<String, JsonRpcMethod> methods;
+  private final long timeoutSec;
 
-  public WebSocketRequestHandler(final Vertx vertx, final Map<String, JsonRpcMethod> methods) {
+  public WebSocketRequestHandler(
+      final Vertx vertx, final Map<String, JsonRpcMethod> methods, final long timeoutSec) {
     this.vertx = vertx;
     this.methods = methods;
+    this.timeoutSec = timeoutSec;
   }
 
   public void handle(final String id, final String payload) {
@@ -57,52 +64,60 @@ public class WebSocketRequestHandler {
       final String payload,
       final Optional<User> user) {
     vertx.executeBlocking(
-        future -> {
-          final WebSocketRpcRequest request;
-          try {
-            request = Json.decodeValue(payload, WebSocketRpcRequest.class);
-          } catch (final IllegalArgumentException | DecodeException e) {
-            LOG.debug("Error mapping json to WebSocketRpcRequest", e);
-            future.complete(new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST));
-            return;
-          }
+        executeHandler(authenticationService, id, payload, user), false, resultHandler(id));
+  }
 
-          if (!methods.containsKey(request.getMethod())) {
-            future.complete(
-                new JsonRpcErrorResponse(request.getId(), JsonRpcError.METHOD_NOT_FOUND));
-            LOG.debug("Can't find method {}", request.getMethod());
-            return;
-          }
-          final JsonRpcMethod method = methods.get(request.getMethod());
-          try {
-            LOG.debug("WS-RPC request -> {}", request.getMethod());
-            request.setConnectionId(id);
-            if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
-              final JsonRpcRequestContext requestContext =
-                  new JsonRpcRequestContext(request, user, () -> true);
-              future.complete(method.response(requestContext));
-            } else {
-              future.complete(
-                  new JsonRpcUnauthorizedResponse(request.getId(), JsonRpcError.UNAUTHORIZED));
-            }
-          } catch (final InvalidJsonRpcParameters e) {
-            LOG.debug("Invalid Params", e);
-            future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS));
-          } catch (final Exception e) {
-            LOG.error(JsonRpcError.INTERNAL_ERROR.getMessage(), e);
-            future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
-          }
-        },
-        false,
-        result -> {
-          if (result.succeeded()) {
-            replyToClient(id, Json.encodeToBuffer(result.result()));
-          } else {
-            replyToClient(
-                id,
-                Json.encodeToBuffer(new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR)));
-          }
-        });
+  private Handler<Promise<Object>> executeHandler(
+      final Optional<AuthenticationService> authenticationService,
+      final String id,
+      final String payload,
+      final Optional<User> user) {
+    return future -> {
+      final WebSocketRpcRequest request;
+      try {
+        request = Json.decodeValue(payload, WebSocketRpcRequest.class);
+      } catch (final IllegalArgumentException | DecodeException e) {
+        LOG.debug("Error mapping json to WebSocketRpcRequest", e);
+        future.complete(new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST));
+        return;
+      }
+
+      if (!methods.containsKey(request.getMethod())) {
+        future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.METHOD_NOT_FOUND));
+        LOG.debug("Can't find method {}", request.getMethod());
+        return;
+      }
+      final JsonRpcMethod method = methods.get(request.getMethod());
+      try {
+        LOG.debug("WS-RPC request -> {}", request.getMethod());
+        request.setConnectionId(id);
+        if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
+          final JsonRpcRequestContext requestContext =
+              new JsonRpcRequestContext(request, user, new IsAliveHandler(timeoutSec));
+          future.complete(method.response(requestContext));
+        } else {
+          future.complete(
+              new JsonRpcUnauthorizedResponse(request.getId(), JsonRpcError.UNAUTHORIZED));
+        }
+      } catch (final InvalidJsonRpcParameters e) {
+        LOG.debug("Invalid Params", e);
+        future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS));
+      } catch (final Exception e) {
+        LOG.error(JsonRpcError.INTERNAL_ERROR.getMessage(), e);
+        future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
+      }
+    };
+  }
+
+  private Handler<AsyncResult<Object>> resultHandler(final String id) {
+    return result -> {
+      if (result.succeeded()) {
+        replyToClient(id, Json.encodeToBuffer(result.result()));
+      } else {
+        replyToClient(
+            id, Json.encodeToBuffer(new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR)));
+      }
+    };
   }
 
   private void replyToClient(final String id, final Buffer request) {

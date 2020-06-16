@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
@@ -54,7 +55,11 @@ public class EthSubscribeIntegrationTest {
     vertx = Vertx.vertx();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
     webSocketMethodsFactory = new WebSocketMethodsFactory(subscriptionManager, new HashMap<>());
-    webSocketRequestHandler = new WebSocketRequestHandler(vertx, webSocketMethodsFactory.methods());
+    webSocketRequestHandler =
+        new WebSocketRequestHandler(
+            vertx,
+            webSocketMethodsFactory.methods(),
+            TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 
   @Test

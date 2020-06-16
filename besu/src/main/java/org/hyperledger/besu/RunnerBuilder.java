@@ -783,7 +783,8 @@ public class RunnerBuilder {
     }
 
     final WebSocketRequestHandler websocketRequestHandler =
-        new WebSocketRequestHandler(vertx, websocketMethodsFactory.methods());
+        new WebSocketRequestHandler(
+            vertx, websocketMethodsFactory.methods(), webSocketConfiguration.getTimeoutSec());
 
     return new WebSocketService(vertx, configuration, websocketRequestHandler);
   }

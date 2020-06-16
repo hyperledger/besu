@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -61,7 +62,9 @@ public class WebSocketRequestHandlerTest {
     jsonRpcMethodMock = mock(JsonRpcMethod.class);
 
     methods.put("eth_x", jsonRpcMethodMock);
-    handler = new WebSocketRequestHandler(vertx, methods);
+    handler =
+        new WebSocketRequestHandler(
+            vertx, methods, TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 
   @After
