@@ -23,6 +23,14 @@ public class IsAliveHandler implements Supplier<Boolean> {
 
   private final AtomicBoolean alive;
 
+  public IsAliveHandler(final boolean alive) {
+    this(new AtomicBoolean(alive));
+  }
+
+  public IsAliveHandler(final AtomicBoolean alive) {
+    this.alive = alive;
+  }
+
   public IsAliveHandler(final long timeoutSec) {
     this(new AtomicBoolean(true), timeoutSec);
   }

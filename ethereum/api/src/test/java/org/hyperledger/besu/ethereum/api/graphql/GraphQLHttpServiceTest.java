@@ -70,7 +70,7 @@ public class GraphQLHttpServiceTest {
   private static Synchronizer synchronizer;
   private static GraphQL graphQL;
   private static GraphQLDataFetchers dataFetchers;
-  private static GraphQLDataFetcherContext dataFetcherContext;
+  private static GraphQLDataFetcherContextImpl dataFetcherContext;
   private static EthHashMiningCoordinator miningCoordinatorMock;
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
@@ -83,7 +83,7 @@ public class GraphQLHttpServiceTest {
 
     miningCoordinatorMock = Mockito.mock(EthHashMiningCoordinator.class);
 
-    dataFetcherContext = Mockito.mock(GraphQLDataFetcherContext.class);
+    dataFetcherContext = Mockito.mock(GraphQLDataFetcherContextImpl.class);
     Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
     Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
 

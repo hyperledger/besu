@@ -21,19 +21,43 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-public interface GraphQLDataFetcherContext {
+public class GraphQLDataFetcherContextDecorator implements GraphQLDataFetcherContext {
+  private final GraphQLDataFetcherContext core;
+  private final IsAliveHandler isAliveHandler;
 
-  TransactionPool getTransactionPool();
+  public GraphQLDataFetcherContextDecorator(
+      final GraphQLDataFetcherContext core, final IsAliveHandler isAliveHandler) {
+    this.core = core;
+    this.isAliveHandler = isAliveHandler;
+  }
 
-  BlockchainQueries getBlockchainQueries();
+  @Override
+  public TransactionPool getTransactionPool() {
+    return core.getTransactionPool();
+  }
 
-  MiningCoordinator getMiningCoordinator();
+  @Override
+  public BlockchainQueries getBlockchainQueries() {
+    return core.getBlockchainQueries();
+  }
 
-  Synchronizer getSynchronizer();
+  @Override
+  public MiningCoordinator getMiningCoordinator() {
+    return core.getMiningCoordinator();
+  }
 
-  ProtocolSchedule getProtocolSchedule();
+  @Override
+  public Synchronizer getSynchronizer() {
+    return core.getSynchronizer();
+  }
 
-  default IsAliveHandler getIsAliveHandler() {
-    return new IsAliveHandler(true);
+  @Override
+  public ProtocolSchedule getProtocolSchedule() {
+    return core.getProtocolSchedule();
+  }
+
+  @Override
+  public IsAliveHandler getIsAliveHandler() {
+    return isAliveHandler;
   }
 }

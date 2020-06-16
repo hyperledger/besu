@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLJsonRe
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponse;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponseType;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLSuccessResponse;
+import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -101,7 +102,7 @@ public class GraphQLHttpService {
       final Path dataDir,
       final GraphQLConfiguration config,
       final GraphQL graphQL,
-      final GraphQLDataFetcherContext dataFetcherContext) {
+      final GraphQLDataFetcherContextImpl dataFetcherContext) {
     this.dataDir = dataDir;
 
     validateConfig(config);
@@ -382,7 +383,9 @@ public class GraphQLHttpService {
             .query(requestJson)
             .operationName(operationName)
             .variables(variables)
-            .context(dataFetcherContext)
+            .context(
+                new GraphQLDataFetcherContextDecorator(
+                    dataFetcherContext, new IsAliveHandler(config.getHttpTimeoutSec())))
             .build();
     final ExecutionResult result = graphQL.execute(executionInput);
     final Map<String, Object> toSpecificationResult = result.toSpecification();

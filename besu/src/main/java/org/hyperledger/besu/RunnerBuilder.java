@@ -25,7 +25,7 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContextImpl;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
@@ -485,8 +485,8 @@ public class RunnerBuilder {
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
     if (graphQLConfiguration.isEnabled()) {
       final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
-      final GraphQLDataFetcherContext dataFetcherContext =
-          new GraphQLDataFetcherContext(
+      final GraphQLDataFetcherContextImpl dataFetcherContext =
+          new GraphQLDataFetcherContextImpl(
               blockchainQueries,
               protocolSchedule,
               transactionPool,

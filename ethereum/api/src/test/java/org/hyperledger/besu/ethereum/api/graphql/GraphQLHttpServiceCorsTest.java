@@ -212,8 +212,8 @@ public class GraphQLHttpServiceCorsTest {
     final EthHashMiningCoordinator miningCoordinatorMock =
         Mockito.mock(EthHashMiningCoordinator.class);
 
-    final GraphQLDataFetcherContext dataFetcherContext =
-        Mockito.mock(GraphQLDataFetcherContext.class);
+    final GraphQLDataFetcherContextImpl dataFetcherContext =
+        Mockito.mock(GraphQLDataFetcherContextImpl.class);
     Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
     Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
 

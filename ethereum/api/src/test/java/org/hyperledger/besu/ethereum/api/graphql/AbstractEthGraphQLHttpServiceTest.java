@@ -161,8 +161,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final GraphQLConfiguration config = GraphQLConfiguration.createDefault();
 
     config.setPort(0);
-    final GraphQLDataFetcherContext dataFetcherContext =
-        new GraphQLDataFetcherContext(
+    final GraphQLDataFetcherContextImpl dataFetcherContext =
+        new GraphQLDataFetcherContextImpl(
             blockchainQueries,
             PROTOCOL_SCHEDULE,
             transactionPoolMock,
