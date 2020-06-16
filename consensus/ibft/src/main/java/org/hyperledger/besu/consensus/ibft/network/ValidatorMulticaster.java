@@ -23,5 +23,5 @@ public interface ValidatorMulticaster {
 
   void send(final MessageData message);
 
-  void send(final MessageData message, final Collection<Address> blackList);
+  void send(final MessageData message, final Collection<Address> denylist);
 }

@@ -33,28 +33,28 @@ public class LocalPermissioningConfigurationTest {
   public void defaultConfiguration() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    assertThat(configuration.getNodeWhitelist()).isEmpty();
-    assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
-    assertThat(configuration.getAccountWhitelist()).isEmpty();
-    assertThat(configuration.isAccountWhitelistEnabled()).isFalse();
+    assertThat(configuration.getNodeAllowlist()).isEmpty();
+    assertThat(configuration.isNodeAllowlistEnabled()).isFalse();
+    assertThat(configuration.getAccountAllowlist()).isEmpty();
+    assertThat(configuration.isAccountAllowlistEnabled()).isFalse();
   }
 
   @Test
   public void setNodeWhitelist() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setNodeWhitelist(Arrays.asList(nodes));
-    assertThat(configuration.getNodeWhitelist()).containsExactlyInAnyOrder(nodes);
-    assertThat(configuration.isNodeWhitelistEnabled()).isTrue();
+    configuration.setNodeAllowlist(Arrays.asList(nodes));
+    assertThat(configuration.getNodeAllowlist()).containsExactlyInAnyOrder(nodes);
+    assertThat(configuration.isNodeAllowlistEnabled()).isTrue();
   }
 
   @Test
   public void setNodeWhiteListPassingNull() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setNodeWhitelist(null);
-    assertThat(configuration.getNodeWhitelist()).isEmpty();
-    assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
+    configuration.setNodeAllowlist(null);
+    assertThat(configuration.getNodeAllowlist()).isEmpty();
+    assertThat(configuration.isNodeAllowlistEnabled()).isFalse();
   }
 
   @Test
@@ -62,17 +62,17 @@ public class LocalPermissioningConfigurationTest {
     final String[] accounts = {"1111111111111111", "2222222222222222", "ffffffffffffffff"};
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setAccountWhitelist(Arrays.asList(accounts));
-    assertThat(configuration.getAccountWhitelist()).containsExactlyInAnyOrder(accounts);
-    assertThat(configuration.isAccountWhitelistEnabled()).isTrue();
+    configuration.setAccountAllowlist(Arrays.asList(accounts));
+    assertThat(configuration.getAccountAllowlist()).containsExactlyInAnyOrder(accounts);
+    assertThat(configuration.isAccountAllowlistEnabled()).isTrue();
   }
 
   @Test
   public void setAccountWhiteListPassingNull() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setAccountWhitelist(null);
-    assertThat(configuration.getAccountWhitelist()).isEmpty();
-    assertThat(configuration.isAccountWhitelistEnabled()).isFalse();
+    configuration.setAccountAllowlist(null);
+    assertThat(configuration.getAccountAllowlist()).isEmpty();
+    assertThat(configuration.isAccountAllowlistEnabled()).isFalse();
   }
 }

@@ -147,7 +147,7 @@ public class JsonRpcHttpServiceTlsTest {
   private JsonRpcConfiguration createJsonRpcConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singletonList("*"));
+    config.setHostsAllowlist(Collections.singletonList("*"));
     config.setTlsConfiguration(getRpcHttpTlsConfiguration());
     return config;
   }

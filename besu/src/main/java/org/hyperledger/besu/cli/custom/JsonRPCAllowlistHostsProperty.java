@@ -25,25 +25,25 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
-public class JsonRPCWhitelistHostsProperty extends AbstractList<String> {
+public class JsonRPCAllowlistHostsProperty extends AbstractList<String> {
 
-  private final List<String> hostnamesWhitelist = new ArrayList<>();
+  private final List<String> hostnamesAllowlist = new ArrayList<>();
 
-  public JsonRPCWhitelistHostsProperty() {}
+  public JsonRPCAllowlistHostsProperty() {}
 
   @Override
   @Nonnull
   public Iterator<String> iterator() {
-    if (hostnamesWhitelist.size() == 1 && hostnamesWhitelist.get(0).equals("none")) {
+    if (hostnamesAllowlist.size() == 1 && hostnamesAllowlist.get(0).equals("none")) {
       return Collections.emptyIterator();
     } else {
-      return hostnamesWhitelist.iterator();
+      return hostnamesAllowlist.iterator();
     }
   }
 
   @Override
   public int size() {
-    return hostnamesWhitelist.size();
+    return hostnamesAllowlist.size();
   }
 
   @Override
@@ -53,36 +53,36 @@ public class JsonRPCWhitelistHostsProperty extends AbstractList<String> {
 
   @Override
   public String get(final int index) {
-    return hostnamesWhitelist.get(index);
+    return hostnamesAllowlist.get(index);
   }
 
   @Override
   public boolean addAll(final Collection<? extends String> collection) {
-    final int initialSize = hostnamesWhitelist.size();
+    final int initialSize = hostnamesAllowlist.size();
     for (final String string : collection) {
       if (Strings.isNullOrEmpty(string)) {
         throw new IllegalArgumentException("Hostname cannot be empty string or null string.");
       }
       for (final String s : Splitter.onPattern("\\s*,+\\s*").split(string)) {
         if ("all".equals(s)) {
-          hostnamesWhitelist.add("*");
+          hostnamesAllowlist.add("*");
         } else {
-          hostnamesWhitelist.add(s);
+          hostnamesAllowlist.add(s);
         }
       }
     }
 
-    if (hostnamesWhitelist.contains("none")) {
-      if (hostnamesWhitelist.size() > 1) {
+    if (hostnamesAllowlist.contains("none")) {
+      if (hostnamesAllowlist.size() > 1) {
         throw new IllegalArgumentException("Value 'none' can't be used with other hostnames");
       }
-    } else if (hostnamesWhitelist.contains("*")) {
-      if (hostnamesWhitelist.size() > 1) {
+    } else if (hostnamesAllowlist.contains("*")) {
+      if (hostnamesAllowlist.size() > 1) {
         throw new IllegalArgumentException(
             "Values '*' or 'all' can't be used with other hostnames");
       }
     }
 
-    return hostnamesWhitelist.size() != initialSize;
+    return hostnamesAllowlist.size() != initialSize;
   }
 }
