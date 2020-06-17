@@ -15,16 +15,18 @@
 
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+
 import java.util.Iterator;
+import java.util.NavigableMap;
 import java.util.OptionalLong;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.LongStream;
 
 class TransactionsForSenderInfo {
-  private final SortedMap<Long, PendingTransactions.TransactionInfo> transactionsInfos;
+  private final NavigableMap<Long, PendingTransactions.TransactionInfo> transactionsInfos;
   private final Queue<Long> gaps = new PriorityQueue<>();
 
   TransactionsForSenderInfo() {
@@ -56,7 +58,7 @@ class TransactionsForSenderInfo {
     }
   }
 
-  SortedMap<Long, PendingTransactions.TransactionInfo> getTransactionsInfos() {
+  NavigableMap<Long, TransactionInfo> getTransactionsInfos() {
     return transactionsInfos;
   }
 

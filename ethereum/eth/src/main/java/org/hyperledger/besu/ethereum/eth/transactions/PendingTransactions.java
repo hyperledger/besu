@@ -42,11 +42,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Queue;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -69,7 +69,7 @@ public class PendingTransactions {
 
   private final Queue<Hash> newPooledHashes;
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
-  private final SortedSet<TransactionInfo> prioritizedTransactions =
+  private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getSequence)

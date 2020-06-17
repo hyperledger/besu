@@ -33,6 +33,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   S getSegmentIdentifierByName(SegmentIdentifier segment);
 
   /**
+   * Get the value from the associated segment and key.
+   *
    * @param segment the segment
    * @param key Index into persistent data repository.
    * @return The value persisted at the key index.

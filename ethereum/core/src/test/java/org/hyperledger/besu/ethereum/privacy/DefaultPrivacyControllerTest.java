@@ -36,7 +36,6 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -89,9 +88,9 @@ public class DefaultPrivacyControllerTest {
   private static final String MOCK_TRANSACTION_SIMULATOR_RESULT_OUTPUT_BYTES_PREFIX =
       "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002";
   private static final PrivacyGroup PANTHEON_PRIVACY_GROUP =
-      new PrivacyGroup("", Type.PANTHEON, "", "", emptyList());
+      new PrivacyGroup("", PrivacyGroup.Type.PANTHEON, "", "", emptyList());
   private static final PrivacyGroup ON_CHAIN_PRIVACY_GROUP =
-      new PrivacyGroup("", Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY));
+      new PrivacyGroup("", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY));
 
   private PrivacyController privacyController;
   private PrivacyController brokenPrivacyController;
@@ -229,7 +228,8 @@ public class DefaultPrivacyControllerTest {
     final List<String> privacyGroupAddresses = newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2);
 
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.ONCHAIN, "", "", privacyGroupAddresses);
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID, PrivacyGroup.Type.ONCHAIN, "", "", privacyGroupAddresses);
 
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         new PrivacyGroupHeadBlockMap(
@@ -310,7 +310,7 @@ public class DefaultPrivacyControllerTest {
     final PrivacyGroup enclavePrivacyGroupResponse =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             PRIVACY_GROUP_NAME,
             PRIVACY_GROUP_DESCRIPTION,
             PRIVACY_GROUP_ADDRESSES);
@@ -349,7 +349,7 @@ public class DefaultPrivacyControllerTest {
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             PRIVACY_GROUP_NAME,
             PRIVACY_GROUP_DESCRIPTION,
             PRIVACY_GROUP_ADDRESSES);
@@ -369,7 +369,11 @@ public class DefaultPrivacyControllerTest {
     final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
           new PrivacyGroup(
-              PRIVACY_GROUP_ID, Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
+              PRIVACY_GROUP_ID,
+              PrivacyGroup.Type.LEGACY,
+              "Group1_Name",
+              "Group1_Desc",
+              emptyList()),
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
@@ -408,8 +412,10 @@ public class DefaultPrivacyControllerTest {
     final Address address = Address.fromHexString("55");
     final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
-          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
-          new PrivacyGroup("Group2", Type.LEGACY, "Group2_Name", "Group2_Desc", emptyList()),
+          new PrivacyGroup(
+              "Group1", PrivacyGroup.Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
+          new PrivacyGroup(
+              "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", emptyList()),
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);

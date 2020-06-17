@@ -91,6 +91,8 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   }
 
   /**
+   * Extracts an address from a ECDSARECOVER result hash.
+   *
    * @param hash A hash that has been obtained through hashing the return of the <code>ECDSARECOVER
    *     </code> function from Appendix F (Signing Transactions) of the Ethereum Yellow Paper.
    * @return The ethereum address from the provided hash.

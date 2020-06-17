@@ -69,7 +69,11 @@ public class Code {
     return bytes.hashCode();
   }
 
-  /** @return The number of bytes in the code. */
+  /**
+   * Size of the Code, in bytes
+   *
+   * @return The number of bytes in the code.
+   */
   public int getSize() {
     return bytes.size();
   }

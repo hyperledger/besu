@@ -39,7 +39,6 @@ import com.google.common.collect.ImmutableSet;
 import io.prometheus.client.Collector;
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
-import io.prometheus.client.Collector.Type;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Summary;
@@ -193,10 +192,10 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   private Observation createObservationFromSample(
       final MetricCategory category, final Sample sample, final MetricFamilySamples familySamples) {
-    if (familySamples.type == Type.HISTOGRAM) {
+    if (familySamples.type == Collector.Type.HISTOGRAM) {
       return convertHistogramSampleNamesToLabels(category, sample, familySamples);
     }
-    if (familySamples.type == Type.SUMMARY) {
+    if (familySamples.type == Collector.Type.SUMMARY) {
       return convertSummarySampleNamesToLabels(category, sample, familySamples);
     }
     return new Observation(

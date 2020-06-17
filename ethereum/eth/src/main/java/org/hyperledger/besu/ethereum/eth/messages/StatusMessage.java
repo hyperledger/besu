@@ -83,34 +83,56 @@ public final class StatusMessage extends AbstractMessageData {
     return EthPV62.STATUS;
   }
 
-  /** @return The eth protocol version the associated node is running. */
+  /**
+   * Return The eth protocol version the associated node is running.
+   *
+   * @return The eth protocol version the associated node is running.
+   */
   public int protocolVersion() {
     return status().protocolVersion;
   }
 
-  /** @return The id of the network the associated node is participating in. */
+  /**
+   * Return The id of the network the associated node is participating in.
+   *
+   * @return The id of the network the associated node is participating in.
+   */
   public BigInteger networkId() {
     return status().networkId;
   }
 
-  /** @return The total difficulty of the head of the associated node's local blockchain. */
+  /**
+   * Return The total difficulty of the head of the associated node's local blockchain.
+   *
+   * @return The total difficulty of the head of the associated node's local blockchain.
+   */
   public Difficulty totalDifficulty() {
     return status().totalDifficulty;
   }
 
-  /** @return The hash of the head of the associated node's local blockchian. */
+  /**
+   * Return The hash of the head of the associated node's local blockchian.
+   *
+   * @return The hash of the head of the associated node's local blockchian.
+   */
   public Hash bestHash() {
     return status().bestHash;
   }
 
   /**
+   * Return The hash of the genesis block of the network the associated node is participating in.
+   *
    * @return The hash of the genesis block of the network the associated node is participating in.
    */
   public Bytes32 genesisHash() {
     return status().genesisHash;
   }
 
-  /** @return The fork id of the network the associated node is participating in. */
+  /**
+   * Return The fork id of the network the associated node is participating in.
+   *
+   * @return The fork id of the network the associated node is participating in.
+   */
   public ForkId forkId() {
     return status().forkId;
   }

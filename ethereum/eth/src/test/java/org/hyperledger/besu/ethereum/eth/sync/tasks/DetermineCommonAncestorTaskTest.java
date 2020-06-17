@@ -272,7 +272,7 @@ public class DetermineCommonAncestorTaskTest {
    *     remoteBlockCount} - 1.
    * @param blocksInCommon The number of blocks shared between local and remote. If a common
    *     ancestor exists, its block number will be: {@code blocksInCommon} - 1
-   * @return
+   * @return the test blockchain
    */
   private Blockchain setupLocalAndRemoteChains(
       final int localBlockCount, final int remoteBlockCount, final int blocksInCommon) {

@@ -53,7 +53,7 @@ public abstract class AbstractMiningCoordinator<
   private boolean isEnabled = false;
   protected Optional<M> currentRunningMiner = Optional.empty();
 
-  public AbstractMiningCoordinator(
+  protected AbstractMiningCoordinator(
       final Blockchain blockchain,
       final AbstractMinerExecutor<M> executor,
       final SyncState syncState) {

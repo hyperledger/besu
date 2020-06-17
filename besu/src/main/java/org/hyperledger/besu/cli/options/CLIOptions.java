@@ -30,6 +30,10 @@ public interface CLIOptions<T> {
    */
   T toDomainObject();
 
-  /** @return The list of CLI options corresponding to this class. */
+  /**
+   * Return The list of CLI options corresponding to this class.
+   *
+   * @return The list of CLI options corresponding to this class.
+   */
   List<String> getCLIOptions();
 }
