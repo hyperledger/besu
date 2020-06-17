@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -69,7 +70,7 @@ public class WorldStateProofProvider {
       final StateTrieAccountValue account, final List<UInt256> accountStorageKeys) {
     final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
         newAccountStorageTrie(account.getStorageRoot());
-    final SortedMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
+    final NavigableMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
     accountStorageKeys.forEach(
         key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key.toBytes()))));
     return storageProofs;

@@ -54,7 +54,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-  public AbstractMinerExecutor(
+  protected AbstractMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final PendingTransactions pendingTransactions,

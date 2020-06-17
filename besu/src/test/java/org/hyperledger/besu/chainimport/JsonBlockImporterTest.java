@@ -66,7 +66,7 @@ public abstract class JsonBlockImporterTest {
   protected final GenesisConfigFile genesisConfigFile;
   protected final boolean isEthash;
 
-  public JsonBlockImporterTest(final String consensusEngine) throws IOException {
+  protected JsonBlockImporterTest(final String consensusEngine) throws IOException {
     this.consensusEngine = consensusEngine;
     final String genesisData = getFileContents("genesis.json");
     this.genesisConfigFile = GenesisConfigFile.fromConfig(genesisData);

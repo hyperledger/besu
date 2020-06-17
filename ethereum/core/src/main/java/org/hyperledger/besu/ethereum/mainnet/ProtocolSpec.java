@@ -54,7 +54,7 @@ public class ProtocolSpec {
 
   private final BlockHeaderFunctions blockHeaderFunctions;
 
-  private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
   private final DifficultyCalculator difficultyCalculator;
 
@@ -113,7 +113,7 @@ public class ProtocolSpec {
       final BlockImporter blockImporter,
       final BlockValidator blockValidator,
       final BlockHeaderFunctions blockHeaderFunctions,
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+      final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final DifficultyCalculator difficultyCalculator,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
@@ -251,7 +251,7 @@ public class ProtocolSpec {
    *
    * @return the transaction receipt factory
    */
-  public MainnetBlockProcessor.TransactionReceiptFactory getTransactionReceiptFactory() {
+  public AbstractBlockProcessor.TransactionReceiptFactory getTransactionReceiptFactory() {
     return transactionReceiptFactory;
   }
 

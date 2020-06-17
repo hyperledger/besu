@@ -27,7 +27,7 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
 
   private final String name;
 
-  public AbstractPrecompiledContract(final String name, final GasCalculator gasCalculator) {
+  protected AbstractPrecompiledContract(final String name, final GasCalculator gasCalculator) {
     this.name = name;
     this.gasCalculator = gasCalculator;
   }

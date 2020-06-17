@@ -245,8 +245,8 @@ public class EvmToolCommand implements Runnable {
           mcp.process(
               messageFrame, new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
           if (lastLoop) {
-            if (!messageFrame.getExceptionalHaltReasons().isEmpty()) {
-              out.println(messageFrame.getExceptionalHaltReasons());
+            if (messageFrame.getExceptionalHaltReason().isPresent()) {
+              out.println(messageFrame.getExceptionalHaltReason().get());
             }
             if (messageFrame.getRevertReason().isPresent()) {
               out.println(
@@ -303,8 +303,8 @@ public class EvmToolCommand implements Runnable {
       stack.add(messageFrame.getStackItem(i).toShortHexString());
     }
     final String error =
-        messageFrame.getExceptionalHaltReasons().stream()
-            .findFirst()
+        messageFrame
+            .getExceptionalHaltReason()
             .map(ExceptionalHaltReason::getDescription)
             .orElse(
                 messageFrame

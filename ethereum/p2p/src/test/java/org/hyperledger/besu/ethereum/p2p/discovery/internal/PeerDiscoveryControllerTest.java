@@ -69,8 +69,6 @@ import org.mockito.ArgumentCaptor;
 public class PeerDiscoveryControllerTest {
 
   private static final byte MOST_SIGNFICANT_BIT_MASK = -128;
-  private static final RetryDelayFunction LONG_DELAY_FUNCTION = (prev) -> 999999999L;
-  private static final RetryDelayFunction SHORT_DELAY_FUNCTION = (prev) -> Math.max(100, prev * 2);
   private static final PeerRequirement PEER_REQUIREMENT = () -> true;
   private static final long TABLE_REFRESH_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   private PeerDiscoveryController controller;
@@ -79,6 +77,14 @@ public class PeerDiscoveryControllerTest {
   private NodeKey localNodeKey;
   private final AtomicInteger counter = new AtomicInteger(1);
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
+
+  private static Long longDelayFunction(final Long prev) {
+    return 999999999L;
+  }
+
+  private static Long shortDelayFunction(final Long prev) {
+    return Math.max(100, prev * 2);
+  }
 
   @Before
   public void initializeMocks() {
@@ -110,7 +116,7 @@ public class PeerDiscoveryControllerTest {
             .timerUtil(timer)
             .outboundMessageHandler(outboundMessageHandler)
             .build();
-    controller.setRetryDelayFunction(SHORT_DELAY_FUNCTION);
+    controller.setRetryDelayFunction(PeerDiscoveryControllerTest::shortDelayFunction);
 
     // Mock the creation of the PING packet, so that we can control the hash,
     // which gets validated when receiving the PONG.
@@ -387,7 +393,7 @@ public class PeerDiscoveryControllerTest {
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder().peers(peers).outboundMessageHandler(outboundMessageHandler).build();
-    controller.setRetryDelayFunction(LONG_DELAY_FUNCTION);
+    controller.setRetryDelayFunction(PeerDiscoveryControllerTest::longDelayFunction);
 
     // Mock the creation of the PING packet, so that we can control the hash, which gets validated
     // when
@@ -984,7 +990,7 @@ public class PeerDiscoveryControllerTest {
             .peers(bootstrapPeers)
             .outboundMessageHandler(outboundMessageHandler)
             .build();
-    controller.setRetryDelayFunction(LONG_DELAY_FUNCTION);
+    controller.setRetryDelayFunction(PeerDiscoveryControllerTest::longDelayFunction);
 
     // Mock the creation of PING packets to control hash PONG packets.
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
@@ -1322,7 +1328,8 @@ public class PeerDiscoveryControllerTest {
 
   private PeerDiscoveryController startPeerDiscoveryController(
       final DiscoveryPeer... bootstrapPeers) {
-    return startPeerDiscoveryController(LONG_DELAY_FUNCTION, bootstrapPeers);
+    return startPeerDiscoveryController(
+        PeerDiscoveryControllerTest::longDelayFunction, bootstrapPeers);
   }
 
   private PeerDiscoveryController startPeerDiscoveryController(

@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 
@@ -184,7 +183,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
     // Only contains updated storage entries, but may contains entry with a value of 0 to signify
     // deletion.
-    private final SortedMap<UInt256, UInt256> updatedStorage;
+    private final NavigableMap<UInt256, UInt256> updatedStorage;
     private boolean storageWasCleared = false;
     private boolean transactionBoundary = false;
 

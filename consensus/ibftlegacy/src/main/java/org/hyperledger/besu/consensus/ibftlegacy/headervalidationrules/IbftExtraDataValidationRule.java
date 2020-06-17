@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import com.google.common.collect.Iterables;
@@ -77,7 +77,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
         }
       }
 
-      final SortedSet<Address> sortedReportedValidators =
+      final NavigableSet<Address> sortedReportedValidators =
           new TreeSet<>(ibftExtraData.getValidators());
 
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), sortedReportedValidators)) {

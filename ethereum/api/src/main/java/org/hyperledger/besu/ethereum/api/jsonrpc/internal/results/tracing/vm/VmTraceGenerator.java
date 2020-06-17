@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -105,10 +104,10 @@ public class VmTraceGenerator {
   private boolean mustIgnore(final TraceFrame frame) {
     if ("STOP".equals(frame.getOpcode()) && transactionTrace.getTraceFrames().size() == 1) {
       return true;
-    } else if (!frame.getExceptionalHaltReasons().isEmpty()) {
-      final EnumSet<ExceptionalHaltReason> haltReasons = frame.getExceptionalHaltReasons();
-      return !haltReasons.contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION)
-          && !haltReasons.contains(ExceptionalHaltReason.INSUFFICIENT_GAS);
+    } else if (frame.getExceptionalHaltReason().isPresent()) {
+      final Optional<ExceptionalHaltReason> haltReason = frame.getExceptionalHaltReason();
+      return haltReason.get() != ExceptionalHaltReason.INVALID_JUMP_DESTINATION
+          && haltReason.get() != ExceptionalHaltReason.INSUFFICIENT_GAS;
     } else {
       return frame.isVirtualOperation();
     }
@@ -117,7 +116,9 @@ public class VmTraceGenerator {
   private void completeStep(
       final TraceFrame frame, final VmOperation op, final VmOperationExecutionReport report) {
     // add the operation representation to the list of traces
-    if (frame.getExceptionalHaltReasons().contains(ExceptionalHaltReason.INSUFFICIENT_GAS)) {
+    final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
+    if (exceptionalHaltReason.isPresent()
+        && exceptionalHaltReason.get() == ExceptionalHaltReason.INSUFFICIENT_GAS) {
       op.setVmOperationExecutionReport(null);
     } else {
       op.setVmOperationExecutionReport(report);
