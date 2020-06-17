@@ -42,6 +42,7 @@ Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a futu
   - Add `perm_getAccountsAllowlist` as an alternative equivalent to `perm_getAccountsWhitelist`
   - Add `perm_addAccountsToAllowlist` as an alternative equivalent to `perm_addAccountsToWhitelist`
   - Add `perm_removeAccountsFromAllowlist` as an alternative equivalent to `perm_removeAccountsFromWhitelist`
+- Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints
 
 ## 1.4.6
 
