@@ -94,13 +94,13 @@ public enum JsonRpcError {
 
   // Permissioning/persistence errors
   WHITELIST_PERSIST_FAILURE(
-      -32000, "Unable to persist changes to whitelist configuration file. Changes reverted"),
+      -32000, "Unable to persist changes to allowlist configuration file. Changes reverted"),
   WHITELIST_FILE_SYNC(
       -32000,
       "The permissioning whitelist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
   WHITELIST_RELOAD_ERROR(
       -32000,
-      "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesAllowlist to review the current state of the whitelists"),
+      "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesAllowlist to review the current state of the allowlists"),
   PERMISSIONING_NOT_ENABLED(-32000, "Node/Account allowlisting has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
