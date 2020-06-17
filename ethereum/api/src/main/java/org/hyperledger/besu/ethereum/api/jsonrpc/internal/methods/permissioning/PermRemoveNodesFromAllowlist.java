@@ -28,33 +28,31 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.List;
 import java.util.Optional;
 
-@Deprecated
-public class PermAddNodesToWhitelist implements JsonRpcMethod {
+public class PermRemoveNodesFromAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
       nodeWhitelistPermissioningController;
 
-  public PermAddNodesToWhitelist(
+  public PermRemoveNodesFromAllowlist(
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
     this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.PERM_ADD_NODES_TO_WHITELIST.getMethodName();
+    return RpcMethod.PERM_REMOVE_NODES_FROM_ALLOWLIST.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final StringListParameter enodeListParam =
         requestContext.getRequiredParameter(0, StringListParameter.class);
-
     try {
       if (nodeWhitelistPermissioningController.isPresent()) {
         try {
           final List<String> enodeURLs = enodeListParam.getStringList();
           final NodeLocalConfigPermissioningController.NodesWhitelistResult nodesWhitelistResult =
-              nodeWhitelistPermissioningController.get().addNodes(enodeURLs);
+              nodeWhitelistPermissioningController.get().removeNodes(enodeURLs);
 
           switch (nodesWhitelistResult.result()) {
             case SUCCESS:
@@ -62,9 +60,9 @@ public class PermAddNodesToWhitelist implements JsonRpcMethod {
             case ERROR_EMPTY_ENTRY:
               return new JsonRpcErrorResponse(
                   requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
-            case ERROR_EXISTING_ENTRY:
+            case ERROR_ABSENT_ENTRY:
               return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EXISTING_ENTRY);
+                  requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_MISSING_ENTRY);
             case ERROR_DUPLICATED_ENTRY:
               return new JsonRpcErrorResponse(
                   requestContext.getRequest().getId(),
@@ -75,6 +73,10 @@ public class PermAddNodesToWhitelist implements JsonRpcMethod {
             case ERROR_WHITELIST_FILE_SYNC:
               return new JsonRpcErrorResponse(
                   requestContext.getRequest().getId(), JsonRpcError.WHITELIST_FILE_SYNC);
+            case ERROR_FIXED_NODE_CANNOT_BE_REMOVED:
+              return new JsonRpcErrorResponse(
+                  requestContext.getRequest().getId(),
+                  JsonRpcError.NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED);
             default:
               throw new Exception();
           }

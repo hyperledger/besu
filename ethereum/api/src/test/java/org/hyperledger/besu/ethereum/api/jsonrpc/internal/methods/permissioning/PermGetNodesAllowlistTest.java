@@ -39,12 +39,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@Deprecated
 @RunWith(MockitoJUnitRunner.class)
-public class PermGetNodesWhitelistTest {
+public class PermGetNodesAllowlistTest {
 
-  private PermGetNodesWhitelist method;
-  private static final String METHOD_NAME = "perm_getNodesWhitelist";
+  private PermGetNodesAllowlist method;
+  private static final String METHOD_NAME = "perm_getNodesAllowlist";
 
   private final String enode1 =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
@@ -57,7 +56,7 @@ public class PermGetNodesWhitelistTest {
 
   @Before
   public void setUp() {
-    method = new PermGetNodesWhitelist(Optional.of(nodeLocalConfigPermissioningController));
+    method = new PermGetNodesAllowlist(Optional.of(nodeLocalConfigPermissioningController));
   }
 
   @Test
@@ -101,7 +100,7 @@ public class PermGetNodesWhitelistTest {
 
   @Test
   public void shouldFailWhenP2pDisabled() {
-    method = new PermGetNodesWhitelist(Optional.empty());
+    method = new PermGetNodesAllowlist(Optional.empty());
 
     final JsonRpcRequestContext request = buildRequest();
     final JsonRpcResponse expectedResponse =

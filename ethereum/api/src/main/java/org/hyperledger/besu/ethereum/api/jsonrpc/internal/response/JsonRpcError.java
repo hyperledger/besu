@@ -89,21 +89,21 @@ public enum JsonRpcError {
   NODE_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of nodes"),
   NODE_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid node"),
   NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
-  NODE_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to whitelist"),
-  NODE_WHITELIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from whitelist"),
+  NODE_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to allowlist"),
+  NODE_WHITELIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from allowlist"),
   NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED(
-      -32000, "Cannot remove a fixed node (bootnode or static node) from whitelist"),
+      -32000, "Cannot remove a fixed node (bootnode or static node) from allowlist"),
 
   // Permissioning/persistence errors
   WHITELIST_PERSIST_FAILURE(
-      -32000, "Unable to persist changes to whitelist configuration file. Changes reverted"),
+      -32000, "Unable to persist changes to allowlist configuration file. Changes reverted"),
   WHITELIST_FILE_SYNC(
       -32000,
       "The permissioning whitelist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
   WHITELIST_RELOAD_ERROR(
       -32000,
-      "Error reloading permissions file. Please use perm_getAccountsAllowlist and perm_getNodesWhitelist to review the current state of the whitelists"),
-  PERMISSIONING_NOT_ENABLED(-32000, "Node/Account whitelisting has not been enabled"),
+      "Error reloading permissions file. Please use perm_getAccountsAllowlist and perm_getNodesAllowlist to review the current state of the whitelists"),
+  PERMISSIONING_NOT_ENABLED(-32000, "Node/Account allowlisting has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
   // Permissioning/Authorization errors
@@ -131,7 +131,7 @@ public enum JsonRpcError {
       -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
-      "Private Marker Transaction failed due to intrinsic gas exeeding the limit. Gas limit used from the Private Transaction."),
+      "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 

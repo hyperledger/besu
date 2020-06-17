@@ -45,7 +45,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, AddNodeResponse> addNodesToWhitelist(final List<URI> enodeList) {
     return new Request<>(
-        "perm_addNodesToWhitelist",
+        "perm_addNodesToAllowlist",
         Collections.singletonList(enodeList),
         web3jService,
         AddNodeResponse.class);
@@ -53,7 +53,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, RemoveNodeResponse> removeNodesFromWhitelist(final List<URI> enodeList) {
     return new Request<>(
-        "perm_removeNodesFromWhitelist",
+        "perm_removeNodesFromAllowlist",
         Collections.singletonList(enodeList),
         web3jService,
         RemoveNodeResponse.class);
@@ -61,7 +61,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, GetNodesWhitelistResponse> getNodesWhitelist() {
     return new Request<>(
-        "perm_getNodesWhitelist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
+        "perm_getNodesAllowlist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
   }
 
   Request<?, GetAccountsWhitelistResponse> getAccountsWhitelist() {

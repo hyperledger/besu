@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated
 public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>

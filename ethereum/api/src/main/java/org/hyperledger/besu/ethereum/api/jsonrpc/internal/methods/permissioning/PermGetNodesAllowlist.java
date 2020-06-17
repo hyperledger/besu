@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.StringListParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,63 +27,29 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.List;
 import java.util.Optional;
 
-@Deprecated
-public class PermAddNodesToWhitelist implements JsonRpcMethod {
+public class PermGetNodesAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
       nodeWhitelistPermissioningController;
 
-  public PermAddNodesToWhitelist(
+  public PermGetNodesAllowlist(
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
     this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.PERM_ADD_NODES_TO_WHITELIST.getMethodName();
+    return RpcMethod.PERM_GET_NODES_ALLOWLIST.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final StringListParameter enodeListParam =
-        requestContext.getRequiredParameter(0, StringListParameter.class);
-
     try {
       if (nodeWhitelistPermissioningController.isPresent()) {
-        try {
-          final List<String> enodeURLs = enodeListParam.getStringList();
-          final NodeLocalConfigPermissioningController.NodesWhitelistResult nodesWhitelistResult =
-              nodeWhitelistPermissioningController.get().addNodes(enodeURLs);
+        final List<String> enodeList =
+            nodeWhitelistPermissioningController.get().getNodesWhitelist();
 
-          switch (nodesWhitelistResult.result()) {
-            case SUCCESS:
-              return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
-            case ERROR_EMPTY_ENTRY:
-              return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
-            case ERROR_EXISTING_ENTRY:
-              return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EXISTING_ENTRY);
-            case ERROR_DUPLICATED_ENTRY:
-              return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(),
-                  JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
-            case ERROR_WHITELIST_PERSIST_FAIL:
-              return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.WHITELIST_PERSIST_FAILURE);
-            case ERROR_WHITELIST_FILE_SYNC:
-              return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.WHITELIST_FILE_SYNC);
-            default:
-              throw new Exception();
-          }
-        } catch (IllegalArgumentException e) {
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
-        } catch (Exception e) {
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
-        }
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), enodeList);
       } else {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
