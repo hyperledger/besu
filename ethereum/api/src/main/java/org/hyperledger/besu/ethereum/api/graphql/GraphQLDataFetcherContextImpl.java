@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -27,6 +28,18 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
   private final Synchronizer synchronizer;
   private final ProtocolSchedule protocolSchedule;
   private final TransactionPool transactionPool;
+  private final IsAliveHandler isAliveHandler;
+
+  public GraphQLDataFetcherContextImpl(
+      final GraphQLDataFetcherContext context, final IsAliveHandler isAliveHandler) {
+    this(
+        context.getBlockchainQueries(),
+        context.getProtocolSchedule(),
+        context.getTransactionPool(),
+        context.getMiningCoordinator(),
+        context.getSynchronizer(),
+        isAliveHandler);
+  }
 
   public GraphQLDataFetcherContextImpl(
       final BlockchainQueries blockchainQueries,
@@ -34,11 +47,28 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Synchronizer synchronizer) {
+    this(
+        blockchainQueries,
+        protocolSchedule,
+        transactionPool,
+        miningCoordinator,
+        synchronizer,
+        new IsAliveHandler(true));
+  }
+
+  public GraphQLDataFetcherContextImpl(
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
+      final TransactionPool transactionPool,
+      final MiningCoordinator miningCoordinator,
+      final Synchronizer synchronizer,
+      final IsAliveHandler isAliveHandler) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.miningCoordinator = miningCoordinator;
     this.synchronizer = synchronizer;
     this.transactionPool = transactionPool;
+    this.isAliveHandler = isAliveHandler;
   }
 
   @Override
@@ -64,5 +94,10 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
   @Override
   public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
+  }
+
+  @Override
+  public IsAliveHandler getIsAliveHandler() {
+    return isAliveHandler;
   }
 }

@@ -384,7 +384,7 @@ public class GraphQLHttpService {
             .operationName(operationName)
             .variables(variables)
             .context(
-                new GraphQLDataFetcherContextDecorator(
+                new GraphQLDataFetcherContextImpl(
                     dataFetcherContext, new IsAliveHandler(config.getHttpTimeoutSec())))
             .build();
     final ExecutionResult result = graphQL.execute(executionInput);
