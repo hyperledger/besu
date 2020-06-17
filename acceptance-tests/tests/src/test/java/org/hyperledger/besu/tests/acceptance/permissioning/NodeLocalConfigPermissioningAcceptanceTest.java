@@ -69,7 +69,7 @@ public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBa
   }
 
   @Test
-  public void forbiddenNodeAddedToWhitelistCanConnectToPermissionedNode() {
+  public void forbiddenNodeAddedToAllowlistCanConnectToPermissionedNode() {
     permissionedNode.verify(net.awaitPeerCount(2));
 
     // add node to the allowlist

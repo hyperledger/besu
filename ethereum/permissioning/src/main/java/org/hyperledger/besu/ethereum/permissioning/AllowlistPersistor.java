@@ -37,8 +37,8 @@ public class AllowlistPersistor {
   private final File configurationFile;
 
   public enum ALLOWLIST_TYPE {
-    ACCOUNTS("accounts-whitelist"),
-    NODES("nodes-whitelist");
+    ACCOUNTS("accounts-allowlist"),
+    NODES("nodes-allowlist");
 
     private final String tomlKey;
 
