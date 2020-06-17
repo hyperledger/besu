@@ -71,7 +71,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, AddAccountsToWhitelistResponse> addAccountsToWhitelist(final List<String> accounts) {
     return new Request<>(
-        "perm_addAccountsToWhitelist",
+        "perm_addAccountsToAllowlist",
         Collections.singletonList(accounts),
         web3jService,
         AddAccountsToWhitelistResponse.class);
@@ -80,7 +80,7 @@ public class PermissioningJsonRpcRequestFactory {
   Request<?, RemoveAccountsFromWhitelistResponse> removeAccountsFromWhitelist(
       final List<String> accounts) {
     return new Request<>(
-        "perm_removeAccountsFromWhitelist",
+        "perm_removeAccountsFromAllowlist",
         Collections.singletonList(accounts),
         web3jService,
         RemoveAccountsFromWhitelistResponse.class);
