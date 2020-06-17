@@ -24,8 +24,10 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLJsonRe
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponse;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponseType;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLSuccessResponse;
+import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
@@ -86,6 +88,7 @@ public class GraphQLHttpService {
   private final GraphQL graphQL;
 
   private final GraphQLDataFetcherContext dataFetcherContext;
+  private final EthScheduler scheduler;
 
   /**
    * Construct a GraphQLHttpService handler
@@ -95,13 +98,15 @@ public class GraphQLHttpService {
    * @param config Configuration for the rpc methods being loaded
    * @param graphQL GraphQL engine
    * @param dataFetcherContext DataFetcherContext required by GraphQL to finish it's job
+   * @param scheduler {@link EthScheduler} used to trigger timeout on backend queries
    */
   public GraphQLHttpService(
       final Vertx vertx,
       final Path dataDir,
       final GraphQLConfiguration config,
       final GraphQL graphQL,
-      final GraphQLDataFetcherContext dataFetcherContext) {
+      final GraphQLDataFetcherContextImpl dataFetcherContext,
+      final EthScheduler scheduler) {
     this.dataDir = dataDir;
 
     validateConfig(config);
@@ -109,6 +114,7 @@ public class GraphQLHttpService {
     this.vertx = vertx;
     this.graphQL = graphQL;
     this.dataFetcherContext = dataFetcherContext;
+    this.scheduler = scheduler;
   }
 
   private void validateConfig(final GraphQLConfiguration config) {
@@ -382,7 +388,9 @@ public class GraphQLHttpService {
             .query(requestJson)
             .operationName(operationName)
             .variables(variables)
-            .context(dataFetcherContext)
+            .context(
+                new GraphQLDataFetcherContextImpl(
+                    dataFetcherContext, new IsAliveHandler(scheduler, config.getHttpTimeoutSec())))
             .build();
     final ExecutionResult result = graphQL.execute(executionInput);
     final Map<String, Object> toSpecificationResult = result.toSpecification();
