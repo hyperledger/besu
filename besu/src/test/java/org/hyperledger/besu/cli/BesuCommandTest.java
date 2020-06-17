@@ -45,6 +45,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -3430,5 +3431,57 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--Xeip1559-enabled=false");
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(ExperimentalEIPs.eip1559Enabled).isFalse();
+  }
+
+  @Test
+  public void assertThatDefaultHttpTimeoutSecondsWorks() {
+    parseCommand();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHttpTimeoutSec())
+        .isEqualTo(TimeoutOptions.defaultOptions().getTimeoutSeconds());
+  }
+
+  @Test
+  public void assertThatHttpTimeoutSecondsWorks() {
+    parseCommand("--Xhttp-timeout-seconds=513");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHttpTimeoutSec()).isEqualTo(513);
+  }
+
+  @Test
+  public void assertThatInvalidHttpTimeoutSecondsFails() {
+    parseCommand("--Xhttp-timeout-seconds=abc");
+    assertThat(commandErrorOutput.toString())
+        .contains("Invalid value for option", "--Xhttp-timeout-seconds", "abc", "is not a long");
+  }
+
+  @Test
+  public void assertThatDefaultWsTimeoutSecondsWorks() {
+    parseCommand();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getTimeoutSec())
+        .isEqualTo(TimeoutOptions.defaultOptions().getTimeoutSeconds());
+  }
+
+  @Test
+  public void assertThatWsTimeoutSecondsWorks() {
+    parseCommand("--Xws-timeout-seconds=11112018");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getTimeoutSec()).isEqualTo(11112018);
+  }
+
+  @Test
+  public void assertThatInvalidWsTimeoutSecondsFails() {
+    parseCommand("--Xws-timeout-seconds=abc");
+    assertThat(commandErrorOutput.toString())
+        .contains("Invalid value for option", "--Xws-timeout-seconds", "abc", "is not a long");
   }
 }
