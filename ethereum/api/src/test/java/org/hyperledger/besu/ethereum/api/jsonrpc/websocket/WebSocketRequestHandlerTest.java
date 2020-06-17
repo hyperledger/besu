@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,7 +65,10 @@ public class WebSocketRequestHandlerTest {
     methods.put("eth_x", jsonRpcMethodMock);
     handler =
         new WebSocketRequestHandler(
-            vertx, methods, TimeoutOptions.defaultOptions().getTimeoutSeconds());
+            vertx,
+            methods,
+            mock(EthScheduler.class),
+            TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 
   @After

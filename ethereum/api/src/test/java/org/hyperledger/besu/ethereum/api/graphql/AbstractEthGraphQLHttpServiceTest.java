@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -174,7 +175,12 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
     service =
         new GraphQLHttpService(
-            vertx, folder.newFolder().toPath(), config, graphQL, dataFetcherContext);
+            vertx,
+            folder.newFolder().toPath(),
+            config,
+            graphQL,
+            dataFetcherContext,
+            Mockito.mock(EthScheduler.class));
     service.start().join();
 
     client = new OkHttpClient();

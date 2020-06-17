@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 
 @RunWith(VertxUnitRunner.class)
 public class EthSubscribeIntegrationTest {
@@ -59,6 +61,7 @@ public class EthSubscribeIntegrationTest {
         new WebSocketRequestHandler(
             vertx,
             webSocketMethodsFactory.methods(),
+            Mockito.mock(EthScheduler.class),
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 

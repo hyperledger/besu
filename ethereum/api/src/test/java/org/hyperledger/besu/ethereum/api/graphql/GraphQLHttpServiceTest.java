@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -106,12 +107,22 @@ public class GraphQLHttpServiceTest {
   private static GraphQLHttpService createGraphQLHttpService(final GraphQLConfiguration config)
       throws Exception {
     return new GraphQLHttpService(
-        vertx, folder.newFolder().toPath(), config, graphQL, dataFetcherContext);
+        vertx,
+        folder.newFolder().toPath(),
+        config,
+        graphQL,
+        dataFetcherContext,
+        Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLHttpService createGraphQLHttpService() throws Exception {
     return new GraphQLHttpService(
-        vertx, folder.newFolder().toPath(), createGraphQLConfig(), graphQL, dataFetcherContext);
+        vertx,
+        folder.newFolder().toPath(),
+        createGraphQLConfig(),
+        graphQL,
+        dataFetcherContext,
+        Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLConfiguration createGraphQLConfig() {

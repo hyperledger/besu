@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.Map;
 import java.util.Optional;
@@ -46,12 +47,17 @@ public class WebSocketRequestHandler {
 
   private final Vertx vertx;
   private final Map<String, JsonRpcMethod> methods;
+  final EthScheduler ethScheduler;
   private final long timeoutSec;
 
   public WebSocketRequestHandler(
-      final Vertx vertx, final Map<String, JsonRpcMethod> methods, final long timeoutSec) {
+      final Vertx vertx,
+      final Map<String, JsonRpcMethod> methods,
+      final EthScheduler ethScheduler,
+      final long timeoutSec) {
     this.vertx = vertx;
     this.methods = methods;
+    this.ethScheduler = ethScheduler;
     this.timeoutSec = timeoutSec;
   }
 
@@ -94,7 +100,8 @@ public class WebSocketRequestHandler {
         request.setConnectionId(id);
         if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
           final JsonRpcRequestContext requestContext =
-              new JsonRpcRequestContext(request, user, new IsAliveHandler(timeoutSec));
+              new JsonRpcRequestContext(
+                  request, user, new IsAliveHandler(ethScheduler, timeoutSec));
           future.complete(method.response(requestContext));
         } else {
           future.complete(

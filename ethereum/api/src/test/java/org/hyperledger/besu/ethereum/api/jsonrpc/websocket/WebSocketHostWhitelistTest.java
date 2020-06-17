@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
@@ -22,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.net.InetSocketAddress;
@@ -75,7 +77,10 @@ public class WebSocketHostWhitelistTest {
     webSocketRequestHandlerSpy =
         spy(
             new WebSocketRequestHandler(
-                vertx, websocketMethods, TimeoutOptions.defaultOptions().getTimeoutSeconds()));
+                vertx,
+                websocketMethods,
+                mock(EthScheduler.class),
+                TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
         new WebSocketService(vertx, webSocketConfiguration, webSocketRequestHandlerSpy);

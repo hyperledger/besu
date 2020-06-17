@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.handlers;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -31,14 +32,18 @@ public class IsAliveHandler implements Supplier<Boolean> {
     this.alive = alive;
   }
 
-  public IsAliveHandler(final long timeoutSec) {
-    this(new AtomicBoolean(true), timeoutSec);
+  public IsAliveHandler(final EthScheduler ethScheduler, final long timeoutSec) {
+    this(ethScheduler, new AtomicBoolean(true), timeoutSec);
   }
 
-  public IsAliveHandler(final AtomicBoolean alive, final long timeoutSec) {
+  public IsAliveHandler(
+      final EthScheduler ethScheduler, final AtomicBoolean alive, final long timeoutSec) {
     this.alive = alive;
-    Executors.newSingleThreadScheduledExecutor()
-        .schedule(() -> alive.set(false), timeoutSec, TimeUnit.SECONDS);
+    ethScheduler.scheduleFutureTask(this::triggerTimeout, Duration.ofSeconds(timeoutSec));
+  }
+
+  private void triggerTimeout() {
+    alive.set(false);
   }
 
   @Override

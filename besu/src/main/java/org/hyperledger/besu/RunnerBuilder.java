@@ -502,7 +502,12 @@ public class RunnerBuilder {
       graphQLHttpService =
           Optional.of(
               new GraphQLHttpService(
-                  vertx, dataDir, graphQLConfiguration, graphQL, dataFetcherContext));
+                  vertx,
+                  dataDir,
+                  graphQLConfiguration,
+                  graphQL,
+                  dataFetcherContext,
+                  besuController.getProtocolManager().ethContext().getScheduler()));
     }
 
     Optional<WebSocketService> webSocketService = Optional.empty();
@@ -784,7 +789,10 @@ public class RunnerBuilder {
 
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(
-            vertx, websocketMethodsFactory.methods(), webSocketConfiguration.getTimeoutSec());
+            vertx,
+            websocketMethodsFactory.methods(),
+            besuController.getProtocolManager().ethContext().getScheduler(),
+            webSocketConfiguration.getTimeoutSec());
 
     return new WebSocketService(vertx, configuration, websocketRequestHandler);
   }
