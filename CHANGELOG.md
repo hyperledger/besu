@@ -321,7 +321,18 @@ No bug fixes with [user impact in this release](https://wiki.hyperledger.org/dis
 
 ### Known Issues
 
+<<<<<<< HEAD
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+=======
+* Public Networks Default to Fast Sync: The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets, is now `FAST`.
+  * The default is unchanged for private networks. That is, the sync mode defaults to `FULL` for private networks. 
+  * Use the [`--sync-mode` command line option](https://besu.hyperledger.org/Reference/CLI/CLI-Syntax/#sync-mode) to change the sync mode. [\#384](https://github.com/hyperledger/besu/pull/384)
+* Proper Mining Support: Added full support for `eth_hashrate` and `eth_submitHashrate`. It is now possible to have the hahsrate when we mine with a GPU mining worker [\#1063](https://github.com/hyperledger/besu/pull/1063)
+* Performance Improvements: The addition of native libraries ([\#775](https://github.com/hyperledger/besu/pull/775)) and changes to data structures in the EVM ([\#1089](https://github.com/hyperledger/besu/pull/1089)) have improved Besu sync and EVM execution times. 
+* Tracing API Improvements: The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.  
+* New Plugin API Block Events: `BlockAdded` and `BlockReorg` are now exposed via the Plugin API [\#637](https://github.com/hyperledger/besu/pull/637). 
+- Add CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
+>>>>>>> Update Changelog for 1.5
 
 #### New known issues
 
