@@ -64,7 +64,10 @@ public class TimeoutHandler {
                       ctx.vertx()
                           .setTimer(
                               timeoutOptions.getTimeoutMillis(),
-                              t -> ctx.fail(timeoutOptions.getErrorCode()));
+                              t -> {
+                                ctx.fail(timeoutOptions.getErrorCode());
+                                ctx.response().close();
+                              });
                   ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
                 });
       }
