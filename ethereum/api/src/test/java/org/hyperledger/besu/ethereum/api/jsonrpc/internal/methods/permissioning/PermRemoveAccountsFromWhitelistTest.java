@@ -45,11 +45,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PermRemoveAccountsFromWhitelistTest {
 
   @Mock private AccountLocalConfigPermissioningController accountWhitelist;
-  private PermRemoveAccountsFromAllowlist method;
+  private PermRemoveAccountsFromWhitelist method;
 
   @Before
   public void before() {
-    method = new PermRemoveAccountsFromAllowlist(java.util.Optional.of(accountWhitelist));
+    method = new PermRemoveAccountsFromWhitelist(java.util.Optional.of(accountWhitelist));
   }
 
   @Test
