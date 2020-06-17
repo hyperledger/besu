@@ -15,12 +15,15 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
@@ -49,7 +52,12 @@ public class EthUnsubscribeIntegrationTest {
     vertx = Vertx.vertx();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
     webSocketMethodsFactory = new WebSocketMethodsFactory(subscriptionManager, new HashMap<>());
-    webSocketRequestHandler = new WebSocketRequestHandler(vertx, webSocketMethodsFactory.methods());
+    webSocketRequestHandler =
+        new WebSocketRequestHandler(
+            vertx,
+            webSocketMethodsFactory.methods(),
+            mock(EthScheduler.class),
+            TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 
   @Test
