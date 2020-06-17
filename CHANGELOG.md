@@ -55,6 +55,19 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
+### Additions and Improvements
+- local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
+Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
+- CLI now supports `--host-allowlist`. Support for `--host-whitelist` will be removed in a future release.
+- Additional `Allowlist` JSON RPC endpoints for permissioning now supported. `Whitelist` endpoints will be removed in a future release.
+  - Add `perm_getNodesAllowlist` as an alternative equivalent to `perm_getNodesWhitelist`
+  - Add `perm_addNodesToAllowlist` as an alternative equivalent to `perm_addNodesToWhitelist`
+  - Add `perm_removeNodesFromAllowlist` as an alternative equivalent to `perm_removeNodesFromWhitelist`
+  - Add `perm_getAccountsAllowlist` as an alternative equivalent to `perm_getAccountsWhitelist`
+  - Add `perm_addAccountsToAllowlist` as an alternative equivalent to `perm_addAccountsToWhitelist`
+  - Add `perm_removeAccountsFromAllowlist` as an alternative equivalent to `perm_removeAccountsFromWhitelist`
+- Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints
+
 ## 1.4.6
 
 ### Additions and Improvements

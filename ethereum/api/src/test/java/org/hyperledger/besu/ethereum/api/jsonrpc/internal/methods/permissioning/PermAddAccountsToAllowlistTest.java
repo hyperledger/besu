@@ -40,21 +40,20 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@Deprecated
 @RunWith(MockitoJUnitRunner.class)
-public class PermAddAccountsToWhitelistTest {
+public class PermAddAccountsToAllowlistTest {
 
   @Mock private AccountLocalConfigPermissioningController accountWhitelist;
-  private PermAddAccountsToWhitelist method;
+  private PermAddAccountsToAllowlist method;
 
   @Before
   public void before() {
-    method = new PermAddAccountsToWhitelist(java.util.Optional.of(accountWhitelist));
+    method = new PermAddAccountsToAllowlist(java.util.Optional.of(accountWhitelist));
   }
 
   @Test
   public void getNameShouldReturnExpectedName() {
-    assertThat(method.getName()).isEqualTo("perm_addAccountsToWhitelist");
+    assertThat(method.getName()).isEqualTo("perm_addAccountsToAllowlist");
   }
 
   @Test
@@ -121,7 +120,7 @@ public class PermAddAccountsToWhitelistTest {
   public void whenEmptyParamOnRequestShouldThrowInvalidJsonRpcException() {
     JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "perm_addAccountsToWhitelist", new Object[] {}));
+            new JsonRpcRequest("2.0", "perm_addAccountsToAllowlist", new Object[] {}));
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -132,6 +131,6 @@ public class PermAddAccountsToWhitelistTest {
 
   private JsonRpcRequestContext request(final List<String> accounts) {
     return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "perm_addAccountsToWhitelist", new Object[] {accounts}));
+        new JsonRpcRequest("2.0", "perm_addAccountsToAllowlist", new Object[] {accounts}));
   }
 }

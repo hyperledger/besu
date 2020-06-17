@@ -31,6 +31,7 @@ import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
@@ -418,6 +419,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specify the NAT circumvention method to be used, possible values are ${COMPLETION-CANDIDATES}."
               + " NONE disables NAT functionality. (default: ${DEFAULT-VALUE})")
   private final NatMethod natMethod = DEFAULT_NAT_METHOD;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @Option(
+      names = {"--Xnat-kube-pod-name"},
+      description =
+          "Specify the name of the pod that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
+  private String natManagerPodName = DEFAULT_BESU_POD_NAME_FILTER;
 
   @Option(
       names = {"--network-id"},
@@ -1002,6 +1010,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xws-timeout-seconds"},
+      description = "Web socket timeout in seconds (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1275,6 +1290,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     validateP2PInterface(p2pInterface);
     validateMiningParams();
+    validateNatParams();
 
     return this;
   }
@@ -1303,6 +1319,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } catch (final UnknownHostException | SocketException e) {
       throw new ParameterException(commandLine, failMessage, e);
+    }
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  private void validateNatParams() {
+    if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
+        && !natManagerPodName.equals(DEFAULT_BESU_POD_NAME_FILTER)) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name"
+              + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
     }
   }
 
@@ -1633,6 +1660,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setTimeoutSec(wsTimeoutSec);
     return webSocketConfiguration;
   }
 
@@ -1943,6 +1971,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
+            .natManagerPodName(natManagerPodName)
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)
