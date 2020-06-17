@@ -71,6 +71,16 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
   }
 
   @Override
+  public void onResumeMining() {
+    LOG.info("Resuming mining operations");
+  }
+
+  @Override
+  public void onPauseMining() {
+    LOG.info("Pausing mining while behind chain head");
+  }
+
+  @Override
   public Optional<Long> hashesPerSecond() {
     if (sealerHashRate.size() <= 0) {
       return localHashesPerSecond();
