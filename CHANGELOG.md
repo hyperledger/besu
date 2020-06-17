@@ -41,7 +41,7 @@ v1.6. Older versions of Orion will no longer work with Besu v1.5.
 - The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets, is now `FAST`.
   The default is unchanged for private networks. That is, the sync mode defaults to `FULL` for private networks. 
   Use the [`--sync-mode` command line option](https://besu.hyperledger.org/Reference/CLI/CLI-Syntax/#sync-mode) to change the sync mode. [\#384](https://github.com/hyperledger/besu/pull/384)
-- Add proper support for `eth_hashrate` and `eth_submitHashrate`. It is now po`ssible to have the hahsrate when we mine with a GPU mining worker [\#1063](https://github.com/hyperledger/besu/pull/1063)
+- Add proper support for `eth_hashrate` and `eth_submitHashrate`. It is now possible to have the hahsrate when we mine with a GPU mining worker [\#1063](https://github.com/hyperledger/besu/pull/1063)
 - Add cli option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
 
 ### Bug fixes 
