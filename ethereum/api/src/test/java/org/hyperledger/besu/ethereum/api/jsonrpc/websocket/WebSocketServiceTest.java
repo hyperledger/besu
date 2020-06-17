@@ -19,9 +19,11 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
@@ -45,6 +47,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 
 @RunWith(VertxUnitRunner.class)
 public class WebSocketServiceTest {
@@ -69,7 +72,13 @@ public class WebSocketServiceTest {
         new WebSocketMethodsFactory(
                 new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
             .methods();
-    webSocketRequestHandlerSpy = spy(new WebSocketRequestHandler(vertx, websocketMethods));
+    webSocketRequestHandlerSpy =
+        spy(
+            new WebSocketRequestHandler(
+                vertx,
+                websocketMethods,
+                Mockito.mock(EthScheduler.class),
+                TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
         new WebSocketService(vertx, websocketConfiguration, webSocketRequestHandlerSpy);
