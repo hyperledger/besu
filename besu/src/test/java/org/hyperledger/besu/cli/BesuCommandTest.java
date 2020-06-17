@@ -2014,7 +2014,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistAcceptsSingleArgument() {
+  public void rpcHttpHostAllowlistAcceptsSingleArgument() {
     parseCommand("--host-whitelist", "a");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -2030,7 +2030,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistAcceptsMultipleArguments() {
+  public void rpcHttpHostAllowlistAcceptsMultipleArguments() {
     parseCommand("--host-whitelist", "a,b");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -2046,7 +2046,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistAcceptsDoubleComma() {
+  public void rpcHttpHostAllowlistAcceptsDoubleComma() {
     parseCommand("--host-whitelist", "a,,b");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -2062,7 +2062,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistAcceptsMultipleFlags() {
+  public void rpcHttpHostAllowlistAcceptsMultipleFlags() {
     parseCommand("--host-whitelist=a", "--host-whitelist=b");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -2078,7 +2078,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistStarWithAnotherHostnameMustFail() {
+  public void rpcHttpHostAllowlistStarWithAnotherHostnameMustFail() {
     final String[] origins = {"friend", "*"};
     parseCommand("--host-whitelist", String.join(",", origins));
 
@@ -2090,7 +2090,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistStarWithAnotherHostnameMustFailStarFirst() {
+  public void rpcHttpHostAllowlistStarWithAnotherHostnameMustFailStarFirst() {
     final String[] origins = {"*", "friend"};
     parseCommand("--host-whitelist", String.join(",", origins));
 
@@ -2102,7 +2102,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistAllWithAnotherHostnameMustFail() {
+  public void rpcHttpHostAllowlistAllWithAnotherHostnameMustFail() {
     final String[] origins = {"friend", "all"};
     parseCommand("--host-whitelist", String.join(",", origins));
 
@@ -2114,7 +2114,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistWithNoneMustBuildEmptyList() {
+  public void rpcHttpHostAllowlistWithNoneMustBuildEmptyList() {
     final String[] origins = {"none"};
     parseCommand("--host-whitelist", String.join(",", origins));
 
@@ -2128,7 +2128,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistNoneWithAnotherDomainMustFail() {
+  public void rpcHttpHostAllowlistNoneWithAnotherDomainMustFail() {
     final String[] origins = {"http://domain1.com", "none"};
     parseCommand("--host-whitelist", String.join(",", origins));
 
@@ -2140,7 +2140,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistNoneWithAnotherDomainMustFailNoneFirst() {
+  public void rpcHttpHostAllowlistNoneWithAnotherDomainMustFailNoneFirst() {
     final String[] origins = {"none", "http://domain1.com"};
     parseCommand("--host-whitelist", String.join(",", origins));
 
@@ -2152,7 +2152,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpHostWhitelistEmptyValueFails() {
+  public void rpcHttpHostAllowlistEmptyValueFails() {
     parseCommand("--host-whitelist=");
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
@@ -3079,7 +3079,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         staticNodesFile.toPath(), ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
     Files.write(
         permissioningConfig.toPath(),
-        ("nodes-whitelist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
+        ("nodes-allowlist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
 
     parseCommand(
         "--data-path=" + testFolder.getRoot().getPath(),
@@ -3087,7 +3087,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-nodes-config-file-enabled=true",
         "--permissions-nodes-config-file=" + permissioningConfig.getPath());
     assertThat(commandErrorOutput.toString())
-        .contains(staticNodeURI.toString(), "not in nodes-whitelist");
+        .contains(staticNodeURI.toString(), "not in nodes-allowlist");
   }
 
   @Test
