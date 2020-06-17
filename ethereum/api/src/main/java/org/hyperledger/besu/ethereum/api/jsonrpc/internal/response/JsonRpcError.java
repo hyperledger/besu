@@ -100,7 +100,7 @@ public enum JsonRpcError {
       "The permissioning whitelist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
   WHITELIST_RELOAD_ERROR(
       -32000,
-      "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesWhitelist to review the current state of the whitelists"),
+      "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesAllowlist to review the current state of the whitelists"),
   PERMISSIONING_NOT_ENABLED(-32000, "Node/Account whitelisting has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
@@ -129,7 +129,7 @@ public enum JsonRpcError {
       -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
-      "Private Marker Transaction failed due to intrinsic gas exeeding the limit. Gas limit used from the Private Transaction."),
+      "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 

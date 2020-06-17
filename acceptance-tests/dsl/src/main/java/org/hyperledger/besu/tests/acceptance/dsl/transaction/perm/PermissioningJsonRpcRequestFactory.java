@@ -61,7 +61,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, GetNodesWhitelistResponse> getNodesWhitelist() {
     return new Request<>(
-        "perm_getNodesWhitelist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
+        "perm_getNodesAllowlist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
   }
 
   Request<?, GetAccountsWhitelistResponse> getAccountsWhitelist() {
