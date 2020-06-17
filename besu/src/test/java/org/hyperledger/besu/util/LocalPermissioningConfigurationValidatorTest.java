@@ -81,9 +81,9 @@ public class LocalPermissioningConfigurationValidatorTest {
               .collect(Collectors.toList());
       PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           enodeURIs, permissioningConfiguration);
-      fail("expected exception because ropsten bootnodes are not in node-whitelist");
+      fail("expected exception because ropsten bootnodes are not in node-allowlist");
     } catch (Exception e) {
-      assertThat(e.getMessage()).startsWith("Specified node(s) not in nodes-whitelist");
+      assertThat(e.getMessage()).startsWith("Specified node(s) not in nodes-allowlist");
       assertThat(e.getMessage())
           .contains(
               "enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303");

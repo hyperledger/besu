@@ -31,6 +31,18 @@ This default is what most users want when they are syncing but if you want to fu
 
 The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
 
+### Additions and Improvements
+- local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
+Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
+- CLI now supports `--host-allowlist`. Support for `--host-whitelist` will be removed in a future release.
+- Additional `Allowlist` JSON RPC endpoints for permissioning now supported. `Whitelist` endpoints will be removed in a future release.
+  - Add `perm_getNodesAllowlist` as an alternative equivalent to `perm_getNodesWhitelist`
+  - Add `perm_addNodesToAllowlist` as an alternative equivalent to `perm_addNodesToWhitelist`
+  - Add `perm_removeNodesFromAllowlist` as an alternative equivalent to `perm_removeNodesFromWhitelist`
+  - Add `perm_getAccountsAllowlist` as an alternative equivalent to `perm_getAccountsWhitelist`
+  - Add `perm_addAccountsToAllowlist` as an alternative equivalent to `perm_addAccountsToWhitelist`
+  - Add `perm_removeAccountsFromAllowlist` as an alternative equivalent to `perm_removeAccountsFromWhitelist`
+
 ## 1.4.6
 
 ### Additions and Improvements

@@ -76,16 +76,16 @@ public enum JsonRpcError {
   // Debug failures
   PARENT_BLOCK_NOT_FOUND(-32000, "Parent block not found"),
 
-  // Permissioning/Account whitelist errors
-  ACCOUNT_WHITELIST_NOT_ENABLED(-32000, "Account whitelisting has not been enabled"),
+  // Permissioning/Account allowlist errors
+  ACCOUNT_WHITELIST_NOT_ENABLED(-32000, "Account allowlisting has not been enabled"),
   ACCOUNT_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of accounts"),
   ACCOUNT_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid account"),
   ACCOUNT_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate accounts"),
-  ACCOUNT_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing account to whitelist"),
-  ACCOUNT_WHITELIST_ABSENT_ENTRY(-32000, "Cannot remove an absent account from whitelist"),
+  ACCOUNT_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing account to allowlist"),
+  ACCOUNT_WHITELIST_ABSENT_ENTRY(-32000, "Cannot remove an absent account from allowlist"),
 
-  // Permissioning/Node whitelist errors
-  NODE_WHITELIST_NOT_ENABLED(-32000, "Node whitelisting has not been enabled"),
+  // Permissioning/Node allowlist errors
+  NODE_WHITELIST_NOT_ENABLED(-32000, "Node allowlisting has not been enabled"),
   NODE_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of nodes"),
   NODE_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid node"),
   NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
@@ -102,7 +102,7 @@ public enum JsonRpcError {
       "The permissioning whitelist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
   WHITELIST_RELOAD_ERROR(
       -32000,
-      "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesWhitelist to review the current state of the whitelists"),
+      "Error reloading permissions file. Please use perm_getAccountsAllowlist and perm_getNodesWhitelist to review the current state of the whitelists"),
   PERMISSIONING_NOT_ENABLED(-32000, "Node/Account whitelisting has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 

@@ -38,7 +38,7 @@ public class PermRemoveAccountsFromAllowlist implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.PERM_REMOVE_ACCOUNTS_FROM_WHITELIST.getMethodName();
+    return RpcMethod.PERM_REMOVE_ACCOUNTS_FROM_ALLOWLIST.getMethodName();
   }
 
   @Override
