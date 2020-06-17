@@ -25,9 +25,17 @@ import java.util.List;
  * href="https://ethereum.github.io/yellowpaper/paper.pdf">Ethereum Yellow Paper</a>.
  */
 public interface BlockBody {
-  /** @return The list of transactions of the block. */
+  /**
+   * Returns the list of transactions of the block.
+   *
+   * @return The list of transactions of the block.
+   */
   public List<? extends Transaction> getTransactions();
 
-  /** @return The list of ommers of the block. */
+  /**
+   * Returns the list of ommers of the block.
+   *
+   * @return The list of ommers of the block.
+   */
   public List<? extends BlockHeader> getOmmers();
 }

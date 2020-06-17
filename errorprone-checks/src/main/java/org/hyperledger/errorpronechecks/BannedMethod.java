@@ -51,7 +51,7 @@ public class BannedMethod extends BugChecker implements MethodInvocationTreeMatc
       final MethodInvocationTree tree, final VisitorState state) {
     for (final Map.Entry<Matcher<ExpressionTree>, String> entry : BANNED_METHOD_LIST.entrySet()) {
       if (entry.getKey().matches(tree, state)) {
-        return buildDescriptionFromChecker(tree, this).setMessage(entry.getValue()).build();
+        return buildDescription(tree).setMessage(entry.getValue()).build();
       }
     }
     return NO_MATCH;

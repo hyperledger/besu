@@ -53,7 +53,7 @@ public class PermRemoveAccountsFromAllowlistTest {
 
   @Test
   public void getNameShouldReturnExpectedName() {
-    assertThat(method.getName()).isEqualTo("perm_removeAccountsFromWhitelist");
+    assertThat(method.getName()).isEqualTo("perm_removeAccountsFromAllowlist");
   }
 
   @Test
@@ -121,7 +121,7 @@ public class PermRemoveAccountsFromAllowlistTest {
   public void whenEmptyParamOnRequestShouldThrowInvalidJsonRpcException() {
     JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {}));
+            new JsonRpcRequest("2.0", "perm_removeAccountsFromAllowlist", new Object[] {}));
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -132,6 +132,6 @@ public class PermRemoveAccountsFromAllowlistTest {
 
   private JsonRpcRequestContext request(final List<String> accounts) {
     return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {accounts}));
+        new JsonRpcRequest("2.0", "perm_removeAccountsFromAllowlist", new Object[] {accounts}));
   }
 }

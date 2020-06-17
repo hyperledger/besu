@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
@@ -111,7 +110,7 @@ public class ProposerSelector {
       final Collection<Address> validatorsForRound,
       final ConsensusRoundIdentifier roundIdentifier) {
     final NavigableSet<Address> validatorSet = new TreeSet<>(validatorsForRound);
-    final SortedSet<Address> latterValidators = validatorSet.tailSet(prevBlockProposer, false);
+    final NavigableSet<Address> latterValidators = validatorSet.tailSet(prevBlockProposer, false);
     final Address nextProposer;
     if (latterValidators.isEmpty()) {
       // i.e. prevBlockProposer was at the end of the validator list, so the right validator for

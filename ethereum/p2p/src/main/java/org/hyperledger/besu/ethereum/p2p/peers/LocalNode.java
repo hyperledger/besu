@@ -38,12 +38,16 @@ public interface LocalNode {
   }
 
   /**
+   * Information of this node as a peer.
+   *
    * @return the {@link PeerInfo} associated with the local node.
    * @throws NodeNotReadyException If the local node is not ready, throws an exception.
    */
   PeerInfo getPeerInfo() throws NodeNotReadyException;
 
   /**
+   * This node as a Peer.
+   *
    * @return a {@link Peer} representing the local node.
    * @throws NodeNotReadyException If the local node is not ready, throws an exception.
    */

@@ -56,7 +56,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
     this.chainHeightEstimationBuffer = chainHeightEstimationBuffer;
   }
 
-  public AbstractPeerBlockValidator(
+  protected AbstractPeerBlockValidator(
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long blockNumber) {

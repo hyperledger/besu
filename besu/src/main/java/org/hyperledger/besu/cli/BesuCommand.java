@@ -1010,6 +1010,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xws-timeout-seconds"},
+      description = "Web socket timeout in seconds (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1653,6 +1660,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setTimeoutSec(wsTimeoutSec);
     return webSocketConfiguration;
   }
 

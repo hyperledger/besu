@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPriv
 
 import java.math.BigInteger;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,7 +50,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivacyQueries privacyQueries;
 
-  public PrivacyApiGroupJsonRpcMethods(
+  protected PrivacyApiGroupJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
@@ -98,7 +97,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return create(privacyController, enclavePublicProvider).entrySet().stream()
         .collect(
             Collectors.toMap(
-                Entry::getKey, entry -> createPrivacyMethod(privacyParameters, entry.getValue())));
+                Map.Entry::getKey,
+                entry -> createPrivacyMethod(privacyParameters, entry.getValue())));
   }
 
   protected abstract Map<String, JsonRpcMethod> create(

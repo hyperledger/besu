@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -247,17 +247,17 @@ public class TraceTransactionIntegrationTest {
 
   @SuppressWarnings("unchecked")
   @SafeVarargs
-  private final void assertStorageContainsExactly(
-      final TraceFrame frame, final Entry<String, String>... memoryEntriesAsHex) {
+  private void assertStorageContainsExactly(
+      final TraceFrame frame, final Map.Entry<String, String>... memoryEntriesAsHex) {
     assertThat(frame.getMemory()).isPresent();
-    final Entry<UInt256, UInt256>[] memoryEntries =
+    final Map.Entry<UInt256, UInt256>[] memoryEntries =
         Stream.of(memoryEntriesAsHex)
             .map(
                 entry ->
                     entry(
                         UInt256.fromHexString(entry.getKey()),
                         UInt256.fromHexString(entry.getValue())))
-            .toArray(Entry[]::new);
+            .toArray(Map.Entry[]::new);
     assertThat(frame.getStorage().get()).containsExactly(memoryEntries);
   }
 }

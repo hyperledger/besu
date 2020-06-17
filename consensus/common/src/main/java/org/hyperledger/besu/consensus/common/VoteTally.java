@@ -21,9 +21,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.google.common.collect.Maps;
@@ -31,7 +31,7 @@ import com.google.common.collect.Maps;
 /** Tracks the current list of validators and votes to add or drop validators. */
 public class VoteTally implements ValidatorProvider {
 
-  private final SortedSet<Address> currentValidators;
+  private final NavigableSet<Address> currentValidators;
 
   private final Map<Address, Set<Address>> addVotesBySubject;
   private final Map<Address, Set<Address>> removeVotesBySubject;

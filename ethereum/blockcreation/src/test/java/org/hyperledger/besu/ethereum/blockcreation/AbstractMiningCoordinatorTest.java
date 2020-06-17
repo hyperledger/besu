@@ -167,7 +167,6 @@ public class AbstractMiningCoordinatorTest {
 
     when(syncState.isInSync()).thenReturn(true);
     miningCoordinator.inSyncChanged(true);
-
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
 

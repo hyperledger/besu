@@ -52,6 +52,10 @@ public interface MiningCoordinator {
 
   boolean isMining();
 
+  default void onResumeMining() {}
+
+  default void onPauseMining() {}
+
   Wei getMinTransactionGasPrice();
 
   void setExtraData(Bytes extraData);
