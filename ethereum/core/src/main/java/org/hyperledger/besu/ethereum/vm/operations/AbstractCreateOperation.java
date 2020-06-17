@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -73,9 +72,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   @Override
   public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
+      final MessageFrame frame, final EVM evm) {
     return frame.isStatic()
         ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
         : Optional.empty();

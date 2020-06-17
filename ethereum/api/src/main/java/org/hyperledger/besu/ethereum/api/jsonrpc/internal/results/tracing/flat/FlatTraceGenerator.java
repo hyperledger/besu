@@ -167,7 +167,7 @@ public class FlatTraceGenerator {
         if (currentContext != null) currentContext = handleRevert(tracesContexts, currentContext);
       }
 
-      if (currentContext != null && !traceFrame.getExceptionalHaltReasons().isEmpty()) {
+      if (currentContext != null && traceFrame.getExceptionalHaltReason().isPresent()) {
         currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
       }
     }
@@ -435,9 +435,7 @@ public class FlatTraceGenerator {
       final TraceFrame traceFrame) {
     final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
     traceFrameBuilder.error(
-        traceFrame.getExceptionalHaltReasons().stream()
-            .map(ExceptionalHaltReason::getDescription)
-            .reduce((a, b) -> a + ", " + b));
+        traceFrame.getExceptionalHaltReason().map(ExceptionalHaltReason::getDescription));
     final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
     actionBuilder.value(Quantity.create(traceFrame.getValue()));
     tracesContexts.removeLast();

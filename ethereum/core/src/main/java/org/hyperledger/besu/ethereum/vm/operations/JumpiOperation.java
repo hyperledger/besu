@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -53,9 +52,7 @@ public class JumpiOperation extends AbstractOperation {
 
   @Override
   public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
+      final MessageFrame frame, final EVM evm) {
     // If condition is zero (false), no jump is will be performed. Therefore skip the test.
     if (frame.getStackItem(1).isZero()) {
       return Optional.empty();
