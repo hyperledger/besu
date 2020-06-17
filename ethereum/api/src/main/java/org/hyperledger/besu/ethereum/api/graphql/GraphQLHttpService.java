@@ -98,6 +98,7 @@ public class GraphQLHttpService {
    * @param config Configuration for the rpc methods being loaded
    * @param graphQL GraphQL engine
    * @param dataFetcherContext DataFetcherContext required by GraphQL to finish it's job
+   * @param scheduler {@link EthScheduler} used to trigger timeout on backend queries
    */
   public GraphQLHttpService(
       final Vertx vertx,
