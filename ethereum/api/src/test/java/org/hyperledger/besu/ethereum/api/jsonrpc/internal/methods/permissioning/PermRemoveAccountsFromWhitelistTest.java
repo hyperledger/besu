@@ -42,26 +42,27 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @Deprecated
 @RunWith(MockitoJUnitRunner.class)
-public class PermAddAccountsToWhitelistTest {
+public class PermRemoveAccountsFromWhitelistTest {
 
   @Mock private AccountLocalConfigPermissioningController accountWhitelist;
-  private PermAddAccountsToWhitelist method;
+  private PermRemoveAccountsFromAllowlist method;
 
   @Before
   public void before() {
-    method = new PermAddAccountsToWhitelist(java.util.Optional.of(accountWhitelist));
+    method = new PermRemoveAccountsFromAllowlist(java.util.Optional.of(accountWhitelist));
   }
 
   @Test
   public void getNameShouldReturnExpectedName() {
-    assertThat(method.getName()).isEqualTo("perm_addAccountsToWhitelist");
+    assertThat(method.getName()).isEqualTo("perm_removeAccountsFromWhitelist");
   }
 
   @Test
-  public void whenAccountsAreAddedToWhitelistShouldReturnSuccess() {
+  public void whenAccountsAreRemovedFromWhitelistShouldReturnSuccess() {
     List<String> accounts = Arrays.asList("0x0", "0x1");
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null);
-    when(accountWhitelist.addAccounts(eq(accounts))).thenReturn(AllowlistOperationResult.SUCCESS);
+    when(accountWhitelist.removeAccounts(eq(accounts)))
+        .thenReturn(AllowlistOperationResult.SUCCESS);
 
     JsonRpcResponse actualResponse = method.response(request(accounts));
 
@@ -72,7 +73,7 @@ public class PermAddAccountsToWhitelistTest {
   public void whenAccountIsInvalidShouldReturnInvalidAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
-    when(accountWhitelist.addAccounts(any()))
+    when(accountWhitelist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_INVALID_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
@@ -81,11 +82,11 @@ public class PermAddAccountsToWhitelistTest {
   }
 
   @Test
-  public void whenAccountExistsShouldReturnExistingEntryErrorResponse() {
+  public void whenAccountIsAbsentShouldReturnAbsentAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
-    when(accountWhitelist.addAccounts(any()))
-        .thenReturn(AllowlistOperationResult.ERROR_EXISTING_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_ABSENT_ENTRY);
+    when(accountWhitelist.removeAccounts(any()))
+        .thenReturn(AllowlistOperationResult.ERROR_ABSENT_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
@@ -96,7 +97,7 @@ public class PermAddAccountsToWhitelistTest {
   public void whenInputHasDuplicatedAccountsShouldReturnDuplicatedEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
-    when(accountWhitelist.addAccounts(any()))
+    when(accountWhitelist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
@@ -109,7 +110,7 @@ public class PermAddAccountsToWhitelistTest {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
 
-    when(accountWhitelist.addAccounts(eq(new ArrayList<>())))
+    when(accountWhitelist.removeAccounts(eq(new ArrayList<>())))
         .thenReturn(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
@@ -121,7 +122,7 @@ public class PermAddAccountsToWhitelistTest {
   public void whenEmptyParamOnRequestShouldThrowInvalidJsonRpcException() {
     JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "perm_addAccountsToWhitelist", new Object[] {}));
+            new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {}));
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -132,6 +133,6 @@ public class PermAddAccountsToWhitelistTest {
 
   private JsonRpcRequestContext request(final List<String> accounts) {
     return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "perm_addAccountsToWhitelist", new Object[] {accounts}));
+        new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {accounts}));
   }
 }

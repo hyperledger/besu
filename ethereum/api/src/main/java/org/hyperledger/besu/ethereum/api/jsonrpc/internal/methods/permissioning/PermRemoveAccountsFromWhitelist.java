@@ -28,39 +28,38 @@ import java.util.List;
 import java.util.Optional;
 
 @Deprecated
-public class PermAddAccountsToWhitelist implements JsonRpcMethod {
+public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
 
-  private final Optional<AccountLocalConfigPermissioningController> whitelistController;
+  private final Optional<AccountLocalConfigPermissioningController> allowlistController;
 
-  public PermAddAccountsToWhitelist(
-      final Optional<AccountLocalConfigPermissioningController> whitelistController) {
-    this.whitelistController = whitelistController;
+  public PermRemoveAccountsFromWhitelist(
+      final Optional<AccountLocalConfigPermissioningController> allowlistController) {
+    this.allowlistController = allowlistController;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.PERM_ADD_ACCOUNTS_TO_WHITELIST.getMethodName();
+    return RpcMethod.PERM_REMOVE_ACCOUNTS_FROM_WHITELIST.getMethodName();
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final List<String> accountsList = requestContext.getRequiredParameter(0, List.class);
+    if (allowlistController.isPresent()) {
+      final AllowlistOperationResult removeResult =
+          allowlistController.get().removeAccounts(accountsList);
 
-    if (whitelistController.isPresent()) {
-      final AllowlistOperationResult addResult =
-          whitelistController.get().addAccounts(accountsList);
-
-      switch (addResult) {
+      switch (removeResult) {
         case ERROR_EMPTY_ENTRY:
           return new JsonRpcErrorResponse(
               requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
         case ERROR_INVALID_ENTRY:
           return new JsonRpcErrorResponse(
               requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
-        case ERROR_EXISTING_ENTRY:
+        case ERROR_ABSENT_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_ABSENT_ENTRY);
         case ERROR_DUPLICATED_ENTRY:
           return new JsonRpcErrorResponse(
               requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);

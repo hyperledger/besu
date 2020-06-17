@@ -66,7 +66,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, GetAccountsWhitelistResponse> getAccountsWhitelist() {
     return new Request<>(
-        "perm_getAccountsWhitelist", null, web3jService, GetAccountsWhitelistResponse.class);
+        "perm_getAccountsAllowlist", null, web3jService, GetAccountsWhitelistResponse.class);
   }
 
   Request<?, AddAccountsToWhitelistResponse> addAccountsToWhitelist(final List<String> accounts) {

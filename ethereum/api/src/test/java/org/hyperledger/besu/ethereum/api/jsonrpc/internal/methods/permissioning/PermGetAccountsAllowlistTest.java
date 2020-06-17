@@ -33,24 +33,23 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@Deprecated
 @RunWith(MockitoJUnitRunner.class)
-public class PermGetAccountsWhitelistTest {
+public class PermGetAccountsAllowlistTest {
 
   private static final JsonRpcRequestContext request =
-      new JsonRpcRequestContext(new JsonRpcRequest("2.0", "perm_getAccountsWhitelist", null));
+      new JsonRpcRequestContext(new JsonRpcRequest("2.0", "perm_getAccountsAllowlist", null));
 
   @Mock private AccountLocalConfigPermissioningController accountWhitelist;
-  private PermGetAccountsWhitelist method;
+  private PermGetAccountsAllowlist method;
 
   @Before
   public void before() {
-    method = new PermGetAccountsWhitelist(java.util.Optional.of(accountWhitelist));
+    method = new PermGetAccountsAllowlist(java.util.Optional.of(accountWhitelist));
   }
 
   @Test
   public void getNameShouldReturnExpectedName() {
-    assertThat(method.getName()).isEqualTo("perm_getAccountsWhitelist");
+    assertThat(method.getName()).isEqualTo("perm_getAccountsAllowlist");
   }
 
   @Test
