@@ -31,6 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 
 public class Pruner {
 
@@ -163,17 +164,21 @@ public class Pruner {
   private void execute(final Runnable action) {
     try {
       executorService.execute(action);
-    } catch (final Throwable t) {
+    } catch (final MerkleTrieException mte) {
       LOG.error(
-          "An unexpected error in the {} phase: {}. Reattempting.",
+          "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
+          mte);
+      System.exit(1);
+    } catch (final Exception e) {
+      LOG.error(
+          "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
           getPruningPhase(),
-          t.getMessage());
-      pruningStrategy.cleanup();
+          e.getMessage());
+      pruningStrategy.clearMarks();
       pruningPhase.set(PruningPhase.IDLE);
     }
   }
 
-  @VisibleForTesting
   PruningPhase getPruningPhase() {
     return pruningPhase.get();
   }
