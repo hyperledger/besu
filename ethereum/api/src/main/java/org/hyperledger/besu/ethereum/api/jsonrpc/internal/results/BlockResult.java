@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 @JsonPropertyOrder({
   "number",
   "hash",
+  "mixHash",
   "parentHash",
   "nonce",
   "sha3Uncles",
@@ -51,6 +52,7 @@ public class BlockResult implements JsonRpcResult {
 
   private final String number;
   private final String hash;
+  private final String mixHash;
   private final String parentHash;
   private final String nonce;
   private final String sha3Uncles;
@@ -89,6 +91,7 @@ public class BlockResult implements JsonRpcResult {
       final boolean includeCoinbase) {
     this.number = Quantity.create(header.getNumber());
     this.hash = header.getHash().toString();
+    this.mixHash = header.getMixHash().toString();
     this.parentHash = header.getParentHash().toString();
     this.nonce = Quantity.longToPaddedHex(header.getNonce(), 8);
     this.sha3Uncles = header.getOmmersHash().toString();
@@ -118,6 +121,11 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "hash")
   public String getHash() {
     return hash;
+  }
+
+  @JsonGetter(value = "mixHash")
+  public String getMixHash() {
+    return mixHash;
   }
 
   @JsonGetter(value = "parentHash")
