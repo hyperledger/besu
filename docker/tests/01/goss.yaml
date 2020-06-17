@@ -4,22 +4,22 @@ file:
   /opt/besu/bin/besu:
     exists: true
     mode: "0755"
-    owner: root
-    group: root
+    owner: besu
+    group: besu
     filetype: file
     contains: []
   /opt/besu/database:
     exists: true
     mode: "0755"
-    owner: root
-    group: root
+    owner: besu
+    group: besu
     filetype: directory
     contains: []
   /opt/besu/key:
     exists: true
     mode: "0600"
-    owner: root
-    group: root
+    owner: besu
+    group: besu
     filetype: file
     contains: []
 process:

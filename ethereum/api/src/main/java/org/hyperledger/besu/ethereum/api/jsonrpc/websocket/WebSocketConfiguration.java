@@ -100,7 +100,7 @@ public class WebSocketConfiguration {
     return authenticationCredentialsFile;
   }
 
-  public void setHostsWhitelist(final List<String> hostsWhitelist) {
+  public void setHostsAllowlist(final List<String> hostsWhitelist) {
     this.hostsWhitelist = hostsWhitelist;
   }
 

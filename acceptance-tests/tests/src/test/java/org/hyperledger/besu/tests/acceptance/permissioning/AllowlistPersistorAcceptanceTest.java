@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
-import static org.hyperledger.besu.ethereum.permissioning.WhitelistPersistor.WHITELIST_TYPE;
+import static org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
@@ -28,7 +28,7 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
-public class WhitelistPersistorAcceptanceTest extends AcceptanceTestBase {
+public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
 
   private static final String ENODE_ONE =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
@@ -63,40 +63,40 @@ public class WhitelistPersistorAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void manipulatedAccountsWhitelistIsPersisted() {
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
 
-    node.execute(permissioningTransactions.addAccountsToWhitelist(senderB.getAddress()));
-    node.verify(perm.expectAccountsWhitelist(senderA.getAddress(), senderB.getAddress()));
+    node.execute(permissioningTransactions.addAccountsToAllowlist(senderB.getAddress()));
+    node.verify(perm.expectAccountsAllowlist(senderA.getAddress(), senderB.getAddress()));
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress(), senderB.getAddress()));
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress(), senderB.getAddress()));
 
-    node.execute(permissioningTransactions.removeAccountsFromWhitelist(senderB.getAddress()));
-    node.verify(perm.expectAccountsWhitelist(senderA.getAddress()));
+    node.execute(permissioningTransactions.removeAccountsFromAllowlist(senderB.getAddress()));
+    node.verify(perm.expectAccountsAllowlist(senderA.getAddress()));
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
 
-    node.execute(permissioningTransactions.removeAccountsFromWhitelist(senderA.getAddress()));
-    node.verify(perm.expectAccountsWhitelist());
-    node.verify(perm.expectPermissioningWhitelistFileKeyValue(WHITELIST_TYPE.ACCOUNTS, tempFile));
+    node.execute(permissioningTransactions.removeAccountsFromAllowlist(senderA.getAddress()));
+    node.verify(perm.expectAccountsAllowlist());
+    node.verify(perm.expectPermissioningAllowlistFileKeyValue(ALLOWLIST_TYPE.ACCOUNTS, tempFile));
   }
 
   @Test
   public void manipulatedNodesWhitelistIsPersisted() {
-    node.verify(perm.addNodesToWhitelist(ENODE_ONE, ENODE_TWO));
+    node.verify(perm.addNodesToAllowlist(ENODE_ONE, ENODE_TWO));
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.NODES, tempFile, ENODE_ONE, ENODE_TWO));
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE, ENODE_TWO));
 
-    node.verify(perm.removeNodesFromWhitelist(ENODE_ONE));
+    node.verify(perm.removeNodesFromAllowlist(ENODE_ONE));
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(WHITELIST_TYPE.NODES, tempFile, ENODE_TWO));
+        perm.expectPermissioningAllowlistFileKeyValue(ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO));
 
-    node.verify(perm.addNodesToWhitelist(ENODE_ONE, ENODE_THREE));
+    node.verify(perm.addNodesToAllowlist(ENODE_ONE, ENODE_THREE));
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.NODES, tempFile, ENODE_TWO, ENODE_ONE, ENODE_THREE));
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO, ENODE_ONE, ENODE_THREE));
   }
 }

@@ -17,11 +17,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermAddAccountsToAllowlist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermAddAccountsToWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermAddNodesToWhitelist;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetAccountsAllowlist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetAccountsWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetNodesWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromAllowlist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -54,8 +57,11 @@ public class PermJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new PermRemoveNodesFromWhitelist(nodeWhitelistController),
         new PermGetNodesWhitelist(nodeWhitelistController),
         new PermGetAccountsWhitelist(accountsWhitelistController),
+        new PermGetAccountsAllowlist(accountsWhitelistController),
         new PermAddAccountsToWhitelist(accountsWhitelistController),
+        new PermAddAccountsToAllowlist(accountsWhitelistController),
         new PermRemoveAccountsFromWhitelist(accountsWhitelistController),
+        new PermRemoveAccountsFromAllowlist(accountsWhitelistController),
         new PermReloadPermissionsFromFile(accountsWhitelistController, nodeWhitelistController));
   }
 }

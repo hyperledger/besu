@@ -103,6 +103,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--min-gas-price");
       params.add(
           Integer.toString(node.getMiningParameters().getMinTransactionGasPrice().intValue()));
+      params.add("--Xminer-remote-sealers-limit");
+      params.add(Integer.toString(node.getMiningParameters().getRemoteSealersLimit()));
+      params.add("--Xminer-remote-sealers-hashrate-ttl");
+      params.add(Long.toString(node.getMiningParameters().getRemoteSealersTimeToLive()));
     }
     if (node.getMiningParameters().isStratumMiningEnabled()) {
       params.add("--miner-stratum-enabled");
@@ -233,14 +237,14 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
             permissioningConfiguration -> {
-              if (permissioningConfiguration.isNodeWhitelistEnabled()) {
+              if (permissioningConfiguration.isNodeAllowlistEnabled()) {
                 params.add("--permissions-nodes-config-file-enabled");
               }
               if (permissioningConfiguration.getNodePermissioningConfigFilePath() != null) {
                 params.add("--permissions-nodes-config-file");
                 params.add(permissioningConfiguration.getNodePermissioningConfigFilePath());
               }
-              if (permissioningConfiguration.isAccountWhitelistEnabled()) {
+              if (permissioningConfiguration.isAccountAllowlistEnabled()) {
                 params.add("--permissions-accounts-config-file-enabled");
               }
               if (permissioningConfiguration.getAccountPermissioningConfigFilePath() != null) {
@@ -253,14 +257,14 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         .flatMap(PermissioningConfiguration::getSmartContractConfig)
         .ifPresent(
             permissioningConfiguration -> {
-              if (permissioningConfiguration.isSmartContractNodeWhitelistEnabled()) {
+              if (permissioningConfiguration.isSmartContractNodeAllowlistEnabled()) {
                 params.add("--permissions-nodes-contract-enabled");
               }
               if (permissioningConfiguration.getNodeSmartContractAddress() != null) {
                 params.add("--permissions-nodes-contract-address");
                 params.add(permissioningConfiguration.getNodeSmartContractAddress().toString());
               }
-              if (permissioningConfiguration.isSmartContractAccountWhitelistEnabled()) {
+              if (permissioningConfiguration.isSmartContractAccountAllowlistEnabled()) {
                 params.add("--permissions-accounts-contract-enabled");
               }
               if (permissioningConfiguration.getAccountSmartContractAddress() != null) {

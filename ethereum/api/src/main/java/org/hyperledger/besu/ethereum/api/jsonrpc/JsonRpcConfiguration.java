@@ -103,11 +103,11 @@ public class JsonRpcConfiguration {
     rpcApis.add(rpcApi);
   }
 
-  public Collection<String> getHostsWhitelist() {
+  public Collection<String> getHostsAllowlist() {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 
-  public void setHostsWhitelist(final List<String> hostsWhitelist) {
+  public void setHostsAllowlist(final List<String> hostsWhitelist) {
     this.hostsWhitelist = hostsWhitelist;
   }
 

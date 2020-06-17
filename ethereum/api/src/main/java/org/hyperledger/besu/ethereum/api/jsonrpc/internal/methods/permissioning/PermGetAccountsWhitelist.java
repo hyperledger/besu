@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 
 import java.util.Optional;
 
+@Deprecated
 public class PermGetAccountsWhitelist implements JsonRpcMethod {
 
   private final Optional<AccountLocalConfigPermissioningController> whitelistController;
