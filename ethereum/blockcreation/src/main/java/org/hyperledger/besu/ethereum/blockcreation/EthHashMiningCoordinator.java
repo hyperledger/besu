@@ -31,8 +31,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.logging.log4j.Logger;
 
-import org.apache.logging.log4j.Logger;
-
 /**
  * Responsible for determining when a block mining operation should be started/stopped, then
  * creating an appropriate miner and starting it running in a thread.
