@@ -87,10 +87,10 @@ public enum JsonRpcError {
   NODE_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of nodes"),
   NODE_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid node"),
   NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
-  NODE_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to whitelist"),
-  NODE_WHITELIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from whitelist"),
+  NODE_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to allowlist"),
+  NODE_WHITELIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from allowlist"),
   NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED(
-      -32000, "Cannot remove a fixed node (bootnode or static node) from whitelist"),
+      -32000, "Cannot remove a fixed node (bootnode or static node) from allowlist"),
 
   // Permissioning/persistence errors
   WHITELIST_PERSIST_FAILURE(
@@ -101,7 +101,7 @@ public enum JsonRpcError {
   WHITELIST_RELOAD_ERROR(
       -32000,
       "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesAllowlist to review the current state of the whitelists"),
-  PERMISSIONING_NOT_ENABLED(-32000, "Node/Account whitelisting has not been enabled"),
+  PERMISSIONING_NOT_ENABLED(-32000, "Node/Account allowlisting has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
   // Permissioning/Authorization errors

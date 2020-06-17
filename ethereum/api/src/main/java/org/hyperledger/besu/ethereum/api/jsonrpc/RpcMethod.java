@@ -115,6 +115,7 @@ public enum RpcMethod {
   NET_VERSION("net_version"),
   PERM_ADD_ACCOUNTS_TO_WHITELIST("perm_addAccountsToWhitelist"),
   PERM_ADD_NODES_TO_WHITELIST("perm_addNodesToWhitelist"),
+  PERM_ADD_NODES_TO_ALLOWLIST("perm_addNodesToAllowlist"),
   PERM_GET_ACCOUNTS_WHITELIST("perm_getAccountsWhitelist"),
   PERM_GET_NODES_WHITELIST("perm_getNodesWhitelist"),
   PERM_GET_NODES_ALLOWLIST("perm_getNodesAllowlist"),

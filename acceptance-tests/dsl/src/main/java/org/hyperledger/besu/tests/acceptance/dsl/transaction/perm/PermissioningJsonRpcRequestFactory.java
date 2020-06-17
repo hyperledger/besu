@@ -45,7 +45,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, AddNodeResponse> addNodesToWhitelist(final List<URI> enodeList) {
     return new Request<>(
-        "perm_addNodesToWhitelist",
+        "perm_addNodesToAllowlist",
         Collections.singletonList(enodeList),
         web3jService,
         AddNodeResponse.class);
