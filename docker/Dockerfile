@@ -1,8 +1,13 @@
 
-FROM openjdk:11.0.2-jre-slim-stretch
+FROM openjdk:11.0.7-jre-slim-buster
 
-COPY besu /opt/besu/
+RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
+    chown besu:besu /opt/besu
+
+USER besu
 WORKDIR /opt/besu
+
+COPY --chown=besu:besu besu /opt/besu/
 
 # Expose services ports
 # 8545 HTTP JSON-RPC
