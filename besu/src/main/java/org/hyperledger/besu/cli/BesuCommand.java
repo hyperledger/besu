@@ -26,9 +26,12 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
@@ -42,7 +45,7 @@ import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.RpcApisConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
-import org.hyperledger.besu.cli.custom.JsonRPCWhitelistHostsProperty;
+import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
@@ -198,7 +201,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private CommandLine commandLine;
 
   private final Supplier<RlpBlockImporter> rlpBlockImporter;
-  private final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory;
+  private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   final NetworkingOptions networkingOptions = NetworkingOptions.create();
@@ -416,6 +419,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specify the NAT circumvention method to be used, possible values are ${COMPLETION-CANDIDATES}."
               + " NONE disables NAT functionality. (default: ${DEFAULT-VALUE})")
   private final NatMethod natMethod = DEFAULT_NAT_METHOD;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @Option(
+      names = {"--Xnat-kube-pod-name"},
+      description =
+          "Specify the name of the pod that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
+  private String natManagerPodName = DEFAULT_BESU_POD_NAME_FILTER;
 
   @Option(
       names = {"--network-id"},
@@ -690,12 +700,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String metricsPrometheusJob = "besu-client";
 
   @Option(
-      names = {"--host-whitelist"},
+      names = {"--host-allowlist", "--host-whitelist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to whitelist for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
-  private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
+  private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
       names = {"--logging", "-l"},
@@ -723,6 +733,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--miner-stratum-port"},
       description = "Stratum port binding (default: ${DEFAULT-VALUE})")
   private final Integer stratumPort = 8008;
+
+  @Option(
+      names = {"--Xminer-remote-sealers-limit"},
+      description =
+          "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
+  private final Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
+
+  @Option(
+      names = {"--Xminer-remote-sealers-hashrate-ttl"},
+      description =
+          "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
+  private final Long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -764,7 +786,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
+          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
   private final Boolean pruningEnabled = false;
 
   @Option(
@@ -988,6 +1010,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xws-timeout-seconds"},
+      description = "Web socket timeout in seconds (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -995,7 +1024,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
-  private BesuController<?> besuController;
+  private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
@@ -1004,7 +1033,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuCommand(
       final Logger logger,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
-      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
@@ -1027,7 +1056,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   protected BesuCommand(
       final Logger logger,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
-      final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
@@ -1261,6 +1290,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     validateP2PInterface(p2pInterface);
     validateMiningParams();
+    validateNatParams();
 
     return this;
   }
@@ -1292,6 +1322,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
+  private void validateNatParams() {
+    if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
+        && !natManagerPodName.equals(DEFAULT_BESU_POD_NAME_FILTER)) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name"
+              + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+    }
+  }
+
   private void issueOptionWarnings() {
     // Check that P2P options are able to work
     CommandLineUtils.checkOptionDependencies(
@@ -1320,7 +1361,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--min-gas-price",
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
-            "--miner-stratum-enabled"));
+            "--miner-stratum-enabled",
+            "--Xminer-remote-sealers-limit",
+            "--Xminer-remote-sealers-hashrate-ttl"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1353,13 +1396,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         ethNetworkConfig.getBootNodes().stream().map(EnodeURL::toURI).collect(Collectors.toList());
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(p -> ensureAllNodesAreInWhitelist(enodeURIs, p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
 
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
             p ->
-                ensureAllNodesAreInWhitelist(
+                ensureAllNodesAreInAllowlist(
                     staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
     metricsConfiguration = metricsConfiguration();
 
@@ -1373,11 +1416,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return network == null ? MAINNET : network;
   }
 
-  private void ensureAllNodesAreInWhitelist(
+  private void ensureAllNodesAreInAllowlist(
       final Collection<URI> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
     try {
-      PermissioningConfigurationValidator.areAllNodesAreInWhitelist(
+      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           enodeAddresses, permissioningConfiguration);
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage());
@@ -1389,7 +1432,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
-  public BesuController<?> buildController() {
+  public BesuController buildController() {
     try {
       return getControllerBuilder().build();
     } catch (final Exception e) {
@@ -1397,7 +1440,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public BesuControllerBuilder<?> getControllerBuilder() {
+  public BesuControllerBuilder getControllerBuilder() {
     addConfigurationService();
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
@@ -1415,7 +1458,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 stratumPort,
                 stratumExtranonce,
                 Optional.empty(),
-                minBlockOccupancyRatio))
+                minBlockOccupancyRatio,
+                remoteSealersLimit,
+                remoteSealersTimeToLive))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
@@ -1444,7 +1489,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
     graphQLConfiguration.setHost(graphQLHttpHost);
     graphQLConfiguration.setPort(graphQLHttpPort);
-    graphQLConfiguration.setHostsWhitelist(hostsWhitelist);
+    graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
     graphQLConfiguration.setHttpTimeoutSec(httpTimeoutSec);
 
@@ -1490,7 +1535,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setPort(rpcHttpPort);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
+    jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
@@ -1613,8 +1658,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setTimeoutSec(wsTimeoutSec);
     return webSocketConfiguration;
   }
 
@@ -1654,7 +1700,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pushHost(metricsPushHost)
         .pushPort(metricsPushPort)
         .pushInterval(metricsPushInterval)
-        .hostsWhitelist(hostsWhitelist)
+        .hostsAllowlist(hostsAllowlist)
         .prometheusJob(metricsPrometheusJob)
         .build();
   }
@@ -1706,7 +1752,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
       } else {
-        smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(
+        smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
             permissionsNodesContractEnabled);
         smartContractPermissioningConfiguration.setNodeSmartContractAddress(
             permissionsNodesContractAddress);
@@ -1723,7 +1769,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
       } else {
-        smartContractPermissioningConfiguration.setSmartContractAccountWhitelistEnabled(
+        smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
             permissionsAccountsContractEnabled);
         smartContractPermissioningConfiguration.setAccountSmartContractAddress(
             permissionsAccountsContractAddress);
@@ -1898,7 +1944,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Blockchain synchronisation from peers.
   private void synchronize(
-      final BesuController<?> controller,
+      final BesuController controller,
       final boolean p2pEnabled,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
@@ -1925,6 +1971,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
+            .natManagerPodName(natManagerPodName)
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)

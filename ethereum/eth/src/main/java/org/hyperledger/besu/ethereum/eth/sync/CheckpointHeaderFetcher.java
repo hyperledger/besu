@@ -37,7 +37,7 @@ public class CheckpointHeaderFetcher {
   private static final Logger LOG = LogManager.getLogger();
 
   private final SynchronizerConfiguration syncConfig;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   // The checkpoint we're aiming to reach at the end of this sync.
   private final Optional<BlockHeader> finalCheckpointHeader;
@@ -45,7 +45,7 @@ public class CheckpointHeaderFetcher {
 
   public CheckpointHeaderFetcher(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Optional<BlockHeader> finalCheckpointHeader,
       final MetricsSystem metricsSystem) {

@@ -66,7 +66,7 @@ public class EthHashBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
-                new ProtocolScheduleBuilder<>(
+                new ProtocolScheduleBuilder(
                         GenesisConfigFile.DEFAULT.getConfigOptions(),
                         BigInteger.valueOf(42),
                         Function.identity(),
@@ -118,7 +118,7 @@ public class EthHashBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
-                new ProtocolScheduleBuilder<>(
+                new ProtocolScheduleBuilder(
                         GenesisConfigFile.fromConfig(
                                 "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
                             .getConfigOptions(),
@@ -167,7 +167,7 @@ public class EthHashBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
-                new ProtocolScheduleBuilder<>(
+                new ProtocolScheduleBuilder(
                         GenesisConfigFile.fromConfig(
                                 "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
                             .getConfigOptions(),
@@ -232,7 +232,7 @@ public class EthHashBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
-                new ProtocolScheduleBuilder<>(
+                new ProtocolScheduleBuilder(
                         GenesisConfigFile.fromConfig(
                                 "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
                             .getConfigOptions(),

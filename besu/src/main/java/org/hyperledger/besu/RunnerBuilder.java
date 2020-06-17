@@ -25,7 +25,7 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContextImpl;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
@@ -72,7 +72,7 @@ import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -126,7 +126,7 @@ public class RunnerBuilder {
   private static final Logger LOG = LogManager.getLogger();
 
   private Vertx vertx;
-  private BesuController<?> besuController;
+  private BesuController besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
@@ -136,6 +136,7 @@ public class RunnerBuilder {
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
   private NatMethod natMethod = NatMethod.AUTO;
+  private String natManagerPodName;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -159,7 +160,7 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder besuController(final BesuController<?> besuController) {
+  public RunnerBuilder besuController(final BesuController besuController) {
     this.besuController = besuController;
     return this;
   }
@@ -203,6 +204,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder natMethod(final NatMethod natMethod) {
     this.natMethod = natMethod;
+    return this;
+  }
+
+  public RunnerBuilder natManagerPodName(final String natManagerPodName) {
+    this.natManagerPodName = natManagerPodName;
     return this;
   }
 
@@ -316,8 +322,8 @@ public class RunnerBuilder {
     final SubProtocolConfiguration subProtocolConfiguration =
         besuController.getSubProtocolConfiguration();
 
-    final ProtocolSchedule<?> protocolSchedule = besuController.getProtocolSchedule();
-    final ProtocolContext<?> context = besuController.getProtocolContext();
+    final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
+    final ProtocolContext context = besuController.getProtocolContext();
 
     final List<SubProtocol> subProtocols = subProtocolConfiguration.getSubProtocols();
     final List<ProtocolManager> protocolManagers = subProtocolConfiguration.getProtocolManagers();
@@ -337,7 +343,7 @@ public class RunnerBuilder {
             .setFractionRemoteWireConnectionsAllowed(fractionRemoteConnectionsAllowed);
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
-    final PeerPermissionsBlacklist bannedNodes = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
 
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
@@ -417,6 +423,7 @@ public class RunnerBuilder {
           Optional.of(
               new StratumServer(
                   vertx,
+                  miningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
                   miningParameters.getStratumExtranonce()));
@@ -478,8 +485,8 @@ public class RunnerBuilder {
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
     if (graphQLConfiguration.isEnabled()) {
       final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
-      final GraphQLDataFetcherContext dataFetcherContext =
-          new GraphQLDataFetcherContext(
+      final GraphQLDataFetcherContextImpl dataFetcherContext =
+          new GraphQLDataFetcherContextImpl(
               blockchainQueries,
               protocolSchedule,
               transactionPool,
@@ -495,7 +502,12 @@ public class RunnerBuilder {
       graphQLHttpService =
           Optional.of(
               new GraphQLHttpService(
-                  vertx, dataDir, graphQLConfiguration, graphQL, dataFetcherContext));
+                  vertx,
+                  dataDir,
+                  graphQLConfiguration,
+                  graphQL,
+                  dataFetcherContext,
+                  besuController.getProtocolManager().ethContext().getScheduler()));
     }
 
     Optional<WebSocketService> webSocketService = Optional.empty();
@@ -597,7 +609,7 @@ public class RunnerBuilder {
 
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final BesuController<?> besuController,
+      final BesuController besuController,
       final TransactionSimulator transactionSimulator) {
 
     if (permissioningConfiguration.isPresent()) {
@@ -630,7 +642,7 @@ public class RunnerBuilder {
         return Optional.of(
             new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case KUBERNETES:
-        return Optional.of(new KubernetesNatManager());
+        return Optional.of(new KubernetesNatManager(natManagerPodName));
       case NONE:
       default:
         return Optional.empty();
@@ -646,8 +658,8 @@ public class RunnerBuilder {
   }
 
   private Map<String, JsonRpcMethod> jsonRpcMethods(
-      final ProtocolSchedule<?> protocolSchedule,
-      final BesuController<?> besuController,
+      final ProtocolSchedule protocolSchedule,
+      final BesuController besuController,
       final P2PNetwork network,
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -756,7 +768,7 @@ public class RunnerBuilder {
       final SubscriptionManager subscriptionManager,
       final Map<String, JsonRpcMethod> jsonRpcMethods,
       final PrivacyParameters privacyParameters,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool) {
 
@@ -776,7 +788,11 @@ public class RunnerBuilder {
     }
 
     final WebSocketRequestHandler websocketRequestHandler =
-        new WebSocketRequestHandler(vertx, websocketMethodsFactory.methods());
+        new WebSocketRequestHandler(
+            vertx,
+            websocketMethodsFactory.methods(),
+            besuController.getProtocolManager().ethContext().getScheduler(),
+            webSocketConfiguration.getTimeoutSec());
 
     return new WebSocketService(vertx, configuration, websocketRequestHandler);
   }

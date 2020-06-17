@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MA
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MORDOR_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.YOLO_V1_BOOTSTRAP_NODES;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 
@@ -45,6 +46,7 @@ public class EthNetworkConfig {
   public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
   public static final BigInteger KOTTI_NETWORK_ID = BigInteger.valueOf(6);
   public static final BigInteger MORDOR_NETWORK_ID = BigInteger.valueOf(7);
+  private static final BigInteger YOLO_V1_NETWORK_ID = BigInteger.valueOf(133519467574833L);
   private static final String MAINNET_GENESIS = "/mainnet.json";
   private static final String ROPSTEN_GENESIS = "/ropsten.json";
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
@@ -53,6 +55,7 @@ public class EthNetworkConfig {
   private static final String CLASSIC_GENESIS = "/classic.json";
   private static final String KOTTI_GENESIS = "/kotti.json";
   private static final String MORDOR_GENESIS = "/mordor.json";
+  private static final String YOLO_GENESIS = "/yolo.json";
   private final String genesisConfig;
   private final BigInteger networkId;
   private final List<EnodeURL> bootNodes;
@@ -131,6 +134,9 @@ public class EthNetworkConfig {
       case MORDOR:
         return new EthNetworkConfig(
             jsonConfig(MORDOR_GENESIS), MORDOR_NETWORK_ID, MORDOR_BOOTSTRAP_NODES);
+      case YOLO_V1:
+        return new EthNetworkConfig(
+            jsonConfig(YOLO_GENESIS), YOLO_V1_NETWORK_ID, YOLO_V1_BOOTSTRAP_NODES);
       case MAINNET:
       default:
         return new EthNetworkConfig(
@@ -165,6 +171,8 @@ public class EthNetworkConfig {
         return jsonConfig(KOTTI_GENESIS);
       case MORDOR:
         return jsonConfig(MORDOR_GENESIS);
+      case YOLO_V1:
+        return jsonConfig(YOLO_GENESIS);
       default:
         throw new IllegalArgumentException("Unknown network:" + network);
     }

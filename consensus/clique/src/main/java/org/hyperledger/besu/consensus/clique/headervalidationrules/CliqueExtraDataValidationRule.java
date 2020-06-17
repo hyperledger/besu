@@ -30,8 +30,7 @@ import com.google.common.collect.Iterables;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CliqueExtraDataValidationRule
-    implements AttachedBlockHeaderValidationRule<CliqueContext> {
+public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -55,12 +54,13 @@ public class CliqueExtraDataValidationRule
    */
   @Override
   public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<CliqueContext> protocolContext) {
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     try {
       final VoteTally validatorProvider =
-          protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+          protocolContext
+              .getConsensusState(CliqueContext.class)
+              .getVoteTallyCache()
+              .getVoteTallyAfterBlock(parent);
 
       final Collection<Address> storedValidators = validatorProvider.getValidators();
       return extraDataIsValid(storedValidators, header);

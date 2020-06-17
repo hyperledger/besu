@@ -97,7 +97,7 @@ public class FilterManagerLogFilterTest {
     filterManager.installLogFilter(latest(), latest(), logsQuery());
     final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
 
-    verify(blockchainQueries, never()).matchingLogs(eq(100L), eq(100L), eq(logsQuery()));
+    verify(blockchainQueries, never()).matchingLogs(eq(100L), eq(100L), eq(logsQuery()), any());
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
   }
 
@@ -109,7 +109,7 @@ public class FilterManagerLogFilterTest {
 
     final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
 
-    verify(blockchainQueries, never()).matchingLogs(any(), any());
+    verify(blockchainQueries, never()).matchingLogs(any(), any(), any());
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
   }
 
@@ -143,7 +143,7 @@ public class FilterManagerLogFilterTest {
     filterManager.installLogFilter(latest(), latest(), logsQuery());
     recordBlockEvents(1);
 
-    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any());
+    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any(), any());
   }
 
   @Test
@@ -151,7 +151,7 @@ public class FilterManagerLogFilterTest {
     final List<LogWithMetadata> logs = filterManager.logsChanges("NOT THERE");
 
     assertThat(logs).isNull();
-    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any());
+    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any(), any());
   }
 
   @Test
@@ -190,7 +190,7 @@ public class FilterManagerLogFilterTest {
   public void getLogsForExistingFilterReturnsResults() {
     final LogWithMetadata log = logWithMetadata();
     when(blockchainQueries.headBlockNumber()).thenReturn(100L);
-    when(blockchainQueries.matchingLogs(eq(100L), eq(100L), eq(logsQuery())))
+    when(blockchainQueries.matchingLogs(eq(100L), eq(100L), eq(logsQuery()), any()))
         .thenReturn(singletonList(log));
 
     final String filterId = filterManager.installLogFilter(latest(), latest(), logsQuery());
@@ -258,7 +258,7 @@ public class FilterManagerLogFilterTest {
     final List<LogWithMetadata> logs = filterManager.logs(privateLogFilterId);
 
     verify(blockchainQueries, times(2)).headBlockNumber();
-    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any());
+    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any(), any());
 
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any());
     assertThat(logs.get(0)).isEqualTo(logWithMetadata);

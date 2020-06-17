@@ -40,13 +40,13 @@ public class RewardTraceGenerator {
    * @return a stream of generated reward traces {@link Trace}
    */
   public static Stream<Trace> generateFromBlock(
-      final ProtocolSchedule<?> protocolSchedule, final Block block) {
+      final ProtocolSchedule protocolSchedule, final Block block) {
 
     final List<Trace> flatTraces = new ArrayList<>();
 
     final BlockHeader blockHeader = block.getHeader();
     final List<BlockHeader> ommers = block.getBody().getOmmers();
-    final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
     final Wei blockReward = protocolSpec.getBlockReward();
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         protocolSpec.getMiningBeneficiaryCalculator();

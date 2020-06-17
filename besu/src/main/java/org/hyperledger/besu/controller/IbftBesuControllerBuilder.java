@@ -78,7 +78,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext> {
+public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private IbftEventQueue ibftEventQueue;
@@ -94,7 +94,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext<IbftContext> protocolContext) {
+      final ProtocolContext protocolContext) {
     return new IbftJsonRpcMethods(protocolContext);
   }
 
@@ -108,8 +108,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
-      final ProtocolSchedule<IbftContext> protocolSchedule,
-      final ProtocolContext<IbftContext> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final SyncState syncState,
@@ -128,7 +128,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
-    final VoteTallyCache voteTallyCache = protocolContext.getConsensusState().getVoteTallyCache();
+    final VoteTallyCache voteTallyCache =
+        protocolContext.getConsensusState(IbftContext.class).getVoteTallyCache();
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
@@ -208,7 +209,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
   }
 
   @Override
-  protected ProtocolSchedule<IbftContext> createProtocolSchedule() {
+  protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
@@ -216,7 +217,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
   }
 
   @Override
-  protected void validateContext(final ProtocolContext<IbftContext> context) {
+  protected void validateContext(final ProtocolContext context) {
     final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
 
     if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {

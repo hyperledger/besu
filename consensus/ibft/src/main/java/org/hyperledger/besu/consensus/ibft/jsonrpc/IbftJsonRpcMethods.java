@@ -38,9 +38,9 @@ import java.util.Map;
 
 public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
-  private final ProtocolContext<IbftContext> context;
+  private final ProtocolContext context;
 
-  public IbftJsonRpcMethods(final ProtocolContext<IbftContext> context) {
+  public IbftJsonRpcMethods(final ProtocolContext context) {
     this.context = context;
   }
 
@@ -54,7 +54,8 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final MutableBlockchain mutableBlockchain = context.getBlockchain();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
-    final VoteProposer voteProposer = context.getConsensusState().getVoteProposer();
+    final VoteProposer voteProposer =
+        context.getConsensusState(IbftContext.class).getVoteProposer();
     final BlockInterface blockInterface = new IbftBlockInterface();
 
     final VoteTallyCache voteTallyCache = createVoteTallyCache(context, mutableBlockchain);
@@ -69,8 +70,9 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   private VoteTallyCache createVoteTallyCache(
-      final ProtocolContext<IbftContext> context, final MutableBlockchain blockchain) {
-    final EpochManager epochManager = context.getConsensusState().getEpochManager();
+      final ProtocolContext context, final MutableBlockchain blockchain) {
+    final EpochManager epochManager =
+        context.getConsensusState(IbftContext.class).getEpochManager();
     final IbftBlockInterface ibftBlockInterface = new IbftBlockInterface();
     final VoteTallyUpdater voteTallyUpdater =
         new VoteTallyUpdater(epochManager, ibftBlockInterface);

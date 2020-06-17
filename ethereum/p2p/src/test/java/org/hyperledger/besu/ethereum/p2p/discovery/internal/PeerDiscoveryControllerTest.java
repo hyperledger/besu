@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -653,7 +653,7 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer otherPeer = peers.get(1);
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
-    final PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
@@ -731,7 +731,7 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer otherPeer = peers.get(1);
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
-    final PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
@@ -907,7 +907,7 @@ public class PeerDiscoveryControllerTest {
 
     final DiscoveryPeer discoPeer = peers.get(0);
 
-    final PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()

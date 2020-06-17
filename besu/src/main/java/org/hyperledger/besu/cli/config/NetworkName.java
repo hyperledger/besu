@@ -22,5 +22,6 @@ public enum NetworkName {
   DEV,
   CLASSIC,
   KOTTI,
-  MORDOR
+  MORDOR,
+  YOLO_V1
 }

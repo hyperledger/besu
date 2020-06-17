@@ -26,7 +26,7 @@ public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldReturnDefaultProtocolSpecsWhenCustomNumbersAreNotUsed() {
-    final ProtocolSchedule<Void> sched = MainnetProtocolSchedule.create();
+    final ProtocolSchedule sched = MainnetProtocolSchedule.create();
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(1_150_000L).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockNumber(1_920_000L).getName())
@@ -50,7 +50,7 @@ public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldOnlyUseFrontierWhenEmptyJsonConfigIsUsed() {
-    final ProtocolSchedule<Void> sched =
+    final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig("{}").getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Frontier");
@@ -60,7 +60,7 @@ public class MainnetProtocolScheduleTest {
   public void createFromConfigWithSettings() {
     final String json =
         "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"constantinopleFixBlock\": 19, \"chainId\":1234}}";
-    final ProtocolSchedule<Void> sched =
+    final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(2).getName()).isEqualTo("Homestead");
@@ -89,7 +89,7 @@ public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldCreateRopstenConfig() throws Exception {
-    final ProtocolSchedule<Void> sched =
+    final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(
                     Resources.toString(
@@ -110,7 +110,7 @@ public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldCreateGoerliConfig() throws Exception {
-    final ProtocolSchedule<Void> sched =
+    final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(
                     Resources.toString(
@@ -123,7 +123,7 @@ public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldCreateRinkebyConfig() throws Exception {
-    final ProtocolSchedule<Void> sched =
+    final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(
                     Resources.toString(

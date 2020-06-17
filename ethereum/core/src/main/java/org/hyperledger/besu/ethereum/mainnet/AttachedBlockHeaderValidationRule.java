@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-public interface AttachedBlockHeaderValidationRule<C> {
+public interface AttachedBlockHeaderValidationRule {
 
   /**
    * Validates a block header against its ancestors.
@@ -27,7 +27,7 @@ public interface AttachedBlockHeaderValidationRule<C> {
    * @param protocolContext the protocol context
    * @return {@code true} if valid; otherwise {@code false}
    */
-  boolean validate(BlockHeader header, BlockHeader parent, ProtocolContext<C> protocolContext);
+  boolean validate(BlockHeader header, BlockHeader parent, ProtocolContext protocolContext);
 
   default boolean includeInLightValidation() {
     return true;

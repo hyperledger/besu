@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.permissioning.WhitelistPersistor.WHITELIST_TYPE;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,14 +32,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class WhitelistPersistorTest {
+public class AllowlistPersistorTest {
 
-  private WhitelistPersistor whitelistPersistor;
+  private AllowlistPersistor allowlistPersistor;
   private File tempFile;
   private final String accountsWhitelist =
-      String.format("%s=[%s]", WHITELIST_TYPE.ACCOUNTS.getTomlKey(), "\"account1\",\"account2\"");
+      String.format("%s=[%s]", ALLOWLIST_TYPE.ACCOUNTS.getTomlKey(), "\"account1\",\"account2\"");
   private final String nodesWhitelist =
-      String.format("%s=[%s]", WHITELIST_TYPE.NODES.getTomlKey(), "\"node1\",\"node2\"");
+      String.format("%s=[%s]", ALLOWLIST_TYPE.NODES.getTomlKey(), "\"node1\",\"node2\"");
 
   @Before
   public void setUp() throws IOException {
@@ -47,17 +47,17 @@ public class WhitelistPersistorTest {
     tempFile = File.createTempFile("test", "test");
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), lines, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-    whitelistPersistor = new WhitelistPersistor(tempFile.getAbsolutePath());
+    allowlistPersistor = new AllowlistPersistor(tempFile.getAbsolutePath());
   }
 
   @Test
   public void lineShouldBeRemoved() throws IOException {
-    WHITELIST_TYPE keyForRemoval = WHITELIST_TYPE.ACCOUNTS;
+    ALLOWLIST_TYPE keyForRemoval = ALLOWLIST_TYPE.ACCOUNTS;
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKey(keyForRemoval)).isTrue();
 
-    whitelistPersistor.removeExistingConfigItem(keyForRemoval);
+    allowlistPersistor.removeExistingConfigItem(keyForRemoval);
 
     assertThat(countLines()).isEqualTo(1);
     assertThat(hasKey(keyForRemoval)).isFalse();
@@ -65,18 +65,18 @@ public class WhitelistPersistorTest {
 
   @Test
   public void lineShouldBeAdded() throws IOException {
-    final WHITELIST_TYPE key = WHITELIST_TYPE.NODES;
+    final ALLOWLIST_TYPE key = ALLOWLIST_TYPE.NODES;
     final Set<String> updatedWhitelist = Collections.singleton("node5");
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKey(key)).isTrue();
 
-    whitelistPersistor.removeExistingConfigItem(WHITELIST_TYPE.NODES);
+    allowlistPersistor.removeExistingConfigItem(ALLOWLIST_TYPE.NODES);
 
     assertThat(countLines()).isEqualTo(1);
     assertThat(hasKey(key)).isFalse();
 
-    whitelistPersistor.addNewConfigItem(key, updatedWhitelist);
+    allowlistPersistor.addNewConfigItem(key, updatedWhitelist);
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKey(key)).isTrue();
@@ -84,13 +84,13 @@ public class WhitelistPersistorTest {
 
   @Test
   public void lineShouldBeReplaced() throws IOException {
-    WHITELIST_TYPE key = WHITELIST_TYPE.NODES;
+    ALLOWLIST_TYPE key = ALLOWLIST_TYPE.NODES;
     String newValue = "node5";
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKeyAndExactLineContent(key, nodesWhitelist)).isTrue();
 
-    whitelistPersistor.updateConfig(key, Collections.singleton(newValue));
+    allowlistPersistor.updateConfig(key, Collections.singleton(newValue));
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKeyAndContainsValue(key, newValue)).isTrue();
@@ -99,12 +99,12 @@ public class WhitelistPersistorTest {
 
   @Test
   public void outputIsValidTOML() throws IOException {
-    WHITELIST_TYPE key = WHITELIST_TYPE.ACCOUNTS;
+    ALLOWLIST_TYPE key = ALLOWLIST_TYPE.ACCOUNTS;
     List<String> newValue = Lists.newArrayList("account5", "account6", "account4");
     String expectedValue =
-        String.format("%s=[%s]", "accounts-whitelist", "\"account5\",\"account6\",\"account4\"");
+        String.format("%s=[%s]", "accounts-allowlist", "\"account5\",\"account6\",\"account4\"");
 
-    whitelistPersistor.updateConfig(key, newValue);
+    allowlistPersistor.updateConfig(key, newValue);
 
     assertThat(hasKey(key)).isTrue();
     assertThat(hasKeyAndExactLineContent(key, expectedValue)).isTrue();
@@ -121,20 +121,20 @@ public class WhitelistPersistorTest {
     }
   }
 
-  private boolean hasKey(final WHITELIST_TYPE key) throws IOException {
+  private boolean hasKey(final ALLOWLIST_TYPE key) throws IOException {
     try (Stream<String> lines = Files.lines(tempFile.toPath())) {
       return lines.anyMatch(s -> s.startsWith(key.getTomlKey()));
     }
   }
 
-  private boolean hasKeyAndContainsValue(final WHITELIST_TYPE key, final String value)
+  private boolean hasKeyAndContainsValue(final ALLOWLIST_TYPE key, final String value)
       throws IOException {
     try (Stream<String> lines = Files.lines(tempFile.toPath())) {
       return lines.anyMatch(s -> s.startsWith(key.getTomlKey()) && s.contains(value));
     }
   }
 
-  private boolean hasKeyAndExactLineContent(final WHITELIST_TYPE key, final String exactKeyValue)
+  private boolean hasKeyAndExactLineContent(final ALLOWLIST_TYPE key, final String exactKeyValue)
       throws IOException {
     try (Stream<String> lines = Files.lines(tempFile.toPath())) {
       return lines.anyMatch(s -> s.startsWith(key.getTomlKey()) && s.equals(exactKeyValue));

@@ -173,6 +173,17 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetYoloV1BlockNumber() {
+    try {
+      ExperimentalEIPs.berlinEnabled = true;
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV1Block", 1000));
+      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
+    } finally {
+      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
+    }
+  }
+
+  @Test
   // TODO EIP-1559 change for the actual fork name when known
   public void shouldGetEIP1559BlockNumber() {
     try {

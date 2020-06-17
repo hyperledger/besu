@@ -36,14 +36,25 @@ public class CliqueHelpers {
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
-  public static boolean addressIsAllowedToProduceNextBlock(
-      final Address candidate,
-      final ProtocolContext<CliqueContext> protocolContext,
-      final BlockHeader parent) {
+  public static boolean isSigner(
+      final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final VoteTally validatorProvider =
-        protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+        protocolContext
+            .getConsensusState(CliqueContext.class)
+            .getVoteTallyCache()
+            .getVoteTallyAfterBlock(parent);
+    return validatorProvider.getValidators().contains(candidate);
+  }
 
-    if (!validatorProvider.getValidators().contains(candidate)) {
+  public static boolean addressIsAllowedToProduceNextBlock(
+      final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
+    final VoteTally validatorProvider =
+        protocolContext
+            .getConsensusState(CliqueContext.class)
+            .getVoteTallyCache()
+            .getVoteTallyAfterBlock(parent);
+
+    if (!isSigner(candidate, protocolContext, parent)) {
       return false;
     }
 

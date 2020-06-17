@@ -52,7 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PipelineChainDownloaderTest {
 
-  @Mock private SyncTargetManager<Void> syncTargetManager;
+  @Mock private SyncTargetManager syncTargetManager;
   @Mock private DownloadPipelineFactory downloadPipelineFactory;
   @Mock private EthScheduler scheduler;
   @Mock private Pipeline<?> downloadPipeline;
@@ -62,13 +62,13 @@ public class PipelineChainDownloaderTest {
   @Mock private SyncState syncState;
   private final BlockHeader commonAncestor = new BlockHeaderTestFixture().buildHeader();
   private SyncTarget syncTarget;
-  private PipelineChainDownloader<Void> chainDownloader;
+  private PipelineChainDownloader chainDownloader;
 
   @Before
   public void setUp() {
     syncTarget = new SyncTarget(peer1, commonAncestor);
     chainDownloader =
-        new PipelineChainDownloader<>(
+        new PipelineChainDownloader(
             syncState,
             syncTargetManager,
             downloadPipelineFactory,
@@ -307,7 +307,7 @@ public class PipelineChainDownloaderTest {
     return pipelineFuture;
   }
 
-  @SuppressWarnings("unchecked") // Mockito really doesn't like Pipeline<?>
+  @SuppressWarnings({"unchecked", "rawtypes"}) // Mockito really doesn't like Pipeline<?>
   private void expectPipelineCreation(final SyncTarget syncTarget, final Pipeline<?> pipeline) {
     when(downloadPipelineFactory.createDownloadPipelineForSyncTarget(syncTarget))
         .thenReturn((Pipeline) pipeline);

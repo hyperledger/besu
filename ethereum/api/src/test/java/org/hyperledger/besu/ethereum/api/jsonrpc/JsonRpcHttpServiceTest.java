@@ -183,7 +183,7 @@ public class JsonRpcHttpServiceTest {
   private static JsonRpcConfiguration createJsonRpcConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singletonList("*"));
+    config.setHostsAllowlist(Collections.singletonList("*"));
     return config;
   }
 

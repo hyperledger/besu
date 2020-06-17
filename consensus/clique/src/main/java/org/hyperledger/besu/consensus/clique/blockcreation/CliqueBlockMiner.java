@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
-import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
@@ -27,14 +26,14 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.function.Function;
 
-public class CliqueBlockMiner extends BlockMiner<CliqueContext, CliqueBlockCreator> {
+public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
 
   private final Address localAddress;
 
   public CliqueBlockMiner(
       final Function<BlockHeader, CliqueBlockCreator> blockCreator,
-      final ProtocolSchedule<CliqueContext> protocolSchedule,
-      final ProtocolContext<CliqueContext> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final Subscribers<MinedBlockObserver> observers,
       final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader,

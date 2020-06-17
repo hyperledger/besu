@@ -31,14 +31,14 @@ import java.util.OptionalInt;
 public class ClassicProtocolSpecs {
   private static final Wei MAX_BLOCK_REWARD = Wei.fromEth(5);
 
-  public static ProtocolSpecBuilder<Void> classicRecoveryInitDefinition(
+  public static ProtocolSpecBuilder classicRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return MainnetProtocolSpecs.homesteadDefinition(contractSizeLimit, configStackSizeLimit)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 
-  public static ProtocolSpecBuilder<Void> tangerineWhistleDefinition(
+  public static ProtocolSpecBuilder tangerineWhistleDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit) {
@@ -49,7 +49,7 @@ public class ClassicProtocolSpecs {
         .name("ClassicTangerineWhistle");
   }
 
-  public static ProtocolSpecBuilder<Void> dieHardDefinition(
+  public static ProtocolSpecBuilder dieHardDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit) {
@@ -59,7 +59,7 @@ public class ClassicProtocolSpecs {
         .name("DieHard");
   }
 
-  public static ProtocolSpecBuilder<Void> gothamDefinition(
+  public static ProtocolSpecBuilder gothamDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit) {
@@ -82,7 +82,7 @@ public class ClassicProtocolSpecs {
         .name("Gotham");
   }
 
-  public static ProtocolSpecBuilder<Void> defuseDifficultyBombDefinition(
+  public static ProtocolSpecBuilder defuseDifficultyBombDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit) {
@@ -93,7 +93,7 @@ public class ClassicProtocolSpecs {
         .name("DefuseDifficultyBomb");
   }
 
-  public static ProtocolSpecBuilder<Void> atlantisDefinition(
+  public static ProtocolSpecBuilder atlantisDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -140,7 +140,7 @@ public class ClassicProtocolSpecs {
         .name("Atlantis");
   }
 
-  public static ProtocolSpecBuilder<Void> aghartaDefinition(
+  public static ProtocolSpecBuilder aghartaDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -154,7 +154,7 @@ public class ClassicProtocolSpecs {
         .name("Agharta");
   }
 
-  public static ProtocolSpecBuilder<Void> phoenixDefinition(
+  public static ProtocolSpecBuilder phoenixDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,

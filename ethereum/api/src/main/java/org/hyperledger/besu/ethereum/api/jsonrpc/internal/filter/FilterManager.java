@@ -296,7 +296,8 @@ public class FilterManager extends AbstractVerticle {
                       filter.getLogsQuery()))
           .orElse(emptyList());
     } else {
-      return blockchainQueries.matchingLogs(fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+      return blockchainQueries.matchingLogs(
+          fromBlockNumber, toBlockNumber, filter.getLogsQuery(), () -> true);
     }
   }
 }

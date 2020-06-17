@@ -71,11 +71,11 @@ public class CliqueBlockCreatorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
-  private ProtocolSchedule<CliqueContext> protocolSchedule;
+  private ProtocolSchedule protocolSchedule;
   private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
   private MutableBlockchain blockchain;
-  private ProtocolContext<CliqueContext> protocolContext;
+  private ProtocolContext protocolContext;
   private VoteProposer voteProposer;
   private EpochManager epochManager;
 
@@ -97,7 +97,7 @@ public class CliqueBlockCreatorTest {
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
-    protocolContext = new ProtocolContext<>(blockchain, stateArchive, cliqueContext);
+    protocolContext = new ProtocolContext(blockchain, stateArchive, cliqueContext);
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis

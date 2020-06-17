@@ -52,6 +52,10 @@ public interface MiningCoordinator {
 
   boolean isMining();
 
+  default void onResumeMining() {}
+
+  default void onPauseMining() {}
+
   Wei getMinTransactionGasPrice();
 
   void setExtraData(Bytes extraData);
@@ -75,6 +79,17 @@ public interface MiningCoordinator {
   default boolean submitWork(final EthHashSolution solution) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents submission of work solutions.");
+  }
+
+  /**
+   * Allows to submit the hashrate of a sealer with a specific id
+   *
+   * @param id of the sealer
+   * @param hashrate of the sealer
+   * @return true if the hashrate has been added otherwise false
+   */
+  default boolean submitHashRate(final String id, final Long hashrate) {
+    return false;
   }
 
   /**
