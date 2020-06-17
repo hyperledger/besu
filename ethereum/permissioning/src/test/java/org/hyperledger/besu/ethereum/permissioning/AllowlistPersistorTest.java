@@ -102,7 +102,7 @@ public class AllowlistPersistorTest {
     ALLOWLIST_TYPE key = ALLOWLIST_TYPE.ACCOUNTS;
     List<String> newValue = Lists.newArrayList("account5", "account6", "account4");
     String expectedValue =
-        String.format("%s=[%s]", "accounts-whitelist", "\"account5\",\"account6\",\"account4\"");
+        String.format("%s=[%s]", "accounts-allowlist", "\"account5\",\"account6\",\"account4\"");
 
     allowlistPersistor.updateConfig(key, newValue);
 
