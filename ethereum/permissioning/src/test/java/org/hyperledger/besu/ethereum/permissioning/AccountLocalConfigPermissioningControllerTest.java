@@ -83,7 +83,7 @@ public class AccountLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenPermConfigHasAccountsShouldAddAllAccountsToWhitelist() {
+  public void whenPermConfigHasAccountsShouldAddAllAccountsToAllowlist() {
     when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountAllowlist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
@@ -245,7 +245,7 @@ public class AccountLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void stateShouldRevertIfWhitelistPersistFails()
+  public void stateShouldRevertIfAllowlistPersistFails()
       throws IOException, AllowlistFileSyncException {
     List<String> newAccount = singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
     List<String> newAccount2 = singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd72");
@@ -267,7 +267,7 @@ public class AccountLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void reloadAccountWhitelistWithValidConfigFileShouldUpdateWhitelist() throws Exception {
+  public void reloadAccountAllowlistWithValidConfigFileShouldUpdateAllowlist() throws Exception {
     final String expectedAccount = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
     final Path permissionsFile = createPermissionsFileWithAccount(expectedAccount);
 
@@ -286,7 +286,7 @@ public class AccountLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void reloadAccountWhitelistWithErrorReadingConfigFileShouldKeepOldWhitelist() {
+  public void reloadAccountAllowlistWithErrorReadingConfigFileShouldKeepOldAllowlist() {
     when(permissioningConfig.getAccountPermissioningConfigFilePath()).thenReturn("foo");
     when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountAllowlist())
@@ -331,7 +331,7 @@ public class AccountLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void isPermittedShouldCheckIfAccountExistInTheWhitelist() {
+  public void isPermittedShouldCheckIfAccountExistInTheAllowlist() {
     when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountAllowlist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
@@ -367,7 +367,7 @@ public class AccountLocalConfigPermissioningControllerTest {
   }
 
   private Path createPermissionsFileWithAccount(final String account) throws IOException {
-    final String nodePermissionsFileContent = "accounts-whitelist=[\"" + account + "\"]";
+    final String nodePermissionsFileContent = "accounts-allowlist=[\"" + account + "\"]";
     final Path permissionsFile = Files.createTempFile("account_permissions", "");
     permissionsFile.toFile().deleteOnExit();
     Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));
