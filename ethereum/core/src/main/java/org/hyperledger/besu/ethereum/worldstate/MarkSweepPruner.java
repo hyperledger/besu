@@ -42,9 +42,11 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class MarkSweepPruner {
 
+  private static final int DEFAULT_OPS_PER_TRANSACTION = 100_000;
   private static final Logger LOG = LogManager.getLogger();
   private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
 
+  private final int operationsPerTransaction;
   private final WorldStateStorage worldStateStorage;
   private final MutableBlockchain blockchain;
   private final KeyValueStorage markStorage;
@@ -62,9 +64,19 @@ public class MarkSweepPruner {
       final MutableBlockchain blockchain,
       final KeyValueStorage markStorage,
       final ObservableMetricsSystem metricsSystem) {
+    this(worldStateStorage, blockchain, markStorage, metricsSystem, DEFAULT_OPS_PER_TRANSACTION);
+  }
+
+  public MarkSweepPruner(
+      final WorldStateStorage worldStateStorage,
+      final MutableBlockchain blockchain,
+      final KeyValueStorage markStorage,
+      final ObservableMetricsSystem metricsSystem,
+      final int operationsPerTransaction) {
     this.worldStateStorage = worldStateStorage;
     this.markStorage = markStorage;
     this.blockchain = blockchain;
+    this.operationsPerTransaction = operationsPerTransaction;
 
     markedNodesCounter =
         metricsSystem.createCounter(
@@ -118,12 +130,12 @@ public class MarkSweepPruner {
               node.getValue().ifPresent(this::processAccountState);
             });
     markStopwatch.stop();
-    LOG.info("Completed marking used nodes for pruning");
+    LOG.debug("Completed marking used nodes for pruning");
   }
 
   public void sweepBefore(final long markedBlockNumber) {
     sweepOperationCounter.inc();
-    LOG.info("Sweeping unused nodes");
+    LOG.debug("Sweeping unused nodes");
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
     // storage
     long prunedNodeCount = 0;
@@ -139,6 +151,10 @@ public class MarkSweepPruner {
       if (!isMarked(candidateStateRootHash)) {
         updater.removeAccountStateTrieNode(candidateStateRootHash);
         prunedNodeCount++;
+        if (prunedNodeCount % operationsPerTransaction == 0) {
+          updater.commit();
+          updater = worldStateStorage.updater();
+        }
       }
     }
     updater.commit();
@@ -146,7 +162,7 @@ public class MarkSweepPruner {
     prunedNodeCount += worldStateStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
     clearMarks();
-    LOG.info("Completed sweeping unused nodes");
+    LOG.debug("Completed sweeping unused nodes");
   }
 
   public void cleanup() {
@@ -197,6 +213,7 @@ public class MarkSweepPruner {
     markLock.lock();
     try {
       pendingMarks.add(hash);
+      maybeFlushPendingMarks();
     } finally {
       markLock.unlock();
     }
@@ -207,13 +224,19 @@ public class MarkSweepPruner {
     markLock.lock();
     try {
       pendingMarks.addAll(nodeHashes);
-      flushPendingMarks();
+      maybeFlushPendingMarks();
     } finally {
       markLock.unlock();
     }
   }
 
-  final Stopwatch stopwatch = Stopwatch.createUnstarted();
+  private void maybeFlushPendingMarks() {
+    if (pendingMarks.size() >= operationsPerTransaction) {
+      flushPendingMarks();
+    }
+  }
+
+  private final Stopwatch stopwatch = Stopwatch.createUnstarted();
 
   private void flushPendingMarks() {
     markLock.lock();
@@ -225,9 +248,7 @@ public class MarkSweepPruner {
       transaction.commit();
       stopwatch.stop();
       final long elapsed = stopwatch.elapsed().toMillis();
-      if (elapsed > 0) {
-        LOG.info("Flushed {} nodes: {}ms", flushSize, elapsed);
-      }
+      LOG.info("Flushed {} nodes: {}ms", flushSize, elapsed);
       stopwatch.reset();
       pendingMarks.clear();
     } finally {
