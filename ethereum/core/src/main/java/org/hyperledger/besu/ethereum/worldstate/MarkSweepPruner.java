@@ -42,7 +42,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class MarkSweepPruner {
 
-  private static final int DEFAULT_OPS_PER_TRANSACTION = 100_000;
+  private static final int DEFAULT_OPS_PER_TRANSACTION = 50_000;
   private static final Logger LOG = LogManager.getLogger();
   private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
 
