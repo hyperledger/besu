@@ -44,12 +44,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@Deprecated
 @RunWith(MockitoJUnitRunner.class)
-public class PermRemoveNodesFromWhitelistTest {
+public class PermAddNodesToAllowlistTest {
 
-  private PermRemoveNodesFromWhitelist method;
-  private static final String METHOD_NAME = "perm_removeNodesFromWhitelist";
+  private PermAddNodesToAllowlist method;
+  private static final String METHOD_NAME = "perm_addNodesToAllowlist";
 
   private final String enode1 =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
@@ -63,7 +62,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
   @Before
   public void setUp() {
-    method = new PermRemoveNodesFromWhitelist(Optional.of(nodeLocalConfigPermissioningController));
+    method = new PermAddNodesToAllowlist(Optional.of(nodeLocalConfigPermissioningController));
   }
 
   @Test
@@ -72,13 +71,14 @@ public class PermRemoveNodesFromWhitelistTest {
   }
 
   @Test
-  public void shouldThrowInvalidJsonRpcParametersExceptionWhenBadEnode() {
-    final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(badEnode));
+  public void shouldThrowInvalidJsonRpcParametersExceptionWhenOnlyBadEnode() {
+    final ArrayList<String> enodeList = Lists.newArrayList(badEnode);
+    final JsonRpcRequestContext request = buildRequest(enodeList);
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.removeNodes(eq(Lists.newArrayList(badEnode))))
+    when(nodeLocalConfigPermissioningController.addNodes(eq(enodeList)))
         .thenThrow(IllegalArgumentException.class);
 
     final JsonRpcResponse actual = method.response(request);
@@ -87,62 +87,34 @@ public class PermRemoveNodesFromWhitelistTest {
   }
 
   @Test
-  public void shouldThrowInvalidJsonRpcParametersExceptionWhenEmptyList() {
+  public void shouldThrowInvalidJsonRpcParametersExceptionWhenBadEnodeInList() {
+    final ArrayList<String> enodeList = Lists.newArrayList(enode2, badEnode, enode1);
+    final JsonRpcRequestContext request = buildRequest(enodeList);
+    final JsonRpcResponse expected =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+
+    when(nodeLocalConfigPermissioningController.addNodes(eq(enodeList)))
+        .thenThrow(IllegalArgumentException.class);
+
+    final JsonRpcResponse actual = method.response(request);
+
+    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+  }
+
+  @Test
+  public void shouldThrowInvalidJsonRpcParametersExceptionWhenEmptyEnode() {
     final JsonRpcRequestContext request = buildRequest(Lists.emptyList());
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.removeNodes(eq(Lists.emptyList())))
+    when(nodeLocalConfigPermissioningController.addNodes(eq(Lists.emptyList())))
         .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
-  }
-
-  @Test
-  public void shouldRemoveSingleValidNode() {
-    final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1));
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
-
-    when(nodeLocalConfigPermissioningController.removeNodes(any()))
-        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
-
-    final JsonRpcResponse actual = method.response(request);
-
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
-
-    verify(nodeLocalConfigPermissioningController, times(1)).removeNodes(any());
-    verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
-  }
-
-  @Test
-  public void shouldRemoveMultipleValidNodes() {
-    final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
-
-    when(nodeLocalConfigPermissioningController.removeNodes(any()))
-        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
-
-    final JsonRpcResponse actual = method.response(request);
-
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
-
-    verify(nodeLocalConfigPermissioningController, times(1)).removeNodes(any());
-    verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
-  }
-
-  @Test
-  public void shouldFailWhenP2pDisabled() {
-    method = new PermRemoveNodesFromWhitelist(Optional.empty());
-    final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
-
-    Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test
@@ -152,7 +124,7 @@ public class PermRemoveNodesFromWhitelistTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.removeNodes(any()))
+    when(nodeLocalConfigPermissioningController.addNodes(any()))
         .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
@@ -167,7 +139,7 @@ public class PermRemoveNodesFromWhitelistTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.removeNodes(eq(new ArrayList<>())))
+    when(nodeLocalConfigPermissioningController.addNodes(eq(new ArrayList<>())))
         .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
@@ -176,19 +148,49 @@ public class PermRemoveNodesFromWhitelistTest {
   }
 
   @Test
-  public void shouldReturnCantRemoveBootnodeWhenRemovingBootnode() {
+  public void shouldAddSingleValidNode() {
     final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1));
-    final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED);
+    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
 
-    when(nodeLocalConfigPermissioningController.removeNodes(any()))
-        .thenReturn(
-            new NodesWhitelistResult(AllowlistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED));
+    when(nodeLocalConfigPermissioningController.addNodes(any()))
+        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
 
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+
+    verify(nodeLocalConfigPermissioningController, times(1)).addNodes(any());
+    verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
+  }
+
+  @Test
+  public void shouldAddMultipleValidNodes() {
+    final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
+    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
+
+    when(nodeLocalConfigPermissioningController.addNodes(any()))
+        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
+
+    final JsonRpcResponse actual = method.response(request);
+
+    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+
+    verify(nodeLocalConfigPermissioningController, times(1)).addNodes(any());
+    verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
+  }
+
+  @Test
+  public void shouldFailWhenP2pDisabled() {
+    method = new PermAddNodesToAllowlist(Optional.empty());
+
+    final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
+    ;
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
   }
 
   private JsonRpcRequestContext buildRequest(final List<String> enodeList) {

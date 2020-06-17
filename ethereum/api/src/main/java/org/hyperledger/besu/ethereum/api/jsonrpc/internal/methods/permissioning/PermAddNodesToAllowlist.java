@@ -28,20 +28,19 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.List;
 import java.util.Optional;
 
-@Deprecated
-public class PermAddNodesToWhitelist implements JsonRpcMethod {
+public class PermAddNodesToAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
       nodeWhitelistPermissioningController;
 
-  public PermAddNodesToWhitelist(
+  public PermAddNodesToAllowlist(
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
     this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.PERM_ADD_NODES_TO_WHITELIST.getMethodName();
+    return RpcMethod.PERM_ADD_NODES_TO_ALLOWLIST.getMethodName();
   }
 
   @Override
