@@ -83,7 +83,7 @@ public abstract class PeerDiscoveryAgent {
   private boolean isActive = false;
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
-  public PeerDiscoveryAgent(
+  protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,

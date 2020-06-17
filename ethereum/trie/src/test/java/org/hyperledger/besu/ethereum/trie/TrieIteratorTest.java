@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.NavigableSet;
 import java.util.Random;
 import java.util.TreeSet;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -52,10 +51,13 @@ public class TrieIteratorTest {
   @SuppressWarnings("unchecked")
   private final LeafHandler<String> leafHandler = mock(LeafHandler.class);
 
-  private final Function<String, Bytes> valueSerializer =
-      value -> Bytes.wrap(value.getBytes(StandardCharsets.UTF_8));
-  private final DefaultNodeFactory<String> nodeFactory = new DefaultNodeFactory<>(valueSerializer);
+  private final DefaultNodeFactory<String> nodeFactory =
+      new DefaultNodeFactory<>(this::valueSerializer);
   private final TrieIterator<String> iterator = new TrieIterator<>(leafHandler);
+
+  private Bytes valueSerializer(final String value) {
+    return Bytes.wrap(value.getBytes(StandardCharsets.UTF_8));
+  }
 
   @Test
   public void shouldCallLeafHandlerWhenRootNodeIsALeaf() {

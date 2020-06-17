@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.MessageFrame.Type;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.util.ArrayDeque;
@@ -37,7 +36,7 @@ public class MessageFrameTestFixture {
   public static final Address DEFAUT_ADDRESS = AddressHelpers.ofValue(244259721);
   private final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
-  private Type type = Type.MESSAGE_CALL;
+  private MessageFrame.Type type = MessageFrame.Type.MESSAGE_CALL;
   private Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
   private Optional<Blockchain> blockchain = Optional.empty();
   private Optional<WorldUpdater> worldState = Optional.empty();
@@ -58,7 +57,7 @@ public class MessageFrameTestFixture {
   private ReturnStack returnStack = new ReturnStack();
   private ExecutionContextTestFixture executionContextTestFixture;
 
-  public MessageFrameTestFixture type(final Type type) {
+  public MessageFrameTestFixture type(final MessageFrame.Type type) {
     this.type = type;
     return this;
   }

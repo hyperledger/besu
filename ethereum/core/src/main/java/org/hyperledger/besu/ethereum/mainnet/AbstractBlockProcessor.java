@@ -82,7 +82,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   private final TransactionProcessor transactionProcessor;
 
-  private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
   final Wei blockReward;
 
@@ -92,7 +92,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   private final TransactionGasBudgetCalculator gasBudgetCalculator;
 
-  public AbstractBlockProcessor(
+  protected AbstractBlockProcessor(
       final TransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,

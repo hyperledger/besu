@@ -34,8 +34,8 @@ import org.junit.Test;
 public class MainnetBlockProcessorTest {
 
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
-  private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
-      mock(MainnetBlockProcessor.TransactionReceiptFactory.class);
+  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
+      mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
 
   @Test
   public void noAccountCreatedWhenBlockRewardIsZeroAndSkipped() {

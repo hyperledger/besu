@@ -31,7 +31,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
 
-  public AbstractCallOperation(
+  protected AbstractCallOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,

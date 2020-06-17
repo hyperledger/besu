@@ -41,7 +41,7 @@ public abstract class AbstractGetSignerMetricsMethod {
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
 
-  public AbstractGetSignerMetricsMethod(
+  protected AbstractGetSignerMetricsMethod(
       final VoteTallyCache voteTallyCache,
       final BlockInterface blockInterface,
       final BlockchainQueries blockchainQueries) {

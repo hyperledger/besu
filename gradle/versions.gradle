@@ -26,10 +26,10 @@ dependencyManagement {
     dependency 'com.google.dagger:dagger:2.27'
     dependency 'com.google.dagger:dagger-compiler:2.27'
 
-    dependency 'com.google.errorprone:error_prone_annotation:2.3.3'
-    dependency 'com.google.errorprone:error_prone_check_api:2.3.3'
-    dependency 'com.google.errorprone:error_prone_core:2.3.3'
-    dependency 'com.google.errorprone:error_prone_test_helpers:2.3.3'
+    dependency 'com.google.errorprone:error_prone_annotation:2.4.0'
+    dependency 'com.google.errorprone:error_prone_check_api:2.4.0'
+    dependency 'com.google.errorprone:error_prone_core:2.4.0'
+    dependency 'com.google.errorprone:error_prone_test_helpers:2.4.0'
 
     dependency 'com.google.guava:guava:28.1-jre'
 

@@ -23,6 +23,8 @@ import java.util.Optional;
 public interface Operation extends ExceptionalHaltPredicate {
 
   /**
+   * Gas cost of this operation, in context of the provided frame.
+   *
    * @param frame The frame for execution of this operation.
    * @return The gas cost associated with executing this operation given the current {@link
    *     MessageFrame}.

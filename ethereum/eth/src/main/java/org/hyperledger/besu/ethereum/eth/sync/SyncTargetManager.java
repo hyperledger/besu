@@ -42,7 +42,7 @@ public abstract class SyncTargetManager {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
-  public SyncTargetManager(
+  protected SyncTargetManager(
       final SynchronizerConfiguration config,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
