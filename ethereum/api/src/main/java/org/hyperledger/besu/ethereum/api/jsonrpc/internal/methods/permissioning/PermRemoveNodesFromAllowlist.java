@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning;
 
+import java.util.List;
+import java.util.Optional;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -25,23 +27,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
-import java.util.List;
-import java.util.Optional;
-
-@Deprecated
-public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
+public class PermRemoveNodesFromAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
       nodeWhitelistPermissioningController;
 
-  public PermRemoveNodesFromWhitelist(
+  public PermRemoveNodesFromAllowlist(
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
     this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.PERM_REMOVE_NODES_FROM_WHITELIST.getMethodName();
+    return RpcMethod.PERM_REMOVE_NODES_FROM_ALLOWLIST.getMethodName();
   }
 
   @Override

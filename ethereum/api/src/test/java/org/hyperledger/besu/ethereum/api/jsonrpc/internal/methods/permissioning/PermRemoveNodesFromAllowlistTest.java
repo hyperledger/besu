@@ -23,6 +23,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.util.Lists;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -31,25 +36,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import org.assertj.core.api.Assertions;
-import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@Deprecated
 @RunWith(MockitoJUnitRunner.class)
-public class PermRemoveNodesFromWhitelistTest {
+public class PermRemoveNodesFromAllowlistTest {
 
-  private PermRemoveNodesFromWhitelist method;
-  private static final String METHOD_NAME = "perm_removeNodesFromWhitelist";
+  private PermRemoveNodesFromAllowlist method;
+  private static final String METHOD_NAME = "perm_removeNodesFromAllowlist";
 
   private final String enode1 =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
@@ -63,7 +60,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
   @Before
   public void setUp() {
-    method = new PermRemoveNodesFromWhitelist(Optional.of(nodeLocalConfigPermissioningController));
+    method = new PermRemoveNodesFromAllowlist(Optional.of(nodeLocalConfigPermissioningController));
   }
 
   @Test
@@ -135,7 +132,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
   @Test
   public void shouldFailWhenP2pDisabled() {
-    method = new PermRemoveNodesFromWhitelist(Optional.empty());
+    method = new PermRemoveNodesFromAllowlist(Optional.empty());
     final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(

@@ -53,7 +53,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, RemoveNodeResponse> removeNodesFromWhitelist(final List<URI> enodeList) {
     return new Request<>(
-        "perm_removeNodesFromWhitelist",
+        "perm_removeNodesFromAllowlist",
         Collections.singletonList(enodeList),
         web3jService,
         RemoveNodeResponse.class);

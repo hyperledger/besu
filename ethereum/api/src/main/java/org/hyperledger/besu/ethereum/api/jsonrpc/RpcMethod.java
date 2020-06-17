@@ -122,6 +122,7 @@ public enum RpcMethod {
   PERM_RELOAD_PERMISSIONS_FROM_FILE("perm_reloadPermissionsFromFile"),
   PERM_REMOVE_ACCOUNTS_FROM_WHITELIST("perm_removeAccountsFromWhitelist"),
   PERM_REMOVE_NODES_FROM_WHITELIST("perm_removeNodesFromWhitelist"),
+  PERM_REMOVE_NODES_FROM_ALLOWLIST("perm_removeNodesFromAllowlist"),
   RPC_MODULES("rpc_modules"),
   TRACE_REPLAY_BLOCK_TRANSACTIONS("trace_replayBlockTransactions"),
   TRACE_BLOCK("trace_block"),

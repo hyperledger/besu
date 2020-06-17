@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetNodesWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromAllowlist;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromAllowlist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
@@ -55,6 +56,7 @@ public class PermJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new PermAddNodesToWhitelist(nodeWhitelistController),
         new PermAddNodesToAllowlist(nodeWhitelistController),
         new PermRemoveNodesFromWhitelist(nodeWhitelistController),
+        new PermRemoveNodesFromAllowlist(nodeWhitelistController),
         new PermGetNodesWhitelist(nodeWhitelistController),
         new PermGetNodesAllowlist(nodeWhitelistController),
         new PermGetAccountsWhitelist(accountsWhitelistController),
