@@ -137,7 +137,7 @@ public class Pruner {
 
   private void mark(final BlockHeader header) {
     final Hash stateRoot = header.getStateRoot();
-    LOG.info(
+    LOG.debug(
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
         markBlockNumber,
         stateRoot);
@@ -149,7 +149,7 @@ public class Pruner {
   }
 
   private void sweep() {
-    LOG.info(
+    LOG.debug(
         "Begin sweeping unused nodes for pruning. Keeping full state for blocks {} to {}",
         markBlockNumber,
         markBlockNumber + blocksRetained);
@@ -164,10 +164,12 @@ public class Pruner {
     try {
       executorService.execute(action);
     } catch (final Throwable t) {
-      LOG.error("Pruner failed", t);
+      LOG.error(
+          "An unexpected error in the {} phase: {}. Reattempting.",
+          getPruningPhase(),
+          t.getMessage());
       pruningStrategy.cleanup();
       pruningPhase.set(PruningPhase.IDLE);
-      System.exit(1);
     }
   }
 
