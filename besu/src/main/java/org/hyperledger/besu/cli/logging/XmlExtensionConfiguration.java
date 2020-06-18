@@ -22,6 +22,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.hyperledger.besu.cli.BesuCommand;
 
 import java.io.IOException;
 
@@ -62,16 +63,13 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
   }
 
   private void createConsoleAppender() {
-    final boolean color = true;
-    final String pattern =
-        color
-            ? "%style{%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | }{DIM}%highlight{%t | %-5level | %c{1} | %msg%n}{TRACE=normal}"
-            : "%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n";
     final PatternLayout patternLayout =
         PatternLayout.newBuilder()
             .withConfiguration(this)
-            .withNoConsoleNoAnsi(true)
-            .withPattern(pattern)
+            .withDisableAnsi(!BesuCommand.isColorEnabled())
+            .withNoConsoleNoAnsi(BesuCommand.isColorEnabled())
+            .withPattern(
+                "%style{%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | }{DIM}%highlight{%t | %-5level | %c{1} | %msg%n}{TRACE=normal}")
             .build();
     final ConsoleAppender consoleAppender =
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();

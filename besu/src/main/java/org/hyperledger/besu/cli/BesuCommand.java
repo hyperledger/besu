@@ -714,6 +714,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
   private final Level logLevel = INFO;
 
+  @SuppressWarnings({"FieldCanBeFinal"})
+  @Option(
+      names = {"--color-enabled"},
+      description =
+          "Force color output to be enabled/disabled (default: colorized only if printing to console")
+  private static Boolean colorEnabled = null;
+
   @Option(
       names = {"--miner-enabled"},
       description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
@@ -1275,6 +1282,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       System.out.printf("Setting logging level to %s%n", logLevel.name());
     }
     Configurator.setAllLevels("", logLevel);
+  }
+
+  public static boolean isColorEnabled() {
+    return Optional.ofNullable(colorEnabled).orElse(true);
   }
 
   private void configureNativeLibs() {
