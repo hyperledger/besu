@@ -3,7 +3,7 @@
   "response": {
     "errors": [
       {
-        "message": "Validation error of type WrongType: argument 'address' with value 'StringValue{value='6295ee1b4f6dd65047762f924ecd367c17eabf8f'}' is not a valid 'Address' @ 'account'",
+        "message": "Validation error of type WrongType: argument 'address' with value 'StringValue{value='6295ee1b4f6dd65047762f924ecd367c17eabf8f'}' is not a valid 'Address' - Address value '6295ee1b4f6dd65047762f924ecd367c17eabf8f' is not prefixed with 0x @ 'account'",
         "locations": [
           {
             "line": 1,

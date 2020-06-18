@@ -4,7 +4,7 @@
   "response": {
     "errors": [
       {
-        "message": "Validation error of type WrongType: argument 'data.data' with value 'StringValue{value='12a7b914'}' is not a valid 'Bytes' @ 'block/call'",
+        "message": "Validation error of type WrongType: argument 'data.data' with value 'StringValue{value='12a7b914'}' is not a valid 'Bytes' - Bytes value '12a7b914' is not prefixed with 0x @ 'block/call'",
         "locations": [
           {
             "line": 1,
