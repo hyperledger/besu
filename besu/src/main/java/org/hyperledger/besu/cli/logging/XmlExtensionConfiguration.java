@@ -14,11 +14,16 @@
  */
 package org.hyperledger.besu.cli.logging;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.config.AbstractConfiguration;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+
+import java.io.IOException;
 
 public class XmlExtensionConfiguration extends XmlConfiguration {
   public XmlExtensionConfiguration(
@@ -30,6 +35,33 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
   protected void doConfigure() {
     super.doConfigure();
 
+    createConsoleAppender();
+  }
+
+  @Override
+  public Configuration reconfigure() {
+    final Configuration refreshedParent = super.reconfigure();
+
+    if (refreshedParent != null
+        && AbstractConfiguration.class.isAssignableFrom(refreshedParent.getClass())) {
+
+      try {
+        final XmlExtensionConfiguration refreshed =
+            new XmlExtensionConfiguration(
+                refreshedParent.getLoggerContext(),
+                refreshedParent.getConfigurationSource().resetInputStream());
+        createConsoleAppender();
+        return refreshed;
+      } catch (final IOException e) {
+        LogManager.getLogger().error("Failed to reload the Log4j2 Xml configuration file", e);
+      }
+    }
+
+    LogManager.getLogger().warn("Cannot programmatically reconfigure loggers");
+    return refreshedParent;
+  }
+
+  private void createConsoleAppender() {
     final boolean color = true;
     final String pattern =
         color
