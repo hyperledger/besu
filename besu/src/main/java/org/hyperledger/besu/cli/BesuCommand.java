@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.apache.logging.log4j.Level.INFO;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
@@ -711,7 +712,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
-  private final Level logLevel = null;
+  private final Level logLevel = INFO;
 
   @Option(
       names = {"--miner-enabled"},
@@ -1268,12 +1269,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public void configureLogging(final boolean announce) {
     // set log level per CLI flags
-    if (logLevel != null) {
-      if (announce) {
-        System.out.println("Setting logging level to " + logLevel.name());
-      }
-      Configurator.setAllLevels("", logLevel);
+    if (announce) {
+      System.out.printf("Setting logging level to %s%n", logLevel.name());
     }
+    Configurator.setAllLevels("", logLevel);
   }
 
   private void configureNativeLibs() {
