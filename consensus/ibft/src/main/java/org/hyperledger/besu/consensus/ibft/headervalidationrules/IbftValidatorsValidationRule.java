@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collection;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import com.google.common.collect.Iterables;
@@ -35,22 +35,22 @@ import org.apache.logging.log4j.Logger;
  * Ensures the Validators listed in the block header match that tracked in memory (which was in-turn
  * created by tracking votes included on the block chain).
  */
-public class IbftValidatorsValidationRule
-    implements AttachedBlockHeaderValidationRule<IbftContext> {
+public class IbftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger();
 
   @Override
   public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<IbftContext> context) {
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
     try {
       final ValidatorProvider validatorProvider =
-          context.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+          context
+              .getConsensusState(IbftContext.class)
+              .getVoteTallyCache()
+              .getVoteTallyAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
-      final SortedSet<Address> sortedReportedValidators =
+      final NavigableSet<Address> sortedReportedValidators =
           new TreeSet<>(ibftExtraData.getValidators());
 
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), sortedReportedValidators)) {

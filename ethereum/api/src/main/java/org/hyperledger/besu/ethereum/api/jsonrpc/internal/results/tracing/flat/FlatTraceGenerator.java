@@ -64,7 +64,7 @@ public class FlatTraceGenerator {
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
       final AtomicInteger traceCounter,
@@ -167,7 +167,7 @@ public class FlatTraceGenerator {
         if (currentContext != null) currentContext = handleRevert(tracesContexts, currentContext);
       }
 
-      if (currentContext != null && !traceFrame.getExceptionalHaltReasons().isEmpty()) {
+      if (currentContext != null && traceFrame.getExceptionalHaltReason().isPresent()) {
         currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
       }
     }
@@ -186,7 +186,7 @@ public class FlatTraceGenerator {
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
       final AtomicInteger traceCounter) {
@@ -208,7 +208,7 @@ public class FlatTraceGenerator {
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTraceAndBlock(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block) {
     return generateFromTransactionTrace(
@@ -269,7 +269,7 @@ public class FlatTraceGenerator {
   }
 
   private static FlatTrace.Context handleReturn(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
       final TraceFrame traceFrame,
@@ -435,9 +435,7 @@ public class FlatTraceGenerator {
       final TraceFrame traceFrame) {
     final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
     traceFrameBuilder.error(
-        traceFrame.getExceptionalHaltReasons().stream()
-            .map(ExceptionalHaltReason::getDescription)
-            .reduce((a, b) -> a + ", " + b));
+        traceFrame.getExceptionalHaltReason().map(ExceptionalHaltReason::getDescription));
     final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
     actionBuilder.value(Quantity.create(traceFrame.getValue()));
     tracesContexts.removeLast();

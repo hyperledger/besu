@@ -44,9 +44,9 @@ import org.mockito.Mockito;
 
 public class PersistBlockTaskTest {
 
-  private BlockchainSetupUtil<Void> blockchainUtil;
-  private ProtocolSchedule<Void> protocolSchedule;
-  private ProtocolContext<Void> protocolContext;
+  private BlockchainSetupUtil blockchainUtil;
+  private ProtocolSchedule protocolSchedule;
+  private ProtocolContext protocolContext;
   private EthContext ethContext;
   private MutableBlockchain blockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -70,7 +70,7 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
     // Create task
-    final PersistBlockTask<Void> task =
+    final PersistBlockTask task =
         PersistBlockTask.create(
             protocolSchedule,
             protocolContext,
@@ -97,7 +97,7 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
     // Create task
-    final PersistBlockTask<Void> task =
+    final PersistBlockTask task =
         PersistBlockTask.create(
             protocolSchedule,
             protocolContext,
@@ -340,7 +340,7 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
     // Create task
-    final PersistBlockTask<Void> task =
+    final PersistBlockTask task =
         PersistBlockTask.create(
             protocolSchedule,
             protocolContext,
@@ -365,7 +365,7 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
     // Create task
-    final PersistBlockTask<Void> task =
+    final PersistBlockTask task =
         PersistBlockTask.create(
             protocolSchedule,
             protocolContext,
@@ -373,7 +373,7 @@ public class PersistBlockTaskTest {
             nextBlock,
             HeaderValidationMode.FULL,
             metricsSystem);
-    final PersistBlockTask<Void> taskSpy = Mockito.spy(task);
+    final PersistBlockTask taskSpy = Mockito.spy(task);
     Mockito.doNothing().when(taskSpy).executeTaskTimed();
 
     final CompletableFuture<Block> result = taskSpy.run();

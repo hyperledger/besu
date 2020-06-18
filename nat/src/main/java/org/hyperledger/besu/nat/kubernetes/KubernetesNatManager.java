@@ -47,13 +47,15 @@ import org.apache.logging.log4j.Logger;
 public class KubernetesNatManager extends AbstractNatManager {
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String DEFAULT_BESU_POD_NAME_FILTER = "besu";
+  public static final String DEFAULT_BESU_POD_NAME_FILTER = "besu";
 
   private String internalAdvertisedHost;
+  private final String besuPodNameFilter;
   private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
 
-  public KubernetesNatManager() {
+  public KubernetesNatManager(final String besuPodNameFilter) {
     super(NatMethod.KUBERNETES);
+    this.besuPodNameFilter = besuPodNameFilter;
   }
 
   @Override
@@ -75,15 +77,12 @@ public class KubernetesNatManager extends AbstractNatManager {
       final V1Service service =
           api.listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
               .getItems().stream()
-              .filter(
-                  v1Service ->
-                      v1Service.getMetadata().getName().contains(DEFAULT_BESU_POD_NAME_FILTER))
+              .filter(v1Service -> v1Service.getMetadata().getName().contains(besuPodNameFilter))
               .findFirst()
               .orElseThrow(() -> new NatInitializationException("Service not found"));
       updateUsingBesuService(service);
     } catch (Exception e) {
-      throw new NatInitializationException(
-          "Failed update information using Kubernetes client SDK.", e);
+      throw new NatInitializationException(e.getMessage(), e);
     }
   }
 
@@ -134,7 +133,8 @@ public class KubernetesNatManager extends AbstractNatManager {
                 }
               });
     } catch (Exception e) {
-      throw new RuntimeException("Failed update information using pod metadata.", e);
+      throw new RuntimeException(
+          "Failed update information using pod metadata : " + e.getMessage(), e);
     }
   }
 

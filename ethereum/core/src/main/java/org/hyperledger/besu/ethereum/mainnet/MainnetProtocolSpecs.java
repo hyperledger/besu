@@ -76,11 +76,11 @@ public abstract class MainnetProtocolSpecs {
 
   private MainnetProtocolSpecs() {}
 
-  public static ProtocolSpecBuilder<Void> frontierDefinition(
+  public static ProtocolSpecBuilder frontierDefinition(
       final OptionalInt configContractSizeLimit, final OptionalInt configStackSizeLimit) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    return new ProtocolSpecBuilder<Void>()
+    return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::frontier)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
@@ -141,7 +141,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Frontier");
   }
 
-  public static ProtocolSpecBuilder<Void> homesteadDefinition(
+  public static ProtocolSpecBuilder homesteadDefinition(
       final OptionalInt configContractSizeLimit, final OptionalInt configStackSizeLimit) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     return frontierDefinition(configContractSizeLimit, configStackSizeLimit)
@@ -161,7 +161,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Homestead");
   }
 
-  public static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition(
+  public static ProtocolSpecBuilder daoRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createDaoValidator())
@@ -183,21 +183,21 @@ public abstract class MainnetProtocolSpecs {
         .name("DaoRecoveryInit");
   }
 
-  public static ProtocolSpecBuilder<Void> daoRecoveryTransitionDefinition(
+  public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return daoRecoveryInitDefinition(contractSizeLimit, configStackSizeLimit)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
 
-  public static ProtocolSpecBuilder<Void> tangerineWhistleDefinition(
+  public static ProtocolSpecBuilder tangerineWhistleDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
 
-  public static ProtocolSpecBuilder<Void> spuriousDragonDefinition(
+  public static ProtocolSpecBuilder spuriousDragonDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit) {
@@ -243,7 +243,7 @@ public abstract class MainnetProtocolSpecs {
         .name("SpuriousDragon");
   }
 
-  public static ProtocolSpecBuilder<Void> byzantiumDefinition(
+  public static ProtocolSpecBuilder byzantiumDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -277,7 +277,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Byzantium");
   }
 
-  public static ProtocolSpecBuilder<Void> constantinopleDefinition(
+  public static ProtocolSpecBuilder constantinopleDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -290,7 +290,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Constantinople");
   }
 
-  public static ProtocolSpecBuilder<Void> constantinopleFixDefinition(
+  public static ProtocolSpecBuilder constantinopleFixDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -301,7 +301,7 @@ public abstract class MainnetProtocolSpecs {
         .name("ConstantinopleFix");
   }
 
-  public static ProtocolSpecBuilder<Void> istanbulDefinition(
+  public static ProtocolSpecBuilder istanbulDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -327,7 +327,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Istanbul");
   }
 
-  static ProtocolSpecBuilder<Void> muirGlacierDefinition(
+  static ProtocolSpecBuilder muirGlacierDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -337,7 +337,7 @@ public abstract class MainnetProtocolSpecs {
         .name("MuirGlacier");
   }
 
-  static ProtocolSpecBuilder<Void> berlinDefinition(
+  static ProtocolSpecBuilder berlinDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -347,7 +347,6 @@ public abstract class MainnetProtocolSpecs {
     }
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
-        .gasCalculator(BerlinGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
@@ -356,7 +355,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   // TODO EIP-1559 change for the actual fork name when known
-  static ProtocolSpecBuilder<Void> eip1559Definition(
+  static ProtocolSpecBuilder eip1559Definition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -402,7 +401,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   // TODO EIP-1559 change for the actual fork name when known
-  static ProtocolSpecBuilder<Void> eip1559FinalizedDefinition(
+  static ProtocolSpecBuilder eip1559FinalizedDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,

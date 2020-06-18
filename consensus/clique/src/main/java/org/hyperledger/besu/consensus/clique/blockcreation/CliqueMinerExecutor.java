@@ -41,15 +41,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
-public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, CliqueBlockMiner> {
+public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner> {
 
   private final Address localAddress;
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
 
   public CliqueMinerExecutor(
-      final ProtocolContext<CliqueContext> protocolContext,
-      final ProtocolSchedule<CliqueContext> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final PendingTransactions pendingTransactions,
       final NodeKey nodeKey,
       final MiningParameters miningParams,
@@ -113,7 +113,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
       final VoteTally voteTally =
           protocolContext
-              .getConsensusState()
+              .getConsensusState(CliqueContext.class)
               .getVoteTallyCache()
               .getVoteTallyAfterBlock(parentHeader);
       validators.addAll(voteTally.getValidators());

@@ -32,17 +32,17 @@ import com.google.common.base.Charsets;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 
-public class WhitelistPersistor {
+public class AllowlistPersistor {
 
   private final File configurationFile;
 
-  public enum WHITELIST_TYPE {
-    ACCOUNTS("accounts-whitelist"),
-    NODES("nodes-whitelist");
+  public enum ALLOWLIST_TYPE {
+    ACCOUNTS("accounts-allowlist"),
+    NODES("nodes-allowlist");
 
     private final String tomlKey;
 
-    WHITELIST_TYPE(final String tomlKey) {
+    ALLOWLIST_TYPE(final String tomlKey) {
       this.tomlKey = tomlKey;
     }
 
@@ -51,53 +51,53 @@ public class WhitelistPersistor {
     }
   }
 
-  public WhitelistPersistor(final String configurationFile) {
+  public AllowlistPersistor(final String configurationFile) {
     this.configurationFile = new File(configurationFile);
   }
 
   public static boolean verifyConfigFileMatchesState(
-      final WHITELIST_TYPE whitelistType,
+      final ALLOWLIST_TYPE allowlistType,
       final Collection<String> checkLists,
       final Path configurationFilePath)
-      throws IOException, WhitelistFileSyncException {
+      throws IOException, AllowlistFileSyncException {
 
-    final Map<WHITELIST_TYPE, Collection<String>> configItems =
+    final Map<ALLOWLIST_TYPE, Collection<String>> configItems =
         existingConfigItems(configurationFilePath);
     final Collection<String> existingValues =
-        configItems.get(whitelistType) != null
-            ? configItems.get(whitelistType)
+        configItems.get(allowlistType) != null
+            ? configItems.get(allowlistType)
             : Collections.emptyList();
 
     boolean listsMatch = existingValues.containsAll(checkLists);
     if (!listsMatch) {
-      throw new WhitelistFileSyncException();
+      throw new AllowlistFileSyncException();
     }
     return listsMatch;
   }
 
   public boolean verifyConfigFileMatchesState(
-      final WHITELIST_TYPE whitelistType, final Collection<String> checkLists)
-      throws IOException, WhitelistFileSyncException {
-    return verifyConfigFileMatchesState(whitelistType, checkLists, configurationFile.toPath());
+      final ALLOWLIST_TYPE allowlistType, final Collection<String> checkLists)
+      throws IOException, AllowlistFileSyncException {
+    return verifyConfigFileMatchesState(allowlistType, checkLists, configurationFile.toPath());
   }
 
   public synchronized void updateConfig(
-      final WHITELIST_TYPE whitelistType, final Collection<String> updatedWhitelistValues)
+      final ALLOWLIST_TYPE allowlistType, final Collection<String> updatedAllowlistValues)
       throws IOException {
-    removeExistingConfigItem(whitelistType);
-    addNewConfigItem(whitelistType, updatedWhitelistValues);
+    removeExistingConfigItem(allowlistType);
+    addNewConfigItem(allowlistType, updatedAllowlistValues);
   }
 
-  private static Map<WHITELIST_TYPE, Collection<String>> existingConfigItems(
+  private static Map<ALLOWLIST_TYPE, Collection<String>> existingConfigItems(
       final Path configurationFilePath) throws IOException {
     TomlParseResult parsedToml = Toml.parse(configurationFilePath);
 
-    return Arrays.stream(WHITELIST_TYPE.values())
+    return Arrays.stream(ALLOWLIST_TYPE.values())
         .filter(k -> parsedToml.contains(k.getTomlKey()))
         .map(
-            whitelist_type ->
+            allowlist_type ->
                 new AbstractMap.SimpleImmutableEntry<>(
-                    whitelist_type, parsedToml.getArrayOrEmpty(whitelist_type.getTomlKey())))
+                    allowlist_type, parsedToml.getArrayOrEmpty(allowlist_type.getTomlKey())))
         .collect(
             Collectors.toMap(
                 o -> o.getKey(),
@@ -110,12 +110,12 @@ public class WhitelistPersistor {
   }
 
   @VisibleForTesting
-  void removeExistingConfigItem(final WHITELIST_TYPE whitelistType) throws IOException {
+  void removeExistingConfigItem(final ALLOWLIST_TYPE allowlistType) throws IOException {
     List<String> otherConfigItems =
         existingConfigItems(configurationFile.toPath())
             .entrySet()
             .parallelStream()
-            .filter(listType -> !listType.getKey().equals(whitelistType))
+            .filter(listType -> !listType.getKey().equals(allowlistType))
             .map(keyVal -> valueListToTomlArray(keyVal.getKey(), keyVal.getValue()))
             .collect(Collectors.toList());
 
@@ -128,11 +128,11 @@ public class WhitelistPersistor {
 
   @VisibleForTesting
   public static void addNewConfigItem(
-      final WHITELIST_TYPE whitelistType,
-      final Collection<String> whitelistValues,
+      final ALLOWLIST_TYPE allowlistType,
+      final Collection<String> allowlistValues,
       final Path configFilePath)
       throws IOException {
-    String newConfigItem = valueListToTomlArray(whitelistType, whitelistValues);
+    String newConfigItem = valueListToTomlArray(allowlistType, allowlistValues);
 
     Files.write(
         configFilePath,
@@ -143,17 +143,17 @@ public class WhitelistPersistor {
 
   @VisibleForTesting
   void addNewConfigItem(
-      final WHITELIST_TYPE whitelistType, final Collection<String> whitelistValues)
+      final ALLOWLIST_TYPE allowlistType, final Collection<String> allowlistValues)
       throws IOException {
-    addNewConfigItem(whitelistType, whitelistValues, configurationFile.toPath());
+    addNewConfigItem(allowlistType, allowlistValues, configurationFile.toPath());
   }
 
   private static String valueListToTomlArray(
-      final WHITELIST_TYPE whitelistType, final Collection<String> whitelistValues) {
+      final ALLOWLIST_TYPE allowlistType, final Collection<String> allowlistValues) {
     return String.format(
         "%s=[%s]",
-        whitelistType.getTomlKey(),
-        whitelistValues
+        allowlistType.getTomlKey(),
+        allowlistValues
             .parallelStream()
             .map(uri -> String.format("\"%s\"", uri))
             .collect(Collectors.joining(",")));

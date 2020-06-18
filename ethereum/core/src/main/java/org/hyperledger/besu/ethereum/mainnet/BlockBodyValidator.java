@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import java.util.List;
 
 /** Validates block bodies. */
-public interface BlockBodyValidator<C> {
+public interface BlockBodyValidator {
 
   /**
    * Validates that the block body is valid.
@@ -36,7 +36,7 @@ public interface BlockBodyValidator<C> {
    * @return {@code true} if valid; otherwise {@code false}
    */
   boolean validateBody(
-      ProtocolContext<C> context,
+      ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
       Hash worldStateRootHash,
@@ -52,7 +52,7 @@ public interface BlockBodyValidator<C> {
    * @return {@code true} if valid; otherwise {@code false}
    */
   boolean validateBodyLight(
-      ProtocolContext<C> context,
+      ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
       final HeaderValidationMode ommerValidationMode);

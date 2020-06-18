@@ -152,7 +152,7 @@ public final class RunnerTest {
     final BigInteger networkId = BigInteger.valueOf(2929);
 
     // Setup state with block data
-    try (final BesuController<Void> controller =
+    try (final BesuController controller =
         new MainnetBesuControllerBuilder()
             .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(syncConfigAhead)
@@ -172,7 +172,7 @@ public final class RunnerTest {
     }
 
     // Setup Runner with blocks
-    final BesuController<Void> controllerAhead =
+    final BesuController controllerAhead =
         new MainnetBesuControllerBuilder()
             .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(syncConfigAhead)
@@ -235,7 +235,7 @@ public final class RunnerTest {
       final MetricsConfiguration behindMetricsConfiguration = metricsConfiguration();
 
       // Setup runner with no block data
-      final BesuController<Void> controllerBehind =
+      final BesuController controllerBehind =
           new MainnetBesuControllerBuilder()
               .genesisConfigFile(genesisConfig)
               .synchronizerConfiguration(syncConfigBehind)
@@ -399,7 +399,7 @@ public final class RunnerTest {
     final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
     configuration.setPort(0);
     configuration.setEnabled(true);
-    configuration.setHostsWhitelist(Collections.singletonList("*"));
+    configuration.setHostsAllowlist(Collections.singletonList("*"));
     return configuration;
   }
 
@@ -414,7 +414,7 @@ public final class RunnerTest {
     final WebSocketConfiguration configuration = WebSocketConfiguration.createDefault();
     configuration.setPort(0);
     configuration.setEnabled(true);
-    configuration.setHostsWhitelist(Collections.singletonList("*"));
+    configuration.setHostsAllowlist(Collections.singletonList("*"));
     return configuration;
   }
 
@@ -424,15 +424,15 @@ public final class RunnerTest {
 
   private static void setupState(
       final int count,
-      final ProtocolSchedule<Void> protocolSchedule,
-      final ProtocolContext<Void> protocolContext) {
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext) {
     final List<Block> blocks = BlockSyncTestUtils.firstBlocks(count + 1);
 
     for (int i = 1; i < count + 1; ++i) {
       final Block block = blocks.get(i);
-      final ProtocolSpec<Void> protocolSpec =
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-      final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final boolean result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
       if (!result) {

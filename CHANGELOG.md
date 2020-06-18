@@ -1,6 +1,10 @@
 # Changelog
 
-## Breaking change upcoming in v1.5 
+## 1.5 Breaking changes
+
+When upgrading to 1.5, ensure you've taken into account the following breaking changes. 
+
+### Docker users with volume mounts 
 
 To maintain best security practices, we're changing the `user:group` on the Docker container to `besu`.
 
@@ -18,9 +22,57 @@ If youâ€™re mounting local folders, it is best to set the user via the Docker `â
 UID because the username may not exist inside the docker container. Ensure the directory being mounted
 is owned by that user.
 
-## Upcoming 1.5 release 
+### Remove Manual NAT method
 
-The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July. 
+The NAT manager `MANUAL` method has been removed. 
+If you have have been using the `MANUAL` method, use the `NONE` method instead. The behavior of the 
+`NONE` method is the same as the previously supported `MANUAL` methods.
+
+### Privacy users 
+
+Besu minor version upgrades require upgrading Orion to the latest minor version. That is, for 
+Besu <> Orion node pairs, when upgrading Besu to v1.5, it is required that Orion is upgraded to 
+v1.6. Older versions of Orion will no longer work with Besu v1.5.  
+
+## 1.5 
+
+### Additions and Improvements 
+
+* Public Networks Default to Fast Sync: The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets, is now `FAST`.
+  * The default is unchanged for private networks. That is, the sync mode defaults to `FULL` for private networks. 
+  * Use the [`--sync-mode` command line option](https://besu.hyperledger.org/Reference/CLI/CLI-Syntax/#sync-mode) to change the sync mode. [\#384](https://github.com/hyperledger/besu/pull/384)
+* Proper Mining Support: Added full support for `eth_hashrate` and `eth_submitHashrate`. It is now possible to have the hahsrate when we mine with a GPU mining worker [\#1063](https://github.com/hyperledger/besu/pull/1063)
+* Performance Improvements: The addition of native libraries ([\#775](https://github.com/hyperledger/besu/pull/775)) and changes to data structures in the EVM ([\#1089](https://github.com/hyperledger/besu/pull/1089)) have improved Besu sync and EVM execution times. 
+* Tracing API Improvements: The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.  
+* New Plugin API Block Events: `BlockAdded` and `BlockReorg` are now exposed via the Plugin API [\#637](https://github.com/hyperledger/besu/pull/637). 
+- Add CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
+
+### Bug fixes 
+
+ 
+### Known Issues 
+
+Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+
+#### Previously identified known issues
+ 
+- [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+### Additions and Improvements
+- local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
+Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
+- CLI now supports `--host-allowlist`. Support for `--host-whitelist` will be removed in a future release.
+- Additional `Allowlist` JSON RPC endpoints for permissioning now supported. `Whitelist` endpoints will be removed in a future release.
+  - Add `perm_getNodesAllowlist` as an alternative equivalent to `perm_getNodesWhitelist`
+  - Add `perm_addNodesToAllowlist` as an alternative equivalent to `perm_addNodesToWhitelist`
+  - Add `perm_removeNodesFromAllowlist` as an alternative equivalent to `perm_removeNodesFromWhitelist`
+  - Add `perm_getAccountsAllowlist` as an alternative equivalent to `perm_getAccountsWhitelist`
+  - Add `perm_addAccountsToAllowlist` as an alternative equivalent to `perm_addAccountsToWhitelist`
+  - Add `perm_removeAccountsFromAllowlist` as an alternative equivalent to `perm_removeAccountsFromWhitelist`
+- Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints
 
 ## 1.4.6
 
@@ -33,6 +85,7 @@ The [1.5 release](docs/1_5_Upgrade.md) is scheduled for early July.
 
 - Added timeout to queries. [\#986](https://github.com/hyperledger/besu/pull/986)
 - Fixed issue where networks using onchain permissioning could stall when the bootnodes were not validators. [\#969](https://github.com/hyperledger/besu/pull/969)
+- Update getForks method to ignore ClassicForkBlock chain parameter to fix issue with ETC syncing. [\#1014](https://github.com/hyperledger/besu/pull/1014)
 
 ### Known Issues 
 

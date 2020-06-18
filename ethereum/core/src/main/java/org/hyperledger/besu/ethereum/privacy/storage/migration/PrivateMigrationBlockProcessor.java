@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
@@ -45,14 +44,14 @@ public class PrivateMigrationBlockProcessor {
   static final int MAX_GENERATION = 6;
 
   private final TransactionProcessor transactionProcessor;
-  private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   final Wei blockReward;
   private final boolean skipZeroBlockRewards;
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
   public PrivateMigrationBlockProcessor(
       final TransactionProcessor transactionProcessor,
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+      final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards) {
@@ -63,7 +62,7 @@ public class PrivateMigrationBlockProcessor {
     this.skipZeroBlockRewards = skipZeroBlockRewards;
   }
 
-  public PrivateMigrationBlockProcessor(final ProtocolSpec<?> protocolSpec) {
+  public PrivateMigrationBlockProcessor(final ProtocolSpec protocolSpec) {
     this(
         protocolSpec.getTransactionProcessor(),
         protocolSpec.getTransactionReceiptFactory(),

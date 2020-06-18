@@ -85,7 +85,8 @@ public class Cluster implements AutoCloseable {
 
     final Optional<? extends RunnableNode> bootnode = selectAndStartBootnode(nodes);
 
-    nodes.stream()
+    nodes
+        .parallelStream()
         .filter(node -> bootnode.map(boot -> boot != node).orElse(true))
         .forEach(this::startNode);
 
@@ -95,6 +96,7 @@ public class Cluster implements AutoCloseable {
         node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
       }
     }
+    LOG.info("Cluster startup complete.");
   }
 
   private Optional<? extends RunnableNode> selectAndStartBootnode(

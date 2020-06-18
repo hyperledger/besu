@@ -62,7 +62,7 @@ public class GenesisFileModule {
 
   @Singleton
   @Provides
-  ProtocolSchedule<?> provideProtocolSchedule(
+  ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     throw new RuntimeException("Abstract");
@@ -71,7 +71,7 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   GenesisState provideGenesisState(
-      final GenesisConfigFile genesisConfigFile, final ProtocolSchedule<?> protocolSchedule) {
+      final GenesisConfigFile genesisConfigFile, final ProtocolSchedule protocolSchedule) {
     return GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
   }
 

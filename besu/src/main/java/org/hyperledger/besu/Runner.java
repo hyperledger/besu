@@ -63,7 +63,7 @@ public class Runner implements AutoCloseable {
   private final Optional<WebSocketService> websocketRpc;
   private final Optional<MetricsService> metrics;
 
-  private final BesuController<?> besuController;
+  private final BesuController besuController;
   private final Path dataDir;
   private final Optional<StratumServer> stratumServer;
   private final Optional<AutoTransactionLogBloomCachingService>
@@ -78,7 +78,7 @@ public class Runner implements AutoCloseable {
       final Optional<WebSocketService> websocketRpc,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
-      final BesuController<?> besuController,
+      final BesuController besuController,
       final Path dataDir,
       final Optional<Path> pidPath,
       final Optional<TransactionLogBloomCacher> transactionLogBloomCacher,
@@ -271,6 +271,7 @@ public class Runner implements AutoCloseable {
           try {
             pid = Long.toString(ProcessHandle.current().pid());
           } catch (Throwable t) {
+            LOG.error("Error retrieving PID", t);
           }
           try {
             Files.write(

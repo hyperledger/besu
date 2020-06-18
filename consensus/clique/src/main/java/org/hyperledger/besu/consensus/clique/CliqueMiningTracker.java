@@ -21,10 +21,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 public class CliqueMiningTracker {
 
   private final Address localAddress;
-  private final ProtocolContext<CliqueContext> protocolContext;
+  private final ProtocolContext protocolContext;
 
-  public CliqueMiningTracker(
-      final Address localAddress, final ProtocolContext<CliqueContext> protocolContext) {
+  public CliqueMiningTracker(final Address localAddress, final ProtocolContext protocolContext) {
     this.localAddress = localAddress;
     this.protocolContext = protocolContext;
   }
@@ -32,8 +31,12 @@ public class CliqueMiningTracker {
   public boolean isProposerAfter(final BlockHeader header) {
     final Address nextProposer =
         CliqueHelpers.getProposerForBlockAfter(
-            header, protocolContext.getConsensusState().getVoteTallyCache());
+            header, protocolContext.getConsensusState(CliqueContext.class).getVoteTallyCache());
     return localAddress.equals(nextProposer);
+  }
+
+  public boolean isSigner(final BlockHeader header) {
+    return CliqueHelpers.isSigner(localAddress, protocolContext, header);
   }
 
   public boolean canMakeBlockNextRound(final BlockHeader header) {

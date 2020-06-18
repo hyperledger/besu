@@ -47,19 +47,19 @@ public class PivotBlockConfirmerTest {
 
   private static final long PIVOT_BLOCK_NUMBER = 10;
 
-  private ProtocolContext<Void> protocolContext;
+  private ProtocolContext protocolContext;
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final AtomicBoolean timeout = new AtomicBoolean(false);
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
   private TransactionPool transactionPool;
-  private PivotBlockConfirmer<Void> pivotBlockConfirmer;
-  private ProtocolSchedule<Void> protocolSchedule;
+  private PivotBlockConfirmer pivotBlockConfirmer;
+  private ProtocolSchedule protocolSchedule;
 
   @Before
   public void setUp() {
-    final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     transactionPool = blockchainSetupUtil.getTransactionPool();
@@ -75,11 +75,11 @@ public class PivotBlockConfirmerTest {
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
   }
 
-  private PivotBlockConfirmer<Void> createPivotBlockConfirmer(
+  private PivotBlockConfirmer createPivotBlockConfirmer(
       final int peersToQuery, final int maxRetries) {
     return pivotBlockConfirmer =
         spy(
-            new PivotBlockConfirmer<>(
+            new PivotBlockConfirmer(
                 protocolSchedule,
                 ethProtocolManager.ethContext(),
                 metricsSystem,

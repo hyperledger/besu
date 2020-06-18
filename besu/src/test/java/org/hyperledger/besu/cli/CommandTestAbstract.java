@@ -35,7 +35,6 @@ import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -76,6 +76,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -118,14 +120,14 @@ public abstract class CommandTestAbstract {
 
   @Mock protected BesuController.Builder mockControllerBuilderFactory;
 
-  @Mock protected BesuControllerBuilder<Void> mockControllerBuilder;
+  @Mock protected BesuControllerBuilder mockControllerBuilder;
   @Mock protected EthProtocolManager mockEthProtocolManager;
-  @Mock protected ProtocolSchedule<Object> mockProtocolSchedule;
-  @Mock protected ProtocolContext<Object> mockProtocolContext;
+  @Mock protected ProtocolSchedule mockProtocolSchedule;
+  @Mock protected ProtocolContext mockProtocolContext;
   @Mock protected BlockBroadcaster mockBlockBroadcaster;
-  @Mock protected BesuController<Object> mockController;
+  @Mock protected BesuController mockController;
   @Mock protected RlpBlockExporter rlpBlockExporter;
-  @Mock protected JsonBlockImporter<?> jsonBlockImporter;
+  @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
@@ -211,6 +213,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.natManagerPodName(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.graphQLConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
@@ -275,9 +278,8 @@ public abstract class CommandTestAbstract {
     return parseCommand(System.in, args);
   }
 
-  @SuppressWarnings("unchecked")
-  private <T> JsonBlockImporter<T> jsonBlockImporterFactory(final BesuController<T> controller) {
-    return (JsonBlockImporter<T>) jsonBlockImporter;
+  private JsonBlockImporter jsonBlockImporterFactory(final BesuController controller) {
+    return jsonBlockImporter;
   }
 
   protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
@@ -289,7 +291,7 @@ public abstract class CommandTestAbstract {
             mockLogger,
             nodeKey,
             keyPair,
-            rlpBlockImporter,
+            () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
@@ -323,9 +325,9 @@ public abstract class CommandTestAbstract {
         final Logger mockLogger,
         final NodeKey mockNodeKey,
         final SECP256K1.KeyPair keyPair,
-        final RlpBlockImporter mockBlockImporter,
-        final BlocksSubCommand.JsonBlockImporterFactory jsonBlockImporterFactory,
-        final BlocksSubCommand.RlpBlockExporterFactory rlpBlockExporterFactory,
+        final Supplier<RlpBlockImporter> mockBlockImporter,
+        final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+        final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,

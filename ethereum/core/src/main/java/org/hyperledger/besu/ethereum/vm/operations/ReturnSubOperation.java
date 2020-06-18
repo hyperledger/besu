@@ -21,18 +21,17 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
 public class ReturnSubOperation extends AbstractOperation {
 
   public ReturnSubOperation(final GasCalculator gasCalculator) {
-    super(0xb7, "RETURNSUB", 0, 0, true, 1, gasCalculator);
+    super(0x5d, "RETURNSUB", 0, 0, true, 1, gasCalculator);
   }
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
+    return gasCalculator().getLowTierGasCost();
   }
 
   @Override
@@ -42,9 +41,7 @@ public class ReturnSubOperation extends AbstractOperation {
 
   @Override
   public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
+      final MessageFrame frame, final EVM evm) {
     if (frame.isReturnStackEmpty()) {
       return Optional.of(ExceptionalHaltReason.INVALID_RETSUB);
     }

@@ -37,12 +37,12 @@ import java.util.Map;
 public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final ObservableMetricsSystem metricsSystem;
 
   DebugJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ObservableMetricsSystem metricsSystem) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;

@@ -36,20 +36,20 @@ import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PersistBlockTask<C> extends AbstractEthTask<Block> {
+public class PersistBlockTask extends AbstractEthTask<Block> {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final Block block;
   private final HeaderValidationMode validateHeaders;
   private boolean blockImported;
 
   private PersistBlockTask(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final Block block,
       final HeaderValidationMode headerValidationMode,
@@ -63,20 +63,20 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
     blockImported = false;
   }
 
-  public static <C> PersistBlockTask<C> create(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static PersistBlockTask create(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
-    return new PersistBlockTask<>(
+    return new PersistBlockTask(
         protocolSchedule, protocolContext, ethContext, block, headerValidationMode, metricsSystem);
   }
 
-  public static <C> Supplier<CompletableFuture<List<Block>>> forSequentialBlocks(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static Supplier<CompletableFuture<List<Block>>> forSequentialBlocks(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
@@ -112,9 +112,9 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
     };
   }
 
-  private static <C> CompletableFuture<Block> importBlockAndAddToList(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  private static CompletableFuture<Block> importBlockAndAddToList(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final Block block,
       final List<Block> list,
@@ -136,9 +136,9 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
             });
   }
 
-  public static <C> Supplier<CompletableFuture<List<Block>>> forUnorderedBlocks(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static Supplier<CompletableFuture<List<Block>>> forUnorderedBlocks(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
@@ -147,7 +147,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
     return () -> {
       final CompletableFuture<List<Block>> finalResult = new CompletableFuture<>();
       final List<Block> successfulImports = new ArrayList<>();
-      final Iterator<PersistBlockTask<C>> tasks =
+      final Iterator<PersistBlockTask> tasks =
           blocks.stream()
               .map(
                   block ->
@@ -162,7 +162,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
 
       CompletableFuture<Block> future = tasks.next().run();
       while (tasks.hasNext()) {
-        final PersistBlockTask<C> task = tasks.next();
+        final PersistBlockTask task = tasks.next();
         future =
             future
                 .handle((r, t) -> r)
@@ -193,9 +193,9 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
   @Override
   protected void executeTask() {
     try {
-      final ProtocolSpec<C> protocolSpec =
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-      final BlockImporter<C> blockImporter = protocolSpec.getBlockImporter();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImported = blockImporter.importBlock(protocolContext, block, validateHeaders);
       if (!blockImported) {
         result

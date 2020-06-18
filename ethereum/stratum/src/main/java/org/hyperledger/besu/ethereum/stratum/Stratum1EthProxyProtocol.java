@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
@@ -44,8 +46,13 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private static final Logger LOG = getLogger();
   private static final JsonMapper mapper = new JsonMapper();
 
+  private final MiningCoordinator miningCoordinator;
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
+
+  public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
+    this.miningCoordinator = miningCoordinator;
+  }
 
   @Override
   public boolean canHandle(final String initialMessage, final StratumConnection conn) {
@@ -95,10 +102,12 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   public void handle(final StratumConnection conn, final String message) {
     try {
       final JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
-      if ("eth_getWork".equals(req.getMethod())) {
+      if (RpcMethod.ETH_GET_WORK.getMethodName().equals(req.getMethod())) {
         sendNewWork(conn, req.getId());
-      } else if ("eth_submitWork".equals(req.getMethod())) {
+      } else if (RpcMethod.ETH_SUBMIT_WORK.getMethodName().equals(req.getMethod())) {
         handleMiningSubmit(conn, req);
+      } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
+        handleHashrateSubmit(mapper, miningCoordinator, conn, req);
       }
     } catch (IllegalArgumentException | IOException e) {
       LOG.debug(e.getMessage(), e);

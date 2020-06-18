@@ -56,11 +56,11 @@ public final class RlpBlockExporterTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
   private static Blockchain blockchain;
   private static long chainHead;
-  private static ProtocolSchedule<?> protocolSchedule;
+  private static ProtocolSchedule protocolSchedule;
 
   @BeforeClass
   public static void setupBlockchain() throws IOException {
-    final BesuController<?> controller = createController();
+    final BesuController controller = createController();
     final Path blocks = folder.newFile("1000.blocks").toPath();
     BlockTestUtil.write1000Blocks(blocks);
     blockchain = importBlocks(controller, blocks);
@@ -68,7 +68,7 @@ public final class RlpBlockExporterTest {
     protocolSchedule = controller.getProtocolSchedule();
   }
 
-  private static Blockchain importBlocks(final BesuController<?> controller, final Path blocksFile)
+  private static Blockchain importBlocks(final BesuController controller, final Path blocksFile)
       throws IOException {
     final RlpBlockImporter blockImporter = new RlpBlockImporter();
 
@@ -76,7 +76,7 @@ public final class RlpBlockExporterTest {
     return controller.getProtocolContext().getBlockchain();
   }
 
-  private static BesuController<?> createController() throws IOException {
+  private static BesuController createController() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
         .fromGenesisConfig(GenesisConfigFile.mainnet())

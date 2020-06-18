@@ -35,32 +35,28 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
     final BesuNode bootnode = besu.createIbft2NonValidatorBootnode("bootnode", GENESIS_FILE);
     final BesuNode nodeA = besu.createIbft2Node("nodeA", GENESIS_FILE);
     final BesuNode nodeB = besu.createIbft2Node("nodeB", GENESIS_FILE);
-    final BesuNode nodeC = besu.createIbft2Node("nodeC", GENESIS_FILE);
-    final BesuNode nodeD = besu.createIbft2Node("nodeD", GENESIS_FILE);
 
-    permissionedCluster.start(bootnode, nodeA, nodeB, nodeC, nodeD);
+    permissionedCluster.start(bootnode, nodeA, nodeB);
 
-    bootnode.verify(net.awaitPeerCount(4));
+    // make sure we are producing blocks before sending any transactions
+    waitForBlockHeight(bootnode, 1);
 
-    // update onchain smart contract to whitelist nodes
+    // allow nodes in onchain smart contract
     nodeA.execute(allowNode(bootnode));
-    nodeA.verify(nodeIsAllowed(bootnode));
     nodeA.execute(allowNode(nodeA));
-    nodeA.verify(nodeIsAllowed(nodeA));
     nodeA.execute(allowNode(nodeB));
-    nodeA.verify(nodeIsAllowed(nodeB));
-    nodeA.execute(allowNode(nodeC));
-    nodeA.verify(nodeIsAllowed(nodeC));
-    nodeA.execute(allowNode(nodeD));
-    nodeA.verify(nodeIsAllowed(nodeD));
 
-    waitForBlockHeight(bootnode, 10);
+    // verify the nodes are allowed
+    nodeA.verify(nodeIsAllowed(bootnode));
+    nodeA.verify(nodeIsAllowed(nodeA));
+    nodeA.verify(nodeIsAllowed(nodeB));
+
     permissionedCluster.stop();
 
     // Create permissioning config
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         new SmartContractPermissioningConfiguration();
-    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString(CONTRACT_ADDRESS));
     final PermissioningConfiguration permissioningConfiguration =
@@ -71,12 +67,10 @@ public class NodeSmartContractPermissioningIbftStallAcceptanceTest
     bootnode.setPermissioningConfiguration(permissioningConfiguration);
     nodeA.setPermissioningConfiguration(permissioningConfiguration);
     nodeB.setPermissioningConfiguration(permissioningConfiguration);
-    nodeC.setPermissioningConfiguration(permissioningConfiguration);
-    nodeD.setPermissioningConfiguration(permissioningConfiguration);
 
-    permissionedCluster.start(bootnode, nodeA, nodeB, nodeC, nodeD);
+    permissionedCluster.start(bootnode, nodeA, nodeB);
 
     // Verify blockchain is progressing
-    waitForBlockHeight(bootnode, 15);
+    permissionedCluster.verify(blockchain.reachesHeight(bootnode, 1, 120));
   }
 }

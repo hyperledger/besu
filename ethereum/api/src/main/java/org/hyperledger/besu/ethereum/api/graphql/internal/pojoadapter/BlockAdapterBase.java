@@ -164,7 +164,7 @@ public class BlockAdapterBase extends AdapterBase {
     final BlockchainQueries blockchain = getBlockchainQueries(environment);
 
     final Hash hash = header.getHash();
-    final List<LogWithMetadata> logs = blockchain.matchingLogs(hash, query);
+    final List<LogWithMetadata> logs = blockchain.matchingLogs(hash, query, () -> true);
     final List<LogAdapter> results = new ArrayList<>();
     for (final LogWithMetadata log : logs) {
       results.add(new LogAdapter(log));
@@ -191,7 +191,7 @@ public class BlockAdapterBase extends AdapterBase {
     final Bytes data = (Bytes) callData.get("data");
 
     final BlockchainQueries query = getBlockchainQueries(environment);
-    final ProtocolSchedule<?> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
     final long bn = header.getNumber();
 

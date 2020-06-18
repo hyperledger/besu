@@ -24,7 +24,7 @@ import java.io.Closeable;
 
 public interface StorageProvider extends Closeable {
 
-  BlockchainStorage createBlockchainStorage(ProtocolSchedule<?> protocolSchedule);
+  BlockchainStorage createBlockchainStorage(ProtocolSchedule protocolSchedule);
 
   WorldStateStorage createWorldStateStorage();
 

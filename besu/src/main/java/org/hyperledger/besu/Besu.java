@@ -38,7 +38,7 @@ public final class Besu {
     final BesuCommand besuCommand =
         new BesuCommand(
             logger,
-            new RlpBlockImporter(),
+            RlpBlockImporter::new,
             JsonBlockImporter::new,
             RlpBlockExporter::new,
             new RunnerBuilder(),

@@ -22,6 +22,8 @@ import java.util.Optional;
 public interface PermissionsUpdateCallback {
 
   /**
+   * onUpdate callback.
+   *
    * @param permissionsRestricted True if permissions were narrowed in any way, meaning that
    *     previously permitted peers may no longer be permitted. False indicates that permissions
    *     were made less restrictive, meaning peers that were previously restricted may now be

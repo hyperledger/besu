@@ -50,6 +50,8 @@ public interface PeerValidator {
   CompletableFuture<Boolean> validatePeer(final EthContext ethContext, final EthPeer ethPeer);
 
   /**
+   * Reason the peer will disconnect when the validator fail.
+   *
    * @param ethPeer The peer to be disconnected.
    * @return The reason for disconnecting.
    */

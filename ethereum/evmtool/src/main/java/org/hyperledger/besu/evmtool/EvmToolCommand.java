@@ -203,7 +203,7 @@ public class EvmToolCommand implements Runnable {
 
       Configurator.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int repeat = this.repeat;
-      final ProtocolSpec<?> protocolSpec = component.getProtocolSpec().apply(0);
+      final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
@@ -245,8 +245,8 @@ public class EvmToolCommand implements Runnable {
           mcp.process(
               messageFrame, new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
           if (lastLoop) {
-            if (!messageFrame.getExceptionalHaltReasons().isEmpty()) {
-              out.println(messageFrame.getExceptionalHaltReasons());
+            if (messageFrame.getExceptionalHaltReason().isPresent()) {
+              out.println(messageFrame.getExceptionalHaltReason().get());
             }
             if (messageFrame.getRevertReason().isPresent()) {
               out.println(
@@ -303,8 +303,8 @@ public class EvmToolCommand implements Runnable {
       stack.add(messageFrame.getStackItem(i).toShortHexString());
     }
     final String error =
-        messageFrame.getExceptionalHaltReasons().stream()
-            .findFirst()
+        messageFrame
+            .getExceptionalHaltReason()
             .map(ExceptionalHaltReason::getDescription)
             .orElse(
                 messageFrame

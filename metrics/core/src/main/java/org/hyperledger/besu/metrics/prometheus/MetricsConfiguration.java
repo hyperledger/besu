@@ -121,7 +121,7 @@ public class MetricsConfiguration {
     return prometheusJob;
   }
 
-  Collection<String> getHostsWhitelist() {
+  Collection<String> getHostsAllowlist() {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 
@@ -241,7 +241,7 @@ public class MetricsConfiguration {
       return this;
     }
 
-    public Builder hostsWhitelist(final List<String> hostsWhitelist) {
+    public Builder hostsAllowlist(final List<String> hostsWhitelist) {
       this.hostsWhitelist = hostsWhitelist;
       return this;
     }

@@ -44,7 +44,6 @@ import org.junit.Test;
 public class BlockMinerTest {
 
   @Test
-  @SuppressWarnings("unchecked")
   public void blockCreatedIsAddedToBlockChain() throws InterruptedException {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -52,17 +51,17 @@ public class BlockMinerTest {
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
-    final ProtocolContext<Void> protocolContext = new ProtocolContext<>(null, null, null);
+    final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 
     final EthHashBlockCreator blockCreator = mock(EthHashBlockCreator.class);
     final Function<BlockHeader, EthHashBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
 
-    final BlockImporter<Void> blockImporter = mock(BlockImporter.class);
-    final ProtocolSpec<Void> protocolSpec = mock(ProtocolSpec.class);
+    final BlockImporter blockImporter = mock(BlockImporter.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
-    final ProtocolSchedule<Void> protocolSchedule = singleSpecSchedule(protocolSpec);
+    final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
@@ -70,7 +69,7 @@ public class BlockMinerTest {
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
     when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
-    final BlockMiner<Void, EthHashBlockCreator> miner =
+    final BlockMiner<EthHashBlockCreator> miner =
         new EthHashBlockMiner(
             blockCreatorSupplier,
             protocolSchedule,
@@ -85,7 +84,6 @@ public class BlockMinerTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void failureToImportDoesNotTriggerObservers() throws InterruptedException {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -93,16 +91,16 @@ public class BlockMinerTest {
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
-    final ProtocolContext<Void> protocolContext = new ProtocolContext<>(null, null, null);
+    final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 
     final EthHashBlockCreator blockCreator = mock(EthHashBlockCreator.class);
     final Function<BlockHeader, EthHashBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
 
-    final BlockImporter<Void> blockImporter = mock(BlockImporter.class);
-    final ProtocolSpec<Void> protocolSpec = mock(ProtocolSpec.class);
-    final ProtocolSchedule<Void> protocolSchedule = singleSpecSchedule(protocolSpec);
+    final BlockImporter blockImporter = mock(BlockImporter.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(false, false, true);
@@ -110,7 +108,7 @@ public class BlockMinerTest {
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
     when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
-    final BlockMiner<Void, EthHashBlockCreator> miner =
+    final BlockMiner<EthHashBlockCreator> miner =
         new EthHashBlockMiner(
             blockCreatorSupplier,
             protocolSchedule,
@@ -134,9 +132,9 @@ public class BlockMinerTest {
     return result;
   }
 
-  private ProtocolSchedule<Void> singleSpecSchedule(final ProtocolSpec<Void> protocolSpec) {
-    final MutableProtocolSchedule<Void> protocolSchedule =
-        new MutableProtocolSchedule<>(Optional.of(BigInteger.valueOf(1234)));
+  private ProtocolSchedule singleSpecSchedule(final ProtocolSpec protocolSpec) {
+    final MutableProtocolSchedule protocolSchedule =
+        new MutableProtocolSchedule(Optional.of(BigInteger.valueOf(1234)));
     protocolSchedule.putMilestone(0, protocolSpec);
     return protocolSchedule;
   }

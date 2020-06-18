@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import java.util.List;
 import java.util.Optional;
 
-public interface BlockValidator<C> {
+public interface BlockValidator {
 
   class BlockProcessingOutputs {
     public final MutableWorldState worldState;
@@ -36,13 +36,13 @@ public interface BlockValidator<C> {
   }
 
   Optional<BlockProcessingOutputs> validateAndProcessBlock(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode);
 
   boolean fastBlockValidation(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
       final HeaderValidationMode headerValidationMode,
