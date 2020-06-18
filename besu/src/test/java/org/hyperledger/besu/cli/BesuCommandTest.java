@@ -2556,6 +2556,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
   }
 
+  @Test
+  public void colorEnabledByDefault() throws Exception {
+    assertThat(parseCommand().isColorEnabled()).isTrue();
+  }
+
+  @Test
+  public void colorCanBeEnabledOrDisabledExplicitly() throws Exception {
+    Stream.of(true, false)
+        .forEach(
+            bool ->
+                assertThat(parseCommand("--color-enabled", bool.toString()).isColorEnabled())
+                    .isEqualTo(bool));
+  }
+
   @Ignore
   public void pruningIsEnabledIfSyncModeIsFast() {
     parseCommand("--sync-mode", "FAST");
