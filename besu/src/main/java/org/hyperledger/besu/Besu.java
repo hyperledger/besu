@@ -68,11 +68,14 @@ public final class Besu {
     final Logger logger = getLogger();
     Thread.setDefaultUncaughtExceptionHandler(
         (thread, error) ->
-            logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+            logger.error(
+                String.format("Uncaught exception in thread \"%s\"", thread.getName()), error));
     Thread.currentThread()
         .setUncaughtExceptionHandler(
             (thread, error) ->
-                logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+                logger.error(
+                    String.format("Uncaught exception in thread \"%s\"", thread.getName()), error));
+
     return logger;
   }
 }
