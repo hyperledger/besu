@@ -20,6 +20,7 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
@@ -59,12 +60,13 @@ public final class Besu {
       System.setProperty(
           "vertx.logger-delegate-factory-class-name",
           "io.vertx.core.logging.Log4j2LogDelegateFactory");
+      System.setProperty(
+          "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
     } catch (SecurityException e) {
       System.out.println(
           "Could not set logging system property as the security manager prevented it:"
               + e.getMessage());
     }
-
     final Logger logger = getLogger();
     Thread.setDefaultUncaughtExceptionHandler(
         (thread, error) ->

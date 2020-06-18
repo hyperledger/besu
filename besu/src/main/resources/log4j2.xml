@@ -16,13 +16,13 @@
     </Properties>
 
     <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout noConsoleNoAnsi="true" pattern="%style{%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | }{DIM}%highlight{%t | %-5level | %c{1} | %msg%n}{TRACE=normal}"/>
-        </Console>
+        <!--<Console name="Console" target="SYSTEM_OUT">-->
+            <!--<PatternLayout noConsoleNoAnsi="true" pattern="%style{%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | }{DIM}%highlight{%t | %-5level | %c{1} | %msg%n}{TRACE=normal}"/>-->
+        <!--</Console>-->
 
         <Routing name="Router">
             <Routes pattern="$${sys:root.log.logger}">
-                <Route ref="Console" key="Console" />
+                <!--<Route ref="Console" key="Console" />-->
                 <Route key="Splunk">
                     <SplunkHttp name="Splunk"
                                 url="${sys:splunk.url}"
