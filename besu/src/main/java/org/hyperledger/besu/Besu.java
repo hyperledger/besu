@@ -74,7 +74,7 @@ public final class Besu {
     return logger;
   }
 
-  private static Thread.UncaughtExceptionHandler log4jExceptionHandler(Logger logger) {
+  private static Thread.UncaughtExceptionHandler log4jExceptionHandler(final Logger logger) {
     return (thread, error) ->
         logger.error(
             () -> String.format("Uncaught exception in thread \"%s\"", thread.getName()), error);
