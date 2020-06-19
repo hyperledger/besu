@@ -80,15 +80,13 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
             .withDisableAnsi(!BesuCommand.isColorEnabled())
             .withNoConsoleNoAnsi(BesuCommand.isColorEnabled())
             .withPattern(
-                dim("%d{yyyy-MM-dd HH:mm:ss.SSSZZZ}")
-                    + SEP
-                    + dim("%t")
-                    + SEP
-                    + colorize("%-5level")
-                    + SEP
-                    + dim("%c{1}")
-                    + SEP
-                    + colorize("%msg%n%throwable"))
+                String.join(
+                    SEP,
+                    dim("%d{yyyy-MM-dd HH:mm:ss.SSSZZZ}"),
+                    dim("%t"),
+                    colorize("%-5level"),
+                    dim("%c{1}"),
+                    colorize("%msg%n%throwable")))
             .build();
     final ConsoleAppender consoleAppender =
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
