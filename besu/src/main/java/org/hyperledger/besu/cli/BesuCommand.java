@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.apache.logging.log4j.Level.INFO;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
@@ -712,7 +711,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
-  private final Level logLevel = INFO;
+  private final Level logLevel = null;
 
   @SuppressWarnings({"FieldCanBeFinal"})
   @Option(
@@ -1278,9 +1277,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // To change the configuration if color was enabled/disabled
     Configurator.reconfigure();
     // set log level per CLI flags
-    if (announce) {
-      System.out.printf("Setting logging level to %s%n", logLevel.name());
-    }
+    Optional.ofNullable(logLevel)
+        .filter(__ -> announce)
+        .ifPresent(level -> System.out.printf("Setting logging level to %s%n", level.name()));
     Configurator.setAllLevels("", logLevel);
   }
 
