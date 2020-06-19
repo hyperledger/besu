@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.cli.logging;
 
+import org.hyperledger.besu.cli.BesuCommand;
+
+import java.io.IOException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
@@ -22,9 +26,6 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.hyperledger.besu.cli.BesuCommand;
-
-import java.io.IOException;
 
 public class XmlExtensionConfiguration extends XmlConfiguration {
   public XmlExtensionConfiguration(
