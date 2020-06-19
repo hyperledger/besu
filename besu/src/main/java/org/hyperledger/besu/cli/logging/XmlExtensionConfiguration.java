@@ -92,6 +92,6 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     final ConsoleAppender consoleAppender =
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
     consoleAppender.start();
-    this.getRootLogger().addAppender(consoleAppender, getRootLogger().getLevel(), null);
+    this.getRootLogger().addAppender(consoleAppender, null, null);
   }
 }
