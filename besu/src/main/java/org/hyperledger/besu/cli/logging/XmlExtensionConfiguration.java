@@ -62,6 +62,16 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     return refreshedParent;
   }
 
+  private String dim(final String string) {
+    return String.format("%%style{%s}{DIM}", string);
+  }
+
+  private String colorize(final String string) {
+    return String.format("%%highlight{%s}{TRACE=normal}", string);
+  }
+
+  private final String SEP = dim(" | ");
+
   private void createConsoleAppender() {
     final PatternLayout patternLayout =
         PatternLayout.newBuilder()
@@ -69,7 +79,15 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
             .withDisableAnsi(!BesuCommand.isColorEnabled())
             .withNoConsoleNoAnsi(BesuCommand.isColorEnabled())
             .withPattern(
-                "%style{%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | }{DIM}%highlight{%t | %-5level | %c{1} | %msg%n}{TRACE=normal}")
+                dim("%d{yyyy-MM-dd HH:mm:ss.SSSZZZ}")
+                    + SEP
+                    + dim("%t")
+                    + SEP
+                    + colorize("%-5level")
+                    + SEP
+                    + dim("%c{1}")
+                    + SEP
+                    + colorize("%msg%n%throwable"))
             .build();
     final ConsoleAppender consoleAppender =
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
