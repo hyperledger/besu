@@ -43,6 +43,8 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
         174
       };
 
+  static final int MAX_DISCOUNT = 174;
+
   private final String name;
   private final byte operationId;
 
@@ -80,8 +82,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     }
   }
 
-  protected int getNumPairs(final Bytes input, final int length) {
-    int k = input.size() / length;
+  protected int getDiscount(final int k) {
     // `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`
     // multiplication_cost and multiplier are folded into one constant as a long and placed first to
     // prevent int32 overflow
@@ -89,8 +90,8 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     // with a discount cup max_discount for k > 128.
 
     if (k >= DISCOUNT_TABLE.length) {
-      k = DISCOUNT_TABLE.length - 1;
+      return MAX_DISCOUNT;
     }
-    return k;
+    return DISCOUNT_TABLE[k];
   }
 }
