@@ -43,6 +43,8 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
         174
       };
 
+  static final int MAX_DISCOUNT = 174;
+
   private final String name;
   private final byte operationId;
 
@@ -78,5 +80,18 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
           new String(error, 0, err_len.getValue(), UTF_8));
       return null;
     }
+  }
+
+  protected int getDiscount(final int k) {
+    // `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`
+    // multiplication_cost and multiplier are folded into one constant as a long and placed first to
+    // prevent int32 overflow
+    // there was a table prepared for discount in case of k <= 128 points in the multiexponentiation
+    // with a discount cup max_discount for k > 128.
+
+    if (k >= DISCOUNT_TABLE.length) {
+      return MAX_DISCOUNT;
+    }
+    return DISCOUNT_TABLE[k];
   }
 }
