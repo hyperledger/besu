@@ -89,7 +89,6 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     // with a discount cup max_discount for k > 128.
 
     if (k >= DISCOUNT_TABLE.length) {
-      System.out.println(input.toHexString());
       k = DISCOUNT_TABLE.length - 1;
     }
     return k;
