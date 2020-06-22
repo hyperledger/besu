@@ -271,6 +271,7 @@ public class Runner implements AutoCloseable {
           try {
             pid = Long.toString(ProcessHandle.current().pid());
           } catch (Throwable t) {
+            LOG.error("Error retrieving PID", t);
           }
           try {
             Files.write(

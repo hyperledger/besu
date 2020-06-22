@@ -434,10 +434,10 @@ public class BlockDataGenerator {
    * Creates a UInt256 with a value that fits within maxByteSize
    *
    * @param maxByteSize The byte size to cap this value to
-   * @return
+   * @return the maximum size
    */
   private UInt256 uint256(final int maxByteSize) {
-    assert maxByteSize <= 32;
+    checkArgument(maxByteSize <= 32);
     return UInt256.fromBytes(Bytes32.wrap(bytes(32, 32 - maxByteSize)));
   }
 
@@ -472,7 +472,7 @@ public class BlockDataGenerator {
    * @param size The size of the byte array to return
    * @param zerofill The number of lower-order bytes to fill with zero (creating a smaller big
    *     endian integer value)
-   * @return
+   * @return the array of bytes.
    */
   private byte[] bytes(final int size, final int zerofill) {
     final byte[] bytes = new byte[size];

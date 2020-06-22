@@ -139,10 +139,11 @@ public class PermissioningConfigurationBuilder {
    * This method allows support for both keys for now. Whitelist TOML keys will be removed in future
    * (breaking change)
    *
-   * @param tomlParseResult
-   * @param primaryKey
-   * @param alternateKey
-   * @return
+   * @param tomlParseResult result of a prior toml parse
+   * @param primaryKey key to fetch
+   * @param alternateKey alternate key to fetch
+   * @return In order: the array of the primaryKey if it exists, or the array of the alternateKey if
+   *     it exists, or null.
    */
   private static TomlArray getAllowlistArray(
       final TomlParseResult tomlParseResult, final String primaryKey, final String alternateKey) {

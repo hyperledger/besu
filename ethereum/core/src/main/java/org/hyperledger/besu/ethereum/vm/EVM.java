@@ -19,12 +19,10 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltManager;
 import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 import org.hyperledger.besu.ethereum.vm.operations.VirtualOperation;
 
-import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -70,7 +68,7 @@ public class EVM {
       throws ExceptionalHaltException {
     frame.setCurrentOperation(
         operationAtOffset(frame.getCode(), frame.getContractAccountVersion(), frame.getPC()));
-    evaluateExceptionalHaltReasons(frame);
+    frame.setExceptionalHaltReason(checkExceptionalHalt(frame, this));
     final Optional<Gas> currentGasCost = calculateGasCost(frame);
     operationTracer.traceExecution(
         frame,
@@ -84,19 +82,30 @@ public class EVM {
         });
   }
 
-  private void evaluateExceptionalHaltReasons(final MessageFrame frame) {
-    final EnumSet<ExceptionalHaltReason> haltReasons =
-        ExceptionalHaltManager.evaluateAll(frame, this);
-    frame.getExceptionalHaltReasons().addAll(haltReasons);
+  public static Optional<ExceptionalHaltReason> checkExceptionalHalt(
+      final MessageFrame frame, final EVM evm) {
+
+    final Operation op = frame.getCurrentOperation();
+    if (frame.stackSize() + op.getStackSizeChange() > frame.getMaxStackSize()) {
+      return Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+    }
+    if (frame.stackSize() < op.getStackItemsConsumed()) {
+      return Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    if (frame.getRemainingGas().compareTo(op.cost(frame)) < 0) {
+      return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    return op.exceptionalHaltCondition(frame, evm);
   }
 
   private Optional<Gas> calculateGasCost(final MessageFrame frame) {
     // Calculate the cost if, and only if, we are not halting as a result of a stack underflow, as
     // the operation may need all its stack items to calculate gas.
     // This is how existing EVM implementations behave.
-    if (!frame
-        .getExceptionalHaltReasons()
-        .contains(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS)) {
+    final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
+    if (exceptionalHaltReason.isEmpty()
+        || exceptionalHaltReason.get() != ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS) {
       try {
         return Optional.ofNullable(frame.getCurrentOperation().cost(frame));
       } catch (final IllegalArgumentException e) {
@@ -112,12 +121,12 @@ public class EVM {
   }
 
   private void checkForExceptionalHalt(final MessageFrame frame) throws ExceptionalHaltException {
-    final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons = frame.getExceptionalHaltReasons();
-    if (!exceptionalHaltReasons.isEmpty()) {
-      LOG.trace("MessageFrame evaluation halted because of {}", exceptionalHaltReasons);
+    final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
+    if (exceptionalHaltReason.isPresent()) {
+      LOG.trace("MessageFrame evaluation halted because of {}", exceptionalHaltReason);
       frame.setState(State.EXCEPTIONAL_HALT);
       frame.setOutputData(Bytes.EMPTY);
-      throw new ExceptionalHaltException(exceptionalHaltReasons);
+      throw new ExceptionalHaltException(exceptionalHaltReason.get());
     }
   }
 

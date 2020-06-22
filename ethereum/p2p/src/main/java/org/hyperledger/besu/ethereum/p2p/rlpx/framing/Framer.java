@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.errorprone.annotations.FormatMethod;
 import io.netty.buffer.ByteBuf;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -358,6 +359,7 @@ public class Framer {
     return pad == 0 ? 0 : 16 - pad;
   }
 
+  @FormatMethod
   private static FramingException error(final String s, final Object... params) {
     return new FramingException(String.format(s, params));
   }

@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 public interface EthHasher {
 
   /**
+   * Hash of a particular block and nonce.
+   *
    * @param buffer At least 64 bytes long buffer to store EthHash result in
    * @param nonce Block Nonce
    * @param number Block Number

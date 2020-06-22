@@ -27,7 +27,7 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
   public static final Wei ZERO = of(0);
 
-  protected Wei(final UInt256 value) {
+  Wei(final UInt256 value) {
     super(value, Wei::new);
   }
 

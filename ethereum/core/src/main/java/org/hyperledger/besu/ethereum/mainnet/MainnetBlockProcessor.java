@@ -33,7 +33,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
   public MainnetBlockProcessor(
       final TransactionProcessor transactionProcessor,
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+      final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,

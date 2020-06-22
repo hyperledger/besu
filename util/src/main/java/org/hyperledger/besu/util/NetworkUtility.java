@@ -20,7 +20,6 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Enumeration;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -50,18 +49,9 @@ public class NetworkUtility {
    */
   private static Boolean checkIpv6Availability() {
     try {
-      final Enumeration<NetworkInterface> networkInterfaces =
-          NetworkInterface.getNetworkInterfaces();
-      while (networkInterfaces.hasMoreElements()) {
-        final Enumeration<InetAddress> addresses =
-            networkInterfaces.nextElement().getInetAddresses();
-        while (addresses.hasMoreElements()) {
-          if (addresses.nextElement() instanceof Inet6Address) {
-            // Found an IPv6 address, hence the IPv6 stack is available.
-            return true;
-          }
-        }
-      }
+      return NetworkInterface.networkInterfaces()
+          .flatMap(NetworkInterface::inetAddresses)
+          .anyMatch(addr -> addr instanceof Inet6Address);
     } catch (final Exception ignore) {
       // Any exception means we treat it as not available.
     }

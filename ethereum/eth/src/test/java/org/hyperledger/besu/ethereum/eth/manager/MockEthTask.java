@@ -39,6 +39,7 @@ public class MockEthTask extends AbstractEthTask<Object> {
     try {
       countdown.await();
     } catch (final InterruptedException ignore) {
+      // ignore
     }
   }
 

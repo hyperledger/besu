@@ -57,7 +57,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -81,8 +80,11 @@ public class BlockTransactionSelectorTest {
           Optional.empty(),
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
-  private final Supplier<Boolean> isCancelled = () -> false;
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+
+  private Boolean isCancelled() {
+    return false;
+  }
 
   private ProcessableBlockHeader createBlockWithGasLimit(final long gasLimit) {
     return BlockHeaderBuilder.create()
@@ -117,7 +119,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -156,7 +158,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -213,7 +215,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -257,7 +259,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -292,7 +294,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.of(6),
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -328,7 +330,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -385,7 +387,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -446,7 +448,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());
@@ -529,7 +531,7 @@ public class BlockTransactionSelectorTest {
             this::createReceipt,
             Wei.ZERO,
             0.8,
-            isCancelled,
+            this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
             Optional.empty());

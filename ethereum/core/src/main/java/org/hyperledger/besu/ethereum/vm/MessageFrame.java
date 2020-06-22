@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -238,8 +237,7 @@ public class MessageFrame {
   private final Hash transactionHash;
 
   // Miscellaneous fields.
-  private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
-      EnumSet.noneOf(ExceptionalHaltReason.class);
+  private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
   private Operation currentOperation;
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
@@ -985,8 +983,17 @@ public class MessageFrame {
     return messageFrameStack;
   }
 
-  public EnumSet<ExceptionalHaltReason> getExceptionalHaltReasons() {
-    return exceptionalHaltReasons;
+  public void setExceptionalHaltReason(final ExceptionalHaltReason exceptionalHaltReason) {
+    this.exceptionalHaltReason = Optional.of(exceptionalHaltReason);
+  }
+
+  public void setExceptionalHaltReason(
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+    this.exceptionalHaltReason = exceptionalHaltReason;
+  }
+
+  public Optional<ExceptionalHaltReason> getExceptionalHaltReason() {
+    return exceptionalHaltReason;
   }
 
   /**

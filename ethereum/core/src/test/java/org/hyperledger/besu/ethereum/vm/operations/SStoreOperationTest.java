@@ -115,6 +115,6 @@ public class SStoreOperationTest {
     final SStoreOperation operation = new SStoreOperation(gasCalculator, minimumGasAvailable);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null)).isEqualTo(expectedHalt);
+    assertThat(operation.exceptionalHaltCondition(frame, null)).isEqualTo(expectedHalt);
   }
 }

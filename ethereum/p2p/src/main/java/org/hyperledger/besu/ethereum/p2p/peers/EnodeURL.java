@@ -173,7 +173,7 @@ public class EnodeURL {
   /**
    * Returns the discovery port only if it differs from the listening port
    *
-   * @return
+   * @return The port, as an optional.
    */
   private OptionalInt getDiscPortQueryParam() {
     final int listeningPort = getListeningPortOrZero();

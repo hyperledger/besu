@@ -27,7 +27,7 @@ public abstract class AbstractOperation implements Operation {
   private final int opSize;
   private final GasCalculator gasCalculator;
 
-  public AbstractOperation(
+  protected AbstractOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,

@@ -74,7 +74,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
 
-    assert (blockchainSetupUtil.getMaxBlockNumber() >= 20L);
+    assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
   @Before
