@@ -71,7 +71,7 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenAccountIsInvalidShouldReturnInvalidAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_INVALID_ENTRY);
     when(accountWhitelist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_INVALID_ENTRY);
 
@@ -83,7 +83,7 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenAccountIsAbsentShouldReturnAbsentAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_ABSENT_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_ABSENT_ENTRY);
     when(accountWhitelist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_ABSENT_ENTRY);
 
@@ -95,7 +95,7 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenInputHasDuplicatedAccountsShouldReturnDuplicatedEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_DUPLICATED_ENTRY);
     when(accountWhitelist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
 
@@ -107,7 +107,7 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenEmptyListOnRequestShouldReturnEmptyEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_EMPTY_ENTRY);
 
     when(accountWhitelist.removeAccounts(eq(new ArrayList<>())))
         .thenReturn(AllowlistOperationResult.ERROR_EMPTY_ENTRY);

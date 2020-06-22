@@ -56,7 +56,7 @@ public class PermReloadPermissionsFromFile implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (Exception e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.WHITELIST_RELOAD_ERROR);
+          requestContext.getRequest().getId(), JsonRpcError.ALLOWLIST_RELOAD_ERROR);
     }
   }
 }

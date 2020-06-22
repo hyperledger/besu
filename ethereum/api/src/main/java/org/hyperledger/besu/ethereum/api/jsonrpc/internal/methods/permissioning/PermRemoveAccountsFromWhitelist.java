@@ -53,22 +53,22 @@ public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
       switch (removeResult) {
         case ERROR_EMPTY_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_EMPTY_ENTRY);
         case ERROR_INVALID_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_INVALID_ENTRY);
         case ERROR_ABSENT_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_ABSENT_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_ABSENT_ENTRY);
         case ERROR_DUPLICATED_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
-        case ERROR_WHITELIST_PERSIST_FAIL:
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_DUPLICATED_ENTRY);
+        case ERROR_ALLOWLIST_PERSIST_FAIL:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.WHITELIST_PERSIST_FAILURE);
-        case ERROR_WHITELIST_FILE_SYNC:
+              requestContext.getRequest().getId(), JsonRpcError.ALLOWLIST_PERSIST_FAILURE);
+        case ERROR_ALLOWLIST_FILE_SYNC:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.WHITELIST_FILE_SYNC);
+              requestContext.getRequest().getId(), JsonRpcError.ALLOWLIST_FILE_SYNC);
         case SUCCESS:
           return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
         default:
@@ -77,7 +77,7 @@ public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
       }
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);
+          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_NOT_ENABLED);
     }
   }
 }
