@@ -24,5 +24,6 @@ public interface TransactionPoolReplacementRule {
   boolean shouldReplace(
       TransactionInfo existingTransactionInfo,
       TransactionInfo newTransactionInfo,
-      Optional<Long> baseFee);
+      Optional<Long> baseFee,
+      Optional<Long> blockNumber);
 }

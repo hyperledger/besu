@@ -291,7 +291,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
         return false;
       }
       final Optional<Long> baseFee = block.getHeader().getBaseFee();
-      final Wei price = transactionPriceCalculator.price(transaction, baseFee);
+      final Wei price =
+          transactionPriceCalculator.price(
+              transaction, baseFee, Optional.of(block.getHeader().getNumber()));
       if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         LOG.warn(
             "Invalid block: transaction gas price {} must be greater than base fee {}",

@@ -194,7 +194,10 @@ public class BlockTransactionSelector {
     // If the gas price specified by the transaction is less than this node is willing to accept,
     // do not include it in the block.
     final Wei actualMinTransactionGasPriceInBlock =
-        transactionPriceCalculator.price(transaction, processableBlockHeader.getBaseFee());
+        transactionPriceCalculator.price(
+            transaction,
+            processableBlockHeader.getBaseFee(),
+            Optional.of(processableBlockHeader.getNumber()));
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }

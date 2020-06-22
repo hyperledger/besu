@@ -36,14 +36,15 @@ public class BaseFee {
   public static Wei minTransactionPriceInNextBlock(
       final Transaction transaction,
       final TransactionPriceCalculator calculator,
-      final Supplier<Optional<Long>> baseFeeSupplier) {
+      final Supplier<Optional<Long>> baseFeeSupplier,
+      final Long blockNumber) {
     final Optional<Long> baseFee = baseFeeSupplier.get();
     Optional<Long> minBaseFeeInNextBlock = Optional.empty();
     if (baseFee.isPresent()) {
       minBaseFeeInNextBlock =
           Optional.of(new BaseFee(FeeMarket.eip1559(), baseFee.get()).getMinNextValue());
     }
-    return calculator.price(transaction, minBaseFeeInNextBlock);
+    return calculator.price(transaction, minBaseFeeInNextBlock, Optional.of(blockNumber));
   }
 
   public long getValue() {

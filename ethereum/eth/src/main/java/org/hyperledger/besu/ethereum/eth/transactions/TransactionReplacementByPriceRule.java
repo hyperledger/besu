@@ -37,20 +37,25 @@ public class TransactionReplacementByPriceRule implements TransactionPoolReplace
   public boolean shouldReplace(
       final TransactionInfo existingTransactionInfo,
       final TransactionInfo newTransactionInfo,
-      final Optional<Long> baseFee) {
+      final Optional<Long> baseFee,
+      final Optional<Long> blockNumber) {
     assert existingTransactionInfo.getTransaction() != null
         && newTransactionInfo.getTransaction() != null;
     final Wei replacementThreshold =
-        priceOf(existingTransactionInfo.getTransaction(), baseFee)
+        priceOf(existingTransactionInfo.getTransaction(), baseFee, blockNumber)
             .multiply(100 + priceBump.getValue())
             .divide(100);
-    return priceOf(newTransactionInfo.getTransaction(), baseFee).compareTo(replacementThreshold)
+    return priceOf(newTransactionInfo.getTransaction(), baseFee, blockNumber)
+            .compareTo(replacementThreshold)
         > 0;
   }
 
-  private Wei priceOf(final Transaction transaction, final Optional<Long> baseFee) {
+  private Wei priceOf(
+      final Transaction transaction,
+      final Optional<Long> baseFee,
+      final Optional<Long> blockNumber) {
     final TransactionPriceCalculator transactionPriceCalculator =
         transaction.isEIP1559Transaction() ? EIP1559_CALCULATOR : FRONTIER_CALCULATOR;
-    return transactionPriceCalculator.price(transaction, baseFee);
+    return transactionPriceCalculator.price(transaction, baseFee, blockNumber);
   }
 }

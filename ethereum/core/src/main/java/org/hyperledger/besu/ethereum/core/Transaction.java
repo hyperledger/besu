@@ -69,6 +69,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final Optional<BigInteger> chainId;
 
+  private final Wei escalatorStartPrice;
+  private final Wei escalatorMaxPrice;
+  private final Long escalatorStartBlock;
+  private final Long escalatorMaxBlock;
+
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
@@ -186,6 +191,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
+   * @param escalatorStartPrice the escalator start price
+   * @param escalatorMaxPrice the escalator max price
+   * @param escalatorStartBlock the escalator start block
+   * @param escalatorMaxBlock the escalator max block
    */
   public Transaction(
       final long nonce,
@@ -198,7 +207,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final SECP256K1.Signature signature,
       final Bytes payload,
       final Address sender,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final Wei escalatorStartPrice,
+      final Wei escalatorMaxPrice,
+      final Long escalatorStartBlock,
+      final Long escalatorMaxBlock) {
     this.nonce = nonce;
     this.gasPrice = gasPrice;
     this.gasPremium = gasPremium;
@@ -210,6 +223,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.payload = payload;
     this.sender = sender;
     this.chainId = chainId;
+    this.escalatorStartPrice = escalatorStartPrice;
+    this.escalatorMaxPrice = escalatorMaxPrice;
+    this.escalatorStartBlock = escalatorStartBlock;
+    this.escalatorMaxBlock = escalatorMaxBlock;
   }
 
   /**
@@ -238,7 +255,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId) {
-    this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId);
+    this(
+        nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId, null,
+        null, null, null);
   }
 
   /**
@@ -581,6 +600,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         && Objects.equals(this.gasPrice, that.gasPrice)
         && Objects.equals(this.gasPremium, that.gasPremium)
         && Objects.equals(this.feeCap, that.feeCap)
+        && Objects.equals(this.escalatorStartPrice, that.escalatorStartPrice)
+        && Objects.equals(this.escalatorMaxPrice, that.escalatorMaxPrice)
+        && Objects.equals(this.escalatorStartBlock, that.escalatorStartBlock)
+        && Objects.equals(this.escalatorMaxBlock, that.escalatorMaxBlock)
         && this.nonce == that.nonce
         && this.payload.equals(that.payload)
         && this.signature.equals(that.signature)
@@ -591,7 +614,20 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public int hashCode() {
     return Objects.hash(
-        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId);
+        nonce,
+        gasPrice,
+        gasPremium,
+        feeCap,
+        gasLimit,
+        to,
+        value,
+        payload,
+        signature,
+        chainId,
+        escalatorStartPrice,
+        escalatorMaxPrice,
+        escalatorStartBlock,
+        escalatorMaxBlock);
   }
 
   @Override
@@ -607,6 +643,15 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
     sb.append("value=").append(getValue()).append(", ");
+    getEscalatorStartPrice()
+        .ifPresent(startPrice -> sb.append("escalatorStartPrice=").append(startPrice).append(", "));
+    getEscalatorMaxPrice()
+        .ifPresent(maxPrice -> sb.append("escalatorMaxPrice=").append(maxPrice).append(", "));
+    getEscalatorStartBlock()
+        .ifPresent(startBlock -> sb.append("escalatorStartBlock=").append(startBlock).append(", "));
+    getEscalatorMaxBlock()
+        .ifPresent(maxBlock -> sb.append("escalatorMaxBlock=").append(maxBlock).append(", "));
+
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     sb.append("payload=").append(getPayload());
@@ -643,6 +688,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     protected Address sender;
 
     protected Optional<BigInteger> chainId = Optional.empty();
+
+    protected Wei escalatorStartPrice;
+    protected Wei escalatorMaxPrice;
+    protected Long escalatorStartBlock;
+    protected Long escalatorMaxBlock;
 
     public Builder chainId(final BigInteger chainId) {
       this.chainId = Optional.of(chainId);
@@ -699,6 +749,26 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return this;
     }
 
+    public Builder escalatorStartPrice(final Wei escalatorStartPrice) {
+      this.escalatorStartPrice = escalatorStartPrice;
+      return this;
+    }
+
+    public Builder escalatorMaxPrice(final Wei escalatorMaxPrice) {
+      this.escalatorMaxPrice = escalatorMaxPrice;
+      return this;
+    }
+
+    public Builder escalatorStartBlock(final Long escalatorStartBlock) {
+      this.escalatorStartBlock = escalatorStartBlock;
+      return this;
+    }
+
+    public Builder escalatorMaxBlock(final Long escalatorMaxBlock) {
+      this.escalatorMaxBlock = escalatorMaxBlock;
+      return this;
+    }
+
     public Transaction build() {
       return new Transaction(
           nonce,
@@ -711,7 +781,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           signature,
           payload,
           sender,
-          chainId);
+          chainId,
+          escalatorStartPrice,
+          escalatorMaxPrice,
+          escalatorStartBlock,
+          escalatorMaxBlock);
     }
 
     public Transaction signAndBuild(final SECP256K1.KeyPair keys) {

@@ -285,16 +285,19 @@ public class TransactionPool implements BlockAddedObserver {
   private Wei minTransactionGasPrice(final Transaction transaction) {
     // EIP-1559 enablement guard block
     if (!ExperimentalEIPs.eip1559Enabled || this.eip1559.isEmpty()) {
-      return frontierPriceCalculator.price(transaction, Optional.empty());
+      return frontierPriceCalculator.price(transaction, Optional.empty(), Optional.empty());
     }
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     // Compute transaction price using EIP-1559 rules if chain head is after fork
     if (this.eip1559.get().isEIP1559(chainHeadBlockHeader.getNumber())) {
       return BaseFee.minTransactionPriceInNextBlock(
-          transaction, eip1559PriceCalculator, chainHeadBlockHeader::getBaseFee);
+          transaction,
+          eip1559PriceCalculator,
+          chainHeadBlockHeader::getBaseFee,
+          chainHeadBlockHeader.getNumber());
     } else { // Use frontier rules otherwise
-      return frontierPriceCalculator.price(transaction, Optional.empty());
+      return frontierPriceCalculator.price(transaction, Optional.empty(), Optional.empty());
     }
   }
 }

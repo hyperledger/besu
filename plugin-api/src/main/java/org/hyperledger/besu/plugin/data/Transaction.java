@@ -172,6 +172,49 @@ public interface Transaction {
   Bytes getPayload();
 
   /**
+   * A scalar value equal to the number of Wei defining the lowest price that the user would like to
+   * pay for the transaction.
+   *
+   * @return the quantity of Wei for escalator start price.
+   */
+  @Unstable
+  default Optional<Quantity> getEscalatorStartPrice() {
+    return Optional.empty();
+  }
+
+  /**
+   * A scalar value equal to the number of Wei defining the maximum price the sender would be
+   * willing to pay to have this transaction processed.
+   *
+   * @return the maximum price the sender would be willing to pay to have this transaction
+   *     processed.
+   */
+  @Unstable
+  default Optional<Quantity> getEscalatorMaxPrice() {
+    return Optional.empty();
+  }
+
+  /**
+   * The first block that this transaction is valid at.
+   *
+   * @return the first block that this transaction is valid at.
+   */
+  @Unstable
+  default Optional<Long> getEscalatorStartBlock() {
+    return Optional.empty();
+  }
+
+  /**
+   * The last block that the user is willing to wait for the transaction to be processed in.
+   *
+   * @return the last block that the user is willing to wait for the transaction to be processed in.
+   */
+  @Unstable
+  default Optional<Long> getEscalatorMaxBlock() {
+    return Optional.empty();
+  }
+
+  /**
    * Returns whether or not the transaction is a legacy transaction.
    *
    * @return true if legacy transaction, false otherwise

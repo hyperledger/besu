@@ -23,14 +23,14 @@ import java.util.Optional;
 
 @FunctionalInterface
 public interface TransactionPriceCalculator {
-  Wei price(Transaction transaction, Optional<Long> baseFee);
+  Wei price(Transaction transaction, Optional<Long> baseFee, Optional<Long> blockNumber);
 
   static TransactionPriceCalculator frontier() {
-    return (transaction, baseFee) -> transaction.getGasPrice();
+    return (transaction, baseFee, blockNumber) -> transaction.getGasPrice();
   }
 
   static TransactionPriceCalculator eip1559() {
-    return (transaction, maybeBaseFee) -> {
+    return (transaction, maybeBaseFee, blockNumber) -> {
       ExperimentalEIPs.eip1559MustBeEnabled();
       final Wei gasPremium =
           Wei.of((BigInteger) transaction.getGasPremium().orElseThrow().getValue());
@@ -41,6 +41,24 @@ public interface TransactionPriceCalculator {
         price = feeCap;
       }
       return price;
+    };
+  }
+
+  static TransactionPriceCalculator escalator() {
+    return (transaction, maybeBaseFee, maybeBlockNumber) -> {
+      final Long blockNumber = maybeBlockNumber.orElseThrow();
+      final Wei startPrice =
+          Wei.of((BigInteger) transaction.getEscalatorStartPrice().orElseThrow());
+      final Wei maxPrice = Wei.of((BigInteger) transaction.getEscalatorMaxPrice().orElseThrow());
+      final Long startBlock = transaction.getEscalatorStartBlock().orElseThrow();
+      final Long maxBlock = transaction.getEscalatorMaxBlock().orElseThrow();
+      if (blockNumber.compareTo(maxBlock) >= 0) {
+        return maxPrice;
+      }
+      final Wei priceRange = maxPrice.subtract(startPrice);
+      final long blockRange = maxBlock - startBlock;
+      final Wei slope = priceRange.divide(blockRange);
+      return startPrice.add(slope.multiply(blockNumber - startBlock));
     };
   }
 }

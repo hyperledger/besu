@@ -95,7 +95,7 @@ public class TransactionReplacementByPriceRuleTest {
   public void shouldReplace() {
     assertThat(
             new TransactionReplacementByPriceRule(Percentage.fromInt(priceBump))
-                .shouldReplace(oldTx, newTx, baseFee))
+                .shouldReplace(oldTx, newTx, baseFee, Optional.empty()))
         .isEqualTo(expected);
   }
 

@@ -60,6 +60,9 @@ public class TransactionPoolReplacementHandler {
             .anyMatch(
                 rule ->
                     rule.shouldReplace(
-                        existingTransactionInfo, newTransactionInfo, chainHeadHeader.getBaseFee()));
+                        existingTransactionInfo,
+                        newTransactionInfo,
+                        chainHeadHeader.getBaseFee(),
+                        Optional.of(chainHeadHeader.getNumber())));
   }
 }

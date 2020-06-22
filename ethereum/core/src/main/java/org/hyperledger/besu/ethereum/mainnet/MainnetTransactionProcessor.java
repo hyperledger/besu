@@ -232,7 +232,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final MutableAccount senderMutableAccount = sender.getMutable();
     final long previousNonce = senderMutableAccount.incrementNonce();
     final Wei transactionGasPrice =
-        transactionPriceCalculator.price(transaction, blockHeader.getBaseFee());
+        transactionPriceCalculator.price(
+            transaction, blockHeader.getBaseFee(), Optional.of(blockHeader.getNumber()));
     LOG.trace(
         "Incremented sender {} nonce ({} -> {})", senderAddress, previousNonce, sender.getNonce());
 
