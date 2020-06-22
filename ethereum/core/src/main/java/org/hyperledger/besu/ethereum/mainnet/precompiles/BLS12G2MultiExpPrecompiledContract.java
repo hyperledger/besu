@@ -28,17 +28,7 @@ public class BLS12G2MultiExpPrecompiledContract extends AbstractBLS12Precompiled
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    int k = input.size() / 288;
-    // `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`
-    // multiplication_cost and multiplier are folded into one constant as a long and placed first to
-    // prevent int32 overflow
-
-    // there was a table prepared for discount in case of k <= 128 points in the multiexponentiation
-    // with a discount cup max_discount for k > 128.
-
-    if (k >= DISCOUNT_TABLE.length) {
-      k = DISCOUNT_TABLE.length - 1;
-    }
+    final int k = getNumPairs(input, 288);
     return Gas.of(55L * k * DISCOUNT_TABLE[k]);
   }
 }
