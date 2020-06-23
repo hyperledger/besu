@@ -29,11 +29,11 @@ import java.util.Optional;
 
 public class PermAddAccountsToAllowlist implements JsonRpcMethod {
 
-  private final Optional<AccountLocalConfigPermissioningController> whitelistController;
+  private final Optional<AccountLocalConfigPermissioningController> allowlistController;
 
   public PermAddAccountsToAllowlist(
-      final Optional<AccountLocalConfigPermissioningController> whitelistController) {
-    this.whitelistController = whitelistController;
+      final Optional<AccountLocalConfigPermissioningController> allowlistController) {
+    this.allowlistController = allowlistController;
   }
 
   @Override
@@ -46,9 +46,9 @@ public class PermAddAccountsToAllowlist implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final List<String> accountsList = requestContext.getRequiredParameter(0, List.class);
 
-    if (whitelistController.isPresent()) {
+    if (allowlistController.isPresent()) {
       final AllowlistOperationResult addResult =
-          whitelistController.get().addAccounts(accountsList);
+          allowlistController.get().addAccounts(accountsList);
 
       switch (addResult) {
         case ERROR_EMPTY_ENTRY:
