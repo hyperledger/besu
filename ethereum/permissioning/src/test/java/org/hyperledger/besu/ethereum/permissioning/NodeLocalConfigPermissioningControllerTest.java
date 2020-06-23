@@ -54,7 +54,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class NodeLocalConfigPermissioningControllerTest {
 
-  @Mock private WhitelistPersistor whitelistPersistor;
+  @Mock private AllowlistPersistor allowlistPersistor;
   private final List<EnodeURL> bootnodesList = new ArrayList<>();
   private NodeLocalConfigPermissioningController controller;
 
@@ -97,7 +97,7 @@ public class NodeLocalConfigPermissioningControllerTest {
             LocalPermissioningConfiguration.createDefault(),
             bootnodesList,
             selfEnode.getNodeId(),
-            whitelistPersistor,
+            allowlistPersistor,
             metricsSystem);
   }
 
@@ -105,7 +105,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenAddNodesWithValidInputShouldReturnSuccess() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.SUCCESS);
+            AllowlistOperationResult.SUCCESS);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.addNodes(Lists.newArrayList(enode1));
 
@@ -119,7 +119,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_EXISTING_ENTRY);
+            AllowlistOperationResult.ERROR_EXISTING_ENTRY);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.addNodes(Lists.newArrayList(enode1, enode2));
 
@@ -130,7 +130,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenAddNodesInputHasDuplicatedNodesShouldReturnDuplicatedEntryError() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
+            AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
 
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.addNodes(Arrays.asList(enode1, enode1));
@@ -142,7 +142,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenAddNodesInputHasEmptyListOfNodesShouldReturnErrorEmptyEntry() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+            AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.removeNodes(new ArrayList<>());
 
@@ -153,7 +153,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenAddNodesInputHasNullListOfNodesShouldReturnErrorEmptyEntry() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+            AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.removeNodes(null);
 
@@ -164,7 +164,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenRemoveNodesInputHasAbsentNodeShouldReturnRemoveErrorAbsentEntry() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_ABSENT_ENTRY);
+            AllowlistOperationResult.ERROR_ABSENT_ENTRY);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.removeNodes(Lists.newArrayList(enode1, enode2));
 
@@ -175,7 +175,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenRemoveNodesInputHasDuplicateNodesShouldReturnErrorDuplicatedEntry() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
+            AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.removeNodes(Lists.newArrayList(enode1, enode1));
 
@@ -186,7 +186,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenRemoveNodesInputHasEmptyListOfNodesShouldReturnErrorEmptyEntry() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+            AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.removeNodes(new ArrayList<>());
 
@@ -197,7 +197,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenRemoveNodesInputHasNullListOfNodesShouldReturnErrorEmptyEntry() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+            AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodeLocalConfigPermissioningController.NodesWhitelistResult actualResult =
         controller.removeNodes(null);
 
@@ -300,7 +300,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
   @Test
   public void
-      whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsidered_whitelistAndNodeHaveDiscDisabled() {
+      whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsidered_allowlistAndNodeHaveDiscDisabled() {
     String peerWithDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=0";
     String peerWithoutDiscoveryPortSet =
@@ -325,8 +325,8 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void stateShouldRevertIfWhitelistPersistFails()
-      throws IOException, WhitelistFileSyncException {
+  public void stateShouldRevertIfAllowlistPersistFails()
+      throws IOException, AllowlistFileSyncException {
     List<String> newNode1 = singletonList(EnodeURL.fromString(enode1).toString());
     List<String> newNode2 = singletonList(EnodeURL.fromString(enode2).toString());
 
@@ -335,19 +335,19 @@ public class NodeLocalConfigPermissioningControllerTest {
     controller.addNodes(newNode1);
     assertThat(controller.getNodesWhitelist().size()).isEqualTo(1);
 
-    doThrow(new IOException()).when(whitelistPersistor).updateConfig(any(), any());
+    doThrow(new IOException()).when(allowlistPersistor).updateConfig(any(), any());
     controller.addNodes(newNode2);
 
     assertThat(controller.getNodesWhitelist().size()).isEqualTo(1);
     assertThat(controller.getNodesWhitelist()).isEqualTo(newNode1);
 
-    verify(whitelistPersistor, times(3)).verifyConfigFileMatchesState(any(), any());
-    verify(whitelistPersistor, times(2)).updateConfig(any(), any());
-    verifyNoMoreInteractions(whitelistPersistor);
+    verify(allowlistPersistor, times(3)).verifyConfigFileMatchesState(any(), any());
+    verify(allowlistPersistor, times(2)).updateConfig(any(), any());
+    verifyNoMoreInteractions(allowlistPersistor);
   }
 
   @Test
-  public void reloadNodeWhitelistWithValidConfigFileShouldUpdateWhitelist() throws Exception {
+  public void reloadNodeAllowlistWithValidConfigFileShouldUpdateAllowlist() throws Exception {
     final String expectedEnodeURL =
         "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567";
     final Path permissionsFile = createPermissionsFileWithNode(expectedEnodeURL);
@@ -356,8 +356,8 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
-    when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getNodeWhitelist())
+    when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeAllowlist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURL)));
     controller =
         new NodeLocalConfigPermissioningController(
@@ -369,15 +369,15 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void reloadNodeWhitelistWithErrorReadingConfigFileShouldKeepOldWhitelist() {
+  public void reloadNodeAllowlistWithErrorReadingConfigFileShouldKeepOldAllowlist() {
     final String expectedEnodeURI =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567";
     final LocalPermissioningConfiguration permissioningConfig =
         mock(LocalPermissioningConfiguration.class);
 
     when(permissioningConfig.getNodePermissioningConfigFilePath()).thenReturn("foo");
-    when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getNodeWhitelist())
+    when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeAllowlist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURI)));
     controller =
         new NodeLocalConfigPermissioningController(
@@ -408,8 +408,8 @@ public class NodeLocalConfigPermissioningControllerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void whenAddingNodeDoesNotAddShouldNotNotifyWhitelistModifiedSubscribers() {
-    // adding node before subscribing to whitelist modified events
+  public void whenAddingNodeDoesNotAddShouldNotNotifyAllowlistModifiedSubscribers() {
+    // adding node before subscribing to allowlist modified events
     controller.addNodes(Lists.newArrayList(enode1));
     final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
 
@@ -422,8 +422,8 @@ public class NodeLocalConfigPermissioningControllerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void whenRemovingNodeShouldNotifyWhitelistModifiedSubscribers() {
-    // adding node before subscribing to whitelist modified events
+  public void whenRemovingNodeShouldNotifyAllowlistModifiedSubscribers() {
+    // adding node before subscribing to allowlist modified events
     controller.addNodes(Lists.newArrayList(enode1));
 
     final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
@@ -439,7 +439,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void whenRemovingNodeDoesNotRemoveShouldNotifyWhitelistModifiedSubscribers() {
+  public void whenRemovingNodeDoesNotRemoveShouldNotifyAllowlistModifiedSubscribers() {
     final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
 
     controller.subscribeToListUpdatedEvent(consumer);
@@ -453,7 +453,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   public void whenRemovingBootnodeShouldReturnRemoveBootnodeError() {
     NodeLocalConfigPermissioningController.NodesWhitelistResult expected =
         new NodeLocalConfigPermissioningController.NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED);
+            AllowlistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED);
     bootnodesList.add(EnodeURL.fromString(enode1));
     controller.addNodes(Lists.newArrayList(enode1, enode2));
 
@@ -466,7 +466,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void whenReloadingWhitelistShouldNotifyWhitelistModifiedSubscribers() throws Exception {
+  public void whenReloadingAllowlistShouldNotifyAllowlistModifiedSubscribers() throws Exception {
     final Path permissionsFile = createPermissionsFileWithNode(enode2);
     final LocalPermissioningConfiguration permissioningConfig =
         mock(LocalPermissioningConfiguration.class);
@@ -478,8 +478,8 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
-    when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
+    when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeAllowlist()).thenReturn(Arrays.asList(URI.create(enode1)));
     controller =
         new NodeLocalConfigPermissioningController(
             permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
@@ -492,7 +492,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void whenReloadingWhitelistAndNothingChangesShouldNotNotifyWhitelistModifiedSubscribers()
+  public void whenReloadingAllowlistAndNothingChangesShouldNotNotifyAllowlistModifiedSubscribers()
       throws Exception {
     final Path permissionsFile = createPermissionsFileWithNode(enode1);
     final LocalPermissioningConfiguration permissioningConfig =
@@ -501,8 +501,8 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
-    when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
+    when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeAllowlist()).thenReturn(Arrays.asList(URI.create(enode1)));
     controller =
         new NodeLocalConfigPermissioningController(
             permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
@@ -514,7 +514,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   private Path createPermissionsFileWithNode(final String node) throws IOException {
-    final String nodePermissionsFileContent = "nodes-whitelist=[\"" + node + "\"]";
+    final String nodePermissionsFileContent = "nodes-allowlist=[\"" + node + "\"]";
     final Path permissionsFile = Files.createTempFile("node_permissions", "");
     permissionsFile.toFile().deleteOnExit();
     Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));

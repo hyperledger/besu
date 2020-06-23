@@ -340,7 +340,11 @@ public class EthPeer {
     return statusHasBeenReceivedFromPeer.get();
   }
 
-  /** @return true if we have sent a status message to this peer. */
+  /**
+   * Return true if we have sent a status message to this peer.
+   *
+   * @return true if we have sent a status message to this peer.
+   */
   public boolean statusHasBeenSentToPeer() {
     return statusHasBeenSentToPeer.get();
   }
@@ -349,12 +353,20 @@ public class EthPeer {
     return knownBlocks.contains(hash);
   }
 
-  /** @return This peer's current chain state. */
+  /**
+   * Return This peer's current chain state.
+   *
+   * @return This peer's current chain state.
+   */
   public ChainState chainState() {
     return chainHeadState;
   }
 
-  /** @return A read-only snapshot of this peer's current {@code chainState} } */
+  /**
+   * Return A read-only snapshot of this peer's current {@code chainState} }
+   *
+   * @return A read-only snapshot of this peer's current {@code chainState} }
+   */
   public ChainHeadEstimate chainStateSnapshot() {
     return chainHeadState.getSnapshot();
   }

@@ -16,22 +16,20 @@ package org.hyperledger.besu.ethereum.vm.ehalt;
 
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
-import java.util.EnumSet;
-
 /** An exception to signal that an exceptional halt has occurred. */
 public class ExceptionalHaltException extends Exception {
-  private final EnumSet<ExceptionalHaltReason> reasons;
+  private final ExceptionalHaltReason reason;
 
-  public ExceptionalHaltException(final EnumSet<ExceptionalHaltReason> reasons) {
-    this.reasons = reasons;
+  public ExceptionalHaltException(final ExceptionalHaltReason reason) {
+    this.reason = reason;
   }
 
   @Override
   public String getMessage() {
-    return "Exceptional halt condition(s) triggered: " + this.reasons;
+    return "Exceptional halt condition(s) triggered: " + this.reason;
   }
 
-  public EnumSet<ExceptionalHaltReason> getReasons() {
-    return reasons;
+  public ExceptionalHaltReason getReasons() {
+    return reason;
   }
 }

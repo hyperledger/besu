@@ -21,11 +21,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistPersistor;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistPersistor.WHITELIST_TYPE;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -212,9 +212,9 @@ public class PermissionedNodeBuilder {
       List<String> nodesAsListOfStrings =
           localConfigPermittedNodes.stream().map(URI::toASCIIString).collect(Collectors.toList());
       initPermissioningConfigurationFile(
-          WHITELIST_TYPE.NODES, nodesAsListOfStrings, localConfigNodesPermissioningFile);
+          ALLOWLIST_TYPE.NODES, nodesAsListOfStrings, localConfigNodesPermissioningFile);
 
-      localPermissioningConfiguration.setNodeWhitelist(localConfigPermittedNodes);
+      localPermissioningConfiguration.setNodeAllowlist(localConfigPermittedNodes);
       localPermissioningConfiguration.setNodePermissioningConfigFilePath(
           localConfigNodesPermissioningFile.toAbsolutePath().toString());
     }
@@ -225,11 +225,11 @@ public class PermissionedNodeBuilder {
       }
 
       initPermissioningConfigurationFile(
-          WHITELIST_TYPE.ACCOUNTS,
+          ALLOWLIST_TYPE.ACCOUNTS,
           localConfigPermittedAccounts,
           localConfigAccountsPermissioningFile);
 
-      localPermissioningConfiguration.setAccountWhitelist(localConfigPermittedAccounts);
+      localPermissioningConfiguration.setAccountAllowlist(localConfigPermittedAccounts);
       localPermissioningConfiguration.setAccountPermissioningConfigFilePath(
           localConfigAccountsPermissioningFile.toAbsolutePath().toString());
     }
@@ -243,13 +243,13 @@ public class PermissionedNodeBuilder {
     if (nodePermissioningSmartContractAddress != null) {
       config.setNodeSmartContractAddress(
           Address.fromHexString(nodePermissioningSmartContractAddress));
-      config.setSmartContractNodeWhitelistEnabled(true);
+      config.setSmartContractNodeAllowlistEnabled(true);
     }
 
     if (accountPermissioningSmartContractAddress != null) {
       config.setAccountSmartContractAddress(
           Address.fromHexString(accountPermissioningSmartContractAddress));
-      config.setSmartContractAccountWhitelistEnabled(true);
+      config.setSmartContractAccountAllowlistEnabled(true);
     }
 
     return config;
@@ -270,7 +270,7 @@ public class PermissionedNodeBuilder {
     final JsonRpcConfiguration jsonRpcConfig = JsonRpcConfiguration.createDefault();
     jsonRpcConfig.setEnabled(true);
     jsonRpcConfig.setPort(0);
-    jsonRpcConfig.setHostsWhitelist(singletonList("*"));
+    jsonRpcConfig.setHostsAllowlist(singletonList("*"));
     jsonRpcConfig.setCorsAllowedDomains(singletonList("*"));
     final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
     rpcApis.add(RpcApis.PERM);
@@ -280,11 +280,11 @@ public class PermissionedNodeBuilder {
   }
 
   private void initPermissioningConfigurationFile(
-      final WhitelistPersistor.WHITELIST_TYPE listType,
-      final Collection<String> whitelistVal,
+      final ALLOWLIST_TYPE listType,
+      final Collection<String> allowlistVal,
       final Path configFilePath) {
     try {
-      WhitelistPersistor.addNewConfigItem(listType, whitelistVal, configFilePath);
+      AllowlistPersistor.addNewConfigItem(listType, allowlistVal, configFilePath);
 
       Files.write(
           configFilePath,

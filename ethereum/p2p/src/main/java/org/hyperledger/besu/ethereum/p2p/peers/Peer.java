@@ -20,7 +20,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 public interface Peer extends PeerId {
 
-  /** @return The enode representing the location of this peer. */
+  /**
+   * ENode URL of this peer.
+   *
+   * @return The enode representing the location of this peer.
+   */
   EnodeURL getEnodeURL();
 
   /**

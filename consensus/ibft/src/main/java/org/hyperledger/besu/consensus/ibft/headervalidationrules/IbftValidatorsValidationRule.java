@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collection;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import com.google.common.collect.Iterables;
@@ -50,7 +50,7 @@ public class IbftValidatorsValidationRule implements AttachedBlockHeaderValidati
               .getVoteTallyAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
-      final SortedSet<Address> sortedReportedValidators =
+      final NavigableSet<Address> sortedReportedValidators =
           new TreeSet<>(ibftExtraData.getValidators());
 
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), sortedReportedValidators)) {

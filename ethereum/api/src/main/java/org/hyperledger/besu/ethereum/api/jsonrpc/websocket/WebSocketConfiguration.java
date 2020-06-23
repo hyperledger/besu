@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 
@@ -38,8 +39,9 @@ public class WebSocketConfiguration {
   private List<RpcApi> rpcApis;
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
-  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private File authenticationPublicKeyFile;
+  private long timeoutSec;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -47,6 +49,7 @@ public class WebSocketConfiguration {
     config.setHost(DEFAULT_WEBSOCKET_HOST);
     config.setPort(DEFAULT_WEBSOCKET_PORT);
     config.setRpcApis(DEFAULT_WEBSOCKET_APIS);
+    config.setTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     return config;
   }
 
@@ -100,12 +103,12 @@ public class WebSocketConfiguration {
     return authenticationCredentialsFile;
   }
 
-  public void setHostsWhitelist(final List<String> hostsWhitelist) {
-    this.hostsWhitelist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsAllowlist) {
+    this.hostsAllowlist = hostsAllowlist;
   }
 
-  public Collection<String> getHostsWhitelist() {
-    return Collections.unmodifiableCollection(this.hostsWhitelist);
+  public Collection<String> getHostsAllowlist() {
+    return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
   public File getAuthenticationPublicKeyFile() {
@@ -114,6 +117,14 @@ public class WebSocketConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public long getTimeoutSec() {
+    return timeoutSec;
+  }
+
+  public void setTimeoutSec(final long timeoutSec) {
+    this.timeoutSec = timeoutSec;
   }
 
   @Override
@@ -131,8 +142,9 @@ public class WebSocketConfiguration {
         && Objects.equals(host, that.host)
         && Objects.equals(rpcApis, that.rpcApis)
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
-        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
-        && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile);
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist)
+        && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile)
+        && timeoutSec == that.timeoutSec;
   }
 
   @Override
@@ -144,8 +156,9 @@ public class WebSocketConfiguration {
         rpcApis,
         authenticationEnabled,
         authenticationCredentialsFile,
-        hostsWhitelist,
-        authenticationPublicKeyFile);
+        hostsAllowlist,
+        authenticationPublicKeyFile,
+        timeoutSec);
   }
 
   @Override
@@ -157,8 +170,9 @@ public class WebSocketConfiguration {
         .add("rpcApis", rpcApis)
         .add("authenticationEnabled", authenticationEnabled)
         .add("authenticationCredentialsFile", authenticationCredentialsFile)
-        .add("hostsWhitelist", hostsWhitelist)
+        .add("hostsAllowlist", hostsAllowlist)
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
+        .add("timeoutSec", timeoutSec)
         .toString();
   }
 }

@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -39,7 +38,7 @@ public class TraceFrame {
   private final Optional<Gas> gasCost;
   private final Gas gasRefund;
   private final int depth;
-  private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons;
+  private Optional<ExceptionalHaltReason> exceptionalHaltReason;
   private final Address recipient;
   private final Wei value;
   private final Bytes inputData;
@@ -67,7 +66,7 @@ public class TraceFrame {
       final Optional<Gas> gasCost,
       final Gas gasRefund,
       final int depth,
-      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason,
       final Address recipient,
       final Wei value,
       final Bytes inputData,
@@ -90,7 +89,7 @@ public class TraceFrame {
     this.gasCost = gasCost;
     this.gasRefund = gasRefund;
     this.depth = depth;
-    this.exceptionalHaltReasons = exceptionalHaltReasons;
+    this.exceptionalHaltReason = exceptionalHaltReason;
     this.recipient = recipient;
     this.value = value;
     this.inputData = inputData;
@@ -134,12 +133,12 @@ public class TraceFrame {
     return depth;
   }
 
-  public EnumSet<ExceptionalHaltReason> getExceptionalHaltReasons() {
-    return exceptionalHaltReasons;
+  public Optional<ExceptionalHaltReason> getExceptionalHaltReason() {
+    return exceptionalHaltReason;
   }
 
-  public boolean addExceptionalHaltReason(final ExceptionalHaltReason exceptionalHaltReason) {
-    return exceptionalHaltReasons.add(exceptionalHaltReason);
+  public void setExceptionalHaltReason(final ExceptionalHaltReason exceptionalHaltReason) {
+    this.exceptionalHaltReason = Optional.ofNullable(exceptionalHaltReason);
   }
 
   public Address getRecipient() {
@@ -190,7 +189,7 @@ public class TraceFrame {
         .add("getGasRemaining", gasRemaining)
         .add("gasCost", gasCost)
         .add("depth", depth)
-        .add("exceptionalHaltReasons", exceptionalHaltReasons)
+        .add("exceptionalHaltReason", exceptionalHaltReason)
         .add("stack", stack)
         .add("memory", memory)
         .add("storage", storage)

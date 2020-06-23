@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.perm;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
-import org.hyperledger.besu.ethereum.permissioning.WhitelistPersistor.WHITELIST_TYPE;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -36,53 +36,53 @@ public class PermissioningConditions {
 
   private final PermissioningTransactions transactions;
 
-  public Condition addAccountsToWhitelist(final String... accounts) {
-    return new AddAccountsToWhitelistSuccessfully(transactions.addAccountsToWhitelist(accounts));
+  public Condition addAccountsToAllowlist(final String... accounts) {
+    return new AddAccountsToWhitelistSuccessfully(transactions.addAccountsToAllowlist(accounts));
   }
 
-  public Condition removeAccountsFromWhitelist(final String... accounts) {
+  public Condition removeAccountsFromAllowlist(final String... accounts) {
     return new RemoveAccountsFromWhitelistSuccessfully(
-        transactions.removeAccountsFromWhitelist(accounts));
+        transactions.removeAccountsFromAllowlist(accounts));
   }
 
-  public Condition expectAccountsWhitelist(final String... expectedAccounts) {
+  public Condition expectAccountsAllowlist(final String... expectedAccounts) {
     return new GetExpectedAccountsWhitelist(
         transactions.getAccountsWhiteList(), asList(expectedAccounts));
   }
 
-  public Condition addNodesToWhitelist(final String... nodes) {
-    return addNodesToWhitelist(Stream.of(nodes).map(URI::create).collect(toList()));
+  public Condition addNodesToAllowlist(final String... nodes) {
+    return addNodesToAllowlist(Stream.of(nodes).map(URI::create).collect(toList()));
   }
 
-  public Condition addNodesToWhitelist(final Node... nodes) {
+  public Condition addNodesToAllowlist(final Node... nodes) {
     final List<URI> enodeList = toEnodeUris(nodes);
-    return addNodesToWhitelist(enodeList);
+    return addNodesToAllowlist(enodeList);
   }
 
-  private Condition addNodesToWhitelist(final List<URI> enodeList) {
-    return new AddNodeSuccess(transactions.addNodesToWhitelist(enodeList));
+  private Condition addNodesToAllowlist(final List<URI> enodeList) {
+    return new AddNodeSuccess(transactions.addNodesToAllowlist(enodeList));
   }
 
-  public Condition removeNodesFromWhitelist(final String... nodes) {
-    return removeNodesFromWhitelist(Stream.of(nodes).map(URI::create).collect(toList()));
+  public Condition removeNodesFromAllowlist(final String... nodes) {
+    return removeNodesFromAllowlist(Stream.of(nodes).map(URI::create).collect(toList()));
   }
 
-  public Condition removeNodesFromWhitelist(final Node... nodes) {
+  public Condition removeNodesFromAllowlist(final Node... nodes) {
     final List<URI> enodeList = toEnodeUris(nodes);
-    return removeNodesFromWhitelist(enodeList);
+    return removeNodesFromAllowlist(enodeList);
   }
 
-  private Condition removeNodesFromWhitelist(final List<URI> enodeList) {
-    return new RemoveNodeSuccess(transactions.removeNodesFromWhitelist(enodeList));
+  private Condition removeNodesFromAllowlist(final List<URI> enodeList) {
+    return new RemoveNodeSuccess(transactions.removeNodesFromAllowlist(enodeList));
   }
 
-  public Condition getNodesWhitelist(final int expectedNodeNum) {
+  public Condition getNodesAllowlist(final int expectedNodeNum) {
     return new GetNodesWhitelistPopulated(transactions.getNodesWhiteList(), expectedNodeNum);
   }
 
-  public Condition expectPermissioningWhitelistFileKeyValue(
-      final WHITELIST_TYPE whitelistType, final Path configFilePath, final String... val) {
-    return new WhiteListContainsKeyAndValue(whitelistType, asList(val), configFilePath);
+  public Condition expectPermissioningAllowlistFileKeyValue(
+      final ALLOWLIST_TYPE allowlistType, final Path configFilePath, final String... val) {
+    return new AllowListContainsKeyAndValue(allowlistType, asList(val), configFilePath);
   }
 
   private List<URI> toEnodeUris(final Node[] nodes) {

@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.MutableLocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
@@ -408,7 +408,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private P2PNetwork doBuild() {
       // Set up permissions
       // Fold peer reputation into permissions
-      final PeerPermissionsBlacklist misbehavingPeers = PeerPermissionsBlacklist.create(500);
+      final PeerPermissionsDenylist misbehavingPeers = PeerPermissionsDenylist.create(500);
       final PeerReputationManager reputationManager = new PeerReputationManager(misbehavingPeers);
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
 

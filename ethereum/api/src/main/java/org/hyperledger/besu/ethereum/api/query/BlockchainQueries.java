@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
+import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -46,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -537,43 +539,66 @@ public class BlockchainQueries {
    * @param toBlockNumber The block number defining the last block in the search range (inclusive).
    * @param query Constraints on required topics by topic index. For a given index if the set of
    *     topics is non-empty, the topic at this index must match one of the values in the set.
+   * @param isQueryAlive Whether or not the backend query should stay alive.
    * @return The set of logs matching the given constraints.
    */
   public List<LogWithMetadata> matchingLogs(
-      final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
-    final List<LogWithMetadata> result = new ArrayList<>();
-    final long startSegment = fromBlockNumber / BLOCKS_PER_BLOOM_CACHE;
-    final long endSegment = toBlockNumber / BLOCKS_PER_BLOOM_CACHE;
-    long currentStep = fromBlockNumber;
-    for (long segment = startSegment; segment <= endSegment; segment++) {
-      final long thisSegment = segment;
-      final long thisStep = currentStep;
-      final long nextStep = (segment + 1) * BLOCKS_PER_BLOOM_CACHE;
-      result.addAll(
-          cachePath
-              .map(path -> path.resolve("logBloom-" + thisSegment + ".cache"))
-              .filter(Files::isRegularFile)
-              .map(
-                  cacheFile ->
-                      matchingLogsCached(
-                          thisSegment * BLOCKS_PER_BLOOM_CACHE,
-                          thisStep % BLOCKS_PER_BLOOM_CACHE,
-                          Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
-                          query,
-                          cacheFile))
-              .orElseGet(
-                  () ->
-                      matchingLogsUncached(
-                          thisStep,
-                          Math.min(toBlockNumber, Math.min(toBlockNumber, nextStep - 1)),
-                          query)));
-      currentStep = nextStep;
+      final long fromBlockNumber,
+      final long toBlockNumber,
+      final LogsQuery query,
+      final Supplier<Boolean> isQueryAlive) {
+    try {
+      final List<LogWithMetadata> result = new ArrayList<>();
+      final long startSegment = fromBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+      final long endSegment = toBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+      long currentStep = fromBlockNumber;
+      for (long segment = startSegment; segment <= endSegment; segment++) {
+        final long thisSegment = segment;
+        final long thisStep = currentStep;
+        final long nextStep = (segment + 1) * BLOCKS_PER_BLOOM_CACHE;
+        BackendQuery.stopIfExpired(isQueryAlive);
+        result.addAll(
+            cachePath
+                .map(path -> path.resolve("logBloom-" + thisSegment + ".cache"))
+                .filter(Files::isRegularFile)
+                .map(
+                    cacheFile -> {
+                      try {
+                        return matchingLogsCached(
+                            thisSegment * BLOCKS_PER_BLOOM_CACHE,
+                            thisStep % BLOCKS_PER_BLOOM_CACHE,
+                            Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
+                            query,
+                            cacheFile,
+                            isQueryAlive);
+                      } catch (Exception e) {
+                        throw new RuntimeException(e);
+                      }
+                    })
+                .orElseGet(
+                    () ->
+                        matchingLogsUncached(
+                            thisStep,
+                            Math.min(toBlockNumber, Math.min(toBlockNumber, nextStep - 1)),
+                            query,
+                            isQueryAlive)));
+        currentStep = nextStep;
+      }
+      return result;
+    } catch (RpcMethodTimeoutException e) {
+      LOG.error("Error retrieving matching logs", e);
+      throw e;
+    } catch (Exception e) {
+      LOG.error("Error retrieving matching logs", e);
+      throw new RuntimeException(e);
     }
-    return result;
   }
 
   private List<LogWithMetadata> matchingLogsUncached(
-      final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
+      final long fromBlockNumber,
+      final long toBlockNumber,
+      final LogsQuery query,
+      final Supplier<Boolean> isQueryAlive) {
     // rangeClosed handles the inverted from/to situations automatically with zero results.
     return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
         .mapToObj(blockchain::getBlockHeader)
@@ -583,7 +608,7 @@ public class BlockchainQueries {
         .takeWhile(Optional::isPresent)
         .map(Optional::get)
         .filter(header -> query.couldMatch(header.getLogsBloom()))
-        .flatMap(header -> matchingLogs(header.getHash(), query).stream())
+        .flatMap(header -> matchingLogs(header.getHash(), query, isQueryAlive).stream())
         .collect(Collectors.toList());
   }
 
@@ -592,24 +617,31 @@ public class BlockchainQueries {
       final long offset,
       final long endOffset,
       final LogsQuery query,
-      final Path cacheFile) {
+      final Path cacheFile,
+      final Supplier<Boolean> isQueryAlive)
+      throws Exception {
     final List<LogWithMetadata> results = new ArrayList<>();
     try (final RandomAccessFile raf = new RandomAccessFile(cacheFile.toFile(), "r")) {
       raf.seek(offset * 256);
       final byte[] bloomBuff = new byte[256];
       final Bytes bytesValue = Bytes.wrap(bloomBuff);
       for (long pos = offset; pos <= endOffset; pos++) {
+        BackendQuery.stopIfExpired(isQueryAlive);
         try {
           raf.readFully(bloomBuff);
         } catch (final EOFException e) {
-          results.addAll(matchingLogsUncached(segmentStart + pos, segmentStart + endOffset, query));
+          results.addAll(
+              matchingLogsUncached(
+                  segmentStart + pos, segmentStart + endOffset, query, isQueryAlive));
           break;
         }
         final LogsBloomFilter logsBloom = new LogsBloomFilter(bytesValue);
         if (query.couldMatch(logsBloom)) {
           results.addAll(
               matchingLogs(
-                  blockchain.getBlockHashByNumber(segmentStart + pos).orElseThrow(), query));
+                  blockchain.getBlockHashByNumber(segmentStart + pos).orElseThrow(),
+                  query,
+                  isQueryAlive));
         }
       }
     } catch (final IOException e) {
@@ -619,25 +651,56 @@ public class BlockchainQueries {
     return results;
   }
 
-  public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {
-    final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
-    if (blockHeader.isEmpty()) {
-      return Collections.emptyList();
+  public List<LogWithMetadata> matchingLogs(
+      final Hash blockHash, final LogsQuery query, final Supplier<Boolean> isQueryAlive) {
+    try {
+      final Optional<BlockHeader> blockHeader =
+          BackendQuery.runIfAlive(
+              "matchingLogs - getBlockHeader",
+              () -> blockchain.getBlockHeader(blockHash),
+              isQueryAlive);
+      if (blockHeader.isEmpty()) {
+        return Collections.emptyList();
+      }
+      // receipts and transactions should exist if the header exists, so throwing is ok.
+      final List<TransactionReceipt> receipts =
+          BackendQuery.runIfAlive(
+              "matchingLogs - getTxReceipts",
+              () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
+              isQueryAlive);
+      final List<Transaction> transactions =
+          BackendQuery.runIfAlive(
+              "matchingLogs - getBlockBody",
+              () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
+              isQueryAlive);
+      final long number = blockHeader.get().getNumber();
+      final boolean removed =
+          BackendQuery.runIfAlive(
+              "matchingLogs - blockIsOnCanonicalChain",
+              () -> !blockchain.blockIsOnCanonicalChain(blockHash),
+              isQueryAlive);
+      return IntStream.range(0, receipts.size())
+          .mapToObj(
+              i -> {
+                try {
+                  BackendQuery.stopIfExpired(isQueryAlive);
+                  return LogWithMetadata.generate(
+                      receipts.get(i),
+                      number,
+                      blockHash,
+                      transactions.get(i).getHash(),
+                      i,
+                      removed);
+                } catch (Exception e) {
+                  throw new RuntimeException(e);
+                }
+              })
+          .flatMap(Collection::stream)
+          .filter(query::matches)
+          .collect(Collectors.toList());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-    // receipts and transactions should exist if the header exists, so throwing is ok.
-    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockHash).orElseThrow();
-    final List<Transaction> transactions =
-        blockchain.getBlockBody(blockHash).orElseThrow().getTransactions();
-    final long number = blockHeader.get().getNumber();
-    final boolean removed = !blockchain.blockIsOnCanonicalChain(blockHash);
-    return IntStream.range(0, receipts.size())
-        .mapToObj(
-            i ->
-                LogWithMetadata.generate(
-                    receipts.get(i), number, blockHash, transactions.get(i).getHash(), i, removed))
-        .flatMap(Collection::stream)
-        .filter(query::matches)
-        .collect(Collectors.toList());
   }
 
   /**

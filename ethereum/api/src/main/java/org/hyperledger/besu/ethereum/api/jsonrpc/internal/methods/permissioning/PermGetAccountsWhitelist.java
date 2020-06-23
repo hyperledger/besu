@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 
 import java.util.Optional;
 
+@Deprecated
 public class PermGetAccountsWhitelist implements JsonRpcMethod {
 
   private final Optional<AccountLocalConfigPermissioningController> whitelistController;
@@ -43,10 +44,10 @@ public class PermGetAccountsWhitelist implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (whitelistController.isPresent()) {
       return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), whitelistController.get().getAccountWhitelist());
+          requestContext.getRequest().getId(), whitelistController.get().getAccountAllowlist());
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);
+          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_NOT_ENABLED);
     }
   }
 }

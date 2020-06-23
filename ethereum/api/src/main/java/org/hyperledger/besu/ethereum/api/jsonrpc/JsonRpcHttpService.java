@@ -228,7 +228,7 @@ public class JsonRpcHttpService {
     final Router router = Router.router(vertx);
 
     // Verify Host header to avoid rebind attack.
-    router.route().handler(checkWhitelistHostHeader());
+    router.route().handler(checkAllowlistHostHeader());
 
     router
         .route()
@@ -341,11 +341,11 @@ public class JsonRpcHttpService {
     return listenFailure;
   }
 
-  private Handler<RoutingContext> checkWhitelistHostHeader() {
+  private Handler<RoutingContext> checkAllowlistHostHeader() {
     return event -> {
       final Optional<String> hostHeader = getAndValidateHostHeader(event);
-      if (config.getHostsWhitelist().contains("*")
-          || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader.get()))) {
+      if (config.getHostsAllowlist().contains("*")
+          || (hostHeader.isPresent() && hostIsInAllowlist(hostHeader.get()))) {
         event.next();
       } else {
         final HttpServerResponse response = event.response();
@@ -376,13 +376,13 @@ public class JsonRpcHttpService {
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 
-  private boolean hostIsInWhitelist(final String hostHeader) {
-    if (config.getHostsWhitelist().stream()
+  private boolean hostIsInAllowlist(final String hostHeader) {
+    if (config.getHostsAllowlist().stream()
         .anyMatch(
-            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
       return true;
     } else {
-      LOG.trace("Host not in whitelist: '{}'", hostHeader);
+      LOG.trace("Host not in allowlist: '{}'", hostHeader);
       return false;
     }
   }
@@ -469,7 +469,7 @@ public class JsonRpcHttpService {
     final HttpServerResponse response = routingContext.response();
     vertx.executeBlocking(
         future -> {
-          final JsonRpcResponse jsonRpcResponse = process(request, user);
+          final JsonRpcResponse jsonRpcResponse = process(routingContext, request, user);
           future.complete(jsonRpcResponse);
         },
         false,
@@ -529,7 +529,7 @@ public class JsonRpcHttpService {
                   final JsonObject req = (JsonObject) obj;
                   final Future<JsonRpcResponse> fut = Future.future();
                   vertx.executeBlocking(
-                      future -> future.complete(process(req, user)),
+                      future -> future.complete(process(routingContext, req, user)),
                       false,
                       ar -> {
                         if (ar.failed()) {
@@ -567,7 +567,8 @@ public class JsonRpcHttpService {
     return result.getType() != JsonRpcResponseType.NONE;
   }
 
-  private JsonRpcResponse process(final JsonObject requestJson, final Optional<User> user) {
+  private JsonRpcResponse process(
+      final RoutingContext ctx, final JsonObject requestJson, final Optional<User> user) {
     final JsonRpcRequest requestBody;
     Object id = null;
     try {
@@ -594,9 +595,11 @@ public class JsonRpcHttpService {
       try (final OperationTimer.TimingContext ignored =
           requestTimer.labels(requestBody.getMethod()).startTimer()) {
         if (user.isPresent()) {
-          return method.response(new JsonRpcRequestContext(requestBody, user.get()));
+          return method.response(
+              new JsonRpcRequestContext(requestBody, user.get(), () -> !ctx.response().closed()));
         }
-        return method.response(new JsonRpcRequestContext(requestBody));
+        return method.response(
+            new JsonRpcRequestContext(requestBody, () -> !ctx.response().closed()));
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug("Invalid Params", e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);

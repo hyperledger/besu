@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -60,7 +59,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
   private final TransactionProcessor transactionProcessor;
   private final PrivateTransactionProcessor privateTransactionProcessor;
-  private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   final Wei blockReward;
   private final boolean skipZeroBlockRewards;
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
@@ -68,7 +67,7 @@ public class PrivateGroupRehydrationBlockProcessor {
   public PrivateGroupRehydrationBlockProcessor(
       final TransactionProcessor transactionProcessor,
       final PrivateTransactionProcessor privateTransactionProcessor,
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+      final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards) {

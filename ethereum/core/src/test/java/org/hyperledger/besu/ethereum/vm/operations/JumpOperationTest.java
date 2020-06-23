@@ -88,7 +88,7 @@ public class JumpOperationTest {
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
+    assertThat(operation.exceptionalHaltCondition(frame, evm)).isNotPresent();
     operation.execute(frame);
   }
 
@@ -102,7 +102,7 @@ public class JumpOperationTest {
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
+    assertThat(operation.exceptionalHaltCondition(frame, evm)).isNotPresent();
     operation.execute(frame);
   }
 
@@ -116,7 +116,7 @@ public class JumpOperationTest {
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frameDestinationGreaterThanCodeSize, null, null))
+    assertThat(operation.exceptionalHaltCondition(frameDestinationGreaterThanCodeSize, null))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
 
     final MessageFrame frameDestinationEqualsToCodeSize =
@@ -127,7 +127,7 @@ public class JumpOperationTest {
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frameDestinationEqualsToCodeSize, null, null))
+    assertThat(operation.exceptionalHaltCondition(frameDestinationEqualsToCodeSize, null))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 }

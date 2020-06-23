@@ -39,6 +39,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+@Deprecated
 @RunWith(MockitoJUnitRunner.class)
 public class PermGetNodesWhitelistTest {
 
@@ -105,7 +106,7 @@ public class PermGetNodesWhitelistTest {
     final JsonRpcRequestContext request = buildRequest();
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);

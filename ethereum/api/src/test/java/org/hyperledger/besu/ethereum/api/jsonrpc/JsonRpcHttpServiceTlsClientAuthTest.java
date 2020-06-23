@@ -164,7 +164,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
       final Supplier<Optional<TlsConfiguration>> tlsConfigurationSupplier) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singletonList("*"));
+    config.setHostsAllowlist(Collections.singletonList("*"));
     config.setTlsConfiguration(tlsConfigurationSupplier.get());
     return config;
   }

@@ -50,7 +50,7 @@ public class AccountLocalConfigPermissioningControllerTest {
 
   private AccountLocalConfigPermissioningController controller;
   @Mock private LocalPermissioningConfiguration permissioningConfig;
-  @Mock private WhitelistPersistor whitelistPersistor;
+  @Mock private AllowlistPersistor allowlistPersistor;
   @Mock private MetricsSystem metricsSystem;
   @Mock private Counter checkCounter;
   @Mock private Counter checkPermittedCounter;
@@ -79,93 +79,93 @@ public class AccountLocalConfigPermissioningControllerTest {
 
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
   }
 
   @Test
-  public void whenPermConfigHasAccountsShouldAddAllAccountsToWhitelist() {
-    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist())
+  public void whenPermConfigHasAccountsShouldAddAllAccountsToAllowlist() {
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
 
-    assertThat(controller.getAccountWhitelist())
+    assertThat(controller.getAccountAllowlist())
         .contains("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
   @Test
   public void whenLoadingAccountsFromConfigShouldNormalizeAccountsToLowerCase() {
-    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist())
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist())
         .thenReturn(singletonList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
 
-    assertThat(controller.getAccountWhitelist())
+    assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
   @Test
   public void whenPermConfigContainsEmptyListOfAccountsContainsShouldReturnFalse() {
-    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist()).thenReturn(new ArrayList<>());
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist()).thenReturn(new ArrayList<>());
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
 
     assertThat(controller.contains("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73")).isFalse();
   }
 
   @Test
   public void addAccountsWithInvalidAccountShouldReturnInvalidEntryResult() {
-    WhitelistOperationResult addResult = controller.addAccounts(Arrays.asList("0x0"));
+    AllowlistOperationResult addResult = controller.addAccounts(Arrays.asList("0x0"));
 
-    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_INVALID_ENTRY);
-    assertThat(controller.getAccountWhitelist()).isEmpty();
+    assertThat(addResult).isEqualTo(AllowlistOperationResult.ERROR_INVALID_ENTRY);
+    assertThat(controller.getAccountAllowlist()).isEmpty();
   }
 
   @Test
   public void addExistingAccountShouldReturnExistingEntryResult() {
     controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
-    WhitelistOperationResult addResult =
+    AllowlistOperationResult addResult =
         controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_EXISTING_ENTRY);
-    assertThat(controller.getAccountWhitelist())
+    assertThat(addResult).isEqualTo(AllowlistOperationResult.ERROR_EXISTING_ENTRY);
+    assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
   @Test
   public void addExistingAccountWithDifferentCasingShouldReturnExistingEntryResult() {
     controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
-    WhitelistOperationResult addResult =
+    AllowlistOperationResult addResult =
         controller.addAccounts(Arrays.asList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
 
-    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_EXISTING_ENTRY);
-    assertThat(controller.getAccountWhitelist())
+    assertThat(addResult).isEqualTo(AllowlistOperationResult.ERROR_EXISTING_ENTRY);
+    assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
   @Test
   public void addValidAccountsShouldReturnSuccessResult() {
-    WhitelistOperationResult addResult =
+    AllowlistOperationResult addResult =
         controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(addResult).isEqualTo(WhitelistOperationResult.SUCCESS);
-    assertThat(controller.getAccountWhitelist())
+    assertThat(addResult).isEqualTo(AllowlistOperationResult.SUCCESS);
+    assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
   @Test
   public void addAccountsShouldAddAccountNormalizedToLowerCase() {
-    WhitelistOperationResult addResult =
+    AllowlistOperationResult addResult =
         controller.addAccounts(Arrays.asList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
 
-    assertThat(addResult).isEqualTo(WhitelistOperationResult.SUCCESS);
-    assertThat(controller.getAccountWhitelist())
+    assertThat(addResult).isEqualTo(AllowlistOperationResult.SUCCESS);
+    assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
@@ -173,127 +173,127 @@ public class AccountLocalConfigPermissioningControllerTest {
   public void removeExistingAccountShouldReturnSuccessResult() {
     controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    WhitelistOperationResult removeResult =
+    AllowlistOperationResult removeResult =
         controller.removeAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(removeResult).isEqualTo(WhitelistOperationResult.SUCCESS);
-    assertThat(controller.getAccountWhitelist()).isEmpty();
+    assertThat(removeResult).isEqualTo(AllowlistOperationResult.SUCCESS);
+    assertThat(controller.getAccountAllowlist()).isEmpty();
   }
 
   @Test
   public void removeAccountShouldNormalizeAccountToLowerCAse() {
     controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    WhitelistOperationResult removeResult =
+    AllowlistOperationResult removeResult =
         controller.removeAccounts(Arrays.asList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
 
-    assertThat(removeResult).isEqualTo(WhitelistOperationResult.SUCCESS);
-    assertThat(controller.getAccountWhitelist()).isEmpty();
+    assertThat(removeResult).isEqualTo(AllowlistOperationResult.SUCCESS);
+    assertThat(controller.getAccountAllowlist()).isEmpty();
   }
 
   @Test
   public void removeAbsentAccountShouldReturnAbsentEntryResult() {
-    WhitelistOperationResult removeResult =
+    AllowlistOperationResult removeResult =
         controller.removeAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_ABSENT_ENTRY);
-    assertThat(controller.getAccountWhitelist()).isEmpty();
+    assertThat(removeResult).isEqualTo(AllowlistOperationResult.ERROR_ABSENT_ENTRY);
+    assertThat(controller.getAccountAllowlist()).isEmpty();
   }
 
   @Test
   public void removeInvalidAccountShouldReturnInvalidEntryResult() {
-    WhitelistOperationResult removeResult = controller.removeAccounts(Arrays.asList("0x0"));
+    AllowlistOperationResult removeResult = controller.removeAccounts(Arrays.asList("0x0"));
 
-    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_INVALID_ENTRY);
-    assertThat(controller.getAccountWhitelist()).isEmpty();
+    assertThat(removeResult).isEqualTo(AllowlistOperationResult.ERROR_INVALID_ENTRY);
+    assertThat(controller.getAccountAllowlist()).isEmpty();
   }
 
   @Test
   public void addDuplicatedAccountShouldReturnDuplicatedEntryResult() {
-    WhitelistOperationResult addResult =
+    AllowlistOperationResult addResult =
         controller.addAccounts(
             Arrays.asList(
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
+    assertThat(addResult).isEqualTo(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
   }
 
   @Test
   public void removeDuplicatedAccountShouldReturnDuplicatedEntryResult() {
-    WhitelistOperationResult removeResult =
+    AllowlistOperationResult removeResult =
         controller.removeAccounts(
             Arrays.asList(
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
+    assertThat(removeResult).isEqualTo(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
   }
 
   @Test
   public void removeNullListShouldReturnEmptyEntryResult() {
-    WhitelistOperationResult removeResult = controller.removeAccounts(null);
+    AllowlistOperationResult removeResult = controller.removeAccounts(null);
 
-    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+    assertThat(removeResult).isEqualTo(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
   }
 
   @Test
   public void removeEmptyListShouldReturnEmptyEntryResult() {
-    WhitelistOperationResult removeResult = controller.removeAccounts(new ArrayList<>());
+    AllowlistOperationResult removeResult = controller.removeAccounts(new ArrayList<>());
 
-    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+    assertThat(removeResult).isEqualTo(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
   }
 
   @Test
-  public void stateShouldRevertIfWhitelistPersistFails()
-      throws IOException, WhitelistFileSyncException {
+  public void stateShouldRevertIfAllowlistPersistFails()
+      throws IOException, AllowlistFileSyncException {
     List<String> newAccount = singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
     List<String> newAccount2 = singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd72");
 
-    assertThat(controller.getAccountWhitelist().size()).isEqualTo(0);
+    assertThat(controller.getAccountAllowlist().size()).isEqualTo(0);
 
     controller.addAccounts(newAccount);
-    assertThat(controller.getAccountWhitelist().size()).isEqualTo(1);
+    assertThat(controller.getAccountAllowlist().size()).isEqualTo(1);
 
-    doThrow(new IOException()).when(whitelistPersistor).updateConfig(any(), any());
+    doThrow(new IOException()).when(allowlistPersistor).updateConfig(any(), any());
     controller.addAccounts(newAccount2);
 
-    assertThat(controller.getAccountWhitelist().size()).isEqualTo(1);
-    assertThat(controller.getAccountWhitelist()).isEqualTo(newAccount);
+    assertThat(controller.getAccountAllowlist().size()).isEqualTo(1);
+    assertThat(controller.getAccountAllowlist()).isEqualTo(newAccount);
 
-    verify(whitelistPersistor, times(3)).verifyConfigFileMatchesState(any(), any());
-    verify(whitelistPersistor, times(2)).updateConfig(any(), any());
-    verifyNoMoreInteractions(whitelistPersistor);
+    verify(allowlistPersistor, times(3)).verifyConfigFileMatchesState(any(), any());
+    verify(allowlistPersistor, times(2)).updateConfig(any(), any());
+    verifyNoMoreInteractions(allowlistPersistor);
   }
 
   @Test
-  public void reloadAccountWhitelistWithValidConfigFileShouldUpdateWhitelist() throws Exception {
+  public void reloadAccountAllowlistWithValidConfigFileShouldUpdateAllowlist() throws Exception {
     final String expectedAccount = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
     final Path permissionsFile = createPermissionsFileWithAccount(expectedAccount);
 
     when(permissioningConfig.getAccountPermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
-    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist())
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist())
         .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
 
     controller.reload();
 
-    assertThat(controller.getAccountWhitelist()).containsExactly(expectedAccount);
+    assertThat(controller.getAccountAllowlist()).containsExactly(expectedAccount);
   }
 
   @Test
-  public void reloadAccountWhitelistWithErrorReadingConfigFileShouldKeepOldWhitelist() {
+  public void reloadAccountAllowlistWithErrorReadingConfigFileShouldKeepOldAllowlist() {
     when(permissioningConfig.getAccountPermissioningConfigFilePath()).thenReturn("foo");
-    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist())
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist())
         .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
 
     final Throwable thrown = catchThrowable(() -> controller.reload());
 
@@ -301,7 +301,7 @@ public class AccountLocalConfigPermissioningControllerTest {
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("Unable to read permissioning TOML config file");
 
-    assertThat(controller.getAccountWhitelist())
+    assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
@@ -320,24 +320,24 @@ public class AccountLocalConfigPermissioningControllerTest {
 
   @Test
   public void shouldMatchAccountsWithInconsistentCasing() {
-    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist())
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
 
     assertThat(controller.contains("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73")).isTrue();
   }
 
   @Test
-  public void isPermittedShouldCheckIfAccountExistInTheWhitelist() {
-    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist())
+  public void isPermittedShouldCheckIfAccountExistInTheAllowlist() {
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
         new AccountLocalConfigPermissioningController(
-            permissioningConfig, whitelistPersistor, metricsSystem);
+            permissioningConfig, allowlistPersistor, metricsSystem);
 
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getSender())
@@ -367,7 +367,7 @@ public class AccountLocalConfigPermissioningControllerTest {
   }
 
   private Path createPermissionsFileWithAccount(final String account) throws IOException {
-    final String nodePermissionsFileContent = "accounts-whitelist=[\"" + account + "\"]";
+    final String nodePermissionsFileContent = "accounts-allowlist=[\"" + account + "\"]";
     final Path permissionsFile = Files.createTempFile("account_permissions", "");
     permissionsFile.toFile().deleteOnExit();
     Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));

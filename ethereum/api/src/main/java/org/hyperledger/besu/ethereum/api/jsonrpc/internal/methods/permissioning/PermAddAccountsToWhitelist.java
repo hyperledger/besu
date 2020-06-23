@@ -22,11 +22,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistOperationResult;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated
 public class PermAddAccountsToWhitelist implements JsonRpcMethod {
 
   private final Optional<AccountLocalConfigPermissioningController> whitelistController;
@@ -47,28 +48,28 @@ public class PermAddAccountsToWhitelist implements JsonRpcMethod {
     final List<String> accountsList = requestContext.getRequiredParameter(0, List.class);
 
     if (whitelistController.isPresent()) {
-      final WhitelistOperationResult addResult =
+      final AllowlistOperationResult addResult =
           whitelistController.get().addAccounts(accountsList);
 
       switch (addResult) {
         case ERROR_EMPTY_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_EMPTY_ENTRY);
         case ERROR_INVALID_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_INVALID_ENTRY);
         case ERROR_EXISTING_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_EXISTING_ENTRY);
         case ERROR_DUPLICATED_ENTRY:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
-        case ERROR_WHITELIST_PERSIST_FAIL:
+              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_DUPLICATED_ENTRY);
+        case ERROR_ALLOWLIST_PERSIST_FAIL:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.WHITELIST_PERSIST_FAILURE);
-        case ERROR_WHITELIST_FILE_SYNC:
+              requestContext.getRequest().getId(), JsonRpcError.ALLOWLIST_PERSIST_FAILURE);
+        case ERROR_ALLOWLIST_FILE_SYNC:
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.WHITELIST_FILE_SYNC);
+              requestContext.getRequest().getId(), JsonRpcError.ALLOWLIST_FILE_SYNC);
         case SUCCESS:
           return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
         default:
@@ -77,7 +78,7 @@ public class PermAddAccountsToWhitelist implements JsonRpcMethod {
       }
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);
+          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_NOT_ENABLED);
     }
   }
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.nat.kubernetes;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
@@ -80,8 +81,8 @@ public final class KubernetesNatManagerTest {
                             .name(NatServiceType.DISCOVERY.getValue())
                             .port(p2pPort)
                             .targetPort(new IntOrString(p2pPort)))));
-    when(v1Service.getMetadata()).thenReturn(new V1ObjectMeta().name("besu"));
-    natManager = new KubernetesNatManager();
+    when(v1Service.getMetadata()).thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_POD_NAME_FILTER));
+    natManager = new KubernetesNatManager(DEFAULT_BESU_POD_NAME_FILTER);
     try {
       natManager.start();
     } catch (Exception ignored) {

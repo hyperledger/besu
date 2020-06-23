@@ -43,7 +43,7 @@ public class ProtocolSpecBuilder {
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
   private BlockHeaderFunctions blockHeaderFunctions;
-  private MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator difficultyCalculator;
   private Function<GasCalculator, EVM> evmBuilder;
   private Function<GasCalculator, TransactionValidator> transactionValidatorBuilder;
@@ -91,7 +91,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionReceiptFactory(
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory) {
+      final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory) {
     this.transactionReceiptFactory = transactionReceiptFactory;
     return this;
   }
@@ -370,7 +370,7 @@ public class ProtocolSpecBuilder {
   public interface BlockProcessorBuilder {
     BlockProcessor apply(
         TransactionProcessor transactionProcessor,
-        MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+        AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,

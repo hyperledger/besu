@@ -35,10 +35,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -74,7 +72,7 @@ public class DebugTraceBlockByNumberTest {
             Optional.of(Gas.of(56)),
             Gas.ZERO,
             2,
-            EnumSet.noneOf(ExceptionalHaltReason.class),
+            Optional.empty(),
             null,
             Wei.ZERO,
             Bytes.EMPTY,

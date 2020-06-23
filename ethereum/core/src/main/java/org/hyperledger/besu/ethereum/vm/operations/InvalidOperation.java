@@ -16,9 +16,12 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+
+import java.util.Optional;
 
 public class InvalidOperation extends AbstractOperation {
 
@@ -28,12 +31,18 @@ public class InvalidOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    return null;
+    return Gas.ZERO;
   }
 
   @Override
   public void execute(final MessageFrame frame) {
     frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-    frame.getExceptionalHaltReasons().add(ExceptionalHaltReason.INVALID_OPERATION);
+    frame.setExceptionalHaltReason(ExceptionalHaltReason.INVALID_OPERATION);
+  }
+
+  @Override
+  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
+      final MessageFrame frame, final EVM evm) {
+    return Optional.of(ExceptionalHaltReason.INVALID_OPERATION);
   }
 }

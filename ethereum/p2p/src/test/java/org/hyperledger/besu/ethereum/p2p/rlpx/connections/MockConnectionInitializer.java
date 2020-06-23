@@ -21,7 +21,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,7 +42,8 @@ public class MockConnectionInitializer implements ConnectionInitializer {
   }
 
   public void completePendingFutures() {
-    for (Entry<Peer, CompletableFuture<PeerConnection>> conn : incompleteConnections.entrySet()) {
+    for (Map.Entry<Peer, CompletableFuture<PeerConnection>> conn :
+        incompleteConnections.entrySet()) {
       conn.getValue().complete(MockPeerConnection.create(conn.getKey()));
     }
     incompleteConnections.clear();

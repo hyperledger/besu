@@ -111,7 +111,7 @@ public final class EthProtocolManagerTest {
     transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
-    assert (blockchainSetupUtil.getMaxBlockNumber() >= 20L);
+    assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
   @Test

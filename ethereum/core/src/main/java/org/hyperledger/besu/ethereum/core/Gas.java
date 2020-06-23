@@ -33,7 +33,7 @@ public final class Gas {
 
   private static final BigInteger MAX_VALUE_BIGINT = BigInteger.valueOf(Long.MAX_VALUE);
 
-  protected Gas(final long value) {
+  Gas(final long value) {
     this.value = value;
   }
 

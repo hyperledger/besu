@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated
 public class PermGetNodesWhitelist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
@@ -52,7 +53,7 @@ public class PermGetNodesWhitelist implements JsonRpcMethod {
         return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), enodeList);
       } else {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+            requestContext.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
       }
     } catch (P2PDisabledException e) {
       return new JsonRpcErrorResponse(

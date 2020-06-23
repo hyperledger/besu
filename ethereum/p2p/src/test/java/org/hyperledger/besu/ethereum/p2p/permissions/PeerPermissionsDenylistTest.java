@@ -29,13 +29,13 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-public class PeerPermissionsBlacklistTest {
+public class PeerPermissionsDenylistTest {
 
   private final Peer localNode = createPeer();
 
   @Test
   public void add_peer() {
-    PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
@@ -54,7 +54,7 @@ public class PeerPermissionsBlacklistTest {
 
   @Test
   public void remove_peer() {
-    PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
     blacklist.add(peer);
 
@@ -74,7 +74,7 @@ public class PeerPermissionsBlacklistTest {
 
   @Test
   public void add_id() {
-    PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
@@ -93,7 +93,7 @@ public class PeerPermissionsBlacklistTest {
 
   @Test
   public void remove_id() {
-    PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
     blacklist.add(peer);
 
@@ -113,7 +113,7 @@ public class PeerPermissionsBlacklistTest {
 
   @Test
   public void trackedPeerIsNotPermitted() {
-    PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
 
     Peer peer = createPeer();
     checkPermissions(blacklist, peer, true);
@@ -127,7 +127,7 @@ public class PeerPermissionsBlacklistTest {
 
   @Test
   public void subscribeUpdate() {
-    PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     final AtomicInteger callbackCount = new AtomicInteger(0);
     final AtomicInteger restrictedCallbackCount = new AtomicInteger(0);
     Peer peer = createPeer();
@@ -167,7 +167,7 @@ public class PeerPermissionsBlacklistTest {
 
   @Test
   public void createWithLimitedCapacity() {
-    final PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create(2);
+    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create(2);
     Peer peerA = createPeer();
     Peer peerB = createPeer();
     Peer peerC = createPeer();
@@ -198,7 +198,7 @@ public class PeerPermissionsBlacklistTest {
   }
 
   private void checkPermissions(
-      final PeerPermissionsBlacklist blacklist,
+      final PeerPermissionsDenylist blacklist,
       final Peer remotePeer,
       final boolean expectedResult) {
     for (Action action : Action.values()) {
@@ -208,7 +208,7 @@ public class PeerPermissionsBlacklistTest {
 
   @Test
   public void createWithUnlimitedCapacity() {
-    final PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     final int peerCount = 200;
     final List<Peer> peers =
         Stream.generate(this::createPeer).limit(peerCount).collect(Collectors.toList());

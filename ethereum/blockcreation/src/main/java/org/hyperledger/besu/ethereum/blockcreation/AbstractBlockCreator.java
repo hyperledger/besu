@@ -34,9 +34,9 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -81,7 +81,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
-  public AbstractBlockCreator(
+  protected AbstractBlockCreator(
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
@@ -207,7 +207,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throws RuntimeException {
     final TransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
-    final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
+    final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
         protocolSpec.getTransactionReceiptFactory();
 
     final BlockTransactionSelector selector =

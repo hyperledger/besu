@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
@@ -67,9 +66,7 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
+      final MessageFrame frame, final EVM evm) {
     return frame.isStatic()
         ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
         : Optional.empty();

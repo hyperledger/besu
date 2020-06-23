@@ -103,7 +103,7 @@ public class JumpSubOperationTest {
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm))
+    assertThat(operation.exceptionalHaltCondition(frame, evm))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 
@@ -118,7 +118,7 @@ public class JumpSubOperationTest {
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
+    assertThat(operation.exceptionalHaltCondition(frame, evm)).isNotPresent();
     operation.execute(frame);
     assertThat(frame.popReturnStackItem()).isEqualTo(CURRENT_PC + 1);
   }
@@ -134,7 +134,7 @@ public class JumpSubOperationTest {
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
+    assertThat(operation.exceptionalHaltCondition(frame, evm)).isNotPresent();
     operation.execute(frame);
     assertThat(frame.popReturnStackItem()).isEqualTo(CURRENT_PC + 1);
   }
@@ -150,7 +150,7 @@ public class JumpSubOperationTest {
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frameDestinationGreaterThanCodeSize, null, null))
+    assertThat(operation.exceptionalHaltCondition(frameDestinationGreaterThanCodeSize, null))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
 
     final MessageFrame frameDestinationEqualsToCodeSize =
@@ -161,7 +161,7 @@ public class JumpSubOperationTest {
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frameDestinationEqualsToCodeSize, null, null))
+    assertThat(operation.exceptionalHaltCondition(frameDestinationEqualsToCodeSize, null))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 
@@ -172,7 +172,7 @@ public class JumpSubOperationTest {
         createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
+    assertThat(operation.exceptionalHaltCondition(frame, null))
         .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 
@@ -189,7 +189,7 @@ public class JumpSubOperationTest {
     IntStream.range(0, 1023).forEach(frame::pushReturnStackItem);
     assertThat(frame.isReturnStackFull()).isTrue();
     assertThat(returnStack.size()).isEqualTo(1023);
-    assertThat(operation.exceptionalHaltCondition(frame, null, null))
+    assertThat(operation.exceptionalHaltCondition(frame, null))
         .contains(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
   }
 }
