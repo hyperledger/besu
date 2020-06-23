@@ -1311,10 +1311,8 @@ public class PeerDiscoveryControllerTest {
     return newPeers;
   }
 
-  private void startPeerDiscoveryController(
-      final DiscoveryPeer... bootstrapPeers) {
-    startPeerDiscoveryController(
-        PeerDiscoveryControllerTest::longDelayFunction, bootstrapPeers);
+  private void startPeerDiscoveryController(final DiscoveryPeer... bootstrapPeers) {
+    startPeerDiscoveryController(PeerDiscoveryControllerTest::longDelayFunction, bootstrapPeers);
   }
 
   private void startPeerDiscoveryController(
