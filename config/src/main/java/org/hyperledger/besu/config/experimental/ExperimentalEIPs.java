@@ -23,6 +23,7 @@ import picocli.CommandLine.Option;
 public class ExperimentalEIPs {
   // To make it easier for tests to reset the value to default
   public static final boolean EIP1559_ENABLED_DEFAULT_VALUE = false;
+  public static final boolean EIP1559_ESCALATOR_ENABLED_DEFAULT_VALUE = false;
 
   @Option(
       hidden = true,
@@ -82,4 +83,12 @@ public class ExperimentalEIPs {
       names = {"--Xeip1559-per-tx-gas-limit"},
       arity = "1")
   public static Long perTxGasLimit = 8000000L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-escalator-enabled"},
+      description =
+          "Enable experimental EIP-1559 fee market change combined with Escalator (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  public static boolean eip1559EscalatorEnabled = EIP1559_ENABLED_DEFAULT_VALUE;
 }

@@ -233,4 +233,24 @@ public interface Transaction {
   default boolean isEIP1559Transaction() {
     return false;
   }
+
+  /**
+   * Returns whether or not the transaction is an escalator transaction.
+   *
+   * @return true if escalator transaction, false otherwise
+   */
+  @Unstable
+  default boolean isEscalatorTransaction() {
+    return false;
+  }
+
+  /**
+   * Returns the type of the transaction.
+   *
+   * @return the type of the transaction
+   */
+  @Unstable
+  default TransactionType getType() {
+    return TransactionType.FRONTIER;
+  }
 }

@@ -282,7 +282,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockBody body = block.getBody();
     final List<Transaction> transactions = body.getTransactions();
     final TransactionPriceCalculator transactionPriceCalculator =
-        TransactionPriceCalculator.eip1559();
+        protocolSchedule
+            .getByBlockNumber(block.getHeader().getNumber())
+            .getTransactionPriceCalculator();
+
     for (final Transaction transaction : transactions) {
       if (!eip1559.isValidGasLimit(transaction)) {
         LOG.warn(

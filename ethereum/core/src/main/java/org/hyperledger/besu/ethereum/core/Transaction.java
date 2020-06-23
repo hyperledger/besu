@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -416,7 +417,12 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               to.orElse(null),
               value,
               payload,
-              chainId);
+              chainId,
+              getType(),
+              escalatorStartPrice,
+              escalatorMaxPrice,
+              escalatorStartBlock,
+              escalatorMaxBlock);
     }
     return hashNoSignature;
   }
@@ -430,23 +436,26 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     out.startList();
 
     out.writeLongScalar(getNonce());
-    final boolean asEIP1559 =
-        ExperimentalEIPs.eip1559Enabled
-            && (gasPrice == null || gasPrice.isZero())
-            && gasPremium != null
-            && feeCap != null;
-    if (asEIP1559) {
-      out.writeNull();
-    } else {
+    final TransactionType type = getType();
+    if (TransactionType.FRONTIER.equals(type)) {
       out.writeUInt256Scalar(getGasPrice());
+    } else {
+      out.writeNull();
     }
     out.writeLongScalar(getGasLimit());
     out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar(getValue());
     out.writeBytes(getPayload());
-    if (ExperimentalEIPs.eip1559Enabled && gasPremium != null && feeCap != null) {
-      out.writeUInt256Scalar(gasPremium);
-      out.writeUInt256Scalar(feeCap);
+    if (ExperimentalEIPs.eip1559Enabled) {
+      if (ExperimentalEIPs.eip1559EscalatorEnabled && type.equals(TransactionType.ESCALATOR)) {
+        out.writeUInt256Scalar(escalatorStartPrice);
+        out.writeLongScalar(escalatorStartBlock);
+        out.writeUInt256Scalar(escalatorMaxPrice);
+        out.writeLongScalar(escalatorMaxBlock);
+      } else if (type.equals(TransactionType.EIP1559)) {
+        out.writeUInt256Scalar(gasPremium);
+        out.writeUInt256Scalar(feeCap);
+      }
     }
     writeSignature(out);
 
@@ -556,6 +565,49 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return getGasPremium().isPresent() && getFeeCap().isPresent();
   }
 
+  /**
+   * Returns whether or not the transaction is an escalator transaction.
+   *
+   * @return true if escalator transaction, false otherwise
+   */
+  @Override
+  public boolean isEscalatorTransaction() {
+    return getEscalatorStartPrice().isPresent()
+        && getEscalatorMaxPrice().isPresent()
+        && getEscalatorStartBlock().isPresent()
+        && getEscalatorMaxBlock().isPresent();
+  }
+
+  @Override
+  public TransactionType getType() {
+    if (isEscalatorTransaction()) {
+      return TransactionType.ESCALATOR;
+    } else if (isEIP1559Transaction()) {
+      return TransactionType.EIP1559;
+    } else {
+      return TransactionType.FRONTIER;
+    }
+  }
+
+  private static TransactionType typeOf(
+      final Wei gasPremium,
+      final Wei feeCap,
+      final Wei escalatorStartPrice,
+      final Wei escalatorMaxPrice,
+      final Long escalatorStartBlock,
+      final Long escalatorMaxBlock) {
+    if (escalatorStartPrice != null
+        && escalatorMaxPrice != null
+        && escalatorStartBlock != null
+        && escalatorMaxBlock != null) {
+      return TransactionType.ESCALATOR;
+    } else if (gasPremium != null && feeCap != null) {
+      return TransactionType.EIP1559;
+    } else {
+      return TransactionType.FRONTIER;
+    }
+  }
+
   private static Bytes32 computeSenderRecoveryHash(
       final long nonce,
       final Wei gasPrice,
@@ -565,20 +617,37 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Address to,
       final Wei value,
       final Bytes payload,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final TransactionType type,
+      final Wei escalatorStartPrice,
+      final Wei escalatorMaxPrice,
+      final Long escalatorStartBlock,
+      final Long escalatorMaxBlock) {
     return keccak256(
         RLP.encode(
             out -> {
               out.startList();
               out.writeLongScalar(nonce);
-              out.writeUInt256Scalar(gasPrice);
+              if (TransactionType.FRONTIER.equals(type)) {
+                out.writeUInt256Scalar(gasPrice);
+              } else {
+                out.writeNull();
+              }
               out.writeLongScalar(gasLimit);
               out.writeBytes(to == null ? Bytes.EMPTY : to);
               out.writeUInt256Scalar(value);
               out.writeBytes(payload);
-              if (ExperimentalEIPs.eip1559Enabled && gasPremium != null && feeCap != null) {
-                out.writeUInt256Scalar(gasPremium);
-                out.writeUInt256Scalar(feeCap);
+              if (ExperimentalEIPs.eip1559Enabled) {
+                if (ExperimentalEIPs.eip1559EscalatorEnabled
+                    && type.equals(TransactionType.ESCALATOR)) {
+                  out.writeUInt256Scalar(escalatorStartPrice);
+                  out.writeLongScalar(escalatorStartBlock);
+                  out.writeUInt256Scalar(escalatorMaxPrice);
+                  out.writeLongScalar(escalatorMaxBlock);
+                } else if (type.equals(TransactionType.EIP1559)) {
+                  out.writeUInt256Scalar(gasPremium);
+                  out.writeUInt256Scalar(feeCap);
+                }
               }
               if (chainId.isPresent()) {
                 out.writeBigIntegerScalar(chainId.get());
@@ -799,7 +868,26 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
       final Bytes32 hash =
           computeSenderRecoveryHash(
-              nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+              nonce,
+              gasPrice,
+              gasPremium,
+              feeCap,
+              gasLimit,
+              to,
+              value,
+              payload,
+              chainId,
+              typeOf(
+                  gasPremium,
+                  feeCap,
+                  escalatorStartPrice,
+                  escalatorMaxPrice,
+                  escalatorStartBlock,
+                  escalatorMaxBlock),
+              escalatorStartPrice,
+              escalatorMaxPrice,
+              escalatorStartBlock,
+              escalatorMaxBlock);
       return SECP256K1.sign(hash, keys);
     }
   }
