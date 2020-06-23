@@ -61,9 +61,9 @@ public interface TransactionRLPEncoder {
       out.writeUInt256Scalar(transaction.getValue());
       out.writeBytes(transaction.getPayload());
       out.writeUInt256Scalar(
-          transaction.getGasPremium().map(Quantity::getValue).map(Wei::of).orElseThrow());
+          transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
       out.writeUInt256Scalar(
-          transaction.getFeeCap().map(Quantity::getValue).map(Wei::of).orElseThrow());
+          transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
       writeSignature(transaction, out);
       out.endList();
     };
@@ -84,10 +84,18 @@ public interface TransactionRLPEncoder {
       out.writeUInt256Scalar(transaction.getValue());
       out.writeBytes(transaction.getPayload());
       out.writeUInt256Scalar(
-          transaction.getEscalatorStartPrice().map(Quantity::getValue).map(Wei::of).orElseThrow());
+          transaction
+              .getEscalatorStartPrice()
+              .map(Quantity::getValue)
+              .map(Wei::ofNumber)
+              .orElseThrow());
       out.writeLongScalar(transaction.getEscalatorStartBlock().orElseThrow());
       out.writeUInt256Scalar(
-          transaction.getEscalatorMaxPrice().map(Quantity::getValue).map(Wei::of).orElseThrow());
+          transaction
+              .getEscalatorMaxPrice()
+              .map(Quantity::getValue)
+              .map(Wei::ofNumber)
+              .orElseThrow());
       out.writeLongScalar(transaction.getEscalatorMaxBlock().orElseThrow());
       writeSignature(transaction, out);
       out.endList();
