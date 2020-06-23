@@ -101,7 +101,7 @@ public class PrivxFindOnChainPrivacyGroupTest {
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privxFindOnChainPrivacyGroup.response(request);
-    assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_ON_CHAIN_PRIVACY_GROUP_ERROR);
+    assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_ONCHAIN_PRIVACY_GROUP_ERROR);
     verify(privacyController).findOnChainPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 
@@ -112,7 +112,7 @@ public class PrivxFindOnChainPrivacyGroupTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.FIND_ON_CHAIN_PRIVACY_GROUP_ERROR);
+            request.getRequest().getId(), JsonRpcError.FIND_ONCHAIN_PRIVACY_GROUP_ERROR);
     final JsonRpcResponse response = privxFindOnChainPrivacyGroup.response(request);
     assertThat(response).isEqualTo(expectedResponse);
     verify(privacyController).findOnChainPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);

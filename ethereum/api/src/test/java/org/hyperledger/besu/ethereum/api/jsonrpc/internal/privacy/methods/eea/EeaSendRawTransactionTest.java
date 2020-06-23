@@ -333,7 +333,7 @@ public class EeaSendRawTransactionTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+            request.getRequest().getId(), JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

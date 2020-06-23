@@ -43,12 +43,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PermRemoveAccountsFromAllowlistTest {
 
-  @Mock private AccountLocalConfigPermissioningController accountWhitelist;
+  @Mock private AccountLocalConfigPermissioningController accountAllowlist;
   private PermRemoveAccountsFromAllowlist method;
 
   @Before
   public void before() {
-    method = new PermRemoveAccountsFromAllowlist(java.util.Optional.of(accountWhitelist));
+    method = new PermRemoveAccountsFromAllowlist(java.util.Optional.of(accountAllowlist));
   }
 
   @Test
@@ -57,10 +57,10 @@ public class PermRemoveAccountsFromAllowlistTest {
   }
 
   @Test
-  public void whenAccountsAreRemovedFromWhitelistShouldReturnSuccess() {
+  public void whenAccountsAreRemovedFromAllowlistShouldReturnSuccess() {
     List<String> accounts = Arrays.asList("0x0", "0x1");
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null);
-    when(accountWhitelist.removeAccounts(eq(accounts)))
+    when(accountAllowlist.removeAccounts(eq(accounts)))
         .thenReturn(AllowlistOperationResult.SUCCESS);
 
     JsonRpcResponse actualResponse = method.response(request(accounts));
@@ -71,8 +71,8 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenAccountIsInvalidShouldReturnInvalidAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
-    when(accountWhitelist.removeAccounts(any()))
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_INVALID_ENTRY);
+    when(accountAllowlist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_INVALID_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
@@ -83,8 +83,8 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenAccountIsAbsentShouldReturnAbsentAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_ABSENT_ENTRY);
-    when(accountWhitelist.removeAccounts(any()))
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_ABSENT_ENTRY);
+    when(accountAllowlist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_ABSENT_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
@@ -95,8 +95,8 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenInputHasDuplicatedAccountsShouldReturnDuplicatedEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
-    when(accountWhitelist.removeAccounts(any()))
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_DUPLICATED_ENTRY);
+    when(accountAllowlist.removeAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
@@ -107,9 +107,9 @@ public class PermRemoveAccountsFromAllowlistTest {
   @Test
   public void whenEmptyListOnRequestShouldReturnEmptyEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_EMPTY_ENTRY);
 
-    when(accountWhitelist.removeAccounts(eq(new ArrayList<>())))
+    when(accountAllowlist.removeAccounts(eq(new ArrayList<>())))
         .thenReturn(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));

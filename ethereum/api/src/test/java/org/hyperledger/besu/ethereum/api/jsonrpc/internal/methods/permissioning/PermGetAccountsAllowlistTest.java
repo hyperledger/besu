@@ -39,12 +39,12 @@ public class PermGetAccountsAllowlistTest {
   private static final JsonRpcRequestContext request =
       new JsonRpcRequestContext(new JsonRpcRequest("2.0", "perm_getAccountsAllowlist", null));
 
-  @Mock private AccountLocalConfigPermissioningController accountWhitelist;
+  @Mock private AccountLocalConfigPermissioningController accountAllowlist;
   private PermGetAccountsAllowlist method;
 
   @Before
   public void before() {
-    method = new PermGetAccountsAllowlist(java.util.Optional.of(accountWhitelist));
+    method = new PermGetAccountsAllowlist(java.util.Optional.of(accountAllowlist));
   }
 
   @Test
@@ -53,9 +53,9 @@ public class PermGetAccountsAllowlistTest {
   }
 
   @Test
-  public void shouldReturnExpectedListOfAccountsWhenWhitelistHasBeenSet() {
+  public void shouldReturnExpectedListOfAccountsWhenAllowlistHasBeenSet() {
     List<String> accountsList = Arrays.asList("0x0", "0x1");
-    when(accountWhitelist.getAccountWhitelist()).thenReturn(accountsList);
+    when(accountAllowlist.getAccountAllowlist()).thenReturn(accountsList);
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, accountsList);
 
     JsonRpcResponse actualResponse = method.response(request);
@@ -64,9 +64,9 @@ public class PermGetAccountsAllowlistTest {
   }
 
   @Test
-  public void shouldReturnEmptyListOfAccountsWhenWhitelistHasBeenSetAndIsEmpty() {
+  public void shouldReturnEmptyListOfAccountsWhenAllowlistHasBeenSetAndIsEmpty() {
     List<String> emptyAccountsList = new ArrayList<>();
-    when(accountWhitelist.getAccountWhitelist()).thenReturn(emptyAccountsList);
+    when(accountAllowlist.getAccountAllowlist()).thenReturn(emptyAccountsList);
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, emptyAccountsList);
 
     JsonRpcResponse actualResponse = method.response(request);

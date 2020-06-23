@@ -70,7 +70,7 @@ public class PermAddAccountsToAllowlistTest {
   @Test
   public void whenAccountIsInvalidShouldReturnInvalidAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_INVALID_ENTRY);
     when(accountWhitelist.addAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_INVALID_ENTRY);
 
@@ -82,7 +82,7 @@ public class PermAddAccountsToAllowlistTest {
   @Test
   public void whenAccountExistsShouldReturnExistingEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_EXISTING_ENTRY);
     when(accountWhitelist.addAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_EXISTING_ENTRY);
 
@@ -94,7 +94,7 @@ public class PermAddAccountsToAllowlistTest {
   @Test
   public void whenInputHasDuplicatedAccountsShouldReturnDuplicatedEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_DUPLICATED_ENTRY);
     when(accountWhitelist.addAccounts(any()))
         .thenReturn(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
 
@@ -106,7 +106,7 @@ public class PermAddAccountsToAllowlistTest {
   @Test
   public void whenEmptyListOnRequestShouldReturnEmptyEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_ALLOWLIST_EMPTY_ENTRY);
 
     when(accountWhitelist.addAccounts(eq(new ArrayList<>())))
         .thenReturn(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
