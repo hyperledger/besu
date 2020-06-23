@@ -97,7 +97,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
                 maybePrivacyGroupId.get(), enclavePublicKey);
         if (maybePrivacyGroup.isEmpty()
             && !privacyController.isGroupAdditionTransaction(privateTransaction)) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
         }
       } else { // !onchainPirvacyGroupEnabled
         if (maybePrivacyGroupId.isPresent()) {

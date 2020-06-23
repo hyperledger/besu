@@ -77,32 +77,32 @@ public enum JsonRpcError {
   PARENT_BLOCK_NOT_FOUND(-32000, "Parent block not found"),
 
   // Permissioning/Account allowlist errors
-  ACCOUNT_WHITELIST_NOT_ENABLED(-32000, "Account allowlisting has not been enabled"),
-  ACCOUNT_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of accounts"),
-  ACCOUNT_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid account"),
-  ACCOUNT_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate accounts"),
-  ACCOUNT_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing account to allowlist"),
-  ACCOUNT_WHITELIST_ABSENT_ENTRY(-32000, "Cannot remove an absent account from allowlist"),
+  ACCOUNT_ALLOWLIST_NOT_ENABLED(-32000, "Account allowlisting has not been enabled"),
+  ACCOUNT_ALLOWLIST_EMPTY_ENTRY(-32000, "Request contains an empty list of accounts"),
+  ACCOUNT_ALLOWLIST_INVALID_ENTRY(-32000, "Request contains an invalid account"),
+  ACCOUNT_ALLOWLIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate accounts"),
+  ACCOUNT_ALLOWLIST_EXISTING_ENTRY(-32000, "Cannot add an existing account to allowlist"),
+  ACCOUNT_ALLOWLIST_ABSENT_ENTRY(-32000, "Cannot remove an absent account from allowlist"),
 
   // Permissioning/Node allowlist errors
-  NODE_WHITELIST_NOT_ENABLED(-32000, "Node allowlisting has not been enabled"),
-  NODE_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of nodes"),
-  NODE_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid node"),
-  NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
-  NODE_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to allowlist"),
-  NODE_WHITELIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from allowlist"),
-  NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED(
+  NODE_ALLOWLIST_NOT_ENABLED(-32000, "Node allowlisting has not been enabled"),
+  NODE_ALLOWLIST_EMPTY_ENTRY(-32000, "Request contains an empty list of nodes"),
+  NODE_ALLOWLIST_INVALID_ENTRY(-32000, "Request contains an invalid node"),
+  NODE_ALLOWLIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
+  NODE_ALLOWLIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to allowlist"),
+  NODE_ALLOWLIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from allowlist"),
+  NODE_ALLOWLIST_FIXED_NODE_CANNOT_BE_REMOVED(
       -32000, "Cannot remove a fixed node (bootnode or static node) from allowlist"),
 
   // Permissioning/persistence errors
-  WHITELIST_PERSIST_FAILURE(
+  ALLOWLIST_PERSIST_FAILURE(
       -32000, "Unable to persist changes to allowlist configuration file. Changes reverted"),
-  WHITELIST_FILE_SYNC(
+  ALLOWLIST_FILE_SYNC(
       -32000,
-      "The permissioning whitelist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
-  WHITELIST_RELOAD_ERROR(
+      "The permissioning allowlist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
+  ALLOWLIST_RELOAD_ERROR(
       -32000,
-      "Error reloading permissions file. Please use perm_getAccountsAllowlist and perm_getNodesAllowlist to review the current state of the whitelists"),
+      "Error reloading permissions file. Please use perm_getAccountsAllowlist and perm_getNodesAllowlist to review the current state of the allowlists"),
   PERMISSIONING_NOT_ENABLED(-32000, "Node/Account allowlisting has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
@@ -116,17 +116,17 @@ public enum JsonRpcError {
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
-  FIND_ON_CHAIN_PRIVACY_GROUP_ERROR(-50100, "Error finding on-chain privacy group"),
+  FIND_ONCHAIN_PRIVACY_GROUP_ERROR(-50100, "Error finding onchain privacy group"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
   OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Offchain Privacy group does not exist."),
-  ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
+  ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
   ONCHAIN_PRIVACY_GROUP_NOT_ENABLED(-50100, "Onchain privacy groups not enabled."),
   OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED(
       -50100, "Offchain privacy group can't be used with Onchain privacy groups enabled."),
   ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE(
-      -50100, "Private transactions to on-chain privacy groups must use privacyGroupId"),
+      -50100, "Private transactions to onchain privacy groups must use privacyGroupId"),
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
