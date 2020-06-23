@@ -108,7 +108,7 @@ public class WebSocketService {
         LOG.trace("Websocket authentication token {}", token);
       }
 
-      if (!hasWhitelistedHostnameHeader(Optional.ofNullable(websocket.headers().get("Host")))) {
+      if (!hasAllowlistedHostnameHeader(Optional.ofNullable(websocket.headers().get("Host")))) {
         websocket.reject(403);
       }
 
@@ -152,7 +152,7 @@ public class WebSocketService {
     final Router router = Router.router(vertx);
 
     // Verify Host header to avoid rebind attack.
-    router.route().handler(checkWhitelistHostHeader());
+    router.route().handler(checkAllowlistHostHeader());
 
     if (authenticationService.isPresent()) {
       router.route("/login").handler(BodyHandler.create());
@@ -231,9 +231,9 @@ public class WebSocketService {
         websocket.headers().get("Authorization"));
   }
 
-  private Handler<RoutingContext> checkWhitelistHostHeader() {
+  private Handler<RoutingContext> checkAllowlistHostHeader() {
     return event -> {
-      if (hasWhitelistedHostnameHeader(Optional.ofNullable(event.request().host()))) {
+      if (hasAllowlistedHostnameHeader(Optional.ofNullable(event.request().host()))) {
         event.next();
       } else {
         final HttpServerResponse response = event.response();
@@ -248,9 +248,9 @@ public class WebSocketService {
   }
 
   @VisibleForTesting
-  public boolean hasWhitelistedHostnameHeader(final Optional<String> header) {
-    return configuration.getHostsWhitelist().contains("*")
-        || header.map(value -> checkHostInWhitelist(validateHostHeader(value))).orElse(false);
+  public boolean hasAllowlistedHostnameHeader(final Optional<String> header) {
+    return configuration.getHostsAllowlist().contains("*")
+        || header.map(value -> checkHostInAllowlist(validateHostHeader(value))).orElse(false);
   }
 
   private Optional<String> validateHostHeader(final String header) {
@@ -265,14 +265,14 @@ public class WebSocketService {
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 
-  private boolean checkHostInWhitelist(final Optional<String> hostHeader) {
+  private boolean checkHostInAllowlist(final Optional<String> hostHeader) {
     return hostHeader
         .map(
             header ->
-                configuration.getHostsWhitelist().stream()
+                configuration.getHostsAllowlist().stream()
                     .anyMatch(
-                        whitelistEntry ->
-                            whitelistEntry.toLowerCase().equals(header.toLowerCase())))
+                        allowlistEntry ->
+                            allowlistEntry.toLowerCase().equals(header.toLowerCase())))
         .orElse(false);
   }
 }

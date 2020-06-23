@@ -182,9 +182,9 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
       verifyConfigurationFileState(peerToEnodeURI(nodesWhitelist));
     } catch (IOException e) {
       revertState(oldWhitelist);
-      return new NodesWhitelistResult(AllowlistOperationResult.ERROR_WHITELIST_PERSIST_FAIL);
+      return new NodesWhitelistResult(AllowlistOperationResult.ERROR_ALLOWLIST_PERSIST_FAIL);
     } catch (AllowlistFileSyncException e) {
-      return new NodesWhitelistResult(AllowlistOperationResult.ERROR_WHITELIST_FILE_SYNC);
+      return new NodesWhitelistResult(AllowlistOperationResult.ERROR_ALLOWLIST_FILE_SYNC);
     }
 
     return new NodesWhitelistResult(AllowlistOperationResult.SUCCESS);

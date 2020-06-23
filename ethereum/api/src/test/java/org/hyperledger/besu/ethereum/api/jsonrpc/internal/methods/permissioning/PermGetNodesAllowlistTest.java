@@ -105,7 +105,7 @@ public class PermGetNodesAllowlistTest {
     final JsonRpcRequestContext request = buildRequest();
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);

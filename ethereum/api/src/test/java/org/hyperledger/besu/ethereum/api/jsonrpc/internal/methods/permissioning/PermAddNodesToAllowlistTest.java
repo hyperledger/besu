@@ -76,7 +76,7 @@ public class PermAddNodesToAllowlistTest {
     final JsonRpcRequestContext request = buildRequest(enodeList);
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_INVALID_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(eq(enodeList)))
         .thenThrow(IllegalArgumentException.class);
@@ -92,7 +92,7 @@ public class PermAddNodesToAllowlistTest {
     final JsonRpcRequestContext request = buildRequest(enodeList);
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_INVALID_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(eq(enodeList)))
         .thenThrow(IllegalArgumentException.class);
@@ -107,7 +107,7 @@ public class PermAddNodesToAllowlistTest {
     final JsonRpcRequestContext request = buildRequest(Lists.emptyList());
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(eq(Lists.emptyList())))
         .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
@@ -122,7 +122,7 @@ public class PermAddNodesToAllowlistTest {
     final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode1));
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_DUPLICATED_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(any()))
         .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY));
@@ -137,7 +137,7 @@ public class PermAddNodesToAllowlistTest {
     final JsonRpcRequestContext request = buildRequest(new ArrayList<>());
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
     when(nodeLocalConfigPermissioningController.addNodes(eq(new ArrayList<>())))
         .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
@@ -187,7 +187,7 @@ public class PermAddNodesToAllowlistTest {
     ;
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
