@@ -81,7 +81,7 @@ public class TransactionPoolReplacementHandlerTest {
   }
 
   private static TransactionPoolReplacementRule constantRule(final boolean returnValue) {
-    return (ot, nt, bf) -> returnValue;
+    return (ot, nt, bf, bn) -> returnValue;
   }
 
   private static List<TransactionPoolReplacementRule> constantRules(
