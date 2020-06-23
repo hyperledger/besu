@@ -82,7 +82,8 @@ public class TransactionPriceCalculatorTest {
                     .gasPremium(gasPremium)
                     .feeCap(feeCap)
                     .build(),
-                baseFee))
+                baseFee,
+                Optional.empty()))
         .isEqualByComparingTo(expectedPrice);
   }
 
