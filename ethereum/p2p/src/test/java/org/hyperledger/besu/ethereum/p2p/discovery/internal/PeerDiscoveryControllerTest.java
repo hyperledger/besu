@@ -606,16 +606,6 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotAddNewPeerWhenReceivedPing() {
-    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
-    startPeerDiscoveryController();
-
-    final Packet pingPacket = mockPingPacket(peers.get(0), localPeer);
-    controller.onMessage(pingPacket, peers.get(0));
-    assertThat(controller.streamDiscoveredPeers()).doesNotContain(peers.get(0));
-  }
-
-  @Test
   public void shouldNotAddSelfWhenReceivedPingFromSelf() {
     startPeerDiscoveryController();
     final DiscoveryPeer localPeer = DiscoveryPeer.fromEnode(this.localPeer.getEnodeURL());

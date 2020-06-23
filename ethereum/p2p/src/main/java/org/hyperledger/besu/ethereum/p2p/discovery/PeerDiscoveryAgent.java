@@ -21,6 +21,7 @@ import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
@@ -188,6 +189,10 @@ public abstract class PeerDiscoveryAgent {
       if (ping != null && ping.getFrom() != null && ping.getFrom().getTcpPort().isPresent()) {
         tcpPort = ping.getFrom().getTcpPort();
       }
+    }
+
+    if (PacketType.PONG.equals(packet.getType())) {
+      tcpPort = sourceEndpoint.getTcpPort();
     }
 
     // Notify the peer controller.
