@@ -35,9 +35,9 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testAccountCannotSendTxWhenNotOnLocalWhiteList() {
-    // OnChain whitelist: Primary, Secondary, C
-    // Local whitelist: Primary, Secondary
+  public void testAccountCannotSendTxWhenNotOnLocalAllowList() {
+    // OnChain allowlist: Primary, Secondary, C
+    // Local allowlist: Primary, Secondary
 
     final Node node =
         permissionedNode(
@@ -51,7 +51,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(accountTransactions.createTransfer(senderC, 10));
     node.verify(senderC.balanceEquals(10));
 
-    // add accounts to onChain Whitelist
+    // add accounts to onChain allowlist
     node.execute(allowAccount(accounts.getPrimaryBenefactor()));
     node.verify(accountIsAllowed(accounts.getPrimaryBenefactor()));
 
@@ -66,9 +66,9 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testAccountCannotSendTxWhenNotOnOnChainWhiteList() {
-    // OnChain Whitelist: Primary, Secondary, Receiver
-    // Local Whitelist: Primary, Secondary, C, Receiver
+  public void testAccountCannotSendTxWhenNotOnOnChainAllowList() {
+    // OnChain allowlist: Primary, Secondary, Receiver
+    // Local allowlist: Primary, Secondary, C, Receiver
 
     final Account receiverAccount = accounts.createAccount("Rec-A");
 
@@ -86,7 +86,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(accountTransactions.createTransfer(senderC, 10));
     node.verify(senderC.balanceEquals(10));
 
-    // add accounts to onChain Whitelist
+    // add accounts to onChain allowlist
     node.execute(allowAccount(accounts.getPrimaryBenefactor()));
     node.verify(accountIsAllowed(accounts.getPrimaryBenefactor()));
 
@@ -96,7 +96,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(allowAccount(receiverAccount));
     node.verify(accountIsAllowed(receiverAccount));
 
-    // verify senderC is forbidden because it is not on OnChain whitelist
+    // verify senderC is forbidden because it is not on OnChain allowlist
     node.verify(accountIsForbidden(senderC));
 
     // sender C should not be able to send Tx as well
