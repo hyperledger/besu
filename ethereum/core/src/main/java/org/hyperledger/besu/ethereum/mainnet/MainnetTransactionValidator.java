@@ -149,7 +149,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     if (!isSenderAllowed(transaction, validationParams)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
-          String.format("Sender %s is not on the Account Whitelist", transaction.getSender()));
+          String.format("Sender %s is not on the Account Allowlist", transaction.getSender()));
     }
 
     return ValidationResult.valid();

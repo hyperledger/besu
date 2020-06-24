@@ -516,7 +516,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldAllowTransactionWhenAccountWhitelistControllerIsNotPresent() {
+  public void shouldAllowTransactionWhenAccountAllowlistControllerIsNotPresent() {
     givenTransactionIsValid(transaction1);
 
     assertThat(transactionPool.addLocalTransaction(transaction1)).isEqualTo(valid());
