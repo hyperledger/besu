@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.logging;
 import org.hyperledger.besu.cli.BesuCommand;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -28,6 +29,7 @@ import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
 public class XmlExtensionConfiguration extends XmlConfiguration {
+
   public XmlExtensionConfiguration(
       final LoggerContext loggerContext, final ConfigurationSource configSource) {
     super(loggerContext, configSource);
@@ -74,6 +76,10 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
   private final String SEP = dim(" | ");
 
   private void createConsoleAppender() {
+    if (customLog4jConfigFilePresent()) {
+      return;
+    }
+
     final PatternLayout patternLayout =
         PatternLayout.newBuilder()
             .withConfiguration(this)
@@ -92,5 +98,15 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
     consoleAppender.start();
     this.getRootLogger().addAppender(consoleAppender, null, null);
+  }
+
+  private boolean customLog4jConfigFilePresent() {
+    return Stream.of("LOG4J_CONFIGURATION_FILE", "log4j.configurationFile")
+        .flatMap(
+            configFileKey ->
+                Stream.of(System.getenv(configFileKey), System.getProperty(configFileKey)))
+        .flatMap(Stream::ofNullable)
+        .findFirst()
+        .isPresent();
   }
 }
