@@ -20,12 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class NodeWhitelistUpdatedEvent {
+public class NodeAllowlistUpdatedEvent {
 
   private final List<EnodeURL> addedNodes;
   private final List<EnodeURL> removedNodes;
 
-  public NodeWhitelistUpdatedEvent(
+  public NodeAllowlistUpdatedEvent(
       final List<EnodeURL> addedNodes, final List<EnodeURL> removedNodes) {
     this.addedNodes = addedNodes != null ? addedNodes : Collections.emptyList();
     this.removedNodes = removedNodes != null ? removedNodes : Collections.emptyList();
@@ -47,7 +47,7 @@ public class NodeWhitelistUpdatedEvent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NodeWhitelistUpdatedEvent that = (NodeWhitelistUpdatedEvent) o;
+    NodeAllowlistUpdatedEvent that = (NodeAllowlistUpdatedEvent) o;
     return Objects.equals(addedNodes, that.addedNodes)
         && Objects.equals(removedNodes, that.removedNodes);
   }

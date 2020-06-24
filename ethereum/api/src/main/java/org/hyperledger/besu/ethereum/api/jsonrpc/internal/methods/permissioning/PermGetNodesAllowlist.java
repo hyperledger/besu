@@ -47,7 +47,7 @@ public class PermGetNodesAllowlist implements JsonRpcMethod {
     try {
       if (nodeWhitelistPermissioningController.isPresent()) {
         final List<String> enodeList =
-            nodeWhitelistPermissioningController.get().getNodesWhitelist();
+            nodeWhitelistPermissioningController.get().getNodesAllowlist();
 
         return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), enodeList);
       } else {

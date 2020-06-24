@@ -34,7 +34,7 @@ public class GraphQLConfiguration {
   private int port;
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
-  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   public static GraphQLConfiguration createDefault() {
@@ -81,13 +81,13 @@ public class GraphQLConfiguration {
     this.corsAllowedDomains = corsAllowedDomains;
   }
 
-  Collection<String> getHostsWhitelist() {
-    return Collections.unmodifiableCollection(this.hostsWhitelist);
+  Collection<String> getHostsAllowlist() {
+    return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
-  public void setHostsAllowlist(final List<String> hostsWhitelist) {
-    checkNotNull(hostsWhitelist);
-    this.hostsWhitelist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsAllowlist) {
+    checkNotNull(hostsAllowlist);
+    this.hostsAllowlist = hostsAllowlist;
   }
 
   public Long getHttpTimeoutSec() {
@@ -105,7 +105,7 @@ public class GraphQLConfiguration {
         .add("port", port)
         .add("host", host)
         .add("corsAllowedDomains", corsAllowedDomains)
-        .add("hostsWhitelist", hostsWhitelist)
+        .add("hostsAllowlist", hostsAllowlist)
         .add("httpTimeoutSec", httpTimeoutSec)
         .toString();
   }
@@ -123,11 +123,11 @@ public class GraphQLConfiguration {
         && port == that.port
         && Objects.equals(host, that.host)
         && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
-        && Objects.equals(hostsWhitelist, that.hostsWhitelist);
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsWhitelist);
+    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsAllowlist);
   }
 }

@@ -108,7 +108,7 @@ public class WebSocketService {
         LOG.trace("Websocket authentication token {}", token);
       }
 
-      if (!hasAllowlistedHostnameHeader(Optional.ofNullable(websocket.headers().get("Host")))) {
+      if (!hasAllowedHostnameHeader(Optional.ofNullable(websocket.headers().get("Host")))) {
         websocket.reject(403);
       }
 
@@ -233,7 +233,7 @@ public class WebSocketService {
 
   private Handler<RoutingContext> checkAllowlistHostHeader() {
     return event -> {
-      if (hasAllowlistedHostnameHeader(Optional.ofNullable(event.request().host()))) {
+      if (hasAllowedHostnameHeader(Optional.ofNullable(event.request().host()))) {
         event.next();
       } else {
         final HttpServerResponse response = event.response();
@@ -248,7 +248,7 @@ public class WebSocketService {
   }
 
   @VisibleForTesting
-  public boolean hasAllowlistedHostnameHeader(final Optional<String> header) {
+  public boolean hasAllowedHostnameHeader(final Optional<String> header) {
     return configuration.getHostsAllowlist().contains("*")
         || header.map(value -> checkHostInAllowlist(validateHostHeader(value))).orElse(false);
   }
