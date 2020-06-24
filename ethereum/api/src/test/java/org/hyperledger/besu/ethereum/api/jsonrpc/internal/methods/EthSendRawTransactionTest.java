@@ -170,6 +170,12 @@ public class EthSendRawTransactionTest {
         TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, JsonRpcError.TX_SENDER_NOT_AUTHORIZED);
   }
 
+  @Test
+  public void transactionWithFeeCapExceededIsRejected() {
+    verifyErrorForInvalidTransaction(
+        TransactionInvalidReason.TX_FEECAP_EXCEEDED, JsonRpcError.TX_FEECAP_EXCEEDED);
+  }
+
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
     when(transactionPool.addLocalTransaction(any(Transaction.class)))

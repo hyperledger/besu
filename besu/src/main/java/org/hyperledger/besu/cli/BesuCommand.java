@@ -770,6 +770,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
+      names = {"--rpc-tx-feecap"},
+      description =
+          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
+
+  @Option(
       names = {"--min-block-occupancy-ratio"},
       description = "Minimum occupancy ratio for  a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
@@ -1938,6 +1945,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(priceBump)
+        .txFeeCap(txFeeCap)
         .build();
   }
 

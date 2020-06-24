@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Objects;
@@ -24,25 +25,31 @@ public class TransactionPoolConfiguration {
   public static final int MAX_PENDING_TRANSACTIONS_HASHES = 4096;
   public static final int DEFAULT_TX_RETENTION_HOURS = 13;
   public static final Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
+  public static final Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
+  public static final TransactionPoolConfiguration DEFAULT =
+      TransactionPoolConfiguration.builder().build();
 
   private final int txPoolMaxSize;
   private final int pooledTransactionHashesSize;
   private final int pendingTxRetentionPeriod;
   private final int txMessageKeepAliveSeconds;
-
   private final Percentage priceBump;
+
+  private final Wei txFeeCap;
 
   public TransactionPoolConfiguration(
       final int txPoolMaxSize,
       final int pooledTransactionHashesSize,
       final int pendingTxRetentionPeriod,
       final int txMessageKeepAliveSeconds,
-      final Percentage priceBump) {
+      final Percentage priceBump,
+      final Wei txFeeCap) {
     this.txPoolMaxSize = txPoolMaxSize;
     this.pooledTransactionHashesSize = pooledTransactionHashesSize;
     this.pendingTxRetentionPeriod = pendingTxRetentionPeriod;
     this.txMessageKeepAliveSeconds = txMessageKeepAliveSeconds;
     this.priceBump = priceBump;
+    this.txFeeCap = txFeeCap;
   }
 
   public int getTxPoolMaxSize() {
@@ -65,6 +72,10 @@ public class TransactionPoolConfiguration {
     return priceBump;
   }
 
+  public Wei getTxFeeCap() {
+    return txFeeCap;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -77,13 +88,14 @@ public class TransactionPoolConfiguration {
     return txPoolMaxSize == that.txPoolMaxSize
         && Objects.equals(pendingTxRetentionPeriod, that.pendingTxRetentionPeriod)
         && Objects.equals(txMessageKeepAliveSeconds, that.txMessageKeepAliveSeconds)
-        && Objects.equals(priceBump, that.priceBump);
+        && Objects.equals(priceBump, that.priceBump)
+        && Objects.equals(txFeeCap, that.txFeeCap);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        txPoolMaxSize, pendingTxRetentionPeriod, txMessageKeepAliveSeconds, priceBump);
+        txPoolMaxSize, pendingTxRetentionPeriod, txMessageKeepAliveSeconds, priceBump, txFeeCap);
   }
 
   @Override
@@ -97,6 +109,8 @@ public class TransactionPoolConfiguration {
         + txMessageKeepAliveSeconds
         + ", priceBump="
         + priceBump
+        + ", txFeeCap="
+        + txFeeCap
         + '}';
   }
 
@@ -110,6 +124,7 @@ public class TransactionPoolConfiguration {
     private Integer txMessageKeepAliveSeconds = DEFAULT_TX_MSG_KEEP_ALIVE;
     private int pooledTransactionHashesSize = MAX_PENDING_TRANSACTIONS_HASHES;
     private Percentage priceBump = DEFAULT_PRICE_BUMP;
+    private Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
 
     public Builder txPoolMaxSize(final int txPoolMaxSize) {
       this.txPoolMaxSize = txPoolMaxSize;
@@ -140,13 +155,19 @@ public class TransactionPoolConfiguration {
       return priceBump(Percentage.fromInt(priceBump));
     }
 
+    public Builder txFeeCap(final Wei txFeeCap) {
+      this.txFeeCap = txFeeCap;
+      return this;
+    }
+
     public TransactionPoolConfiguration build() {
       return new TransactionPoolConfiguration(
           txPoolMaxSize,
           pooledTransactionHashesSize,
           pendingTxRetentionPeriod,
           txMessageKeepAliveSeconds,
-          priceBump);
+          priceBump,
+          txFeeCap);
     }
   }
 }

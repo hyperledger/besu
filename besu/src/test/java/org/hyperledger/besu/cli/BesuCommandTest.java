@@ -3171,6 +3171,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void transactionPoolTxFeeCap() {
+    final Wei txFeeCap = Wei.fromEth(2);
+    parseCommand("--rpc-tx-feecap", txFeeCap.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void invalidTansactionPoolTxFeeCapShouldFail() {
+    parseCommand("--rpc-tx-feecap", "abcd");
+    assertThat(commandErrorOutput.toString())
+        .contains("Invalid value for option '--rpc-tx-feecap'", "cannot convert 'abcd' to Wei");
+  }
+
+  @Test
   public void txMessageKeepAliveSecondsWithInvalidInputShouldFail() {
     parseCommand("--Xincoming-tx-messages-keep-alive-seconds", "acbd");
 
