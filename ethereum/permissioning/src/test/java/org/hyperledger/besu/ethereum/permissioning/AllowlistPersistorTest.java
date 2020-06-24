@@ -36,14 +36,14 @@ public class AllowlistPersistorTest {
 
   private AllowlistPersistor allowlistPersistor;
   private File tempFile;
-  private final String accountsWhitelist =
+  private final String accountsAllowlist =
       String.format("%s=[%s]", ALLOWLIST_TYPE.ACCOUNTS.getTomlKey(), "\"account1\",\"account2\"");
-  private final String nodesWhitelist =
+  private final String nodesAllowlist =
       String.format("%s=[%s]", ALLOWLIST_TYPE.NODES.getTomlKey(), "\"node1\",\"node2\"");
 
   @Before
   public void setUp() throws IOException {
-    List<String> lines = Lists.newArrayList(nodesWhitelist, accountsWhitelist);
+    List<String> lines = Lists.newArrayList(nodesAllowlist, accountsAllowlist);
     tempFile = File.createTempFile("test", "test");
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), lines, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
@@ -66,7 +66,7 @@ public class AllowlistPersistorTest {
   @Test
   public void lineShouldBeAdded() throws IOException {
     final ALLOWLIST_TYPE key = ALLOWLIST_TYPE.NODES;
-    final Set<String> updatedWhitelist = Collections.singleton("node5");
+    final Set<String> updatedAllowlist = Collections.singleton("node5");
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKey(key)).isTrue();
@@ -76,7 +76,7 @@ public class AllowlistPersistorTest {
     assertThat(countLines()).isEqualTo(1);
     assertThat(hasKey(key)).isFalse();
 
-    allowlistPersistor.addNewConfigItem(key, updatedWhitelist);
+    allowlistPersistor.addNewConfigItem(key, updatedAllowlist);
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKey(key)).isTrue();
@@ -88,13 +88,13 @@ public class AllowlistPersistorTest {
     String newValue = "node5";
 
     assertThat(countLines()).isEqualTo(2);
-    assertThat(hasKeyAndExactLineContent(key, nodesWhitelist)).isTrue();
+    assertThat(hasKeyAndExactLineContent(key, nodesAllowlist)).isTrue();
 
     allowlistPersistor.updateConfig(key, Collections.singleton(newValue));
 
     assertThat(countLines()).isEqualTo(2);
     assertThat(hasKeyAndContainsValue(key, newValue)).isTrue();
-    assertThat(hasKeyAndExactLineContent(key, nodesWhitelist)).isFalse();
+    assertThat(hasKeyAndExactLineContent(key, nodesAllowlist)).isFalse();
   }
 
   @Test

@@ -40,7 +40,7 @@ public class LocalPermissioningConfigurationTest {
   }
 
   @Test
-  public void setNodeWhitelist() {
+  public void setNodeAllowlist() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
     configuration.setNodeAllowlist(Arrays.asList(nodes));
@@ -49,7 +49,7 @@ public class LocalPermissioningConfigurationTest {
   }
 
   @Test
-  public void setNodeWhiteListPassingNull() {
+  public void setNodeAllowListPassingNull() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
     configuration.setNodeAllowlist(null);
@@ -58,7 +58,7 @@ public class LocalPermissioningConfigurationTest {
   }
 
   @Test
-  public void setAccountWhitelist() {
+  public void setAccountAllowlist() {
     final String[] accounts = {"1111111111111111", "2222222222222222", "ffffffffffffffff"};
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
@@ -68,7 +68,7 @@ public class LocalPermissioningConfigurationTest {
   }
 
   @Test
-  public void setAccountWhiteListPassingNull() {
+  public void setAccountAllowListPassingNull() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
     configuration.setAccountAllowlist(null);

@@ -37,7 +37,7 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodeCannotConnectWhnAllowlistedOnChainButNotLocal() {
+  public void testNodeCannotConnectWhenAllowedOnChainButNotLocally() {
 
     // add permissioned node after cluster start because we need enode URI for local config
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode);
@@ -60,7 +60,7 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodeCannotConnectWhenAllowlistedLocalButNotOnChain() {
+  public void testNodeCannotConnectWhenAllowedLocallyButNotOnChain() {
     // onchain allowlist: A, B
     // local allowlist: A, B, C
 
@@ -82,7 +82,7 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodesCanConnectWhenAllowlistedBothOnChainAndLocal() {
+  public void testNodesCanConnectWhenAllowedBothOnChainAndLocally() {
     // add permissioned node after cluster start because we need enode URI for local config
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode, forbiddenNode);
     permissionedCluster.addNode(permissionedNode);

@@ -72,14 +72,14 @@ public class PermGetNodesWhitelistTest {
         new JsonRpcSuccessResponse(
             request.getRequest().getId(), Lists.newArrayList(enode1, enode2, enode3));
 
-    when(nodeLocalConfigPermissioningController.getNodesWhitelist())
+    when(nodeLocalConfigPermissioningController.getNodesAllowlist())
         .thenReturn(buildNodesList(enode1, enode2, enode3));
 
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
 
-    verify(nodeLocalConfigPermissioningController, times(1)).getNodesWhitelist();
+    verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
   }
 
@@ -89,13 +89,13 @@ public class PermGetNodesWhitelistTest {
     final JsonRpcResponse expected =
         new JsonRpcSuccessResponse(request.getRequest().getId(), Lists.emptyList());
 
-    when(nodeLocalConfigPermissioningController.getNodesWhitelist()).thenReturn(buildNodesList());
+    when(nodeLocalConfigPermissioningController.getNodesAllowlist()).thenReturn(buildNodesList());
 
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
 
-    verify(nodeLocalConfigPermissioningController, times(1)).getNodesWhitelist();
+    verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
   }
 
