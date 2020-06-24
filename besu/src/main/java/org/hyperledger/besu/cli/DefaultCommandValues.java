@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 
@@ -44,6 +45,8 @@ public interface DefaultCommandValues {
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
   Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+  Wei DEFAULT_RPC_TX_FEE_CAP = TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP;
+
   Double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
   Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
   long DEFAULT_MAX_REFRESH_DELAY = 3600000;

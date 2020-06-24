@@ -47,6 +47,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
       case GAS_PRICE_TOO_LOW:
         return JsonRpcError.GAS_PRICE_TOO_LOW;
+      case TX_FEECAP_EXCEEDED:
+        return JsonRpcError.TX_FEECAP_EXCEEDED;
       case OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST:
         return JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
       case TRANSACTION_ALREADY_KNOWN:
