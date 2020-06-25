@@ -48,7 +48,7 @@ public class TomlUserTest {
   }
 
   @Test
-  public void createsPrincipleWithOnlyRequiredValues() {
+  public void createsPrincipalWithOnlyRequiredValues() {
     final TomlUser tomlUser =
         new TomlUser("user", "password", list(), list(), list(), Optional.empty());
 

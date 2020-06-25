@@ -110,7 +110,8 @@ public class IbftBlockCreatorTest {
             parentGasLimit -> parentGasLimit,
             Wei.ZERO,
             0.8,
-            parentHeader);
+            parentHeader,
+            initialValidatorList.get(0));
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
