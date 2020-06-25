@@ -98,7 +98,7 @@ public class BlockPropagationManagerTest {
             blockchain,
             blockchainUtil.getWorldArchive(),
             blockchainUtil.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockBroadcaster = mock(BlockBroadcaster.class);

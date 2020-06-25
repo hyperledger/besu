@@ -64,7 +64,7 @@ public class DownloadReceiptsStepTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
     downloadReceiptsStep =
         new DownloadReceiptsStep(ethProtocolManager.ethContext(), new NoOpMetricsSystem());
   }

@@ -75,7 +75,7 @@ public class CheckpointHeaderFetcherTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
     responder =
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool);

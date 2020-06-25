@@ -74,7 +74,7 @@ public class PivotBlockRetrieverTest {
             timeout::get,
             blockchainSetupUtil.getWorldArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
 
     pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
   }

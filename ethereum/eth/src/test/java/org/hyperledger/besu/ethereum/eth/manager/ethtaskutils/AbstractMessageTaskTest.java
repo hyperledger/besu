@@ -106,7 +106,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             ethScheduler,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
+            EthProtocolConfiguration.builder().build(),
             ethPeers,
             ethMessages,
             ethContext);

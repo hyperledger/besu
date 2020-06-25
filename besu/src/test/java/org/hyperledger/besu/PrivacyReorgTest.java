@@ -161,7 +161,7 @@ public class PrivacyReorgTest {
         new BesuController.Builder()
             .fromGenesisConfig(GenesisConfigFile.development())
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.builder().build())
             .storageProvider(new InMemoryStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())

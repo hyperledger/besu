@@ -414,7 +414,7 @@ public abstract class JsonBlockImporterTest {
     return new BesuController.Builder()
         .fromGenesisConfig(genesisConfigFile)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .ethProtocolConfiguration(EthProtocolConfiguration.builder().build())
         .storageProvider(new InMemoryStorageProvider())
         .networkId(BigInteger.valueOf(10))
         .miningParameters(

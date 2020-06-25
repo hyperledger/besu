@@ -81,7 +81,7 @@ public final class RlpBlockExporterTest {
     return new BesuController.Builder()
         .fromGenesisConfig(GenesisConfigFile.mainnet())
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .ethProtocolConfiguration(EthProtocolConfiguration.builder().build())
         .storageProvider(new InMemoryStorageProvider())
         .networkId(BigInteger.ONE)
         .miningParameters(new MiningParametersTestBuilder().enabled(false).build())

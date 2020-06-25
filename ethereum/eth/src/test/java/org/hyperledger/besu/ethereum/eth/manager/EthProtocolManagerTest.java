@@ -122,7 +122,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
@@ -139,7 +139,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer =
@@ -157,7 +157,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer =
@@ -186,7 +186,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer =
@@ -215,7 +215,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       final MessageData messageData =
           GetBlockBodiesMessage.create(Collections.singletonList(gen.hash()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
@@ -236,7 +236,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       final long startBlock = 5L;
       final int blockCount = 5;
       final MessageData messageData =
@@ -309,7 +309,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
 
       final long endBlock = 10L;
       final int blockCount = 5;
@@ -345,7 +345,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
 
       final long startBlock = 5L;
       final int blockCount = 5;
@@ -384,7 +384,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
 
       final long endBlock = 10L;
       final int blockCount = 5;
@@ -444,7 +444,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
 
       final long startBlock = blockchain.getChainHeadBlockNumber() - 1L;
       final int blockCount = 5;
@@ -481,7 +481,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
 
       final long startBlock = blockchain.getChainHeadBlockNumber() + 1;
       final int blockCount = 5;
@@ -515,7 +515,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
 
       // Setup blocks query
       final long startBlock = blockchain.getChainHeadBlockNumber() - 5;
@@ -613,7 +613,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       // Setup blocks query
       final long expectedBlockNumber = blockchain.getChainHeadBlockNumber() - 1;
       final BlockHeader header = blockchain.getBlockHeader(expectedBlockNumber).get();
@@ -655,7 +655,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       // Setup blocks query
       final long startBlock = blockchain.getChainHeadBlockNumber() - 5;
       final int blockCount = 2;
@@ -750,7 +750,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       // Setup blocks query
       final long blockNumber = blockchain.getChainHeadBlockNumber() - 5;
       final BlockHeader header = blockchain.getBlockHeader(blockNumber).get();
@@ -794,7 +794,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       // Setup node data query
 
       final List<Bytes> expectedResults = new ArrayList<>();
@@ -841,7 +841,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       // Define handler to validate response
       final PeerSendHandler onSend = mock(PeerSendHandler.class);
       final List<PeerConnection> peers = Lists.newArrayList();
@@ -911,7 +911,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
 
       final long startBlock = 1L;
       final int requestedBlockCount = 13;
@@ -976,7 +976,7 @@ public final class EthProtocolManagerTest {
             ethScheduler,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.builder().build())) {
       // Create a transaction pool.  This has a side effect of registering a listener for the
       // transactions message.
       TransactionPoolFactory.createTransactionPool(

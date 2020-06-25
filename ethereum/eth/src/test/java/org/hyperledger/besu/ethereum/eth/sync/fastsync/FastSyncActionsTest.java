@@ -71,7 +71,7 @@ public class FastSyncActionsTest {
             () -> timeoutCount.getAndDecrement() > 0,
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
     fastSyncActions = createFastSyncActions(syncConfig);
   }
 

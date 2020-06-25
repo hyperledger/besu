@@ -146,7 +146,7 @@ public class TestNode implements Closeable {
             BigInteger.ONE,
             worldStateArchive,
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
+            EthProtocolConfiguration.builder().build(),
             ethPeers,
             ethMessages,
             ethContext,

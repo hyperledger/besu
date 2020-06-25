@@ -61,7 +61,7 @@ public class FullSyncDownloaderTest {
             new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
             localBlockchainSetup.getWorldArchive(),
             localBlockchainSetup.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }

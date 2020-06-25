@@ -137,7 +137,7 @@ public class EthProtocolManagerTestUtil {
         ethScheduler,
         BlockchainSetupUtil.forTesting().getWorldArchive(),
         mock(TransactionPool.class),
-        EthProtocolConfiguration.defaultConfig(),
+        EthProtocolConfiguration.builder().build(),
         peers,
         messages,
         new EthContext(peers, messages, ethScheduler));

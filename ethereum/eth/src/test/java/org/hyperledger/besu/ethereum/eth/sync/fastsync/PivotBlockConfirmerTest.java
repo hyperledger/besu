@@ -71,7 +71,7 @@ public class PivotBlockConfirmerTest {
             timeout::get,
             blockchainSetupUtil.getWorldArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
   }
 

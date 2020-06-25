@@ -70,7 +70,7 @@ public class FullSyncTargetManagerTest {
             new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
             localWorldState,
             localBlockchainSetup.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.builder().build());
     final EthContext ethContext = ethProtocolManager.ethContext();
     localBlockchainSetup.importFirstBlocks(5);
     otherBlockchainSetup.importFirstBlocks(20);
