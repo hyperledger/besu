@@ -121,6 +121,12 @@ public class MetricsConfiguration {
     return prometheusJob;
   }
 
+  // use getHostsAllowlist instead
+  @Deprecated
+  Collection<String> getHostsWhitelist() {
+    return Collections.unmodifiableCollection(this.hostsAllowlist);
+  }
+
   Collection<String> getHostsAllowlist() {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
@@ -238,6 +244,13 @@ public class MetricsConfiguration {
 
     public Builder prometheusJob(final String prometheusJob) {
       this.prometheusJob = prometheusJob;
+      return this;
+    }
+
+    // use hostsAllowlist instead
+    @Deprecated
+    public Builder hostsWhitelist(final List<String> hostsAllowlist) {
+      this.hostsAllowlist = hostsAllowlist;
       return this;
     }
 
