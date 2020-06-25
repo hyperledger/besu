@@ -298,13 +298,13 @@ public class PeerDiscoveryController {
     // Load the peer from the table, or use the instance that comes in.
     final Optional<DiscoveryPeer> maybeKnownPeer =
         peerTable.get(sender).filter(known -> known.discoveryEndpointMatches(sender));
-    DiscoveryPeer peer1 = maybeKnownPeer.orElse(sender);
+    DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
     final boolean peerKnown = maybeKnownPeer.isPresent();
     if (!peerKnown && bondingPeers.containsKey(sender.getId())) {
-      peer1 = bondingPeers.get(sender.getId());
+      peer = bondingPeers.get(sender.getId());
     }
 
-    final DiscoveryPeer peer = peer1;
+    final DiscoveryPeer finalPeer = peer;
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
@@ -323,8 +323,8 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  addToPeerTable(peer);
-                  recursivePeerRefreshState.onBondingComplete(peer);
+                  addToPeerTable(finalPeer);
+                  recursivePeerRefreshState.onBondingComplete(finalPeer);
                 });
         break;
       case NEIGHBORS:
@@ -332,7 +332,7 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction ->
                     recursivePeerRefreshState.onNeighboursReceived(
-                        peer, getPeersFromNeighborsPacket(packet)));
+                        finalPeer, getPeersFromNeighborsPacket(packet)));
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
@@ -478,7 +478,7 @@ public class PeerDiscoveryController {
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState peerInteractionState =
-        new PeerInteractionState(action, peer.getId(), PacketType.PONG, (packet) -> false, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.PONG, packet -> false, true);
     dispatchInteraction(peer, peerInteractionState);
   }
 
@@ -519,7 +519,7 @@ public class PeerDiscoveryController {
    */
   private void findNodes(final DiscoveryPeer peer, final Bytes target) {
     final Consumer<PeerInteractionState> action =
-        (interaction) -> {
+        interaction -> {
           final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
