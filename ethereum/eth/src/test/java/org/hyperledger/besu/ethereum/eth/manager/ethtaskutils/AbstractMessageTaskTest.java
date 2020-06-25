@@ -50,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @param <T> The type of data being requested from the network
@@ -62,6 +63,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   protected static MetricsSystem metricsSystem = new NoOpMetricsSystem();
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
+  protected EthPeers ethPeers;
   protected TransactionPool transactionPool;
   protected AtomicBoolean peersDoTimeout;
   protected AtomicInteger peerCountToTimeout;
@@ -81,7 +83,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+    ethPeers = Mockito.spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(
