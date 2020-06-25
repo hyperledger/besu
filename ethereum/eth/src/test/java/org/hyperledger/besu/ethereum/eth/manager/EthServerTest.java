@@ -55,7 +55,14 @@ public class EthServerTest {
         worldStateArchive,
         transactionPool,
         ethMessages,
-        new EthProtocolConfiguration(2, 2, 2, 2, 2, true));
+        EthProtocolConfiguration.builder()
+            .maxGetBlockBodies(2)
+            .maxGetBlockHeaders(2)
+            .maxGetNodeData(2)
+            .maxGetPooledTransactions(2)
+            .maxGetReceipts(2)
+            .eth65Enabled(true)
+            .build());
   }
 
   @Test

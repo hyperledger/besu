@@ -110,7 +110,14 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, true),
+            EthProtocolConfiguration.builder()
+                .maxGetBlockBodies(5)
+                .maxGetBlockHeaders(5)
+                .maxGetNodeData(5)
+                .maxGetPooledTransactions(5)
+                .maxGetReceipts(5)
+                .eth65Enabled(true)
+                .build(),
             ethPeers,
             mock(EthMessages.class),
             ethContext,
@@ -193,7 +200,14 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, true),
+            EthProtocolConfiguration.builder()
+                .maxGetBlockBodies(5)
+                .maxGetBlockHeaders(5)
+                .maxGetNodeData(5)
+                .maxGetPooledTransactions(5)
+                .maxGetReceipts(5)
+                .eth65Enabled(true)
+                .build(),
             ethPeers,
             mock(EthMessages.class),
             ethContext,

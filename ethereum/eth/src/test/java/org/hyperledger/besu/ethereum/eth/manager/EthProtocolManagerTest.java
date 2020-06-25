@@ -273,7 +273,14 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            EthProtocolConfiguration.builder()
+                .maxGetBlockBodies(limit)
+                .maxGetBlockHeaders(limit)
+                .maxGetNodeData(limit)
+                .maxGetPooledTransactions(limit)
+                .maxGetReceipts(limit)
+                .eth65Enabled(true)
+                .build())) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -565,7 +572,14 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            EthProtocolConfiguration.builder()
+                .maxGetBlockBodies(limit)
+                .maxGetBlockHeaders(limit)
+                .maxGetNodeData(limit)
+                .maxGetPooledTransactions(limit)
+                .maxGetReceipts(limit)
+                .eth65Enabled(true)
+                .build())) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -703,7 +717,14 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            EthProtocolConfiguration.builder()
+                .maxGetBlockBodies(limit)
+                .maxGetBlockHeaders(limit)
+                .maxGetNodeData(limit)
+                .maxGetPooledTransactions(limit)
+                .maxGetReceipts(limit)
+                .eth65Enabled(true)
+                .build())) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
