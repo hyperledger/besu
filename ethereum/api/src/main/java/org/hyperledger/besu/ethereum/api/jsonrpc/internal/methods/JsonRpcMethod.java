@@ -23,7 +23,7 @@ import java.util.List;
 public interface JsonRpcMethod {
 
   /**
-   * Standardised JSON-RPC method name.
+   * Standardized JSON-RPC method name.
    *
    * @return identification of the JSON-RPC method.
    */
@@ -38,7 +38,9 @@ public interface JsonRpcMethod {
   JsonRpcResponse response(JsonRpcRequestContext request);
 
   /**
-   * The list of Permissions that correspond to this JSON-RPC method. e.g. [*:*, net:*, net:listening]
+   * The list of Permissions that correspond to this JSON-RPC method.
+   *
+   * <p>e.g. [*:*, net:*, net:listening]
    *
    * @return list of permissions that match this method.
    */
