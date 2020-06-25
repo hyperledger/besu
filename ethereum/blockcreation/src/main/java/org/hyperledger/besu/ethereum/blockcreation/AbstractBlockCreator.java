@@ -257,12 +257,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final long gasLimit;
-    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
-      gasLimit = protocolSpec.getEip1559().orElseThrow().eip1559GasPool(newBlockNumber);
-    } else {
-      gasLimit = gasLimitCalculator.apply(parentHeader.getGasLimit());
-    }
+    final long gasLimit = gasLimitCalculator.apply(parentHeader.getGasLimit());
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);

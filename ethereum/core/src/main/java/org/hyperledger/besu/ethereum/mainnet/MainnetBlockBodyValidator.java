@@ -112,7 +112,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validatePerTransactionGasLimit(block)) {
+    if (!validateTransactionGasPrice(block)) {
       return false;
     }
 
@@ -271,7 +271,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return false;
   }
 
-  private boolean validatePerTransactionGasLimit(final Block block) {
+  private boolean validateTransactionGasPrice(final Block block) {
     if (!ExperimentalEIPs.eip1559Enabled || maybeEip1559.isEmpty()) {
       return true;
     }
@@ -284,12 +284,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final TransactionPriceCalculator transactionPriceCalculator =
         TransactionPriceCalculator.eip1559();
     for (final Transaction transaction : transactions) {
-      if (!eip1559.isValidGasLimit(transaction)) {
-        LOG.warn(
-            "Invalid block: transaction gas limit {} exceeds per transaction gas limit",
-            transaction.getGasLimit());
-        return false;
-      }
       final Optional<Long> baseFee = block.getHeader().getBaseFee();
       final Wei price = transactionPriceCalculator.price(transaction, baseFee);
       if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
