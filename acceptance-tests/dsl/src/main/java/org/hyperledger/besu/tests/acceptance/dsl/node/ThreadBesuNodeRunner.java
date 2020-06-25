@@ -157,7 +157,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
             .metricsSystem(metricsSystem)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.builder().build())
             .clock(Clock.systemUTC())
             .isRevertReasonEnabled(node.isRevertReasonEnabled())
             .storageProvider(storageProvider)

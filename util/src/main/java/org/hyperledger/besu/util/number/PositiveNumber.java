@@ -19,12 +19,16 @@ import static java.lang.Integer.parseInt;
 
 import java.util.Objects;
 
-public class PositiveNumber {
+public class PositiveNumber extends Number {
 
-  private final int value;
+  private final Integer value;
 
   private PositiveNumber(final int value) {
     this.value = value;
+  }
+
+  public static PositiveNumber of(final Number value) {
+    return new PositiveNumber(value.intValue());
   }
 
   /**
@@ -60,7 +64,7 @@ public class PositiveNumber {
       return false;
     }
     final PositiveNumber that = (PositiveNumber) o;
-    return value == that.value;
+    return value.equals(that.value);
   }
 
   @Override
@@ -71,5 +75,25 @@ public class PositiveNumber {
   @Override
   public String toString() {
     return "+" + value;
+  }
+
+  @Override
+  public int intValue() {
+    return value;
+  }
+
+  @Override
+  public long longValue() {
+    return value.longValue();
+  }
+
+  @Override
+  public float floatValue() {
+    return value.floatValue();
+  }
+
+  @Override
+  public double doubleValue() {
+    return value.doubleValue();
   }
 }

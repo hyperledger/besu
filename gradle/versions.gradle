@@ -119,6 +119,8 @@ dependencyManagement {
 
     dependency 'org.yaml:snakeyaml:1.26'
 
+    dependency 'org.projectlombok:lombok:1.18.12'
+
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'

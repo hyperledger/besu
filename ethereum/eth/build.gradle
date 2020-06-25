@@ -65,4 +65,10 @@ dependencies {
   jmhImplementation project(':plugins:rocksdb')
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+
+  compileOnly 'org.projectlombok:lombok'
+  annotationProcessor 'org.projectlombok:lombok'
+
+  testCompileOnly 'org.projectlombok:lombok'
+  testAnnotationProcessor 'org.projectlombok:lombok'
 }
