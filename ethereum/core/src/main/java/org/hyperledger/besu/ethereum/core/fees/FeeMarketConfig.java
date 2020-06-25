@@ -19,7 +19,6 @@ public class FeeMarketConfig implements FeeMarket {
   private final long targetGasUsed;
   private final long decayRange;
   private final long initialBasefee;
-  private final long perTxGaslimit;
   private final long slackCoefficient;
   private final long maxGas;
   private final long gasIncrementAmount;
@@ -29,14 +28,12 @@ public class FeeMarketConfig implements FeeMarket {
       final long targetGasUsed,
       final long slackCoefficient,
       final long decayRange,
-      final long initialBasefee,
-      final long perTxGaslimit) {
+      final long initialBasefee) {
     this.basefeeMaxChangeDenominator = basefeeMaxChangeDenominator;
     this.targetGasUsed = targetGasUsed;
     this.slackCoefficient = slackCoefficient;
     this.decayRange = decayRange;
     this.initialBasefee = initialBasefee;
-    this.perTxGaslimit = perTxGaslimit;
     this.maxGas = slackCoefficient * targetGasUsed;
     this.gasIncrementAmount = this.maxGas / 2 / this.decayRange;
   }
@@ -69,11 +66,6 @@ public class FeeMarketConfig implements FeeMarket {
   @Override
   public long getInitialBasefee() {
     return initialBasefee;
-  }
-
-  @Override
-  public long getPerTxGaslimit() {
-    return perTxGaslimit;
   }
 
   @Override
