@@ -308,8 +308,7 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
-          long now = System.currentTimeMillis();
-          peer.setLastSeen(now);
+          peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
               && !bondingPeers.containsKey(peer.getId())) {
