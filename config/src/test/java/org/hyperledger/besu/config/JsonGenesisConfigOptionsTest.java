@@ -126,7 +126,7 @@ public class JsonGenesisConfigOptionsTest {
     assertThat(configOptions.getIbft2ConfigOptions().getMiningBeneficiary()).isNotEmpty();
     assertThat(configOptions.getIbft2ConfigOptions().getMiningBeneficiary().get())
         .isEqualTo("0x1234567890123456789012345678901234567890");
-    assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(4);
+    assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(21);
   }
 
   @Test
@@ -151,5 +151,17 @@ public class JsonGenesisConfigOptionsTest {
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
     assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(0);
+  }
+
+  @Test
+  public void ibftBlockRewardAsDecimalNumberCorrectlyDecodes() {
+    final ObjectNode configNode = loadConfigWithNoTransitions();
+    final ObjectNode ibftNode = (ObjectNode) configNode.get("ibft2");
+    ibftNode.put("blockreward", "12");
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(12);
   }
 }

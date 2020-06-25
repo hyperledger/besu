@@ -10,7 +10,7 @@
     "blockperiodseconds": 2,
     "epochlength": 30000,
     "requesttimeoutseconds": 10,
-    "blockreward": "0x4",
+    "blockreward": "0x15",
     "miningbeneficiary": "0x1234567890123456789012345678901234567890"
   },
   "transitions": {
