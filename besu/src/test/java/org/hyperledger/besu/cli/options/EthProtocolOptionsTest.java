@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.util.number.PositiveNumber;
 
 import org.junit.Test;
 
@@ -53,7 +52,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetBlockBodies()).isEqualTo(14);
+    assertThat(config.getMaxGetBlockBodies().intValue()).isEqualTo(14);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -75,7 +74,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetReceipts()).isEqualTo(15);
+    assertThat(config.getMaxGetReceipts().intValue()).isEqualTo(15);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -98,7 +97,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetNodeData()).isEqualTo(16);
+    assertThat(config.getMaxGetNodeData().intValue()).isEqualTo(16);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -123,14 +122,11 @@ public class EthProtocolOptionsTest
   EthProtocolConfiguration createCustomizedDomainObject() {
     final EthProtocolConfiguration defaultConfig = EthProtocolConfiguration.builder().build();
     return EthProtocolConfiguration.builder()
-        .maxGetBlockHeaders(
-            PositiveNumber.fromInt(defaultConfig.getMaxGetBlockHeaders().intValue() + 2))
-        .maxGetBlockBodies(
-            PositiveNumber.fromInt(defaultConfig.getMaxGetBlockBodies().intValue() + 2))
-        .maxGetReceipts(PositiveNumber.fromInt(defaultConfig.getMaxGetReceipts().intValue() + 2))
-        .maxGetNodeData(PositiveNumber.fromInt(defaultConfig.getMaxGetNodeData().intValue() + 2))
-        .maxGetPooledTransactions(
-            PositiveNumber.fromInt(defaultConfig.getMaxGetPooledTransactions().intValue() + 2))
+        .maxGetBlockHeaders(defaultConfig.getMaxGetBlockHeaders() + 2)
+        .maxGetBlockBodies(defaultConfig.getMaxGetBlockBodies() + 2)
+        .maxGetReceipts(defaultConfig.getMaxGetReceipts() + 2)
+        .maxGetNodeData(defaultConfig.getMaxGetNodeData() + 2)
+        .maxGetPooledTransactions(defaultConfig.getMaxGetPooledTransactions() + 2)
         .eth65Enabled(!defaultConfig.isEth65Enabled())
         .build();
   }

@@ -20,10 +20,10 @@ import lombok.Value;
 @Value
 @Builder
 public class EthProtocolConfiguration {
-  @Builder.Default Number maxGetBlockHeaders = 192;
-  @Builder.Default Number maxGetBlockBodies = 128;
-  @Builder.Default Number maxGetReceipts = 256;
-  @Builder.Default Number maxGetNodeData = 384;
-  @Builder.Default Number maxGetPooledTransactions = 256;
+  @Builder.Default Integer maxGetBlockHeaders = 192;
+  @Builder.Default Integer maxGetBlockBodies = 128;
+  @Builder.Default Integer maxGetReceipts = 256;
+  @Builder.Default Integer maxGetNodeData = 384;
+  @Builder.Default Integer maxGetPooledTransactions = 256;
   @Builder.Default boolean eth65Enabled = false;
 }

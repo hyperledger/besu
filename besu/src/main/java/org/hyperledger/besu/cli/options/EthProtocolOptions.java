@@ -102,11 +102,11 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   @Override
   public EthProtocolConfiguration toDomainObject() {
     return EthProtocolConfiguration.builder()
-        .maxGetBlockHeaders(maxGetBlockHeaders)
-        .maxGetBlockBodies(maxGetBlockBodies)
-        .maxGetReceipts(maxGetReceipts)
-        .maxGetNodeData(maxGetNodeData)
-        .maxGetPooledTransactions(maxGetPooledTransactions)
+        .maxGetBlockHeaders(maxGetBlockHeaders.getValue())
+        .maxGetBlockBodies(maxGetBlockBodies.getValue())
+        .maxGetReceipts(maxGetReceipts.getValue())
+        .maxGetNodeData(maxGetNodeData.getValue())
+        .maxGetPooledTransactions(maxGetPooledTransactions.getValue())
         .eth65Enabled(eth65Enabled)
         .build();
   }
