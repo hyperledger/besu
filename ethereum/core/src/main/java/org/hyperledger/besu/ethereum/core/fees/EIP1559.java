@@ -130,13 +130,6 @@ public class EIP1559 {
                 : FRONTIER_TRANSACTIONS);
   }
 
-  public boolean isValidGasLimit(final Transaction transaction) {
-    if (transaction == null) {
-      return false;
-    }
-    return transaction.getGasLimit() <= feeMarket.getPerTxGaslimit();
-  }
-
   private void guardActivation() {
     if (!ExperimentalEIPs.eip1559Enabled) {
       throw new RuntimeException("EIP-1559 is not enabled");
