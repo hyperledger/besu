@@ -306,6 +306,7 @@ public class TestContextBuilder {
             Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
+    final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
             (gasLimit) -> gasLimit,
@@ -313,7 +314,8 @@ public class TestContextBuilder {
             protocolContext,
             protocolSchedule,
             miningParams,
-            Util.publicKeyToAddress(nodeKey.getPublicKey()));
+            localAddress,
+            localAddress);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
