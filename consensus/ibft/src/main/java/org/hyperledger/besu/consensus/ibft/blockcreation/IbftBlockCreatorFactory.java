@@ -43,6 +43,7 @@ public class IbftBlockCreatorFactory {
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   private final Address localAddress;
+  final Address miningBeneficiary;
 
   private volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
@@ -54,7 +55,8 @@ public class IbftBlockCreatorFactory {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MiningParameters miningParams,
-      final Address localAddress) {
+      final Address localAddress,
+      final Address miningBeneficiary) {
     this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
@@ -63,6 +65,7 @@ public class IbftBlockCreatorFactory {
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
+    this.miningBeneficiary = miningBeneficiary;
   }
 
   public IbftBlockCreator create(final BlockHeader parentHeader, final int round) {
@@ -75,7 +78,8 @@ public class IbftBlockCreatorFactory {
         gasLimitCalculator,
         minTransactionGasPrice,
         minBlockOccupancyRatio,
-        parentHeader);
+        parentHeader,
+        miningBeneficiary);
   }
 
   public void setExtraData(final Bytes extraData) {

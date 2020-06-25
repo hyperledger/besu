@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
@@ -52,7 +51,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
   @Override
   boolean rewardCoinbase(
       final MutableWorldState worldState,
-      final ProcessableBlockHeader header,
+      final BlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards) {
     if (skipZeroBlockRewards && blockReward.isZero()) {

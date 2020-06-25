@@ -116,4 +116,40 @@ public class JsonGenesisConfigOptionsTest {
     assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators().get().size())
         .isEqualTo(1);
   }
+
+  @Test
+  public void configWithValidIbftBlockRewardIsParsable() {
+    final ObjectNode configNode = loadConfigWithNoTransitions();
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    assertThat(configOptions.getIbft2ConfigOptions().getMiningBeneficiary()).isNotEmpty();
+    assertThat(configOptions.getIbft2ConfigOptions().getMiningBeneficiary().get())
+        .isEqualTo("0x1234567890123456789012345678901234567890");
+    assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(4);
+  }
+
+  @Test
+  public void ibftConfigWithoutMiningBeneficiaryDefaultsToEmpty() {
+    final ObjectNode configNode = loadConfigWithNoTransitions();
+    final ObjectNode ibftNode = (ObjectNode) configNode.get("ibft2");
+    ibftNode.remove("miningbeneficiary");
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.getIbft2ConfigOptions().getMiningBeneficiary()).isEmpty();
+  }
+
+  @Test
+  public void ibftConfigWithoutBlockRewardsDefaultsToZero() {
+    final ObjectNode configNode = loadConfigWithNoTransitions();
+    final ObjectNode ibftNode = (ObjectNode) configNode.get("ibft2");
+    ibftNode.remove("blockreward");
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(0);
+  }
 }

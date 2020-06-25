@@ -117,6 +117,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final IbftExecutors ibftExecutors = IbftExecutors.create(metricsSystem);
 
+    final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
             gasLimitCalculator,
@@ -124,7 +125,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext,
             protocolSchedule,
             miningParameters,
-            Util.publicKeyToAddress(nodeKey.getPublicKey()));
+            localAddress,
+            ibftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
