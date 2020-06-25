@@ -53,6 +53,10 @@ public class AuthenticationUtils {
                   foundMatchingPermission.set(true);
                 }
               });
+          // exit if a matching permission was found, no need to keep checking
+          if (foundMatchingPermission.get()) {
+            return foundMatchingPermission.get();
+          }
         }
       }
     } else {
