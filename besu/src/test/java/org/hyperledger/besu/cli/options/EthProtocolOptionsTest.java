@@ -32,7 +32,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetBlockHeaders()).isEqualTo(13);
+    assertThat(config.getMaxGetBlockHeaders().intValue()).isEqualTo(13);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
