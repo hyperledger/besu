@@ -37,27 +37,31 @@ public class AuthenticationUtils {
 
     AtomicBoolean foundMatchingPermission = new AtomicBoolean();
 
-    if (authenticationService.isPresent()) {
-      if (optionalUser.isPresent()) {
-        User user = optionalUser.get();
-        for (String perm : jsonRpcMethod.getPermissions()) {
-          user.isAuthorized(
-              perm,
-              (authed) -> {
-                if (authed.result()) {
-                  LOG.trace(
-                      "user {} authorized : {} via permission {}",
-                      user,
-                      jsonRpcMethod.getName(),
-                      perm);
-                  foundMatchingPermission.set(true);
-                }
-              });
+    if (authenticationService.isEmpty()) {
+      // no auth provider configured thus anything is permitted
+      return true;
+    }
+
+    if (optionalUser.isPresent()) {
+      User user = optionalUser.get();
+      for (String perm : jsonRpcMethod.getPermissions()) {
+        user.isAuthorized(
+            perm,
+            (authed) -> {
+              if (authed.result()) {
+                LOG.trace(
+                    "user {} authorized : {} via permission {}",
+                    user,
+                    jsonRpcMethod.getName(),
+                    perm);
+                foundMatchingPermission.set(true);
+              }
+            });
+        // exit if a matching permission was found, no need to keep checking
+        if (foundMatchingPermission.get()) {
+          return foundMatchingPermission.get();
         }
       }
-    } else {
-      // no auth provider configured thus anything is permitted
-      foundMatchingPermission.set(true);
     }
 
     if (!foundMatchingPermission.get()) {
