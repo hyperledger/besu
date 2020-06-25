@@ -121,19 +121,17 @@ public class EthProtocolOptionsTest
 
   @Override
   EthProtocolConfiguration createCustomizedDomainObject() {
+    final EthProtocolConfiguration defaultConfig = EthProtocolConfiguration.builder().build();
     return EthProtocolConfiguration.builder()
         .maxGetBlockHeaders(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2))
+            PositiveNumber.fromInt(defaultConfig.getMaxGetBlockHeaders().intValue() + 2))
         .maxGetBlockBodies(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2))
-        .maxGetReceipts(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2))
-        .maxGetNodeData(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2))
+            PositiveNumber.fromInt(defaultConfig.getMaxGetBlockBodies().intValue() + 2))
+        .maxGetReceipts(PositiveNumber.fromInt(defaultConfig.getMaxGetReceipts().intValue() + 2))
+        .maxGetNodeData(PositiveNumber.fromInt(defaultConfig.getMaxGetNodeData().intValue() + 2))
         .maxGetPooledTransactions(
-            PositiveNumber.fromInt(
-                EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2))
-        .eth65Enabled(!EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED)
+            PositiveNumber.fromInt(defaultConfig.getMaxGetPooledTransactions().intValue() + 2))
+        .eth65Enabled(!defaultConfig.isEth65Enabled())
         .build();
   }
 
