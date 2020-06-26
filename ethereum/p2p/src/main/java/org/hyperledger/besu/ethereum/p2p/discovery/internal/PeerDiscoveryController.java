@@ -38,6 +38,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -87,8 +88,7 @@ import org.apache.tuweni.bytes.Bytes;
  *   <li><em>KNOWN:</em> the peer is known but there is no ongoing interaction with it.
  *   <li><em>BONDING:</em> an attempt to bond is being made (e.g. a PING has been sent).
  *   <li><em>BONDED:</em> the bonding handshake has taken place (e.g. an expected PONG has been
- *       received after having sent a PING or a PING has been received and a PONG has been sent in
- *       response). This is the same as having an "active" channel.
+ *       received after having sent a PING). This is the same as having an "active" channel.
  *   <li><em>MESSAGE_EXPECTED (*)</em>: a message has been sent and a response is expected.
  *   <li><em>DROPPED (*):</em> the peer is no longer in our peer table.
  * </ul>
@@ -107,6 +107,7 @@ public class PeerDiscoveryController {
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
   protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
+  private final Map<Bytes, DiscoveryPeer> bondingPeers;
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
@@ -168,6 +169,7 @@ public class PeerDiscoveryController {
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
+    this.bondingPeers = new HashMap<>();
 
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
 
@@ -205,7 +207,7 @@ public class PeerDiscoveryController {
         bootstrapNodes.stream()
             .filter(peerPermissions::isAllowedInPeerTable)
             .collect(Collectors.toList());
-    initialDiscoveryPeers.stream().forEach(peerTable::tryAdd);
+    initialDiscoveryPeers.forEach(peerTable::tryAdd);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
@@ -296,23 +298,32 @@ public class PeerDiscoveryController {
     // Load the peer from the table, or use the instance that comes in.
     final Optional<DiscoveryPeer> maybeKnownPeer =
         peerTable.get(sender).filter(known -> known.discoveryEndpointMatches(sender));
-    final DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
+    DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
     final boolean peerKnown = maybeKnownPeer.isPresent();
+    if (!peerKnown && bondingPeers.containsKey(sender.getId())) {
+      peer = bondingPeers.get(sender.getId());
+    }
 
+    final DiscoveryPeer finalPeer = peer;
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
-          addToPeerTable(peer);
+          peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
+          if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
+              && !bondingPeers.containsKey(peer.getId())) {
+            bond(peer);
+          }
           respondToPing(ping, packet.getHash(), peer);
         }
         break;
       case PONG:
+        bondingPeers.remove(peer.getId());
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  addToPeerTable(peer);
-                  recursivePeerRefreshState.onBondingComplete(peer);
+                  addToPeerTable(finalPeer);
+                  recursivePeerRefreshState.onBondingComplete(finalPeer);
                 });
         break;
       case NEIGHBORS:
@@ -320,7 +331,7 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction ->
                     recursivePeerRefreshState.onNeighboursReceived(
-                        peer, getPeersFromNeighborsPacket(packet)));
+                        finalPeer, getPeersFromNeighborsPacket(packet)));
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
@@ -337,7 +348,7 @@ public class PeerDiscoveryController {
   private List<DiscoveryPeer> getPeersFromNeighborsPacket(final Packet packet) {
     final Optional<NeighborsPacketData> maybeNeighborsData =
         packet.getPacketData(NeighborsPacketData.class);
-    if (!maybeNeighborsData.isPresent()) {
+    if (maybeNeighborsData.isEmpty()) {
       return Collections.emptyList();
     }
     final NeighborsPacketData neighborsData = maybeNeighborsData.get();
@@ -439,6 +450,7 @@ public class PeerDiscoveryController {
   void bond(final DiscoveryPeer peer) {
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
+    bondingPeers.put(peer.getId(), peer);
 
     final Consumer<PeerInteractionState> action =
         interaction -> {
@@ -464,9 +476,9 @@ public class PeerDiscoveryController {
         };
 
     // The filter condition will be updated as soon as the action is performed.
-    final PeerInteractionState ping =
-        new PeerInteractionState(action, peer.getId(), PacketType.PONG, (packet) -> false, true);
-    dispatchInteraction(peer, ping);
+    final PeerInteractionState peerInteractionState =
+        new PeerInteractionState(action, peer.getId(), PacketType.PONG, packet -> false, true);
+    dispatchInteraction(peer, peerInteractionState);
   }
 
   private void sendPacket(final DiscoveryPeer peer, final PacketType type, final PacketData data) {
@@ -506,7 +518,7 @@ public class PeerDiscoveryController {
    */
   private void findNodes(final DiscoveryPeer peer, final Bytes target) {
     final Consumer<PeerInteractionState> action =
-        (interaction) -> {
+        interaction -> {
           final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
