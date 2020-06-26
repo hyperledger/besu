@@ -176,7 +176,7 @@ public class JsonRpcHttpService {
   }
 
   public CompletableFuture<?> start() {
-    LOG.info("Starting JsonRPC service on {}:{}", config.getHost(), config.getPort());
+    LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
@@ -190,7 +190,7 @@ public class JsonRpcHttpService {
                   resultFuture.complete(null);
                   config.setPort(httpServer.actualPort());
                   LOG.info(
-                      "JsonRPC service started and listening on {}:{}{}",
+                      "JSON-RPC service started and listening on {}:{}{}",
                       config.getHost(),
                       config.getPort(),
                       tlsLogMessage());
@@ -216,7 +216,7 @@ public class JsonRpcHttpService {
       resultFuture.completeExceptionally(
           new JsonRpcServiceException(
               String.format(
-                  "Ethereum JSON RPC listener failed to start: %s",
+                  "Ethereum JSON-RPC listener failed to start: %s",
                   ExceptionUtils.rootCause(listenException).getMessage())));
     }
 
@@ -309,7 +309,7 @@ public class JsonRpcHttpService {
     } catch (final RuntimeException re) {
       throw new JsonRpcServiceException(
           String.format(
-              "TLS options failed to initialize for Ethereum JSON RPC listener: %s",
+              "TLS options failed to initialize for Ethereum JSON-RPC listener: %s",
               re.getMessage()));
     }
   }
@@ -335,7 +335,7 @@ public class JsonRpcHttpService {
     if (listenFailure instanceof SocketException) {
       return new JsonRpcServiceException(
           String.format(
-              "Failed to bind Ethereum JSON RPC listener to %s:%s: %s",
+              "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
               config.getHost(), config.getPort(), listenFailure.getMessage()));
     }
     return listenFailure;
