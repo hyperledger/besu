@@ -33,6 +33,8 @@ public class NatService {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private static final boolean DEFAULT_FALLBACK_STATUS = true;
+
   private NatMethod currentNatMethod;
   private Optional<NatManager> currentNatManager;
   private final boolean fallbackEnabled;
@@ -41,6 +43,10 @@ public class NatService {
     this.currentNatMethod = retrieveNatMethod(natManager);
     this.currentNatManager = natManager;
     this.fallbackEnabled = fallbackEnabled;
+  }
+
+  public NatService(final Optional<NatManager> natManager) {
+    this(natManager, DEFAULT_FALLBACK_STATUS);
   }
 
   /**

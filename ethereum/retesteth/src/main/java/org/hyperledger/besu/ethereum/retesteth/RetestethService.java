@@ -61,7 +61,7 @@ public class RetestethService {
     retestethContext = new RetestethContext();
 
     final BlockResultFactory blockResult = new BlockResultFactory();
-    final NatService natService = new NatService(Optional.empty(), true);
+    final NatService natService = new NatService(Optional.empty());
 
     final Map<String, JsonRpcMethod> jsonRpcMethods =
         mapOf(
