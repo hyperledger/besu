@@ -31,7 +31,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetBlockHeaders().intValue()).isEqualTo(13);
+    assertThat(config.getMaxGetBlockHeaders()).isEqualTo(13);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -52,7 +52,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetBlockBodies().intValue()).isEqualTo(14);
+    assertThat(config.getMaxGetBlockBodies()).isEqualTo(14);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -74,7 +74,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetReceipts().intValue()).isEqualTo(15);
+    assertThat(config.getMaxGetReceipts()).isEqualTo(15);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -97,7 +97,7 @@ public class EthProtocolOptionsTest
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxGetNodeData().intValue()).isEqualTo(16);
+    assertThat(config.getMaxGetNodeData()).isEqualTo(16);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

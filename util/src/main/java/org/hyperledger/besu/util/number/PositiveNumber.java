@@ -19,7 +19,7 @@ import static java.lang.Integer.parseInt;
 
 import java.util.Objects;
 
-public class PositiveNumber extends Number {
+public class PositiveNumber {
 
   private final Integer value;
 
@@ -75,25 +75,5 @@ public class PositiveNumber extends Number {
   @Override
   public String toString() {
     return "+" + value;
-  }
-
-  @Override
-  public int intValue() {
-    return value;
-  }
-
-  @Override
-  public long longValue() {
-    return value.longValue();
-  }
-
-  @Override
-  public float floatValue() {
-    return value.floatValue();
-  }
-
-  @Override
-  public double doubleValue() {
-    return value.doubleValue();
   }
 }

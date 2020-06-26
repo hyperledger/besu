@@ -37,7 +37,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description =
           "Maximum request limit for Ethereum Wire Protocol GET_BLOCK_HEADERS. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxGetBlockHeaders =
-      PositiveNumber.of(EthProtocolConfiguration.builder().build().getMaxGetBlockHeaders());
+      PositiveNumber.of(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS);
 
   @CommandLine.Option(
       hidden = true,
@@ -46,7 +46,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description =
           "Maximum request limit for Ethereum Wire Protocol GET_BLOCK_BODIES. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxGetBlockBodies =
-      PositiveNumber.of(EthProtocolConfiguration.builder().build().getMaxGetBlockBodies());
+      PositiveNumber.of(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES);
 
   @CommandLine.Option(
       hidden = true,
@@ -55,7 +55,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description =
           "Maximum request limit for Ethereum Wire Protocol GET_RECEIPTS. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxGetReceipts =
-      PositiveNumber.of(EthProtocolConfiguration.builder().build().getMaxGetReceipts());
+      PositiveNumber.of(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS);
 
   @CommandLine.Option(
       hidden = true,
@@ -64,7 +64,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description =
           "Maximum request limit for Ethereum Wire Protocol GET_NODE_DATA. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxGetNodeData =
-      PositiveNumber.of(EthProtocolConfiguration.builder().build().getMaxGetNodeData());
+      PositiveNumber.of(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
 
   @CommandLine.Option(
       hidden = true,
@@ -73,14 +73,14 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description =
           "Maximum request limit for Ethereum Wire Protocol GET_POOLED_TRANSACTIONS. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxGetPooledTransactions =
-      PositiveNumber.of(EthProtocolConfiguration.builder().build().getMaxGetPooledTransactions());
+      PositiveNumber.of(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
 
   @CommandLine.Option(
       hidden = true,
       names = {ETH_65_ENABLED},
       paramLabel = "<INTEGER>",
       description = "Enable the Eth/65 subprotocol. (default: ${DEFAULT-VALUE})")
-  private Boolean eth65Enabled = EthProtocolConfiguration.builder().build().isEth65Enabled();
+  private Boolean eth65Enabled = EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED;
 
   private EthProtocolOptions() {}
 

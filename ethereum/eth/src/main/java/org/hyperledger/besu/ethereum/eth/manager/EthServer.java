@@ -92,7 +92,7 @@ class EthServer {
           constructGetHeadersResponse(
               blockchain,
               message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetBlockHeaders().intValue());
+              ethereumWireProtocolConfiguration.getMaxGetBlockHeaders());
       message.getPeer().send(response);
     } catch (final RLPException e) {
       LOG.debug(
@@ -110,7 +110,7 @@ class EthServer {
           constructGetBodiesResponse(
               blockchain,
               message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetBlockBodies().intValue());
+              ethereumWireProtocolConfiguration.getMaxGetBlockBodies());
       message.getPeer().send(response);
     } catch (final RLPException e) {
       LOG.debug(
@@ -126,9 +126,7 @@ class EthServer {
     try {
       final MessageData response =
           constructGetReceiptsResponse(
-              blockchain,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetReceipts().intValue());
+              blockchain, message.getData(), ethereumWireProtocolConfiguration.getMaxGetReceipts());
       message.getPeer().send(response);
     } catch (final RLPException e) {
       LOG.debug("Received malformed GET_RECEIPTS message, disconnecting: {}", message.getPeer(), e);
@@ -145,7 +143,7 @@ class EthServer {
           constructGetNodeDataResponse(
               worldStateArchive,
               message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetNodeData().intValue());
+              ethereumWireProtocolConfiguration.getMaxGetNodeData());
       message.getPeer().send(response);
     } catch (final RLPException e) {
       LOG.debug(
@@ -163,7 +161,7 @@ class EthServer {
           constructGetPooledTransactionsResponse(
               transactionPool,
               message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetPooledTransactions().intValue());
+              ethereumWireProtocolConfiguration.getMaxGetPooledTransactions());
       message.getPeer().send(response);
     } catch (final RLPException e) {
       LOG.debug(
