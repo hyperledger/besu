@@ -22,12 +22,12 @@ import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.core.exception.NatInitializationException;
-import org.hyperledger.besu.nat.kubernetes.service.ClusterIpBasedDetector;
 import org.hyperledger.besu.nat.kubernetes.service.KubernetesServiceType;
 import org.hyperledger.besu.nat.kubernetes.service.LoadBalancerBasedDetector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -149,7 +149,7 @@ public class KubernetesNatManager extends AbstractNatManager {
     final String serviceType = v1Service.getSpec().getType();
     switch (KubernetesServiceType.fromName(serviceType)) {
       case CLUSTER_IP:
-        return new ClusterIpBasedDetector(v1Service);
+        return () -> Optional.ofNullable(v1Service.getSpec().getClusterIP());
       case LOAD_BALANCER:
         return new LoadBalancerBasedDetector(v1Service);
       default:

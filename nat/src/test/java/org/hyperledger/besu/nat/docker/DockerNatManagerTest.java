@@ -63,7 +63,7 @@ public final class DockerNatManagerTest {
   @Test
   public void assertThatExternalIPIsEqualToDefaultHostIfIpDetectorCannotRetrieveIP()
       throws ExecutionException, InterruptedException {
-    NatManager natManager =
+    final NatManager natManager =
         new DockerNatManager(hostBasedIpDetector, advertisedHost, p2pPort, rpcHttpPort);
     when(hostBasedIpDetector.detectAdvertisedIp()).thenReturn(Optional.empty());
     try {

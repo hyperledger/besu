@@ -16,6 +16,7 @@
 package org.hyperledger.besu.nat;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -197,7 +198,7 @@ public class NatServiceTest {
     assertThat(natService.queryLocalIPAddress(fallbackLocalIp)).isEqualTo(fallbackLocalIp);
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void assertThatManagerSwitchToNoneForInvalidNatEnvironmentIfFallbackDisabled()
       throws NatInitializationException {
 
@@ -212,7 +213,7 @@ public class NatServiceTest {
     assertThat(natService.isNatEnvironment()).isTrue();
     assertThat(natService.getNatManager()).contains(natManager);
 
-    natService.start();
+    assertThatThrownBy(natService::start);
   }
 
   @Test

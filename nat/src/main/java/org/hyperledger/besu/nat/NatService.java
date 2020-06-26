@@ -96,9 +96,9 @@ public class NatService {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
         LOG.debug(
-            String.format(
-                "Nat manager failed to configure itself automatically due to the following reason : %s. %s",
-                e.getMessage(), (fallbackEnabled) ? "NONE mode will be used" : ""));
+            "Nat manager failed to configure itself automatically due to the following reason : {}. {}",
+            e.getMessage(),
+            (fallbackEnabled) ? "NONE mode will be used" : "");
         if (fallbackEnabled) {
           disableNatManager();
         } else {
