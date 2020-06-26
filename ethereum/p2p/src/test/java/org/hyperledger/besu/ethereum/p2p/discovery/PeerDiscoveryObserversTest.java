@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,7 +80,7 @@ public class PeerDiscoveryObserversTest {
   }
 
   @Test
-  public void peerBondedObserverTriggered() throws TimeoutException, InterruptedException {
+  public void peerBondedObserverTriggered() {
     // Create 3 discovery agents with no bootstrap peers.
     final List<MockPeerDiscoveryAgent> others1 =
         helper.startDiscoveryAgents(3, Collections.emptyList());
@@ -135,6 +134,7 @@ public class PeerDiscoveryObserversTest {
     // Create 3 discovery agents with no bootstrap peers.
     final List<MockPeerDiscoveryAgent> others =
         helper.startDiscoveryAgents(3, Collections.emptyList());
+    assertThat(others.get(0).getAdvertisedPeer().isPresent()).isTrue();
     final DiscoveryPeer peer = others.get(0).getAdvertisedPeer().get();
 
     // Create a discovery agent (which we'll assert on), using the above two peers as bootstrap
