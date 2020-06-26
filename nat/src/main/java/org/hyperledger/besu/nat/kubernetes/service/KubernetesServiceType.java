@@ -12,25 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.nat.kubernetes.service;
 
-package org.hyperledger.besu.nat.docker;
+public enum KubernetesServiceType {
+  CLUSTER_IP("ClusterIP"),
+  LOAD_BALANCER("LoadBalancer"),
+  UNKNOWN("");
 
-import org.hyperledger.besu.nat.core.IpDetector;
+  String name;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Optional;
+  KubernetesServiceType(final String name) {
+    this.name = name;
+  }
 
-public class HostBasedIpDetector implements IpDetector {
-
-  private static final String HOSTNAME = "HOST_IP";
-
-  @Override
-  public Optional<String> detectAdvertisedIp() {
-    try {
-      return Optional.of(InetAddress.getByName(HOSTNAME).getHostAddress());
-    } catch (final UnknownHostException e) {
-      return Optional.empty();
+  public static KubernetesServiceType fromName(final String name) {
+    for (KubernetesServiceType value : values()) {
+      if (value.name.equals(name)) {
+        return value;
+      }
     }
+    return UNKNOWN;
   }
 }

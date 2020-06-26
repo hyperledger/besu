@@ -366,7 +366,8 @@ public class RunnerBuilder {
             .orElse(bannedNodes);
 
     LOG.info("Detecting NAT service.");
-    final NatService natService = new NatService(buildNatManager(natMethod));
+    final NatService natService =
+        new NatService(buildNatManager(natMethod), natMethod == NatMethod.AUTO);
     final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
         (caps) ->

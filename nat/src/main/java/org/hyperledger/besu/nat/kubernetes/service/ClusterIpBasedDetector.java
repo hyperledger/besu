@@ -12,12 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.nat.kubernetes.service;
 
-package org.hyperledger.besu.nat.docker;
+import org.hyperledger.besu.nat.core.IpDetector;
 
 import java.util.Optional;
 
-public interface IpDetector {
+import io.kubernetes.client.models.V1Service;
 
-  Optional<String> detectExternalIp();
+public class ClusterIpBasedDetector implements IpDetector {
+
+  private final V1Service v1Service;
+
+  public ClusterIpBasedDetector(final V1Service v1Service) {
+    this.v1Service = v1Service;
+  }
+
+  @Override
+  public Optional<String> detectAdvertisedIp() {
+    return Optional.ofNullable(v1Service.getSpec().getClusterIP());
+  }
 }

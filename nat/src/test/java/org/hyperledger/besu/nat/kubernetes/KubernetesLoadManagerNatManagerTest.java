@@ -43,7 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public final class KubernetesNatManagerTest {
+public final class KubernetesLoadManagerNatManagerTest {
 
   private final String detectedAdvertisedHost = "199.45.69.12";
 
@@ -67,6 +67,7 @@ public final class KubernetesNatManagerTest {
     when(v1Service.getSpec())
         .thenReturn(
             new V1ServiceSpec()
+                .type("LoadBalancer")
                 .ports(
                     Arrays.asList(
                         new V1ServicePort()
