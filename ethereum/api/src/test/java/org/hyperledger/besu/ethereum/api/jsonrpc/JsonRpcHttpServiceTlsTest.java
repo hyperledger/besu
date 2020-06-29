@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static okhttp3.Protocol.HTTP_1_1;
+import static okhttp3.Protocol.HTTP_2;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
@@ -64,7 +66,6 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -186,15 +187,24 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   @Test
+  public void netVersionSuccessfulOnTlsWithHttp1_1() throws Exception {
+    netVersionSuccessfulOnTls(true);
+  }
+
+  @Test
   public void netVersionSuccessfulOnTlsWithHttp2() throws Exception {
+    netVersionSuccessfulOnTls(false);
+  }
+
+  public void netVersionSuccessfulOnTls(final boolean useHttp1) throws Exception {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
 
-    final OkHttpClient httpClient = getTlsHttpClient();
+    final OkHttpClient httpClient = getTlsHttpClient(useHttp1);
     try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
       assertThat(response.code()).isEqualTo(200);
-      assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2);
+      assertThat(response.protocol()).isEqualTo(useHttp1 ? HTTP_1_1 : HTTP_2);
       // Check general format of result
       final ResponseBody body = response.body();
       assertThat(body).isNotNull();
@@ -209,8 +219,11 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private OkHttpClient getTlsHttpClient() {
-    return TlsOkHttpClientBuilder.anOkHttpClient().withBesuCertificate(besuCertificate).build();
+  private OkHttpClient getTlsHttpClient(boolean useHttp1) {
+    return TlsOkHttpClientBuilder.anOkHttpClient()
+        .withBesuCertificate(besuCertificate)
+        .withHttp1(useHttp1)
+        .build();
   }
 
   private Request buildPostRequest(final String json) {
