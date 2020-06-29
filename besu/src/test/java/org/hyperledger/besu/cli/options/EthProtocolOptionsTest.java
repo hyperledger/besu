@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.util.number.PositiveNumber;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 
 import org.junit.Test;
 
@@ -116,24 +116,18 @@ public class EthProtocolOptionsTest
 
   @Override
   EthProtocolConfiguration createDefaultDomainObject() {
-    return EthProtocolConfiguration.builder().build();
+    return EthProtocolConfiguration.defaultConfig();
   }
 
   @Override
   EthProtocolConfiguration createCustomizedDomainObject() {
-    return EthProtocolConfiguration.builder()
-        .maxGetBlockHeaders(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2))
-        .maxGetBlockBodies(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2))
-        .maxGetReceipts(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2))
-        .maxGetNodeData(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2))
-        .maxGetPooledTransactions(
-            PositiveNumber.fromInt(
-                EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2))
-        .eth65Enabled(!EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED)
+    return ImmutableEthProtocolConfiguration.builder()
+        .maxGetBlockHeaders(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2)
+        .maxGetBlockBodies(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2)
+        .maxGetReceipts(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2)
+        .maxGetNodeData(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2)
+        .maxGetPooledTransactions(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2)
+        .isEth65Enabled(!EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED)
         .build();
   }
 

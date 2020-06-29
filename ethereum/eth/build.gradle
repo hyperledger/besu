@@ -45,6 +45,10 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 
+
+  annotationProcessor "org.immutables:value"
+  implementation "org.immutables:value-annotations"
+
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(':crypto')

@@ -119,6 +119,10 @@ dependencyManagement {
 
     dependency 'org.yaml:snakeyaml:1.26'
 
+
+    dependency "org.immutables:value:2.8.8"
+    dependency "org.immutables:value-annotations:2.8.8"
+
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'

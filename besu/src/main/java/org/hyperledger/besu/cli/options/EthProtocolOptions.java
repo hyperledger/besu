@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.Arrays;
@@ -101,13 +102,13 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
 
   @Override
   public EthProtocolConfiguration toDomainObject() {
-    return EthProtocolConfiguration.builder()
-        .maxGetBlockHeaders(maxGetBlockHeaders)
-        .maxGetBlockBodies(maxGetBlockBodies)
-        .maxGetReceipts(maxGetReceipts)
-        .maxGetNodeData(maxGetNodeData)
-        .maxGetPooledTransactions(maxGetPooledTransactions)
-        .eth65Enabled(eth65Enabled)
+    return ImmutableEthProtocolConfiguration.builder()
+        .maxGetBlockHeaders(maxGetBlockHeaders.getValue())
+        .maxGetBlockBodies(maxGetBlockBodies.getValue())
+        .maxGetReceipts(maxGetReceipts.getValue())
+        .maxGetNodeData(maxGetNodeData.getValue())
+        .maxGetPooledTransactions(maxGetPooledTransactions.getValue())
+        .isEth65Enabled(eth65Enabled)
         .build();
   }
 
