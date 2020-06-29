@@ -45,7 +45,7 @@ public class RetestethSubCommand implements Runnable {
   public static final String COMMAND_NAME = "retesteth";
 
   /**
-   * Using a distinct port for retesteth will result in less teting collisions and accidental RPC
+   * Using a distinct port for retesteth will result in less testing collisions and accidental RPC
    * calls. This is <code>0xba5e</code> in hex, a hex speak play on the english translation of
    * "Besu."
    */
