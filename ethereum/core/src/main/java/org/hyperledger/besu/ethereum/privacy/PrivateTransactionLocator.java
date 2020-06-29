@@ -109,7 +109,7 @@ public class PrivateTransactionLocator {
    * @param enclaveKey participant public key that must match the private key used to decrypt the
    *     payload
    * @return an optional containing the private transaction, if found. Or an empty optional if the
-   *     private transaction couldnt' be found.
+   *     private transaction couldn't be found.
    */
   private Optional<TransactionFromEnclave> tryFetchingPrivateTransactionFromEnclave(
       final String payloadKey, final String enclaveKey) {
