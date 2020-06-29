@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -273,7 +274,14 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            ImmutableEthProtocolConfiguration.builder()
+                .maxGetBlockHeaders(limit)
+                .maxGetBlockBodies(limit)
+                .maxGetReceipts(limit)
+                .maxGetNodeData(limit)
+                .maxGetPooledTransactions(limit)
+                .isEth65Enabled(true)
+                .build())) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -565,7 +573,14 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            ImmutableEthProtocolConfiguration.builder()
+                .maxGetBlockHeaders(limit)
+                .maxGetBlockBodies(limit)
+                .maxGetReceipts(limit)
+                .maxGetNodeData(limit)
+                .maxGetPooledTransactions(limit)
+                .isEth65Enabled(true)
+                .build())) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -703,7 +718,14 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            ImmutableEthProtocolConfiguration.builder()
+                .maxGetBlockHeaders(limit)
+                .maxGetBlockBodies(limit)
+                .maxGetReceipts(limit)
+                .maxGetNodeData(limit)
+                .maxGetPooledTransactions(limit)
+                .isEth65Enabled(true)
+                .build())) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
