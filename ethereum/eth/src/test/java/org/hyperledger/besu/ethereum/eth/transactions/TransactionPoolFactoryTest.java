@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -110,7 +110,14 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, true),
+            ImmutableEthProtocolConfiguration.builder()
+                .maxGetBlockHeaders(5)
+                .maxGetBlockBodies(5)
+                .maxGetReceipts(5)
+                .maxGetNodeData(5)
+                .maxGetPooledTransactions(5)
+                .isEth65Enabled(true)
+                .build(),
             ethPeers,
             mock(EthMessages.class),
             ethContext,
@@ -193,7 +200,14 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, true),
+            ImmutableEthProtocolConfiguration.builder()
+                .maxGetBlockHeaders(5)
+                .maxGetBlockBodies(5)
+                .maxGetReceipts(5)
+                .maxGetNodeData(5)
+                .maxGetPooledTransactions(5)
+                .isEth65Enabled(true)
+                .build(),
             ethPeers,
             mock(EthMessages.class),
             ethContext,

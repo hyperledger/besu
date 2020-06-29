@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -55,7 +55,14 @@ public class EthServerTest {
         worldStateArchive,
         transactionPool,
         ethMessages,
-        new EthProtocolConfiguration(2, 2, 2, 2, 2, true));
+        ImmutableEthProtocolConfiguration.builder()
+            .maxGetBlockHeaders(2)
+            .maxGetBlockBodies(2)
+            .maxGetReceipts(2)
+            .maxGetNodeData(2)
+            .maxGetPooledTransactions(2)
+            .isEth65Enabled(true)
+            .build());
   }
 
   @Test
