@@ -219,7 +219,7 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private OkHttpClient getTlsHttpClient(boolean useHttp1) {
+  private OkHttpClient getTlsHttpClient(final boolean useHttp1) {
     return TlsOkHttpClientBuilder.anOkHttpClient()
         .withBesuCertificate(besuCertificate)
         .withHttp1(useHttp1)
