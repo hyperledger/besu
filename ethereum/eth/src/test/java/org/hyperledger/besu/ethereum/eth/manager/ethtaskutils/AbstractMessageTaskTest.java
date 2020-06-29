@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -50,7 +51,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @param <T> The type of data being requested from the network
@@ -83,7 +83,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    ethPeers = Mockito.spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem));
+    ethPeers = spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(
