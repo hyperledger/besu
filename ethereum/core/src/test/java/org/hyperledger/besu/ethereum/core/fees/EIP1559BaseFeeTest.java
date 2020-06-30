@@ -34,18 +34,15 @@ public class EIP1559BaseFeeTest {
   private static final long MARKER_BASE_FEE = 1049238967;
   private final EIP1559 eip1559 = new EIP1559(0L);
   private static final FeeMarket FEE_MARKET = FeeMarket.eip1559();
+  private static final long TARGET_GAS_USED = 10000000L;
 
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {
-            FEE_MARKET.getInitialBasefee(),
-            FEE_MARKET.getTargetGasUsed(),
-            FEE_MARKET.getInitialBasefee()
-          },
+          {FEE_MARKET.getInitialBasefee(), TARGET_GAS_USED, FEE_MARKET.getInitialBasefee()},
           {FEE_MARKET.getInitialBasefee(), 7000000, 962500000},
-          {1100000000, FEE_MARKET.getTargetGasUsed(), 1100000000},
+          {1100000000, TARGET_GAS_USED, 1100000000},
           {1100000000, 9000000, 1086250000},
           {1086250000, 9000000, 1072671875},
           {1072671875, 9000000, 1059263476},
@@ -55,8 +52,7 @@ public class EIP1559BaseFeeTest {
           {MARKER_BASE_FEE, 5, 918084161},
           {MARKER_BASE_FEE, 5000, 918149673},
           {MARKER_BASE_FEE, 500000, 924641839},
-          {MARKER_BASE_FEE, FEE_MARKET.getTargetGasUsed(), MARKER_BASE_FEE},
-          {MARKER_BASE_FEE, FEE_MARKET.getMaxGas(), 1180393837}
+          {MARKER_BASE_FEE, TARGET_GAS_USED, MARKER_BASE_FEE}
         });
   }
 
@@ -83,6 +79,7 @@ public class EIP1559BaseFeeTest {
 
   @Test
   public void assertThatBaseFeeIsCorrect() {
-    assertThat(eip1559.computeBaseFee(parentBaseFee, parentGasUsed)).isEqualTo(expectedBaseFee);
+    assertThat(eip1559.computeBaseFee(parentBaseFee, parentGasUsed, TARGET_GAS_USED))
+        .isEqualTo(expectedBaseFee);
   }
 }

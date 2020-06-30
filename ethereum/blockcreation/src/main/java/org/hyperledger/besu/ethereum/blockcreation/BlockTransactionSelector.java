@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
@@ -65,7 +64,6 @@ public class BlockTransactionSelector {
 
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
-  private static final FeeMarket EIP_1559_FEE_MARKET = FeeMarket.eip1559();
 
   public static class TransactionSelectionResults {
 
@@ -264,8 +262,7 @@ public class BlockTransactionSelector {
                 - transactionSelectionResult.getEip1559CumulativeGasUsed();
       } else {
         blockGasRemaining =
-            EIP_1559_FEE_MARKET.getMaxGas()
-                - processableBlockHeader.getGasLimit()
+            processableBlockHeader.getGasLimit()
                 - transactionSelectionResult.getFrontierCumulativeGasUsed();
       }
     } else {
@@ -278,14 +275,14 @@ public class BlockTransactionSelector {
 
   private boolean blockOccupancyAboveThreshold() {
     final double gasUsed, gasAvailable;
+    gasAvailable = processableBlockHeader.getGasLimit();
+
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       gasUsed =
           transactionSelectionResult.getFrontierCumulativeGasUsed()
               + transactionSelectionResult.getEip1559CumulativeGasUsed();
-      gasAvailable = EIP_1559_FEE_MARKET.getMaxGas();
     } else {
       gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();
-      gasAvailable = processableBlockHeader.getGasLimit();
     }
     return (gasUsed / gasAvailable) >= minBlockOccupancyRatio;
   }

@@ -40,6 +40,7 @@ public class TransactionGasBudgetCalculatorTest {
   private static final TransactionGasBudgetCalculator EIP1559_CALCULATOR =
       TransactionGasBudgetCalculator.eip1559(new EIP1559(EIP_1559_FORK_BLOCK));
   private static final FeeMarket FEE_MARKET = FeeMarket.eip1559();
+  private static final long MAX_GAS = 20000000L;
 
   private final TransactionGasBudgetCalculator gasBudgetCalculator;
   private final boolean isEIP1559;
@@ -74,75 +75,43 @@ public class TransactionGasBudgetCalculatorTest {
           {FRONTIER_CALCULATOR, false, 11L, 1L, 10L, 0L, false},
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 6L, false},
           {EIP1559_CALCULATOR, false, 5L, EIP_1559_FORK_BLOCK, 10L, 0L, true},
-          {
-            EIP1559_CALCULATOR,
-            false,
-            (FEE_MARKET.getMaxGas() / 2) + 1,
-            1L,
-            FEE_MARKET.getMaxGas(),
-            0L,
-            false
-          },
-          {
-            EIP1559_CALCULATOR,
-            false,
-            (FEE_MARKET.getMaxGas() / 2) - 1,
-            EIP_1559_FORK_BLOCK,
-            10L,
-            2L,
-            false
-          },
+          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) + 1, 1L, MAX_GAS, 0L, false},
+          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
+          {EIP1559_CALCULATOR, true, (MAX_GAS / 2) + 1, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, false},
+          {EIP1559_CALCULATOR, true, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
           {
             EIP1559_CALCULATOR,
             true,
-            (FEE_MARKET.getMaxGas() / 2) + 1,
-            EIP_1559_FORK_BLOCK,
-            FEE_MARKET.getMaxGas(),
-            0L,
-            false
-          },
-          {
-            EIP1559_CALCULATOR,
-            true,
-            (FEE_MARKET.getMaxGas() / 2) - 1,
-            EIP_1559_FORK_BLOCK,
-            10L,
-            2L,
-            false
-          },
-          {
-            EIP1559_CALCULATOR,
-            true,
-            (FEE_MARKET.getMaxGas() / 2) + FEE_MARKET.getGasIncrementAmount(),
+            (MAX_GAS / 2) + FEE_MARKET.getGasIncrementAmount(MAX_GAS),
             EIP_1559_FORK_BLOCK + 1,
-            FEE_MARKET.getMaxGas(),
+            MAX_GAS,
             0L,
             true
           },
           {
             EIP1559_CALCULATOR,
             true,
-            (FEE_MARKET.getMaxGas() / 2) + FEE_MARKET.getGasIncrementAmount() + 1,
+            (MAX_GAS / 2) + FEE_MARKET.getGasIncrementAmount(MAX_GAS) + 1,
             EIP_1559_FORK_BLOCK + 1,
-            FEE_MARKET.getMaxGas(),
+            MAX_GAS,
             0L,
             false
           },
           {
             EIP1559_CALCULATOR,
             false,
-            (FEE_MARKET.getMaxGas() / 2) - FEE_MARKET.getGasIncrementAmount(),
+            (MAX_GAS / 2) - FEE_MARKET.getGasIncrementAmount(MAX_GAS),
             EIP_1559_FORK_BLOCK + 1,
-            FEE_MARKET.getMaxGas(),
+            MAX_GAS,
             0L,
             true
           },
           {
             EIP1559_CALCULATOR,
             false,
-            (FEE_MARKET.getMaxGas() / 2) - FEE_MARKET.getGasIncrementAmount() + 1,
+            (MAX_GAS / 2) - FEE_MARKET.getGasIncrementAmount(MAX_GAS) + 1,
             EIP_1559_FORK_BLOCK + 1,
-            FEE_MARKET.getMaxGas(),
+            MAX_GAS,
             0L,
             false
           }
