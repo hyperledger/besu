@@ -73,24 +73,38 @@ public class PeerDiscoveryTableRefreshTest {
     final Packet pingPacket = Packet.create(PacketType.PING, ping, nodeKeys.get(1));
     controller.onMessage(pingPacket, peers.get(1));
 
+    final PingPacketData data =
+        PingPacketData.create(peers.get(0).getEndpoint(), peers.get(1).getEndpoint());
+    final Packet packet = Packet.create(PacketType.PING, data, nodeKeys.get(0));
+
+    // Simulate a PONG message from peer 0.
+    final PongPacketData pong = PongPacketData.create(peers.get(0).getEndpoint(), packet.getHash());
+    final Packet pongPacket = Packet.create(PacketType.PONG, pong, nodeKeys.get(1));
+
+    controller.onMessage(pongPacket, peers.get(1));
+
     // Wait until the controller has added the newly found peer.
     assertThat(controller.streamDiscoveredPeers()).hasSize(1);
 
-    // Simulate a PONG message from peer 0.
-    final PongPacketData pongPacketData =
-        PongPacketData.create(localPeer.getEndpoint(), pingPacket.getHash());
-    final Packet pongPacket = Packet.create(PacketType.PONG, pongPacketData, nodeKeys.get(0));
-
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     for (int i = 0; i < 5; i++) {
+      controller.onMessage(pingPacket, peers.get(1));
 
-      controller.onMessage(pongPacket, peers.get(0));
+      final PingPacketData refreshData =
+          PingPacketData.create(peers.get(0).getEndpoint(), peers.get(1).getEndpoint());
+      final Packet refreshPacket = Packet.create(PacketType.PING, refreshData, nodeKeys.get(0));
+
+      final PongPacketData refreshPong =
+          PongPacketData.create(peers.get(0).getEndpoint(), refreshPacket.getHash());
+      final Packet refreshPongPacket = Packet.create(PacketType.PONG, refreshPong, nodeKeys.get(1));
+
+      controller.onMessage(refreshPongPacket, peers.get(1));
 
       controller.getRecursivePeerRefreshState().cancel();
       timer.runPeriodicHandlers();
       controller.streamDiscoveredPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
-      controller.onMessage(pingPacket, peers.get(1));
     }
+
     verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
     final List<Packet> capturedFindNeighborsPackets =
         captor.getAllValues().stream()

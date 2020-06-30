@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -52,6 +53,7 @@ public class PeerDiscoveryTimestampsTest {
     final DiscoveryPeer localPeer = peers.get(0);
     final NodeKey localNodeKey = nodeKeys.get(0);
 
+    assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
     final PeerDiscoveryController controller =
         PeerDiscoveryController.builder()
             .nodeKey(localNodeKey)
@@ -67,9 +69,18 @@ public class PeerDiscoveryTimestampsTest {
 
     final PingPacketData ping =
         PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
-    final Packet packet = Packet.create(PacketType.PING, ping, nodeKeys.get(1));
+    final Packet pingPacket = Packet.create(PacketType.PING, ping, nodeKeys.get(1));
 
-    controller.onMessage(packet, peers.get(1));
+    controller.onMessage(pingPacket, peers.get(1));
+
+    final PingPacketData data =
+        PingPacketData.create(localPeer.getEndpoint(), peers.get(1).getEndpoint());
+    final Packet packet = Packet.create(PacketType.PING, data, nodeKeys.get(0));
+
+    final PongPacketData pong = PongPacketData.create(peers.get(0).getEndpoint(), packet.getHash());
+    final Packet pongPacket = Packet.create(PacketType.PONG, pong, nodeKeys.get(1));
+
+    controller.onMessage(pongPacket, peers.get(1));
 
     final AtomicLong lastSeen = new AtomicLong();
     final AtomicLong firstDiscovered = new AtomicLong();
@@ -83,7 +94,7 @@ public class PeerDiscoveryTimestampsTest {
     lastSeen.set(p.getLastSeen());
     firstDiscovered.set(p.getFirstDiscovered());
 
-    controller.onMessage(packet, peers.get(1));
+    controller.onMessage(pingPacket, peers.get(1));
 
     assertThat(controller.streamDiscoveredPeers()).hasSize(1);
 

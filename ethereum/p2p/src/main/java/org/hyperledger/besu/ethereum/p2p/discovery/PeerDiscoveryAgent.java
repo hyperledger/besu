@@ -308,4 +308,8 @@ public abstract class PeerDiscoveryAgent {
   public boolean isActive() {
     return isActive;
   }
+
+  public void bond(final DiscoveryPeer peer) {
+    controller.ifPresent(c -> c.handleBondingRequest(peer));
+  }
 }

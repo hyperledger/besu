@@ -192,8 +192,8 @@ public class GraphQLHttpService {
   private Handler<RoutingContext> checkWhitelistHostHeader() {
     return event -> {
       final Optional<String> hostHeader = getAndValidateHostHeader(event);
-      if (config.getHostsWhitelist().contains("*")
-          || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader.get()))) {
+      if (config.getHostsAllowlist().contains("*")
+          || (hostHeader.isPresent() && hostIsInAllowlist(hostHeader.get()))) {
         event.next();
       } else {
         final HttpServerResponse response = event.response();
@@ -219,13 +219,13 @@ public class GraphQLHttpService {
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 
-  private boolean hostIsInWhitelist(final String hostHeader) {
-    if (config.getHostsWhitelist().stream()
+  private boolean hostIsInAllowlist(final String hostHeader) {
+    if (config.getHostsAllowlist().stream()
         .anyMatch(
-            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
       return true;
     } else {
-      LOG.trace("Host not in whitelist: '{}'", hostHeader);
+      LOG.trace("Host not in allowlist: '{}'", hostHeader);
       return false;
     }
   }

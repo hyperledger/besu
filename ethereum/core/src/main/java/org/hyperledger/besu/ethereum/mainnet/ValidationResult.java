@@ -33,7 +33,7 @@ public final class ValidationResult<T> {
   }
 
   public boolean isValid() {
-    return !invalidReason.isPresent();
+    return invalidReason.isEmpty();
   }
 
   public T getInvalidReason() throws NoSuchElementException {

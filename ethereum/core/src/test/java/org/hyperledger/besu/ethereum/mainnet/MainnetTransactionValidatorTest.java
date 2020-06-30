@@ -238,30 +238,6 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectTransactionIfGasLimitExceedsPerTransactionGasLimit() {
-    final long forkBlock = 845L;
-    final EIP1559 eip1559 = new EIP1559(forkBlock);
-    ExperimentalEIPs.eip1559Enabled = true;
-    final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            false,
-            Optional.empty(),
-            Optional.of(eip1559),
-            AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS);
-    final Transaction transaction =
-        new TransactionTestFixture()
-            .gasLimit(feeMarket.getPerTxGaslimit() + 1)
-            .chainId(Optional.empty())
-            .createTransaction(senderKeys);
-    assertThat(validator.validate(transaction))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT));
-    ExperimentalEIPs.eip1559Enabled = false;
-  }
-
-  @Test
   public void shouldRejectTransactionIfLegacyAfterEIP1559Finalized() {
     final long forkBlock = 845L;
     final EIP1559 eip1559 = new EIP1559(forkBlock);
@@ -275,7 +251,7 @@ public class MainnetTransactionValidatorTest {
             AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS);
     final Transaction transaction =
         new TransactionTestFixture()
-            .gasLimit(feeMarket.getPerTxGaslimit() + 1)
+            .gasLimit(21000)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     assertThat(validator.validate(transaction))

@@ -83,6 +83,7 @@ public class TransactionPool implements BlockAddedObserver {
       TransactionPriceCalculator.frontier();
   private final TransactionPriceCalculator eip1559PriceCalculator =
       TransactionPriceCalculator.eip1559();
+  private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
@@ -96,7 +97,8 @@ public class TransactionPool implements BlockAddedObserver {
       final Optional<PeerPendingTransactionTracker> peerPendingTransactionTracker,
       final Wei minTransactionGasPrice,
       final MetricsSystem metricsSystem,
-      final Optional<EIP1559> eip1559) {
+      final Optional<EIP1559> eip1559,
+      final TransactionPoolConfiguration configuration) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -107,6 +109,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.peerPendingTransactionTracker = peerPendingTransactionTracker;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.eip1559 = eip1559;
+    this.configuration = configuration;
 
     duplicateTransactionCounter =
         metricsSystem.createLabelledCounter(
@@ -152,6 +155,12 @@ public class TransactionPool implements BlockAddedObserver {
     if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
       return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
     }
+
+    if (!configuration.getTxFeeCap().isZero()
+        && transactionGasPrice.compareTo(configuration.getTxFeeCap()) > 0) {
+      return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
+    }
+
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateTransaction(transaction);
     if (validationResult.isValid()) {

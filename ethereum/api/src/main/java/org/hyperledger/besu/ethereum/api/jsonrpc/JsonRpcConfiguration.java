@@ -37,7 +37,7 @@ public class JsonRpcConfiguration {
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<RpcApi> rpcApis;
-  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private File authenticationPublicKeyFile;
@@ -104,11 +104,11 @@ public class JsonRpcConfiguration {
   }
 
   public Collection<String> getHostsAllowlist() {
-    return Collections.unmodifiableCollection(this.hostsWhitelist);
+    return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
   public void setHostsAllowlist(final List<String> hostsWhitelist) {
-    this.hostsWhitelist = hostsWhitelist;
+    this.hostsAllowlist = hostsWhitelist;
   }
 
   public boolean isAuthenticationEnabled() {
@@ -158,7 +158,7 @@ public class JsonRpcConfiguration {
         .add("port", port)
         .add("host", host)
         .add("corsAllowedDomains", corsAllowedDomains)
-        .add("hostsWhitelist", hostsWhitelist)
+        .add("hostsAllowlist", hostsAllowlist)
         .add("rpcApis", rpcApis)
         .add("authenticationEnabled", authenticationEnabled)
         .add("authenticationCredentialsFile", authenticationCredentialsFile)
@@ -183,7 +183,7 @@ public class JsonRpcConfiguration {
         && Objects.equals(host, that.host)
         && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
         && Objects.equals(rpcApis, that.rpcApis)
-        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist)
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
         && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile);
   }
@@ -196,7 +196,7 @@ public class JsonRpcConfiguration {
         host,
         corsAllowedDomains,
         rpcApis,
-        hostsWhitelist,
+        hostsAllowlist,
         authenticationEnabled,
         authenticationCredentialsFile,
         authenticationPublicKeyFile);

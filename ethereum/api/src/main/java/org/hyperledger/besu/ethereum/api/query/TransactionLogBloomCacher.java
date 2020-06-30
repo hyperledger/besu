@@ -151,7 +151,7 @@ public class TransactionLogBloomCacher {
       if (cacheFile.exists()) {
         cacheSingleBlock(blockHeader, cacheFile);
       } else {
-        scheduler.scheduleComputationTask(this::populateLatestSegment);
+        scheduler.scheduleComputationTask(() -> this.populateLatestSegment(blockNumber));
       }
     } catch (final IOException e) {
       LOG.error("Unhandled caching exception.", e);
@@ -169,21 +169,18 @@ public class TransactionLogBloomCacher {
     }
   }
 
-  private boolean populateLatestSegment() {
+  private boolean populateLatestSegment(final long eventBlockNumber) {
     try {
       if (populateLastFragmentLock.tryLock(100, TimeUnit.MILLISECONDS)) {
         try {
           final File currentFile = calculateCacheFileName(CURRENT, cacheDir);
-
-          final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
-          final long segmentNumber = chainHeadBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+          final long segmentNumber = eventBlockNumber / BLOCKS_PER_BLOOM_CACHE;
           long blockNumber =
-              Math.min((segmentNumber + 1) * BLOCKS_PER_BLOOM_CACHE - 1, chainHeadBlockNumber);
+              Math.min((segmentNumber + 1) * BLOCKS_PER_BLOOM_CACHE - 1, eventBlockNumber);
           try (final OutputStream out = new FileOutputStream(currentFile)) {
             fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, out);
           }
-          while (blockNumber <= chainHeadBlockNumber
-              && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
+          while (blockNumber <= eventBlockNumber && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
             cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
             blockNumber++;
           }

@@ -402,14 +402,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--p2p-interface"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
       description =
-          "The network interface address on which this node listens for p2p communication (default: ${DEFAULT-VALUE})",
+          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String p2pInterface = NetworkUtility.INADDR_ANY;
 
   @Option(
       names = {"--p2p-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port on which to listen for p2p communication (default: ${DEFAULT-VALUE})",
+      description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer p2pPort = EnodeURL.DEFAULT_LISTENING_PORT;
 
@@ -770,8 +770,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
+      names = {"--rpc-tx-feecap"},
+      description =
+          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
+
+  @Option(
       names = {"--min-block-occupancy-ratio"},
-      description = "Minimum occupancy ratio for  a mined block (default: ${DEFAULT-VALUE})",
+      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 
@@ -1099,7 +1106,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       configureLogging(true);
       configureNativeLibs();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
-      // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
+      // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
       final BesuCommand controller = validateOptions().configure().controller();
@@ -1938,6 +1945,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(priceBump)
+        .txFeeCap(txFeeCap)
         .build();
   }
 
