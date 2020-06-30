@@ -36,12 +36,14 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 public class PeerDiscoveryTableRefreshTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
+  @Ignore
   @Test
   public void tableRefreshSingleNode() {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
