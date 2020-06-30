@@ -133,7 +133,9 @@ public class RlpxAgent {
         .whenComplete(
             (res, err) -> {
               if (err != null) {
-                LOG.error("Failed to start P2P RLPx agent.", err);
+                // the detail of this error is already logged by the completeExceptionally() call in
+                // NettyConnectionInitializer
+                LOG.error("Failed to start P2P RLPx agent. Check for port conflicts.");
               }
             });
   }

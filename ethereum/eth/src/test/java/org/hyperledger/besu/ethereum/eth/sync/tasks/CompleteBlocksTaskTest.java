@@ -16,28 +16,39 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.manager.PeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>> {
 
   @Override
   protected List<Block> generateDataToBeRequested() {
+    return generateDataToBeRequested(3);
+  }
+
+  protected List<Block> generateDataToBeRequested(final int nbBlock) {
     // Setup data to be requested and expected response
     final List<Block> blocks = new ArrayList<>();
-    for (long i = 0; i < 3; i++) {
+    for (long i = 0; i < nbBlock; i++) {
       final BlockHeader header = blockchain.getBlockHeader(10 + i).get();
       final BlockBody body = blockchain.getBlockBody(header.getHash()).get();
       blocks.add(new Block(header, body));
@@ -66,5 +77,51 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final List<Block> blocks = asList(block1, block2, block3);
     final EthTask<List<Block>> task = createTask(blocks);
     assertThat(task.run()).isCompletedWithValue(blocks);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void shouldReduceTheBlockSegmentSizeAfterEachRetry() {
+
+    peerCountToTimeout.set(3);
+    final List<Block> requestedData = generateDataToBeRequested(10);
+
+    final EthTask<List<Block>> task = createTask(requestedData);
+    final CompletableFuture<List<Block>> future = task.run();
+
+    ArgumentCaptor<Long> blockNumbersCaptor = ArgumentCaptor.forClass(Long.class);
+
+    verify(ethPeers, times(4))
+        .executePeerRequest(
+            any(PeerRequest.class), blockNumbersCaptor.capture(), any(Optional.class));
+
+    assertThat(future.isDone()).isFalse();
+    assertThat(blockNumbersCaptor.getAllValues().get(0)).isEqualTo(19);
+    assertThat(blockNumbersCaptor.getAllValues().get(1)).isEqualTo(14);
+    assertThat(blockNumbersCaptor.getAllValues().get(2)).isEqualTo(13);
+    assertThat(blockNumbersCaptor.getAllValues().get(3)).isEqualTo(10);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void shouldNotReduceTheBlockSegmentSizeIfOnlyOneBlockNeeded() {
+
+    peerCountToTimeout.set(3);
+    final List<Block> requestedData = generateDataToBeRequested(1);
+
+    final EthTask<List<Block>> task = createTask(requestedData);
+    final CompletableFuture<List<Block>> future = task.run();
+
+    ArgumentCaptor<Long> blockNumbersCaptor = ArgumentCaptor.forClass(Long.class);
+
+    verify(ethPeers, times(4))
+        .executePeerRequest(
+            any(PeerRequest.class), blockNumbersCaptor.capture(), any(Optional.class));
+
+    assertThat(future.isDone()).isFalse();
+    assertThat(blockNumbersCaptor.getAllValues().get(0)).isEqualTo(10);
+    assertThat(blockNumbersCaptor.getAllValues().get(1)).isEqualTo(10);
+    assertThat(blockNumbersCaptor.getAllValues().get(2)).isEqualTo(10);
+    assertThat(blockNumbersCaptor.getAllValues().get(3)).isEqualTo(10);
   }
 }
