@@ -902,7 +902,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--target-gas-limit"},
       description =
-          "Sets target gas limit per block. If set each blocks gas limit will approach this setting over time if the current gas limit is different.")
+          "Sets target gas limit per block. If set each block's gas limit will approach this setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
 
   @Option(
@@ -1307,13 +1307,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isMiningEnabled && coinbase == null) {
       throw new ParameterException(
           this.commandLine,
-          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
+          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
     if (!isMiningEnabled && iStratumMiningEnabled) {
       throw new ParameterException(
           this.commandLine,
-          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)"
+          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
               + "or specify mining is enabled (--miner-enabled)");
     }
   }
@@ -1868,6 +1868,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       } else if (!isPrivacyMultiTenancyEnabled) {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
+      }
+
+      // TODO use compareTo instead - and reject if < 0
+      if (!Wei.ZERO.equals(minTransactionGasPrice)) {
+        // if gas is required, cannot use random keys to sign private tx
+        // ie --privacy-marker-transaction-signing-key-file must be set
+        if (privacyMarkerTransactionSigningKeyPath == null) {
+          throw new ParameterException(
+              commandLine,
+              "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
+        }
       }
       privacyParametersBuilder.setPrivacyAddress(privacyPrecompiledAddress);
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
