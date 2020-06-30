@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -218,7 +217,7 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent agent =
         helper.startDiscoveryAgent(Collections.emptyList(), peerPermissions);
     assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
-    final Peer localNode = agent.getAdvertisedPeer().get();
+    final DiscoveryPeer localNode = agent.getAdvertisedPeer().get();
 
     // Setup peer and permissions
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
@@ -233,10 +232,10 @@ public class PeerDiscoveryAgentTest {
         .thenReturn(true);
 
     // Bond
-    bondViaIncomingPing(agent, otherNode);
+    otherNode.bond(localNode);
 
     List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(3);
+    assertThat(remoteIncomingPackets).hasSize(2);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
     assertThat(firstMsg.fromAgent).isEqualTo(agent);
@@ -372,10 +371,6 @@ public class PeerDiscoveryAgentTest {
     remoteAgent.start(888);
     assertThat(remoteAgent.getAdvertisedPeer().isPresent()).isTrue();
     final DiscoveryPeer remotePeer = remoteAgent.getAdvertisedPeer().get();
-
-    // Send PONG so that peers will be bonded
-    final Packet pongPacket = helper.createPongPacket(agent, Hash.EMPTY);
-    helper.sendMessageBetweenAgents(remoteAgent, agent, pongPacket);
 
     // Remote agent should have bonded with agent
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
