@@ -38,6 +38,7 @@ public class EIP1559 {
   public long computeBaseFee(
       final long parentBaseFee, final long parentBlockGasUsed, final long targetGasUsed) {
     guardActivation();
+    assert targetGasUsed != 0L;
     long delta = parentBlockGasUsed - targetGasUsed;
     long baseFee =
         parentBaseFee
