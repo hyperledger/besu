@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.nat.NatService;
@@ -41,6 +42,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,13 +84,17 @@ public abstract class PeerDiscoveryAgent {
   /* Is discovery enabled? */
   private boolean isActive = false;
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
+  private final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber;
+  private final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber;
 
   protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber,
+      final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -102,7 +108,8 @@ public abstract class PeerDiscoveryAgent {
 
     this.config = config;
     this.nodeKey = nodeKey;
-
+    this.peerAddedCallbackSubscriber = peerAddedCallbackSubscriber;
+    this.peerRemovedCallbackSubscriber = peerRemovedCallbackSubscriber;
     id = nodeKey.getPublicKey().getEncodedBytes();
   }
 
@@ -174,6 +181,8 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
+        .peerAddedCallbackSubscriber(peerAddedCallbackSubscriber)
+        .peerRemovedCallbackSubscriber(peerRemovedCallbackSubscriber)
         .build();
   }
 

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
@@ -158,7 +159,9 @@ public class PeerDiscoveryController {
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
       final Subscribers<PeerBondedObserver> peerBondedObservers,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber,
+      final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -173,6 +176,8 @@ public class PeerDiscoveryController {
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
+    peerAddedCallbackSubscriber.accept(this::onPeerAdded);
+    peerRemovedCallbackSubscriber.accept(this::onPeerRemoved);
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -193,6 +198,18 @@ public class PeerDiscoveryController {
             "discovery_interaction_retry_count",
             "Total number of interaction retries performed",
             "type");
+  }
+
+  private void onPeerAdded(final Peer peer, final boolean wasAdded) {
+    if (wasAdded) {
+      addToPeerTable(DiscoveryPeer.fromEnode(peer.getEnodeURL()));
+    }
+  }
+
+  private void onPeerRemoved(final Peer peer, final boolean wasRemoved) {
+    if (wasRemoved) {
+      peerTable.tryEvict(peer);
+    }
   }
 
   public static Builder builder() {
@@ -692,6 +709,10 @@ public class PeerDiscoveryController {
     private final List<DiscoveryPeer> bootstrapNodes = new ArrayList<>();
     private PeerTable peerTable;
     private Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
+    private Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber =
+        peerAddedCallback -> {};
+    private Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber =
+        peerRemovedCallback -> {};
 
     // Required dependencies
     private NodeKey nodeKey;
@@ -722,7 +743,9 @@ public class PeerDiscoveryController {
           peerRequirement,
           peerPermissions,
           peerBondedObservers,
-          metricsSystem);
+          metricsSystem,
+          peerAddedCallbackSubscriber,
+          peerRemovedCallbackSubscriber);
     }
 
     private void validate() {
@@ -812,6 +835,20 @@ public class PeerDiscoveryController {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
+      return this;
+    }
+
+    public Builder peerAddedCallbackSubscriber(
+        final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber) {
+      checkNotNull(peerAddedCallbackSubscriber);
+      this.peerAddedCallbackSubscriber = peerAddedCallbackSubscriber;
+      return this;
+    }
+
+    public Builder peerRemovedCallbackSubscriber(
+        final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackConsumer) {
+      checkNotNull(peerRemovedCallbackConsumer);
+      this.peerRemovedCallbackSubscriber = peerRemovedCallbackConsumer;
       return this;
     }
   }

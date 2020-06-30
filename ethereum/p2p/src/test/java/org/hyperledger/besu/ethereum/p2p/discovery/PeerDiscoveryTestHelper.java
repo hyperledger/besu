@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.nat.NatService;
@@ -264,8 +265,16 @@ public class PeerDiscoveryTestHelper {
       config.setAdvertisedHost(advertisedHost);
       config.setBindPort(port);
       config.setActive(active);
+      MaintainedPeers maintainedPeers = new MaintainedPeers();
 
-      return new MockPeerDiscoveryAgent(nodeKey, config, peerPermissions, agents, natService);
+      return new MockPeerDiscoveryAgent(
+          nodeKey,
+          config,
+          peerPermissions,
+          agents,
+          natService,
+          maintainedPeers::subscribeAdd,
+          maintainedPeers::subscribeRemove);
     }
   }
 }

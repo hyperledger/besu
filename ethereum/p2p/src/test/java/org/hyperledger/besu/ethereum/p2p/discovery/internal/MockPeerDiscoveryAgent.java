@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
@@ -30,6 +31,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,8 +50,17 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
-      final NatService natService) {
-    super(nodeKey, config, peerPermissions, natService, new NoOpMetricsSystem());
+      final NatService natService,
+      final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber,
+      final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber) {
+    super(
+        nodeKey,
+        config,
+        peerPermissions,
+        natService,
+        new NoOpMetricsSystem(),
+        peerAddedCallbackSubscriber,
+        peerRemovedCallbackSubscriber);
     this.agentNetwork = agentNetwork;
   }
 

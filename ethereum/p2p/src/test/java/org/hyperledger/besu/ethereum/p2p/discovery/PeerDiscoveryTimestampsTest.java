@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import org.junit.Test;
 
@@ -52,6 +54,10 @@ public class PeerDiscoveryTimestampsTest {
     when(agent.getAdvertisedPeer()).thenReturn(Optional.of(peers.get(0)));
     final DiscoveryPeer localPeer = peers.get(0);
     final NodeKey localNodeKey = nodeKeys.get(0);
+    final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber =
+        peerAddedCallback -> {};
+    final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber =
+        peerRemovedCallback -> {};
 
     assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
     final PeerDiscoveryController controller =
@@ -64,6 +70,8 @@ public class PeerDiscoveryTimestampsTest {
             .tableRefreshIntervalMs(TimeUnit.HOURS.toMillis(1))
             .peerBondedObservers(Subscribers.create())
             .metricsSystem(new NoOpMetricsSystem())
+            .peerAddedCallbackSubscriber(peerAddedCallbackSubscriber)
+            .peerRemovedCallbackSubscriber(peerRemovedCallbackSubscriber)
             .build();
     controller.start();
 
