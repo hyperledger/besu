@@ -47,6 +47,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
   private static final Logger LOG = LogManager.getLogger();
+
+  private static final int MIN_SIZE_INCOMPLETE_LIST = 1;
   private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;
@@ -136,8 +138,19 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
   }
 
   private List<BlockHeader> incompleteHeaders() {
-    return headers.stream()
-        .filter(h -> blocks.get(h.getNumber()) == null)
-        .collect(Collectors.toList());
+    final List<BlockHeader> collectedHeaders =
+        headers.stream()
+            .filter(h -> blocks.get(h.getNumber()) == null)
+            .collect(Collectors.toList());
+    if (getRetryCount() > 1) {
+      final int subSize = (int) Math.ceil((double) collectedHeaders.size() / getRetryCount());
+      if (getRetryCount() > getMaxRetries()) {
+        return collectedHeaders.subList(0, MIN_SIZE_INCOMPLETE_LIST);
+      } else {
+        return collectedHeaders.subList(0, subSize);
+      }
+    }
+
+    return collectedHeaders;
   }
 }
