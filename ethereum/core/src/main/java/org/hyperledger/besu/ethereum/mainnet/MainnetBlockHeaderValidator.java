@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasLimitValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
@@ -102,7 +101,6 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(new ProofOfWorkValidationRule(true))
-        .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
@@ -115,7 +113,6 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(new ProofOfWorkValidationRule(true))
-        .addRule(new EIP1559BlockHeaderGasLimitValidationRule(eip1559))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

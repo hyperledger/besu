@@ -56,19 +56,19 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     return new Cluster(clusterConfiguration, net);
   }
 
-  protected Node permissionedNode(final String name, final Node... localConfigWhiteListedNodes) {
-    return permissionedNode(name, GENESIS_FILE, localConfigWhiteListedNodes);
+  protected Node permissionedNode(final String name, final Node... localConfigAllowedNodes) {
+    return permissionedNode(name, GENESIS_FILE, localConfigAllowedNodes);
   }
 
   protected Node permissionedNode(
-      final String name, final String genesisFile, final Node... localConfigWhiteListedNodes) {
+      final String name, final String genesisFile, final Node... localConfigAllowedNodes) {
     PermissionedNodeBuilder permissionedNodeBuilder =
         this.permissionedNodeBuilder
             .name(name)
             .genesisFile(genesisFile)
             .nodesContractEnabled(CONTRACT_ADDRESS);
-    if (localConfigWhiteListedNodes != null && localConfigWhiteListedNodes.length > 0) {
-      permissionedNodeBuilder.nodesPermittedInConfig(localConfigWhiteListedNodes);
+    if (localConfigAllowedNodes != null && localConfigAllowedNodes.length > 0) {
+      permissionedNodeBuilder.nodesPermittedInConfig(localConfigAllowedNodes);
     }
     return permissionedNodeBuilder.build();
   }

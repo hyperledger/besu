@@ -31,8 +31,11 @@ import org.junit.Test;
 public class LocalPermissioningConfigurationBuilderTest {
 
   private static final String PERMISSIONING_CONFIG_VALID = "/permissioning_config.toml";
+
+  @Deprecated
   private static final String PERMISSIONING_CONFIG_VALID_WHITELISTS =
       "/permissioning_config_whitelists.toml";
+
   private static final String PERMISSIONING_CONFIG_ACCOUNT_ALLOWLIST_ONLY =
       "/permissioning_config_account_allowlist_only.toml";
   private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY =
@@ -90,7 +93,7 @@ public class LocalPermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithOnlyNodeWhitelistSet() throws Exception {
+  public void permissioningConfigWithOnlyNodeAllowlistSet() throws Exception {
     final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
 
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY);
@@ -106,7 +109,7 @@ public class LocalPermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithOnlyAccountWhitelistSet() throws Exception {
+  public void permissioningConfigWithOnlyAccountAllowlistSet() throws Exception {
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ACCOUNT_ALLOWLIST_ONLY);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
@@ -145,7 +148,7 @@ public class LocalPermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithEmptyWhitelistMustNotError() throws Exception {
+  public void permissioningConfigWithEmptyAllowlistMustNotError() throws Exception {
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_EMPTY_ALLOWLISTS);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
@@ -158,7 +161,7 @@ public class LocalPermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithAbsentWhitelistMustThrowException() throws Exception {
+  public void permissioningConfigWithAbsentAllowlistMustThrowException() throws Exception {
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ABSENT_ALLOWLISTS);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 

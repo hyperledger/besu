@@ -107,7 +107,7 @@ public abstract class PeerPermissions implements AutoCloseable {
               .filter(p -> !(p instanceof NoopPeerPermissions))
               .collect(ImmutableList.toImmutableList());
 
-      if (filteredPermissions.size() == 0) {
+      if (filteredPermissions.isEmpty()) {
         return PeerPermissions.NOOP;
       } else if (filteredPermissions.size() == 1) {
         return filteredPermissions.get(0);

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController.NodesAllowlistResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,45 +52,45 @@ public class PermRemoveNodesFromAllowlist implements JsonRpcMethod {
       if (nodeWhitelistPermissioningController.isPresent()) {
         try {
           final List<String> enodeURLs = enodeListParam.getStringList();
-          final NodeLocalConfigPermissioningController.NodesWhitelistResult nodesWhitelistResult =
+          final NodesAllowlistResult nodesAllowlistResult =
               nodeWhitelistPermissioningController.get().removeNodes(enodeURLs);
 
-          switch (nodesWhitelistResult.result()) {
+          switch (nodesAllowlistResult.result()) {
             case SUCCESS:
               return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
             case ERROR_EMPTY_ENTRY:
               return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
+                  requestContext.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
             case ERROR_ABSENT_ENTRY:
               return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_MISSING_ENTRY);
+                  requestContext.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_MISSING_ENTRY);
             case ERROR_DUPLICATED_ENTRY:
               return new JsonRpcErrorResponse(
                   requestContext.getRequest().getId(),
-                  JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
-            case ERROR_WHITELIST_PERSIST_FAIL:
+                  JsonRpcError.NODE_ALLOWLIST_DUPLICATED_ENTRY);
+            case ERROR_ALLOWLIST_PERSIST_FAIL:
               return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.WHITELIST_PERSIST_FAILURE);
-            case ERROR_WHITELIST_FILE_SYNC:
+                  requestContext.getRequest().getId(), JsonRpcError.ALLOWLIST_PERSIST_FAILURE);
+            case ERROR_ALLOWLIST_FILE_SYNC:
               return new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.WHITELIST_FILE_SYNC);
+                  requestContext.getRequest().getId(), JsonRpcError.ALLOWLIST_FILE_SYNC);
             case ERROR_FIXED_NODE_CANNOT_BE_REMOVED:
               return new JsonRpcErrorResponse(
                   requestContext.getRequest().getId(),
-                  JsonRpcError.NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED);
+                  JsonRpcError.NODE_ALLOWLIST_FIXED_NODE_CANNOT_BE_REMOVED);
             default:
               throw new Exception();
           }
         } catch (IllegalArgumentException e) {
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+              requestContext.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_INVALID_ENTRY);
         } catch (Exception e) {
           return new JsonRpcErrorResponse(
               requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
         }
       } else {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+            requestContext.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
       }
     } catch (P2PDisabledException e) {
       return new JsonRpcErrorResponse(

@@ -41,7 +41,7 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
 
   private static final int ACCOUNT_BYTES_SIZE = 20;
   private LocalPermissioningConfiguration configuration;
-  private List<String> accountWhitelist = new ArrayList<>();
+  private List<String> accountAllowlist = new ArrayList<>();
   private final AllowlistPersistor allowlistPersistor;
 
   private final Counter checkCounter;
@@ -96,22 +96,22 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
     }
 
     boolean inputHasExistingAccount =
-        normalizedAccounts.stream().anyMatch(accountWhitelist::contains);
+        normalizedAccounts.stream().anyMatch(accountAllowlist::contains);
     if (inputHasExistingAccount) {
       return AllowlistOperationResult.ERROR_EXISTING_ENTRY;
     }
 
-    final List<String> oldWhitelist = new ArrayList<>(this.accountWhitelist);
-    this.accountWhitelist.addAll(normalizedAccounts);
+    final List<String> oldAllowlist = new ArrayList<>(this.accountAllowlist);
+    this.accountAllowlist.addAll(normalizedAccounts);
     try {
-      verifyConfigurationFileState(oldWhitelist);
-      updateConfigurationFile(accountWhitelist);
-      verifyConfigurationFileState(accountWhitelist);
+      verifyConfigurationFileState(oldAllowlist);
+      updateConfigurationFile(accountAllowlist);
+      verifyConfigurationFileState(accountAllowlist);
     } catch (IOException e) {
-      revertState(oldWhitelist);
-      return AllowlistOperationResult.ERROR_WHITELIST_PERSIST_FAIL;
+      revertState(oldAllowlist);
+      return AllowlistOperationResult.ERROR_ALLOWLIST_PERSIST_FAIL;
     } catch (AllowlistFileSyncException e) {
-      return AllowlistOperationResult.ERROR_WHITELIST_FILE_SYNC;
+      return AllowlistOperationResult.ERROR_ALLOWLIST_FILE_SYNC;
     }
     return AllowlistOperationResult.SUCCESS;
   }
@@ -123,22 +123,22 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       return inputValidationResult;
     }
 
-    if (!accountWhitelist.containsAll(normalizedAccounts)) {
+    if (!accountAllowlist.containsAll(normalizedAccounts)) {
       return AllowlistOperationResult.ERROR_ABSENT_ENTRY;
     }
 
-    final List<String> oldWhitelist = new ArrayList<>(this.accountWhitelist);
+    final List<String> oldAllowlist = new ArrayList<>(this.accountAllowlist);
 
-    this.accountWhitelist.removeAll(normalizedAccounts);
+    this.accountAllowlist.removeAll(normalizedAccounts);
     try {
-      verifyConfigurationFileState(oldWhitelist);
-      updateConfigurationFile(accountWhitelist);
-      verifyConfigurationFileState(accountWhitelist);
+      verifyConfigurationFileState(oldAllowlist);
+      updateConfigurationFile(accountAllowlist);
+      verifyConfigurationFileState(accountAllowlist);
     } catch (IOException e) {
-      revertState(oldWhitelist);
-      return AllowlistOperationResult.ERROR_WHITELIST_PERSIST_FAIL;
+      revertState(oldAllowlist);
+      return AllowlistOperationResult.ERROR_ALLOWLIST_PERSIST_FAIL;
     } catch (AllowlistFileSyncException e) {
-      return AllowlistOperationResult.ERROR_WHITELIST_FILE_SYNC;
+      return AllowlistOperationResult.ERROR_ALLOWLIST_FILE_SYNC;
     }
     return AllowlistOperationResult.SUCCESS;
   }
@@ -168,8 +168,8 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
     allowlistPersistor.updateConfig(ALLOWLIST_TYPE.ACCOUNTS, accounts);
   }
 
-  private void revertState(final List<String> accountWhitelist) {
-    this.accountWhitelist = accountWhitelist;
+  private void revertState(final List<String> accountAllowlist) {
+    this.accountAllowlist = accountAllowlist;
   }
 
   private boolean inputHasDuplicates(final List<String> accounts) {
@@ -177,11 +177,11 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
   }
 
   public boolean contains(final String account) {
-    return accountWhitelist.stream().anyMatch(a -> a.equalsIgnoreCase(account));
+    return accountAllowlist.stream().anyMatch(a -> a.equalsIgnoreCase(account));
   }
 
-  public List<String> getAccountWhitelist() {
-    return new ArrayList<>(accountWhitelist);
+  public List<String> getAccountAllowlist() {
+    return new ArrayList<>(accountAllowlist);
   }
 
   private boolean containsInvalidAccount(final List<String> accounts) {
@@ -202,8 +202,8 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
   }
 
   public synchronized void reload() throws RuntimeException {
-    final ArrayList<String> currentAccountsList = new ArrayList<>(accountWhitelist);
-    accountWhitelist.clear();
+    final ArrayList<String> currentAccountsList = new ArrayList<>(accountAllowlist);
+    accountAllowlist.clear();
 
     try {
       final LocalPermissioningConfiguration updatedConfig =
@@ -216,11 +216,11 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       configuration = updatedConfig;
     } catch (Exception e) {
       LOG.warn(
-          "Error reloading permissions file. In-memory whitelisted accounts will be reverted to previous valid configuration. "
+          "Error reloading permissions file. In-memory accounts allowlist will be reverted to previous valid configuration. "
               + "Details: {}",
           e.getMessage());
-      accountWhitelist.clear();
-      accountWhitelist.addAll(currentAccountsList);
+      accountAllowlist.clear();
+      accountAllowlist.addAll(currentAccountsList);
       throw new RuntimeException(e);
     }
   }

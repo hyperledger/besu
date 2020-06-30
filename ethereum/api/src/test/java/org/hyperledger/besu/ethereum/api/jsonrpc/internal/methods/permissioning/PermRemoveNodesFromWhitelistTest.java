@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController.NodesWhitelistResult;
+import static org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController.NodesAllowlistResult;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -76,7 +76,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(badEnode));
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_INVALID_ENTRY);
 
     when(nodeLocalConfigPermissioningController.removeNodes(eq(Lists.newArrayList(badEnode))))
         .thenThrow(IllegalArgumentException.class);
@@ -91,10 +91,10 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequestContext request = buildRequest(Lists.emptyList());
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
     when(nodeLocalConfigPermissioningController.removeNodes(eq(Lists.emptyList())))
-        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
+        .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -107,7 +107,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
 
     when(nodeLocalConfigPermissioningController.removeNodes(any()))
-        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
+        .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.SUCCESS));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -123,7 +123,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId());
 
     when(nodeLocalConfigPermissioningController.removeNodes(any()))
-        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.SUCCESS));
+        .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.SUCCESS));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -139,7 +139,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
@@ -150,10 +150,10 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1, enode1));
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_DUPLICATED_ENTRY);
 
     when(nodeLocalConfigPermissioningController.removeNodes(any()))
-        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY));
+        .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -165,10 +165,10 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequestContext request = buildRequest(new ArrayList<>());
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
     when(nodeLocalConfigPermissioningController.removeNodes(eq(new ArrayList<>())))
-        .thenReturn(new NodesWhitelistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
+        .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -180,11 +180,11 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequestContext request = buildRequest(Lists.newArrayList(enode1));
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED);
+            request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_FIXED_NODE_CANNOT_BE_REMOVED);
 
     when(nodeLocalConfigPermissioningController.removeNodes(any()))
         .thenReturn(
-            new NodesWhitelistResult(AllowlistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED));
+            new NodesAllowlistResult(AllowlistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED));
 
     final JsonRpcResponse actual = method.response(request);
 

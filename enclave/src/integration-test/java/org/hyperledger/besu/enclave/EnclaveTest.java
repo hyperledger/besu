@@ -190,7 +190,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void upcheckReturnsFalseIfNoResposneReceived() throws URISyntaxException {
+  public void upcheckReturnsFalseIfNoResponseReceived() throws URISyntaxException {
     assertThat(factory.createVertxEnclave(new URI("http://8.8.8.8:65535")).upCheck()).isFalse();
   }
 }

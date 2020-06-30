@@ -67,21 +67,21 @@ public class PermissioningConfigurationBuilder {
 
     if (localConfigNodePermissioningEnabled) {
       final TomlParseResult nodePermissioningToml = readToml(nodePermissioningConfigFilepath);
-      final TomlArray nodeWhitelistTomlArray =
+      final TomlArray nodeAllowlistTomlArray =
           getAllowlistArray(nodePermissioningToml, NODES_ALLOWLIST_KEY, NODES_WHITELIST_KEY);
 
       permissioningConfiguration.setNodePermissioningConfigFilePath(
           nodePermissioningConfigFilepath);
 
-      if (nodeWhitelistTomlArray != null) {
-        List<URI> nodesWhitelistToml =
-            nodeWhitelistTomlArray
+      if (nodeAllowlistTomlArray != null) {
+        List<URI> nodesAllowlistToml =
+            nodeAllowlistTomlArray
                 .toList()
                 .parallelStream()
                 .map(Object::toString)
                 .map(EnodeURL::asURI)
                 .collect(Collectors.toList());
-        permissioningConfiguration.setNodeAllowlist(nodesWhitelistToml);
+        permissioningConfiguration.setNodeAllowlist(nodesAllowlistToml);
       } else {
         throw new Exception(
             NODES_ALLOWLIST_KEY
@@ -100,22 +100,22 @@ public class PermissioningConfigurationBuilder {
 
     if (localConfigAccountPermissioningEnabled) {
       final TomlParseResult accountPermissioningToml = readToml(accountPermissioningConfigFilepath);
-      final TomlArray accountWhitelistTomlArray =
+      final TomlArray accountAllowlistTomlArray =
           getAllowlistArray(
               accountPermissioningToml, ACCOUNTS_ALLOWLIST_KEY, ACCOUNTS_WHITELIST_KEY);
 
       permissioningConfiguration.setAccountPermissioningConfigFilePath(
           accountPermissioningConfigFilepath);
 
-      if (accountWhitelistTomlArray != null) {
-        List<String> accountsWhitelistToml =
-            accountWhitelistTomlArray
+      if (accountAllowlistTomlArray != null) {
+        List<String> accountsAllowlistToml =
+            accountAllowlistTomlArray
                 .toList()
                 .parallelStream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
 
-        accountsWhitelistToml.stream()
+        accountsAllowlistToml.stream()
             .filter(s -> !AccountLocalConfigPermissioningController.isValidAccountString(s))
             .findFirst()
             .ifPresent(
@@ -123,7 +123,7 @@ public class PermissioningConfigurationBuilder {
                   throw new IllegalArgumentException("Invalid account " + s);
                 });
 
-        permissioningConfiguration.setAccountAllowlist(accountsWhitelistToml);
+        permissioningConfiguration.setAccountAllowlist(accountsAllowlistToml);
       } else {
         throw new Exception(
             ACCOUNTS_ALLOWLIST_KEY

@@ -38,6 +38,7 @@ public enum GraphQLError {
   WRONG_CHAIN_ID(-32000, "Wrong Chain ID in transaction signature"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(
       -32000, "Signatures with replay protection are not supported"),
+  TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
 
   // Private Transaction Errors
   PRIVATE_TRANSACTION_FAILED(-32000, "Private transaction failed"),
@@ -91,6 +92,8 @@ public enum GraphQLError {
         return PRIVATE_TRANSACTION_FAILED;
       case GAS_PRICE_TOO_LOW:
         return GAS_PRICE_TOO_LOW;
+      case TX_FEECAP_EXCEEDED:
+        return TX_FEECAP_EXCEEDED;
       default:
         return INTERNAL_ERROR;
     }
