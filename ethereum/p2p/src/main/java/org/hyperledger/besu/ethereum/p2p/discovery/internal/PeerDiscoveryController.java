@@ -296,19 +296,7 @@ public class PeerDiscoveryController {
       return;
     }
 
-    // Load the peer from the table, or use the instance that comes in.
-    final Optional<DiscoveryPeer> maybeKnownPeer =
-        peerTable.get(sender).filter(known -> known.discoveryEndpointMatches(sender));
-    DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
-    final boolean peerKnown = maybeKnownPeer.isPresent();
-    if (!peerKnown) {
-      DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(sender.getId());
-      if (bondingPeer != null) {
-        peer = bondingPeer;
-      }
-    }
-
-    final DiscoveryPeer finalPeer = peer;
+    final DiscoveryPeer peer = resolvePeer(sender);
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
@@ -325,9 +313,9 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  bondingPeers.invalidate(finalPeer.getId());
-                  addToPeerTable(finalPeer);
-                  recursivePeerRefreshState.onBondingComplete(finalPeer);
+                  bondingPeers.invalidate(peer.getId());
+                  addToPeerTable(peer);
+                  recursivePeerRefreshState.onBondingComplete(peer);
                 });
         break;
       case NEIGHBORS:
@@ -335,16 +323,16 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction ->
                     recursivePeerRefreshState.onNeighboursReceived(
-                        finalPeer, getPeersFromNeighborsPacket(packet)));
+                        peer, getPeersFromNeighborsPacket(packet)));
         break;
       case FIND_NEIGHBORS:
-        if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
-          break;
+        if (PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
+            && peerPermissions.allowInboundNeighborsRequest(peer)) {
+          final FindNeighborsPacketData fn =
+              packet.getPacketData(FindNeighborsPacketData.class).get();
+          respondToFindNeighbors(fn, peer);
         }
 
-        final FindNeighborsPacketData fn =
-            packet.getPacketData(FindNeighborsPacketData.class).get();
-        respondToFindNeighbors(fn, peer);
         break;
     }
   }
@@ -591,14 +579,27 @@ public class PeerDiscoveryController {
   }
 
   public void handleBondingRequest(final DiscoveryPeer peer) {
-    final DiscoveryPeer peerToBond =
-        peerTable.get(peer).filter(known -> known.discoveryEndpointMatches(peer)).orElse(peer);
+    final DiscoveryPeer peerToBond = resolvePeer(peer);
 
     if (peerPermissions.allowOutboundBonding(peerToBond)
-        && !PeerDiscoveryStatus.BONDED.equals(peerToBond.getStatus())
-        && !PeerDiscoveryStatus.BONDING.equals(peerToBond.getStatus())) {
+        && PeerDiscoveryStatus.KNOWN.equals(peerToBond.getStatus())) {
       bond(peerToBond);
     }
+  }
+
+  // Load the peer first from the table, then from bonding cache or use the instance that comes in.
+  private DiscoveryPeer resolvePeer(final DiscoveryPeer peer) {
+    final Optional<DiscoveryPeer> maybeKnownPeer =
+        peerTable.get(peer).filter(known -> known.discoveryEndpointMatches(peer));
+    DiscoveryPeer resolvedPeer = maybeKnownPeer.orElse(peer);
+    if (maybeKnownPeer.isEmpty()) {
+      DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
+      if (bondingPeer != null) {
+        resolvedPeer = bondingPeer;
+      }
+    }
+
+    return resolvedPeer;
   }
 
   /** Holds the state machine data for a peer interaction. */
