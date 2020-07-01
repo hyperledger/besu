@@ -1870,8 +1870,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
 
-      // TODO use compareTo instead - and reject if < 0
-      if (!Wei.ZERO.equals(minTransactionGasPrice)) {
+      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
         if (privacyMarkerTransactionSigningKeyPath == null) {
