@@ -136,7 +136,7 @@ public class RunnerBuilder {
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
   private NatMethod natMethod = NatMethod.AUTO;
-  private String natManagerPodName;
+  private String natManagerServiceName;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -207,8 +207,8 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder natManagerPodName(final String natManagerPodName) {
-    this.natManagerPodName = natManagerPodName;
+  public RunnerBuilder natManagerServiceName(final String natManagerServiceName) {
+    this.natManagerServiceName = natManagerServiceName;
     return this;
   }
 
@@ -643,7 +643,7 @@ public class RunnerBuilder {
         return Optional.of(
             new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case KUBERNETES:
-        return Optional.of(new KubernetesNatManager(natManagerPodName));
+        return Optional.of(new KubernetesNatManager(natManagerServiceName));
       case NONE:
       default:
         return Optional.empty();

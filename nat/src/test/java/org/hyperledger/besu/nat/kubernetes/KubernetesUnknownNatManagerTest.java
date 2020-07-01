@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.nat.kubernetes;
 
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.Mockito.when;
 
 import io.kubernetes.client.models.V1ObjectMeta;
@@ -37,8 +37,9 @@ public final class KubernetesUnknownNatManagerTest {
   public void initialize() {
 
     when(v1Service.getSpec()).thenReturn(new V1ServiceSpec().type("Unknown"));
-    when(v1Service.getMetadata()).thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_POD_NAME_FILTER));
-    natManager = new KubernetesNatManager(DEFAULT_BESU_POD_NAME_FILTER);
+    when(v1Service.getMetadata())
+        .thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_SERVICE_NAME_FILTER));
+    natManager = new KubernetesNatManager(DEFAULT_BESU_SERVICE_NAME_FILTER);
     try {
       natManager.start();
     } catch (Exception ignored) {
