@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -27,10 +30,55 @@ import com.google.common.io.Resources;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class EIP1559BaseFeeTest {
 
   private final EIP1559 eip1559 = new EIP1559(0);
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    try {
+      final List<Object[]> data = new ArrayList<>();
+      final String testFilePath = "basefee-test.json";
+      final URL testFileUrl = EIP1559BaseFeeTest.class.getResource(testFilePath);
+      checkState(testFileUrl != null, "Cannot find test file " + testFilePath);
+      final String testSuiteJson = Resources.toString(testFileUrl, Charsets.UTF_8);
+      final ObjectMapper objectMapper = new ObjectMapper();
+      final Eip1559BaseFeeTestCase[] testCases =
+          objectMapper.readValue(testSuiteJson, Eip1559BaseFeeTestCase[].class);
+      for (final Eip1559BaseFeeTestCase testCase : testCases) {
+        data.add(
+            new Object[] {
+              testCase.parentBaseFee,
+              testCase.parentGasUsed,
+              testCase.parentTargetGasUsed,
+              testCase.expectedBaseFee
+            });
+      }
+      return data;
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private final long parentBaseFee;
+  private final long parentGasUsed;
+  private final long parentTargetGasUsed;
+  private final long expectedBaseFee;
+
+  public EIP1559BaseFeeTest(
+      final long parentBaseFee,
+      final long parentGasUsed,
+      final long parentTargetGasUsed,
+      final long expectedBaseFee) {
+    this.parentBaseFee = parentBaseFee;
+    this.parentGasUsed = parentGasUsed;
+    this.parentTargetGasUsed = parentTargetGasUsed;
+    this.expectedBaseFee = expectedBaseFee;
+  }
 
   @Before
   public void setUp() {
@@ -43,20 +91,9 @@ public class EIP1559BaseFeeTest {
   }
 
   @Test
-  public void assertThatBaseFeeIsCorrect() throws Exception {
-    final String testFilePath = "basefee-test.json";
-    final URL testFileUrl = EIP1559BaseFeeTest.class.getResource(testFilePath);
-    checkState(testFileUrl != null, "Cannot find test file " + testFilePath);
-    final String testSuiteJson = Resources.toString(testFileUrl, Charsets.UTF_8);
-    final ObjectMapper objectMapper = new ObjectMapper();
-    final Eip1559BaseFeeTestCase[] testCases =
-        objectMapper.readValue(testSuiteJson, Eip1559BaseFeeTestCase[].class);
-    for (final Eip1559BaseFeeTestCase testCase : testCases) {
-      assertThat(
-              eip1559.computeBaseFee(
-                  testCase.parentBaseFee, testCase.parentGasUsed, testCase.parentTargetGasUsed))
-          .isEqualTo(testCase.expectedBaseFee);
-    }
+  public void assertThatBaseFeeIsCorrect() {
+    assertThat(eip1559.computeBaseFee(parentBaseFee, parentGasUsed, parentTargetGasUsed))
+        .isEqualTo(expectedBaseFee);
   }
 
   private static class Eip1559BaseFeeTestCase {
