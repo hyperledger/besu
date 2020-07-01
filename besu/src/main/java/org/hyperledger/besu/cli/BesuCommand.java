@@ -31,7 +31,7 @@ import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
@@ -422,10 +422,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
-      names = {"--Xnat-kube-pod-name"},
+      names = {"--Xnat-kube-service-name"},
       description =
-          "Specify the name of the pod that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
-  private String natManagerPodName = DEFAULT_BESU_POD_NAME_FILTER;
+          "Specify the name of the service that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
+  private String natManagerServiceName = DEFAULT_BESU_SERVICE_NAME_FILTER;
+
+  @Option(
+      names = {"--Xnat-method-fallback-enabled"},
+      description =
+          "Enable fallback to NONE for the nat manager in case of failure. If False BESU will exit on failure. (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean natMethodFallbackEnabled = true;
 
   @Option(
       names = {"--network-id"},
@@ -1332,11 +1339,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @SuppressWarnings("ConstantConditions")
   private void validateNatParams() {
     if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
-        && !natManagerPodName.equals(DEFAULT_BESU_POD_NAME_FILTER)) {
+        && !natManagerServiceName.equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name"
+          "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
               + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+    }
+    if (natMethod.equals(NatMethod.AUTO) && !natMethodFallbackEnabled) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled"
+              + " or select another mode (via --nat--method=XXXX)");
     }
   }
 
@@ -1992,7 +2005,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
-            .natManagerPodName(natManagerPodName)
+            .natManagerServiceName(natManagerServiceName)
+            .natMethodFallbackEnabled(natMethodFallbackEnabled)
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)
