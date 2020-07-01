@@ -428,6 +428,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String natManagerServiceName = DEFAULT_BESU_SERVICE_NAME_FILTER;
 
   @Option(
+      names = {"--Xnat-method-fallback-enabled"},
+      description =
+          "Enable fallback to NONE for the nat manager in case of failure. If False BESU will exit on failure. (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean natMethodFallbackEnabled = true;
+
+  @Option(
       names = {"--network-id"},
       paramLabel = "<BIG INTEGER>",
       description =
@@ -1338,6 +1345,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
               + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
     }
+    if (natMethod.equals(NatMethod.AUTO) && !natMethodFallbackEnabled) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled"
+              + " or select another mode (via --nat--method=XXXX)");
+    }
   }
 
   private void issueOptionWarnings() {
@@ -1983,6 +1996,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
             .natManagerServiceName(natManagerServiceName)
+            .natMethodFallbackEnabled(natMethodFallbackEnabled)
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)

@@ -1385,6 +1385,52 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithKubernetes() {
+
+    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "false");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
+    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "true");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithDocker() {
+
+    parseCommand("--nat-method", "DOCKER", "--Xnat-method-fallback-enabled", "false");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
+    parseCommand("--nat-method", "DOCKER", "--Xnat-method-fallback-enabled", "true");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithUpnp() {
+
+    parseCommand("--nat-method", "UPNP", "--Xnat-method-fallback-enabled", "false");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
+    parseCommand("--nat-method", "UPNP", "--Xnat-method-fallback-enabled", "true");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natMethodFallbackEnabledCannotBeUsedWithAutoMethod() {
+    parseCommand("--nat-method", "AUTO", "--Xnat-method-fallback-enabled", "false");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled or select another mode (via --nat--method=XXXX)");
+  }
+
+  @Test
   public void rpcHttpEnabledPropertyDefaultIsFalse() {
     parseCommand();
 

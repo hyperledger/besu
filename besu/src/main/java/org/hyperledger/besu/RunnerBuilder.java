@@ -137,6 +137,7 @@ public class RunnerBuilder {
   private int p2pListenPort;
   private NatMethod natMethod = NatMethod.AUTO;
   private String natManagerServiceName;
+  private boolean natMethodFallbackEnabled;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -209,6 +210,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder natManagerServiceName(final String natManagerServiceName) {
     this.natManagerServiceName = natManagerServiceName;
+    return this;
+  }
+
+  public RunnerBuilder natMethodFallbackEnabled(final boolean natMethodFallbackEnabled) {
+    this.natMethodFallbackEnabled = natMethodFallbackEnabled;
     return this;
   }
 
@@ -366,8 +372,8 @@ public class RunnerBuilder {
             .orElse(bannedNodes);
 
     LOG.info("Detecting NAT service.");
-    final NatService natService =
-        new NatService(buildNatManager(natMethod), natMethod == NatMethod.AUTO);
+    final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
+    final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
         (caps) ->
