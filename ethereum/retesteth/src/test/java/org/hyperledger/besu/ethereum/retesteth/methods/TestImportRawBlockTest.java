@@ -69,13 +69,13 @@ public class TestImportRawBlockTest {
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    assertThat(((JsonRpcErrorResponse)response).getError()).isEqualTo(JsonRpcError.BLOCK_IMPORT_ERROR);
+    assertThat(((JsonRpcErrorResponse) response).getError())
+        .isEqualTo(JsonRpcError.BLOCK_IMPORT_ERROR);
   }
 
   @Test
   public void testBadBlock() {
-    final String rawBlockRLPString =
-        "0xf9045df901f9a08";
+    final String rawBlockRLPString = "0xf9045df901f9a08";
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -84,7 +84,8 @@ public class TestImportRawBlockTest {
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    assertThat(((JsonRpcErrorResponse)response).getError()).isEqualTo(JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
+    assertThat(((JsonRpcErrorResponse) response).getError())
+        .isEqualTo(JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
   }
 
   @Test
