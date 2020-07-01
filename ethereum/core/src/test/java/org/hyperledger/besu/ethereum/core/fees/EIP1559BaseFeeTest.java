@@ -54,7 +54,7 @@ public class EIP1559BaseFeeTest {
     for (final Eip1559BaseFeeTestCase testCase : testCases) {
       assertThat(
               eip1559.computeBaseFee(
-                  testCase.parentBaseFee, testCase.parentGasUsed, testCase.targetGasUsed))
+                  testCase.parentBaseFee, testCase.parentGasUsed, testCase.parentTargetGasUsed))
           .isEqualTo(testCase.expectedBaseFee);
     }
   }
@@ -63,7 +63,7 @@ public class EIP1559BaseFeeTest {
 
     private long parentBaseFee;
     private long parentGasUsed;
-    private long targetGasUsed;
+    private long parentTargetGasUsed;
     private long expectedBaseFee;
 
     public Eip1559BaseFeeTestCase() {}
@@ -71,11 +71,11 @@ public class EIP1559BaseFeeTest {
     public Eip1559BaseFeeTestCase(
         final long parentBaseFee,
         final long parentGasUsed,
-        final long targetGasUsed,
+        final long parentTargetGasUsed,
         final long expectedBaseFee) {
       this.parentBaseFee = parentBaseFee;
       this.parentGasUsed = parentGasUsed;
-      this.targetGasUsed = targetGasUsed;
+      this.parentTargetGasUsed = parentTargetGasUsed;
       this.expectedBaseFee = expectedBaseFee;
     }
 
@@ -87,8 +87,8 @@ public class EIP1559BaseFeeTest {
       return parentGasUsed;
     }
 
-    public long getTargetGasUsed() {
-      return targetGasUsed;
+    public long getParentTargetGasUsed() {
+      return parentTargetGasUsed;
     }
 
     public long getExpectedBaseFee() {
@@ -103,8 +103,8 @@ public class EIP1559BaseFeeTest {
       this.parentGasUsed = parentGasUsed;
     }
 
-    public void setTargetGasUsed(final long targetGasUsed) {
-      this.targetGasUsed = targetGasUsed;
+    public void setParentTargetGasUsed(final long parentTargetGasUsed) {
+      this.parentTargetGasUsed = parentTargetGasUsed;
     }
 
     public void setExpectedBaseFee(final long expectedBaseFee) {
