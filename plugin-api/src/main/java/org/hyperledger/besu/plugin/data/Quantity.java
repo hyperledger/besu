@@ -33,7 +33,7 @@ public interface Quantity {
   Number getValue();
 
   /**
-   * The value as a hexadecimal string.
+   * The value as a hexideciam string.
    *
    * @return This value represented as hexadecimal, starting with "0x".
    */
