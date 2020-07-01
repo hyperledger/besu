@@ -112,6 +112,7 @@ public class JsonRpcTestMethodsFactory {
     apis.add(RpcApis.NET);
     apis.add(RpcApis.WEB3);
     apis.add(RpcApis.PRIV);
+    apis.add(RpcApis.DEBUG);
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
