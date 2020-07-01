@@ -60,12 +60,18 @@ public class DebugTraceTransactionIntegrationTest {
   @Test
   public void debugTraceTransactionSuccessTest() {
     final Map<String, Boolean> map = Map.of("disableStorage", true);
-    final Object[] params = new Object[] {Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310"), map};
-    final JsonRpcRequestContext request = new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+    final Object[] params =
+        new Object[] {
+          Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310"),
+          map
+        };
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
-    DebugTraceTransactionResult debugTraceTransactionResult = (DebugTraceTransactionResult) ((JsonRpcSuccessResponse) response).getResult();
+    DebugTraceTransactionResult debugTraceTransactionResult =
+        (DebugTraceTransactionResult) ((JsonRpcSuccessResponse) response).getResult();
     assertThat(debugTraceTransactionResult.getGas()).isEqualTo(23705L);
     assertThat(debugTraceTransactionResult.getReturnValue()).isEmpty();
     assertThat(debugTraceTransactionResult.failed()).isFalse();
@@ -75,8 +81,13 @@ public class DebugTraceTransactionIntegrationTest {
   @Test
   public void debugTraceTransactionMissingTest() {
     final Map<String, Boolean> map = Map.of("disableStorage", true);
-    final Object[] params = new Object[] {Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000"), map};
-    final JsonRpcRequestContext request = new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+    final Object[] params =
+        new Object[] {
+          Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          map
+        };
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
 
     final JsonRpcResponse response = method.response(request);
