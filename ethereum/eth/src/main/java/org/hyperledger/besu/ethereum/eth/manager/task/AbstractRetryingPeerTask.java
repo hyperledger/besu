@@ -141,4 +141,12 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
     return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
   }
+
+  public int getRetryCount() {
+    return retryCount;
+  }
+
+  public int getMaxRetries() {
+    return maxRetries;
+  }
 }
