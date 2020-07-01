@@ -14,58 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.net.URL;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(Parameterized.class)
 public class EIP1559BaseFeeTest {
 
-  private static final long MARKER_BASE_FEE = 1049238967;
-  private final EIP1559 eip1559 = new EIP1559(0L);
-  private static final FeeMarket FEE_MARKET = FeeMarket.eip1559();
-  private static final long TARGET_GAS_USED = 10000000L;
-
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {FEE_MARKET.getInitialBasefee(), TARGET_GAS_USED, FEE_MARKET.getInitialBasefee()},
-          {FEE_MARKET.getInitialBasefee(), 7000000, 962500000},
-          {1100000000, TARGET_GAS_USED, 1100000000},
-          {1100000000, 9000000, 1086250000},
-          {1086250000, 9000000, 1072671875},
-          {1072671875, 9000000, 1059263476},
-          {1059263476, 10001000, 1059276716},
-          {1059276716, 16000000, 1138722469},
-          {MARKER_BASE_FEE, 0, 918084097},
-          {MARKER_BASE_FEE, 5, 918084161},
-          {MARKER_BASE_FEE, 5000, 918149673},
-          {MARKER_BASE_FEE, 500000, 924641839},
-          {MARKER_BASE_FEE, TARGET_GAS_USED, MARKER_BASE_FEE}
-        });
-  }
-
-  private final long parentBaseFee;
-  private final long parentGasUsed;
-  private final long expectedBaseFee;
-
-  public EIP1559BaseFeeTest(
-      final long parentBaseFee, final long parentGasUsed, final long expectedBaseFee) {
-    this.parentBaseFee = parentBaseFee;
-    this.parentGasUsed = parentGasUsed;
-    this.expectedBaseFee = expectedBaseFee;
-  }
+  private final EIP1559 eip1559 = new EIP1559(0);
 
   @Before
   public void setUp() {
@@ -78,8 +43,72 @@ public class EIP1559BaseFeeTest {
   }
 
   @Test
-  public void assertThatBaseFeeIsCorrect() {
-    assertThat(eip1559.computeBaseFee(parentBaseFee, parentGasUsed, TARGET_GAS_USED))
-        .isEqualTo(expectedBaseFee);
+  public void assertThatBaseFeeIsCorrect() throws Exception {
+    final String testFilePath = "basefee-test.json";
+    final URL testFileUrl = EIP1559BaseFeeTest.class.getResource(testFilePath);
+    checkState(testFileUrl != null, "Cannot find test file " + testFilePath);
+    final String testSuiteJson = Resources.toString(testFileUrl, Charsets.UTF_8);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final Eip1559BaseFeeTestCase[] testCases =
+        objectMapper.readValue(testSuiteJson, Eip1559BaseFeeTestCase[].class);
+    for (final Eip1559BaseFeeTestCase testCase : testCases) {
+      assertThat(
+              eip1559.computeBaseFee(
+                  testCase.parentBaseFee, testCase.parentGasUsed, testCase.targetGasUsed))
+          .isEqualTo(testCase.expectedBaseFee);
+    }
+  }
+
+  private static class Eip1559BaseFeeTestCase {
+
+    private long parentBaseFee;
+    private long parentGasUsed;
+    private long targetGasUsed;
+    private long expectedBaseFee;
+
+    public Eip1559BaseFeeTestCase() {}
+
+    public Eip1559BaseFeeTestCase(
+        final long parentBaseFee,
+        final long parentGasUsed,
+        final long targetGasUsed,
+        final long expectedBaseFee) {
+      this.parentBaseFee = parentBaseFee;
+      this.parentGasUsed = parentGasUsed;
+      this.targetGasUsed = targetGasUsed;
+      this.expectedBaseFee = expectedBaseFee;
+    }
+
+    public long getParentBaseFee() {
+      return parentBaseFee;
+    }
+
+    public long getParentGasUsed() {
+      return parentGasUsed;
+    }
+
+    public long getTargetGasUsed() {
+      return targetGasUsed;
+    }
+
+    public long getExpectedBaseFee() {
+      return expectedBaseFee;
+    }
+
+    public void setParentBaseFee(final long parentBaseFee) {
+      this.parentBaseFee = parentBaseFee;
+    }
+
+    public void setParentGasUsed(final long parentGasUsed) {
+      this.parentGasUsed = parentGasUsed;
+    }
+
+    public void setTargetGasUsed(final long targetGasUsed) {
+      this.targetGasUsed = targetGasUsed;
+    }
+
+    public void setExpectedBaseFee(final long expectedBaseFee) {
+      this.expectedBaseFee = expectedBaseFee;
+    }
   }
 }
