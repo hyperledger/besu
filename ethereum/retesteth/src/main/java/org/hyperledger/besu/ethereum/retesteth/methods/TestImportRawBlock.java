@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -33,7 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class TestImportRawBlock implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String METHOD_NAME = "test_importRawBlock";
+  public static final String METHOD_NAME = "test_importRawBlock";
 
   private final RetestethContext context;
 
@@ -59,7 +61,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
               RLP.input(Bytes.fromHexString(input)), protocolSpec.getBlockHeaderFunctions());
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.debug("Failed to parse block RLP", e);
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), "0x");
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
     }
 
     final BlockImporter blockImporter = protocolSpec.getBlockImporter();
@@ -72,7 +74,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
           requestContext.getRequest().getId(), block.getHash().toString());
     } else {
       LOG.debug("Failed to import block.");
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), "0x");
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.BLOCK_IMPORT_ERROR);
     }
   }
 }
