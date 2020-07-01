@@ -12,12 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.nat.kubernetes.service;
 
-package org.hyperledger.besu.nat.docker;
+public enum KubernetesServiceType {
+  CLUSTER_IP("ClusterIP"),
+  LOAD_BALANCER("LoadBalancer"),
+  UNKNOWN("");
 
-import java.util.Optional;
+  String name;
 
-public interface IpDetector {
+  KubernetesServiceType(final String name) {
+    this.name = name;
+  }
 
-  Optional<String> detectExternalIp();
+  public static KubernetesServiceType fromName(final String name) {
+    for (KubernetesServiceType value : values()) {
+      if (value.name.equals(name)) {
+        return value;
+      }
+    }
+    return UNKNOWN;
+  }
 }
