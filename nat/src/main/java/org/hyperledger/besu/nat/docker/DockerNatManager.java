@@ -74,7 +74,6 @@ public class DockerNatManager extends AbstractNatManager {
     } catch (Exception e) {
       throw new NatInitializationException("Unable to retrieve IP from docker");
     }
-    ;
   }
 
   @Override
