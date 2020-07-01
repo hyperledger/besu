@@ -38,7 +38,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,6 +53,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -107,7 +108,8 @@ public class PeerDiscoveryController {
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
   protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
-  private final Map<Bytes, DiscoveryPeer> bondingPeers;
+  private final Cache<Bytes, DiscoveryPeer> bondingPeers =
+      CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build();
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
@@ -169,7 +171,6 @@ public class PeerDiscoveryController {
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
-    this.bondingPeers = new HashMap<>();
 
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
 
@@ -295,35 +296,26 @@ public class PeerDiscoveryController {
       return;
     }
 
-    // Load the peer from the table, or use the instance that comes in.
-    final Optional<DiscoveryPeer> maybeKnownPeer =
-        peerTable.get(sender).filter(known -> known.discoveryEndpointMatches(sender));
-    DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
-    final boolean peerKnown = maybeKnownPeer.isPresent();
-    if (!peerKnown && bondingPeers.containsKey(sender.getId())) {
-      peer = bondingPeers.get(sender.getId());
-    }
-
-    final DiscoveryPeer finalPeer = peer;
+    final DiscoveryPeer peer = resolvePeer(sender);
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
           peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
-              && !bondingPeers.containsKey(peer.getId())) {
+              && (bondingPeers.getIfPresent(sender.getId()) == null)) {
             bond(peer);
           }
           respondToPing(ping, packet.getHash(), peer);
         }
         break;
       case PONG:
-        bondingPeers.remove(peer.getId());
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  addToPeerTable(finalPeer);
-                  recursivePeerRefreshState.onBondingComplete(finalPeer);
+                  bondingPeers.invalidate(peer.getId());
+                  addToPeerTable(peer);
+                  recursivePeerRefreshState.onBondingComplete(peer);
                 });
         break;
       case NEIGHBORS:
@@ -331,16 +323,16 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction ->
                     recursivePeerRefreshState.onNeighboursReceived(
-                        finalPeer, getPeersFromNeighborsPacket(packet)));
+                        peer, getPeersFromNeighborsPacket(packet)));
         break;
       case FIND_NEIGHBORS:
-        if (!peerKnown || !peerPermissions.allowInboundNeighborsRequest(peer)) {
-          break;
+        if (PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
+            && peerPermissions.allowInboundNeighborsRequest(peer)) {
+          final FindNeighborsPacketData fn =
+              packet.getPacketData(FindNeighborsPacketData.class).get();
+          respondToFindNeighbors(fn, peer);
         }
 
-        final FindNeighborsPacketData fn =
-            packet.getPacketData(FindNeighborsPacketData.class).get();
-        respondToFindNeighbors(fn, peer);
         break;
     }
   }
@@ -584,6 +576,30 @@ public class PeerDiscoveryController {
 
   public void setRetryDelayFunction(final RetryDelayFunction retryDelayFunction) {
     this.retryDelayFunction = retryDelayFunction;
+  }
+
+  public void handleBondingRequest(final DiscoveryPeer peer) {
+    final DiscoveryPeer peerToBond = resolvePeer(peer);
+
+    if (peerPermissions.allowOutboundBonding(peerToBond)
+        && PeerDiscoveryStatus.KNOWN.equals(peerToBond.getStatus())) {
+      bond(peerToBond);
+    }
+  }
+
+  // Load the peer first from the table, then from bonding cache or use the instance that comes in.
+  private DiscoveryPeer resolvePeer(final DiscoveryPeer peer) {
+    final Optional<DiscoveryPeer> maybeKnownPeer =
+        peerTable.get(peer).filter(known -> known.discoveryEndpointMatches(peer));
+    DiscoveryPeer resolvedPeer = maybeKnownPeer.orElse(peer);
+    if (maybeKnownPeer.isEmpty()) {
+      DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
+      if (bondingPeer != null) {
+        resolvedPeer = bondingPeer;
+      }
+    }
+
+    return resolvedPeer;
   }
 
   /** Holds the state machine data for a peer interaction. */
