@@ -94,6 +94,11 @@ public class FlatTraceGenerator {
           .to(tx.getTo().map(Bytes::toHexString).orElse(null))
           .callType("call")
           .input(payload == null ? "0x" : payload.toHexString());
+      if (!transactionTrace.getTraceFrames().isEmpty()
+          && hasRevertInSubCall(transactionTrace, transactionTrace.getTraceFrames().get(0))) {
+        firstFlatTraceBuilder.error(Optional.of("Reverted"));
+      }
+
     } else {
       firstFlatTraceBuilder
           .type("create")
@@ -124,25 +129,25 @@ public class FlatTraceGenerator {
               + traceFrame.getPrecompiledGasCost().orElse(Gas.ZERO).toLong();
 
       final String opcodeString = traceFrame.getOpcode();
-      if ("CALL".equals(opcodeString)
-          || "CALLCODE".equals(opcodeString)
-          || "DELEGATECALL".equals(opcodeString)
-          || "STATICCALL".equals(opcodeString)) {
+      if (currentContext != null) {
+        if ("CALL".equals(opcodeString)
+            || "CALLCODE".equals(opcodeString)
+            || "DELEGATECALL".equals(opcodeString)
+            || "STATICCALL".equals(opcodeString)) {
 
-        currentContext =
-            handleCall(
-                transactionTrace,
-                traceFrame,
-                nextTraceFrame,
-                flatTraces,
-                cumulativeGasCost,
-                tracesContexts,
-                opcodeString.toLowerCase(Locale.US));
+          currentContext =
+              handleCall(
+                  transactionTrace,
+                  traceFrame,
+                  nextTraceFrame,
+                  flatTraces,
+                  cumulativeGasCost,
+                  tracesContexts,
+                  opcodeString.toLowerCase(Locale.US));
 
-      } else if ("CALLDATALOAD".equals(opcodeString)) {
-        if (currentContext != null) currentContext = handleCallDataLoad(currentContext, traceFrame);
-      } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
-        if (currentContext != null) {
+        } else if ("CALLDATALOAD".equals(opcodeString)) {
+          currentContext = handleCallDataLoad(currentContext, traceFrame);
+        } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
           currentContext =
               handleReturn(
                   protocolSchedule,
@@ -151,24 +156,38 @@ public class FlatTraceGenerator {
                   traceFrame,
                   tracesContexts,
                   currentContext);
-        }
-      } else if ("SELFDESTRUCT".equals(opcodeString)) {
-        currentContext = handleSelfDestruct(traceFrame, tracesContexts, currentContext, flatTraces);
-      } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
-        currentContext =
-            handleCreateOperation(
-                smartContractAddress,
-                flatTraces,
-                tracesContexts,
-                cumulativeGasCost,
-                traceFrame,
-                nextTraceFrame);
-      } else if ("REVERT".equals(opcodeString)) {
-        if (currentContext != null) currentContext = handleRevert(tracesContexts, currentContext);
-      }
+        } else if ("SELFDESTRUCT".equals(opcodeString)) {
+          if (traceFrame.getExceptionalHaltReason().isPresent()) {
+            currentContext =
+                handleCall(
+                    transactionTrace,
+                    traceFrame,
+                    nextTraceFrame,
+                    flatTraces,
+                    cumulativeGasCost,
+                    tracesContexts,
+                    opcodeString.toLowerCase(Locale.US));
+          } else {
+            currentContext =
+                handleSelfDestruct(traceFrame, tracesContexts, currentContext, flatTraces);
+          }
+        } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
+          currentContext =
+              handleCreateOperation(
+                  traceFrame,
+                  nextTraceFrame,
+                  flatTraces,
+                  cumulativeGasCost,
+                  tracesContexts,
+                  smartContractAddress);
 
-      if (currentContext != null && traceFrame.getExceptionalHaltReason().isPresent()) {
-        currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
+        } else if ("REVERT".equals(opcodeString)) {
+          currentContext = handleRevert(tracesContexts, currentContext);
+        }
+
+        if (traceFrame.getExceptionalHaltReason().isPresent()) {
+          currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
+        }
       }
     }
 
@@ -229,8 +248,8 @@ public class FlatTraceGenerator {
       final Deque<FlatTrace.Context> tracesContexts,
       final String opcodeString) {
     final Bytes32[] stack = traceFrame.getStack().orElseThrow();
-    final Address contractCallAddress = toAddress(stack[stack.length - 2]);
     final FlatTrace.Context lastContext = tracesContexts.peekLast();
+
     final String callingAddress = calculateCallingAddress(lastContext);
 
     if (traceFrame.getDepth() >= nextTraceFrame.map(TraceFrame::getDepth).orElse(0)) {
@@ -245,12 +264,15 @@ public class FlatTraceGenerator {
     final Action.Builder subTraceActionBuilder =
         Action.builder()
             .from(callingAddress)
-            .to(contractCallAddress.toString())
             .input(
                 nextTraceFrame.map(TraceFrame::getInputData).map(Bytes::toHexString).orElse(null))
             .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
             .callType(opcodeString.toLowerCase(Locale.US))
             .value(Quantity.create(transactionTrace.getTransaction().getValue()));
+
+    if (stack.length > 1) {
+      subTraceActionBuilder.to(toAddress(stack[stack.length - 2]).toString());
+    }
 
     nextTraceFrame.ifPresent(
         nextFrame -> {
@@ -388,13 +410,14 @@ public class FlatTraceGenerator {
   }
 
   private static FlatTrace.Context handleCreateOperation(
-      final Optional<String> smartContractAddress,
-      final List<FlatTrace.Builder> flatTraces,
-      final Deque<FlatTrace.Context> tracesContexts,
-      final long cumulativeGasCost,
       final TraceFrame traceFrame,
-      final Optional<TraceFrame> nextTraceFrame) {
+      final Optional<TraceFrame> nextTraceFrame,
+      final List<FlatTrace.Builder> flatTraces,
+      final long cumulativeGasCost,
+      final Deque<FlatTrace.Context> tracesContexts,
+      final Optional<String> smartContractAddress) {
     final FlatTrace.Context lastContext = tracesContexts.peekLast();
+
     final String callingAddress = calculateCallingAddress(lastContext);
 
     final FlatTrace.Builder subTraceBuilder =
@@ -527,6 +550,8 @@ public class FlatTraceGenerator {
       gasRemainingAfterProcessed = transactionTrace.getResult().getGasRemaining();
       if (gasRemainingAfterProcessed > traceFrame.getGasRemaining().toLong()) {
         gasRefund = gasRemainingAfterProcessed - traceFrame.getGasRemaining().toLong();
+      } else {
+        gasRefund = traceFrame.getGasRefund().toLong();
       }
     } else {
       final Action.Builder actionBuilder = currentContext.getBuilder().getActionBuilder();
