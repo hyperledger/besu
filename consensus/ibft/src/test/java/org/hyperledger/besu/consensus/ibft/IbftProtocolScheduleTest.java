@@ -102,4 +102,32 @@ public class IbftProtocolScheduleTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Ibft2 Block reward in config cannot be negative");
   }
+
+  @Test
+  public void zeroEpochLengthThrowsException() {
+    final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
+    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
+    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
+    when(ibftConfig.getEpochLength()).thenReturn(0L);
+    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+
+    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Epoch length in config must be greater than zero");
+  }
+
+  @Test
+  public void negativeEpochLengthThrowsException() {
+    final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
+    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
+    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
+    when(ibftConfig.getEpochLength()).thenReturn(-3000L);
+    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+
+    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Epoch length in config must be greater than zero");
+  }
 }
