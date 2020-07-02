@@ -46,6 +46,10 @@ public class CliqueProtocolSchedule {
 
     final Address localNodeAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
+    if (cliqueConfig.getEpochLength() <= 0) {
+      throw new IllegalArgumentException("Epoch length in config must be greater than zero");
+    }
+
     final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
     return new ProtocolScheduleBuilder(
             config,

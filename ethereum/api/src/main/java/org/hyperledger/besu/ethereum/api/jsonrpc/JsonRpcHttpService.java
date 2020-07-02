@@ -299,7 +299,8 @@ public class JsonRpcHttpService {
           .setPfxKeyCertOptions(
               new PfxOptions()
                   .setPath(tlsConfiguration.getKeyStorePath().toString())
-                  .setPassword(tlsConfiguration.getKeyStorePassword()));
+                  .setPassword(tlsConfiguration.getKeyStorePassword()))
+          .setUseAlpn(true);
 
       tlsConfiguration
           .getClientAuthConfiguration()

@@ -61,6 +61,10 @@ public class IbftProtocolSchedule {
   private static ProtocolSpecBuilder applyIbftChanges(
       final IbftConfigOptions ibftConfig, final ProtocolSpecBuilder builder) {
 
+    if (ibftConfig.getEpochLength() <= 0) {
+      throw new IllegalArgumentException("Epoch length in config must be greater than zero");
+    }
+
     if (ibftConfig.getBlockRewardWei().signum() < 0) {
       throw new IllegalArgumentException("Ibft2 Block reward in config cannot be negative");
     }
