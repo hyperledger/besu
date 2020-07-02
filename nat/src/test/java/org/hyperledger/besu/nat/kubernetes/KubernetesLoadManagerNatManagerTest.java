@@ -12,66 +12,92 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.nat.docker;
+package org.hyperledger.besu.nat.kubernetes;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
-import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Optional;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
-import org.assertj.core.api.Assertions;
+import io.kubernetes.client.custom.IntOrString;
+import io.kubernetes.client.models.V1LoadBalancerIngressBuilder;
+import io.kubernetes.client.models.V1LoadBalancerStatusBuilder;
+import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1Service;
+import io.kubernetes.client.models.V1ServicePort;
+import io.kubernetes.client.models.V1ServiceSpec;
+import io.kubernetes.client.models.V1ServiceStatus;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-public final class DockerNatManagerTest {
+@RunWith(MockitoJUnitRunner.class)
+public final class KubernetesLoadManagerNatManagerTest {
 
-  private final String advertisedHost = "99.45.69.12";
   private final String detectedAdvertisedHost = "199.45.69.12";
 
   private final int p2pPort = 1;
   private final int rpcHttpPort = 2;
 
-  @Mock private HostBasedIpDetector hostBasedIpDetector;
+  @Mock private V1Service v1Service;
 
-  private DockerNatManager natManager;
+  private KubernetesNatManager natManager;
 
   @Before
-  public void initialize() throws NatInitializationException {
-    hostBasedIpDetector = mock(HostBasedIpDetector.class);
-    when(hostBasedIpDetector.detectAdvertisedIp()).thenReturn(Optional.of(detectedAdvertisedHost));
-    natManager = new DockerNatManager(hostBasedIpDetector, advertisedHost, p2pPort, rpcHttpPort);
-    natManager.start();
+  public void initialize() throws IOException {
+    final V1ServiceStatus v1ServiceStatus =
+        new V1ServiceStatus()
+            .loadBalancer(
+                new V1LoadBalancerStatusBuilder()
+                    .addToIngress(
+                        new V1LoadBalancerIngressBuilder().withIp(detectedAdvertisedHost).build())
+                    .build());
+    when(v1Service.getStatus()).thenReturn(v1ServiceStatus);
+    when(v1Service.getSpec())
+        .thenReturn(
+            new V1ServiceSpec()
+                .type("LoadBalancer")
+                .ports(
+                    Arrays.asList(
+                        new V1ServicePort()
+                            .name(NatServiceType.JSON_RPC.getValue())
+                            .port(rpcHttpPort)
+                            .targetPort(new IntOrString(rpcHttpPort)),
+                        new V1ServicePort()
+                            .name(NatServiceType.RLPX.getValue())
+                            .port(p2pPort)
+                            .targetPort(new IntOrString(p2pPort)),
+                        new V1ServicePort()
+                            .name(NatServiceType.DISCOVERY.getValue())
+                            .port(p2pPort)
+                            .targetPort(new IntOrString(p2pPort)))));
+    when(v1Service.getMetadata())
+        .thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_SERVICE_NAME_FILTER));
+    natManager = new KubernetesNatManager(DEFAULT_BESU_SERVICE_NAME_FILTER);
+    try {
+      natManager.start();
+    } catch (Exception ignored) {
+      System.err.println("Ignored missing Kube config file in testing context.");
+    }
+    natManager.updateUsingBesuService(v1Service);
   }
 
   @Test
   public void assertThatExternalIPIsEqualToRemoteHost()
       throws ExecutionException, InterruptedException {
-    assertThat(natManager.queryExternalIPAddress().get()).isEqualTo(detectedAdvertisedHost);
-  }
 
-  @Test
-  public void assertThatExternalIPIsEqualToDefaultHostIfIpDetectorCannotRetrieveIP()
-      throws ExecutionException, InterruptedException {
-    final NatManager natManager =
-        new DockerNatManager(hostBasedIpDetector, advertisedHost, p2pPort, rpcHttpPort);
-    when(hostBasedIpDetector.detectAdvertisedIp()).thenReturn(Optional.empty());
-    try {
-      natManager.start();
-    } catch (NatInitializationException e) {
-      Assertions.fail(e.getMessage());
-    }
-    assertThat(natManager.queryExternalIPAddress().get()).isEqualTo(advertisedHost);
+    assertThat(natManager.queryExternalIPAddress().get()).isEqualTo(detectedAdvertisedHost);
   }
 
   @Test

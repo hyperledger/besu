@@ -33,12 +33,20 @@ public class NatService {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private static final boolean DEFAULT_FALLBACK_STATUS = true;
+
   private NatMethod currentNatMethod;
   private Optional<NatManager> currentNatManager;
+  private final boolean fallbackEnabled;
 
-  public NatService(final Optional<NatManager> natManager) {
+  public NatService(final Optional<NatManager> natManager, final boolean fallbackEnabled) {
     this.currentNatMethod = retrieveNatMethod(natManager);
     this.currentNatManager = natManager;
+    this.fallbackEnabled = fallbackEnabled;
+  }
+
+  public NatService(final Optional<NatManager> natManager) {
+    this(natManager, DEFAULT_FALLBACK_STATUS);
   }
 
   /**
@@ -88,10 +96,14 @@ public class NatService {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
         LOG.debug(
-            "Nat manager failed to configure itself automatically due to the following reason "
-                + e.getMessage()
-                + ". NONE mode will be used");
-        disableNatManager();
+            "Nat manager failed to configure itself automatically due to the following reason : {}. {}",
+            e.getMessage(),
+            (fallbackEnabled) ? "NONE mode will be used" : "");
+        if (fallbackEnabled) {
+          disableNatManager();
+        } else {
+          throw new IllegalStateException(e.getMessage(), e);
+        }
       }
     } else {
       LOG.info("No NAT environment detected so no service could be started");
