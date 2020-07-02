@@ -61,7 +61,8 @@ public class TestImportRawBlock implements JsonRpcMethod {
               RLP.input(Bytes.fromHexString(input)), protocolSpec.getBlockHeaderFunctions());
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.debug("Failed to parse block RLP", e);
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
     }
 
     final BlockImporter blockImporter = protocolSpec.getBlockImporter();
@@ -74,7 +75,8 @@ public class TestImportRawBlock implements JsonRpcMethod {
           requestContext.getRequest().getId(), block.getHash().toString());
     } else {
       LOG.debug("Failed to import block.");
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.BLOCK_IMPORT_ERROR);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.BLOCK_IMPORT_ERROR);
     }
   }
 }
