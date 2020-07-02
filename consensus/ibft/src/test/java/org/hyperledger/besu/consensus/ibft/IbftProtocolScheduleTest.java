@@ -44,6 +44,7 @@ public class IbftProtocolScheduleTest {
     final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
     when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(ibftConfig.getEpochLength()).thenReturn(3000L);
 
     when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
 
@@ -63,6 +64,7 @@ public class IbftProtocolScheduleTest {
     final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
     when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+    when(ibftConfig.getEpochLength()).thenReturn(3000L);
     when(ibftConfig.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
 
     assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
@@ -76,6 +78,7 @@ public class IbftProtocolScheduleTest {
     final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
     when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(ibftConfig.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
 
     final ProtocolSchedule schedule = IbftProtocolSchedule.create(genesisConfig);
@@ -96,6 +99,7 @@ public class IbftProtocolScheduleTest {
     final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
     when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(ibftConfig.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
 
     assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
