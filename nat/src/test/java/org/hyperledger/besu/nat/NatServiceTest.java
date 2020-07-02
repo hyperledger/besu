@@ -16,6 +16,7 @@
 package org.hyperledger.besu.nat;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -41,24 +42,24 @@ public class NatServiceTest {
 
   @Test
   public void assertThatGetNatManagerReturnValidManager() {
-    final NatService natService = new NatService(Optional.of(new UpnpNatManager()));
+    final NatService natService = new NatService(Optional.of(new UpnpNatManager()), true);
     assertThat(natService.getNatMethod()).isEqualTo(NatMethod.UPNP);
     assertThat(natService.getNatManager()).containsInstanceOf(UpnpNatManager.class);
   }
 
   @Test
   public void assertThatGetNatManagerNotReturnManagerWhenNatMethodIsNone() {
-    final NatService natService = new NatService(Optional.empty());
+    final NatService natService = new NatService(Optional.empty(), true);
     assertThat(natService.getNatMethod()).isEqualTo(NatMethod.NONE);
     assertThat(natService.getNatManager()).isNotPresent();
   }
 
   @Test
   public void assertThatIsNatEnvironmentReturnCorrectStatus() {
-    final NatService nonNatService = new NatService(Optional.empty());
+    final NatService nonNatService = new NatService(Optional.empty(), true);
     assertThat(nonNatService.isNatEnvironment()).isFalse();
 
-    final NatService upnpNatService = new NatService(Optional.of(new UpnpNatManager()));
+    final NatService upnpNatService = new NatService(Optional.of(new UpnpNatManager()), true);
     assertThat(upnpNatService.isNatEnvironment()).isTrue();
   }
 
@@ -74,7 +75,7 @@ public class NatServiceTest {
         .thenReturn(natPortMapping);
     when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
 
-    final NatService natService = new NatService(Optional.of(natManager));
+    final NatService natService = new NatService(Optional.of(natManager), true);
 
     final Optional<NatPortMapping> portMapping =
         natService.getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
@@ -88,7 +89,7 @@ public class NatServiceTest {
   @Test
   public void assertThatGetPortMappingWorksProperlyWithoutNat() {
 
-    final NatService natService = new NatService(Optional.empty());
+    final NatService natService = new NatService(Optional.empty(), true);
 
     final Optional<NatPortMapping> portMapping =
         natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.TCP);
@@ -105,7 +106,7 @@ public class NatServiceTest {
         .thenReturn(CompletableFuture.completedFuture(externalIp));
     when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
 
-    final NatService natService = new NatService(Optional.of(natManager));
+    final NatService natService = new NatService(Optional.of(natManager), true);
 
     final String resultIp = natService.queryExternalIPAddress(fallbackExternalIp);
 
@@ -119,7 +120,7 @@ public class NatServiceTest {
 
     final String fallbackExternalIp = "127.0.0.1";
 
-    final NatService natService = new NatService(Optional.empty());
+    final NatService natService = new NatService(Optional.empty(), true);
 
     final String resultIp = natService.queryExternalIPAddress(fallbackExternalIp);
 
@@ -135,7 +136,7 @@ public class NatServiceTest {
         .thenReturn(CompletableFuture.completedFuture(externalIp));
     when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
 
-    final NatService natService = new NatService(Optional.of(natManager));
+    final NatService natService = new NatService(Optional.of(natManager), true);
 
     final String resultIp = natService.queryLocalIPAddress(fallbackExternalIp);
 
@@ -149,7 +150,7 @@ public class NatServiceTest {
 
     final String fallbackValue = "1.2.3.4";
 
-    final NatService natService = new NatService(Optional.empty());
+    final NatService natService = new NatService(Optional.empty(), true);
 
     final String resultIp = natService.queryLocalIPAddress(fallbackValue);
 
@@ -176,7 +177,7 @@ public class NatServiceTest {
                 NatServiceType.DISCOVERY, NetworkProtocol.UDP, localIp, externalIp, 1111, 1111));
     when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
 
-    final NatService natService = new NatService(Optional.of(natManager));
+    final NatService natService = new NatService(Optional.of(natManager), true);
 
     assertThat(natService.getNatMethod()).isEqualTo(NatMethod.UPNP);
     assertThat(natService.isNatEnvironment()).isTrue();
@@ -195,6 +196,24 @@ public class NatServiceTest {
         .isNotPresent();
     assertThat(natService.queryExternalIPAddress(fallbackExternalIp)).isEqualTo(fallbackExternalIp);
     assertThat(natService.queryLocalIPAddress(fallbackLocalIp)).isEqualTo(fallbackLocalIp);
+  }
+
+  @Test
+  public void assertThatManagerSwitchToNoneForInvalidNatEnvironmentIfFallbackDisabled()
+      throws NatInitializationException {
+
+    final NatManager natManager = mock(NatManager.class);
+    doThrow(NatInitializationException.class).when(natManager).start();
+
+    when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
+
+    final NatService natService = new NatService(Optional.of(natManager), false);
+
+    assertThat(natService.getNatMethod()).isEqualTo(NatMethod.UPNP);
+    assertThat(natService.isNatEnvironment()).isTrue();
+    assertThat(natService.getNatManager()).contains(natManager);
+
+    assertThatThrownBy(natService::start);
   }
 
   @Test
