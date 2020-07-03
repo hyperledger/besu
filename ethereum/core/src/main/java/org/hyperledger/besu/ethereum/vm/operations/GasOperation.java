@@ -35,7 +35,7 @@ public class GasOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final Gas gasRemaining = frame.getRemainingGas();
+    final Gas gasRemaining = frame.getRemainingGas().minus(cost(frame));
     final Bytes32 value = Bytes32.leftPad(Bytes.of(gasRemaining.getBytes()));
     frame.pushStackItem(value);
   }

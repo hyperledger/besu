@@ -32,4 +32,10 @@ public class ExceptionalHaltException extends Exception {
   public ExceptionalHaltReason getReasons() {
     return reason;
   }
+
+  // TODO rationalize this
+  @Override
+  public synchronized Throwable fillInStackTrace() {
+    return this;
+  }
 }

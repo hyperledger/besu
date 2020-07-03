@@ -51,7 +51,11 @@ public class VMReferenceTest extends AbstractRetryingTest {
     "VMTests/vmEnvironmentalInfo",
     "VMTests/vmIOandFlowOperations",
     "VMTests/vmLogTest",
+    //    "VMTests/vmPerformance",
+    //    "VMTests/vmPushDupSwapTest",
+    //    "VMTests/vmRandomTest",
     "VMTests/vmSha3Test",
+    //      "VMTests/vmTests",
     "VMTests/vmSystemOperations"
   };
 
@@ -157,15 +161,15 @@ public class VMReferenceTest extends AbstractRetryingTest {
     // This is normally set inside the containing message executing the code.
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-    try {
+//    try {
       protocolSpec.getEvm().runToHalt(frame, OperationTracer.NO_TRACING);
-    } catch (final ExceptionalHaltException ehe) {
-      if (!spec.isExceptionHaltExpected())
-        System.err.println(
-            String.format(
-                "Test %s incurred in an exceptional halt exception for reasons: %s.",
-                name, ehe.getReasons()));
-    }
+//    } catch (final ExceptionalHaltException ehe) {
+//      if (!spec.isExceptionHaltExpected())
+//        System.err.println(
+//            String.format(
+//                "Test %s incurred in an exceptional halt exception for reasons: %s.",
+//                name, ehe.getReasons()));
+//    }
 
     if (spec.isExceptionHaltExpected()) {
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
@@ -177,7 +181,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
       frame.getWorldState().commit();
 
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
-          .withFailMessage("VM should not have exceptionally halted")
+          .withFailMessage("VM should not have exceptionally halted with " + frame.getExceptionalHaltReason())
           .isFalse();
       assertThat(frame.getOutputData())
           .withFailMessage("VM output differs")

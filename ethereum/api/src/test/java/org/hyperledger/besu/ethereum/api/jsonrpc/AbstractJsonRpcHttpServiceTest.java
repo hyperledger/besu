@@ -200,9 +200,13 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   @After
   public void shutdownServer() {
-    client.dispatcher().executorService().shutdown();
-    client.connectionPool().evictAll();
-    service.stop().join();
+    if (client != null) {
+      client.dispatcher().executorService().shutdown();
+      client.connectionPool().evictAll();
+    }
+    if (service != null) {
+      service.stop().join();
+    }
     vertx.close();
   }
 }

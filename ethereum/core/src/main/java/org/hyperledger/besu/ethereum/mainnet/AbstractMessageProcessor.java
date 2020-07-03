@@ -155,8 +155,6 @@ public abstract class AbstractMessageProcessor {
   private void codeExecute(final MessageFrame frame, final OperationTracer operationTracer) {
     try {
       evm.runToHalt(frame, operationTracer);
-    } catch (final ExceptionalHaltException e) {
-      frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     } catch (final ModificationNotAllowedException e) {
       frame.setState(MessageFrame.State.REVERT);
     }

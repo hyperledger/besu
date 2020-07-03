@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Operation;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 import org.hyperledger.besu.ethereum.vm.operations.CallOperation;
 
 import java.io.File;
@@ -361,11 +360,7 @@ public class EvmToolCommand implements Runnable {
     }
 
     @Override
-    public void traceExecution(
-        final MessageFrame frame,
-        final Optional<Gas> currentGasCost,
-        final ExecuteOperation executeOperation)
-        throws ExceptionalHaltException {
+    public void traceExecution(final MessageFrame frame, final ExecuteOperation executeOperation) {
       if (showJsonResults && lastLoop) {
         final JsonObject op =
             EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);

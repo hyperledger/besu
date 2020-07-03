@@ -330,6 +330,22 @@ public class MessageFrame {
     this.pc = pc;
   }
 
+  /**
+   * Increment the PC by a fixed amount.
+   *
+   * @param increment The increment to adjust the PC by.
+   */
+  public void incrementPC(final int increment) {
+    this.pc += increment;
+  }
+
+  /**
+   * Increment the PC to the next location.
+   */
+  public void incrementPC() {
+    this.pc++;
+  }
+
   /** Deducts the remaining gas. */
   public void clearGasRemaining() {
     this.gasRemaining = Gas.ZERO;

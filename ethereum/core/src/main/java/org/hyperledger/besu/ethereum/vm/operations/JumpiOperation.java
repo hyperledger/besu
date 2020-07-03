@@ -29,8 +29,25 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class JumpiOperation extends AbstractOperation {
 
+  private final OperationResult successResponse;
+  private final OperationResult oogResponse;
+  private final OperationResult underflowResponse;
+  private final OperationResult invalidJumpResponse;
+  private final Gas gasCost;
+
   public JumpiOperation(final GasCalculator gasCalculator) {
     super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator);
+    gasCost = gasCalculator().getHighTierGasCost();
+    successResponse = new OperationResult(Optional.of(gasCost), Optional.empty());
+    oogResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    invalidJumpResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+    underflowResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
   }
 
   @Override
@@ -39,29 +56,39 @@ public class JumpiOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.stackSize() < 2) {
+      return underflowResponse;
+    }
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return oogResponse;
+    }
+
     final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 condition = frame.popStackItem();
 
-    if (!condition.isZero()) {
-      frame.setPC(jumpDestination.intValue());
+    // If condition is zero (false), no jump is will be performed. Therefore skip the test.
+    if (condition.isZero()) {
+      frame.setPC(frame.getPC() + 1);
     } else {
-      frame.setPC(frame.getPC() + getOpSize());
+      final Code code = frame.getCode();
+      if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
+        return invalidJumpResponse;
+      }
+      frame.setPC(jumpDestination.intValue());
     }
+
+    return successResponse;
   }
 
   @Override
   public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
       final MessageFrame frame, final EVM evm) {
-    // If condition is zero (false), no jump is will be performed. Therefore skip the test.
-    if (frame.getStackItem(1).isZero()) {
-      return Optional.empty();
-    }
+    throw new UnsupportedOperationException();
+  }
 
-    final Code code = frame.getCode();
-    final UInt256 potentialJumpDestination = UInt256.fromBytes(frame.getStackItem(0));
-    return !code.isValidJumpDestination(evm, frame, potentialJumpDestination)
-        ? Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION)
-        : Optional.empty();
+  @Override
+  public void execute(final MessageFrame frame) {
+    throw new UnsupportedOperationException();
   }
 }

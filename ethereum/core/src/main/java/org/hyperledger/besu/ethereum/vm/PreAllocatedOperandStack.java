@@ -32,6 +32,20 @@ public class PreAllocatedOperandStack implements OperandStack {
 
   private int top;
 
+  public static class UnderflowException extends RuntimeException {
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
+  }
+
+  public static class OverflowException extends RuntimeException {
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
+  }
+
   public PreAllocatedOperandStack(final int maxSize) {
     if (maxSize < 0) {
       throw new IllegalArgumentException(
@@ -45,7 +59,7 @@ public class PreAllocatedOperandStack implements OperandStack {
   @Override
   public Bytes32 get(final int offset) {
     if (offset < 0 || offset >= size()) {
-      throw new IndexOutOfBoundsException();
+      throw new UnderflowException();
     }
 
     return entries[top - offset];
@@ -54,7 +68,7 @@ public class PreAllocatedOperandStack implements OperandStack {
   @Override
   public Bytes32 pop() {
     if (top < 0) {
-      throw new IllegalStateException("operand stack underflow");
+      throw new UnderflowException();
     }
 
     final Bytes32 removed = entries[top];
@@ -66,7 +80,7 @@ public class PreAllocatedOperandStack implements OperandStack {
   public void push(final Bytes32 operand) {
     final int nextTop = top + 1;
     if (nextTop == maxSize) {
-      throw new IllegalStateException("operand stack overflow");
+      throw new OverflowException();
     }
     entries[nextTop] = operand;
     top = nextTop;
