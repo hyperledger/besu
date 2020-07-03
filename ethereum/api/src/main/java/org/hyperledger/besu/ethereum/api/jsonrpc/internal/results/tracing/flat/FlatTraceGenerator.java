@@ -129,12 +129,34 @@ public class FlatTraceGenerator {
               + traceFrame.getPrecompiledGasCost().orElse(Gas.ZERO).toLong();
 
       final String opcodeString = traceFrame.getOpcode();
-      if (currentContext != null) {
-        if ("CALL".equals(opcodeString)
-            || "CALLCODE".equals(opcodeString)
-            || "DELEGATECALL".equals(opcodeString)
-            || "STATICCALL".equals(opcodeString)) {
+      if ("CALL".equals(opcodeString)
+          || "CALLCODE".equals(opcodeString)
+          || "DELEGATECALL".equals(opcodeString)
+          || "STATICCALL".equals(opcodeString)) {
 
+        currentContext =
+            handleCall(
+                transactionTrace,
+                traceFrame,
+                nextTraceFrame,
+                flatTraces,
+                cumulativeGasCost,
+                tracesContexts,
+                opcodeString.toLowerCase(Locale.US));
+
+      } else if ("CALLDATALOAD".equals(opcodeString)) {
+        currentContext = handleCallDataLoad(currentContext, traceFrame);
+      } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
+        currentContext =
+            handleReturn(
+                protocolSchedule,
+                transactionTrace,
+                block,
+                traceFrame,
+                tracesContexts,
+                currentContext);
+      } else if ("SELFDESTRUCT".equals(opcodeString)) {
+        if (traceFrame.getExceptionalHaltReason().isPresent()) {
           currentContext =
               handleCall(
                   transactionTrace,
@@ -144,50 +166,30 @@ public class FlatTraceGenerator {
                   cumulativeGasCost,
                   tracesContexts,
                   opcodeString.toLowerCase(Locale.US));
-
-        } else if ("CALLDATALOAD".equals(opcodeString)) {
-          currentContext = handleCallDataLoad(currentContext, traceFrame);
-        } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
+        } else {
           currentContext =
-              handleReturn(
-                  protocolSchedule,
-                  transactionTrace,
-                  block,
-                  traceFrame,
-                  tracesContexts,
-                  currentContext);
-        } else if ("SELFDESTRUCT".equals(opcodeString)) {
-          if (traceFrame.getExceptionalHaltReason().isPresent()) {
-            currentContext =
-                handleCall(
-                    transactionTrace,
-                    traceFrame,
-                    nextTraceFrame,
-                    flatTraces,
-                    cumulativeGasCost,
-                    tracesContexts,
-                    opcodeString.toLowerCase(Locale.US));
-          } else {
-            currentContext =
-                handleSelfDestruct(traceFrame, tracesContexts, currentContext, flatTraces);
-          }
-        } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
-          currentContext =
-              handleCreateOperation(
-                  traceFrame,
-                  nextTraceFrame,
-                  flatTraces,
-                  cumulativeGasCost,
-                  tracesContexts,
-                  smartContractAddress);
-
-        } else if ("REVERT".equals(opcodeString)) {
-          currentContext = handleRevert(tracesContexts, currentContext);
+              handleSelfDestruct(traceFrame, tracesContexts, currentContext, flatTraces);
         }
+      } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
+        currentContext =
+            handleCreateOperation(
+                traceFrame,
+                nextTraceFrame,
+                flatTraces,
+                cumulativeGasCost,
+                tracesContexts,
+                smartContractAddress);
 
-        if (traceFrame.getExceptionalHaltReason().isPresent()) {
-          currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
-        }
+      } else if ("REVERT".equals(opcodeString)) {
+        currentContext = handleRevert(tracesContexts, currentContext);
+      }
+
+      if (traceFrame.getExceptionalHaltReason().isPresent()) {
+        currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
+      }
+
+      if (currentContext == null) {
+        break;
       }
     }
 
