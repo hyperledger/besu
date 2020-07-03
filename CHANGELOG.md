@@ -66,14 +66,6 @@ Features added between from 1.4 to 1.5 include:
 * Added experimental CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
 - Local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
 Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
-- CLI now supports `--host-allowlist`. Support for `--host-whitelist` will be removed in a future release.
-- Additional `Allowlist` JSON RPC endpoints for permissioning now supported. `Whitelist` endpoints will be removed in a future release.
-  - Add `perm_getNodesAllowlist` as an alternative equivalent to `perm_getNodesWhitelist`
-  - Add `perm_addNodesToAllowlist` as an alternative equivalent to `perm_addNodesToWhitelist`
-  - Add `perm_removeNodesFromAllowlist` as an alternative equivalent to `perm_removeNodesFromWhitelist`
-  - Add `perm_getAccountsAllowlist` as an alternative equivalent to `perm_getAccountsWhitelist`
-  - Add `perm_addAccountsToAllowlist` as an alternative equivalent to `perm_addAccountsToWhitelist`
-  - Add `perm_removeAccountsFromAllowlist` as an alternative equivalent to `perm_removeAccountsFromWhitelist`
 - Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints. [\#1098](https://github.com/hyperledger/besu/pull/1098)
 
 ### Bug fixes 
