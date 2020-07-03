@@ -80,7 +80,7 @@ public class DebugTraceBlockTest {
     final TraceFrame traceFrame =
         new TraceFrame(
             12,
-            "NONE",
+            Optional.of("NONE"),
             Gas.of(45),
             Optional.of(Gas.of(56)),
             Gas.ZERO,
