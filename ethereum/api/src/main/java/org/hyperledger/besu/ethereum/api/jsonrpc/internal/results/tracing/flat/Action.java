@@ -175,10 +175,14 @@ public class Action {
     }
 
     public static Builder from(final TransactionTrace trace) {
-      return new Builder()
-          .from(trace.getTransaction().getSender().toHexString())
-          .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
-          .value(Quantity.create(trace.getTransaction().getValue()));
+      final Builder builder =
+          new Builder()
+              .from(trace.getTransaction().getSender().toHexString())
+              .value(Quantity.create(trace.getTransaction().getValue()));
+      if (!trace.getTraceFrames().isEmpty()) {
+        builder.gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString());
+      }
+      return builder;
     }
 
     public Builder creationMethod(final String creationMethod) {
