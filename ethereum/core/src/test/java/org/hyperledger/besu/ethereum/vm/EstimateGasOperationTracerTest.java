@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.vm.OperationTracer.ExecuteOperation;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 import org.hyperledger.besu.ethereum.vm.operations.CallCodeOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SStoreOperation;
 
@@ -39,7 +38,7 @@ public class EstimateGasOperationTracerTest {
   }
 
   @Test
-  public void shouldDetectChangeInDepthDuringExecution() throws ExceptionalHaltException {
+  public void shouldDetectChangeInDepthDuringExecution() {
 
     final ExecuteOperation noExecutionOperation = mock(ExecuteOperation.class);
 
@@ -67,7 +66,7 @@ public class EstimateGasOperationTracerTest {
   }
 
   @Test
-  public void shouldDetectMinimumGasRemainingForSStoreOperation() throws ExceptionalHaltException {
+  public void shouldDetectMinimumGasRemainingForSStoreOperation() {
 
     final ExecuteOperation noExecutionOperation = mock(ExecuteOperation.class);
     final Gas minimumGasRemaining = Gas.of(2300);
