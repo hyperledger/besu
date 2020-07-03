@@ -36,7 +36,7 @@ public interface Operation {
       return gasCost;
     }
 
-    Optional<ExceptionalHaltReason> getHaltReason() {
+    public Optional<ExceptionalHaltReason> getHaltReason() {
       return haltReason;
     }
   }

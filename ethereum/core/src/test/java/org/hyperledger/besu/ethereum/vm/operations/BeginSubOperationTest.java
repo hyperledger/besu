@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -92,7 +93,8 @@ public class BeginSubOperationTest {
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null))
-        .contains(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
+    OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
   }
 }

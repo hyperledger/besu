@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
@@ -32,14 +35,14 @@ public class PreAllocatedOperandStackTest {
     new PreAllocatedOperandStack(-1);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = OverflowException.class)
   public void push_StackOverflow() {
     final OperandStack stack = new PreAllocatedOperandStack(1);
     stack.push(Bytes32.fromHexString("0x01"));
     stack.push(Bytes32.fromHexString("0x02"));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = UnderflowException.class)
   public void pop_StackUnderflow() {
     final OperandStack stack = new PreAllocatedOperandStack(1);
     stack.pop();
@@ -53,13 +56,13 @@ public class PreAllocatedOperandStackTest {
     assertThat(stack.pop()).isEqualTo(Bytes32.fromHexString("0x01"));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void get_NegativeOffset() {
     final OperandStack stack = new PreAllocatedOperandStack(1);
     stack.get(-1);
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void get_IndexGreaterThanSize() {
     final OperandStack stack = new PreAllocatedOperandStack(1);
     stack.push(Bytes32.fromHexString("0x01"));
@@ -78,13 +81,13 @@ public class PreAllocatedOperandStackTest {
     assertThat(stack.get(2)).isEqualTo(Bytes32.fromHexString("0x01"));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void set_NegativeOffset() {
     final OperandStack stack = new PreAllocatedOperandStack(1);
     stack.get(-1);
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void set_IndexGreaterThanSize() {
     final OperandStack stack = new PreAllocatedOperandStack(1);
     stack.push(Bytes32.fromHexString("0x01"));

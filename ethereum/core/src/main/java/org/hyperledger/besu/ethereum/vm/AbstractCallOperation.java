@@ -164,6 +164,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final Bytes inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
+    Gas cost = cost(frame);
+    frame.decrementRemainingGas(cost);
 
     final MessageFrame childFrame =
         MessageFrame.builder()
@@ -192,6 +194,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             .maxStackSize(frame.getMaxStackSize())
             .returnStack(frame.getReturnStack())
             .build();
+    frame.incrementRemainingGas(cost);
 
     frame.getMessageFrameStack().addFirst(childFrame);
     frame.setState(MessageFrame.State.CODE_SUSPENDED);

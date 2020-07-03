@@ -16,15 +16,11 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
 import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
-
-import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -42,8 +38,8 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
       }
 
       final Address accountAddress = frame.getRecipientAddress();
-    final Account account = frame.getWorldState().get(accountAddress);
-    frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
+      final Account account = frame.getWorldState().get(accountAddress);
+      frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
 
       return successResponse;
     } catch (final UnderflowException ue) {

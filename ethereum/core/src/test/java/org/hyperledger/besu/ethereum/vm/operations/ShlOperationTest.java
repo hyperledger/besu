@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -108,6 +109,8 @@ public class ShlOperationTest {
   @Test
   public void shiftOperation() {
     frame = mock(MessageFrame.class);
+    when(frame.stackSize()).thenReturn(2);
+    when(frame.getRemainingGas()).thenReturn(Gas.of(100));
     when(frame.popStackItem())
         .thenReturn(Bytes32.fromHexStringLenient(shift))
         .thenReturn(Bytes32.fromHexString(number));

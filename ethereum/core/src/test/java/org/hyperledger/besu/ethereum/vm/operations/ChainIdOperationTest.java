@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
@@ -56,7 +57,9 @@ public class ChainIdOperationTest {
   @Test
   public void shouldReturnChainId() {
     final ArgumentCaptor<Bytes32> arg = ArgumentCaptor.forClass(Bytes32.class);
+    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100));
     operation.execute(messageFrame);
+    Mockito.verify(messageFrame).getRemainingGas();
     Mockito.verify(messageFrame).pushStackItem(arg.capture());
     Mockito.verifyNoMoreInteractions(messageFrame);
     assertThat(arg.getValue()).isEqualTo(chainId);

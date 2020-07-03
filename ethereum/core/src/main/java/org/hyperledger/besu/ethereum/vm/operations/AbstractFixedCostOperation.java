@@ -64,11 +64,11 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
 
   @Override
   public final Gas cost(final MessageFrame frame) {
-    throw new UnsupportedOperationException();
+    return gasCost;
   }
 
   @Override
   public final void execute(final MessageFrame frame) {
-    throw new UnsupportedOperationException();
+    execute(frame, null);
   }
 }

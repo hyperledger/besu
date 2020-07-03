@@ -81,25 +81,25 @@ public class GeneralStateReferenceTestTools {
 
   static {
     if (EIPS_TO_RUN.isEmpty()) {
-      params.blacklistAll();
+      params.ignoreAll();
     }
 
     // Known incorrect test.
-    params.blacklist(
+    params.ignore(
         "RevertPrecompiledTouch(_storage)?-(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
 
     // Gas integer value is too large to construct a valid transaction.
-    params.blacklist("OverflowGasRequire");
+    params.ignore("OverflowGasRequire");
 
     // Consumes a huge amount of memory
-    params.blacklist("static_Call1MB1024Calldepth-\\w");
+    params.ignore("static_Call1MB1024Calldepth-\\w");
 
     // Don't do time consuming tests
-    params.blacklist("CALLBlake2f_MaxRounds.*");
+    params.ignore("CALLBlake2f_MaxRounds.*");
 
     if (!ExperimentalEIPs.berlinEnabled) {
       // Berlin isn't finalized
-      params.blacklist(".*Berlin.*");
+      params.ignore(".*Berlin.*");
     }
   }
 

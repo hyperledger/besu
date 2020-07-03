@@ -99,6 +99,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     final Address contractAddress = targetContractAddress(frame);
 
+    Gas cost = cost(frame);
+    frame.decrementRemainingGas(cost);
+
     final Gas childGasStipend = gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
     frame.decrementRemainingGas(childGasStipend);
 
@@ -127,6 +130,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .maxStackSize(frame.getMaxStackSize())
             .returnStack(frame.getReturnStack())
             .build();
+
+    frame.incrementRemainingGas(cost);
 
     frame.getMessageFrameStack().addFirst(childFrame);
     frame.setState(MessageFrame.State.CODE_SUSPENDED);

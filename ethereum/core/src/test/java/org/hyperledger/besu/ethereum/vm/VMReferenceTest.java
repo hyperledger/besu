@@ -50,7 +50,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     "VMTests/vmEnvironmentalInfo",
     "VMTests/vmIOandFlowOperations",
     "VMTests/vmLogTest",
-//    "VMTests/vmPerformance",
+    "VMTests/vmPerformance",
     "VMTests/vmPushDupSwapTest",
     "VMTests/vmRandomTest",
     "VMTests/vmSha3Test",
@@ -58,7 +58,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     "VMTests/vmSystemOperations"
   };
 
-  // The blacklisted test cases fall into two categories:
+  // The ignored test cases fall into two categories:
   //
   // 1. Incorrect Test Cases: The VMTests have known bugs with accessing
   // non-existent accounts. This corresponds to test cases involving
@@ -68,30 +68,24 @@ public class VMReferenceTest extends AbstractRetryingTest {
   // fully test these operations and the mocking does not add much value.
   // Additionally, the GeneralStateTests provide coverage of these
   // operations so the proper functionality does get tested somewhere.
-  private static final String[] BLACKLISTED_TESTS = {
-    "push32AndSuicide",
-    "suicide",
-    "suicide0",
-    "suicideNotExistingAccount",
-    "suicideSendEtherToMe",
+  private static final String[] IGNORED_TESTS = {
+    "push32AndSuicide", "suicide", "suicide0", "suicideNotExistingAccount", "suicideSendEtherToMe",
   };
   private static final Optional<BigInteger> CHAIN_ID = Optional.of(BigInteger.ONE);
-  private final String name;
 
   private final VMReferenceTestCaseSpec spec;
 
   @Parameters(name = "Name: {0}")
-  public static Collection<Object[]> getTestParametersForConfig() throws Exception {
+  public static Collection<Object[]> getTestParametersForConfig() {
     return JsonTestParameters.create(VMReferenceTestCaseSpec.class)
-        .blacklist(BLACKLISTED_TESTS)
+        .ignore(IGNORED_TESTS)
         .generate(TEST_CONFIG_FILE_DIR_PATHS);
   }
 
   public VMReferenceTest(
       final String name, final VMReferenceTestCaseSpec spec, final boolean runTest) {
-    this.name = name;
     this.spec = spec;
-    assumeTrue("Test was blacklisted", runTest);
+    assumeTrue("Test " + name + " was ignored", runTest);
   }
 
   @Override

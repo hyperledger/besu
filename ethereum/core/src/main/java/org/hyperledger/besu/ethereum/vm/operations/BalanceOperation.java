@@ -28,7 +28,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BalanceOperation extends AbstractFixedCostOperation {
 
   public BalanceOperation(final GasCalculator gasCalculator) {
-    super(0x31, "BALANCE", 1, 1, false, 1, gasCalculator, gasCalculator.getBalanceOperationGasCost());
+    super(
+        0x31, "BALANCE", 1, 1, false, 1, gasCalculator, gasCalculator.getBalanceOperationGasCost());
   }
 
   @Override

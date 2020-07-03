@@ -339,9 +339,7 @@ public class MessageFrame {
     this.pc += increment;
   }
 
-  /**
-   * Increment the PC to the next location.
-   */
+  /** Increment the PC to the next location. */
   public void incrementPC() {
     this.pc++;
   }
