@@ -34,6 +34,24 @@ Besu minor version upgrades require upgrading Orion to the latest minor version.
 Besu <> Orion node pairs, when upgrading Besu to v1.5, it is required that Orion is upgraded to 
 v1.6. Older versions of Orion will no longer work with Besu v1.5.  
 
+## 1.5 Features 
+
+Features added between from 1.4 to 1.5 include: 
+* Mining Support 
+  Besu supports `eth_hashrate` and `eth_submitHashrate` to obtain the hashrate when we mine with a GPU mining worker. 
+* Tracing 
+  The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.  
+* Plugin API Block Events 
+  `BlockAdded` and `BlockReorg` are now exposed via the [Plugin API](https://javadoc.io/doc/org.hyperledger.besu/plugin-api/latest/org/hyperledger/besu/plugin/services/BesuEvents.html). 
+* [Filters](https://besu.hyperledger.org/en/stable/HowTo/Interact/Filters/Accessing-Logs-Using-JSON-RPC/) and 
+  [subscriptions](https://besu.hyperledger.org/en/stable/HowTo/Interact/APIs/RPC-PubSub/) for private contracts.  
+* [SecurityModule Plugin API](https://javadoc.io/doc/org.hyperledger.besu/plugin-api/latest/org/hyperledger/besu/plugin/services/SecurityModuleService.html)
+  This allows use of a different [security module](https://besu.hyperledger.org/en/stable/Reference/CLI/CLI-Syntax/#security-module) 
+  as a plugin to provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). 
+* [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/)
+  with add and remove members. This is an early access feature. Early access features are not recommended
+  for production networks and may have unstable interfaces.
+
 ## 1.5 
 
 ### Additions and Improvements 
@@ -41,14 +59,26 @@ v1.6. Older versions of Orion will no longer work with Besu v1.5.
 * Public Networks Default to Fast Sync: The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets, is now `FAST`.
   * The default is unchanged for private networks. That is, the sync mode defaults to `FULL` for private networks. 
   * Use the [`--sync-mode` command line option](https://besu.hyperledger.org/Reference/CLI/CLI-Syntax/#sync-mode) to change the sync mode. [\#384](https://github.com/hyperledger/besu/pull/384)
-* Proper Mining Support: Added full support for `eth_hashrate` and `eth_submitHashrate`. It is now possible to have the hahsrate when we mine with a GPU mining worker [\#1063](https://github.com/hyperledger/besu/pull/1063)
+* Proper Mining Support: Added full support for `eth_hashrate` and `eth_submitHashrate`. It is now possible to have the hashrate when we mine with a GPU mining worker [\#1063](https://github.com/hyperledger/besu/pull/1063)
 * Performance Improvements: The addition of native libraries ([\#775](https://github.com/hyperledger/besu/pull/775)) and changes to data structures in the EVM ([\#1089](https://github.com/hyperledger/besu/pull/1089)) have improved Besu sync and EVM execution times. 
 * Tracing API Improvements: The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.  
 * New Plugin API Block Events: `BlockAdded` and `BlockReorg` are now exposed via the Plugin API [\#637](https://github.com/hyperledger/besu/pull/637). 
-- Add CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
+* Added experimental CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
+- Local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
+Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
+- CLI now supports `--host-allowlist`. Support for `--host-whitelist` will be removed in a future release.
+- Additional `Allowlist` JSON RPC endpoints for permissioning now supported. `Whitelist` endpoints will be removed in a future release.
+  - Add `perm_getNodesAllowlist` as an alternative equivalent to `perm_getNodesWhitelist`
+  - Add `perm_addNodesToAllowlist` as an alternative equivalent to `perm_addNodesToWhitelist`
+  - Add `perm_removeNodesFromAllowlist` as an alternative equivalent to `perm_removeNodesFromWhitelist`
+  - Add `perm_getAccountsAllowlist` as an alternative equivalent to `perm_getAccountsWhitelist`
+  - Add `perm_addAccountsToAllowlist` as an alternative equivalent to `perm_addAccountsToWhitelist`
+  - Add `perm_removeAccountsFromAllowlist` as an alternative equivalent to `perm_removeAccountsFromWhitelist`
+- Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints. [\#1098](https://github.com/hyperledger/besu/pull/1098)
 
 ### Bug fixes 
 
+No bug fixes with [user impact in this release](https://wiki.hyperledger.org/display/BESU/Changelog). 
  
 ### Known Issues 
 
@@ -60,19 +90,6 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
-
-### Additions and Improvements
-- local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
-Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
-- CLI now supports `--host-allowlist`. Support for `--host-whitelist` will be removed in a future release.
-- Additional `Allowlist` JSON RPC endpoints for permissioning now supported. `Whitelist` endpoints will be removed in a future release.
-  - Add `perm_getNodesAllowlist` as an alternative equivalent to `perm_getNodesWhitelist`
-  - Add `perm_addNodesToAllowlist` as an alternative equivalent to `perm_addNodesToWhitelist`
-  - Add `perm_removeNodesFromAllowlist` as an alternative equivalent to `perm_removeNodesFromWhitelist`
-  - Add `perm_getAccountsAllowlist` as an alternative equivalent to `perm_getAccountsWhitelist`
-  - Add `perm_addAccountsToAllowlist` as an alternative equivalent to `perm_addAccountsToWhitelist`
-  - Add `perm_removeAccountsFromAllowlist` as an alternative equivalent to `perm_removeAccountsFromWhitelist`
-- Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints
 
 ## 1.4.6
 
