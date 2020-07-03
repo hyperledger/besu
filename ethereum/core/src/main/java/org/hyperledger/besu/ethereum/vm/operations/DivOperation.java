@@ -14,35 +14,46 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class DivOperation extends AbstractOperation {
+public class DivOperation extends AbstractFixedCostOperation {
 
   public DivOperation(final GasCalculator gasCalculator) {
-    super(0x04, "DIV", 2, 1, false, 1, gasCalculator);
+    super(0x04, "DIV", 2, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getLowTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 2) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
-    if (value1.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      final UInt256 result = value0.divide(value1);
-      frame.pushStackItem(result.toBytes());
+      if (value1.isZero()) {
+        frame.pushStackItem(Bytes32.ZERO);
+      } else {
+        final UInt256 result = value0.divide(value1);
+        frame.pushStackItem(result.toBytes());
+      }
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
     }
   }
 }

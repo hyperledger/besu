@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
@@ -51,11 +50,11 @@ public class VMReferenceTest extends AbstractRetryingTest {
     "VMTests/vmEnvironmentalInfo",
     "VMTests/vmIOandFlowOperations",
     "VMTests/vmLogTest",
-    //    "VMTests/vmPerformance",
-    //    "VMTests/vmPushDupSwapTest",
-    //    "VMTests/vmRandomTest",
+//    "VMTests/vmPerformance",
+    "VMTests/vmPushDupSwapTest",
+    "VMTests/vmRandomTest",
     "VMTests/vmSha3Test",
-    //      "VMTests/vmTests",
+    "VMTests/vmTests",
     "VMTests/vmSystemOperations"
   };
 
@@ -70,34 +69,11 @@ public class VMReferenceTest extends AbstractRetryingTest {
   // Additionally, the GeneralStateTests provide coverage of these
   // operations so the proper functionality does get tested somewhere.
   private static final String[] BLACKLISTED_TESTS = {
-    "balance0",
-    "balanceAddressInputTooBig",
-    "balanceCaller3",
-    "balanceAddressInputTooBigRightMyAddress",
-    "ExtCodeSizeAddressInputTooBigRightMyAddress",
-    "env1",
-    "extcodecopy0AddressTooBigRight",
-    "PostToNameRegistrator0",
-    "CallToReturn1",
-    "CallRecursiveBomb0",
-    "createNameRegistratorValueTooHigh",
-    "suicideNotExistingAccount",
-    "callstatelessToReturn1",
-    "CallRecursiveBomb1",
-    "ABAcallsSuicide1",
-    "suicideSendEtherToMe",
+    "push32AndSuicide",
+    "suicide",
     "suicide0",
-    "CallToNameRegistrator0",
-    "callstatelessToNameRegistrator0",
-    "PostToReturn1",
-    "callcodeToReturn1",
-    "ABAcalls0",
-    "CallRecursiveBomb2",
-    "CallRecursiveBomb3",
-    "ABAcallsSuicide0",
-    "callcodeToNameRegistrator0",
-    "CallToPrecompiledContract",
-    "createNameRegistrator"
+    "suicideNotExistingAccount",
+    "suicideSendEtherToMe",
   };
   private static final Optional<BigInteger> CHAIN_ID = Optional.of(BigInteger.ONE);
   private final String name;
@@ -161,15 +137,15 @@ public class VMReferenceTest extends AbstractRetryingTest {
     // This is normally set inside the containing message executing the code.
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-//    try {
-      protocolSpec.getEvm().runToHalt(frame, OperationTracer.NO_TRACING);
-//    } catch (final ExceptionalHaltException ehe) {
-//      if (!spec.isExceptionHaltExpected())
-//        System.err.println(
-//            String.format(
-//                "Test %s incurred in an exceptional halt exception for reasons: %s.",
-//                name, ehe.getReasons()));
-//    }
+    //    try {
+    protocolSpec.getEvm().runToHalt(frame, OperationTracer.NO_TRACING);
+    //    } catch (final ExceptionalHaltException ehe) {
+    //      if (!spec.isExceptionHaltExpected())
+    //        System.err.println(
+    //            String.format(
+    //                "Test %s incurred in an exceptional halt exception for reasons: %s.",
+    //                name, ehe.getReasons()));
+    //    }
 
     if (spec.isExceptionHaltExpected()) {
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
@@ -181,7 +157,8 @@ public class VMReferenceTest extends AbstractRetryingTest {
       frame.getWorldState().commit();
 
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
-          .withFailMessage("VM should not have exceptionally halted with " + frame.getExceptionalHaltReason())
+          .withFailMessage(
+              "VM should not have exceptionally halted with " + frame.getExceptionalHaltReason())
           .isFalse();
       assertThat(frame.getOutputData())
           .withFailMessage("VM output differs")

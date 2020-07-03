@@ -15,26 +15,34 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
-public class CoinbaseOperation extends AbstractOperation {
+public class CoinbaseOperation extends AbstractFixedCostOperation {
 
   public CoinbaseOperation(final GasCalculator gasCalculator) {
-    super(0x41, "COINBASE", 0, 1, false, 1, gasCalculator);
+    super(0x41, "COINBASE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Address coinbase = frame.getMiningBeneficiary();
-    frame.pushStackItem(Words.fromAddress(coinbase));
+      final Address coinbase = frame.getMiningBeneficiary();
+      frame.pushStackItem(Words.fromAddress(coinbase));
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
+    }
   }
 }

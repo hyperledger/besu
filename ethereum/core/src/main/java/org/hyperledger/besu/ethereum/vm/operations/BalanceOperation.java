@@ -16,29 +16,40 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-public class BalanceOperation extends AbstractOperation {
+public class BalanceOperation extends AbstractFixedCostOperation {
 
   public BalanceOperation(final GasCalculator gasCalculator) {
-    super(0x31, "BALANCE", 1, 1, false, 1, gasCalculator);
+    super(0x31, "BALANCE", 1, 1, false, 1, gasCalculator, gasCalculator.getBalanceOperationGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBalanceOperationGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 2) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Address accountAddress = Words.toAddress(frame.popStackItem());
-    final Account account = frame.getWorldState().get(accountAddress);
-    frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
+      final Address accountAddress = Words.toAddress(frame.popStackItem());
+      final Account account = frame.getWorldState().get(accountAddress);
+      frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
+    }
   }
 }

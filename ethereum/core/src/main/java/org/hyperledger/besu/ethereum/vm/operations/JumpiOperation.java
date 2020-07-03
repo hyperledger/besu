@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -27,32 +25,15 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class JumpiOperation extends AbstractOperation {
+public class JumpiOperation extends AbstractFixedCostOperation {
 
-  private final OperationResult successResponse;
-  private final OperationResult oogResponse;
-  private final OperationResult underflowResponse;
   private final OperationResult invalidJumpResponse;
-  private final Gas gasCost;
 
   public JumpiOperation(final GasCalculator gasCalculator) {
-    super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator);
-    gasCost = gasCalculator().getHighTierGasCost();
-    successResponse = new OperationResult(Optional.of(gasCost), Optional.empty());
-    oogResponse =
-        new OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator, gasCalculator.getHighTierGasCost());
     invalidJumpResponse =
         new OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
-    underflowResponse =
-        new OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
-  }
-
-  @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getHighTierGasCost();
   }
 
   @Override
@@ -79,16 +60,5 @@ public class JumpiOperation extends AbstractOperation {
     }
 
     return successResponse;
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    throw new UnsupportedOperationException();
   }
 }

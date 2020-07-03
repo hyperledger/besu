@@ -34,16 +34,6 @@ public class AddModOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
       if (frame.stackSize() < 3) {

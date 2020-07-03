@@ -14,26 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
-public class GasPriceOperation extends AbstractOperation {
+public class GasPriceOperation extends AbstractFixedCostOperation {
 
   public GasPriceOperation(final GasCalculator gasCalculator) {
-    super(0x3A, "GASPRICE", 0, 1, false, 1, gasCalculator);
+    super(0x3A, "GASPRICE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Wei gasPrice = frame.getGasPrice();
-    frame.pushStackItem(gasPrice.toBytes());
+      final Wei gasPrice = frame.getGasPrice();
+      frame.pushStackItem(gasPrice.toBytes());
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
+    }
   }
 }

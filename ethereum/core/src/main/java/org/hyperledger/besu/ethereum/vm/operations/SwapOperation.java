@@ -14,31 +14,50 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-public class SwapOperation extends AbstractOperation {
+public class SwapOperation extends AbstractFixedCostOperation {
 
   private final int index;
 
   public SwapOperation(final int index, final GasCalculator gasCalculator) {
-    super(0x90 + index - 1, "SWAP" + index, index + 1, index + 1, false, 1, gasCalculator);
+    super(
+        0x90 + index - 1,
+        "SWAP" + index,
+        index + 1,
+        index + 1,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.getVeryLowTierGasCost());
     this.index = index;
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() <= index) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Bytes32 tmp = frame.getStackItem(0);
-    frame.setStackItem(0, frame.getStackItem(index));
-    frame.setStackItem(index, tmp);
+      final Bytes32 tmp = frame.getStackItem(0);
+      frame.setStackItem(0, frame.getStackItem(index));
+      frame.setStackItem(index, tmp);
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
+    }
   }
 }

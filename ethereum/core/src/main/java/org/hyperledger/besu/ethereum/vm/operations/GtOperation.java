@@ -14,33 +14,44 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class GtOperation extends AbstractOperation {
+public class GtOperation extends AbstractFixedCostOperation {
 
   public GtOperation(final GasCalculator gasCalculator) {
-    super(0x11, "GT", 2, 1, false, 1, gasCalculator);
+    super(0x11, "GT", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 2) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
-    final Bytes32 result =
-        (value0.compareTo(value1) > 0 ? UInt256.valueOf(1) : UInt256.ZERO).toBytes();
+      final Bytes32 result =
+          (value0.compareTo(value1) > 0 ? UInt256.valueOf(1) : UInt256.ZERO).toBytes();
 
-    frame.pushStackItem(result);
+      frame.pushStackItem(result);
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
+    }
   }
 }

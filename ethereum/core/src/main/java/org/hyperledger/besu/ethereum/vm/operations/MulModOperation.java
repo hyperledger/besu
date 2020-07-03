@@ -14,36 +14,47 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class MulModOperation extends AbstractOperation {
+public class MulModOperation extends AbstractFixedCostOperation {
 
   public MulModOperation(final GasCalculator gasCalculator) {
-    super(0x09, "MULMOD", 3, 1, false, 1, gasCalculator);
+    super(0x09, "MULMOD", 3, 1, false, 1, gasCalculator, gasCalculator.getMidTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getMidTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 3) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
 
-    if (value2.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      final UInt256 result = value0.multiplyMod(value1, value2);
-      frame.pushStackItem(result.toBytes());
+      if (value2.isZero()) {
+        frame.pushStackItem(Bytes32.ZERO);
+      } else {
+        final UInt256 result = value0.multiplyMod(value1, value2);
+        frame.pushStackItem(result.toBytes());
+      }
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
     }
   }
 }

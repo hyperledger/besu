@@ -16,33 +16,52 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-public class ExtCodeHashOperation extends AbstractOperation {
+public class ExtCodeHashOperation extends AbstractFixedCostOperation {
 
   public ExtCodeHashOperation(final GasCalculator gasCalculator) {
-    super(0x3F, "EXTCODEHASH", 1, 1, false, 1, gasCalculator);
+    super(
+        0x3F,
+        "EXTCODEHASH",
+        1,
+        1,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.extCodeHashOperationGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().extCodeHashOperationGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 2) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Address address = Words.toAddress(frame.popStackItem());
-    final Account account = frame.getWorldState().get(address);
-    if (account == null || account.isEmpty()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      frame.pushStackItem(account.getCodeHash());
+      final Address address = Words.toAddress(frame.popStackItem());
+      final Account account = frame.getWorldState().get(address);
+      if (account == null || account.isEmpty()) {
+        frame.pushStackItem(Bytes32.ZERO);
+      } else {
+        frame.pushStackItem(account.getCodeHash());
+      }
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
     }
   }
 }

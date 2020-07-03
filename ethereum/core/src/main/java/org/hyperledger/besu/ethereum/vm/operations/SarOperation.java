@@ -14,50 +14,61 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class SarOperation extends AbstractOperation {
+public class SarOperation extends AbstractFixedCostOperation {
 
   private static final Bytes32 ALL_BITS =
       Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   public SarOperation(final GasCalculator gasCalculator) {
-    super(0x1d, "SAR", 2, 1, false, 1, gasCalculator);
+    super(0x1d, "SAR", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 2) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
-    Bytes32 value = frame.popStackItem();
+      final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
+      Bytes32 value = frame.popStackItem();
 
-    final boolean negativeNumber = value.get(0) < 0;
+      final boolean negativeNumber = value.get(0) < 0;
 
-    // short circuit result if we are shifting more than the width of the data.
-    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
-      final Bytes32 overflow = negativeNumber ? ALL_BITS : Bytes32.ZERO;
-      frame.pushStackItem(overflow);
-      return;
+      // short circuit result if we are shifting more than the width of the data.
+      if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
+        final Bytes32 overflow = negativeNumber ? ALL_BITS : Bytes32.ZERO;
+        frame.pushStackItem(overflow);
+        return successResponse;
+      }
+
+      // first perform standard shift right.
+      value = value.shiftRight(shiftAmount.intValue());
+
+      // if a negative number, carry through the sign.
+      if (negativeNumber) {
+        final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmount.intValue());
+        value = value.or(significantBits);
+      }
+      frame.pushStackItem(value);
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
     }
-
-    // first perform standard shift right.
-    value = value.shiftRight(shiftAmount.intValue());
-
-    // if a negative number, carry through the sign.
-    if (negativeNumber) {
-      final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmount.intValue());
-      value = value.or(significantBits);
-    }
-    frame.pushStackItem(value);
   }
 }

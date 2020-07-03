@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -25,41 +26,51 @@ import java.util.Arrays;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class SModOperation extends AbstractOperation {
+public class SModOperation extends AbstractFixedCostOperation {
 
   public SModOperation(final GasCalculator gasCalculator) {
-    super(0x07, "SMOD", 2, 1, false, 1, gasCalculator);
+    super(0x07, "SMOD", 2, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getLowTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Bytes32 value0 = frame.popStackItem();
-    final Bytes32 value1 = frame.popStackItem();
-
-    if (value1.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      BigInteger b1 = value0.toBigInteger();
-      BigInteger b2 = value1.toBigInteger();
-      BigInteger result = b1.abs().mod(b2.abs());
-      if (b1.signum() < 0) {
-        result = result.negate();
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 2) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
       }
 
-      Bytes resultBytes = Bytes.wrap(result.toByteArray());
-      if (resultBytes.size() > 32) {
-        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
+      final Bytes32 value0 = frame.popStackItem();
+      final Bytes32 value1 = frame.popStackItem();
+
+      if (value1.isZero()) {
+        frame.pushStackItem(Bytes32.ZERO);
+      } else {
+        final BigInteger b1 = value0.toBigInteger();
+        final BigInteger b2 = value1.toBigInteger();
+        BigInteger result = b1.abs().mod(b2.abs());
+        if (b1.signum() < 0) {
+          result = result.negate();
+        }
+
+        Bytes resultBytes = Bytes.wrap(result.toByteArray());
+        if (resultBytes.size() > 32) {
+          resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
+        }
+
+        final byte[] padding = new byte[32 - resultBytes.size()];
+        Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
+
+        frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
       }
 
-      byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
     }
   }
 }

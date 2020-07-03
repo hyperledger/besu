@@ -14,34 +14,36 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import java.util.Optional;
 
-public class BeginSubOperation extends AbstractOperation {
+public class BeginSubOperation extends AbstractFixedCostOperation {
 
   public static final int OPCODE = 0x5c;
+  public OperationResult invalidEntryResponse;
 
   public BeginSubOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "BEGINSUB", 0, 0, false, 1, gasCalculator);
+    super(OPCODE, "BEGINSUB", 0, 0, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    invalidEntryResponse =
+        new OperationResult(
+            Optional.of(gasCalculator.getBaseTierGasCost()),
+            Optional.of(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY));
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {}
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    return Optional.of(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      return invalidEntryResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
+    }
   }
 }

@@ -14,23 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class ByteOperation extends AbstractOperation {
+public class ByteOperation extends AbstractFixedCostOperation {
 
   public ByteOperation(final GasCalculator gasCalculator) {
-    super(0x1A, "BYTE", 2, 1, false, 1, gasCalculator);
-  }
-
-  @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
+    super(0x1A, "BYTE", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   private UInt256 getByte(final UInt256 seq, final UInt256 offset) {
@@ -44,20 +40,34 @@ public class ByteOperation extends AbstractOperation {
     }
 
     final byte b = seq.toBytes().get(index);
-    MutableBytes32 res = MutableBytes32.create();
+    final MutableBytes32 res = MutableBytes32.create();
     res.set(31, b);
     return UInt256.fromBytes(res);
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 2) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
 
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
-    // Stack items are reversed for the BYTE operation.
-    final UInt256 result = getByte(value1, value0);
+      // Stack items are reversed for the BYTE operation.
+      final UInt256 result = getByte(value1, value0);
 
-    frame.pushStackItem(result.toBytes());
+      frame.pushStackItem(result.toBytes());
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
+    }
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.util.Optional;
 
@@ -31,7 +32,7 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
   protected final OperationResult overflowflowResponse;
   protected final Gas gasCost;
 
-  public AbstractFixedCostOperation(
+  protected AbstractFixedCostOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
@@ -59,5 +60,15 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
     underflowResponse =
         new OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+  }
+
+  @Override
+  public final Gas cost(final MessageFrame frame) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final void execute(final MessageFrame frame) {
+    throw new UnsupportedOperationException();
   }
 }

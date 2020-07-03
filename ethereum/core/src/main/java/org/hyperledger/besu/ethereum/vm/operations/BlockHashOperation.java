@@ -15,55 +15,73 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BlockHashOperation extends AbstractOperation {
+public class BlockHashOperation extends AbstractFixedCostOperation {
 
   private static final int MAX_RELATIVE_BLOCK = 255;
 
   public BlockHashOperation(final GasCalculator gasCalculator) {
-    super(0x40, "BLOCKHASH", 1, 1, false, 1, gasCalculator);
+    super(
+        0x40,
+        "BLOCKHASH",
+        1,
+        1,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.getBlockHashOperationGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBlockHashOperationGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.stackSize() < 1) {
+        return underflowResponse;
+      }
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
+      final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
+      // Short-circuit if value is unreasonably large
+      if (!blockArg.fitsLong()) {
+        frame.pushStackItem(Bytes32.ZERO);
+        return successResponse;
+      }
 
-    // Short-circuit if value is unreasonably large
-    if (!blockArg.fitsLong()) {
-      frame.pushStackItem(Bytes32.ZERO);
-      return;
-    }
+      final long soughtBlock = blockArg.toLong();
+      final ProcessableBlockHeader blockHeader = frame.getBlockHeader();
+      final long currentBlockNumber = blockHeader.getNumber();
+      final long mostRecentBlockNumber = currentBlockNumber - 1;
 
-    final long soughtBlock = blockArg.toLong();
-    final ProcessableBlockHeader blockHeader = frame.getBlockHeader();
-    final long currentBlockNumber = blockHeader.getNumber();
-    final long mostRecentBlockNumber = currentBlockNumber - 1;
+      // If the current block is the genesis block or the sought block is
+      // not within the last 256 completed blocks, zero is returned.
+      if (currentBlockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
+          || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
+          || soughtBlock > mostRecentBlockNumber) {
+        frame.pushStackItem(Bytes32.ZERO);
+      } else {
+        final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
+        final Hash blockHash = blockHashLookup.getBlockHash(soughtBlock);
+        frame.pushStackItem(blockHash);
+      }
 
-    // If the current block is the genesis block or the sought block is
-    // not within the last 256 completed blocks, zero is returned.
-    if (currentBlockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
-        || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
-        || soughtBlock > mostRecentBlockNumber) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
-      final Hash blockHash = blockHashLookup.getBlockHash(soughtBlock);
-      frame.pushStackItem(blockHash);
+      return successResponse;
+    } catch (final UnderflowException ue) {
+      return underflowResponse;
+    } catch (final OverflowException oe) {
+      return overflowflowResponse;
     }
   }
 }
