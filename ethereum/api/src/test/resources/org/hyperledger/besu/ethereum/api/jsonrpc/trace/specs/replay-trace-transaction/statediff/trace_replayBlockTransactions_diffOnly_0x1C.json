@@ -1,0 +1,55 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x1C",
+      [
+        "stateDiff"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x2ed686117abe03fb5",
+                "to": "0x2ed686117ac5e164b"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
+            "balance": {
+              "*": {
+                "from": "0xefffffffffffe28d07ae14311",
+                "to": "0xefffffffffffe28d07a636c7b"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0x15",
+                "to": "0x16"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [],
+        "transactionHash": "0xbe1b55619f540ea8a7d7e9330ea642a195afe0d6d60ced6f463da67b46d3f503",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}
