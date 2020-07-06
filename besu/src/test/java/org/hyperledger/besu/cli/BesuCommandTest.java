@@ -2655,12 +2655,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void colorCanBeEnabledOrDisabledExplicitly() throws Exception {
+  public void colorCanBeEnabledOrDisabledExplicitly() {
     Stream.of(true, false)
         .forEach(
             bool -> {
-              parseCommand("--color-enabled", bool.toString());
-              assertThat(BesuCommand.getColorForceEnabled()).isEqualTo(bool);
+              parseCommand("--force-color-enabled", bool.toString());
+              assertThat(BesuCommand.getColorForceEnabled()).contains(bool);
             });
   }
 
