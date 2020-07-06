@@ -1291,8 +1291,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // To change the configuration if color was enabled/disabled
     Configurator.reconfigure();
     // set log level per CLI flags
-    if (logLevel != null && announce) {
-      System.out.printf("Setting logging level to %s%n", logLevel.name());
+    if (logLevel != null) {
+      if (announce) {
+        System.out.println("Setting logging level to " + logLevel.name());
+      }
       Configurator.setAllLevels("", logLevel);
     }
   }
