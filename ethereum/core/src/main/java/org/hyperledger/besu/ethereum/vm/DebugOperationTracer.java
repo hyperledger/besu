@@ -76,7 +76,7 @@ public class DebugOperationTracer implements OperationTracer {
       lastFrame =
           new TraceFrame(
               pc,
-              opcode,
+              Optional.of(opcode),
               gasRemaining,
               currentGasCost,
               frame.getGasRefund(),
@@ -126,6 +126,33 @@ public class DebugOperationTracer implements OperationTracer {
               frameIndex--;
             } while (foundTraceFrame == null);
             foundTraceFrame.setExceptionalHaltReason(exceptionalHaltReason);
+          } else {
+            final TraceFrame traceFrame =
+                new TraceFrame(
+                    frame.getPC(),
+                    Optional.empty(),
+                    frame.getRemainingGas(),
+                    Optional.empty(),
+                    frame.getGasRefund(),
+                    frame.getMessageStackDepth(),
+                    Optional.of(exceptionalHaltReason),
+                    frame.getRecipientAddress(),
+                    frame.getValue(),
+                    frame.getInputData(),
+                    frame.getOutputData(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    frame.getWorldState(),
+                    Optional.empty(),
+                    Optional.ofNullable(frame.getRefunds()),
+                    Optional.ofNullable(frame.getCode()),
+                    frame.getMaxStackSize(),
+                    Optional.empty(),
+                    true,
+                    Optional.empty(),
+                    Optional.empty());
+            traceFrames.add(traceFrame);
           }
         });
   }
@@ -163,6 +190,7 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isStackEnabled()) {
       return Optional.empty();
     }
+
     final Bytes32[] stackContents = new Bytes32[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse

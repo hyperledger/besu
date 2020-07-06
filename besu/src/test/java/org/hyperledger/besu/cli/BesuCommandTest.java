@@ -1540,9 +1540,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     when(storageService.getByName("rocksdb-privacy"))
         .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+    final String coinbaseStr = String.format("%040x", 1);
 
     parseCommand(
         "--privacy-enabled",
+        "--miner-enabled",
+        "--miner-coinbase=" + coinbaseStr,
+        "--min-gas-price",
+        "0",
         "--privacy-url",
         ENCLAVE_URI,
         "--privacy-public-key-file",
@@ -2622,7 +2627,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .startsWith(
-            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)or specify mining is enabled (--miner-enabled)");
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
   }
 
   @Test
@@ -2912,7 +2917,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-url",
         ENCLAVE_URI,
         "--privacy-public-key-file",
-        configFile.getPath());
+        configFile.getPath(),
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> enclaveArg =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2982,7 +2989,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-authentication-enabled",
         "--privacy-multi-tenancy-enabled",
         "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file");
+        "/non/existent/file",
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -3023,7 +3032,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void onChainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
-    parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -3044,7 +3058,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled",
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled");
+        "--privacy-onchain-groups-enabled",
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -3071,6 +3087,15 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .startsWith("Privacy multi-tenancy and onchain privacy groups cannot be used together");
+  }
+
+  @Test
+  public void privacyMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
+    parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
