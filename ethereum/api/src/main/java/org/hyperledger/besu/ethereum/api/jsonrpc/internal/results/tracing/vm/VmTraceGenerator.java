@@ -123,8 +123,7 @@ public class VmTraceGenerator {
     } else {
       op.setVmOperationExecutionReport(report);
     }
-    if (currentTrace != null
-        && (op.getSub() != null || op.getVmOperationExecutionReport() != null)) {
+    if (currentTrace != null) {
       currentTrace.add(op);
     }
     currentIndex++;

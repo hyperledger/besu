@@ -499,6 +499,32 @@
           "data": "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe"
         }
       ]
+    },
+    {
+      "number": "0x1D",
+      "transactions" : [
+        {
+          "comment": "Stack underflow during contract creation",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "data" : "0x6000f1",
+          "gasLimit" : "0x011940",
+          "gasPrice" : "0x01"
+        }
+      ]
+    },
+    {
+      "number": "0x1E",
+      "transactions" : [
+        {
+          "comment": "Transaction to test refund_CallToSuicideTwice_d0g0v0_Istanbul",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "data" : "0x00000000000000000000000000000000000000000000000000000000000001f4",
+          "gasLimit" : "0x989680",
+          "gasPrice" : "0x01",
+          "to": "0160000000000000000000000000000000000000",
+          "value": "0x0a"
+        }
+      ]
     }
   ]
 }

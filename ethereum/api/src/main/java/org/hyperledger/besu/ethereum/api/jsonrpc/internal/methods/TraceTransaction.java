@@ -78,7 +78,8 @@ public class TraceTransaction implements JsonRpcMethod {
       return emptyResult();
     }
     final TransactionTrace transactionTrace =
-        blockTracerSupplier.get().trace(block, new DebugOperationTracer(TraceOptions.DEFAULT))
+        blockTracerSupplier.get()
+            .trace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
             .map(BlockTrace::getTransactionTraces).orElse(Collections.emptyList()).stream()
             .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
             .findFirst()
