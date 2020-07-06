@@ -18,6 +18,10 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -146,59 +150,89 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   protected abstract boolean isStatic(MessageFrame frame);
 
   @Override
-  public void execute(final MessageFrame frame) {
-    final Gas cost = cost(frame);
-    frame.decrementRemainingGas(cost);
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      final Optional<ExceptionalHaltReason> haltReason = exceptionalHaltCondition(frame, evm);
+      if (haltReason.isEmpty()) {
+        final Gas cost = cost(frame);
+        final Optional<Gas> optionalCost = Optional.ofNullable(cost);
+        if (cost != null) {
+          if (frame.getRemainingGas().compareTo(cost) < 0) {
+            return new OperationResult(
+                optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          }
+          frame.decrementRemainingGas(cost);
 
-    frame.clearReturnData();
+          frame.clearReturnData();
 
-    final Address to = to(frame);
-    final Account contract = frame.getWorldState().get(to);
+          final Address to = to(frame);
+          final Account contract = frame.getWorldState().get(to);
 
-    final Account account = frame.getWorldState().get(frame.getRecipientAddress());
-    final Wei balance = account.getBalance();
-    if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() >= 1024) {
-      frame.expandMemory(inputDataOffset(frame).intValue(), inputDataLength(frame).intValue());
-      frame.expandMemory(outputDataOffset(frame).intValue(), outputDataLength(frame).intValue());
-      frame.incrementRemainingGas(gasAvailableForChildCall(frame).plus(cost));
-      frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(Bytes32.ZERO);
-      return;
+          final Account account = frame.getWorldState().get(frame.getRecipientAddress());
+          final Wei balance = account.getBalance();
+          if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() >= 1024) {
+            frame.expandMemory(
+                inputDataOffset(frame).intValue(), inputDataLength(frame).intValue());
+            frame.expandMemory(
+                outputDataOffset(frame).intValue(), outputDataLength(frame).intValue());
+            frame.incrementRemainingGas(gasAvailableForChildCall(frame).plus(cost));
+            frame.popStackItems(getStackItemsConsumed());
+            frame.pushStackItem(Bytes32.ZERO);
+            return new OperationResult(optionalCost, Optional.empty());
+          }
+
+          final Bytes inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
+
+          final MessageFrame childFrame =
+              MessageFrame.builder()
+                  .type(MessageFrame.Type.MESSAGE_CALL)
+                  .messageFrameStack(frame.getMessageFrameStack())
+                  .blockchain(frame.getBlockchain())
+                  .worldState(frame.getWorldState().updater())
+                  .initialGas(gasAvailableForChildCall(frame))
+                  .address(address(frame))
+                  .originator(frame.getOriginatorAddress())
+                  .contract(to)
+                  .contractAccountVersion(
+                      contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
+                  .gasPrice(frame.getGasPrice())
+                  .inputData(inputData)
+                  .sender(sender(frame))
+                  .value(value(frame))
+                  .apparentValue(apparentValue(frame))
+                  .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
+                  .blockHeader(frame.getBlockHeader())
+                  .depth(frame.getMessageStackDepth() + 1)
+                  .isStatic(isStatic(frame))
+                  .completer(child -> complete(frame, child))
+                  .miningBeneficiary(frame.getMiningBeneficiary())
+                  .blockHashLookup(frame.getBlockHashLookup())
+                  .maxStackSize(frame.getMaxStackSize())
+                  .returnStack(frame.getReturnStack())
+                  .build();
+          frame.incrementRemainingGas(cost);
+
+          frame.getMessageFrameStack().addFirst(childFrame);
+          frame.setState(MessageFrame.State.CODE_SUSPENDED);
+        }
+        return new OperationResult(optionalCost, haltReason);
+      } else {
+        return new OperationResult(Optional.empty(), haltReason);
+      }
+    } catch (final UnderflowException ue) {
+      return new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+    } catch (final OverflowException oe) {
+      return new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
     }
+  }
 
-    final Bytes inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
+  protected abstract Gas cost(final MessageFrame frame);
 
-    final MessageFrame childFrame =
-        MessageFrame.builder()
-            .type(MessageFrame.Type.MESSAGE_CALL)
-            .messageFrameStack(frame.getMessageFrameStack())
-            .blockchain(frame.getBlockchain())
-            .worldState(frame.getWorldState().updater())
-            .initialGas(gasAvailableForChildCall(frame))
-            .address(address(frame))
-            .originator(frame.getOriginatorAddress())
-            .contract(to)
-            .contractAccountVersion(
-                contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
-            .gasPrice(frame.getGasPrice())
-            .inputData(inputData)
-            .sender(sender(frame))
-            .value(value(frame))
-            .apparentValue(apparentValue(frame))
-            .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
-            .blockHeader(frame.getBlockHeader())
-            .depth(frame.getMessageStackDepth() + 1)
-            .isStatic(isStatic(frame))
-            .completer(child -> complete(frame, child))
-            .miningBeneficiary(frame.getMiningBeneficiary())
-            .blockHashLookup(frame.getBlockHashLookup())
-            .maxStackSize(frame.getMaxStackSize())
-            .returnStack(frame.getReturnStack())
-            .build();
-    frame.incrementRemainingGas(cost);
-
-    frame.getMessageFrameStack().addFirst(childFrame);
-    frame.setState(MessageFrame.State.CODE_SUSPENDED);
+  protected Optional<ExceptionalHaltReason> exceptionalHaltCondition(
+      final MessageFrame frame, final EVM evm) {
+    return Optional.empty();
   }
 
   public void complete(final MessageFrame frame, final MessageFrame childFrame) {

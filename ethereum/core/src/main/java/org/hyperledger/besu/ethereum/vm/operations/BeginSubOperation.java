@@ -41,9 +41,9 @@ public class BeginSubOperation extends AbstractFixedCostOperation {
     try {
       return invalidEntryResponse;
     } catch (final UnderflowException ue) {
-      return underflowResponse;
+      return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
-      return overflowflowResponse;
+      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

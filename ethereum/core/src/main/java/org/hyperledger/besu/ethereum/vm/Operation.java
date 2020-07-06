@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -32,7 +30,7 @@ public interface Operation {
       this.haltReason = haltReason;
     }
 
-    Optional<Gas> getGasCost() {
+    public Optional<Gas> getGasCost() {
       return gasCost;
     }
 
@@ -41,60 +39,14 @@ public interface Operation {
     }
   }
 
-  default OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final Optional<ExceptionalHaltReason> haltReason = exceptionalHaltCondition(frame, evm);
-      if (haltReason.isEmpty()) {
-        final Gas cost = cost(frame);
-        final Optional<Gas> optionalCost = Optional.ofNullable(cost);
-        if (cost != null) {
-          if (frame.getRemainingGas().compareTo(cost) < 0) {
-            return new OperationResult(
-                optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-          }
-          execute(frame);
-        }
-        return new OperationResult(optionalCost, haltReason);
-      } else {
-        return new OperationResult(Optional.empty(), haltReason);
-      }
-    } catch (final UnderflowException ue) {
-      return new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
-    } catch (final OverflowException oe) {
-      return new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
-    }
-  }
-
-  /**
-   * Gas cost of this operation, in context of the provided frame.
-   *
-   * @param frame The frame for execution of this operation.
-   * @return The gas cost associated with executing this operation given the current {@link
-   *     MessageFrame}.
-   */
-  Gas cost(final MessageFrame frame);
-
   /**
    * Executes the logic behind this operation.
    *
    * @param frame The frame for execution of this operation.
+   * @param evm The EVM for execution of this operation.
+   * @return the gas cost and any exeptional halt reasons of the operation.
    */
-  void execute(final MessageFrame frame);
-
-  /**
-   * Check if an exceptional halt condition should apply
-   *
-   * @param frame the current frame
-   * @param evm the currently executing EVM
-   * @return an {@link Optional} containing the {@link ExceptionalHaltReason} that applies or empty
-   *     if no exceptional halt condition applies.
-   */
-  default Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    return Optional.empty();
-  }
+  OperationResult execute(final MessageFrame frame, final EVM evm);
 
   int getOpcode();
 

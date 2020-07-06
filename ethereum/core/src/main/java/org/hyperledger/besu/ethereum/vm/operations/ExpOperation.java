@@ -16,8 +16,14 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -28,21 +34,29 @@ public class ExpOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 power = UInt256.fromBytes(frame.getStackItem(1));
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      final UInt256 power = UInt256.fromBytes(frame.getStackItem(1));
+      final int numBytes = (power.bitLength() + 7) / 8;
 
-    final int numBytes = (power.bitLength() + 7) / 8;
-    return gasCalculator().expOperationGasCost(numBytes);
-    //    return FrontierGasCosts.EXP.plus(FrontierGasCosts.EXP_BYTE.times(numBytes));
-  }
+      final Gas cost = gasCalculator().expOperationGasCost(numBytes);
+      final Optional<Gas> optionalCost = Optional.of(cost);
+      if (frame.getRemainingGas().compareTo(cost) < 0) {
+        return new OperationResult(
+            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
-    final UInt256 result = value0.pow(value1);
+      final UInt256 result = value0.pow(value1);
 
-    frame.pushStackItem(result.toBytes());
+      frame.pushStackItem(result.toBytes());
+      return new OperationResult(optionalCost, Optional.empty());
+    } catch (final UnderflowException ue) {
+      return UNDERFLOW_RESPONSE;
+    } catch (final OverflowException oe) {
+      return OVERFLOWFLOW_RESPONSE;
+    }
   }
 }

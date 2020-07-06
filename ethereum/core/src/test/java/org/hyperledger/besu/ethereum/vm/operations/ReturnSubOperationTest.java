@@ -76,7 +76,8 @@ public class ReturnSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.cost(frame)).isEqualTo(RETURN_SUB_GAS_COST);
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getGasCost()).contains(RETURN_SUB_GAS_COST);
   }
 
   @Test

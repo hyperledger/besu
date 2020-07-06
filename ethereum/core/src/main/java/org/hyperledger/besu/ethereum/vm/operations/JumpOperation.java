@@ -38,7 +38,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.stackSize() < 1) {
-      return underflowResponse;
+      return UNDERFLOW_RESPONSE;
     }
     if (frame.getRemainingGas().compareTo(gasCost) < 0) {
       return oogResponse;

@@ -67,7 +67,7 @@ public class JumpOperationTest {
 
     address = Address.fromHexString("0x18675309");
 
-    WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     worldStateUpdater = worldStateArchive.getMutable().updater();
     worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
@@ -83,28 +83,28 @@ public class JumpOperationTest {
   public void shouldJumpWhenLocationIsJumpDest() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(Bytes32.fromHexString("0x03"))
             .code(new Code(Bytes.fromHexString("0x6003565b00")))
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, evm)).isNotPresent();
-    operation.execute(frame);
+    final OperationResult result = operation.execute(frame, evm);
+    assertThat(result.getHaltReason()).isEmpty();
   }
 
   @Test
   public void shouldJumpWhenLocationIsJumpDestAndAtEndOfCode() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(Bytes32.fromHexString("0x03"))
             .code(new Code(Bytes.fromHexString("0x6003565b")))
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, evm)).isNotPresent();
-    operation.execute(frame);
+    final OperationResult result = operation.execute(frame, evm);
+    assertThat(result.getHaltReason()).isEmpty();
   }
 
   @Test

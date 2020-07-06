@@ -38,14 +38,4 @@ public class InvalidOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     return successResponse;
   }
-
-  @Override
-  public final Gas cost(final MessageFrame frame) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public final void execute(final MessageFrame frame) {
-    throw new UnsupportedOperationException();
-  }
 }

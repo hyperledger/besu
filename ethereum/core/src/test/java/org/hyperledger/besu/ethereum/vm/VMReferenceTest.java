@@ -50,7 +50,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     "VMTests/vmEnvironmentalInfo",
     "VMTests/vmIOandFlowOperations",
     "VMTests/vmLogTest",
-    "VMTests/vmPerformance",
+    //    "VMTests/vmPerformance",
     "VMTests/vmPushDupSwapTest",
     "VMTests/vmRandomTest",
     "VMTests/vmSha3Test",

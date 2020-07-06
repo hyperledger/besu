@@ -47,7 +47,6 @@ public class BeginSubOperationTest {
 
   private Blockchain blockchain;
   private Address address;
-  private WorldStateArchive worldStateArchive;
   private WorldUpdater worldStateUpdater;
 
   private MessageFrameTestFixture createMessageFrameBuilder(final Gas initialGas) {
@@ -66,7 +65,7 @@ public class BeginSubOperationTest {
 
     address = Address.fromHexString("0x18675309");
 
-    worldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     worldStateUpdater = worldStateArchive.getMutable().updater();
     worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
@@ -78,9 +77,10 @@ public class BeginSubOperationTest {
 
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
+        createMessageFrameBuilder(Gas.of(100)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.cost(frame)).isEqualTo(BEGIN_SUB_GAS_COST);
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getGasCost()).contains(BEGIN_SUB_GAS_COST);
   }
 
   @Test
@@ -93,7 +93,7 @@ public class BeginSubOperationTest {
             .returnStack(new ReturnStack())
             .build();
     frame.setPC(CURRENT_PC);
-    OperationResult result = operation.execute(frame, null);
+    final OperationResult result = operation.execute(frame, null);
 
     assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
   }

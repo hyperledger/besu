@@ -40,9 +40,9 @@ public class AddressOperation extends AbstractFixedCostOperation {
 
       return successResponse;
     } catch (final UnderflowException ue) {
-      return underflowResponse;
+      return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
-      return overflowflowResponse;
+      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

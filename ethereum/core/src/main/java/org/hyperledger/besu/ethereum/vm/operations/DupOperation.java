@@ -41,7 +41,7 @@ public class DupOperation extends AbstractFixedCostOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
       if (frame.stackSize() < index) {
-        return underflowResponse;
+        return UNDERFLOW_RESPONSE;
       }
       if (frame.getRemainingGas().compareTo(gasCost) < 0) {
         return oogResponse;
@@ -51,9 +51,9 @@ public class DupOperation extends AbstractFixedCostOperation {
 
       return successResponse;
     } catch (final UnderflowException ue) {
-      return underflowResponse;
+      return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
-      return overflowflowResponse;
+      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

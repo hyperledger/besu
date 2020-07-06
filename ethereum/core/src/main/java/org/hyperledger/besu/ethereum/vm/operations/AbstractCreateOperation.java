@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
@@ -53,30 +55,47 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
-    final Wei value = Wei.wrap(frame.getStackItem(0));
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.isStatic()) {
+        return new OperationResult(
+            Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      }
 
-    final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
+      final Gas cost = cost(frame);
+      final Optional<Gas> optionalCost = Optional.ofNullable(cost);
+      if (cost != null) {
+        if (frame.getRemainingGas().compareTo(cost) < 0) {
+          return new OperationResult(
+              optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        }
+        final Wei value = Wei.wrap(frame.getStackItem(0));
 
-    frame.clearReturnData();
+        final Address address = frame.getRecipientAddress();
+        final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 
-    if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
-      fail(frame);
-    } else {
-      spawnChildMessage(frame);
+        frame.clearReturnData();
+
+        if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
+          fail(frame);
+        } else {
+          spawnChildMessage(frame);
+        }
+      }
+      return new OperationResult(optionalCost, Optional.empty());
+
+    } catch (final UnderflowException ue) {
+      return new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+    } catch (final OverflowException oe) {
+      return new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
     }
   }
 
-  protected abstract Address targetContractAddress(MessageFrame frame);
+  protected abstract Gas cost(final MessageFrame frame);
 
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    return frame.isStatic()
-        ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
-        : Optional.empty();
-  }
+  protected abstract Address targetContractAddress(MessageFrame frame);
 
   private void fail(final MessageFrame frame) {
     final UInt256 inputOffset = UInt256.fromBytes(frame.getStackItem(1));

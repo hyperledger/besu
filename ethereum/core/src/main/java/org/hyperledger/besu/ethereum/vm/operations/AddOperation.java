@@ -43,9 +43,9 @@ public class AddOperation extends AbstractFixedCostOperation {
       frame.pushStackItem(result.toBytes());
       return successResponse;
     } catch (final UnderflowException ue) {
-      return underflowResponse;
+      return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
-      return overflowflowResponse;
+      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

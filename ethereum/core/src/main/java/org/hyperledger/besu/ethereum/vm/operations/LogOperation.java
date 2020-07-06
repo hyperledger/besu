@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -40,35 +42,42 @@ public class LogOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 dataOffset = UInt256.fromBytes(frame.getStackItem(0));
-    final UInt256 dataLength = UInt256.fromBytes(frame.getStackItem(1));
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.isStatic()) {
+        return new OperationResult(
+            Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      }
 
-    return gasCalculator().logOperationGasCost(frame, dataOffset, dataLength, numTopics);
-  }
+      final UInt256 dataOffset = UInt256.fromBytes(frame.getStackItem(0));
+      final UInt256 dataLength = UInt256.fromBytes(frame.getStackItem(1));
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Address address = frame.getRecipientAddress();
+      final Gas cost =
+          gasCalculator().logOperationGasCost(frame, dataOffset, dataLength, numTopics);
+      final Optional<Gas> optionalCost = Optional.of(cost);
+      if (frame.getRemainingGas().compareTo(cost) < 0) {
+        return new OperationResult(
+            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      }
 
-    final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
-    final Bytes data = frame.readMemory(dataLocation, numBytes);
+      final Address address = frame.getRecipientAddress();
 
-    final ImmutableList.Builder<LogTopic> builder =
-        ImmutableList.builderWithExpectedSize(numTopics);
-    for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.create(frame.popStackItem()));
+      final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+      final Bytes data = frame.readMemory(dataLocation, numBytes);
+
+      final ImmutableList.Builder<LogTopic> builder =
+          ImmutableList.builderWithExpectedSize(numTopics);
+      for (int i = 0; i < numTopics; i++) {
+        builder.add(LogTopic.create(frame.popStackItem()));
+      }
+
+      frame.addLog(new Log(address, data, builder.build()));
+      return new OperationResult(optionalCost, Optional.empty());
+    } catch (final UnderflowException ue) {
+      return UNDERFLOW_RESPONSE;
+    } catch (final OverflowException oe) {
+      return OVERFLOWFLOW_RESPONSE;
     }
-
-    frame.addLog(new Log(address, data, builder.build()));
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    return frame.isStatic()
-        ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
-        : Optional.empty();
   }
 }

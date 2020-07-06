@@ -40,9 +40,7 @@ public class ShlOperationTest {
   private final GasCalculator gasCalculator = new SpuriousDragonGasCalculator();
   private final ShlOperation operation = new ShlOperation(gasCalculator);
 
-  private MessageFrame frame;
-
-  static String[][] testData = {
+  private static final String[][] testData = {
     {
       "0x0000000000000000000000000000000000000000000000000000000000000001",
       "0x00",
@@ -108,13 +106,13 @@ public class ShlOperationTest {
 
   @Test
   public void shiftOperation() {
-    frame = mock(MessageFrame.class);
+    final MessageFrame frame = mock(MessageFrame.class);
     when(frame.stackSize()).thenReturn(2);
     when(frame.getRemainingGas()).thenReturn(Gas.of(100));
     when(frame.popStackItem())
         .thenReturn(Bytes32.fromHexStringLenient(shift))
         .thenReturn(Bytes32.fromHexString(number));
-    operation.execute(frame);
+    operation.execute(frame, null);
     verify(frame).pushStackItem(Bytes32.fromHexString(expectedResult));
   }
 }

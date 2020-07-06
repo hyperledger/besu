@@ -39,7 +39,7 @@ public class JumpiOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.stackSize() < 2) {
-      return underflowResponse;
+      return UNDERFLOW_RESPONSE;
     }
     if (frame.getRemainingGas().compareTo(gasCost) < 0) {
       return oogResponse;

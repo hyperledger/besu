@@ -14,11 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import java.util.Optional;
+
 /**
  * All {@link Operation} implementations should inherit from this class to get the setting of some
  * members for free.
  */
 public abstract class AbstractOperation implements Operation {
+
+  protected static final OperationResult UNDERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+  protected static final OperationResult OVERFLOWFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+
   private final int opcode;
   private final String name;
   private final int stackItemsConsumed;
