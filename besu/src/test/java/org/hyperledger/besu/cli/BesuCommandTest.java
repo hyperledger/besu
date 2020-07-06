@@ -2655,12 +2655,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void colorEnabledByDefault() throws Exception {
-    parseCommand();
-    assertThat(TestBesuCommand.isColorEnabled()).isTrue();
-  }
-
-  @Test
   public void colorCanBeEnabledOrDisabledExplicitly() throws Exception {
     Stream.of(true, false)
         .forEach(
