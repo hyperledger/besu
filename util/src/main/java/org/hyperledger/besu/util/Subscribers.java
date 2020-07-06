@@ -62,11 +62,11 @@ public class Subscribers<T> {
   }
 
   public static <T> Subscribers<T> create() {
-    return new Subscribers<>(false);
+    return new Subscribers<T>(false);
   }
 
   public static <T> Subscribers<T> create(final boolean catchCallbackExceptions) {
-    return new Subscribers<>(catchCallbackExceptions);
+    return new Subscribers<T>(catchCallbackExceptions);
   }
 
   /**

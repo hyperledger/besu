@@ -57,7 +57,7 @@ public class WaitForPeersTask extends AbstractEthTask<Void> {
     // Listen for peer connections and complete task when we hit our target
     peerListenerId =
         ethPeers.subscribeConnect(
-            peer -> {
+            (peer) -> {
               final int peerCount = ethPeers.peerCount();
               if (peerCount >= targetPeerCount) {
                 LOG.info("Finished waiting for {} peers to connect.", targetPeerCount);

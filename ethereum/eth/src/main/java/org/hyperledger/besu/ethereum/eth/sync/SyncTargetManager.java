@@ -113,7 +113,7 @@ public abstract class SyncTargetManager {
   protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
-    return waitForNewPeer().thenCompose(__ -> selectNewSyncTarget());
+    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> selectNewSyncTarget());
   }
 
   private CompletableFuture<?> waitForNewPeer() {
