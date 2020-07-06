@@ -99,12 +99,10 @@ public class PendingTransactionFilter {
       final TransactionInfo transactionInfo, final Predicate predicate, final String value)
       throws InvalidJsonRpcParameters {
     final Optional<Address> maybeTo = transactionInfo.getTransaction().getTo();
-    if (maybeTo.isPresent()) {
-      if (predicate.equals(EQ)) {
-        return predicate.getOperator().apply(maybeTo.get(), Address.fromHexString(value));
-      } else if (predicate.equals(ACTION)) {
-        return transactionInfo.getTransaction().isContractCreation();
-      }
+    if (maybeTo.isPresent() && predicate.equals(EQ)) {
+      return predicate.getOperator().apply(maybeTo.get(), Address.fromHexString(value));
+    } else if (predicate.equals(ACTION)) {
+      return transactionInfo.getTransaction().isContractCreation();
     }
     return false;
   }
