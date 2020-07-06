@@ -104,7 +104,7 @@ public class WebSocketHostAllowlistTest {
 
   @Test
   public void websocketRequestWithDefaultHeaderAndDefaultConfigIsAccepted() {
-    boolean result = websocketService.hasAllowlistedHostnameHeader(Optional.of("localhost:50012"));
+    boolean result = websocketService.hasAllowedHostnameHeader(Optional.of("localhost:50012"));
     assertThat(result).isTrue();
   }
 
@@ -115,7 +115,7 @@ public class WebSocketHostAllowlistTest {
 
   @Test
   public void websocketRequestWithEmptyHeaderAndDefaultConfigIsRejected() {
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of(""))).isFalse();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of(""))).isFalse();
   }
 
   @Test
@@ -126,8 +126,8 @@ public class WebSocketHostAllowlistTest {
   @Test
   public void websocketRequestWithAnyHostnameAndWildcardConfigIsAccepted() {
     webSocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("ally"))).isTrue();
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("foe"))).isTrue();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally"))).isTrue();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("foe"))).isTrue();
   }
 
   @Test
@@ -138,15 +138,15 @@ public class WebSocketHostAllowlistTest {
   }
 
   @Test
-  public void websocketRequestWithAllowlistedHostIsAccepted() {
+  public void websocketRequestWithAllowedHostIsAccepted() {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("ally"))).isTrue();
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("ally:12345"))).isTrue();
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("friend"))).isTrue();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally"))).isTrue();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:12345"))).isTrue();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("friend"))).isTrue();
   }
 
   @Test
-  public void httpRequestWithAllowlistedHostIsAccepted(final TestContext context) {
+  public void httpRequestWithAllowedHostIsAccepted(final TestContext context) {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     doHttpRequestAndVerify(context, "ally", 400);
     doHttpRequestAndVerify(context, "ally:12345", 400);
@@ -156,7 +156,7 @@ public class WebSocketHostAllowlistTest {
   @Test
   public void websocketRequestWithUnknownHostIsRejected() {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("foe"))).isFalse();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("foe"))).isFalse();
   }
 
   @Test
@@ -169,9 +169,9 @@ public class WebSocketHostAllowlistTest {
   public void websocketRequestWithMalformedHostIsRejected() {
     webSocketConfiguration.setAuthenticationEnabled(false);
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("ally:friend"))).isFalse();
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("ally:123456"))).isFalse();
-    assertThat(websocketService.hasAllowlistedHostnameHeader(Optional.of("ally:friend:1234")))
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:friend"))).isFalse();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:123456"))).isFalse();
+    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:friend:1234")))
         .isFalse();
   }
 

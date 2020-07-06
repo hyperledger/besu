@@ -88,13 +88,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
                 "transaction format is invalid, accepted transaction types are %s",
                 acceptedTransactionTypes.toString()));
       }
-      if (!eip1559.isValidGasLimit(transaction)) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
-            String.format(
-                "transaction gas limit %s exceeds per transaction gas limit",
-                transaction.getGasLimit()));
-      }
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);
@@ -149,7 +142,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     if (!isSenderAllowed(transaction, validationParams)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
-          String.format("Sender %s is not on the Account Whitelist", transaction.getSender()));
+          String.format("Sender %s is not on the Account Allowlist", transaction.getSender()));
     }
 
     return ValidationResult.valid();

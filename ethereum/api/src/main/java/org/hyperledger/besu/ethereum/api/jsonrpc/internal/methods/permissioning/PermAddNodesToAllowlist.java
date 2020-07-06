@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController.NodesAllowlistResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,10 +53,10 @@ public class PermAddNodesToAllowlist implements JsonRpcMethod {
       if (nodeWhitelistPermissioningController.isPresent()) {
         try {
           final List<String> enodeURLs = enodeListParam.getStringList();
-          final NodeLocalConfigPermissioningController.NodesWhitelistResult nodesWhitelistResult =
+          final NodesAllowlistResult nodesAllowlistResult =
               nodeWhitelistPermissioningController.get().addNodes(enodeURLs);
 
-          switch (nodesWhitelistResult.result()) {
+          switch (nodesAllowlistResult.result()) {
             case SUCCESS:
               return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
             case ERROR_EMPTY_ENTRY:

@@ -33,7 +33,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TraceFrame {
 
   private final int pc;
-  private final String opcode;
+  private final Optional<String> opcode;
   private final Gas gasRemaining;
   private final Optional<Gas> gasCost;
   private final Gas gasRefund;
@@ -61,7 +61,7 @@ public class TraceFrame {
 
   public TraceFrame(
       final int pc,
-      final String opcode,
+      final Optional<String> opcode,
       final Gas gasRemaining,
       final Optional<Gas> gasCost,
       final Gas gasRefund,
@@ -114,7 +114,7 @@ public class TraceFrame {
   }
 
   public String getOpcode() {
-    return opcode;
+    return opcode.orElse("");
   }
 
   public Gas getGasRemaining() {
