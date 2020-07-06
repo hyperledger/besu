@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -29,6 +33,7 @@ import org.junit.Test;
 public class CliqueProtocolScheduleTest {
 
   private static final NodeKey NODE_KEY = NodeKeyUtils.generate();
+  private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
 
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {
@@ -66,5 +71,27 @@ public class CliqueProtocolScheduleTest {
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(homestead.isSkipZeroBlockRewards()).isEqualTo(true);
     assertThat(homestead.getDifficultyCalculator()).isInstanceOf(CliqueDifficultyCalculator.class);
+  }
+
+  @Test
+  public void zeroEpochLengthThrowsException() {
+    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    when(cliqueOptions.getEpochLength()).thenReturn(0L);
+    when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
+
+    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Epoch length in config must be greater than zero");
+  }
+
+  @Test
+  public void negativeEpochLengthThrowsException() {
+    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    when(cliqueOptions.getEpochLength()).thenReturn(-3000L);
+    when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
+
+    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Epoch length in config must be greater than zero");
   }
 }

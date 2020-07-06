@@ -37,11 +37,13 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class PeerDiscoveryTimestampsTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
+  @Ignore
   @Test
   public void lastSeenAndFirstDiscoveredTimestampsUpdatedOnMessage() {
     // peer[0] => controller // peer[1] => sender
@@ -95,7 +97,6 @@ public class PeerDiscoveryTimestampsTest {
     firstDiscovered.set(p.getFirstDiscovered());
 
     controller.onMessage(pingPacket, peers.get(1));
-    controller.onMessage(pongPacket, peers.get(1));
 
     assertThat(controller.streamDiscoveredPeers()).hasSize(1);
 

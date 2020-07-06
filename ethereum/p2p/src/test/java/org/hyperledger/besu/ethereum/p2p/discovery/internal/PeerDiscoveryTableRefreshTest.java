@@ -88,9 +88,6 @@ public class PeerDiscoveryTableRefreshTest {
 
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     for (int i = 0; i < 5; i++) {
-      controller.getRecursivePeerRefreshState().cancel();
-      timer.runPeriodicHandlers();
-      controller.streamDiscoveredPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
       controller.onMessage(pingPacket, peers.get(1));
 
       final PingPacketData refreshData =
@@ -102,6 +99,10 @@ public class PeerDiscoveryTableRefreshTest {
       final Packet refreshPongPacket = Packet.create(PacketType.PONG, refreshPong, nodeKeys.get(1));
 
       controller.onMessage(refreshPongPacket, peers.get(1));
+
+      controller.getRecursivePeerRefreshState().cancel();
+      timer.runPeriodicHandlers();
+      controller.streamDiscoveredPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
     }
 
     verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
