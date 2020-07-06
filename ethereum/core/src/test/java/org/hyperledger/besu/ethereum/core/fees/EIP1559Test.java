@@ -86,22 +86,20 @@ public class EIP1559Test {
 
   @Test
   public void eip1559GasPool() {
-    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo((MAX_GAS / 2) + feeMarket.getGasIncrementAmount(MAX_GAS));
+    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(10000024L);
     assertThat(
             eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)
                 + eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo(MAX_GAS);
+        .isEqualTo(25000012L);
   }
 
   @Test
   public void legacyGasPool() {
-    assertThat(eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo((MAX_GAS / 2) - feeMarket.getGasIncrementAmount(MAX_GAS));
+    assertThat(eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(14999988L);
     assertThat(
             eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)
                 + eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo(MAX_GAS);
+        .isEqualTo(25000012L);
   }
 
   @Test
