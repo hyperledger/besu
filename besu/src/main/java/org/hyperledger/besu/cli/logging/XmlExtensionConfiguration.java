@@ -83,8 +83,8 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     final PatternLayout patternLayout =
         PatternLayout.newBuilder()
             .withConfiguration(this)
-            .withDisableAnsi(!BesuCommand.isColorEnabled())
-            .withNoConsoleNoAnsi(BesuCommand.isColorEnabled())
+            .withDisableAnsi(!BesuCommand.getColorForceEnabled().orElse(true))
+            .withNoConsoleNoAnsi(!BesuCommand.getColorForceEnabled().orElse(false))
             .withPattern(
                 String.join(
                     SEP,

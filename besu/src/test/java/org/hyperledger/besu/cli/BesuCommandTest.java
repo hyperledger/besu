@@ -2660,7 +2660,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         .forEach(
             bool -> {
               parseCommand("--color-enabled", bool.toString());
-              assertThat(BesuCommand.isColorEnabled()).isEqualTo(bool);
+              assertThat(BesuCommand.getColorForceEnabled()).isEqualTo(bool);
             });
   }
 
