@@ -75,7 +75,7 @@ public class DebugTraceTransactionIntegrationTest {
     assertThat(debugTraceTransactionResult.getGas()).isEqualTo(23705L);
     assertThat(debugTraceTransactionResult.getReturnValue()).isEmpty();
     assertThat(debugTraceTransactionResult.failed()).isFalse();
-    assertThat(debugTraceTransactionResult.getStructLogs().size()).isEqualTo(106);
+    assertThat(debugTraceTransactionResult.getStructLogs()).hasSize(106);
   }
 
   @Test
