@@ -83,7 +83,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
     blockTracerSupplier
         .get()
-        .trace(block, new DebugOperationTracer(TraceOptions.DEFAULT))
+        .trace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
         .ifPresent(
             blockTrace ->
                 generateTracesFromTransactionTraceAndBlock(
