@@ -147,6 +147,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
+    final Gas cost = cost(frame);
+    frame.decrementRemainingGas(cost);
+
     frame.clearReturnData();
 
     final Address to = to(frame);
@@ -157,15 +160,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() >= 1024) {
       frame.expandMemory(inputDataOffset(frame).intValue(), inputDataLength(frame).intValue());
       frame.expandMemory(outputDataOffset(frame).intValue(), outputDataLength(frame).intValue());
-      frame.incrementRemainingGas(gasAvailableForChildCall(frame));
+      frame.incrementRemainingGas(gasAvailableForChildCall(frame).plus(cost));
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(Bytes32.ZERO);
       return;
     }
 
     final Bytes inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
-    Gas cost = cost(frame);
-    frame.decrementRemainingGas(cost);
 
     final MessageFrame childFrame =
         MessageFrame.builder()

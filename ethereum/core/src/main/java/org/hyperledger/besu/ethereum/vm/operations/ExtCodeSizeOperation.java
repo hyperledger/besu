@@ -43,9 +43,6 @@ public class ExtCodeSizeOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      if (frame.stackSize() < 1) {
-        return underflowResponse;
-      }
       if (frame.getRemainingGas().compareTo(gasCost) < 0) {
         return oogResponse;
       }

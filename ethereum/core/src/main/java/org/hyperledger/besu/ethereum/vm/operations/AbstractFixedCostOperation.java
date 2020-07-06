@@ -56,10 +56,10 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     overflowflowResponse =
         new OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+            Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
     underflowResponse =
         new OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+            Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
   }
 
   @Override

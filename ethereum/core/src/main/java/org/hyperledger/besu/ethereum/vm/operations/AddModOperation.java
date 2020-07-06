@@ -32,9 +32,6 @@ public class AddModOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      if (frame.stackSize() < 3) {
-        return underflowResponse;
-      }
       if (frame.getRemainingGas().compareTo(gasCost) < 0) {
         return oogResponse;
       }

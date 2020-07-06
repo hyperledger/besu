@@ -87,6 +87,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   }
 
   private void spawnChildMessage(final MessageFrame frame) {
+    // memory cost needs to be calculated prior to memory expansion
+    final Gas cost = cost(frame);
+    frame.decrementRemainingGas(cost);
+
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 
@@ -99,10 +103,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     final Address contractAddress = targetContractAddress(frame);
 
-    Gas cost = cost(frame);
-    frame.decrementRemainingGas(cost);
-
-    final Gas childGasStipend = gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
+    final Gas childGasStipend =
+        gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
     frame.decrementRemainingGas(childGasStipend);
 
     final MessageFrame childFrame =

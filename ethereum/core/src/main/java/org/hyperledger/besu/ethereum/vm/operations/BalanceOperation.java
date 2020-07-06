@@ -35,9 +35,6 @@ public class BalanceOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      if (frame.stackSize() < 2) {
-        return underflowResponse;
-      }
       if (frame.getRemainingGas().compareTo(gasCost) < 0) {
         return oogResponse;
       }
