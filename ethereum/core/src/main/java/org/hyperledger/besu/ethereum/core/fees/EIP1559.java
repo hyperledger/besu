@@ -147,17 +147,18 @@ public class EIP1559 {
     return targetGasUsed(blockNumber, migrationDuration, gasTarget, initialForkBlknum);
   }
 
-  private static long targetGasUsed(
+  public static long targetGasUsed(
       final long blockNumber,
       final long migrationDuration,
       final long gasTarget,
       final long forkBlock) {
     final long blocksSinceStartOfMigration = blockNumber - forkBlock;
+    final long halfGasTarget = floorDiv(gasTarget, 2L);
     return (blockNumber < forkBlock)
         ? 0L
         : (blockNumber > forkBlock + migrationDuration)
             ? gasTarget
-            : (gasTarget / 2L)
-                + (gasTarget / 2L) * (blocksSinceStartOfMigration / migrationDuration);
+            : halfGasTarget
+                + floorDiv(halfGasTarget * blocksSinceStartOfMigration, migrationDuration);
   }
 }
