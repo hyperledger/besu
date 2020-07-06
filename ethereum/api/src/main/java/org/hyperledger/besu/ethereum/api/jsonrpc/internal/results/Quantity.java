@@ -77,6 +77,16 @@ public class Quantity {
     return String.format("%s%s%s", HEX_PREFIX, zeroPadding, formatted);
   }
 
+  /**
+   * Checks if value is prefixed with '0x'
+   *
+   * @param value that is checked
+   * @return true if value is prefixed with '0x', false otherwise
+   */
+  public static boolean isValid(final String value) {
+    return value.startsWith(HEX_PREFIX);
+  }
+
   private static String uint256ToHex(final UInt256Value<?> value) {
     return value == null ? null : formatMinimalValue(value.toMinimalBytes().toShortHexString());
   }
