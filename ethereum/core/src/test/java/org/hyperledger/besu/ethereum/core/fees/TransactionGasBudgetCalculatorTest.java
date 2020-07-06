@@ -75,7 +75,7 @@ public class TransactionGasBudgetCalculatorTest {
           {FRONTIER_CALCULATOR, false, 11L, 1L, 10L, 0L, false},
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 6L, false},
           {EIP1559_CALCULATOR, false, 5L, EIP_1559_FORK_BLOCK, 10L, 0L, true},
-          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) + 1, 1L, MAX_GAS, 0L, false},
+          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) + 1, 1L, MAX_GAS, 0L, true},
           {EIP1559_CALCULATOR, false, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
           {EIP1559_CALCULATOR, true, (MAX_GAS / 2) + 1, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, false},
           {EIP1559_CALCULATOR, true, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
@@ -95,7 +95,7 @@ public class TransactionGasBudgetCalculatorTest {
             EIP_1559_FORK_BLOCK + 1,
             MAX_GAS,
             0L,
-            false
+            true
           },
           {
             EIP1559_CALCULATOR,
@@ -113,7 +113,7 @@ public class TransactionGasBudgetCalculatorTest {
             EIP_1559_FORK_BLOCK + 1,
             MAX_GAS,
             0L,
-            false
+            true
           }
         });
   }
