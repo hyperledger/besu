@@ -97,9 +97,9 @@ public class GeneralStateReferenceTestTools {
     // Don't do time consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
 
+    // Berlin isn't finalized
     if (!ExperimentalEIPs.berlinEnabled) {
-      // Berlin isn't finalized
-      params.ignore(".*Berlin.*");
+      params.ignore(".*[_-]Berlin");
     }
   }
 
