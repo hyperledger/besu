@@ -186,8 +186,7 @@ public class JumpSubOperationTest {
         createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
 
-    assertThatThrownBy(() -> operation.execute(frame, null))
-        .isInstanceOf(UnderflowException.class);
+    assertThatThrownBy(() -> operation.execute(frame, null)).isInstanceOf(UnderflowException.class);
   }
 
   @Test
