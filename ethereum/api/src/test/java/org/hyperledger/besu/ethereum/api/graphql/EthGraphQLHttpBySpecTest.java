@@ -47,6 +47,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_blockNumber");
 
     specs.add("eth_call_Block8");
+    specs.add("eth_call_Block8_invalidHexBytesData");
     specs.add("eth_call_BlockLatest");
 
     specs.add("eth_estimateGas_transfer");
@@ -58,11 +59,13 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_getBalance_0x19");
     specs.add("eth_getBalance_invalidAccountBlockNumber");
     specs.add("eth_getBalance_invalidAccountLatest");
+    specs.add("eth_getBalance_invalidHexAddress");
     specs.add("eth_getBalance_latest");
     specs.add("eth_getBalance_toobig_bn");
     specs.add("eth_getBalance_without_addr");
 
     specs.add("eth_getBlock_byHash");
+    specs.add("eth_getBlock_byHash_InvalidHexBytes32Hash");
     specs.add("eth_getBlock_byHashInvalid");
     specs.add("eth_getBlock_byNumber");
     specs.add("eth_getBlock_byNumberInvalid");

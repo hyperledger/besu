@@ -170,7 +170,12 @@ public enum JsonRpcError {
   METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented"),
 
   /** Plugins error */
-  PLUGIN_NOT_FOUND(-60000, "Plugin not found");
+  PLUGIN_NOT_FOUND(-60000, "Plugin not found"),
+
+  // Retesteth Errors
+
+  BLOCK_RLP_IMPORT_ERROR(-32000, "Could not decode RLP for Block"),
+  BLOCK_IMPORT_ERROR(-32000, "Could not import Block");
 
   private final int code;
   private final String message;
