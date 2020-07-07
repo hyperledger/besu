@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
@@ -31,6 +32,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -184,8 +186,8 @@ public class JumpSubOperationTest {
         createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
 
-    final OperationResult result = operation.execute(frame, null);
-    assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    assertThatThrownBy(() -> operation.execute(frame, null))
+        .isInstanceOf(UnderflowException.class);
   }
 
   @Test
