@@ -15,92 +15,49 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.BlockingAsyncExecutor;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class PeerDiscoveryTimestampsTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
-  @Ignore
   @Test
   public void lastSeenAndFirstDiscoveredTimestampsUpdatedOnMessage() {
-    // peer[0] => controller // peer[1] => sender
-    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
+    final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
+    final Packet testAgentPing = helper.createPingPacket(testAgent, agent);
+    helper.sendMessageBetweenAgents(testAgent, agent, testAgentPing);
 
-    final MockPeerDiscoveryAgent agent = mock(MockPeerDiscoveryAgent.class);
-    when(agent.getAdvertisedPeer()).thenReturn(Optional.of(peers.get(0)));
-    final DiscoveryPeer localPeer = peers.get(0);
-    final NodeKey localNodeKey = nodeKeys.get(0);
+    final Packet agentPing = helper.createPingPacket(agent, testAgent);
+    helper.sendMessageBetweenAgents(agent, testAgent, agentPing);
 
-    assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
-    final PeerDiscoveryController controller =
-        PeerDiscoveryController.builder()
-            .nodeKey(localNodeKey)
-            .localPeer(localPeer)
-            .peerTable(new PeerTable(agent.getAdvertisedPeer().get().getId()))
-            .timerUtil(new MockTimerUtil())
-            .workerExecutor(new BlockingAsyncExecutor())
-            .tableRefreshIntervalMs(TimeUnit.HOURS.toMillis(1))
-            .peerBondedObservers(Subscribers.create())
-            .metricsSystem(new NoOpMetricsSystem())
-            .build();
-    controller.start();
-
-    final PingPacketData ping =
-        PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
-    final Packet pingPacket = Packet.create(PacketType.PING, ping, nodeKeys.get(1));
-
-    controller.onMessage(pingPacket, peers.get(1));
-
-    final PingPacketData data =
-        PingPacketData.create(localPeer.getEndpoint(), peers.get(1).getEndpoint());
-    final Packet packet = Packet.create(PacketType.PING, data, nodeKeys.get(0));
-
-    final PongPacketData pong = PongPacketData.create(peers.get(0).getEndpoint(), packet.getHash());
-    final Packet pongPacket = Packet.create(PacketType.PONG, pong, nodeKeys.get(1));
-
-    controller.onMessage(pongPacket, peers.get(1));
+    final Packet pong = helper.createPongPacket(agent, Hash.hash(agentPing.getHash()));
+    helper.sendMessageBetweenAgents(testAgent, agent, pong);
 
     final AtomicLong lastSeen = new AtomicLong();
     final AtomicLong firstDiscovered = new AtomicLong();
 
-    assertThat(controller.streamDiscoveredPeers()).hasSize(1);
+    assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
-    DiscoveryPeer p = controller.streamDiscoveredPeers().iterator().next();
+    DiscoveryPeer p = agent.streamDiscoveredPeers().iterator().next();
     assertThat(p.getLastSeen()).isGreaterThan(0);
     assertThat(p.getFirstDiscovered()).isGreaterThan(0);
 
     lastSeen.set(p.getLastSeen());
     firstDiscovered.set(p.getFirstDiscovered());
 
-    controller.onMessage(pingPacket, peers.get(1));
+    helper.sendMessageBetweenAgents(testAgent, agent, testAgentPing);
 
-    assertThat(controller.streamDiscoveredPeers()).hasSize(1);
+    assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
-    p = controller.streamDiscoveredPeers().iterator().next();
+    p = agent.streamDiscoveredPeers().iterator().next();
     assertThat(p.getLastSeen()).isGreaterThan(lastSeen.get());
     assertThat(p.getFirstDiscovered()).isEqualTo(firstDiscovered.get());
   }
