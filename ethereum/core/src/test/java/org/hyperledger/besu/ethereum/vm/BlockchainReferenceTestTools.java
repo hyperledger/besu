@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -78,6 +79,10 @@ public class BlockchainReferenceTestTools {
     // Insane amount of ether
     params.blacklist("sha3_memSizeNoQuadraticCost[0-9][0-9]_Istanbul");
     params.blacklist("sha3_memSizeQuadraticCost[0-9][0-9]_(|zeroSize|2)_?Istanbul");
+
+    if (!ExperimentalEIPs.berlinEnabled) {
+      params.blacklist(".*_Berlin");
+    }
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
