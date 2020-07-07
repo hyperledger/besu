@@ -152,6 +152,7 @@ public class Create2OperationTest {
     when(messageFrame.memoryWordSize()).thenReturn(UInt256.valueOf(500));
     when(messageFrame.readMemory(UInt256.fromBytes(memoryOffset), memoryLength))
         .thenReturn(codeBytes);
+    when(messageFrame.stackSize()).thenReturn(4);
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
@@ -166,6 +167,7 @@ public class Create2OperationTest {
   @Test
   public void shouldCalculateGasPrice() {
     final OperationResult result = operation.execute(messageFrame, null);
+    assertThat(result.getHaltReason()).isEmpty();
     assertThat(result.getGasCost()).contains(Gas.of(expectedGas));
   }
 }
