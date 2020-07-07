@@ -42,6 +42,11 @@ public interface Operation {
   /**
    * Executes the logic behind this operation.
    *
+   * <p>Implementors are responsible for calculating gas cost, checking Out-of-gas conditions,
+   * applying gas cost to the MessageFrame, executing the operation including all side effects, and
+   * checking for all operation related exceptional halts such as OutOfGas, InvalidJumpDestination,
+   * Stack overflow/underflow, etc., and storing the halt in the MessageFrame
+   *
    * @param frame The frame for execution of this operation.
    * @param evm The EVM for execution of this operation.
    * @return the gas cost and any exeptional halt reasons of the operation.
