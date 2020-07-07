@@ -51,7 +51,7 @@ public class MulModOperation extends AbstractFixedCostOperation {
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
+      return OVERFLOW_RESPONSE;
     }
   }
 }

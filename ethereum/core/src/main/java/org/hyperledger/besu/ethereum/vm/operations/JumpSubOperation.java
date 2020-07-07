@@ -34,7 +34,7 @@ public class JumpSubOperation extends AbstractFixedCostOperation {
       final Code code = frame.getCode();
 
       if (frame.isReturnStackFull()) {
-        return OVERFLOWFLOW_RESPONSE;
+        return OVERFLOW_RESPONSE;
       }
 
       final UInt256 location = UInt256.fromBytes(frame.popStackItem());

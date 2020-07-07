@@ -42,7 +42,7 @@ public class GasOperation extends AbstractFixedCostOperation {
 
       return successResponse;
     } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
+      return OVERFLOW_RESPONSE;
     }
   }
 }

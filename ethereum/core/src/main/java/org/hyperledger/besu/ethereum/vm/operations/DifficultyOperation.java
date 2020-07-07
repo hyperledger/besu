@@ -38,7 +38,7 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
 
       return successResponse;
     } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
+      return OVERFLOW_RESPONSE;
     }
   }
 }

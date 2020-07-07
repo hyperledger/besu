@@ -86,7 +86,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
     } catch (final OverflowException ue) {
-      return OVERFLOWFLOW_RESPONSE;
+      return OVERFLOW_RESPONSE;
     }
   }
 

@@ -34,7 +34,7 @@ public abstract class AbstractOperation implements Operation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
-  protected static final OperationResult OVERFLOWFLOW_RESPONSE =
+  protected static final OperationResult OVERFLOW_RESPONSE =
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
 
