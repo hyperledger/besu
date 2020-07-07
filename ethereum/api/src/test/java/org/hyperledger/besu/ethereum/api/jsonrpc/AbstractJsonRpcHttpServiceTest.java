@@ -203,5 +203,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     client.dispatcher().executorService().shutdown();
     client.connectionPool().evictAll();
     service.stop().join();
+    vertx.close();
   }
 }
