@@ -80,8 +80,9 @@ public class BlockchainReferenceTestTools {
     params.blacklist("sha3_memSizeNoQuadraticCost[0-9][0-9]_Istanbul");
     params.blacklist("sha3_memSizeQuadraticCost[0-9][0-9]_(|zeroSize|2)_?Istanbul");
 
+    // Berlin isn't finalized
     if (!ExperimentalEIPs.berlinEnabled) {
-      params.blacklist(".*_Berlin");
+      params.blacklist(".*[_-]Berlin");
     }
   }
 

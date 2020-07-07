@@ -97,6 +97,7 @@ public class GeneralStateReferenceTestTools {
     // Don't do time consuming tests
     params.blacklist("CALLBlake2f_MaxRounds.*");
 
+    // Berlin isn't finalized
     if (!ExperimentalEIPs.berlinEnabled) {
       params.blacklist(".*[_-]Berlin");
     }
