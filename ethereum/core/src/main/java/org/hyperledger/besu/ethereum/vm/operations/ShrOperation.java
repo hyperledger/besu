@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -31,25 +29,19 @@ public class ShrOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
-      final Bytes32 value = frame.popStackItem();
-
-      if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
-        frame.pushStackItem(Bytes32.ZERO);
-      } else {
-        frame.pushStackItem(value.shiftRight(shiftAmount.intValue()));
-      }
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
+    final Bytes32 value = frame.popStackItem();
+
+    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
+      frame.pushStackItem(Bytes32.ZERO);
+    } else {
+      frame.pushStackItem(value.shiftRight(shiftAmount.intValue()));
+    }
+
+    return successResponse;
   }
 }

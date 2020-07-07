@@ -20,8 +20,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -35,27 +33,20 @@ public class ExpOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final UInt256 number = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 power = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 number = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 power = UInt256.fromBytes(frame.popStackItem());
 
-      final int numBytes = (power.bitLength() + 7) / 8;
+    final int numBytes = (power.bitLength() + 7) / 8;
 
-      final Gas cost = gasCalculator().expOperationGasCost(numBytes);
-      final Optional<Gas> optionalCost = Optional.of(cost);
-      if (frame.getRemainingGas().compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-
-      final UInt256 result = number.pow(power);
-
-      frame.pushStackItem(result.toBytes());
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    final Gas cost = gasCalculator().expOperationGasCost(numBytes);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
+
+    final UInt256 result = number.pow(power);
+
+    frame.pushStackItem(result.toBytes());
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

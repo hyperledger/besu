@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 public class DifficultyOperation extends AbstractFixedCostOperation {
 
@@ -28,17 +27,13 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Difficulty difficulty = frame.getBlockHeader().getDifficulty();
-      frame.pushStackItem(difficulty.toBytes());
-
-      return successResponse;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Difficulty difficulty = frame.getBlockHeader().getDifficulty();
+    frame.pushStackItem(difficulty.toBytes());
+
+    return successResponse;
   }
 }

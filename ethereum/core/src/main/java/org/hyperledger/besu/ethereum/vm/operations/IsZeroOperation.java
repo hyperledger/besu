@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -30,20 +28,14 @@ public class IsZeroOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final UInt256 value = UInt256.fromBytes(frame.popStackItem());
-
-      frame.pushStackItem(value.isZero() ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes());
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
+
+    frame.pushStackItem(value.isZero() ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes());
+
+    return successResponse;
   }
 }

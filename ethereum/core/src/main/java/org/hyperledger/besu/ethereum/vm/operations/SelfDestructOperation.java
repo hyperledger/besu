@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
@@ -37,45 +36,40 @@ public class SelfDestructOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.isStatic()) {
-        return ILLEGAL_STATE_CHANGE;
-      }
-
-      final Address recipientAddress = Words.toAddress(frame.popStackItem());
-
-      // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
-      final Account recipientNullable = frame.getWorldState().get(recipientAddress);
-      final Wei inheritance = frame.getWorldState().get(frame.getRecipientAddress()).getBalance();
-
-      final Gas cost = gasCalculator().selfDestructOperationGasCost(recipientNullable, inheritance);
-      final Optional<Gas> optionalCost = Optional.of(cost);
-      if (frame.getRemainingGas().compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-
-      final Address address = frame.getRecipientAddress();
-      final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
-
-      frame.addSelfDestruct(address);
-
-      final MutableAccount recipient =
-          frame.getWorldState().getOrCreate(recipientAddress).getMutable();
-
-      if (!account.getAddress().equals(recipient.getAddress())) {
-        recipient.incrementBalance(account.getBalance());
-      }
-
-      // add refund in message frame
-      frame.addRefund(recipient.getAddress(), account.getBalance());
-
-      account.setBalance(Wei.ZERO);
-
-      frame.setState(MessageFrame.State.CODE_SUCCESS);
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
+    if (frame.isStatic()) {
+      return ILLEGAL_STATE_CHANGE;
     }
+
+    final Address recipientAddress = Words.toAddress(frame.popStackItem());
+
+    // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
+    final Account recipientNullable = frame.getWorldState().get(recipientAddress);
+    final Wei inheritance = frame.getWorldState().get(frame.getRecipientAddress()).getBalance();
+
+    final Gas cost = gasCalculator().selfDestructOperationGasCost(recipientNullable, inheritance);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
+    final Address address = frame.getRecipientAddress();
+    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
+
+    frame.addSelfDestruct(address);
+
+    final MutableAccount recipient =
+        frame.getWorldState().getOrCreate(recipientAddress).getMutable();
+
+    if (!account.getAddress().equals(recipient.getAddress())) {
+      recipient.incrementBalance(account.getBalance());
+    }
+
+    // add refund in message frame
+    frame.addRefund(recipient.getAddress(), account.getBalance());
+
+    account.setBalance(Wei.ZERO);
+
+    frame.setState(MessageFrame.State.CODE_SUCCESS);
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

@@ -18,6 +18,8 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
@@ -70,7 +72,14 @@ public class EVM {
     operationTracer.traceExecution(
         frame,
         () -> {
-          final OperationResult result = frame.getCurrentOperation().execute(frame, this);
+          OperationResult result;
+          try {
+            result = frame.getCurrentOperation().execute(frame, this);
+          } catch (final OverflowException oe) {
+            result = AbstractOperation.OVERFLOW_RESPONSE;
+          } catch (final UnderflowException ue) {
+            result = AbstractOperation.UNDERFLOW_RESPONSE;
+          }
           frame.setGasCost(result.getGasCost());
           logState(frame, result.getGasCost().orElse(Gas.ZERO));
           final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();

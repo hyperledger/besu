@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -31,17 +30,13 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Bytes returnData = frame.getReturnData();
-      frame.pushStackItem(UInt256.valueOf(returnData.size()).toBytes());
-
-      return successResponse;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Bytes returnData = frame.getReturnData();
+    frame.pushStackItem(UInt256.valueOf(returnData.size()).toBytes());
+
+    return successResponse;
   }
 }

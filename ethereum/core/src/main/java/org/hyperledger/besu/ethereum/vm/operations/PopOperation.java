@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 public class PopOperation extends AbstractFixedCostOperation {
 
@@ -27,16 +26,12 @@ public class PopOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      frame.popStackItem();
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    frame.popStackItem();
+
+    return successResponse;
   }
 }

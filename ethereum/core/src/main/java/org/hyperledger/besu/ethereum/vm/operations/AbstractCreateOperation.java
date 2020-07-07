@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
@@ -56,41 +54,36 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.isStatic()) {
-        return ILLEGAL_STATE_CHANGE;
-      }
-      if (frame.stackSize() < getStackItemsConsumed()) {
-        return UNDERFLOW_RESPONSE;
-      }
-
-      final Gas cost = cost(frame);
-      final Optional<Gas> optionalCost = Optional.ofNullable(cost);
-      if (cost != null) {
-        if (frame.getRemainingGas().compareTo(cost) < 0) {
-          return new OperationResult(
-              optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-        }
-        final Wei value = Wei.wrap(frame.getStackItem(0));
-
-        final Address address = frame.getRecipientAddress();
-        final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
-
-        frame.clearReturnData();
-
-        if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
-          fail(frame);
-        } else {
-          spawnChildMessage(frame);
-        }
-      }
-
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException ue) {
-      return OVERFLOW_RESPONSE;
+    if (frame.isStatic()) {
+      return ILLEGAL_STATE_CHANGE;
     }
+    // manual check because some reads won't come until the "complete" step.
+    if (frame.stackSize() < getStackItemsConsumed()) {
+      return UNDERFLOW_RESPONSE;
+    }
+
+    final Gas cost = cost(frame);
+    final Optional<Gas> optionalCost = Optional.ofNullable(cost);
+    if (cost != null) {
+      if (frame.getRemainingGas().compareTo(cost) < 0) {
+        return new OperationResult(
+            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      }
+      final Wei value = Wei.wrap(frame.getStackItem(0));
+
+      final Address address = frame.getRecipientAddress();
+      final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
+
+      frame.clearReturnData();
+
+      if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
+        fail(frame);
+      } else {
+        spawnChildMessage(frame);
+      }
+    }
+
+    return new OperationResult(optionalCost, Optional.empty());
   }
 
   protected abstract Gas cost(final MessageFrame frame);

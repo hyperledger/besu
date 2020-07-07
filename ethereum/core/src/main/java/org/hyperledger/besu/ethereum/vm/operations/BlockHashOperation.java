@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -45,40 +43,34 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-      final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
-
-      // Short-circuit if value is unreasonably large
-      if (!blockArg.fitsLong()) {
-        frame.pushStackItem(Bytes32.ZERO);
-        return successResponse;
-      }
-
-      final long soughtBlock = blockArg.toLong();
-      final ProcessableBlockHeader blockHeader = frame.getBlockHeader();
-      final long currentBlockNumber = blockHeader.getNumber();
-      final long mostRecentBlockNumber = currentBlockNumber - 1;
-
-      // If the current block is the genesis block or the sought block is
-      // not within the last 256 completed blocks, zero is returned.
-      if (currentBlockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
-          || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
-          || soughtBlock > mostRecentBlockNumber) {
-        frame.pushStackItem(Bytes32.ZERO);
-      } else {
-        final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
-        final Hash blockHash = blockHashLookup.getBlockHash(soughtBlock);
-        frame.pushStackItem(blockHash);
-      }
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+    final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
+
+    // Short-circuit if value is unreasonably large
+    if (!blockArg.fitsLong()) {
+      frame.pushStackItem(Bytes32.ZERO);
+      return successResponse;
+    }
+
+    final long soughtBlock = blockArg.toLong();
+    final ProcessableBlockHeader blockHeader = frame.getBlockHeader();
+    final long currentBlockNumber = blockHeader.getNumber();
+    final long mostRecentBlockNumber = currentBlockNumber - 1;
+
+    // If the current block is the genesis block or the sought block is
+    // not within the last 256 completed blocks, zero is returned.
+    if (currentBlockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
+        || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
+        || soughtBlock > mostRecentBlockNumber) {
+      frame.pushStackItem(Bytes32.ZERO);
+    } else {
+      final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
+      final Hash blockHash = blockHashLookup.getBlockHash(soughtBlock);
+      frame.pushStackItem(blockHash);
+    }
+
+    return successResponse;
   }
 }

@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -35,31 +34,26 @@ public class ReturnDataCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
-      final Bytes returnData = frame.getReturnData();
-      final UInt256 returnDataLength = UInt256.valueOf(returnData.size());
+    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    final Bytes returnData = frame.getReturnData();
+    final UInt256 returnDataLength = UInt256.valueOf(returnData.size());
 
-      if (!sourceOffset.fitsInt()
-          || !numBytes.fitsInt()
-          || sourceOffset.add(numBytes).compareTo(returnDataLength) > 0) {
-        return INVALID_RETURN_DATA_BUFFER_ACCESS;
-      }
-
-      final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
-      final Optional<Gas> optionalCost = Optional.of(cost);
-      if (frame.getRemainingGas().compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-
-      frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
-
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
+    if (!sourceOffset.fitsInt()
+        || !numBytes.fitsInt()
+        || sourceOffset.add(numBytes).compareTo(returnDataLength) > 0) {
+      return INVALID_RETURN_DATA_BUFFER_ACCESS;
     }
+
+    final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
+    frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
+
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

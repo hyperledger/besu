@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -31,26 +29,20 @@ public class AddModOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
-
-      if (value2.isZero()) {
-        frame.pushStackItem(Bytes32.ZERO);
-      } else {
-        final UInt256 result = value0.addMod(value1, value2);
-        frame.pushStackItem(result.toBytes());
-      }
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
+
+    if (value2.isZero()) {
+      frame.pushStackItem(Bytes32.ZERO);
+    } else {
+      final UInt256 result = value0.addMod(value1, value2);
+      frame.pushStackItem(result.toBytes());
+    }
+    return successResponse;
   }
 }

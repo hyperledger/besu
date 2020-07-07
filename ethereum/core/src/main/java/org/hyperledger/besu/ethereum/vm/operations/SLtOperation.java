@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.math.BigInteger;
 
@@ -33,26 +31,20 @@ public class SLtOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Bytes32 value0 = frame.popStackItem();
-      final Bytes32 value1 = frame.popStackItem();
-
-      final BigInteger b0 = value0.toBigInteger();
-      final BigInteger b1 = value1.toBigInteger();
-
-      final Bytes32 result = b0.compareTo(b1) < 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
-
-      frame.pushStackItem(result);
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Bytes32 value0 = frame.popStackItem();
+    final Bytes32 value1 = frame.popStackItem();
+
+    final BigInteger b0 = value0.toBigInteger();
+    final BigInteger b1 = value1.toBigInteger();
+
+    final Bytes32 result = b0.compareTo(b1) < 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
+
+    frame.pushStackItem(result);
+
+    return successResponse;
   }
 }

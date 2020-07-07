@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -29,17 +28,13 @@ public class TimestampOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final long timestamp = frame.getBlockHeader().getTimestamp();
-      frame.pushStackItem(UInt256.valueOf(timestamp).toBytes());
-
-      return successResponse;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final long timestamp = frame.getBlockHeader().getTimestamp();
+    frame.pushStackItem(UInt256.valueOf(timestamp).toBytes());
+
+    return successResponse;
   }
 }

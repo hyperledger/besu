@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 public class GasPriceOperation extends AbstractFixedCostOperation {
 
@@ -28,17 +27,13 @@ public class GasPriceOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Wei gasPrice = frame.getGasPrice();
-      frame.pushStackItem(gasPrice.toBytes());
-
-      return successResponse;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Wei gasPrice = frame.getGasPrice();
+    frame.pushStackItem(gasPrice.toBytes());
+
+    return successResponse;
   }
 }

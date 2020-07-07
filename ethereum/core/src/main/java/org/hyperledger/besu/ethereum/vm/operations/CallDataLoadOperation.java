@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -34,34 +32,28 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final UInt256 startWord = UInt256.fromBytes(frame.popStackItem());
-
-      // If the start index doesn't fit a int, it comes after anything in data, and so the returned
-      // word should be zero.
-      if (!startWord.fitsInt()) {
-        frame.pushStackItem(Bytes32.ZERO);
-        return successResponse;
-      }
-
-      final int offset = startWord.intValue();
-      final Bytes data = frame.getInputData();
-      final MutableBytes32 res = MutableBytes32.create();
-      if (offset < data.size()) {
-        final Bytes toCopy = data.slice(offset, Math.min(Bytes32.SIZE, data.size() - offset));
-        toCopy.copyTo(res, 0);
-      }
-      frame.pushStackItem(res);
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final UInt256 startWord = UInt256.fromBytes(frame.popStackItem());
+
+    // If the start index doesn't fit a int, it comes after anything in data, and so the returned
+    // word should be zero.
+    if (!startWord.fitsInt()) {
+      frame.pushStackItem(Bytes32.ZERO);
+      return successResponse;
+    }
+
+    final int offset = startWord.intValue();
+    final Bytes data = frame.getInputData();
+    final MutableBytes32 res = MutableBytes32.create();
+    if (offset < data.size()) {
+      final Bytes toCopy = data.slice(offset, Math.min(Bytes32.SIZE, data.size() - offset));
+      toCopy.copyTo(res, 0);
+    }
+    frame.pushStackItem(res);
+
+    return successResponse;
   }
 }

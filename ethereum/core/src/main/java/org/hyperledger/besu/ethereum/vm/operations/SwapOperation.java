@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -40,21 +39,18 @@ public class SwapOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-      if (frame.stackSize() < getStackItemsConsumed()) {
-        return UNDERFLOW_RESPONSE;
-      }
-
-      final Bytes32 tmp = frame.getStackItem(0);
-      frame.setStackItem(0, frame.getStackItem(index));
-      frame.setStackItem(index, tmp);
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
+    // getStackItem doesn't under/overflow.  Check explicitly.
+    if (frame.stackSize() < getStackItemsConsumed()) {
       return UNDERFLOW_RESPONSE;
     }
+
+    final Bytes32 tmp = frame.getStackItem(0);
+    frame.setStackItem(0, frame.getStackItem(index));
+    frame.setStackItem(index, tmp);
+
+    return successResponse;
   }
 }

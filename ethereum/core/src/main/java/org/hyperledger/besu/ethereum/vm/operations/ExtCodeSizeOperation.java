@@ -19,8 +19,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -42,21 +40,15 @@ public class ExtCodeSizeOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Address address = Words.toAddress(frame.popStackItem());
-      final Account account = frame.getWorldState().get(address);
-      frame.pushStackItem(
-          account == null ? Bytes32.ZERO : UInt256.valueOf(account.getCode().size()).toBytes());
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Address address = Words.toAddress(frame.popStackItem());
+    final Account account = frame.getWorldState().get(address);
+    frame.pushStackItem(
+        account == null ? Bytes32.ZERO : UInt256.valueOf(account.getCode().size()).toBytes());
+
+    return successResponse;
   }
 }

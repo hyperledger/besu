@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -38,21 +37,17 @@ public class JumpOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-      final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
-      final Code code = frame.getCode();
-      if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
-        return invalidJumpResponse;
-      } else {
-        frame.setPC(jumpDestination.intValue());
-        return successResponse;
-      }
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
+    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+    final Code code = frame.getCode();
+    if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
+      return invalidJumpResponse;
+    } else {
+      frame.setPC(jumpDestination.intValue());
+      return successResponse;
     }
   }
 }

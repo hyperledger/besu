@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 public class DupOperation extends AbstractFixedCostOperation {
 
@@ -39,21 +37,16 @@ public class DupOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-      if (frame.stackSize() < getStackItemsConsumed()) {
-        return UNDERFLOW_RESPONSE;
-      }
-
-      frame.pushStackItem(frame.getStackItem(index - 1));
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+    // getStackItem won't throw under/overflows.  Check explicitly.
+    if (frame.stackSize() < getStackItemsConsumed()) {
+      return UNDERFLOW_RESPONSE;
+    }
+
+    frame.pushStackItem(frame.getStackItem(index - 1));
+
+    return successResponse;
   }
 }

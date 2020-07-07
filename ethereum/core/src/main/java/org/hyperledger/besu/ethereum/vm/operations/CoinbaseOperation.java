@@ -29,17 +29,13 @@ public class CoinbaseOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Address coinbase = frame.getMiningBeneficiary();
-      frame.pushStackItem(Words.fromAddress(coinbase));
-
-      return successResponse;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Address coinbase = frame.getMiningBeneficiary();
+    frame.pushStackItem(Words.fromAddress(coinbase));
+
+    return successResponse;
   }
 }

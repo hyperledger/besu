@@ -36,7 +36,7 @@ public class ReturnSubOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return oogResponse;
+      return outOfGasResponse;
     }
     if (frame.isReturnStackEmpty()) {
       return invalidRetsubResponse;

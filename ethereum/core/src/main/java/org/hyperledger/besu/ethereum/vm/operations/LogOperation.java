@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -42,36 +41,30 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.isStatic()) {
-        return ILLEGAL_STATE_CHANGE;
-      }
-
-      final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
-
-      final Gas cost =
-          gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
-      final Optional<Gas> optionalCost = Optional.of(cost);
-      if (frame.getRemainingGas().compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-
-      final Address address = frame.getRecipientAddress();
-
-      final Bytes data = frame.readMemory(dataLocation, numBytes);
-
-      final ImmutableList.Builder<LogTopic> builder =
-          ImmutableList.builderWithExpectedSize(numTopics);
-      for (int i = 0; i < numTopics; i++) {
-        builder.add(LogTopic.create(frame.popStackItem()));
-      }
-
-      frame.addLog(new Log(address, data, builder.build()));
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
+    if (frame.isStatic()) {
+      return ILLEGAL_STATE_CHANGE;
     }
+
+    final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+
+    final Gas cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
+    final Address address = frame.getRecipientAddress();
+
+    final Bytes data = frame.readMemory(dataLocation, numBytes);
+
+    final ImmutableList.Builder<LogTopic> builder =
+        ImmutableList.builderWithExpectedSize(numTopics);
+    for (int i = 0; i < numTopics; i++) {
+      builder.add(LogTopic.create(frame.popStackItem()));
+    }
+
+    frame.addLog(new Log(address, data, builder.build()));
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

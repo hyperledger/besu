@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -31,18 +30,14 @@ public class GasLimitOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Gas gasLimit = Gas.of(frame.getBlockHeader().getGasLimit());
-      final Bytes32 value = Bytes32.leftPad(Bytes.of(gasLimit.getBytes()));
-      frame.pushStackItem(value);
-
-      return successResponse;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Gas gasLimit = Gas.of(frame.getBlockHeader().getGasLimit());
+    final Bytes32 value = Bytes32.leftPad(Bytes.of(gasLimit.getBytes()));
+    frame.pushStackItem(value);
+
+    return successResponse;
   }
 }

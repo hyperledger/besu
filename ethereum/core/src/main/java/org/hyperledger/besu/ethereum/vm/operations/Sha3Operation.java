@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -37,24 +35,17 @@ public class Sha3Operation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final UInt256 from = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 length = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 from = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 length = UInt256.fromBytes(frame.popStackItem());
 
-      final Gas cost = gasCalculator().sha3OperationGasCost(frame, from, length);
-      final Optional<Gas> optionalCost = Optional.of(cost);
-      if (frame.getRemainingGas().compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-
-      final Bytes bytes = frame.readMemory(from, length);
-      frame.pushStackItem(Hash.hash(bytes));
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    final Gas cost = gasCalculator().sha3OperationGasCost(frame, from, length);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
+
+    final Bytes bytes = frame.readMemory(from, length);
+    frame.pushStackItem(Hash.hash(bytes));
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

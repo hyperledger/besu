@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -45,39 +44,34 @@ public class SStoreOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.isStatic()) {
-        return ILLEGAL_STATE_CHANGE;
-      }
-
-      final UInt256 key = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 value = UInt256.fromBytes(frame.popStackItem());
-
-      final MutableAccount account =
-          frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
-      if (account == null) {
-        return ILLEGAL_STATE_CHANGE;
-      }
-      final Gas cost = gasCalculator().calculateStorageCost(account, key, value);
-      final Optional<Gas> optionalCost = Optional.of(cost);
-      final Gas remainingGas = frame.getRemainingGas();
-      if (remainingGas.compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-      if (remainingGas.compareTo(minumumGasRemaining) <= 0) {
-        return new OperationResult(
-            Optional.of(minumumGasRemaining), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-
-      // Increment the refund counter.
-      frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
-
-      account.setStorageValue(key, value);
-      frame.storageWasUpdated(key, value.toBytes());
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
+    if (frame.isStatic()) {
+      return ILLEGAL_STATE_CHANGE;
     }
+
+    final UInt256 key = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
+
+    final MutableAccount account =
+        frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
+    if (account == null) {
+      return ILLEGAL_STATE_CHANGE;
+    }
+    final Gas cost = gasCalculator().calculateStorageCost(account, key, value);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    final Gas remainingGas = frame.getRemainingGas();
+    if (remainingGas.compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+    if (remainingGas.compareTo(minumumGasRemaining) <= 0) {
+      return new OperationResult(
+          Optional.of(minumumGasRemaining), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
+    // Increment the refund counter.
+    frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
+
+    account.setStorageValue(key, value);
+    frame.storageWasUpdated(key, value.toBytes());
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

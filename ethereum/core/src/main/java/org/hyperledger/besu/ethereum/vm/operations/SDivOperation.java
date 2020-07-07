@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -34,33 +32,27 @@ public class SDivOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-        return oogResponse;
-      }
-
-      final Bytes32 value0 = frame.popStackItem();
-      final Bytes32 value1 = frame.popStackItem();
-      if (value1.isZero()) {
-        frame.pushStackItem(Bytes32.ZERO);
-      } else {
-        final BigInteger result = value0.toBigInteger().divide(value1.toBigInteger());
-        Bytes resultBytes = Bytes.wrap(result.toByteArray());
-        if (resultBytes.size() > 32) {
-          resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
-        }
-
-        final byte[] padding = new byte[32 - resultBytes.size()];
-        Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-        frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
-      }
-
-      return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOW_RESPONSE;
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
+
+    final Bytes32 value0 = frame.popStackItem();
+    final Bytes32 value1 = frame.popStackItem();
+    if (value1.isZero()) {
+      frame.pushStackItem(Bytes32.ZERO);
+    } else {
+      final BigInteger result = value0.toBigInteger().divide(value1.toBigInteger());
+      Bytes resultBytes = Bytes.wrap(result.toByteArray());
+      if (resultBytes.size() > 32) {
+        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
+      }
+
+      final byte[] padding = new byte[32 - resultBytes.size()];
+      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
+
+      frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
+    }
+
+    return successResponse;
   }
 }

@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -35,25 +34,20 @@ public class CodeCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
-      final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
-      final Optional<Gas> optionalCost = Optional.of(cost);
-      if (frame.getRemainingGas().compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-
-      final Code code = frame.getCode();
-
-      frame.writeMemory(memOffset, sourceOffset, numBytes, code.getBytes(), true);
-
-      return new OperationResult(optionalCost, Optional.empty());
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
+    final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
+
+    final Code code = frame.getCode();
+
+    frame.writeMemory(memOffset, sourceOffset, numBytes, code.getBytes(), true);
+
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

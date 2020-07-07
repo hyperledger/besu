@@ -26,7 +26,7 @@ import java.util.Optional;
 abstract class AbstractFixedCostOperation extends AbstractOperation {
 
   protected final OperationResult successResponse;
-  protected final OperationResult oogResponse;
+  protected final OperationResult outOfGasResponse;
   protected final Gas gasCost;
 
   protected AbstractFixedCostOperation(
@@ -48,7 +48,7 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
         gasCalculator);
     gasCost = fixedCost;
     successResponse = new OperationResult(Optional.of(gasCost), Optional.empty());
-    oogResponse =
+    outOfGasResponse =
         new OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
   }
