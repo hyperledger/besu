@@ -57,10 +57,8 @@ public class OperandStack {
   }
 
   public OperandStack(final int maxSize) {
-    if (maxSize < 0) {
-      throw new IllegalArgumentException(
-          String.format("max size (%d) must be non-negative", maxSize));
-    }
+    checkArgument(maxSize >= 0, "max size must be non-negative");
+
     this.entries = new Bytes32[maxSize];
     this.maxSize = maxSize;
     this.top = -1;

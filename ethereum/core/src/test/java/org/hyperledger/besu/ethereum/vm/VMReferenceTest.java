@@ -131,15 +131,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     // This is normally set inside the containing message executing the code.
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-    //    try {
     protocolSpec.getEvm().runToHalt(frame, OperationTracer.NO_TRACING);
-    //    } catch (final ExceptionalHaltException ehe) {
-    //      if (!spec.isExceptionHaltExpected())
-    //        System.err.println(
-    //            String.format(
-    //                "Test %s incurred in an exceptional halt exception for reasons: %s.",
-    //                name, ehe.getReasons()));
-    //    }
 
     if (spec.isExceptionHaltExpected()) {
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)

@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 public class CoinbaseOperation extends AbstractFixedCostOperation {
