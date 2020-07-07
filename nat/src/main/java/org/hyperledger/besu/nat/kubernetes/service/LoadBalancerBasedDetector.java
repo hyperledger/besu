@@ -25,7 +25,7 @@ import io.kubernetes.client.models.V1Service;
 
 public class LoadBalancerBasedDetector implements IpDetector {
 
-  private final V1Service v1Service;
+  protected final V1Service v1Service;
 
   public LoadBalancerBasedDetector(final V1Service v1Service) {
     this.v1Service = v1Service;

@@ -17,6 +17,7 @@ package org.hyperledger.besu.nat.kubernetes.service;
 public enum KubernetesServiceType {
   CLUSTER_IP("ClusterIP"),
   LOAD_BALANCER("LoadBalancer"),
+  NODE_PORT("NodePort"),
   UNKNOWN("");
 
   String name;

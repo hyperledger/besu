@@ -36,6 +36,7 @@ import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.Configuration;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1Service;
+import io.kubernetes.client.models.V1ServicePort;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.authenticators.GCPAuthenticator;
@@ -93,9 +94,10 @@ public class KubernetesNatManager extends AbstractNatManager {
   void updateUsingBesuService(final V1Service service) throws RuntimeException {
     try {
       LOG.info("Found Besu service: {}", service.getMetadata().getName());
-
+      final KubernetesServiceType serviceType =
+          KubernetesServiceType.fromName(service.getSpec().getType());
       internalAdvertisedHost =
-          getIpDetector(service)
+          getIpDetector(serviceType, service)
               .detectAdvertisedIp()
               .orElseThrow(
                   () -> new NatInitializationException("Unable to retrieve IP from service"));
@@ -119,13 +121,14 @@ public class KubernetesNatManager extends AbstractNatManager {
                               : NetworkProtocol.TCP,
                           internalHost,
                           internalAdvertisedHost,
-                          v1ServicePort.getPort(),
+                          getExternalPort(serviceType, v1ServicePort),
                           v1ServicePort.getTargetPort().getIntValue()));
                 } catch (IllegalStateException e) {
-                  LOG.warn("Ignored unknown Besu port: {}", e.getMessage());
+                  LOG.debug("Ignored unknown Besu port: {}", e.getMessage());
                 }
               });
     } catch (Exception e) {
+      e.printStackTrace();
       throw new RuntimeException(
           "Failed update information using pod metadata : " + e.getMessage(), e);
     }
@@ -146,15 +149,30 @@ public class KubernetesNatManager extends AbstractNatManager {
     return CompletableFuture.completedFuture(forwardedPorts);
   }
 
-  private IpDetector getIpDetector(final V1Service v1Service) throws NatInitializationException {
-    final String serviceType = v1Service.getSpec().getType();
-    switch (KubernetesServiceType.fromName(serviceType)) {
+  private IpDetector getIpDetector(
+      final KubernetesServiceType kubernetesServiceType, final V1Service v1Service)
+      throws NatInitializationException {
+    switch (kubernetesServiceType) {
       case CLUSTER_IP:
         return () -> Optional.ofNullable(v1Service.getSpec().getClusterIP());
       case LOAD_BALANCER:
+      case NODE_PORT:
         return new LoadBalancerBasedDetector(v1Service);
       default:
-        throw new NatInitializationException(String.format("%s is not implemented", serviceType));
+        throw new NatInitializationException(
+            String.format("%s is not implemented", v1Service.getSpec().getType()));
+    }
+  }
+
+  private int getExternalPort(
+      final KubernetesServiceType kubernetesServiceType, final V1ServicePort v1ServicePort) {
+    switch (kubernetesServiceType) {
+      case LOAD_BALANCER:
+      case CLUSTER_IP:
+      default:
+        return v1ServicePort.getPort();
+      case NODE_PORT:
+        return v1ServicePort.getNodePort();
     }
   }
 }
