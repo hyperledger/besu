@@ -22,6 +22,15 @@ import java.util.Optional;
  */
 public abstract class AbstractOperation implements Operation {
 
+  protected static final OperationResult ILLEGAL_STATE_CHANGE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+  protected static final OperationResult INVALID_JUMP_DESTINATION =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+  protected static final OperationResult INVALID_RETURN_DATA_BUFFER_ACCESS =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS));
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
@@ -76,11 +85,6 @@ public abstract class AbstractOperation implements Operation {
   @Override
   public int getStackItemsProduced() {
     return stackItemsProduced;
-  }
-
-  @Override
-  public int getStackSizeChange() {
-    return stackItemsProduced - stackItemsConsumed;
   }
 
   @Override

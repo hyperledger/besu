@@ -56,10 +56,6 @@ public interface Operation {
 
   int getStackItemsProduced();
 
-  default int getStackSizeChange() {
-    return getStackItemsProduced() - getStackItemsConsumed();
-  }
-
   boolean getUpdatesProgramCounter();
 
   int getOpSize();

@@ -17,8 +17,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -38,8 +37,6 @@ public class PCOperation extends AbstractFixedCostOperation {
       frame.pushStackItem(UInt256.valueOf(frame.getPC()).toBytes());
 
       return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
       return OVERFLOWFLOW_RESPONSE;
     }

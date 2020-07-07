@@ -19,8 +19,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -42,8 +41,6 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
       frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
 
       return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
       return OVERFLOWFLOW_RESPONSE;
     }

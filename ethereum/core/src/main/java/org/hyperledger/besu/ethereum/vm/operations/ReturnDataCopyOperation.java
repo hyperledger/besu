@@ -20,8 +20,7 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -46,8 +45,7 @@ public class ReturnDataCopyOperation extends AbstractOperation {
       if (!sourceOffset.fitsInt()
           || !numBytes.fitsInt()
           || sourceOffset.add(numBytes).compareTo(returnDataLength) > 0) {
-        return new OperationResult(
-            Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS));
+        return INVALID_RETURN_DATA_BUFFER_ACCESS;
       }
 
       final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
@@ -62,8 +60,6 @@ public class ReturnDataCopyOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.empty());
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

@@ -21,8 +21,7 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -48,8 +47,7 @@ public class SStoreOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
       if (frame.isStatic()) {
-        return new OperationResult(
-            Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+        return ILLEGAL_STATE_CHANGE;
       }
 
       final UInt256 key = UInt256.fromBytes(frame.popStackItem());
@@ -58,8 +56,7 @@ public class SStoreOperation extends AbstractOperation {
       final MutableAccount account =
           frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
       if (account == null) {
-        return new OperationResult(
-            Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+        return ILLEGAL_STATE_CHANGE;
       }
       final Gas cost = gasCalculator().calculateStorageCost(account, key, value);
       final Optional<Gas> optionalCost = Optional.of(cost);
@@ -81,8 +78,6 @@ public class SStoreOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.empty());
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

@@ -25,17 +25,17 @@ import java.util.Optional;
 
 public class InvalidOperation extends AbstractOperation {
 
-  protected final OperationResult successResponse;
+  protected final OperationResult invalidOperation;
 
   public InvalidOperation(final GasCalculator gasCalculator) {
     super(0xFE, "INVALID", -1, -1, false, 1, gasCalculator);
-    successResponse =
+    invalidOperation =
         new OperationResult(
             Optional.of(Gas.ZERO), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    return successResponse;
+    return invalidOperation;
   }
 }

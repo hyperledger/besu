@@ -19,8 +19,7 @@ import static java.lang.Math.min;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes32;
@@ -58,8 +57,6 @@ public class PushOperation extends AbstractFixedCostOperation {
       frame.pushStackItem(bytes);
 
       return successResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
       return OVERFLOWFLOW_RESPONSE;
     }

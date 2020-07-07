@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
@@ -58,8 +58,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
       if (frame.isStatic()) {
-        return new OperationResult(
-            Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+        return ILLEGAL_STATE_CHANGE;
       }
 
       final Gas cost = cost(frame);
@@ -82,14 +81,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
           spawnChildMessage(frame);
         }
       }
-      return new OperationResult(optionalCost, Optional.empty());
 
+      return new OperationResult(optionalCost, Optional.empty());
     } catch (final UnderflowException ue) {
-      return new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
-    } catch (final OverflowException oe) {
-      return new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+      return UNDERFLOW_RESPONSE;
+    } catch (final OverflowException ue) {
+      return OVERFLOWFLOW_RESPONSE;
     }
   }
 
@@ -164,7 +161,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.addLogs(childFrame.getLogs());
     frame.addSelfDestructs(childFrame.getSelfDestructs());
     frame.incrementGasRefund(childFrame.getGasRefund());
-
     frame.popStackItems(getStackItemsConsumed());
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {

@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 public class DupOperation extends AbstractFixedCostOperation {
 
@@ -40,9 +40,6 @@ public class DupOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      if (frame.stackSize() < index) {
-        return UNDERFLOW_RESPONSE;
-      }
       if (frame.getRemainingGas().compareTo(gasCost) < 0) {
         return oogResponse;
       }

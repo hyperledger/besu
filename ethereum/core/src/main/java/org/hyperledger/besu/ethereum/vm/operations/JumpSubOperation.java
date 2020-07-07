@@ -16,13 +16,9 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
-
-import java.util.Optional;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -38,13 +34,11 @@ public class JumpSubOperation extends AbstractFixedCostOperation {
       final Code code = frame.getCode();
 
       if (frame.isReturnStackFull()) {
-        return new OperationResult(
-            Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+        return OVERFLOWFLOW_RESPONSE;
       }
       final UInt256 potentialJumpSubDestination = UInt256.fromBytes(frame.getStackItem(0));
       if (!code.isValidJumpSubDestination(evm, frame, potentialJumpSubDestination)) {
-        return new OperationResult(
-            Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+        return INVALID_JUMP_DESTINATION;
       }
 
       final UInt256 location = UInt256.fromBytes(frame.popStackItem());
@@ -54,8 +48,6 @@ public class JumpSubOperation extends AbstractFixedCostOperation {
       return successResponse;
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

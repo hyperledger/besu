@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -38,27 +39,28 @@ public class JumpiOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.stackSize() < 2) {
+    try {
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return oogResponse;
+      }
+
+      final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+      final Bytes32 condition = frame.popStackItem();
+
+      // If condition is zero (false), no jump is will be performed. Therefore skip the test.
+      if (condition.isZero()) {
+        frame.setPC(frame.getPC() + 1);
+      } else {
+        final Code code = frame.getCode();
+        if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
+          return invalidJumpResponse;
+        }
+        frame.setPC(jumpDestination.intValue());
+      }
+
+      return successResponse;
+    } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
     }
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return oogResponse;
-    }
-
-    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
-    final Bytes32 condition = frame.popStackItem();
-
-    // If condition is zero (false), no jump is will be performed. Therefore skip the test.
-    if (condition.isZero()) {
-      frame.setPC(frame.getPC() + 1);
-    } else {
-      final Code code = frame.getCode();
-      if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
-        return invalidJumpResponse;
-      }
-      frame.setPC(jumpDestination.intValue());
-    }
-
-    return successResponse;
   }
 }

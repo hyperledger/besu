@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Arrays;
+
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -24,42 +26,79 @@ import org.apache.tuweni.bytes.Bytes32;
  * <p>The operand stack is responsible for storing the current operands that the EVM can execute. It
  * is assumed to have a fixed size.
  */
-public interface OperandStack {
+public class OperandStack {
 
-  /**
-   * Returns the operand located at the offset from the top of the stack.
-   *
-   * @param offset the position relative to the top of the stack of the operand to return
-   * @return the operand located at the specified offset
-   * @throws IndexOutOfBoundsException if the offset is out of range (offset &lt; 0 || offset &gt;=
-   *     {@link #size()})
-   */
-  Bytes32 get(int offset);
+  private final Bytes32[] entries;
 
-  /**
-   * Removes the operand at the top of the stack.
-   *
-   * @return the operand removed from the top of the stack
-   * @throws IllegalStateException if the stack is empty (e.g. a stack underflow occurs)
-   */
-  Bytes32 pop();
+  private final int maxSize;
+
+  private int top;
+
+  public static class UnderflowException extends RuntimeException {
+    // Don't create a stack trace since these are not "errors" per say but are using exceptions to
+    // throw rare control flow conditions (EVM stack overflow) that are expected to be seen in
+    // normal
+    // operations.
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
+  }
+
+  public static class OverflowException extends RuntimeException {
+    // Don't create a stack trace since these are not "errors" per say but are using exceptions to
+    // throw rare control flow conditions (EVM stack overflow) that are expected to be seen in
+    // normal
+    // operations.
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
+  }
+
+  public OperandStack(final int maxSize) {
+    if (maxSize < 0) {
+      throw new IllegalArgumentException(
+          String.format("max size (%d) must be non-negative", maxSize));
+    }
+    this.entries = new Bytes32[maxSize];
+    this.maxSize = maxSize;
+    this.top = -1;
+  }
+
+  public Bytes32 get(final int offset) {
+    if (offset < 0 || offset >= size()) {
+      throw new UnderflowException();
+    }
+
+    return entries[top - offset];
+  }
+
+  public Bytes32 pop() {
+    if (top < 0) {
+      throw new UnderflowException();
+    }
+
+    final Bytes32 removed = entries[top];
+    entries[top--] = null;
+    return removed;
+  }
 
   /**
    * Pops the specified number of operands from the stack.
    *
    * @param items the number of operands to pop off the stack
    * @throws IllegalArgumentException if the items to pop is negative.
-   * @throws IllegalStateException when the items to pop is greater than {@link #size()}
+   * @throws UnderflowException when the items to pop is greater than {@link #size()}
    */
-  default void bulkPop(final int items) {
+  void bulkPop(final int items) {
     if (items < 0) {
       throw new IllegalArgumentException(
           String.format("requested number of items to bulk pop (%d) is negative", items));
     }
     checkArgument(items > 0, "number of items to pop must be greater than 0");
     if (items > size()) {
-      throw new IllegalStateException(
-          String.format("requested to bulk pop %d items off a stack of size %d", items, size()));
+      throw new UnderflowException();
     }
 
     for (int i = 0; i < items; ++i) {
@@ -67,28 +106,48 @@ public interface OperandStack {
     }
   }
 
-  /**
-   * Pushes the operand onto the stack.
-   *
-   * @param operand the operand to push on the stack
-   * @throws IllegalStateException when the stack is at capacity (e.g. a stack overflow occurs)
-   */
-  public void push(Bytes32 operand);
+  public void push(final Bytes32 operand) {
+    final int nextTop = top + 1;
+    if (nextTop == maxSize) {
+      throw new OverflowException();
+    }
+    entries[nextTop] = operand;
+    top = nextTop;
+  }
 
-  /**
-   * Sets the ith item from the top of the stack to the value.
-   *
-   * @param index the position relative to the top of the stack to set
-   * @param operand the new operand that replaces the operand at the current offset
-   * @throws IndexOutOfBoundsException if the offset is out of range (offset &lt; 0 || offset &gt;=
-   *     {@link #size()})
-   */
-  void set(int index, Bytes32 operand);
+  public void set(final int offset, final Bytes32 operand) {
+    if (offset < 0 || offset >= size()) {
+      throw new IndexOutOfBoundsException();
+    }
 
-  /**
-   * Returns the current number of operands in the stack.
-   *
-   * @return the current number of operands in the stack
-   */
-  int size();
+    entries[top - offset] = operand;
+  }
+
+  public int size() {
+    return top + 1;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < entries.length; ++i) {
+      builder.append(String.format("\n0x%04X ", i)).append(entries[i]);
+    }
+    return builder.toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(entries);
+  }
+
+  @Override
+  public boolean equals(final Object other) {
+    if (!(other instanceof OperandStack)) {
+      return false;
+    }
+
+    final OperandStack that = (OperandStack) other;
+    return Arrays.deepEquals(this.entries, that.entries);
+  }
 }

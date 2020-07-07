@@ -22,8 +22,7 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
@@ -62,8 +61,6 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.empty());
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

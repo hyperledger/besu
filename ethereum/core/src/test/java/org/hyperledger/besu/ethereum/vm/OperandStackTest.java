@@ -16,41 +16,41 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
-public class PreAllocatedOperandStackTest {
+public class OperandStackTest {
 
   @Test
   public void construction() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     assertThat(stack.size()).isEqualTo(0);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void construction_NegativeMaximumSize() {
-    new PreAllocatedOperandStack(-1);
+    new OperandStack(-1);
   }
 
   @Test(expected = OverflowException.class)
   public void push_StackOverflow() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     stack.push(Bytes32.fromHexString("0x01"));
     stack.push(Bytes32.fromHexString("0x02"));
   }
 
   @Test(expected = UnderflowException.class)
   public void pop_StackUnderflow() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     stack.pop();
   }
 
   @Test
   public void pushPop() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     stack.push(Bytes32.fromHexString("0x01"));
     assertThat(stack.size()).isEqualTo(1);
     assertThat(stack.pop()).isEqualTo(Bytes32.fromHexString("0x01"));
@@ -58,20 +58,20 @@ public class PreAllocatedOperandStackTest {
 
   @Test(expected = UnderflowException.class)
   public void get_NegativeOffset() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     stack.get(-1);
   }
 
   @Test(expected = UnderflowException.class)
   public void get_IndexGreaterThanSize() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     stack.push(Bytes32.fromHexString("0x01"));
     stack.get(2);
   }
 
   @Test
   public void get() {
-    final OperandStack stack = new PreAllocatedOperandStack(3);
+    final OperandStack stack = new OperandStack(3);
     stack.push(Bytes32.fromHexString("0x01"));
     stack.push(Bytes32.fromHexString("0x02"));
     stack.push(Bytes32.fromHexString("0x03"));
@@ -83,20 +83,20 @@ public class PreAllocatedOperandStackTest {
 
   @Test(expected = UnderflowException.class)
   public void set_NegativeOffset() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     stack.get(-1);
   }
 
   @Test(expected = UnderflowException.class)
   public void set_IndexGreaterThanSize() {
-    final OperandStack stack = new PreAllocatedOperandStack(1);
+    final OperandStack stack = new OperandStack(1);
     stack.push(Bytes32.fromHexString("0x01"));
     stack.get(2);
   }
 
   @Test
   public void set() {
-    final OperandStack stack = new PreAllocatedOperandStack(3);
+    final OperandStack stack = new OperandStack(3);
     stack.push(Bytes32.fromHexString("0x01"));
     stack.push(Bytes32.fromHexString("0x02"));
     stack.push(Bytes32.fromHexString("0x03"));

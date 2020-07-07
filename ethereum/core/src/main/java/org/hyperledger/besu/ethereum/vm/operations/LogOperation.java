@@ -23,8 +23,7 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 
 import java.util.Optional;
 
@@ -45,8 +44,7 @@ public class LogOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
       if (frame.isStatic()) {
-        return new OperationResult(
-            Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+        return ILLEGAL_STATE_CHANGE;
       }
 
       final UInt256 dataOffset = UInt256.fromBytes(frame.getStackItem(0));
@@ -76,8 +74,6 @@ public class LogOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.empty());
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
     }
   }
 }

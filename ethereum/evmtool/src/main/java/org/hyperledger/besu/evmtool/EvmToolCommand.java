@@ -317,7 +317,9 @@ public class EvmToolCommand implements Runnable {
       results.put("pc", messageFrame.getPC());
       results.put("op", Bytes.of(currentOp.getOpcode()).toHexString());
       results.put("opName", currentOp.getName());
-      // results.put("gasCost", currentOp.cost(messageFrame).asUInt256().toShortHexString());
+      messageFrame
+          .getGasCost()
+          .ifPresent(gasCost -> results.put("gasCost", gasCost.asUInt256().toShortHexString()));
     } else {
       final MessageFrame caller =
           messageFrame.getMessageFrameStack().toArray(new MessageFrame[0])[1];

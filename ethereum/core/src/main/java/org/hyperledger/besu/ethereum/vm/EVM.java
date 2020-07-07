@@ -71,6 +71,7 @@ public class EVM {
         frame,
         () -> {
           final OperationResult result = frame.getCurrentOperation().execute(frame, this);
+          frame.setGasCost(result.getGasCost());
           logState(frame, result.getGasCost().orElse(Gas.ZERO));
           final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
           if (haltReason.isPresent()) {

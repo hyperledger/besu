@@ -18,15 +18,13 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.PreAllocatedOperandStack.UnderflowException;
 
 import java.util.Optional;
 
 public class BeginSubOperation extends AbstractFixedCostOperation {
 
   public static final int OPCODE = 0x5c;
-  public OperationResult invalidEntryResponse;
+  private final OperationResult invalidEntryResponse;
 
   public BeginSubOperation(final GasCalculator gasCalculator) {
     super(OPCODE, "BEGINSUB", 0, 0, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
@@ -38,12 +36,6 @@ public class BeginSubOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      return invalidEntryResponse;
-    } catch (final UnderflowException ue) {
-      return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException oe) {
-      return OVERFLOWFLOW_RESPONSE;
-    }
+    return invalidEntryResponse;
   }
 }
