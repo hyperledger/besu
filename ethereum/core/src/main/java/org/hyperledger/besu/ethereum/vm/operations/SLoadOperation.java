@@ -16,10 +16,13 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
 import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -40,7 +43,6 @@ public class SLoadOperation extends AbstractFixedCostOperation {
       final Bytes32 key = frame.popStackItem();
 
       final Account account = frame.getWorldState().get(frame.getRecipientAddress());
-      assert account != null : "VM account should exist";
 
       frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)).toBytes());
 
