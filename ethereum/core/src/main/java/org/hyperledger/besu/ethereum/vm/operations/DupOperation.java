@@ -43,6 +43,9 @@ public class DupOperation extends AbstractFixedCostOperation {
       if (frame.getRemainingGas().compareTo(gasCost) < 0) {
         return oogResponse;
       }
+      if (frame.stackSize() < getStackItemsConsumed()) {
+        return UNDERFLOW_RESPONSE;
+      }
 
       frame.pushStackItem(frame.getStackItem(index - 1));
 

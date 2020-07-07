@@ -41,11 +41,11 @@ public class SwapOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      if (frame.stackSize() <= index) {
-        return UNDERFLOW_RESPONSE;
-      }
       if (frame.getRemainingGas().compareTo(gasCost) < 0) {
         return oogResponse;
+      }
+      if (frame.stackSize() < getStackItemsConsumed()) {
+        return UNDERFLOW_RESPONSE;
       }
 
       final Bytes32 tmp = frame.getStackItem(0);

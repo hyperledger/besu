@@ -68,7 +68,7 @@ public class OperandStack {
 
   public Bytes32 get(final int offset) {
     if (offset < 0 || offset >= size()) {
-      throw new UnderflowException();
+      throw new IndexOutOfBoundsException();
     }
 
     return entries[top - offset];

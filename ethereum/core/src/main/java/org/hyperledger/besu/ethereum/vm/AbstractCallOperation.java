@@ -156,10 +156,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       if (frame.stackSize() < getStackItemsConsumed()) {
         return UNDERFLOW_RESPONSE;
       }
-      final Optional<ExceptionalHaltReason> haltReason = exceptionalHaltCondition(frame, evm);
-      if (haltReason.isPresent()) {
-        return new OperationResult(Optional.empty(), haltReason);
-      }
+
       final Gas cost = cost(frame);
       final Optional<Gas> optionalCost = Optional.ofNullable(cost);
       if (cost != null) {
@@ -220,7 +217,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         frame.getMessageFrameStack().addFirst(childFrame);
         frame.setState(MessageFrame.State.CODE_SUSPENDED);
       }
-      return new OperationResult(optionalCost, haltReason);
+      return new OperationResult(optionalCost, Optional.empty());
     } catch (final UnderflowException ue) {
       return UNDERFLOW_RESPONSE;
     } catch (final OverflowException oe) {
@@ -229,11 +226,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   }
 
   protected abstract Gas cost(final MessageFrame frame);
-
-  protected Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    return Optional.empty();
-  }
 
   public void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);

@@ -60,6 +60,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       if (frame.isStatic()) {
         return ILLEGAL_STATE_CHANGE;
       }
+      if (frame.stackSize() < getStackItemsConsumed()) {
+        return UNDERFLOW_RESPONSE;
+      }
 
       final Gas cost = cost(frame);
       final Optional<Gas> optionalCost = Optional.ofNullable(cost);
