@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -43,11 +44,11 @@ public class SelfDestructOperation extends AbstractOperation {
 
       final Address recipientAddress = Words.toAddress(frame.popStackItem());
 
-      final MutableAccount recipient =
-          frame.getWorldState().getOrCreate(recipientAddress).getMutable();
+      // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
+      final Account recipientNullable = frame.getWorldState().get(recipientAddress);
       final Wei inheritance = frame.getWorldState().get(frame.getRecipientAddress()).getBalance();
 
-      final Gas cost = gasCalculator().selfDestructOperationGasCost(recipient, inheritance);
+      final Gas cost = gasCalculator().selfDestructOperationGasCost(recipientNullable, inheritance);
       final Optional<Gas> optionalCost = Optional.of(cost);
       if (frame.getRemainingGas().compareTo(cost) < 0) {
         return new OperationResult(
@@ -58,6 +59,9 @@ public class SelfDestructOperation extends AbstractOperation {
       final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 
       frame.addSelfDestruct(address);
+
+      final MutableAccount recipient =
+          frame.getWorldState().getOrCreate(recipientAddress).getMutable();
 
       if (!account.getAddress().equals(recipient.getAddress())) {
         recipient.incrementBalance(account.getBalance());
