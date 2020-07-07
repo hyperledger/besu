@@ -62,6 +62,7 @@ public final class Besu {
           "io.vertx.core.logging.Log4j2LogDelegateFactory");
       System.setProperty(
           "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
+      System.setProperty("log4j.skipJansi", String.valueOf(false));
     } catch (SecurityException e) {
       System.out.println(
           "Could not set logging system property as the security manager prevented it:"
