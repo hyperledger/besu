@@ -39,23 +39,20 @@ public class ExtCodeCopyOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final UInt256 offset = UInt256.fromBytes(frame.getStackItem(1));
-      final UInt256 length = UInt256.fromBytes(frame.getStackItem(3));
+      final Address address = Words.toAddress(frame.popStackItem());
+      final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
-      final Gas cost = gasCalculator().extCodeCopyOperationGasCost(frame, offset, length);
+      final Gas cost = gasCalculator().extCodeCopyOperationGasCost(frame, memOffset, numBytes);
       final Optional<Gas> optionalCost = Optional.of(cost);
       if (frame.getRemainingGas().compareTo(cost) < 0) {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       }
 
-      final Address address = Words.toAddress(frame.popStackItem());
       final Account account = frame.getWorldState().get(address);
       final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
-
-      final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
       frame.writeMemory(memOffset, sourceOffset, numBytes, code);
       return new OperationResult(optionalCost, Optional.empty());

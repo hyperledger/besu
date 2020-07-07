@@ -47,11 +47,11 @@ public class LogOperation extends AbstractOperation {
         return ILLEGAL_STATE_CHANGE;
       }
 
-      final UInt256 dataOffset = UInt256.fromBytes(frame.getStackItem(0));
-      final UInt256 dataLength = UInt256.fromBytes(frame.getStackItem(1));
+      final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
       final Gas cost =
-          gasCalculator().logOperationGasCost(frame, dataOffset, dataLength, numTopics);
+          gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
       final Optional<Gas> optionalCost = Optional.of(cost);
       if (frame.getRemainingGas().compareTo(cost) < 0) {
         return new OperationResult(
@@ -60,8 +60,6 @@ public class LogOperation extends AbstractOperation {
 
       final Address address = frame.getRecipientAddress();
 
-      final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
       final Bytes data = frame.readMemory(dataLocation, numBytes);
 
       final ImmutableList.Builder<LogTopic> builder =

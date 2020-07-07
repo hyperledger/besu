@@ -36,12 +36,12 @@ public class JumpSubOperation extends AbstractFixedCostOperation {
       if (frame.isReturnStackFull()) {
         return OVERFLOWFLOW_RESPONSE;
       }
-      final UInt256 potentialJumpSubDestination = UInt256.fromBytes(frame.getStackItem(0));
-      if (!code.isValidJumpSubDestination(evm, frame, potentialJumpSubDestination)) {
+
+      final UInt256 location = UInt256.fromBytes(frame.popStackItem());
+      if (!code.isValidJumpSubDestination(evm, frame, location)) {
         return INVALID_JUMP_DESTINATION;
       }
 
-      final UInt256 location = UInt256.fromBytes(frame.popStackItem());
       frame.pushReturnStackItem(frame.getPC() + 1);
       frame.setPC(location.intValue() + 1);
 

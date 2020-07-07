@@ -36,17 +36,16 @@ public class MStore8Operation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final UInt256 offset = UInt256.fromBytes(frame.getStackItem(0));
+      final UInt256 location = UInt256.fromBytes(frame.popStackItem());
+      final Bytes32 value = frame.popStackItem();
 
-      final Gas cost = gasCalculator().mStore8OperationGasCost(frame, offset);
+      final Gas cost = gasCalculator().mStore8OperationGasCost(frame, location);
       final Optional<Gas> optionalCost = Optional.of(cost);
       if (frame.getRemainingGas().compareTo(cost) < 0) {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       }
 
-      final UInt256 location = UInt256.fromBytes(frame.popStackItem());
-      final Bytes32 value = frame.popStackItem();
       frame.writeMemory(location, value.get(Bytes32.SIZE - 1), true);
       return new OperationResult(optionalCost, Optional.empty());
     } catch (final UnderflowException ue) {

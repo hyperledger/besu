@@ -36,7 +36,9 @@ public class ExpOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final UInt256 power = UInt256.fromBytes(frame.getStackItem(1));
+      final UInt256 number = UInt256.fromBytes(frame.popStackItem());
+      final UInt256 power = UInt256.fromBytes(frame.popStackItem());
+
       final int numBytes = (power.bitLength() + 7) / 8;
 
       final Gas cost = gasCalculator().expOperationGasCost(numBytes);
@@ -46,10 +48,7 @@ public class ExpOperation extends AbstractOperation {
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       }
 
-      final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-      final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-
-      final UInt256 result = value0.pow(value1);
+      final UInt256 result = number.pow(power);
 
       frame.pushStackItem(result.toBytes());
       return new OperationResult(optionalCost, Optional.empty());
