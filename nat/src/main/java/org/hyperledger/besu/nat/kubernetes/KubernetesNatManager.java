@@ -93,9 +93,11 @@ public class KubernetesNatManager extends AbstractNatManager {
   @VisibleForTesting
   void updateUsingBesuService(final V1Service service) throws RuntimeException {
     try {
-      LOG.info("Found Besu service: {}", service.getMetadata().getName());
       final KubernetesServiceType serviceType =
           KubernetesServiceType.fromName(service.getSpec().getType());
+
+      LOG.info("Found Besu service: {} of type {}", service.getMetadata().getName(), serviceType);
+
       internalAdvertisedHost =
           getIpDetector(serviceType, service)
               .detectAdvertisedIp()
@@ -128,7 +130,6 @@ public class KubernetesNatManager extends AbstractNatManager {
                 }
               });
     } catch (Exception e) {
-      e.printStackTrace();
       throw new RuntimeException(
           "Failed update information using pod metadata : " + e.getMessage(), e);
     }
@@ -150,9 +151,9 @@ public class KubernetesNatManager extends AbstractNatManager {
   }
 
   private IpDetector getIpDetector(
-      final KubernetesServiceType kubernetesServiceType, final V1Service v1Service)
+      final KubernetesServiceType serviceType, final V1Service v1Service)
       throws NatInitializationException {
-    switch (kubernetesServiceType) {
+    switch (serviceType) {
       case CLUSTER_IP:
         return () -> Optional.ofNullable(v1Service.getSpec().getClusterIP());
       case LOAD_BALANCER:
@@ -165,8 +166,8 @@ public class KubernetesNatManager extends AbstractNatManager {
   }
 
   private int getExternalPort(
-      final KubernetesServiceType kubernetesServiceType, final V1ServicePort v1ServicePort) {
-    switch (kubernetesServiceType) {
+      final KubernetesServiceType serviceType, final V1ServicePort v1ServicePort) {
+    switch (serviceType) {
       case LOAD_BALANCER:
       case CLUSTER_IP:
       default:
