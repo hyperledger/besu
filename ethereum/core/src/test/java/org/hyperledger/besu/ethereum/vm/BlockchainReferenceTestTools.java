@@ -60,29 +60,25 @@ public class BlockchainReferenceTestTools {
 
   static {
     if (NETWORKS_TO_RUN.isEmpty()) {
-      params.blacklistAll();
+      params.ignoreAll();
     }
 
     // Known bad test.
-    params.blacklist(
+    params.ignore(
         "RevertPrecompiledTouch(_storage)?_d(0|3)g0v0_(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
 
     // Consumes a huge amount of memory
-    params.blacklist("static_Call1MB1024Calldepth_d1g0v0_\\w+");
+    params.ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+");
 
     // Absurd amount of gas, doesn't run in parallel
-    params.blacklist("randomStatetest94_\\w+");
+    params.ignore("randomStatetest94_\\w+");
 
     // Don't do time consuming tests
-    params.blacklist("CALLBlake2f_MaxRounds.*");
-
-    // Insane amount of ether
-    params.blacklist("sha3_memSizeNoQuadraticCost[0-9][0-9]_Istanbul");
-    params.blacklist("sha3_memSizeQuadraticCost[0-9][0-9]_(|zeroSize|2)_?Istanbul");
+    params.ignore("CALLBlake2f_MaxRounds.*");
 
     // Berlin isn't finalized
     if (!ExperimentalEIPs.berlinEnabled) {
-      params.blacklist(".*[_-]Berlin");
+      params.ignore(".*[_-]Berlin");
     }
   }
 

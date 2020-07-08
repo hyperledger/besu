@@ -14,27 +14,39 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-public class DupOperation extends AbstractOperation {
+public class DupOperation extends AbstractFixedCostOperation {
 
   private final int index;
 
   public DupOperation(final int index, final GasCalculator gasCalculator) {
-    super(0x80 + index - 1, "DUP" + index, index, index + 1, false, 1, gasCalculator);
+    super(
+        0x80 + index - 1,
+        "DUP" + index,
+        index,
+        index + 1,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.getVeryLowTierGasCost());
     this.index = index;
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
+    // getStackItem won't throw under/overflows.  Check explicitly.
+    if (frame.stackSize() < getStackItemsConsumed()) {
+      return UNDERFLOW_RESPONSE;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     frame.pushStackItem(frame.getStackItem(index - 1));
+
+    return successResponse;
   }
 }
