@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -34,7 +35,7 @@ public class EVMTest {
 
   private static final int CONTRACT_ACCOUNT_VERSION = 1;
   @Mock private OperationRegistry operationRegistry;
-  @Mock private GasCalculator gasCalculator;
+  private final GasCalculator gasCalculator = new FrontierGasCalculator();
   private EVM evm;
 
   @Before

@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,60 +46,52 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   @Override
-  public void traceExecution(
-      final MessageFrame frame,
-      final Optional<Gas> currentGasCost,
-      final ExecuteOperation executeOperation)
-      throws ExceptionalHaltException {
+  public void traceExecution(final MessageFrame frame, final ExecuteOperation executeOperation) {
     final Operation currentOperation = frame.getCurrentOperation();
     final int depth = frame.getMessageStackDepth();
     final String opcode = currentOperation.getName();
     final int pc = frame.getPC();
     final Gas gasRemaining = frame.getRemainingGas();
-    final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
     final Bytes inputData = frame.getInputData();
     final Optional<Bytes32[]> stack = captureStack(frame);
     final WorldUpdater worldUpdater = frame.getWorldState();
     final Optional<Bytes32[]> stackPostExecution;
-    try {
-      executeOperation.execute();
-    } finally {
-      final Bytes outputData = frame.getOutputData();
-      final Optional<Bytes[]> memory = captureMemory(frame);
-      stackPostExecution = captureStack(frame);
-      if (lastFrame != null) {
-        lastFrame.setGasRemainingPostExecution(gasRemaining);
-      }
-      final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
-      final Optional<Map<Address, Wei>> maybeRefunds =
-          frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
-      lastFrame =
-          new TraceFrame(
-              pc,
-              Optional.of(opcode),
-              gasRemaining,
-              currentGasCost,
-              frame.getGasRefund(),
-              depth,
-              exceptionalHaltReason,
-              frame.getRecipientAddress(),
-              frame.getApparentValue(),
-              inputData,
-              outputData,
-              stack,
-              memory,
-              storage,
-              worldUpdater,
-              frame.getRevertReason(),
-              maybeRefunds,
-              Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
-              frame.getCurrentOperation().getStackItemsProduced(),
-              stackPostExecution,
-              currentOperation.isVirtualOperation(),
-              frame.getMaybeUpdatedMemory(),
-              frame.getMaybeUpdatedStorage());
-      traceFrames.add(lastFrame);
+    final OperationResult operationResult = executeOperation.execute();
+    final Bytes outputData = frame.getOutputData();
+    final Optional<Bytes[]> memory = captureMemory(frame);
+    stackPostExecution = captureStack(frame);
+    if (lastFrame != null) {
+      lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
+    final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
+    final Optional<Map<Address, Wei>> maybeRefunds =
+        frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
+    lastFrame =
+        new TraceFrame(
+            pc,
+            Optional.of(opcode),
+            gasRemaining,
+            operationResult.getGasCost(),
+            frame.getGasRefund(),
+            depth,
+            operationResult.getHaltReason(),
+            frame.getRecipientAddress(),
+            frame.getApparentValue(),
+            inputData,
+            outputData,
+            stack,
+            memory,
+            storage,
+            worldUpdater,
+            frame.getRevertReason(),
+            maybeRefunds,
+            Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
+            frame.getCurrentOperation().getStackItemsProduced(),
+            stackPostExecution,
+            currentOperation.isVirtualOperation(),
+            frame.getMaybeUpdatedMemory(),
+            frame.getMaybeUpdatedStorage());
+    traceFrames.add(lastFrame);
     frame.reset();
   }
 
