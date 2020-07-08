@@ -45,7 +45,10 @@ v1.6. Older versions of Orion will no longer work with Besu v1.5.
 * Performance Improvements: The addition of native libraries ([\#775](https://github.com/hyperledger/besu/pull/775)) and changes to data structures in the EVM ([\#1089](https://github.com/hyperledger/besu/pull/1089)) have improved Besu sync and EVM execution times. 
 * Tracing API Improvements: The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.  
 * New Plugin API Block Events: `BlockAdded` and `BlockReorg` are now exposed via the Plugin API [\#637](https://github.com/hyperledger/besu/pull/637). 
-- Add CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
+* Add CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
+* Besu now has a strict check on private transactions to ensure the privateFrom in the transaction
+matches the sender Orion key that has distributed the payload. Besu 1.5+ requires Orion 1.6+ to work. 
+[#357](https://github.com/PegaSysEng/orion/issues/357)
 
 ### Bug fixes 
 
