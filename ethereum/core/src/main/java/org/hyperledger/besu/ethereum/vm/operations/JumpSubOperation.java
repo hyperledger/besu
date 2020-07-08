@@ -14,51 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.Optional;
-
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class JumpSubOperation extends AbstractOperation {
+public class JumpSubOperation extends AbstractFixedCostOperation {
 
   public JumpSubOperation(final GasCalculator gasCalculator) {
-    super(0x5e, "JUMPSUB", 1, 0, true, 1, gasCalculator);
+    super(0x5e, "JUMPSUB", 1, 0, true, 1, gasCalculator, gasCalculator.getHighTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getHighTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
-    frame.pushReturnStackItem(frame.getPC() + 1);
-    frame.setPC(location.intValue() + 1);
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final Code code = frame.getCode();
 
     if (frame.isReturnStackFull()) {
-      return Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
-    } else if (frame.stackSize() <= 0) {
-      return Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-    } else {
-      final UInt256 potentialJumpSubDestination = UInt256.fromBytes(frame.getStackItem(0));
-      if (!code.isValidJumpSubDestination(evm, frame, potentialJumpSubDestination)) {
-        return Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-      }
+      return OVERFLOW_RESPONSE;
     }
-    return Optional.empty();
+
+    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
+    if (!code.isValidJumpSubDestination(evm, frame, location)) {
+      return INVALID_JUMP_DESTINATION;
+    }
+
+    frame.pushReturnStackItem(frame.getPC() + 1);
+    frame.setPC(location.intValue() + 1);
+
+    return successResponse;
   }
 }

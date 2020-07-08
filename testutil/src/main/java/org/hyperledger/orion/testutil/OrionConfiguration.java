@@ -24,17 +24,20 @@ public class OrionConfiguration {
   private final Path privateKey;
   private final Path tempDir;
   private final List<String> otherNodes = new ArrayList<>();
+  private final boolean clearKnownNodes;
 
   public OrionConfiguration(
       final Path publicKey,
       final Path privateKey,
       final Path tempDir,
-      final List<String> otherNodes) {
+      final List<String> otherNodes,
+      final boolean clearKnownNodes) {
 
     this.publicKey = publicKey;
     this.privateKey = privateKey;
     this.tempDir = tempDir;
     this.otherNodes.addAll(otherNodes);
+    this.clearKnownNodes = clearKnownNodes;
   }
 
   public Path getPublicKey() {
@@ -55,5 +58,9 @@ public class OrionConfiguration {
 
   public void addOtherNode(final String otherNode) {
     otherNodes.add(otherNode);
+  }
+
+  public boolean isClearKnownNodes() {
+    return clearKnownNodes;
   }
 }

@@ -15,10 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 import org.hyperledger.besu.ethereum.vm.operations.SStoreOperation;
-
-import java.util.Optional;
 
 public class EstimateGasOperationTracer implements OperationTracer {
 
@@ -28,10 +25,7 @@ public class EstimateGasOperationTracer implements OperationTracer {
 
   @Override
   public void traceExecution(
-      final MessageFrame frame,
-      final Optional<Gas> currentGasCost,
-      final OperationTracer.ExecuteOperation executeOperation)
-      throws ExceptionalHaltException {
+      final MessageFrame frame, final OperationTracer.ExecuteOperation executeOperation) {
     try {
       executeOperation.execute();
     } finally {

@@ -27,9 +27,7 @@ public class PendingTransactionsResult implements TransactionResult {
 
   public PendingTransactionsResult(final Set<TransactionInfo> transactionInfoSet) {
     transactionInfoResults =
-        transactionInfoSet.stream()
-            .map(t -> new TransactionInfoResult(t))
-            .collect(Collectors.toSet());
+        transactionInfoSet.stream().map(TransactionInfoResult::new).collect(Collectors.toSet());
   }
 
   @JsonValue
