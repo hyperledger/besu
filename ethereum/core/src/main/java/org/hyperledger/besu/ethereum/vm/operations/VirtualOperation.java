@@ -15,7 +15,7 @@
 
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Operation;
 
@@ -28,13 +28,8 @@ public class VirtualOperation implements Operation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return delegate.cost(frame);
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    delegate.execute(frame);
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    return delegate.execute(frame, evm);
   }
 
   @Override

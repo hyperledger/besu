@@ -11,31 +11,45 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
+
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
-import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.util.Optional;
 
-public class InvalidOperation extends AbstractOperation {
+abstract class AbstractFixedCostOperation extends AbstractOperation {
 
-  protected final OperationResult invalidOperation;
+  protected final OperationResult successResponse;
+  protected final OperationResult outOfGasResponse;
+  protected final Gas gasCost;
 
-  public InvalidOperation(final GasCalculator gasCalculator) {
-    super(0xFE, "INVALID", -1, -1, false, 1, gasCalculator);
-    invalidOperation =
+  protected AbstractFixedCostOperation(
+      final int opcode,
+      final String name,
+      final int stackItemsConsumed,
+      final int stackItemsProduced,
+      final boolean updatesProgramCounter,
+      final int opSize,
+      final GasCalculator gasCalculator,
+      final Gas fixedCost) {
+    super(
+        opcode,
+        name,
+        stackItemsConsumed,
+        stackItemsProduced,
+        updatesProgramCounter,
+        opSize,
+        gasCalculator);
+    gasCost = fixedCost;
+    successResponse = new OperationResult(Optional.of(gasCost), Optional.empty());
+    outOfGasResponse =
         new OperationResult(
-            Optional.of(Gas.ZERO), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
-  }
-
-  @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    return invalidOperation;
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
   }
 }

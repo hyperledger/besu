@@ -20,34 +20,38 @@ import java.util.Optional;
 
 public interface Operation {
 
-  /**
-   * Gas cost of this operation, in context of the provided frame.
-   *
-   * @param frame The frame for execution of this operation.
-   * @return The gas cost associated with executing this operation given the current {@link
-   *     MessageFrame}.
-   */
-  Gas cost(MessageFrame frame);
+  class OperationResult {
+    final Optional<Gas> gasCost;
+    final Optional<ExceptionalHaltReason> haltReason;
+
+    public OperationResult(
+        final Optional<Gas> gasCost, final Optional<ExceptionalHaltReason> haltReason) {
+      this.gasCost = gasCost;
+      this.haltReason = haltReason;
+    }
+
+    public Optional<Gas> getGasCost() {
+      return gasCost;
+    }
+
+    public Optional<ExceptionalHaltReason> getHaltReason() {
+      return haltReason;
+    }
+  }
 
   /**
    * Executes the logic behind this operation.
    *
-   * @param frame The frame for execution of this operation.
-   */
-  void execute(MessageFrame frame);
-
-  /**
-   * Check if an exceptional halt condition should apply
+   * <p>Implementors are responsible for calculating gas cost, checking Out-of-gas conditions,
+   * applying gas cost to the MessageFrame, executing the operation including all side effects, and
+   * checking for all operation related exceptional halts such as OutOfGas, InvalidJumpDestination,
+   * Stack overflow/underflow, etc., and storing the halt in the MessageFrame
    *
-   * @param frame the current frame
-   * @param evm the currently executing EVM
-   * @return an {@link Optional} containing the {@link ExceptionalHaltReason} that applies or empty
-   *     if no exceptional halt condition applies.
+   * @param frame The frame for execution of this operation.
+   * @param evm The EVM for execution of this operation.
+   * @return the gas cost and any exeptional halt reasons of the operation.
    */
-  default Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    return Optional.empty();
-  }
+  OperationResult execute(final MessageFrame frame, final EVM evm);
 
   int getOpcode();
 
@@ -56,10 +60,6 @@ public interface Operation {
   int getStackItemsConsumed();
 
   int getStackItemsProduced();
-
-  default int getStackSizeChange() {
-    return getStackItemsProduced() - getStackItemsConsumed();
-  }
 
   boolean getUpdatesProgramCounter();
 
