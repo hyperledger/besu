@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -144,7 +143,7 @@ public class PrivacyPrecompiledContractTest {
     final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
 
     final ReceiveResponse response =
-            new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
+        new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
     final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
@@ -181,12 +180,12 @@ public class PrivacyPrecompiledContractTest {
     final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
 
     final ReceiveResponse responseWithoutSenderKey =
-            new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, null);
+        new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, null);
     when(enclave.receive(eq(txEnclaveKey.toBase64String()))).thenReturn(responseWithoutSenderKey);
 
     assertThatThrownBy(() -> contract.compute(txEnclaveKey, messageFrame))
-            .isInstanceOf(EnclaveConfigurationException.class)
-            .hasMessage("Incompatible Orion version. Orion version must be 1.6.0 or greater.");
+        .isInstanceOf(EnclaveConfigurationException.class)
+        .hasMessage("Incompatible Orion version. Orion version must be 1.6.0 or greater.");
   }
 
   @Test
@@ -231,9 +230,6 @@ public class PrivacyPrecompiledContractTest {
 
   private PrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
     return new PrivacyPrecompiledContract(
-        new SpuriousDragonGasCalculator(),
-        enclave,
-        worldStateArchive,
-        privateStateRootResolver);
+        new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateRootResolver);
   }
 }

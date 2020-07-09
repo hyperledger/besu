@@ -84,7 +84,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater) {
 
     if (privateMetadataUpdater != null) {
-      throw new RuntimeException(); // TODO: what to throw?
+      throw new IllegalArgumentException("PrivateMetadataUpdater passed in is not null.");
     }
 
     maybeRehydrate(blockchain, blockHeader, transactions);
