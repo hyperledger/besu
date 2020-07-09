@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -207,7 +208,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams) {
+      final TransactionValidationParams transactionValidationParams,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
     LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
@@ -288,6 +290,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .isPersistingPrivateState(isPersistingPrivateState)
               .maxStackSize(maxStackSize)
               .transactionHash(transaction.getHash())
+              .privateMetadataUpdater(privateMetadataUpdater)
               .build();
 
     } else {
@@ -321,6 +324,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .maxStackSize(maxStackSize)
               .isPersistingPrivateState(isPersistingPrivateState)
               .transactionHash(transaction.getHash())
+              .privateMetadataUpdater(privateMetadataUpdater)
               .build();
     }
 

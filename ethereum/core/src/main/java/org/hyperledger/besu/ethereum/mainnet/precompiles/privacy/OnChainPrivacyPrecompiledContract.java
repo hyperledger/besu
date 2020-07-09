@@ -21,7 +21,6 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -36,6 +35,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -64,7 +64,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         gasCalculator,
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
-        privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateStateRootResolver(),
         "OnChainPrivacy");
   }
@@ -107,10 +106,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
-    final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
 
+    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
     final Hash lastRootHash =
-        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, currentBlockHash);
+        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -149,14 +148,12 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     }
 
     if (messageFrame.isPersistingPrivateState()) {
-      persistPrivateState(
-          pmtHash,
-          currentBlockHash,
-          privateTransaction,
-          privacyGroupId,
-          disposablePrivateState,
-          privateWorldStateUpdater,
-          result);
+
+      privateWorldStateUpdater.commit();
+      disposablePrivateState.persist();
+
+      storePrivateMetadata(
+          pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
     return result.getOutput();

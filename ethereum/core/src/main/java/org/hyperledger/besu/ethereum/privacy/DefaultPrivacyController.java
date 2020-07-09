@@ -266,7 +266,7 @@ public class DefaultPrivacyController implements PrivacyController {
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         privateStateStorage
             .getPrivacyGroupHeadBlockMap(blockchain.getChainHeadHash())
-            .orElse(PrivacyGroupHeadBlockMap.EMPTY);
+            .orElse(PrivacyGroupHeadBlockMap.empty());
     privacyGroupHeadBlockMap
         .keySet()
         .forEach(
@@ -346,7 +346,7 @@ public class DefaultPrivacyController implements PrivacyController {
     PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         privateStateStorage
             .getPrivacyGroupHeadBlockMap(blockchain.getChainHeadHash())
-            .orElse(PrivacyGroupHeadBlockMap.EMPTY);
+            .orElse(PrivacyGroupHeadBlockMap.empty());
     if (privacyGroupHeadBlockMap.get(privacyGroupId) != null) {
       Hash blockHash = privacyGroupHeadBlockMap.get(privacyGroupId);
       while (blockHash != null) {
@@ -360,7 +360,7 @@ public class DefaultPrivacyController implements PrivacyController {
         privacyGroupHeadBlockMap =
             privateStateStorage
                 .getPrivacyGroupHeadBlockMap(blockHash)
-                .orElse(PrivacyGroupHeadBlockMap.EMPTY);
+                .orElse(PrivacyGroupHeadBlockMap.empty());
         if (privacyGroupHeadBlockMap.get(privacyGroupId) != null) {
           blockHash = privacyGroupHeadBlockMap.get(privacyGroupId);
         } else {
