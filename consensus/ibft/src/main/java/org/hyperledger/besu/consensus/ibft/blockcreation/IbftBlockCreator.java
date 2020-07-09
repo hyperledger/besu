@@ -41,7 +41,8 @@ public class IbftBlockCreator extends AbstractBlockCreator {
       final Function<Long, Long> gasLimitCalculator,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final Address miningBeneficiary) {
     super(
         localAddress,
         extraDataCalculator,
@@ -50,7 +51,7 @@ public class IbftBlockCreator extends AbstractBlockCreator {
         protocolSchedule,
         gasLimitCalculator,
         minTransactionGasPrice,
-        localAddress,
+        miningBeneficiary,
         minBlockOccupancyRatio,
         parentHeader);
   }

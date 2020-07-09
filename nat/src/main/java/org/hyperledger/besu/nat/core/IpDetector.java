@@ -12,24 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.ehalt;
 
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+package org.hyperledger.besu.nat.core;
 
-/** An exception to signal that an exceptional halt has occurred. */
-public class ExceptionalHaltException extends Exception {
-  private final ExceptionalHaltReason reason;
+import java.util.Optional;
 
-  public ExceptionalHaltException(final ExceptionalHaltReason reason) {
-    this.reason = reason;
-  }
+public interface IpDetector {
 
-  @Override
-  public String getMessage() {
-    return "Exceptional halt condition(s) triggered: " + this.reason;
-  }
-
-  public ExceptionalHaltReason getReasons() {
-    return reason;
-  }
+  Optional<String> detectAdvertisedIp() throws Exception;
 }

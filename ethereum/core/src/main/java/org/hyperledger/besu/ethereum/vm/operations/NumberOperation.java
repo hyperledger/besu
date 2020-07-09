@@ -14,27 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class NumberOperation extends AbstractOperation {
+public class NumberOperation extends AbstractFixedCostOperation {
 
   public NumberOperation(final GasCalculator gasCalculator) {
-    super(0x43, "NUMBER", 0, 1, false, 1, gasCalculator);
+    super(0x43, "NUMBER", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final long number = frame.getBlockHeader().getNumber();
     frame.pushStackItem(UInt256.valueOf(number).toBytes());
+
+    return successResponse;
   }
 }

@@ -94,6 +94,12 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         VersionedPrivateTransaction.readFrom(bytesValueRLPInput);
     final PrivateTransaction privateTransaction =
         versionedPrivateTransaction.getPrivateTransaction();
+
+    if (!privateFromMatchesSenderKey(
+        privateTransaction.getPrivateFrom(), receiveResponse.getSenderKey())) {
+      return Bytes.EMPTY;
+    }
+
     final Bytes32 version = versionedPrivateTransaction.getVersion();
 
     final Optional<Bytes> maybeGroupId = privateTransaction.getPrivacyGroupId();

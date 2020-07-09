@@ -35,24 +35,30 @@ public class SelfDestructOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final Address recipientAddress = Words.toAddress(frame.getStackItem(0));
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.isStatic()) {
+      return ILLEGAL_STATE_CHANGE;
+    }
 
-    final Account recipient = frame.getWorldState().get(recipientAddress);
+    final Address recipientAddress = Words.toAddress(frame.popStackItem());
+
+    // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
+    final Account recipientNullable = frame.getWorldState().get(recipientAddress);
     final Wei inheritance = frame.getWorldState().get(frame.getRecipientAddress()).getBalance();
 
-    return gasCalculator().selfDestructOperationGasCost(recipient, inheritance);
-  }
+    final Gas cost = gasCalculator().selfDestructOperationGasCost(recipientNullable, inheritance);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 
     frame.addSelfDestruct(address);
 
     final MutableAccount recipient =
-        frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem())).getMutable();
+        frame.getWorldState().getOrCreate(recipientAddress).getMutable();
 
     if (!account.getAddress().equals(recipient.getAddress())) {
       recipient.incrementBalance(account.getBalance());
@@ -64,13 +70,6 @@ public class SelfDestructOperation extends AbstractOperation {
     account.setBalance(Wei.ZERO);
 
     frame.setState(MessageFrame.State.CODE_SUCCESS);
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    return frame.isStatic()
-        ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
-        : Optional.empty();
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

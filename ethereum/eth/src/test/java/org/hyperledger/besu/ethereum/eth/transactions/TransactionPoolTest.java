@@ -148,7 +148,8 @@ public class TransactionPoolTest {
             Optional.of(peerPendingTransactionTracker),
             Wei.of(2),
             metricsSystem,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT);
     blockchain.observeBlockAdded(transactionPool);
   }
 
@@ -404,7 +405,8 @@ public class TransactionPoolTest {
             Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT);
 
     when(pendingTransactions.containsTransaction(transaction1.getHash())).thenReturn(true);
 
@@ -541,7 +543,8 @@ public class TransactionPoolTest {
             Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
@@ -610,7 +613,8 @@ public class TransactionPoolTest {
             Optional.of(peerPendingTransactionTracker),
             Wei.ZERO,
             metricsSystem,
-            Optional.empty());
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
@@ -648,6 +652,75 @@ public class TransactionPoolTest {
 
     assertThat(txValidationParamCaptor.getValue())
         .isEqualToComparingFieldByField(expectedValidationParams);
+  }
+
+  @Test
+  public void shouldIgnoreFeeCapIfSetZero() {
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthContext ethContext = ethProtocolManager.ethContext();
+    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
+    final Wei twoEthers = Wei.fromEth(2);
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            Optional.of(pendingBatchAddedListener),
+            syncState,
+            ethContext,
+            peerTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
+            Wei.ZERO,
+            metricsSystem,
+            Optional.empty(),
+            TransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
+    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            any(Transaction.class),
+            nullable(Account.class),
+            any(TransactionValidationParams.class)))
+        .thenReturn(valid());
+    assertThat(
+            transactionPool
+                .addLocalTransaction(
+                    new TransactionTestFixture()
+                        .nonce(1)
+                        .gasPrice(twoEthers.add(Wei.of(1)))
+                        .createTransaction(KEY_PAIR1))
+                .isValid())
+        .isTrue();
+  }
+
+  @Test
+  public void shouldRejectLocalTransactionIfFeeCapExceeded() {
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthContext ethContext = ethProtocolManager.ethContext();
+    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
+    final Wei twoEthers = Wei.fromEth(2);
+    TransactionPool transactionPool =
+        new TransactionPool(
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            Optional.of(pendingBatchAddedListener),
+            syncState,
+            ethContext,
+            peerTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
+            Wei.ZERO,
+            metricsSystem,
+            Optional.empty(),
+            TransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
+
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final Transaction transactionLocal =
+        builder.nonce(1).gasPrice(twoEthers.add(Wei.of(1))).createTransaction(KEY_PAIR1);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transactionLocal);
+    assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
   }
 
   private void assertTransactionPending(final Transaction t) {

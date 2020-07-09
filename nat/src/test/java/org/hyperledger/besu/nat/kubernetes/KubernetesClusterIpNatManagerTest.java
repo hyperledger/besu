@@ -15,7 +15,7 @@
 package org.hyperledger.besu.nat.kubernetes;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
@@ -29,13 +29,10 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import io.kubernetes.client.custom.IntOrString;
-import io.kubernetes.client.models.V1LoadBalancerIngressBuilder;
-import io.kubernetes.client.models.V1LoadBalancerStatusBuilder;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1Service;
 import io.kubernetes.client.models.V1ServicePort;
 import io.kubernetes.client.models.V1ServiceSpec;
-import io.kubernetes.client.models.V1ServiceStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +40,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public final class KubernetesNatManagerTest {
+public final class KubernetesClusterIpNatManagerTest {
 
   private final String detectedAdvertisedHost = "199.45.69.12";
 
@@ -56,17 +53,12 @@ public final class KubernetesNatManagerTest {
 
   @Before
   public void initialize() throws IOException {
-    final V1ServiceStatus v1ServiceStatus =
-        new V1ServiceStatus()
-            .loadBalancer(
-                new V1LoadBalancerStatusBuilder()
-                    .addToIngress(
-                        new V1LoadBalancerIngressBuilder().withIp(detectedAdvertisedHost).build())
-                    .build());
-    when(v1Service.getStatus()).thenReturn(v1ServiceStatus);
+
     when(v1Service.getSpec())
         .thenReturn(
             new V1ServiceSpec()
+                .type("ClusterIP")
+                .clusterIP(detectedAdvertisedHost)
                 .ports(
                     Arrays.asList(
                         new V1ServicePort()
@@ -81,8 +73,9 @@ public final class KubernetesNatManagerTest {
                             .name(NatServiceType.DISCOVERY.getValue())
                             .port(p2pPort)
                             .targetPort(new IntOrString(p2pPort)))));
-    when(v1Service.getMetadata()).thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_POD_NAME_FILTER));
-    natManager = new KubernetesNatManager(DEFAULT_BESU_POD_NAME_FILTER);
+    when(v1Service.getMetadata())
+        .thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_SERVICE_NAME_FILTER));
+    natManager = new KubernetesNatManager(DEFAULT_BESU_SERVICE_NAME_FILTER);
     try {
       natManager.start();
     } catch (Exception ignored) {

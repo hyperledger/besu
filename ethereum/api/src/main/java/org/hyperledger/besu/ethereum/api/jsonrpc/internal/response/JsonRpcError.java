@@ -59,6 +59,7 @@ public enum JsonRpcError {
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
+  TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),
@@ -169,7 +170,12 @@ public enum JsonRpcError {
   METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented"),
 
   /** Plugins error */
-  PLUGIN_NOT_FOUND(-60000, "Plugin not found");
+  PLUGIN_NOT_FOUND(-60000, "Plugin not found"),
+
+  // Retesteth Errors
+
+  BLOCK_RLP_IMPORT_ERROR(-32000, "Could not decode RLP for Block"),
+  BLOCK_IMPORT_ERROR(-32000, "Could not import Block");
 
   private final int code;
   private final String message;

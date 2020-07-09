@@ -121,6 +121,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final PrivateTransaction privateTransaction =
         PrivateTransaction.readFrom(bytesValueRLPInput.readAsRlp());
 
+    if (!privateFromMatchesSenderKey(
+        privateTransaction.getPrivateFrom(), receiveResponse.getSenderKey())) {
+      return Bytes.EMPTY;
+    }
+
     final Bytes32 privacyGroupId =
         Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
 

@@ -30,8 +30,6 @@ public interface FeeMarket {
 
   long getInitialBasefee();
 
-  long getPerTxGaslimit();
-
   long getSlackCoefficient();
 
   static FeeMarket eip1559() {
@@ -40,7 +38,6 @@ public interface FeeMarket {
         ExperimentalEIPs.targetGasUsed,
         ExperimentalEIPs.slackCoefficient,
         ExperimentalEIPs.decayRange,
-        ExperimentalEIPs.initialBasefee,
-        ExperimentalEIPs.perTxGasLimit);
+        ExperimentalEIPs.initialBasefee);
   }
 }

@@ -112,7 +112,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
           if (!future.isSuccess() || socketAddress == null) {
             final String message =
                 String.format(
-                    "Unable start listening on %s:%s. Check for port conflicts.",
+                    "Unable to start listening on %s:%s. Check for port conflicts.",
                     config.getBindHost(), config.getBindPort());
             listeningPortFuture.completeExceptionally(
                 new IllegalStateException(message, future.cause()));
