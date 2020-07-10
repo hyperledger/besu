@@ -4,6 +4,7 @@ targets="
 OnChainPrivacyGroupManagementInterface
 DefaultOnChainPrivacyGroupManagementContract
 OnChainPrivacyGroupManagementProxy
+OwnerOnChainPrivacyGroupManagementContract
 "
 
 for target in ${targets}; do

@@ -6,13 +6,15 @@ interface OnChainPrivacyGroupManagementInterface {
 
     function removeParticipant(bytes32 enclaveKey, bytes32 account) external returns (bool);
 
-    function getParticipants(bytes32 enclaveKey) external view returns (bytes32[] memory);
+    function getParticipants() external view returns (bytes32[] memory);
 
-    function lock() external;
+    function lock(bytes32 enclaveKey) external;
 
-    function unlock() external;
+    function unlock(bytes32 enclaveKey) external;
 
     function canExecute() external view returns (bool);
 
     function getVersion() external view returns (bytes32);
+
+    function canUpgrade(bytes32 enclaveKey) external view returns (bool);
 }

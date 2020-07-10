@@ -10,11 +10,6 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         implementation = _implementation;
     }
 
-    function upgradeTo(address _newImplementation) external {
-        require(implementation != _newImplementation);
-        _setImplementation(_newImplementation);
-    }
-
     function _setImplementation(address _newImp) internal {
         implementation = _newImp;
     }
@@ -34,12 +29,12 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         return privacyInterface.removeParticipant(enclaveKey, account);
     }
 
-    function lock() public {
+    function lock(bytes32 enclaveKey) public {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.lock();
     }
 
-    function unlock() public {
+    function unlock(bytes32 enclaveKey) public {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.unlock();
     }
@@ -52,5 +47,19 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
     function getVersion() public view returns (bytes32) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.getVersion();
+    }
+
+    function canUpgrade(bytes32 _enclaveKey) external view returns (bool) {
+        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        return privacyInterface.canUpgrade(_enclaveKey);
+    }
+
+    function upgradeTo(bytes32 _enclaveKey, address _newImplementation) external {
+        require(implementation != _newImplementation);
+        require(this.canUpgrade(_enclaveKey));
+        bytes32[] memory participants = this.getParticipants(_enclaveKey);
+        _setImplementation(_newImplementation);
+        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        privacyInterface.addParticipants(_enclaveKey, participants);
     }
 }

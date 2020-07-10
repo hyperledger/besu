@@ -17,11 +17,13 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
         return _canExecute;
     }
 
+    // TODO: should take the enclave key as first argument
     function lock() public {
         require(_canExecute);
         _canExecute = false;
     }
 
+    // TODO: should take the enclave key as first argument
     function unlock() public {
         require(!_canExecute);
         _canExecute = true;
@@ -43,12 +45,18 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
         require(isMember(_enclaveKey));
         bool result = removeInternal(_account);
         updateVersion();
+        emit ParticipantRemoved(result, _account);
         return result;
     }
 
     function getParticipants(bytes32 _enclaveKey) public view returns (bytes32[] memory) {
         require(isMember(_enclaveKey));
         return distributionList;
+    }
+
+    function canUpgrade(bytes32 _enclaveKey) external view returns (bool) {
+        require(isMember(_enclaveKey));
+        return true;
     }
 
 
@@ -105,8 +113,13 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
     }
 
     event ParticipantAdded(
-        bool adminAdded,
+        bool success,
         bytes32 account,
         string message
+    );
+
+    event ParticipantRemoved(
+        bool success,
+        bytes32 account
     );
 }
