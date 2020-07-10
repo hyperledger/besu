@@ -115,6 +115,8 @@ public class KubernetesNatManager extends AbstractNatManager {
                 try {
                   final NatServiceType natServiceType =
                       NatServiceType.fromString(v1ServicePort.getName());
+
+                  LOG.debug("PORT "+natServiceType+" "+internalHost+" "+internalAdvertisedHost+" "+getExternalPort(serviceType, v1ServicePort)+ " "+v1ServicePort.getPort() );
                   forwardedPorts.add(
                       new NatPortMapping(
                           natServiceType,
@@ -124,12 +126,13 @@ public class KubernetesNatManager extends AbstractNatManager {
                           internalHost,
                           internalAdvertisedHost,
                           getExternalPort(serviceType, v1ServicePort),
-                          v1ServicePort.getTargetPort().getIntValue()));
+                          v1ServicePort.getPort()));
                 } catch (IllegalStateException e) {
                   LOG.debug("Ignored unknown Besu port: {}", e.getMessage());
                 }
               });
     } catch (Exception e) {
+      e.printStackTrace();
       throw new RuntimeException(
           "Failed update information using pod metadata : " + e.getMessage(), e);
     }
@@ -155,9 +158,9 @@ public class KubernetesNatManager extends AbstractNatManager {
       throws NatInitializationException {
     switch (serviceType) {
       case CLUSTER_IP:
+      case NODE_PORT:
         return () -> Optional.ofNullable(v1Service.getSpec().getClusterIP());
       case LOAD_BALANCER:
-      case NODE_PORT:
         return new LoadBalancerBasedDetector(v1Service);
       default:
         throw new NatInitializationException(
