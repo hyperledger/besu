@@ -1,0 +1,21 @@
+{
+  "request": "{block(number :\"0x8\") {number call (data : {from : \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\", to: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", data :\"12a7b914\"}){data status}}}"
+  ,
+  "response": {
+    "errors": [
+      {
+        "message": "Validation error of type WrongType: argument 'data.data' with value 'StringValue{value='12a7b914'}' is not a valid 'Bytes' - Bytes value '12a7b914' is not prefixed with 0x @ 'block/call'",
+        "locations": [
+          {
+            "line": 1,
+            "column": 37
+          }
+        ],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ]
+  },
+  "statusCode": 400
+}

@@ -272,7 +272,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
   private void receiveEnclaveStub(final PrivateTransaction privTx) throws JsonProcessingException {
     final BytesValueRLPOutput rlpOutput = getRLPOutputForReceiveResponse(privTx);
-    final String senderKey = "QTFhVnRNeExDVUhtQlZIWG9aenpCZ1BiVy93ajVheERwVzlYOGw5MVNHbz0=";
+    final String senderKey = privTx.getPrivateFrom().toBase64String();
     final String receiveResponse =
         mapper.writeValueAsString(
             new ReceiveResponse(

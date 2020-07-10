@@ -173,6 +173,8 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       } else {
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        operationTracer.traceAccountCreationResult(
+            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       }
     }
   }

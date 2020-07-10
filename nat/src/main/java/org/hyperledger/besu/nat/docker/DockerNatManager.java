@@ -17,12 +17,13 @@ package org.hyperledger.besu.nat.docker;
 
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.AbstractNatManager;
+import org.hyperledger.besu.nat.core.IpDetector;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -42,11 +43,11 @@ public class DockerNatManager extends AbstractNatManager {
 
   private final IpDetector ipDetector;
 
-  private final String internalAdvertisedHost;
   private final int internalP2pPort;
   private final int internalRpcHttpPort;
 
-  private final List<NatPortMapping> forwardedPorts;
+  private String internalAdvertisedHost;
+  private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
 
   public DockerNatManager(final String advertisedHost, final int p2pPort, final int rpcHttpPort) {
     this(new HostBasedIpDetector(), advertisedHost, p2pPort, rpcHttpPort);
@@ -62,45 +63,17 @@ public class DockerNatManager extends AbstractNatManager {
     this.internalAdvertisedHost = advertisedHost;
     this.internalP2pPort = p2pPort;
     this.internalRpcHttpPort = rpcHttpPort;
-    this.forwardedPorts = buildForwardedPorts();
-  }
-
-  private List<NatPortMapping> buildForwardedPorts() {
-    try {
-      final String internalHost = queryLocalIPAddress().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      final String advertisedHost =
-          retrieveExternalIPAddress().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      return Arrays.asList(
-          new NatPortMapping(
-              NatServiceType.DISCOVERY,
-              NetworkProtocol.UDP,
-              internalHost,
-              advertisedHost,
-              internalP2pPort,
-              getExternalPort(internalP2pPort)),
-          new NatPortMapping(
-              NatServiceType.RLPX,
-              NetworkProtocol.TCP,
-              internalHost,
-              advertisedHost,
-              internalP2pPort,
-              getExternalPort(internalP2pPort)),
-          new NatPortMapping(
-              NatServiceType.JSON_RPC,
-              NetworkProtocol.TCP,
-              internalHost,
-              advertisedHost,
-              internalRpcHttpPort,
-              getExternalPort(internalRpcHttpPort)));
-    } catch (Exception e) {
-      LOG.warn("Failed to create forwarded port list", e);
-    }
-    return Collections.emptyList();
   }
 
   @Override
-  protected void doStart() {
+  protected void doStart() throws NatInitializationException {
     LOG.info("Starting docker NAT manager.");
+    try {
+      ipDetector.detectAdvertisedIp().ifPresent(ipFound -> internalAdvertisedHost = ipFound);
+      buildForwardedPorts();
+    } catch (Exception e) {
+      throw new NatInitializationException("Unable to retrieve IP from docker");
+    }
   }
 
   @Override
@@ -110,10 +83,7 @@ public class DockerNatManager extends AbstractNatManager {
 
   @Override
   protected CompletableFuture<String> retrieveExternalIPAddress() {
-    return ipDetector
-        .detectExternalIp()
-        .map(CompletableFuture::completedFuture)
-        .orElse(CompletableFuture.completedFuture(internalAdvertisedHost));
+    return CompletableFuture.completedFuture(internalAdvertisedHost);
   }
 
   @Override
@@ -125,5 +95,39 @@ public class DockerNatManager extends AbstractNatManager {
     return Optional.ofNullable(System.getenv(PORT_MAPPING_TAG + defaultValue))
         .map(Integer::valueOf)
         .orElse(defaultValue);
+  }
+
+  private void buildForwardedPorts() {
+    try {
+      final String internalHost = queryLocalIPAddress().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      final String advertisedHost =
+          retrieveExternalIPAddress().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      forwardedPorts.add(
+          new NatPortMapping(
+              NatServiceType.DISCOVERY,
+              NetworkProtocol.UDP,
+              internalHost,
+              advertisedHost,
+              internalP2pPort,
+              getExternalPort(internalP2pPort)));
+      forwardedPorts.add(
+          new NatPortMapping(
+              NatServiceType.RLPX,
+              NetworkProtocol.TCP,
+              internalHost,
+              advertisedHost,
+              internalP2pPort,
+              getExternalPort(internalP2pPort)));
+      forwardedPorts.add(
+          new NatPortMapping(
+              NatServiceType.JSON_RPC,
+              NetworkProtocol.TCP,
+              internalHost,
+              advertisedHost,
+              internalRpcHttpPort,
+              getExternalPort(internalRpcHttpPort)));
+    } catch (Exception e) {
+      LOG.warn("Failed to create forwarded port list", e);
+    }
   }
 }

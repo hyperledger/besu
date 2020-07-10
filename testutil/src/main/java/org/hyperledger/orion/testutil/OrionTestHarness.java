@@ -56,7 +56,7 @@ public class OrionTestHarness {
   public void start() {
     if (!isRunning) {
       config = buildConfig();
-      orion.run(System.out, System.err, config);
+      orion.run(config, orionConfiguration.isClearKnownNodes());
       isRunning = true;
       LOG.info("Orion node port: {}", orion.nodePort());
       LOG.info("Orion client port: {}", orion.clientPort());

@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
@@ -25,27 +24,26 @@ import java.util.Arrays;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class SModOperation extends AbstractOperation {
+public class SModOperation extends AbstractFixedCostOperation {
 
   public SModOperation(final GasCalculator gasCalculator) {
-    super(0x07, "SMOD", 2, 1, false, 1, gasCalculator);
+    super(0x07, "SMOD", 2, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getLowTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final Bytes32 value0 = frame.popStackItem();
     final Bytes32 value1 = frame.popStackItem();
 
     if (value1.isZero()) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
-      BigInteger b1 = value0.toBigInteger();
-      BigInteger b2 = value1.toBigInteger();
+      final BigInteger b1 = value0.toBigInteger();
+      final BigInteger b2 = value1.toBigInteger();
       BigInteger result = b1.abs().mod(b2.abs());
       if (b1.signum() < 0) {
         result = result.negate();
@@ -56,10 +54,12 @@ public class SModOperation extends AbstractOperation {
         resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
       }
 
-      byte[] padding = new byte[32 - resultBytes.size()];
+      final byte[] padding = new byte[32 - resultBytes.size()];
       Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
 
       frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
     }
+
+    return successResponse;
   }
 }
