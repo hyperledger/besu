@@ -28,7 +28,7 @@ dependencies { testOutput sourceSets.test.output }
 task ('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentially changed"
   doLast {
-    def expectedHash = 'b8abaebf5949877ead03e8f74ac03c0ede41d5f7'// Bogus value to force CI failure
+    def expectedHash = 'b8abaebf5949877ead03e8f74ac03c0ede41d5f7'
     def result = new ByteArrayOutputStream()
     try {
       exec {
