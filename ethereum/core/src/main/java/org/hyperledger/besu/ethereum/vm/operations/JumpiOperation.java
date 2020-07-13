@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -27,41 +25,37 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class JumpiOperation extends AbstractOperation {
+public class JumpiOperation extends AbstractFixedCostOperation {
+
+  private final OperationResult invalidJumpResponse;
 
   public JumpiOperation(final GasCalculator gasCalculator) {
-    super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator);
+    super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator, gasCalculator.getHighTierGasCost());
+    invalidJumpResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getHighTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 condition = frame.popStackItem();
 
-    if (!condition.isZero()) {
-      frame.setPC(jumpDestination.intValue());
-    } else {
-      frame.setPC(frame.getPC() + getOpSize());
-    }
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
     // If condition is zero (false), no jump is will be performed. Therefore skip the test.
-    if (frame.getStackItem(1).isZero()) {
-      return Optional.empty();
+    if (condition.isZero()) {
+      frame.setPC(frame.getPC() + 1);
+    } else {
+      final Code code = frame.getCode();
+      if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
+        return invalidJumpResponse;
+      }
+      frame.setPC(jumpDestination.intValue());
     }
 
-    final Code code = frame.getCode();
-    final UInt256 potentialJumpDestination = UInt256.fromBytes(frame.getStackItem(0));
-    return !code.isValidJumpDestination(evm, frame, potentialJumpDestination)
-        ? Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION)
-        : Optional.empty();
+    return successResponse;
   }
 }

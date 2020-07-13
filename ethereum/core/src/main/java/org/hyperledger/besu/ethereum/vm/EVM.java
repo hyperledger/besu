@@ -18,7 +18,9 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 import org.hyperledger.besu.ethereum.vm.operations.VirtualOperation;
@@ -43,14 +45,13 @@ public class EVM {
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
   }
 
-  public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer)
-      throws ExceptionalHaltException {
+  public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       executeNextOperation(frame, operationTracer);
     }
   }
 
-  public void forEachOperation(
+  void forEachOperation(
       final Code code,
       final int contractAccountVersion,
       final BiConsumer<Operation, Integer> operationDelegate) {
@@ -64,70 +65,35 @@ public class EVM {
     }
   }
 
-  private void executeNextOperation(final MessageFrame frame, final OperationTracer operationTracer)
-      throws ExceptionalHaltException {
+  private void executeNextOperation(
+      final MessageFrame frame, final OperationTracer operationTracer) {
     frame.setCurrentOperation(
         operationAtOffset(frame.getCode(), frame.getContractAccountVersion(), frame.getPC()));
-    frame.setExceptionalHaltReason(checkExceptionalHalt(frame, this));
-    final Optional<Gas> currentGasCost = calculateGasCost(frame);
     operationTracer.traceExecution(
         frame,
-        currentGasCost,
         () -> {
-          logState(frame, currentGasCost);
-          checkForExceptionalHalt(frame);
-          decrementRemainingGas(frame, currentGasCost);
-          frame.getCurrentOperation().execute(frame);
+          OperationResult result;
+          try {
+            result = frame.getCurrentOperation().execute(frame, this);
+          } catch (final OverflowException oe) {
+            result = AbstractOperation.OVERFLOW_RESPONSE;
+          } catch (final UnderflowException ue) {
+            result = AbstractOperation.UNDERFLOW_RESPONSE;
+          }
+          frame.setGasCost(result.getGasCost());
+          logState(frame, result.getGasCost().orElse(Gas.ZERO));
+          final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
+          if (haltReason.isPresent()) {
+            LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
+            frame.setExceptionalHaltReason(haltReason);
+            frame.setState(State.EXCEPTIONAL_HALT);
+          } else if (result.getGasCost().isPresent()) {
+            frame.decrementRemainingGas(result.getGasCost().get());
+          }
           incrementProgramCounter(frame);
+
+          return result;
         });
-  }
-
-  public static Optional<ExceptionalHaltReason> checkExceptionalHalt(
-      final MessageFrame frame, final EVM evm) {
-
-    final Operation op = frame.getCurrentOperation();
-    if (frame.stackSize() + op.getStackSizeChange() > frame.getMaxStackSize()) {
-      return Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
-    }
-    if (frame.stackSize() < op.getStackItemsConsumed()) {
-      return Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    }
-    if (frame.getRemainingGas().compareTo(op.cost(frame)) < 0) {
-      return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
-    return op.exceptionalHaltCondition(frame, evm);
-  }
-
-  private Optional<Gas> calculateGasCost(final MessageFrame frame) {
-    // Calculate the cost if, and only if, we are not halting as a result of a stack underflow, as
-    // the operation may need all its stack items to calculate gas.
-    // This is how existing EVM implementations behave.
-    final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
-    if (exceptionalHaltReason.isEmpty()
-        || exceptionalHaltReason.get() != ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS) {
-      try {
-        return Optional.ofNullable(frame.getCurrentOperation().cost(frame));
-      } catch (final IllegalArgumentException e) {
-        // TODO: Figure out a better way to handle gas overflows.
-      }
-    }
-    return Optional.empty();
-  }
-
-  private void decrementRemainingGas(final MessageFrame frame, final Optional<Gas> currentGasCost) {
-    frame.decrementRemainingGas(
-        currentGasCost.orElseThrow(() -> new IllegalStateException("Gas overflow detected")));
-  }
-
-  private void checkForExceptionalHalt(final MessageFrame frame) throws ExceptionalHaltException {
-    final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
-    if (exceptionalHaltReason.isPresent()) {
-      LOG.trace("MessageFrame evaluation halted because of {}", exceptionalHaltReason);
-      frame.setState(State.EXCEPTIONAL_HALT);
-      frame.setOutputData(Bytes.EMPTY);
-      throw new ExceptionalHaltException(exceptionalHaltReason.get());
-    }
   }
 
   private void incrementProgramCounter(final MessageFrame frame) {
@@ -139,13 +105,13 @@ public class EVM {
     }
   }
 
-  private static void logState(final MessageFrame frame, final Optional<Gas> currentGasCost) {
+  private static void logState(final MessageFrame frame, final Gas currentGasCost) {
     if (LOG.isTraceEnabled()) {
       final StringBuilder builder = new StringBuilder();
       builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
       builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
       builder.append("PC: ").append(frame.getPC()).append("\n");
-      currentGasCost.ifPresent(gas -> builder.append("Gas cost: ").append(gas).append("\n"));
+      builder.append("Gas cost: ").append(currentGasCost).append("\n");
       builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
       builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
       builder.append("Stack:");

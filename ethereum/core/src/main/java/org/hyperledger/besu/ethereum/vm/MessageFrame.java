@@ -239,6 +239,7 @@ public class MessageFrame {
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
   private Operation currentOperation;
+  private Optional<Gas> gasCost = Optional.empty();
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
   private Optional<MemoryEntry> maybeUpdatedStorage = Optional.empty();
@@ -284,7 +285,7 @@ public class MessageFrame {
     this.maxStackSize = maxStackSize;
     this.pc = 0;
     this.memory = new Memory();
-    this.stack = new PreAllocatedOperandStack(maxStackSize);
+    this.stack = new OperandStack(maxStackSize);
     this.output = Bytes.EMPTY;
     this.returnData = Bytes.EMPTY;
     this.logs = new ArrayList<>();
@@ -442,7 +443,6 @@ public class MessageFrame {
    * Removes the corresponding number of items from the top of the stack.
    *
    * @param n The number of items to pop off the stack
-   * @throws IllegalStateException if the stack does not contain enough items
    */
   public void popStackItems(final int n) {
     stack.bulkPop(n);
@@ -452,7 +452,6 @@ public class MessageFrame {
    * Pushes the corresponding item onto the top of the stack
    *
    * @param value The value to push onto the stack.
-   * @throws IllegalStateException if the stack is full
    */
   public void pushStackItem(final Bytes32 value) {
     stack.push(value);
@@ -699,7 +698,7 @@ public class MessageFrame {
     final int len = length.fitsInt() ? length.intValue() : Integer.MAX_VALUE;
     final int endIndex = srcOff + len;
     if (srcOff >= 0 && endIndex > 0) {
-      int srcSize = value.size();
+      final int srcSize = value.size();
       if (endIndex > srcSize) {
         final MutableBytes paddedAnswer = MutableBytes.create(len);
         if (srcOff < srcSize) {
@@ -821,7 +820,7 @@ public class MessageFrame {
    *
    * @return the refunds map
    */
-  public Map<Address, Wei> getRefunds() {
+  Map<Address, Wei> getRefunds() {
     return refunds;
   }
 
@@ -983,12 +982,7 @@ public class MessageFrame {
     return messageFrameStack;
   }
 
-  public void setExceptionalHaltReason(final ExceptionalHaltReason exceptionalHaltReason) {
-    this.exceptionalHaltReason = Optional.of(exceptionalHaltReason);
-  }
-
-  public void setExceptionalHaltReason(
-      final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+  void setExceptionalHaltReason(final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
     this.exceptionalHaltReason = exceptionalHaltReason;
   }
 
@@ -1011,6 +1005,10 @@ public class MessageFrame {
 
   public Operation getCurrentOperation() {
     return currentOperation;
+  }
+
+  public Optional<Gas> getGasCost() {
+    return gasCost;
   }
 
   public int getMaxStackSize() {
@@ -1039,6 +1037,10 @@ public class MessageFrame {
     this.currentOperation = currentOperation;
   }
 
+  public void setGasCost(final Optional<Gas> gasCost) {
+    this.gasCost = gasCost;
+  }
+
   public int getContractAccountVersion() {
     return contractAccountVersion;
   }
@@ -1047,7 +1049,7 @@ public class MessageFrame {
     return maybeUpdatedMemory;
   }
 
-  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+  Optional<MemoryEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 

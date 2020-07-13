@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import org.junit.Before;
@@ -43,7 +44,6 @@ public class ReturnSubOperationTest {
 
   private Blockchain blockchain;
   private Address address;
-  private WorldStateArchive worldStateArchive;
   private WorldUpdater worldStateUpdater;
 
   private MessageFrameTestFixture createMessageFrameBuilder(final Gas initialGas) {
@@ -62,7 +62,7 @@ public class ReturnSubOperationTest {
 
     address = Address.fromHexString("0x18675309");
 
-    worldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     worldStateUpdater = worldStateArchive.getMutable().updater();
     worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
@@ -76,17 +76,19 @@ public class ReturnSubOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.cost(frame)).isEqualTo(RETURN_SUB_GAS_COST);
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getGasCost()).contains(RETURN_SUB_GAS_COST);
   }
 
   @Test
   public void shouldHaltWithInvalidRetSubWhenReturnStackIsEmpty() {
     final ReturnSubOperation operation = new ReturnSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
+        createMessageFrameBuilder(Gas.of(100)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
-    assertThat(operation.exceptionalHaltCondition(frame, null))
-        .contains(ExceptionalHaltReason.INVALID_RETSUB);
+    final OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INVALID_RETSUB);
   }
 
   @Test
@@ -95,11 +97,11 @@ public class ReturnSubOperationTest {
     final ReturnSubOperation operation = new ReturnSubOperation(gasCalculator);
     final ReturnStack returnStack = new ReturnStack();
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(returnStack).build();
+        createMessageFrameBuilder(Gas.of(100)).returnStack(returnStack).build();
     frame.setPC(CURRENT_PC);
     returnStack.push(RETURN_LOCATION);
-    assertThat(operation.exceptionalHaltCondition(frame, null)).isNotPresent();
-    operation.execute(frame);
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getHaltReason()).isNotPresent();
     assertThat(frame.getPC()).isEqualTo(RETURN_LOCATION);
   }
 }
