@@ -132,6 +132,7 @@ public enum RpcMethod {
   TRACE_TRANSACTION("trace_transaction"),
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
+  TX_POOL_BESU_PENDING_TRANSACTIONS("txpool_besuPendingTransactions"),
   WEB3_CLIENT_VERSION("web3_clientVersion"),
   WEB3_SHA3("web3_sha3"),
   PLUGINS_RELOAD_CONFIG("plugins_reloadPluginConfig");

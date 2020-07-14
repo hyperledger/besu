@@ -67,6 +67,9 @@ Features added between from 1.4 to 1.5 include:
 - Local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
 Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
 - Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints. [\#1098](https://github.com/hyperledger/besu/pull/1098)
+* Besu now has a strict check on private transactions to ensure the privateFrom in the transaction
+matches the sender Orion key that has distributed the payload. Besu 1.5+ requires Orion 1.6+ to work. 
+[#357](https://github.com/PegaSysEng/orion/issues/357)
 
 ### Bug fixes 
 

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
@@ -169,8 +170,10 @@ public class PrivacyPrecompiledContractIntegrationTest {
   public void testSendAndReceive() {
     final List<String> publicKeys = testHarness.getPublicKeys();
 
+    final PrivateTransaction privateTransaction =
+        PrivateTransactionDataFixture.privateContractDeploymentTransactionBesu(publicKeys.get(0));
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    bytesValueRLPOutput.writeRLP(VALID_PRIVATE_TRANSACTION_RLP);
+    privateTransaction.writeTo(bytesValueRLPOutput);
 
     final String s = bytesValueRLPOutput.encoded().toBase64String();
     final SendResponse sr =

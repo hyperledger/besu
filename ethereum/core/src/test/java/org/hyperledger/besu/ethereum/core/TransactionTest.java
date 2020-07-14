@@ -50,11 +50,10 @@ public class TransactionTest {
   @Parameters(name = "Name: {0}")
   public static Collection<Object[]> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)
-        // Blacklist tests that expect transactions with large gasLimits to properly decode
-        .blacklist(
-            "TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
+        // ignore tests that expect transactions with large gasLimits to properly decode
+        .ignore("TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
         // Nonce is tracked with type long, large valued nonces can't currently be decoded
-        .blacklist("TransactionWithHighNonce256")
+        .ignore("TransactionWithHighNonce256")
         .generator((name, spec, collector) -> collector.add(name, spec, true))
         .generate(TEST_CONFIG_FILE_DIR_PATH);
   }
@@ -62,7 +61,7 @@ public class TransactionTest {
   public TransactionTest(
       final String name, final TransactionTestCaseSpec spec, final boolean runTest) {
     this.spec = spec;
-    assumeTrue("Test was blacklisted", runTest);
+    assumeTrue("Test " + name + " was ignored", runTest);
   }
 
   @Test

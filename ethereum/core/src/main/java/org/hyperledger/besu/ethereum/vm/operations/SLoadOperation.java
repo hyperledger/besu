@@ -15,32 +15,31 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class SLoadOperation extends AbstractOperation {
+public class SLoadOperation extends AbstractFixedCostOperation {
 
   public SLoadOperation(final GasCalculator gasCalculator) {
-    super(0x54, "SLOAD", 1, 1, false, 1, gasCalculator);
+    super(0x54, "SLOAD", 1, 1, false, 1, gasCalculator, gasCalculator.getSloadOperationGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getSloadOperationGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final Bytes32 key = frame.popStackItem();
 
     final Account account = frame.getWorldState().get(frame.getRecipientAddress());
-    assert account != null : "VM account should exist";
 
     frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)).toBytes());
+
+    return successResponse;
   }
 }

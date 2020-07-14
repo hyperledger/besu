@@ -1,0 +1,1234 @@
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "debug_traceTransaction",
+    "params": [
+      "0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310",
+      {
+        "disableStack": true
+      }
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "gas": 23705,
+      "failed": false,
+      "returnValue": "",
+      "structLogs": [
+        {
+          "pc": 0,
+          "op": "PUSH1",
+          "gas": 292887,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 2,
+          "op": "CALLDATALOAD",
+          "gas": 292884,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 3,
+          "op": "PUSH29",
+          "gas": 292881,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 33,
+          "op": "SWAP1",
+          "gas": 292878,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 34,
+          "op": "DIV",
+          "gas": 292875,
+          "gasCost": 5,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 35,
+          "op": "DUP1",
+          "gas": 292870,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 36,
+          "op": "PUSH4",
+          "gas": 292867,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 41,
+          "op": "EQ",
+          "gas": 292864,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 42,
+          "op": "PUSH2",
+          "gas": 292861,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 45,
+          "op": "JUMPI",
+          "gas": 292858,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 46,
+          "op": "DUP1",
+          "gas": 292848,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 47,
+          "op": "PUSH4",
+          "gas": 292845,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 52,
+          "op": "EQ",
+          "gas": 292842,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 53,
+          "op": "PUSH2",
+          "gas": 292839,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 56,
+          "op": "JUMPI",
+          "gas": 292836,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 57,
+          "op": "DUP1",
+          "gas": 292826,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 58,
+          "op": "PUSH4",
+          "gas": 292823,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 63,
+          "op": "EQ",
+          "gas": 292820,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 64,
+          "op": "PUSH2",
+          "gas": 292817,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 67,
+          "op": "JUMPI",
+          "gas": 292814,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 68,
+          "op": "DUP1",
+          "gas": 292804,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 69,
+          "op": "PUSH4",
+          "gas": 292801,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 74,
+          "op": "EQ",
+          "gas": 292798,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 75,
+          "op": "PUSH2",
+          "gas": 292795,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 78,
+          "op": "JUMPI",
+          "gas": 292792,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 79,
+          "op": "DUP1",
+          "gas": 292782,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 80,
+          "op": "PUSH4",
+          "gas": 292779,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 85,
+          "op": "EQ",
+          "gas": 292776,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 86,
+          "op": "PUSH2",
+          "gas": 292773,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 89,
+          "op": "JUMPI",
+          "gas": 292770,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 90,
+          "op": "DUP1",
+          "gas": 292760,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 91,
+          "op": "PUSH4",
+          "gas": 292757,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 96,
+          "op": "EQ",
+          "gas": 292754,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 97,
+          "op": "PUSH2",
+          "gas": 292751,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 100,
+          "op": "JUMPI",
+          "gas": 292748,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 101,
+          "op": "DUP1",
+          "gas": 292738,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 102,
+          "op": "PUSH4",
+          "gas": 292735,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 107,
+          "op": "EQ",
+          "gas": 292732,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 108,
+          "op": "PUSH2",
+          "gas": 292729,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 111,
+          "op": "JUMPI",
+          "gas": 292726,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 112,
+          "op": "DUP1",
+          "gas": 292716,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 113,
+          "op": "PUSH4",
+          "gas": 292713,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 118,
+          "op": "EQ",
+          "gas": 292710,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 119,
+          "op": "PUSH2",
+          "gas": 292707,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 122,
+          "op": "JUMPI",
+          "gas": 292704,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 123,
+          "op": "DUP1",
+          "gas": 292694,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 124,
+          "op": "PUSH4",
+          "gas": 292691,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 129,
+          "op": "EQ",
+          "gas": 292688,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 130,
+          "op": "PUSH2",
+          "gas": 292685,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 133,
+          "op": "JUMPI",
+          "gas": 292682,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 134,
+          "op": "DUP1",
+          "gas": 292672,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 135,
+          "op": "PUSH4",
+          "gas": 292669,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 140,
+          "op": "EQ",
+          "gas": 292666,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 141,
+          "op": "PUSH2",
+          "gas": 292663,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 144,
+          "op": "JUMPI",
+          "gas": 292660,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 145,
+          "op": "DUP1",
+          "gas": 292650,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 146,
+          "op": "PUSH4",
+          "gas": 292647,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 151,
+          "op": "EQ",
+          "gas": 292644,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 152,
+          "op": "PUSH2",
+          "gas": 292641,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 155,
+          "op": "JUMPI",
+          "gas": 292638,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 156,
+          "op": "DUP1",
+          "gas": 292628,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 157,
+          "op": "PUSH4",
+          "gas": 292625,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 162,
+          "op": "EQ",
+          "gas": 292622,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 163,
+          "op": "PUSH2",
+          "gas": 292619,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 166,
+          "op": "JUMPI",
+          "gas": 292616,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 167,
+          "op": "DUP1",
+          "gas": 292606,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 168,
+          "op": "PUSH4",
+          "gas": 292603,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 173,
+          "op": "EQ",
+          "gas": 292600,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 174,
+          "op": "PUSH2",
+          "gas": 292597,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 177,
+          "op": "JUMPI",
+          "gas": 292594,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 178,
+          "op": "DUP1",
+          "gas": 292584,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 179,
+          "op": "PUSH4",
+          "gas": 292581,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 184,
+          "op": "EQ",
+          "gas": 292578,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 185,
+          "op": "PUSH2",
+          "gas": 292575,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 188,
+          "op": "JUMPI",
+          "gas": 292572,
+          "gasCost": 10,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 543,
+          "op": "JUMPDEST",
+          "gas": 292562,
+          "gasCost": 1,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 544,
+          "op": "PUSH2",
+          "gas": 292561,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 547,
+          "op": "PUSH2",
+          "gas": 292558,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 550,
+          "op": "JUMP",
+          "gas": 292555,
+          "gasCost": 8,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1683,
+          "op": "JUMPDEST",
+          "gas": 292547,
+          "gasCost": 1,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1684,
+          "op": "PUSH32",
+          "gas": 292546,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1717,
+          "op": "PUSH1",
+          "gas": 292543,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1719,
+          "op": "MUL",
+          "gas": 292540,
+          "gasCost": 5,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1720,
+          "op": "CALLER",
+          "gas": 292535,
+          "gasCost": 2,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1721,
+          "op": "PUSH20",
+          "gas": 292533,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1742,
+          "op": "AND",
+          "gas": 292530,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1743,
+          "op": "PUSH1",
+          "gas": 292527,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1745,
+          "op": "PUSH1",
+          "gas": 292524,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1747,
+          "op": "PUSH32",
+          "gas": 292521,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1780,
+          "op": "DUP2",
+          "gas": 292518,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1781,
+          "op": "MSTORE",
+          "gas": 292515,
+          "gasCost": 6,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1782,
+          "op": "PUSH1",
+          "gas": 292509,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1784,
+          "op": "ADD",
+          "gas": 292506,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1785,
+          "op": "PUSH1",
+          "gas": 292503,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1787,
+          "op": "DUP2",
+          "gas": 292500,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1788,
+          "op": "MSTORE",
+          "gas": 292497,
+          "gasCost": 6,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1789,
+          "op": "PUSH1",
+          "gas": 292491,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1791,
+          "op": "ADD",
+          "gas": 292488,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1792,
+          "op": "PUSH1",
+          "gas": 292485,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1794,
+          "op": "LOG3",
+          "gas": 292482,
+          "gasCost": 2012,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1795,
+          "op": "JUMPDEST",
+          "gas": 290470,
+          "gasCost": 1,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 1796,
+          "op": "JUMP",
+          "gas": 290469,
+          "gasCost": 8,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 551,
+          "op": "JUMPDEST",
+          "gas": 290461,
+          "gasCost": 1,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 552,
+          "op": "PUSH1",
+          "gas": 290460,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 554,
+          "op": "PUSH1",
+          "gas": 290457,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        },
+        {
+          "pc": 556,
+          "op": "RETURN",
+          "gas": 290454,
+          "gasCost": 0,
+          "depth": 1,
+          "stack": null,
+          "memory": [
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9",
+            "000000000000000000000000000000000000000000000000000000000000002a"
+          ],
+          "storage": {},
+          "reason": null
+        }
+      ]
+    }
+  },
+  "statusCode": 200
+}

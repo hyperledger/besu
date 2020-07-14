@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -80,21 +81,26 @@ public class GeneralStateReferenceTestTools {
 
   static {
     if (EIPS_TO_RUN.isEmpty()) {
-      params.blacklistAll();
+      params.ignoreAll();
     }
 
     // Known incorrect test.
-    params.blacklist(
+    params.ignore(
         "RevertPrecompiledTouch(_storage)?-(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
 
     // Gas integer value is too large to construct a valid transaction.
-    params.blacklist("OverflowGasRequire");
+    params.ignore("OverflowGasRequire");
 
     // Consumes a huge amount of memory
-    params.blacklist("static_Call1MB1024Calldepth-\\w");
+    params.ignore("static_Call1MB1024Calldepth-\\w");
 
     // Don't do time consuming tests
-    params.blacklist("CALLBlake2f_MaxRounds.*");
+    params.ignore("CALLBlake2f_MaxRounds.*");
+
+    // Berlin isn't finalized
+    if (!ExperimentalEIPs.berlinEnabled) {
+      params.ignore(".*[_-]Berlin");
+    }
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
