@@ -79,6 +79,14 @@ No bug fixes with [user impact in this release](https://wiki.hyperledger.org/dis
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
+#### New known issues 
+
+- K8S permissioning uses of Service IPs rather than pod IPs which can fail. [\#1190](https://github.com/hyperledger/besu/pull/1190)
+Workaround - Do not use permissioning on K8S. 
+
+- Restart caused by insufficient memory can cause inconsistent private state. [\#1110](https://github.com/hyperledger/besu/pull/1110) 
+Workaround - Ensure you allocate enough memory for the Java Runtime Environment that the node does not run out of memory.
+
 #### Previously identified known issues
  
 - [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
