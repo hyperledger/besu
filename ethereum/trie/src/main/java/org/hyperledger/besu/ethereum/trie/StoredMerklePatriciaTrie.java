@@ -15,11 +15,13 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -126,19 +128,23 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public void visitAll(final Consumer<Node<V>> nodeConsumer) {
+  public CompletableFuture<Void> visitAll(final Consumer<Node<V>> nodeConsumer) {
     root.accept(new AllNodesVisitor<>(nodeConsumer));
+    return completedFuture(null);
   }
 
   @Override
-  public void visitAll(
+  public CompletableFuture<Void> visitAll(
       final Consumer<Node<V>> nodeConsumer, final ExecutorService executorService) {
     nodeConsumer.accept(root);
-    root.getChildren()
-        .forEach(
-            rootChild ->
-                executorService.execute(
-                    () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer))));
+    return CompletableFuture.allOf(
+        root.getChildren().stream()
+            .map(
+                rootChild ->
+                    CompletableFuture.runAsync(
+                        () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer)),
+                        executorService))
+            .toArray(CompletableFuture[]::new));
   }
 
   @Override

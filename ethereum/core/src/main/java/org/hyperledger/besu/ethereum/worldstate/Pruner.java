@@ -165,7 +165,7 @@ public class Pruner {
     try {
       executorService.execute(action);
     } catch (final MerkleTrieException mte) {
-      LOG.error(
+      LOG.fatal(
           "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
           mte);
       System.exit(1);
