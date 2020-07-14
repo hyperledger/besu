@@ -266,23 +266,15 @@ public class MarkSweepPruner {
     }
   }
 
-  private final Stopwatch stopwatch = Stopwatch.createUnstarted();
-
   private void flushPendingMarks() {
+    final KeyValueStorageTransaction transaction = markStorage.startTransaction();
     markLock.lock();
     try {
-      final KeyValueStorageTransaction transaction = markStorage.startTransaction();
       pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
-      final long flushSize = pendingMarks.size();
-      stopwatch.start();
-      transaction.commit();
-      stopwatch.stop();
-      final long elapsed = stopwatch.elapsed().toMillis();
-      LOG.info("Flushed {} nodes: {}ms", flushSize, elapsed);
-      stopwatch.reset();
       pendingMarks.clear();
     } finally {
       markLock.unlock();
     }
+    transaction.commit();
   }
 }
