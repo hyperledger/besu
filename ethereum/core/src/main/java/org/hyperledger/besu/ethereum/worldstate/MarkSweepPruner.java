@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import static java.lang.Integer.parseInt;
+
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -27,14 +29,19 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -118,6 +125,18 @@ public class MarkSweepPruner {
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
     markStopwatch.start();
+    final ExecutorService executorService =
+        new ThreadPoolExecutor(
+            0,
+            parseInt(Optional.ofNullable(System.getenv("PRUNER_THREADS")).orElse("1")),
+            0L,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setPriority(Thread.MIN_PRIORITY)
+                .setNameFormat(this.getClass().getSimpleName() + "-%d")
+                .build());
     createStateTrie(rootHash)
         .visitAll(
             node -> {
@@ -128,7 +147,8 @@ public class MarkSweepPruner {
               }
               markNode(node.getHash());
               node.getValue().ifPresent(this::processAccountState);
-            });
+            },
+            executorService);
     markStopwatch.stop();
     LOG.debug("Completed marking used nodes for pruning");
   }

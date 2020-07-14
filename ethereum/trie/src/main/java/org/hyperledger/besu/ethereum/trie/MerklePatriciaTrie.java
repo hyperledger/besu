@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -87,5 +88,7 @@ public interface MerklePatriciaTrie<K, V> {
    */
   Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, int limit);
 
-  void visitAll(Consumer<Node<V>> visitor);
+  void visitAll(Consumer<Node<V>> nodeConsumer);
+
+  void visitAll(Consumer<Node<V>> nodeConsumer, ExecutorService executorService);
 }

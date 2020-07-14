@@ -85,7 +85,7 @@ public class Pruner {
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
-                .setNameFormat("StatePruning-%d")
+                .setNameFormat("Pruning-%d")
                 .build()));
   }
 

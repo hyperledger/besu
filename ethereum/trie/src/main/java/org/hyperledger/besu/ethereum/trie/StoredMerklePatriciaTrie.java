@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -125,8 +126,19 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public void visitAll(final Consumer<Node<V>> visitor) {
-    root.accept(new AllNodesVisitor<>(visitor));
+  public void visitAll(final Consumer<Node<V>> nodeConsumer) {
+    root.accept(new AllNodesVisitor<>(nodeConsumer));
+  }
+
+  @Override
+  public void visitAll(
+      final Consumer<Node<V>> nodeConsumer, final ExecutorService executorService) {
+    nodeConsumer.accept(root);
+    root.getChildren()
+        .forEach(
+            rootChild ->
+                executorService.execute(
+                    () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer))));
   }
 
   @Override
