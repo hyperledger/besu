@@ -65,6 +65,7 @@ public class MarkSweepPruner {
   private volatile long nodeAddedListenerId;
   private final ReentrantLock markLock = new ReentrantLock(true);
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final int prunerThreads;
 
   public MarkSweepPruner(
       final WorldStateStorage worldStateStorage,
@@ -111,6 +112,10 @@ public class MarkSweepPruner {
         "mark_time_duration",
         "Cumulative number of seconds spent marking the state trie across all pruning cycles",
         () -> markStopwatch.elapsed(TimeUnit.SECONDS));
+
+    this.prunerThreads =
+        parseInt(Optional.ofNullable(System.getProperty("PRUNER_THREADS")).orElse("1"));
+    LOG.info("Using {} pruner threads", prunerThreads);
   }
 
   public void prepare() {
@@ -128,7 +133,7 @@ public class MarkSweepPruner {
     final ExecutorService executorService =
         new ThreadPoolExecutor(
             0,
-            parseInt(Optional.ofNullable(System.getenv("PRUNER_THREADS")).orElse("1")),
+            prunerThreads,
             0L,
             TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(),
@@ -223,6 +228,8 @@ public class MarkSweepPruner {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     markNode(accountValue.getCodeHash());
 
+    // use the single-threaded visitAll here since it's going to be called from one of the umbrella
+    // threads at the whole state trie level
     createStorageTrie(accountValue.getStorageRoot())
         .visitAll(storageNode -> markNode(storageNode.getHash()));
   }
