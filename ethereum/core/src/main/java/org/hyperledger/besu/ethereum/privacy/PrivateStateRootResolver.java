@@ -47,7 +47,11 @@ public class PrivateStateRootResolver {
         return privateStateStorage
             .getPrivateBlockMetadata(blockHashForLastBlockWithTx, privacyGroupId)
             .flatMap(PrivateBlockMetadata::getLatestStateRoot)
-            .orElse(EMPTY_ROOT_HASH);
+            .orElseThrow(
+                () ->
+                    new RuntimeException(
+                        "Privacy inconsistent state: PrivateBlockMetadata does not exist for Block "
+                            + blockHashForLastBlockWithTx));
       } else {
         return EMPTY_ROOT_HASH;
       }
@@ -81,7 +85,11 @@ public class PrivateStateRootResolver {
           privateStateStorage
               .getPrivateBlockMetadata(blockHashForLastBlockWithTx, privacyGroupId)
               .flatMap(PrivateBlockMetadata::getLatestStateRoot)
-              .orElse(EMPTY_ROOT_HASH);
+              .orElseThrow(
+                  () ->
+                      new RuntimeException(
+                          "Privacy inconsistent state: PrivateBlockMetadata does not exist for Block "
+                              + blockHashForLastBlockWithTx));
     } else {
       // First transaction for this PG
       lastRootHash = EMPTY_ROOT_HASH;
