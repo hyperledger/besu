@@ -24,3 +24,40 @@ sourceSets {
 configurations { testOutput }
 
 dependencies { testOutput sourceSets.test.output }
+
+task ('validateReferenceTestSubmodule') {
+  description = "Checks that the reference tests submodule is not accidentially changed"
+  doLast {
+    def expectedHash = 'b8abaebf5949877ead03e8f74ac03c0ede41d5f7'
+    def result = new ByteArrayOutputStream()
+    try {
+      exec {
+        commandLine 'git', 'submodule'
+        standardOutput = result
+        errorOutput = result
+      }
+    } catch (Exception ignore) {
+      // Ignore it.  We want to fail in a friendly fashion if they don't have git installed.
+      // The CI servers have git and that is the only critical place for this failure
+      expectedHash = ''
+    }
+    if (!result.toString().contains(expectedHash)) {
+      throw new GradleException("""For the Ethereum Reference Tests the git commit did not match what was expected.
+
+If this is a deliberate change where you are updating the reference tests 
+then update "expectedHash" in `ethereum/referencetests/build.gradle` as the 
+commit hash for this task.
+Expected hash   :  ${expectedHash}
+Full git output : ${result}
+
+If this is accidental you can correct the reference test versions with the 
+following commands:
+    pushd ethereum/referencetests/src/test/resources
+    git checkout ${expectedHash}
+    cd ..
+    git add resources
+    popd""")
+    }
+  }
+}
+processResources.dependsOn('validateReferenceTestSubmodule')
