@@ -63,8 +63,9 @@ public class PingPacketData implements PacketData {
     try {
       from = Optional.of(Endpoint.decodeStandalone(in));
     } catch (RLPException __) {
+      // We don't care if they send us a bad from field, we may be able to recover their endpoint
+      // another way
       from = Optional.empty();
-      // We don't care if
     }
     final Endpoint to = Endpoint.decodeStandalone(in);
     final long expiration = in.readLongScalar();
