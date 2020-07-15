@@ -73,7 +73,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -556,7 +555,7 @@ public class WorldStateDownloaderTest {
     assertThat(allTrieNodes.size()).isGreaterThan(0); // Sanity check
     final Updater localStorageUpdater = localStorage.updater();
     boolean storeNode = true;
-    for (final Entry<Bytes32, Bytes> entry : allTrieNodes.entrySet()) {
+    for (final Map.Entry<Bytes32, Bytes> entry : allTrieNodes.entrySet()) {
       final Bytes32 hash = entry.getKey();
       final Bytes data = entry.getValue();
       if (storeNode) {

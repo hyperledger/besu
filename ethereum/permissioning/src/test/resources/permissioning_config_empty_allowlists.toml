@@ -1,0 +1,4 @@
+# Permissioning TOML file with empty lists
+
+accounts-allowlist=[]
+nodes-allowlist=[]

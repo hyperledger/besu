@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.RoundTimer;
@@ -53,8 +52,8 @@ public class IbftRound {
   private final Subscribers<MinedBlockObserver> observers;
   private final RoundState roundState;
   private final IbftBlockCreator blockCreator;
-  private final ProtocolContext<IbftContext> protocolContext;
-  private final BlockImporter<IbftContext> blockImporter;
+  private final ProtocolContext protocolContext;
+  private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
@@ -62,8 +61,8 @@ public class IbftRound {
   public IbftRound(
       final RoundState roundState,
       final IbftBlockCreator blockCreator,
-      final ProtocolContext<IbftContext> protocolContext,
-      final BlockImporter<IbftContext> blockImporter,
+      final ProtocolContext protocolContext,
+      final BlockImporter blockImporter,
       final Subscribers<MinedBlockObserver> observers,
       final NodeKey nodeKey,
       final MessageFactory messageFactory,

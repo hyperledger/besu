@@ -26,7 +26,7 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
 
   protected final P2PNetwork peerNetwork;
 
-  public AdminModifyPeer(final P2PNetwork peerNetwork) {
+  protected AdminModifyPeer(final P2PNetwork peerNetwork) {
     this.peerNetwork = peerNetwork;
   }
 

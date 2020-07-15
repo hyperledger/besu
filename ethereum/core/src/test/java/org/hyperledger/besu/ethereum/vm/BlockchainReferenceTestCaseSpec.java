@@ -59,7 +59,7 @@ public class BlockchainReferenceTestCaseSpec {
   private final MutableBlockchain blockchain;
   private final String sealEngine;
 
-  private final ProtocolContext<Void> protocolContext;
+  private final ProtocolContext protocolContext;
 
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, WorldStateMock.AccountMock> accounts) {
@@ -100,7 +100,7 @@ public class BlockchainReferenceTestCaseSpec {
     this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
-    this.protocolContext = new ProtocolContext<>(this.blockchain, this.worldStateArchive, null);
+    this.protocolContext = new ProtocolContext(this.blockchain, this.worldStateArchive, null);
   }
 
   public String getNetwork() {
@@ -123,7 +123,7 @@ public class BlockchainReferenceTestCaseSpec {
     return blockchain;
   }
 
-  public ProtocolContext<Void> getProtocolContext() {
+  public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 

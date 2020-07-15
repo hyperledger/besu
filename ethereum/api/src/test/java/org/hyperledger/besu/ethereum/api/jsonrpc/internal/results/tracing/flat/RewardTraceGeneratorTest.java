@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ClassicBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -50,8 +51,8 @@ public class RewardTraceGeneratorTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-  @Mock private ProtocolSchedule<Void> protocolSchedule;
-  @Mock private ProtocolSpec<Void> protocolSpec;
+  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
   @Mock private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   @Mock private TransactionProcessor transactionProcessor;
 
@@ -81,8 +82,8 @@ public class RewardTraceGeneratorTest {
 
   @Test
   public void assertThatTraceGeneratorReturnValidRewardsForMainnetBlockProcessor() {
-    final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
-        mock(MainnetBlockProcessor.TransactionReceiptFactory.class);
+    final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
+        mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
     final MainnetBlockProcessor blockProcessor =
         new MainnetBlockProcessor(
             transactionProcessor,
@@ -140,8 +141,8 @@ public class RewardTraceGeneratorTest {
 
   @Test
   public void assertThatTraceGeneratorReturnValidRewardsForClassicBlockProcessor() {
-    final ClassicBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
-        mock(ClassicBlockProcessor.TransactionReceiptFactory.class);
+    final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
+        mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
     final ClassicBlockProcessor blockProcessor =
         new ClassicBlockProcessor(
             transactionProcessor,

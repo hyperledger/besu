@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.ibft.headervalidationrules;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataFixture;
 import org.hyperledger.besu.consensus.ibft.Vote;
@@ -71,8 +70,8 @@ public class IbftCoinbaseValidationRuleTest {
 
     final List<NodeKey> committers = Lists.newArrayList(proposerNodeKey);
 
-    final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
+    final ProtocolContext context =
+        new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
 
@@ -93,8 +92,8 @@ public class IbftCoinbaseValidationRuleTest {
 
     final List<NodeKey> committers = Lists.newArrayList(otherValidatorNodeKey);
 
-    final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
+    final ProtocolContext context =
+        new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
 

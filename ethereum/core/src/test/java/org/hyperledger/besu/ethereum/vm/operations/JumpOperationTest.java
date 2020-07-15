@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -66,7 +67,7 @@ public class JumpOperationTest {
 
     address = Address.fromHexString("0x18675309");
 
-    WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     worldStateUpdater = worldStateArchive.getMutable().updater();
     worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
@@ -82,52 +83,52 @@ public class JumpOperationTest {
   public void shouldJumpWhenLocationIsJumpDest() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(Bytes32.fromHexString("0x03"))
             .code(new Code(Bytes.fromHexString("0x6003565b00")))
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
-    operation.execute(frame);
+    final OperationResult result = operation.execute(frame, evm);
+    assertThat(result.getHaltReason()).isEmpty();
   }
 
   @Test
   public void shouldJumpWhenLocationIsJumpDestAndAtEndOfCode() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(Bytes32.fromHexString("0x03"))
             .code(new Code(Bytes.fromHexString("0x6003565b")))
             .build();
     frame.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frame, null, evm)).isNotPresent();
-    operation.execute(frame);
+    final OperationResult result = operation.execute(frame, evm);
+    assertThat(result.getHaltReason()).isEmpty();
   }
 
   @Test
   public void shouldHaltWithInvalidJumDestinationWhenLocationIsOutsideOfCodeRange() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frameDestinationGreaterThanCodeSize =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0xFFFFFFFF"))
             .code(new Code(Bytes.fromHexString("0x6801000000000000000c565b00")))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frameDestinationGreaterThanCodeSize, null, null))
-        .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+    final OperationResult result = operation.execute(frameDestinationGreaterThanCodeSize, null);
+    assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
 
     final MessageFrame frameDestinationEqualsToCodeSize =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0x04"))
             .code(new Code(Bytes.fromHexString("0x60045600")))
             .returnStack(new ReturnStack())
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
-    assertThat(operation.exceptionalHaltCondition(frameDestinationEqualsToCodeSize, null, null))
-        .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+    final OperationResult result2 = operation.execute(frameDestinationEqualsToCodeSize, null);
+    assertThat(result2.getHaltReason()).contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 }

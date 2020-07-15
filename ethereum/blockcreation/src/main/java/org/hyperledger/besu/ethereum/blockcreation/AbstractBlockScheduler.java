@@ -22,7 +22,7 @@ public abstract class AbstractBlockScheduler {
 
   protected final Clock clock;
 
-  public AbstractBlockScheduler(final Clock clock) {
+  protected AbstractBlockScheduler(final Clock clock) {
     this.clock = clock;
   }
 

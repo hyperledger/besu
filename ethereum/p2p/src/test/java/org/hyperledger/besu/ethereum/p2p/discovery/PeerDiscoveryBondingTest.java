@@ -41,8 +41,8 @@ public class PeerDiscoveryBondingTest {
 
     // Start a test peer and send a PING packet to the agent under test.
     final MockPeerDiscoveryAgent otherAgent = helper.startDiscoveryAgent();
-    final Packet ping = helper.createPingPacket(otherAgent, agent);
-    helper.sendMessageBetweenAgents(otherAgent, agent, ping);
+    assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
+    otherAgent.bond(agent.getAdvertisedPeer().get());
 
     final List<IncomingPacket> otherAgentIncomingPongs =
         otherAgent.getIncomingPackets().stream()
@@ -50,8 +50,12 @@ public class PeerDiscoveryBondingTest {
             .collect(Collectors.toList());
     assertThat(otherAgentIncomingPongs.size()).isEqualTo(1);
 
+    assertThat(
+            otherAgentIncomingPongs.get(0).packet.getPacketData(PongPacketData.class).isPresent())
+        .isTrue();
     final PongPacketData pong =
         otherAgentIncomingPongs.get(0).packet.getPacketData(PongPacketData.class).get();
+    assertThat(otherAgent.getAdvertisedPeer().isPresent()).isTrue();
     assertThat(pong.getTo()).isEqualTo(otherAgent.getAdvertisedPeer().get().getEndpoint());
 
     // The agent considers the test peer BONDED.
@@ -61,7 +65,7 @@ public class PeerDiscoveryBondingTest {
   }
 
   @Test
-  public void neighborsPacketNotSentUnlessBonded() throws InterruptedException {
+  public void neighborsPacketNotSentUnlessBonded() {
     // Start an agent.
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(emptyList());
 
@@ -77,9 +81,8 @@ public class PeerDiscoveryBondingTest {
     final List<IncomingPacket> incoming = otherNode.getIncomingPackets();
     assertThat(incoming.size()).isEqualTo(0);
 
-    // Create and dispatch a PING packet.
-    final Packet ping = helper.createPingPacket(otherNode, agent);
-    helper.sendMessageBetweenAgents(otherNode, agent, ping);
+    assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
+    otherNode.bond(agent.getAdvertisedPeer().get());
 
     // Now we received a PONG.
     final List<IncomingPacket> incomingPongs =
@@ -90,6 +93,7 @@ public class PeerDiscoveryBondingTest {
     final Optional<PongPacketData> maybePongData =
         incomingPongs.get(0).packet.getPacketData(PongPacketData.class);
     assertThat(maybePongData).isPresent();
+    assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
     assertThat(maybePongData.get().getTo())
         .isEqualTo(otherNode.getAdvertisedPeer().get().getEndpoint());
 

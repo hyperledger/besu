@@ -55,7 +55,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
 
   @Mock private JsonRpcMethod rpcMethod;
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private ProtocolSchedule<?> protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private TransactionPool transactionPool;
   @Mock private PrivacyParameters privacyParameters;
 
@@ -171,7 +171,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
 
     public TestPrivacyApiGroupJsonRpcMethods(
         final BlockchainQueries blockchainQueries,
-        final ProtocolSchedule<?> protocolSchedule,
+        final ProtocolSchedule protocolSchedule,
         final TransactionPool transactionPool,
         final PrivacyParameters privacyParameters,
         final JsonRpcMethod rpcMethod) {

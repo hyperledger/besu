@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class NewBlockMessageTest {
-  private static final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+  private static final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
 
   @Test
   public void roundTripNewBlockMessage() {

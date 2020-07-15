@@ -61,8 +61,8 @@ public class TransactionPoolFactoryTest {
 
   @Test
   public void testDisconnect() {
-    final ProtocolSchedule<?> schedule = mock(ProtocolSchedule.class);
-    final ProtocolContext<?> context = mock(ProtocolContext.class);
+    final ProtocolSchedule schedule = mock(ProtocolSchedule.class);
+    final ProtocolContext context = mock(ProtocolContext.class);
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
 
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mock(Block.class)));
@@ -90,7 +90,12 @@ public class TransactionPoolFactoryTest {
             state,
             Wei.of(1),
             new TransactionPoolConfiguration(
-                1, 1, 1, 1, TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                1,
+                1,
+                1,
+                1,
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP,
+                TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP),
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
@@ -123,9 +128,8 @@ public class TransactionPoolFactoryTest {
     verify(peerPendingTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
   }
 
-  @SuppressWarnings("unchecked")
   @Test
-  public <C> void testNoEth65() {
+  public void testNoEth65() {
     final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem());
 
     final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -134,9 +138,9 @@ public class TransactionPoolFactoryTest {
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
     final PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
-    final ProtocolContext<C> context = mock(ProtocolContext.class);
-    final ProtocolSchedule<C> schedule = mock(ProtocolSchedule.class);
-    final ProtocolSpec<C> protocolSpec = mock(ProtocolSpec.class);
+    final ProtocolContext context = mock(ProtocolContext.class);
+    final ProtocolSchedule schedule = mock(ProtocolSchedule.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     final SyncState state = mock(SyncState.class);
     final TransactionsMessageSender transactionsMessageSender =
         mock(TransactionsMessageSender.class);
@@ -169,7 +173,12 @@ public class TransactionPoolFactoryTest {
             state,
             Wei.of(1),
             new TransactionPoolConfiguration(
-                1, 1, 1, 1, TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                1,
+                1,
+                1,
+                1,
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP,
+                TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP),
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,

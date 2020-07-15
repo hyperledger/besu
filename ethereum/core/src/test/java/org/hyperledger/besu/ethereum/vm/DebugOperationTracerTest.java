@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,9 +28,8 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -53,52 +50,49 @@ public class DebugOperationTracerTest {
 
   @Mock private WorldUpdater worldUpdater;
 
-  @Mock private OperationTracer.ExecuteOperation executeOperationAction;
+  // @Mock private OperationTracer.ExecuteOperation executeOperationAction;
 
   private final Operation anOperation =
       new AbstractOperation(0x02, "MUL", 2, 1, false, 1, null) {
         @Override
-        public Gas cost(final MessageFrame frame) {
-          return Gas.of(20);
+        public OperationResult execute(final MessageFrame frame, final EVM evm) {
+          return new OperationResult(Optional.of(Gas.of(20)), Optional.empty());
         }
-
-        @Override
-        public void execute(final MessageFrame frame) {}
       };
 
   @Test
-  public void shouldRecordProgramCounter() throws Exception {
+  public void shouldRecordProgramCounter() {
     final MessageFrame frame = validMessageFrame();
     frame.setPC(10);
-    final TraceFrame traceFrame = traceFrame(frame, Gas.of(50));
+    final TraceFrame traceFrame = traceFrame(frame);
 
     assertThat(traceFrame.getPc()).isEqualTo(10);
   }
 
   @Test
-  public void shouldRecordOpcode() throws Exception {
+  public void shouldRecordOpcode() {
     final MessageFrame frame = validMessageFrame();
-    final TraceFrame traceFrame = traceFrame(frame, Gas.of(50));
+    final TraceFrame traceFrame = traceFrame(frame);
     assertThat(traceFrame.getOpcode()).isEqualTo("MUL");
   }
 
   @Test
-  public void shouldRecordDepth() throws Exception {
+  public void shouldRecordDepth() {
     final MessageFrame frame = validMessageFrame();
-    final TraceFrame traceFrame = traceFrame(frame, Gas.of(50));
+    final TraceFrame traceFrame = traceFrame(frame);
     assertThat(traceFrame.getDepth()).isEqualTo(DEPTH);
   }
 
   @Test
-  public void shouldRecordRemainingGas() throws Exception {
+  public void shouldRecordRemainingGas() {
     final MessageFrame frame = validMessageFrame();
-    final Gas currentGasCost = Gas.of(50);
-    final TraceFrame traceFrame = traceFrame(frame, currentGasCost);
+    //    final Gas currentGasCost = Gas.of(50);
+    final TraceFrame traceFrame = traceFrame(frame);
     assertThat(traceFrame.getGasRemaining()).isEqualTo(INITIAL_GAS);
   }
 
   @Test
-  public void shouldRecordStackWhenEnabled() throws Exception {
+  public void shouldRecordStackWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
     final Bytes32 stackItem1 = Bytes32.fromHexString("0x01");
     final Bytes32 stackItem2 = Bytes32.fromHexString("0x02");
@@ -106,20 +100,20 @@ public class DebugOperationTracerTest {
     frame.pushStackItem(stackItem1);
     frame.pushStackItem(stackItem2);
     frame.pushStackItem(stackItem3);
-    final TraceFrame traceFrame = traceFrame(frame, Gas.ZERO, new TraceOptions(false, false, true));
+    final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(false, false, true));
     assertThat(traceFrame.getStack()).isPresent();
     assertThat(traceFrame.getStack().get()).containsExactly(stackItem1, stackItem2, stackItem3);
   }
 
   @Test
-  public void shouldNotRecordStackWhenDisabled() throws Exception {
+  public void shouldNotRecordStackWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), Gas.ZERO, new TraceOptions(false, false, false));
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false));
     assertThat(traceFrame.getStack()).isEmpty();
   }
 
   @Test
-  public void shouldRecordMemoryWhenEnabled() throws Exception {
+  public void shouldRecordMemoryWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
@@ -127,64 +121,60 @@ public class DebugOperationTracerTest {
     frame.writeMemory(UInt256.ZERO, UInt256.valueOf(32), word1);
     frame.writeMemory(UInt256.valueOf(32), UInt256.valueOf(32), word2);
     frame.writeMemory(UInt256.valueOf(64), UInt256.valueOf(32), word3);
-    final TraceFrame traceFrame = traceFrame(frame, Gas.ZERO, new TraceOptions(false, true, false));
+    final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(false, true, false));
     assertThat(traceFrame.getMemory()).isPresent();
     assertThat(traceFrame.getMemory().get()).containsExactly(word1, word2, word3);
   }
 
   @Test
-  public void shouldNotRecordMemoryWhenDisabled() throws Exception {
+  public void shouldNotRecordMemoryWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), Gas.ZERO, new TraceOptions(false, false, false));
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false));
     assertThat(traceFrame.getMemory()).isEmpty();
   }
 
   @Test
-  public void shouldRecordStorageWhenEnabled() throws Exception {
+  public void shouldRecordStorageWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
-    final TraceFrame traceFrame = traceFrame(frame, Gas.ZERO, new TraceOptions(true, false, false));
+    final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(true, false, false));
     assertThat(traceFrame.getStorage()).isPresent();
     assertThat(traceFrame.getStorage().get()).isEqualTo(updatedStorage);
   }
 
   @Test
-  public void shouldNotRecordStorageWhenDisabled() throws Exception {
+  public void shouldNotRecordStorageWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), Gas.ZERO, new TraceOptions(false, false, false));
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false));
     assertThat(traceFrame.getStorage()).isEmpty();
   }
 
   @Test
-  public void shouldCaptureFrameWhenExceptionalHaltOccurs() throws Exception {
-    final EnumSet<ExceptionalHaltReason> expectedHaltReasons =
-        EnumSet.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
-    final ExceptionalHaltException expectedException =
-        new ExceptionalHaltException(expectedHaltReasons);
-    doThrow(expectedException).when(executeOperationAction).execute();
+  public void shouldCaptureFrameWhenExceptionalHaltOccurs() {
     final MessageFrame frame = validMessageFrame();
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
 
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true));
-    assertThatThrownBy(
-            () -> tracer.traceExecution(frame, Optional.of(Gas.of(50)), executeOperationAction))
-        .isSameAs(expectedException);
+    tracer.traceExecution(
+        frame,
+        () ->
+            new OperationResult(
+                Optional.of(Gas.of(50)), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS)));
 
     final TraceFrame traceFrame = getOnlyTraceFrame(tracer);
+    assertThat(traceFrame.getExceptionalHaltReason())
+        .contains(ExceptionalHaltReason.INSUFFICIENT_GAS);
     assertThat(traceFrame.getStorage()).contains(updatedStorage);
   }
 
-  private TraceFrame traceFrame(final MessageFrame frame, final Gas currentGasCost)
-      throws Exception {
-    return traceFrame(frame, currentGasCost, new TraceOptions(false, false, false));
+  private TraceFrame traceFrame(final MessageFrame frame) {
+    return traceFrame(frame, new TraceOptions(false, false, false));
   }
 
-  private TraceFrame traceFrame(
-      final MessageFrame frame, final Gas currentGasCost, final TraceOptions traceOptions)
-      throws Exception {
+  private TraceFrame traceFrame(final MessageFrame frame, final TraceOptions traceOptions) {
     final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions);
-    tracer.traceExecution(frame, Optional.of(currentGasCost), executeOperationAction);
+    tracer.traceExecution(frame, () -> anOperation.execute(frame, null));
     return getOnlyTraceFrame(tracer);
   }
 

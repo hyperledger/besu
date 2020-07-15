@@ -38,7 +38,7 @@ public abstract class AbstractDataFetcherTest {
 
   @Mock protected DataFetchingEnvironment environment;
 
-  @Mock protected GraphQLDataFetcherContext context;
+  @Mock protected GraphQLDataFetcherContextImpl context;
 
   @Mock protected BlockchainQueries query;
 

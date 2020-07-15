@@ -40,9 +40,10 @@ public class IbftBlockCreatorFactory {
 
   private final Function<Long, Long> gasLimitCalculator;
   private final PendingTransactions pendingTransactions;
-  protected final ProtocolContext<IbftContext> protocolContext;
-  protected final ProtocolSchedule<IbftContext> protocolSchedule;
+  protected final ProtocolContext protocolContext;
+  protected final ProtocolSchedule protocolSchedule;
   private final Address localAddress;
+  final Address miningBeneficiary;
 
   private volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
@@ -51,10 +52,11 @@ public class IbftBlockCreatorFactory {
   public IbftBlockCreatorFactory(
       final Function<Long, Long> gasLimitCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<IbftContext> protocolContext,
-      final ProtocolSchedule<IbftContext> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final MiningParameters miningParams,
-      final Address localAddress) {
+      final Address localAddress,
+      final Address miningBeneficiary) {
     this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
@@ -63,6 +65,7 @@ public class IbftBlockCreatorFactory {
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
+    this.miningBeneficiary = miningBeneficiary;
   }
 
   public IbftBlockCreator create(final BlockHeader parentHeader, final int round) {
@@ -75,7 +78,8 @@ public class IbftBlockCreatorFactory {
         gasLimitCalculator,
         minTransactionGasPrice,
         minBlockOccupancyRatio,
-        parentHeader);
+        parentHeader,
+        miningBeneficiary);
   }
 
   public void setExtraData(final Bytes extraData) {
@@ -93,12 +97,15 @@ public class IbftBlockCreatorFactory {
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final VoteTally voteTally =
         protocolContext
-            .getConsensusState()
+            .getConsensusState(IbftContext.class)
             .getVoteTallyCache()
             .getVoteTallyAfterBlock(parentHeader);
 
     final Optional<ValidatorVote> proposal =
-        protocolContext.getConsensusState().getVoteProposer().getVote(localAddress, voteTally);
+        protocolContext
+            .getConsensusState(IbftContext.class)
+            .getVoteProposer()
+            .getVote(localAddress, voteTally);
 
     final List<Address> validators = new ArrayList<>(voteTally.getValidators());
 

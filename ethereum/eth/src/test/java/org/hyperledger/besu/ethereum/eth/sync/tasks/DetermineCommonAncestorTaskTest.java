@@ -62,7 +62,7 @@ import org.junit.Test;
 
 public class DetermineCommonAncestorTaskTest {
 
-  private final ProtocolSchedule<?> protocolSchedule = MainnetProtocolSchedule.create();
+  private final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final int defaultHeaderRequestSize = 10;
@@ -70,7 +70,7 @@ public class DetermineCommonAncestorTaskTest {
   private Block localGenesisBlock;
   private EthProtocolManager ethProtocolManager;
   private EthContext ethContext;
-  private ProtocolContext<?> protocolContext;
+  private ProtocolContext protocolContext;
 
   @Before
   public void setup() {
@@ -84,7 +84,7 @@ public class DetermineCommonAncestorTaskTest {
             mock(TransactionPool.class),
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
-    protocolContext = new ProtocolContext<>(localBlockchain, worldStateArchive, null);
+    protocolContext = new ProtocolContext(localBlockchain, worldStateArchive, null);
   }
 
   @Test
@@ -272,7 +272,7 @@ public class DetermineCommonAncestorTaskTest {
    *     remoteBlockCount} - 1.
    * @param blocksInCommon The number of blocks shared between local and remote. If a common
    *     ancestor exists, its block number will be: {@code blocksInCommon} - 1
-   * @return
+   * @return the test blockchain
    */
   private Blockchain setupLocalAndRemoteChains(
       final int localBlockCount, final int remoteBlockCount, final int blocksInCommon) {

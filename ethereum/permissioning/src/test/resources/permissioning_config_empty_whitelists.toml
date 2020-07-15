@@ -1,4 +1,0 @@
-# Permissioning TOML file with empty lists
-
-accounts-whitelist=[]
-nodes-whitelist=[]

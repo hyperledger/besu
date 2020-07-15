@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -57,31 +58,32 @@ import org.junit.Test;
  */
 public abstract class AbstractMessageTaskTest<T, R> {
   protected static Blockchain blockchain;
-  protected static ProtocolSchedule<Void> protocolSchedule;
-  protected static ProtocolContext<Void> protocolContext;
+  protected static ProtocolSchedule protocolSchedule;
+  protected static ProtocolContext protocolContext;
   protected static MetricsSystem metricsSystem = new NoOpMetricsSystem();
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
+  protected EthPeers ethPeers;
   protected TransactionPool transactionPool;
   protected AtomicBoolean peersDoTimeout;
   protected AtomicInteger peerCountToTimeout;
 
   @BeforeClass
   public static void setup() {
-    final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
 
-    assert (blockchainSetupUtil.getMaxBlockNumber() >= 20L);
+    assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
   @Before
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+    ethPeers = spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(

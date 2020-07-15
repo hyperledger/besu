@@ -16,8 +16,12 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -29,16 +33,17 @@ public class MStore8Operation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(0));
-
-    return gasCalculator().mStore8OperationGasCost(frame, offset);
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 value = frame.popStackItem();
+
+    final Gas cost = gasCalculator().mStore8OperationGasCost(frame, location);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
     frame.writeMemory(location, value.get(Bytes32.SIZE - 1), true);
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

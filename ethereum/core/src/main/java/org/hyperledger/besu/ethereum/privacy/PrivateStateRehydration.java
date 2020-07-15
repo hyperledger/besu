@@ -43,7 +43,7 @@ public class PrivateStateRehydration {
 
   private final PrivateStateStorage privateStateStorage;
   private final Blockchain blockchain;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final WorldStateArchive publicWorldStateArchive;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
@@ -51,7 +51,7 @@ public class PrivateStateRehydration {
   public PrivateStateRehydration(
       final PrivateStateStorage privateStateStorage,
       final Blockchain blockchain,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final WorldStateArchive publicWorldStateArchive,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver) {
@@ -70,7 +70,7 @@ public class PrivateStateRehydration {
     final Optional<Bytes> maybeGroupId =
         privateTransactionWithMetadataList.get(0).getPrivateTransaction().getPrivacyGroupId();
     if (maybeGroupId.isEmpty()) {
-      LOG.debug("On-chain groups must have a group id.");
+      LOG.debug("Onchain groups must have a group id.");
       return;
     }
     final Bytes32 privacyGroupId = Bytes32.wrap(maybeGroupId.get());
@@ -127,7 +127,7 @@ public class PrivateStateRehydration {
               .map(Transaction::getHash)
               .collect(Collectors.toList()));
 
-      final ProtocolSpec<?> protocolSpec =
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(blockchain.getBlockHeader(blockHash).get().getNumber());
       final PrivateGroupRehydrationBlockProcessor privateGroupRehydrationBlockProcessor =
           new PrivateGroupRehydrationBlockProcessor(

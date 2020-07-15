@@ -71,7 +71,7 @@ public class PrivacyTest {
 
   @Test
   public void defaultPrivacy() throws IOException, URISyntaxException {
-    final BesuController<?> besuController = setUpControllerWithPrivacyEnabled(false);
+    final BesuController besuController = setUpControllerWithPrivacyEnabled(false);
 
     final PrecompiledContract precompiledContract =
         getPrecompile(besuController, Address.DEFAULT_PRIVACY);
@@ -81,12 +81,7 @@ public class PrivacyTest {
 
   @Test
   public void onchainEnabledPrivacy() throws IOException, URISyntaxException {
-    final BesuController<?> besuController = setUpControllerWithPrivacyEnabled(true);
-
-    final PrecompiledContract privacyPrecompiledContract =
-        getPrecompile(besuController, Address.DEFAULT_PRIVACY);
-
-    assertThat(privacyPrecompiledContract.getName()).isEqualTo("Privacy");
+    final BesuController besuController = setUpControllerWithPrivacyEnabled(true);
 
     final PrecompiledContract onchainPrecompiledContract =
         getPrecompile(besuController, Address.ONCHAIN_PRIVACY);
@@ -94,13 +89,12 @@ public class PrivacyTest {
     assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnChainPrivacy");
   }
 
-  private BesuController<?> setUpControllerWithPrivacyEnabled(final boolean onChainEnabled)
+  private BesuController setUpControllerWithPrivacyEnabled(final boolean onChainEnabled)
       throws IOException, URISyntaxException {
     final Path dataDir = folder.newFolder().toPath();
     final Path dbDir = dataDir.resolve("database");
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
-            .setPrivacyAddress(Address.PRIVACY)
             .setEnabled(true)
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
@@ -144,7 +138,7 @@ public class PrivacyTest {
   }
 
   private PrecompiledContract getPrecompile(
-      final BesuController<?> besuController, final Address defaultPrivacy) {
+      final BesuController besuController, final Address defaultPrivacy) {
     return besuController
         .getProtocolSchedule()
         .getByBlockNumber(1)

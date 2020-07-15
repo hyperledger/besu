@@ -45,7 +45,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, AddNodeResponse> addNodesToWhitelist(final List<URI> enodeList) {
     return new Request<>(
-        "perm_addNodesToWhitelist",
+        "perm_addNodesToAllowlist",
         Collections.singletonList(enodeList),
         web3jService,
         AddNodeResponse.class);
@@ -53,7 +53,7 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, RemoveNodeResponse> removeNodesFromWhitelist(final List<URI> enodeList) {
     return new Request<>(
-        "perm_removeNodesFromWhitelist",
+        "perm_removeNodesFromAllowlist",
         Collections.singletonList(enodeList),
         web3jService,
         RemoveNodeResponse.class);
@@ -61,17 +61,17 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, GetNodesWhitelistResponse> getNodesWhitelist() {
     return new Request<>(
-        "perm_getNodesWhitelist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
+        "perm_getNodesAllowlist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
   }
 
   Request<?, GetAccountsWhitelistResponse> getAccountsWhitelist() {
     return new Request<>(
-        "perm_getAccountsWhitelist", null, web3jService, GetAccountsWhitelistResponse.class);
+        "perm_getAccountsAllowlist", null, web3jService, GetAccountsWhitelistResponse.class);
   }
 
   Request<?, AddAccountsToWhitelistResponse> addAccountsToWhitelist(final List<String> accounts) {
     return new Request<>(
-        "perm_addAccountsToWhitelist",
+        "perm_addAccountsToAllowlist",
         Collections.singletonList(accounts),
         web3jService,
         AddAccountsToWhitelistResponse.class);
@@ -80,7 +80,7 @@ public class PermissioningJsonRpcRequestFactory {
   Request<?, RemoveAccountsFromWhitelistResponse> removeAccountsFromWhitelist(
       final List<String> accounts) {
     return new Request<>(
-        "perm_removeAccountsFromWhitelist",
+        "perm_removeAccountsFromAllowlist",
         Collections.singletonList(accounts),
         web3jService,
         RemoveAccountsFromWhitelistResponse.class);

@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
@@ -75,9 +76,10 @@ public class RetestethContext {
   private Address coinbase;
   private Bytes extraData;
   private MutableBlockchain blockchain;
-  private ProtocolContext<Void> protocolContext;
+  private ProtocolContext protocolContext;
   private BlockchainQueries blockchainQueries;
-  private ProtocolSchedule<Void> protocolSchedule;
+  private ProtocolSchedule protocolSchedule;
+  private BlockHeaderFunctions blockHeaderFunctions;
   private HeaderValidationMode headerValidationMode;
   private BlockReplay blockReplay;
   private RetestethClock retestethClock;
@@ -125,8 +127,9 @@ public class RetestethContext {
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule = MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
-      protocolSchedule = new NoRewardProtocolScheduleWrapper<>(protocolSchedule);
+      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
     }
+    blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
     final GenesisState genesisState = GenesisState.fromJson(genesisConfigString, protocolSchedule);
     coinbase = genesisState.getBlock().getHeader().getCoinbase();
@@ -140,7 +143,7 @@ public class RetestethContext {
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext = new ProtocolContext<>(blockchain, worldStateArchive, null);
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null);
 
     blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
 
@@ -207,11 +210,15 @@ public class RetestethContext {
         new NoOpMetricsSystem());
   }
 
-  public ProtocolSchedule<Void> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
-  public ProtocolContext<Void> getProtocolContext() {
+  public BlockHeaderFunctions getBlockHeaderFunctions() {
+    return blockHeaderFunctions;
+  }
+
+  public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
@@ -219,7 +226,7 @@ public class RetestethContext {
     return blockchain.getChainHeadBlockNumber();
   }
 
-  public ProtocolSpec<Void> getProtocolSpec(final long blockNumber) {
+  public ProtocolSpec getProtocolSpec(final long blockNumber) {
     return getProtocolSchedule().getByBlockNumber(blockNumber);
   }
 

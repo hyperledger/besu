@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -82,7 +81,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   private final TransactionProcessor transactionProcessor;
 
-  private final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
   final Wei blockReward;
 
@@ -92,7 +91,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   private final TransactionGasBudgetCalculator gasBudgetCalculator;
 
-  public AbstractBlockProcessor(
+  protected AbstractBlockProcessor(
       final TransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
@@ -162,9 +161,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 
+  protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
+    return miningBeneficiaryCalculator;
+  }
+
   abstract boolean rewardCoinbase(
       final MutableWorldState worldState,
-      final ProcessableBlockHeader header,
+      final BlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards);
 }

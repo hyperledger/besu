@@ -58,12 +58,12 @@ import com.google.common.collect.Range;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BlockPropagationManager<C> {
+public class BlockPropagationManager {
   private static final Logger LOG = LogManager.getLogger();
 
   private final SynchronizerConfiguration config;
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
@@ -77,8 +77,8 @@ public class BlockPropagationManager<C> {
 
   BlockPropagationManager(
       final SynchronizerConfiguration config,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final PendingBlocks pendingBlocks,
@@ -299,9 +299,9 @@ public class BlockPropagationManager<C> {
                             + block.getHeader().getNumber()
                             + "."));
 
-    final ProtocolSpec<C> protocolSpec =
+    final ProtocolSpec protocolSpec =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(
@@ -309,7 +309,7 @@ public class BlockPropagationManager<C> {
   }
 
   private CompletableFuture<Block> validateAndProcessPendingBlock(
-      final BlockHeaderValidator<C> blockHeaderValidator,
+      final BlockHeaderValidator blockHeaderValidator,
       final Block block,
       final BlockHeader parent) {
     if (blockHeaderValidator.validateHeader(
@@ -327,7 +327,7 @@ public class BlockPropagationManager<C> {
   }
 
   private CompletableFuture<Block> runImportTask(final Block block) {
-    final PersistBlockTask<C> importTask =
+    final PersistBlockTask importTask =
         PersistBlockTask.create(
             protocolSchedule,
             protocolContext,

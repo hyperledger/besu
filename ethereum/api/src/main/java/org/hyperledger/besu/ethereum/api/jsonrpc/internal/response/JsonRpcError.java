@@ -27,6 +27,8 @@ public enum JsonRpcError {
   METHOD_NOT_FOUND(-32601, "Method not found"),
   INVALID_PARAMS(-32602, "Invalid params"),
   INTERNAL_ERROR(-32603, "Internal error"),
+  TIMEOUT_ERROR(-32603, "Timeout expired"),
+
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
 
   // eth_sendTransaction specific error message
@@ -57,6 +59,7 @@ public enum JsonRpcError {
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
+  TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),
@@ -74,34 +77,34 @@ public enum JsonRpcError {
   // Debug failures
   PARENT_BLOCK_NOT_FOUND(-32000, "Parent block not found"),
 
-  // Permissioning/Account whitelist errors
-  ACCOUNT_WHITELIST_NOT_ENABLED(-32000, "Account whitelisting has not been enabled"),
-  ACCOUNT_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of accounts"),
-  ACCOUNT_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid account"),
-  ACCOUNT_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate accounts"),
-  ACCOUNT_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing account to whitelist"),
-  ACCOUNT_WHITELIST_ABSENT_ENTRY(-32000, "Cannot remove an absent account from whitelist"),
+  // Permissioning/Account allowlist errors
+  ACCOUNT_ALLOWLIST_NOT_ENABLED(-32000, "Account allowlist has not been enabled"),
+  ACCOUNT_ALLOWLIST_EMPTY_ENTRY(-32000, "Request contains an empty list of accounts"),
+  ACCOUNT_ALLOWLIST_INVALID_ENTRY(-32000, "Request contains an invalid account"),
+  ACCOUNT_ALLOWLIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate accounts"),
+  ACCOUNT_ALLOWLIST_EXISTING_ENTRY(-32000, "Cannot add an existing account to allowlist"),
+  ACCOUNT_ALLOWLIST_ABSENT_ENTRY(-32000, "Cannot remove an absent account from allowlist"),
 
-  // Permissioning/Node whitelist errors
-  NODE_WHITELIST_NOT_ENABLED(-32000, "Node whitelisting has not been enabled"),
-  NODE_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of nodes"),
-  NODE_WHITELIST_INVALID_ENTRY(-32000, "Request contains an invalid node"),
-  NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
-  NODE_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to whitelist"),
-  NODE_WHITELIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from whitelist"),
-  NODE_WHITELIST_FIXED_NODE_CANNOT_BE_REMOVED(
-      -32000, "Cannot remove a fixed node (bootnode or static node) from whitelist"),
+  // Permissioning/Node allowlist errors
+  NODE_ALLOWLIST_NOT_ENABLED(-32000, "Node allowlist has not been enabled"),
+  NODE_ALLOWLIST_EMPTY_ENTRY(-32000, "Request contains an empty list of nodes"),
+  NODE_ALLOWLIST_INVALID_ENTRY(-32000, "Request contains an invalid node"),
+  NODE_ALLOWLIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
+  NODE_ALLOWLIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to allowlist"),
+  NODE_ALLOWLIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from allowlist"),
+  NODE_ALLOWLIST_FIXED_NODE_CANNOT_BE_REMOVED(
+      -32000, "Cannot remove a fixed node (bootnode or static node) from allowlist"),
 
   // Permissioning/persistence errors
-  WHITELIST_PERSIST_FAILURE(
-      -32000, "Unable to persist changes to whitelist configuration file. Changes reverted"),
-  WHITELIST_FILE_SYNC(
+  ALLOWLIST_PERSIST_FAILURE(
+      -32000, "Unable to persist changes to allowlist configuration file. Changes reverted"),
+  ALLOWLIST_FILE_SYNC(
       -32000,
-      "The permissioning whitelist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
-  WHITELIST_RELOAD_ERROR(
+      "The permissioning allowlist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
+  ALLOWLIST_RELOAD_ERROR(
       -32000,
-      "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesWhitelist to review the current state of the whitelists"),
-  PERMISSIONING_NOT_ENABLED(-32000, "Node/Account whitelisting has not been enabled"),
+      "Error reloading permissions file. Please use perm_getAccountsAllowlist and perm_getNodesAllowlist to review the current state of the allowlists"),
+  PERMISSIONING_NOT_ENABLED(-32000, "Node/Account allowlist has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
   // Permissioning/Authorization errors
@@ -114,22 +117,22 @@ public enum JsonRpcError {
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
-  FIND_ON_CHAIN_PRIVACY_GROUP_ERROR(-50100, "Error finding on-chain privacy group"),
+  FIND_ONCHAIN_PRIVACY_GROUP_ERROR(-50100, "Error finding onchain privacy group"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
   OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Offchain Privacy group does not exist."),
-  ONCCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
+  ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
   ONCHAIN_PRIVACY_GROUP_NOT_ENABLED(-50100, "Onchain privacy groups not enabled."),
   OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED(
       -50100, "Offchain privacy group can't be used with Onchain privacy groups enabled."),
   ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE(
-      -50100, "Private transactions to on-chain privacy groups must use privacyGroupId"),
+      -50100, "Private transactions to onchain privacy groups must use privacyGroupId"),
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
-      "Private Marker Transaction failed due to intrinsic gas exeeding the limit. Gas limit used from the Private Transaction."),
+      "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 
@@ -167,7 +170,12 @@ public enum JsonRpcError {
   METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented"),
 
   /** Plugins error */
-  PLUGIN_NOT_FOUND(-60000, "Plugin not found");
+  PLUGIN_NOT_FOUND(-60000, "Plugin not found"),
+
+  // Retesteth Errors
+
+  BLOCK_RLP_IMPORT_ERROR(-32000, "Could not decode RLP for Block"),
+  BLOCK_IMPORT_ERROR(-32000, "Could not import Block");
 
   private final int code;
   private final String message;

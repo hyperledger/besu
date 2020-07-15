@@ -36,7 +36,7 @@ import dagger.Component;
     })
 public interface EvmToolComponent {
 
-  Function<Integer, ProtocolSpec<?>> getProtocolSpec();
+  Function<Integer, ProtocolSpec> getProtocolSpec();
 
   WorldUpdater getWorldUpdater();
 

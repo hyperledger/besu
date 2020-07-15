@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
@@ -41,19 +40,22 @@ public class LogOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 dataOffset = UInt256.fromBytes(frame.getStackItem(0));
-    final UInt256 dataLength = UInt256.fromBytes(frame.getStackItem(1));
-
-    return gasCalculator().logOperationGasCost(frame, dataOffset, dataLength, numTopics);
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Address address = frame.getRecipientAddress();
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.isStatic()) {
+      return ILLEGAL_STATE_CHANGE;
+    }
 
     final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+
+    final Gas cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
+    final Address address = frame.getRecipientAddress();
+
     final Bytes data = frame.readMemory(dataLocation, numBytes);
 
     final ImmutableList.Builder<LogTopic> builder =
@@ -63,15 +65,6 @@ public class LogOperation extends AbstractOperation {
     }
 
     frame.addLog(new Log(address, data, builder.build()));
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
-    return frame.isStatic()
-        ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
-        : Optional.empty();
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

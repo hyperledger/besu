@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.permissioning;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
+import org.hyperledger.besu.ethereum.permissioning.node.NodeAllowlistUpdatedEvent;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
-import org.hyperledger.besu.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -46,9 +47,9 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   private LocalPermissioningConfiguration configuration;
   private final List<EnodeURL> fixedNodes;
   private final Bytes localNodeId;
-  private final List<EnodeURL> nodesWhitelist = new ArrayList<>();
-  private final WhitelistPersistor whitelistPersistor;
-  private final Subscribers<Consumer<NodeWhitelistUpdatedEvent>> nodeWhitelistUpdatedObservers =
+  private final List<EnodeURL> nodesAllowlist = new ArrayList<>();
+  private final AllowlistPersistor allowlistPersistor;
+  private final Subscribers<Consumer<NodeAllowlistUpdatedEvent>> nodeAllowlistUpdatedObservers =
       Subscribers.create();
 
   private final Counter checkCounter;
@@ -64,7 +65,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
         permissioningConfiguration,
         fixedNodes,
         localNodeId,
-        new WhitelistPersistor(permissioningConfiguration.getNodePermissioningConfigFilePath()),
+        new AllowlistPersistor(permissioningConfiguration.getNodePermissioningConfigFilePath()),
         metricsSystem);
   }
 
@@ -72,12 +73,12 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
       final LocalPermissioningConfiguration configuration,
       final List<EnodeURL> fixedNodes,
       final Bytes localNodeId,
-      final WhitelistPersistor whitelistPersistor,
+      final AllowlistPersistor allowlistPersistor,
       final MetricsSystem metricsSystem) {
     this.configuration = configuration;
     this.fixedNodes = fixedNodes;
     this.localNodeId = localNodeId;
-    this.whitelistPersistor = whitelistPersistor;
+    this.allowlistPersistor = allowlistPersistor;
     readNodesFromConfig(configuration);
 
     this.checkCounter =
@@ -98,48 +99,48 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   private void readNodesFromConfig(final LocalPermissioningConfiguration configuration) {
-    if (configuration.isNodeWhitelistEnabled() && configuration.getNodeWhitelist() != null) {
-      for (URI uri : configuration.getNodeWhitelist()) {
+    if (configuration.isNodeAllowlistEnabled() && configuration.getNodeAllowlist() != null) {
+      for (URI uri : configuration.getNodeAllowlist()) {
         addNode(EnodeURL.fromString(uri.toString()));
       }
     }
   }
 
-  public NodesWhitelistResult addNodes(final List<String> enodeURLs) {
-    final NodesWhitelistResult inputValidationResult = validInput(enodeURLs);
-    if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
+  public NodesAllowlistResult addNodes(final List<String> enodeURLs) {
+    final NodesAllowlistResult inputValidationResult = validInput(enodeURLs);
+    if (inputValidationResult.result() != AllowlistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
     final List<EnodeURL> peers =
         enodeURLs.stream().map(EnodeURL::fromString).collect(Collectors.toList());
 
     for (EnodeURL peer : peers) {
-      if (nodesWhitelist.contains(peer)) {
-        return new NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_EXISTING_ENTRY,
-            String.format("Specified peer: %s already exists in whitelist.", peer.getNodeId()));
+      if (nodesAllowlist.contains(peer)) {
+        return new NodesAllowlistResult(
+            AllowlistOperationResult.ERROR_EXISTING_ENTRY,
+            String.format("Specified peer: %s already exists in allowlist.", peer.getNodeId()));
       }
     }
 
-    final List<EnodeURL> oldWhitelist = new ArrayList<>(this.nodesWhitelist);
+    final List<EnodeURL> oldAllowlist = new ArrayList<>(this.nodesAllowlist);
     peers.forEach(this::addNode);
-    notifyListUpdatedSubscribers(new NodeWhitelistUpdatedEvent(peers, Collections.emptyList()));
+    notifyListUpdatedSubscribers(new NodeAllowlistUpdatedEvent(peers, Collections.emptyList()));
 
-    final NodesWhitelistResult updateConfigFileResult = updateWhitelistInConfigFile(oldWhitelist);
-    if (updateConfigFileResult.result() != WhitelistOperationResult.SUCCESS) {
+    final NodesAllowlistResult updateConfigFileResult = updateAllowlistInConfigFile(oldAllowlist);
+    if (updateConfigFileResult.result() != AllowlistOperationResult.SUCCESS) {
       return updateConfigFileResult;
     }
 
-    return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
+    return new NodesAllowlistResult(AllowlistOperationResult.SUCCESS);
   }
 
   public boolean addNode(final EnodeURL enodeURL) {
-    return nodesWhitelist.add(enodeURL);
+    return nodesAllowlist.add(enodeURL);
   }
 
-  public NodesWhitelistResult removeNodes(final List<String> enodeURLs) {
-    final NodesWhitelistResult inputValidationResult = validInput(enodeURLs);
-    if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
+  public NodesAllowlistResult removeNodes(final List<String> enodeURLs) {
+    final NodesAllowlistResult inputValidationResult = validInput(enodeURLs);
+    if (inputValidationResult.result() != AllowlistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
     final List<EnodeURL> peers =
@@ -147,61 +148,61 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
 
     boolean anyBootnode = peers.stream().anyMatch(fixedNodes::contains);
     if (anyBootnode) {
-      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED);
+      return new NodesAllowlistResult(AllowlistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED);
     }
 
     for (EnodeURL peer : peers) {
-      if (!(nodesWhitelist.contains(peer))) {
-        return new NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_ABSENT_ENTRY,
-            String.format("Specified peer: %s does not exist in whitelist.", peer.getNodeId()));
+      if (!(nodesAllowlist.contains(peer))) {
+        return new NodesAllowlistResult(
+            AllowlistOperationResult.ERROR_ABSENT_ENTRY,
+            String.format("Specified peer: %s does not exist in allowlist.", peer.getNodeId()));
       }
     }
 
-    final List<EnodeURL> oldWhitelist = new ArrayList<>(this.nodesWhitelist);
+    final List<EnodeURL> oldAllowlist = new ArrayList<>(this.nodesAllowlist);
     peers.forEach(this::removeNode);
-    notifyListUpdatedSubscribers(new NodeWhitelistUpdatedEvent(Collections.emptyList(), peers));
+    notifyListUpdatedSubscribers(new NodeAllowlistUpdatedEvent(Collections.emptyList(), peers));
 
-    final NodesWhitelistResult updateConfigFileResult = updateWhitelistInConfigFile(oldWhitelist);
-    if (updateConfigFileResult.result() != WhitelistOperationResult.SUCCESS) {
+    final NodesAllowlistResult updateConfigFileResult = updateAllowlistInConfigFile(oldAllowlist);
+    if (updateConfigFileResult.result() != AllowlistOperationResult.SUCCESS) {
       return updateConfigFileResult;
     }
 
-    return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
+    return new NodesAllowlistResult(AllowlistOperationResult.SUCCESS);
   }
 
   private boolean removeNode(final EnodeURL enodeURL) {
-    return nodesWhitelist.remove(enodeURL);
+    return nodesAllowlist.remove(enodeURL);
   }
 
-  private NodesWhitelistResult updateWhitelistInConfigFile(final List<EnodeURL> oldWhitelist) {
+  private NodesAllowlistResult updateAllowlistInConfigFile(final List<EnodeURL> oldAllowlist) {
     try {
-      verifyConfigurationFileState(peerToEnodeURI(oldWhitelist));
-      updateConfigurationFile(peerToEnodeURI(nodesWhitelist));
-      verifyConfigurationFileState(peerToEnodeURI(nodesWhitelist));
+      verifyConfigurationFileState(peerToEnodeURI(oldAllowlist));
+      updateConfigurationFile(peerToEnodeURI(nodesAllowlist));
+      verifyConfigurationFileState(peerToEnodeURI(nodesAllowlist));
     } catch (IOException e) {
-      revertState(oldWhitelist);
-      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_WHITELIST_PERSIST_FAIL);
-    } catch (WhitelistFileSyncException e) {
-      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_WHITELIST_FILE_SYNC);
+      revertState(oldAllowlist);
+      return new NodesAllowlistResult(AllowlistOperationResult.ERROR_ALLOWLIST_PERSIST_FAIL);
+    } catch (AllowlistFileSyncException e) {
+      return new NodesAllowlistResult(AllowlistOperationResult.ERROR_ALLOWLIST_FILE_SYNC);
     }
 
-    return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
+    return new NodesAllowlistResult(AllowlistOperationResult.SUCCESS);
   }
 
-  private NodesWhitelistResult validInput(final List<String> peers) {
+  private NodesAllowlistResult validInput(final List<String> peers) {
     if (peers == null || peers.isEmpty()) {
-      return new NodesWhitelistResult(
-          WhitelistOperationResult.ERROR_EMPTY_ENTRY, String.format("Null/empty peers list"));
+      return new NodesAllowlistResult(
+          AllowlistOperationResult.ERROR_EMPTY_ENTRY, String.format("Null/empty peers list"));
     }
 
     if (peerListHasDuplicates(peers)) {
-      return new NodesWhitelistResult(
-          WhitelistOperationResult.ERROR_DUPLICATED_ENTRY,
+      return new NodesAllowlistResult(
+          AllowlistOperationResult.ERROR_DUPLICATED_ENTRY,
           String.format("Specified peer list contains duplicates"));
     }
 
-    return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
+    return new NodesAllowlistResult(AllowlistOperationResult.SUCCESS);
   }
 
   private boolean peerListHasDuplicates(final List<String> peers) {
@@ -209,18 +210,17 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   private void verifyConfigurationFileState(final Collection<String> oldNodes)
-      throws IOException, WhitelistFileSyncException {
-    whitelistPersistor.verifyConfigFileMatchesState(
-        WhitelistPersistor.WHITELIST_TYPE.NODES, oldNodes);
+      throws IOException, AllowlistFileSyncException {
+    allowlistPersistor.verifyConfigFileMatchesState(ALLOWLIST_TYPE.NODES, oldNodes);
   }
 
   private void updateConfigurationFile(final Collection<String> nodes) throws IOException {
-    whitelistPersistor.updateConfig(WhitelistPersistor.WHITELIST_TYPE.NODES, nodes);
+    allowlistPersistor.updateConfig(ALLOWLIST_TYPE.NODES, nodes);
   }
 
-  private void revertState(final List<EnodeURL> nodesWhitelist) {
-    this.nodesWhitelist.clear();
-    this.nodesWhitelist.addAll(nodesWhitelist);
+  private void revertState(final List<EnodeURL> nodesAllowlist) {
+    this.nodesAllowlist.clear();
+    this.nodesAllowlist.addAll(nodesAllowlist);
   }
 
   private Collection<String> peerToEnodeURI(final Collection<EnodeURL> peers) {
@@ -235,86 +235,86 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     if (Objects.equals(localNodeId, node.getNodeId())) {
       return true;
     }
-    return nodesWhitelist.stream().anyMatch(p -> EnodeURL.sameListeningEndpoint(p, node));
+    return nodesAllowlist.stream().anyMatch(p -> EnodeURL.sameListeningEndpoint(p, node));
   }
 
-  public List<String> getNodesWhitelist() {
-    return nodesWhitelist.stream().map(Object::toString).collect(Collectors.toList());
+  public List<String> getNodesAllowlist() {
+    return nodesAllowlist.stream().map(Object::toString).collect(Collectors.toList());
   }
 
   public synchronized void reload() throws RuntimeException {
-    final List<EnodeURL> currentAccountsList = new ArrayList<>(nodesWhitelist);
-    nodesWhitelist.clear();
+    final List<EnodeURL> currentAccountsList = new ArrayList<>(nodesAllowlist);
+    nodesAllowlist.clear();
 
     try {
       final LocalPermissioningConfiguration updatedConfig =
           PermissioningConfigurationBuilder.permissioningConfiguration(
-              configuration.isNodeWhitelistEnabled(),
+              configuration.isNodeAllowlistEnabled(),
               configuration.getNodePermissioningConfigFilePath(),
-              configuration.isAccountWhitelistEnabled(),
+              configuration.isAccountAllowlistEnabled(),
               configuration.getAccountPermissioningConfigFilePath());
 
       readNodesFromConfig(updatedConfig);
       configuration = updatedConfig;
 
-      createNodeWhitelistModifiedEventAfterReload(currentAccountsList, nodesWhitelist);
+      createNodeAllowlistModifiedEventAfterReload(currentAccountsList, nodesAllowlist);
     } catch (Exception e) {
       LOG.warn(
-          "Error reloading permissions file. In-memory whitelisted nodes will be reverted to previous valid configuration. "
+          "Error reloading permissions file. In-memory nodes allowlist will be reverted to previous valid configuration. "
               + "Details: {}",
           e.getMessage());
-      nodesWhitelist.clear();
-      nodesWhitelist.addAll(currentAccountsList);
+      nodesAllowlist.clear();
+      nodesAllowlist.addAll(currentAccountsList);
       throw new RuntimeException(e);
     }
   }
 
-  private void createNodeWhitelistModifiedEventAfterReload(
-      final List<EnodeURL> previousNodeWhitelist, final List<EnodeURL> currentNodesList) {
+  private void createNodeAllowlistModifiedEventAfterReload(
+      final List<EnodeURL> previousNodeAllowlist, final List<EnodeURL> currentNodesList) {
     final List<EnodeURL> removedNodes =
-        previousNodeWhitelist.stream()
+        previousNodeAllowlist.stream()
             .filter(n -> !currentNodesList.contains(n))
             .collect(Collectors.toList());
 
     final List<EnodeURL> addedNodes =
         currentNodesList.stream()
-            .filter(n -> !previousNodeWhitelist.contains(n))
+            .filter(n -> !previousNodeAllowlist.contains(n))
             .collect(Collectors.toList());
 
     if (!removedNodes.isEmpty() || !addedNodes.isEmpty()) {
-      notifyListUpdatedSubscribers(new NodeWhitelistUpdatedEvent(addedNodes, removedNodes));
+      notifyListUpdatedSubscribers(new NodeAllowlistUpdatedEvent(addedNodes, removedNodes));
     }
   }
 
-  public long subscribeToListUpdatedEvent(final Consumer<NodeWhitelistUpdatedEvent> subscriber) {
-    return nodeWhitelistUpdatedObservers.subscribe(subscriber);
+  public long subscribeToListUpdatedEvent(final Consumer<NodeAllowlistUpdatedEvent> subscriber) {
+    return nodeAllowlistUpdatedObservers.subscribe(subscriber);
   }
 
-  private void notifyListUpdatedSubscribers(final NodeWhitelistUpdatedEvent event) {
+  private void notifyListUpdatedSubscribers(final NodeAllowlistUpdatedEvent event) {
     LOG.trace(
-        "Sending NodeWhitelistUpdatedEvent (added: {}, removed {})",
+        "Sending NodeAllowlistUpdatedEvent (added: {}, removed {})",
         event.getAddedNodes().size(),
         event.getRemovedNodes().size());
 
-    nodeWhitelistUpdatedObservers.forEach(c -> c.accept(event));
+    nodeAllowlistUpdatedObservers.forEach(c -> c.accept(event));
   }
 
-  public static class NodesWhitelistResult {
-    private final WhitelistOperationResult result;
+  public static class NodesAllowlistResult {
+    private final AllowlistOperationResult result;
     private final Optional<String> message;
 
-    NodesWhitelistResult(final WhitelistOperationResult result, final String message) {
+    NodesAllowlistResult(final AllowlistOperationResult result, final String message) {
       this.result = result;
       this.message = Optional.of(message);
     }
 
     @VisibleForTesting
-    public NodesWhitelistResult(final WhitelistOperationResult result) {
+    public NodesAllowlistResult(final AllowlistOperationResult result) {
       this.result = result;
       this.message = Optional.empty();
     }
 
-    public WhitelistOperationResult result() {
+    public AllowlistOperationResult result() {
       return result;
     }
 

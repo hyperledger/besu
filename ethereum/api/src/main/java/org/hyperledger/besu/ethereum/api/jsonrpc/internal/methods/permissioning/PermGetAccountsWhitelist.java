@@ -15,38 +15,20 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 
 import java.util.Optional;
 
-public class PermGetAccountsWhitelist implements JsonRpcMethod {
-
-  private final Optional<AccountLocalConfigPermissioningController> whitelistController;
+@Deprecated
+public class PermGetAccountsWhitelist extends PermGetAccountsAllowlist {
 
   public PermGetAccountsWhitelist(
-      final Optional<AccountLocalConfigPermissioningController> whitelistController) {
-    this.whitelistController = whitelistController;
+      final Optional<AccountLocalConfigPermissioningController> allowlistController) {
+    super(allowlistController);
   }
 
   @Override
   public String getName() {
     return RpcMethod.PERM_GET_ACCOUNTS_WHITELIST.getMethodName();
-  }
-
-  @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (whitelistController.isPresent()) {
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), whitelistController.get().getAccountWhitelist());
-    } else {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);
-    }
   }
 }

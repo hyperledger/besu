@@ -48,11 +48,11 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.rules.TemporaryFolder;
 
-public class BlockchainSetupUtil<C> {
+public class BlockchainSetupUtil {
   private final GenesisState genesisState;
   private final MutableBlockchain blockchain;
-  private final ProtocolContext<C> protocolContext;
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
   private final WorldStateArchive worldArchive;
   private final TransactionPool transactionPool;
   private final List<Block> blocks;
@@ -62,8 +62,8 @@ public class BlockchainSetupUtil<C> {
   private BlockchainSetupUtil(
       final GenesisState genesisState,
       final MutableBlockchain blockchain,
-      final ProtocolContext<C> protocolContext,
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final WorldStateArchive worldArchive,
       final TransactionPool transactionPool,
       final List<Block> blocks,
@@ -104,24 +104,23 @@ public class BlockchainSetupUtil<C> {
     return blocks.size();
   }
 
-  public static BlockchainSetupUtil<Void> forTesting() {
+  public static BlockchainSetupUtil forTesting() {
     return createForEthashChain(BlockTestUtil.getTestChainResources());
   }
 
-  public static BlockchainSetupUtil<Void> forMainnet() {
+  public static BlockchainSetupUtil forMainnet() {
     return createForEthashChain(BlockTestUtil.getMainnetResources());
   }
 
-  public static BlockchainSetupUtil<Void> forOutdatedFork() {
+  public static BlockchainSetupUtil forOutdatedFork() {
     return createForEthashChain(BlockTestUtil.getOutdatedForkResources());
   }
 
-  public static BlockchainSetupUtil<Void> forUpgradedFork() {
+  public static BlockchainSetupUtil forUpgradedFork() {
     return createForEthashChain(BlockTestUtil.getUpgradedForkResources());
   }
 
-  public static BlockchainSetupUtil<Void> createForEthashChain(
-      final ChainResources chainResources) {
+  public static BlockchainSetupUtil createForEthashChain(final ChainResources chainResources) {
     return create(
         chainResources,
         BlockchainSetupUtil::mainnetProtocolScheduleProvider,
@@ -129,20 +128,20 @@ public class BlockchainSetupUtil<C> {
         new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
   }
 
-  private static ProtocolSchedule<Void> mainnetProtocolScheduleProvider(
+  private static ProtocolSchedule mainnetProtocolScheduleProvider(
       final GenesisConfigFile genesisConfigFile) {
     return MainnetProtocolSchedule.fromConfig(genesisConfigFile.getConfigOptions());
   }
 
-  private static ProtocolContext<Void> mainnetProtocolContextProvider(
+  private static ProtocolContext mainnetProtocolContextProvider(
       final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive) {
-    return new ProtocolContext<>(blockchain, worldStateArchive, null);
+    return new ProtocolContext(blockchain, worldStateArchive, null);
   }
 
-  private static <T> BlockchainSetupUtil<T> create(
+  private static BlockchainSetupUtil create(
       final ChainResources chainResources,
-      final ProtocolScheduleProvider<T> protocolScheduleProvider,
-      final ProtocolContextProvider<T> protocolContextProvider,
+      final ProtocolScheduleProvider protocolScheduleProvider,
+      final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
     final TemporaryFolder temp = new TemporaryFolder();
     try {
@@ -150,7 +149,7 @@ public class BlockchainSetupUtil<C> {
       final String genesisJson = Resources.toString(chainResources.getGenesisURL(), Charsets.UTF_8);
 
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisJson);
-      final ProtocolSchedule<T> protocolSchedule = protocolScheduleProvider.get(genesisConfigFile);
+      final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfigFile);
 
       final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -158,8 +157,7 @@ public class BlockchainSetupUtil<C> {
       final TransactionPool transactionPool = mock(TransactionPool.class);
 
       genesisState.writeStateTo(worldArchive.getMutable());
-      final ProtocolContext<T> protocolContext =
-          protocolContextProvider.get(blockchain, worldArchive);
+      final ProtocolContext protocolContext = protocolContextProvider.get(blockchain, worldArchive);
 
       final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
       final List<Block> blocks = new ArrayList<>();
@@ -172,7 +170,7 @@ public class BlockchainSetupUtil<C> {
           blocks.add(iterator.next());
         }
       }
-      return new BlockchainSetupUtil<T>(
+      return new BlockchainSetupUtil(
           genesisState,
           blockchain,
           protocolContext,
@@ -200,11 +198,11 @@ public class BlockchainSetupUtil<C> {
     return blockchain;
   }
 
-  public ProtocolContext<C> getProtocolContext() {
+  public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
-  public ProtocolSchedule<C> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
@@ -225,9 +223,9 @@ public class BlockchainSetupUtil<C> {
       if (block.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
         continue;
       }
-      final ProtocolSpec<C> protocolSpec =
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-      final BlockImporter<C> blockImporter = protocolSpec.getBlockImporter();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final boolean result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
       if (!result) {
@@ -237,11 +235,11 @@ public class BlockchainSetupUtil<C> {
     this.maxBlockNumber = blockchain.getChainHeadBlockNumber();
   }
 
-  private interface ProtocolScheduleProvider<T> {
-    ProtocolSchedule<T> get(GenesisConfigFile genesisConfig);
+  private interface ProtocolScheduleProvider {
+    ProtocolSchedule get(GenesisConfigFile genesisConfig);
   }
 
-  private interface ProtocolContextProvider<T> {
-    ProtocolContext<T> get(MutableBlockchain blockchain, WorldStateArchive worldStateArchive);
+  private interface ProtocolContextProvider {
+    ProtocolContext get(MutableBlockchain blockchain, WorldStateArchive worldStateArchive);
   }
 }

@@ -36,7 +36,7 @@ public class CliqueProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(4);
 
-  public static ProtocolSchedule<CliqueContext> create(
+  public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
@@ -46,8 +46,12 @@ public class CliqueProtocolSchedule {
 
     final Address localNodeAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
+    if (cliqueConfig.getEpochLength() <= 0) {
+      throw new IllegalArgumentException("Epoch length in config must be greater than zero");
+    }
+
     final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
-    return new ProtocolScheduleBuilder<>(
+    return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
             builder ->
@@ -58,28 +62,29 @@ public class CliqueProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  public static ProtocolSchedule<CliqueContext> create(
+  public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled) {
     return create(config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
-  private static ProtocolSpecBuilder<CliqueContext> applyCliqueSpecificModifications(
+  private static ProtocolSpecBuilder applyCliqueSpecificModifications(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
       final Address localNodeAddress,
-      final ProtocolSpecBuilder<Void> specBuilder) {
+      final ProtocolSpecBuilder specBuilder) {
     return specBuilder
-        .changeConsensusContextType(
+        .blockHeaderValidatorBuilder(
             BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-                secondsBetweenBlocks, epochManager),
+                secondsBetweenBlocks, epochManager))
+        .ommerHeaderValidatorBuilder(
             BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-                secondsBetweenBlocks, epochManager),
-            MainnetBlockBodyValidator::new,
-            MainnetBlockValidator::new,
-            MainnetBlockImporter::new,
-            new CliqueDifficultyCalculator(localNodeAddress))
+                secondsBetweenBlocks, epochManager))
+        .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
+        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockImporterBuilder(MainnetBlockImporter::new)
+        .difficultyCalculator(new CliqueDifficultyCalculator(localNodeAddress))
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .miningBeneficiaryCalculator(CliqueHelpers::getProposerOfBlock)

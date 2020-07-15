@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -29,6 +33,7 @@ import org.junit.Test;
 public class CliqueProtocolScheduleTest {
 
   private static final NodeKey NODE_KEY = NodeKeyUtils.generate();
+  private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
 
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {
@@ -43,13 +48,13 @@ public class CliqueProtocolScheduleTest {
             + "}";
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
-    final ProtocolSchedule<CliqueContext> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(config, NODE_KEY, false);
 
-    final ProtocolSpec<CliqueContext> homesteadSpec = protocolSchedule.getByBlockNumber(1);
-    final ProtocolSpec<CliqueContext> tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
-    final ProtocolSpec<CliqueContext> spuriousDragonSpec = protocolSchedule.getByBlockNumber(3);
-    final ProtocolSpec<CliqueContext> byzantiumSpec = protocolSchedule.getByBlockNumber(1035301);
+    final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
+    final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
+    final ProtocolSpec spuriousDragonSpec = protocolSchedule.getByBlockNumber(3);
+    final ProtocolSpec byzantiumSpec = protocolSchedule.getByBlockNumber(1035301);
 
     assertThat(homesteadSpec.equals(tangerineWhistleSpec)).isFalse();
     assertThat(tangerineWhistleSpec.equals(spuriousDragonSpec)).isFalse();
@@ -58,7 +63,7 @@ public class CliqueProtocolScheduleTest {
 
   @Test
   public void parametersAlignWithMainnetWithAdjustments() {
-    final ProtocolSpec<CliqueContext> homestead =
+    final ProtocolSpec homestead =
         CliqueProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEY, false)
             .getByBlockNumber(0);
 
@@ -66,5 +71,27 @@ public class CliqueProtocolScheduleTest {
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(homestead.isSkipZeroBlockRewards()).isEqualTo(true);
     assertThat(homestead.getDifficultyCalculator()).isInstanceOf(CliqueDifficultyCalculator.class);
+  }
+
+  @Test
+  public void zeroEpochLengthThrowsException() {
+    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    when(cliqueOptions.getEpochLength()).thenReturn(0L);
+    when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
+
+    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Epoch length in config must be greater than zero");
+  }
+
+  @Test
+  public void negativeEpochLengthThrowsException() {
+    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    when(cliqueOptions.getEpochLength()).thenReturn(-3000L);
+    when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
+
+    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Epoch length in config must be greater than zero");
   }
 }

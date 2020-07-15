@@ -21,10 +21,9 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,61 +46,52 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   @Override
-  public void traceExecution(
-      final MessageFrame frame,
-      final Optional<Gas> currentGasCost,
-      final ExecuteOperation executeOperation)
-      throws ExceptionalHaltException {
+  public void traceExecution(final MessageFrame frame, final ExecuteOperation executeOperation) {
     final Operation currentOperation = frame.getCurrentOperation();
     final int depth = frame.getMessageStackDepth();
     final String opcode = currentOperation.getName();
     final int pc = frame.getPC();
     final Gas gasRemaining = frame.getRemainingGas();
-    final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
-        EnumSet.copyOf(frame.getExceptionalHaltReasons());
     final Bytes inputData = frame.getInputData();
     final Optional<Bytes32[]> stack = captureStack(frame);
     final WorldUpdater worldUpdater = frame.getWorldState();
     final Optional<Bytes32[]> stackPostExecution;
-    try {
-      executeOperation.execute();
-    } finally {
-      final Bytes outputData = frame.getOutputData();
-      final Optional<Bytes[]> memory = captureMemory(frame);
-      stackPostExecution = captureStack(frame);
-      if (lastFrame != null) {
-        lastFrame.setGasRemainingPostExecution(gasRemaining);
-      }
-      final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
-      final Optional<Map<Address, Wei>> maybeRefunds =
-          frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
-      lastFrame =
-          new TraceFrame(
-              pc,
-              opcode,
-              gasRemaining,
-              currentGasCost,
-              frame.getGasRefund(),
-              depth,
-              exceptionalHaltReasons,
-              frame.getRecipientAddress(),
-              frame.getApparentValue(),
-              inputData,
-              outputData,
-              stack,
-              memory,
-              storage,
-              worldUpdater,
-              frame.getRevertReason(),
-              maybeRefunds,
-              Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
-              frame.getCurrentOperation().getStackItemsProduced(),
-              stackPostExecution,
-              currentOperation.isVirtualOperation(),
-              frame.getMaybeUpdatedMemory(),
-              frame.getMaybeUpdatedStorage());
-      traceFrames.add(lastFrame);
+    final OperationResult operationResult = executeOperation.execute();
+    final Bytes outputData = frame.getOutputData();
+    final Optional<Bytes[]> memory = captureMemory(frame);
+    stackPostExecution = captureStack(frame);
+    if (lastFrame != null) {
+      lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
+    final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
+    final Optional<Map<Address, Wei>> maybeRefunds =
+        frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
+    lastFrame =
+        new TraceFrame(
+            pc,
+            Optional.of(opcode),
+            gasRemaining,
+            operationResult.getGasCost(),
+            frame.getGasRefund(),
+            depth,
+            operationResult.getHaltReason(),
+            frame.getRecipientAddress(),
+            frame.getApparentValue(),
+            inputData,
+            outputData,
+            stack,
+            memory,
+            storage,
+            worldUpdater,
+            frame.getRevertReason(),
+            maybeRefunds,
+            Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
+            frame.getCurrentOperation().getStackItemsProduced(),
+            stackPostExecution,
+            currentOperation.isVirtualOperation(),
+            frame.getMaybeUpdatedMemory(),
+            frame.getMaybeUpdatedStorage());
+    traceFrames.add(lastFrame);
     frame.reset();
   }
 
@@ -127,7 +117,34 @@ public class DebugOperationTracer implements OperationTracer {
               }
               frameIndex--;
             } while (foundTraceFrame == null);
-            foundTraceFrame.addExceptionalHaltReason(exceptionalHaltReason);
+            foundTraceFrame.setExceptionalHaltReason(exceptionalHaltReason);
+          } else {
+            final TraceFrame traceFrame =
+                new TraceFrame(
+                    frame.getPC(),
+                    Optional.empty(),
+                    frame.getRemainingGas(),
+                    Optional.empty(),
+                    frame.getGasRefund(),
+                    frame.getMessageStackDepth(),
+                    Optional.of(exceptionalHaltReason),
+                    frame.getRecipientAddress(),
+                    frame.getValue(),
+                    frame.getInputData(),
+                    frame.getOutputData(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    frame.getWorldState(),
+                    Optional.empty(),
+                    Optional.ofNullable(frame.getRefunds()),
+                    Optional.ofNullable(frame.getCode()),
+                    frame.getMaxStackSize(),
+                    Optional.empty(),
+                    true,
+                    Optional.empty(),
+                    Optional.empty());
+            traceFrames.add(traceFrame);
           }
         });
   }
@@ -165,6 +182,7 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isStackEnabled()) {
       return Optional.empty();
     }
+
     final Bytes32[] stackContents = new Bytes32[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse

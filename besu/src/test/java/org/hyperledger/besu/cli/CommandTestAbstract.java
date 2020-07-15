@@ -120,14 +120,14 @@ public abstract class CommandTestAbstract {
 
   @Mock protected BesuController.Builder mockControllerBuilderFactory;
 
-  @Mock protected BesuControllerBuilder<Void> mockControllerBuilder;
+  @Mock protected BesuControllerBuilder mockControllerBuilder;
   @Mock protected EthProtocolManager mockEthProtocolManager;
-  @Mock protected ProtocolSchedule<Object> mockProtocolSchedule;
-  @Mock protected ProtocolContext<Object> mockProtocolContext;
+  @Mock protected ProtocolSchedule mockProtocolSchedule;
+  @Mock protected ProtocolContext mockProtocolContext;
   @Mock protected BlockBroadcaster mockBlockBroadcaster;
-  @Mock protected BesuController<Object> mockController;
+  @Mock protected BesuController mockController;
   @Mock protected RlpBlockExporter rlpBlockExporter;
-  @Mock protected JsonBlockImporter<?> jsonBlockImporter;
+  @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
@@ -213,6 +213,8 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.natManagerServiceName(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.natMethodFallbackEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.graphQLConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
@@ -277,9 +279,8 @@ public abstract class CommandTestAbstract {
     return parseCommand(System.in, args);
   }
 
-  @SuppressWarnings("unchecked")
-  private <T> JsonBlockImporter<T> jsonBlockImporterFactory(final BesuController<T> controller) {
-    return (JsonBlockImporter<T>) jsonBlockImporter;
+  private JsonBlockImporter jsonBlockImporterFactory(final BesuController controller) {
+    return jsonBlockImporter;
   }
 
   protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
@@ -326,7 +327,7 @@ public abstract class CommandTestAbstract {
         final NodeKey mockNodeKey,
         final SECP256K1.KeyPair keyPair,
         final Supplier<RlpBlockImporter> mockBlockImporter,
-        final Function<BesuController<?>, JsonBlockImporter<?>> jsonBlockImporterFactory,
+        final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,

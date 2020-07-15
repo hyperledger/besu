@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
+import org.hyperledger.besu.ethereum.eth.manager.ForkId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -57,7 +57,7 @@ public final class StatusMessage extends AbstractMessageData {
       final Difficulty totalDifficulty,
       final Hash bestHash,
       final Hash genesisHash,
-      final ForkIdManager.ForkId forkId) {
+      final ForkId forkId) {
     final EthStatus status =
         new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -83,35 +83,57 @@ public final class StatusMessage extends AbstractMessageData {
     return EthPV62.STATUS;
   }
 
-  /** @return The eth protocol version the associated node is running. */
+  /**
+   * Return The eth protocol version the associated node is running.
+   *
+   * @return The eth protocol version the associated node is running.
+   */
   public int protocolVersion() {
     return status().protocolVersion;
   }
 
-  /** @return The id of the network the associated node is participating in. */
+  /**
+   * Return The id of the network the associated node is participating in.
+   *
+   * @return The id of the network the associated node is participating in.
+   */
   public BigInteger networkId() {
     return status().networkId;
   }
 
-  /** @return The total difficulty of the head of the associated node's local blockchain. */
+  /**
+   * Return The total difficulty of the head of the associated node's local blockchain.
+   *
+   * @return The total difficulty of the head of the associated node's local blockchain.
+   */
   public Difficulty totalDifficulty() {
     return status().totalDifficulty;
   }
 
-  /** @return The hash of the head of the associated node's local blockchian. */
+  /**
+   * Return The hash of the head of the associated node's local blockchian.
+   *
+   * @return The hash of the head of the associated node's local blockchian.
+   */
   public Hash bestHash() {
     return status().bestHash;
   }
 
   /**
+   * Return The hash of the genesis block of the network the associated node is participating in.
+   *
    * @return The hash of the genesis block of the network the associated node is participating in.
    */
   public Bytes32 genesisHash() {
     return status().genesisHash;
   }
 
-  /** @return The fork id of the network the associated node is participating in. */
-  public ForkIdManager.ForkId forkId() {
+  /**
+   * Return The fork id of the network the associated node is participating in.
+   *
+   * @return The fork id of the network the associated node is participating in.
+   */
+  public ForkId forkId() {
     return status().forkId;
   }
 
@@ -129,7 +151,7 @@ public final class StatusMessage extends AbstractMessageData {
     private final Difficulty totalDifficulty;
     private final Hash bestHash;
     private final Hash genesisHash;
-    private final ForkIdManager.ForkId forkId;
+    private final ForkId forkId;
 
     EthStatus(
         final int protocolVersion,
@@ -151,7 +173,7 @@ public final class StatusMessage extends AbstractMessageData {
         final Difficulty totalDifficulty,
         final Hash bestHash,
         final Hash genesisHash,
-        final ForkIdManager.ForkId forkHash) {
+        final ForkId forkHash) {
       this.protocolVersion = protocolVersion;
       this.networkId = networkId;
       this.totalDifficulty = totalDifficulty;
@@ -182,9 +204,9 @@ public final class StatusMessage extends AbstractMessageData {
       final Difficulty totalDifficulty = Difficulty.of(in.readUInt256Scalar());
       final Hash bestHash = Hash.wrap(in.readBytes32());
       final Hash genesisHash = Hash.wrap(in.readBytes32());
-      final ForkIdManager.ForkId forkId;
+      final ForkId forkId;
       if (in.nextIsList()) {
-        forkId = ForkIdManager.ForkId.readFrom(in);
+        forkId = ForkId.readFrom(in);
       } else {
         forkId = null;
       }

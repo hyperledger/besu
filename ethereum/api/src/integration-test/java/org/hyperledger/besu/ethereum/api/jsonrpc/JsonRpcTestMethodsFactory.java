@@ -72,13 +72,13 @@ public class JsonRpcTestMethodsFactory {
     importer.getGenesisState().writeStateTo(stateArchive.getMutable());
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
-    final ProtocolContext<Void> context = new ProtocolContext<>(blockchain, stateArchive, null);
+    final ProtocolContext context = new ProtocolContext(blockchain, stateArchive, null);
 
     for (final Block block : importer.getBlocks()) {
-      final ProtocolSchedule<Void> protocolSchedule = importer.getProtocolSchedule();
-      final ProtocolSpec<Void> protocolSpec =
+      final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-      final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
 
@@ -112,6 +112,7 @@ public class JsonRpcTestMethodsFactory {
     apis.add(RpcApis.NET);
     apis.add(RpcApis.WEB3);
     apis.add(RpcApis.PRIV);
+    apis.add(RpcApis.DEBUG);
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,

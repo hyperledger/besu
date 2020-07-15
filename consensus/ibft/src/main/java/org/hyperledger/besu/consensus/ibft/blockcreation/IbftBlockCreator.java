@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
@@ -31,18 +30,19 @@ import java.util.function.Function;
 
 // This class is responsible for creating a block without committer seals (basically it was just
 // too hard to coordinate with the state machine).
-public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
+public class IbftBlockCreator extends AbstractBlockCreator {
 
   public IbftBlockCreator(
       final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<IbftContext> protocolContext,
-      final ProtocolSchedule<IbftContext> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final Function<Long, Long> gasLimitCalculator,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final Address miningBeneficiary) {
     super(
         localAddress,
         extraDataCalculator,
@@ -51,7 +51,7 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
         protocolSchedule,
         gasLimitCalculator,
         minTransactionGasPrice,
-        localAddress,
+        miningBeneficiary,
         minBlockOccupancyRatio,
         parentHeader);
   }

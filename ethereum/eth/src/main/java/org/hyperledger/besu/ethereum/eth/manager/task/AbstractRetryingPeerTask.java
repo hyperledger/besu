@@ -55,7 +55,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
    * @param isEmptyResponse Test if the response received was empty.
    * @param metricsSystem The metrics system used to measure task.
    */
-  public AbstractRetryingPeerTask(
+  protected AbstractRetryingPeerTask(
       final EthContext ethContext,
       final int maxRetries,
       final Predicate<T> isEmptyResponse,
@@ -140,5 +140,13 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
             || error instanceof NoAvailablePeersException;
 
     return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
+  }
+
+  public int getRetryCount() {
+    return retryCount;
+  }
+
+  public int getMaxRetries() {
+    return maxRetries;
   }
 }

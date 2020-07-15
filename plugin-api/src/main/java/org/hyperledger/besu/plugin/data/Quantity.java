@@ -32,6 +32,10 @@ public interface Quantity {
    */
   Number getValue();
 
-  /** @return This value represented as hexadecimal, starting with "0x". */
+  /**
+   * The value as a hexadecimal string.
+   *
+   * @return This value represented as hexadecimal, starting with "0x".
+   */
   String toHexString();
 }

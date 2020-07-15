@@ -34,9 +34,9 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -55,7 +55,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
+public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   public interface ExtraDataCalculator {
 
@@ -70,23 +70,23 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
   private final ExtraDataCalculator extraDataCalculator;
   private final PendingTransactions pendingTransactions;
-  protected final ProtocolContext<C> protocolContext;
-  protected final ProtocolSchedule<C> protocolSchedule;
+  protected final ProtocolContext protocolContext;
+  protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
   private final Address miningBeneficiary;
   protected final BlockHeader parentHeader;
-  protected final ProtocolSpec<C> protocolSpec;
+  protected final ProtocolSpec protocolSpec;
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
-  public AbstractBlockCreator(
+  protected AbstractBlockCreator(
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<C> protocolContext,
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final Function<Long, Long> gasLimitCalculator,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
@@ -156,7 +156,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final ProtocolSpec<C> protocolSpec =
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
 
       if (!rewardBeneficiary(
@@ -207,7 +207,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       throws RuntimeException {
     final TransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
-    final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
+    final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
         protocolSpec.getTransactionReceiptFactory();
 
     final BlockTransactionSelector selector =
@@ -257,13 +257,8 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final long gasLimit;
-    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
-      gasLimit = protocolSpec.getEip1559().orElseThrow().eip1559GasPool(newBlockNumber);
-    } else {
-      gasLimit = gasLimitCalculator.apply(parentHeader.getGasLimit());
-    }
-    final DifficultyCalculator<C> difficultyCalculator = protocolSpec.getDifficultyCalculator();
+    final long gasLimit = gasLimitCalculator.apply(parentHeader.getGasLimit());
+    final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 

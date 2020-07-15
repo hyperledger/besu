@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -69,6 +68,7 @@ public class DefaultPrivacyController implements PrivacyController {
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
+  private final PrivateTransactionLocator privateTransactionLocator;
 
   public DefaultPrivacyController(
       final Blockchain blockchain,
@@ -106,6 +106,14 @@ public class DefaultPrivacyController implements PrivacyController {
     this.privateTransactionSimulator = privateTransactionSimulator;
     this.privateNonceProvider = privateNonceProvider;
     this.privateWorldStateReader = privateWorldStateReader;
+    this.privateTransactionLocator =
+        new PrivateTransactionLocator(blockchain, enclave, privateStateStorage);
+  }
+
+  @Override
+  public Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
+      final Hash pmtHash, final String enclaveKey) {
+    return privateTransactionLocator.findByPmtHash(pmtHash, enclaveKey);
   }
 
   @Override
@@ -188,7 +196,7 @@ public class DefaultPrivacyController implements PrivacyController {
 
     final List<PrivacyGroup> legacyGroups =
         matchingGroups.stream()
-            .filter(group -> group.getType() == Type.LEGACY)
+            .filter(group -> group.getType() == PrivacyGroup.Type.LEGACY)
             .collect(Collectors.toList());
 
     if (legacyGroups.size() == 0) {
@@ -290,7 +298,11 @@ public class DefaultPrivacyController implements PrivacyController {
       if (rlpInput.nextSize() > 0) {
         return Optional.of(
             new PrivacyGroup(
-                privacyGroupId.toBase64String(), Type.ONCHAIN, "", "", decodeList(rlpInput.raw())));
+                privacyGroupId.toBase64String(),
+                PrivacyGroup.Type.ONCHAIN,
+                "",
+                "",
+                decodeList(rlpInput.raw())));
       } else {
         return Optional.empty();
       }
@@ -413,7 +425,7 @@ public class DefaultPrivacyController implements PrivacyController {
   @Override
   public List<PrivateTransactionWithMetadata> retrieveAddBlob(final String addDataKey) {
     final ReceiveResponse addReceiveResponse = enclave.receive(addDataKey);
-    return deserializeAddToGroupPayload(
+    return PrivateTransactionWithMetadata.readListFromPayload(
         Bytes.wrap(Base64.getDecoder().decode(addReceiveResponse.getPayload())));
   }
 
@@ -429,19 +441,6 @@ public class DefaultPrivacyController implements PrivacyController {
     return rlpOutput.encoded();
   }
 
-  private List<PrivateTransactionWithMetadata> deserializeAddToGroupPayload(
-      final Bytes encodedAddToGroupPayload) {
-    final ArrayList<PrivateTransactionWithMetadata> deserializedResponse = new ArrayList<>();
-    final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(encodedAddToGroupPayload, false);
-    final int noOfEntries = bytesValueRLPInput.enterList();
-    for (int i = 0; i < noOfEntries; i++) {
-      deserializedResponse.add(PrivateTransactionWithMetadata.readFrom(bytesValueRLPInput));
-    }
-    bytesValueRLPInput.leaveList();
-    return deserializedResponse;
-  }
-
   private SendResponse sendRequest(
       final PrivateTransaction privateTransaction,
       final String enclavePublicKey,
@@ -450,7 +449,7 @@ public class DefaultPrivacyController implements PrivacyController {
 
     if (maybePrivacyGroup.isPresent() || isGroupAdditionTransaction(privateTransaction)) {
       if (isGroupAdditionTransaction(privateTransaction)
-          || maybePrivacyGroup.get().getType() == Type.ONCHAIN) {
+          || maybePrivacyGroup.get().getType() == PrivacyGroup.Type.ONCHAIN) {
         // onchain privacy group
         final Optional<PrivateTransactionProcessor.Result> result =
             privateTransactionSimulator.process(
@@ -464,7 +463,7 @@ public class DefaultPrivacyController implements PrivacyController {
             rlpOutput.encoded().toBase64String(),
             privateTransaction.getPrivateFrom().toBase64String(),
             onChainPrivateFor);
-      } else if (maybePrivacyGroup.get().getType() == Type.PANTHEON) {
+      } else if (maybePrivacyGroup.get().getType() == PrivacyGroup.Type.PANTHEON) {
         // offchain privacy group
         privateTransaction.writeTo(rlpOutput);
         return enclave.send(

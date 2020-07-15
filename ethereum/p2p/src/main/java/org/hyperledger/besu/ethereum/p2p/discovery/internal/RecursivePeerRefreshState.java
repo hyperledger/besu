@@ -19,9 +19,9 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,7 +47,7 @@ public class RecursivePeerRefreshState {
   private final int maxRounds;
   private int currentRound;
 
-  private final SortedMap<Bytes, MetadataPeer> oneTrueMap = new TreeMap<>();
+  private final NavigableMap<Bytes, MetadataPeer> oneTrueMap = new TreeMap<>();
 
   private final TimerUtil timerUtil;
   private final int timeoutPeriodInSeconds;

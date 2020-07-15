@@ -272,8 +272,7 @@ public class TestContextBuilder {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
 
-    final ProtocolSchedule<IbftContext> protocolSchedule =
-        IbftProtocolSchedule.create(genesisConfigOptions);
+    final ProtocolSchedule protocolSchedule = IbftProtocolSchedule.create(genesisConfigOptions);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
@@ -290,8 +289,8 @@ public class TestContextBuilder {
 
     final VoteProposer voteProposer = new VoteProposer();
 
-    final ProtocolContext<IbftContext> protocolContext =
-        new ProtocolContext<>(
+    final ProtocolContext protocolContext =
+        new ProtocolContext(
             blockChain,
             worldStateArchive,
             new IbftContext(voteTallyCache, voteProposer, epochManager, blockInterface));
@@ -307,6 +306,7 @@ public class TestContextBuilder {
             Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
+    final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
             (gasLimit) -> gasLimit,
@@ -314,7 +314,8 @@ public class TestContextBuilder {
             protocolContext,
             protocolSchedule,
             miningParams,
-            Util.publicKeyToAddress(nodeKey.getPublicKey()));
+            localAddress,
+            localAddress);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
@@ -322,7 +323,7 @@ public class TestContextBuilder {
     final IbftExecutors ibftExecutors = IbftExecutors.create(new NoOpMetricsSystem());
     final IbftFinalState finalState =
         new IbftFinalState(
-            protocolContext.getConsensusState().getVoteTallyCache(),
+            protocolContext.getConsensusState(IbftContext.class).getVoteTallyCache(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,

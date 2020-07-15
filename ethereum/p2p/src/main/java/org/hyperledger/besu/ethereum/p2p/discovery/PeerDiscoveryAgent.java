@@ -83,7 +83,7 @@ public abstract class PeerDiscoveryAgent {
   private boolean isActive = false;
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
-  public PeerDiscoveryAgent(
+  protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
@@ -307,5 +307,9 @@ public abstract class PeerDiscoveryAgent {
    */
   public boolean isActive() {
     return isActive;
+  }
+
+  public void bond(final DiscoveryPeer peer) {
+    controller.ifPresent(c -> c.handleBondingRequest(peer));
   }
 }

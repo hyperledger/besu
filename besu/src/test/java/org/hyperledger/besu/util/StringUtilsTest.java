@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -35,7 +34,7 @@ public class StringUtilsTest {
     testCases.put(Arrays.asList("item1", "item2"), "item1 and item2");
     testCases.put(Arrays.asList("item1", "item2", "item3"), "item1, item2 and item3");
 
-    for (Entry<List<String>, String> entry : testCases.entrySet()) {
+    for (Map.Entry<List<String>, String> entry : testCases.entrySet()) {
       String joinedResult =
           entry.getKey().stream()
               .collect(

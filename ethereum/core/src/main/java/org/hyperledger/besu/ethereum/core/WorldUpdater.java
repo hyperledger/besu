@@ -112,6 +112,10 @@ public interface WorldUpdater extends MutableWorldView {
    */
   void commit();
 
-  /** @return The parent WorldUpdater if this wraps another one, empty otherwise */
+  /**
+   * The parent updater (if it exists).
+   *
+   * @return The parent WorldUpdater if this wraps another one, empty otherwise
+   */
   public Optional<WorldUpdater> parentUpdater();
 }

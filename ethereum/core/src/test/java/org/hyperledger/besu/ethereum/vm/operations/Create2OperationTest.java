@@ -19,10 +19,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
+import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
+
+import java.util.ArrayDeque;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -42,6 +52,9 @@ public class Create2OperationTest {
   private final String expectedAddress;
   private final int expectedGas;
   private final MessageFrame messageFrame = mock(MessageFrame.class);
+  private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
+  private final DefaultEvmAccount account = mock(DefaultEvmAccount.class);
+  private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final Create2Operation operation =
       new Create2Operation(new ConstantinopleGasCalculator());
 
@@ -119,13 +132,30 @@ public class Create2OperationTest {
     final Bytes32 memoryOffset = Bytes32.fromHexString("0xFF");
     final Bytes codeBytes = Bytes.fromHexString(code);
     final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(UInt256.valueOf(500));
+    when(messageFrame.getBlockHashLookup()).thenReturn(mock(BlockHashLookup.class));
+    when(messageFrame.getBlockHeader()).thenReturn(mock(ProcessableBlockHeader.class));
+    when(messageFrame.getBlockchain()).thenReturn(mock(Blockchain.class));
+    when(messageFrame.getBlockchain()).thenReturn(mock(Blockchain.class));
+    when(messageFrame.getGasPrice()).thenReturn(Wei.ZERO);
+    when(messageFrame.getMessageFrameStack()).thenReturn(new ArrayDeque<>());
+    when(messageFrame.getMiningBeneficiary()).thenReturn(Address.ZERO);
+    when(messageFrame.getOriginatorAddress()).thenReturn(Address.ZERO);
+    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100000));
+    when(messageFrame.getReturnStack()).thenReturn(mock(ReturnStack.class));
+    when(messageFrame.getStackItem(0)).thenReturn(Bytes32.ZERO);
     when(messageFrame.getStackItem(1)).thenReturn(memoryOffset);
     when(messageFrame.getStackItem(2)).thenReturn(memoryLength.toBytes());
     when(messageFrame.getStackItem(3)).thenReturn(Bytes32.fromHexString(salt));
+    when(messageFrame.getWorldState()).thenReturn(worldUpdater);
+    when(messageFrame.memoryWordSize()).thenReturn(UInt256.valueOf(500));
     when(messageFrame.readMemory(UInt256.fromBytes(memoryOffset), memoryLength))
         .thenReturn(codeBytes);
-    when(messageFrame.memoryWordSize()).thenReturn(UInt256.valueOf(500));
-    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(UInt256.valueOf(500));
+    when(messageFrame.stackSize()).thenReturn(4);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
   }
 
   @Test
@@ -136,6 +166,8 @@ public class Create2OperationTest {
 
   @Test
   public void shouldCalculateGasPrice() {
-    assertThat(operation.cost(messageFrame)).isEqualTo(Gas.of(expectedGas));
+    final OperationResult result = operation.execute(messageFrame, null);
+    assertThat(result.getHaltReason()).isEmpty();
+    assertThat(result.getGasCost()).contains(Gas.of(expectedGas));
   }
 }

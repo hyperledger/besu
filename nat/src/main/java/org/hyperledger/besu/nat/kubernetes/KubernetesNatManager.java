@@ -17,14 +17,17 @@ package org.hyperledger.besu.nat.kubernetes;
 
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.AbstractNatManager;
+import org.hyperledger.besu.nat.core.IpDetector;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.core.exception.NatInitializationException;
+import org.hyperledger.besu.nat.kubernetes.service.KubernetesServiceType;
+import org.hyperledger.besu.nat.kubernetes.service.LoadBalancerBasedDetector;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +35,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.Configuration;
 import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1LoadBalancerIngress;
 import io.kubernetes.client.models.V1Service;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
@@ -47,13 +49,15 @@ import org.apache.logging.log4j.Logger;
 public class KubernetesNatManager extends AbstractNatManager {
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String DEFAULT_BESU_POD_NAME_FILTER = "besu";
+  public static final String DEFAULT_BESU_SERVICE_NAME_FILTER = "besu";
 
   private String internalAdvertisedHost;
+  private final String besuServiceNameFilter;
   private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
 
-  public KubernetesNatManager() {
+  public KubernetesNatManager(final String besuServiceNameFilter) {
     super(NatMethod.KUBERNETES);
+    this.besuServiceNameFilter = besuServiceNameFilter;
   }
 
   @Override
@@ -76,14 +80,12 @@ public class KubernetesNatManager extends AbstractNatManager {
           api.listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
               .getItems().stream()
               .filter(
-                  v1Service ->
-                      v1Service.getMetadata().getName().contains(DEFAULT_BESU_POD_NAME_FILTER))
+                  v1Service -> v1Service.getMetadata().getName().contains(besuServiceNameFilter))
               .findFirst()
               .orElseThrow(() -> new NatInitializationException("Service not found"));
       updateUsingBesuService(service);
     } catch (Exception e) {
-      throw new NatInitializationException(
-          "Failed update information using Kubernetes client SDK.", e);
+      throw new NatInitializationException(e.getMessage(), e);
     }
   }
 
@@ -92,21 +94,11 @@ public class KubernetesNatManager extends AbstractNatManager {
     try {
       LOG.info("Found Besu service: {}", service.getMetadata().getName());
 
-      final V1LoadBalancerIngress v1LoadBalancerIngress =
-          service.getStatus().getLoadBalancer().getIngress().stream()
-              .filter(
-                  v1LoadBalancerIngress1 ->
-                      v1LoadBalancerIngress1.getHostname() != null
-                          || v1LoadBalancerIngress1.getIp() != null)
-              .findFirst()
-              .orElseThrow(() -> new NatInitializationException("Ingress not found"));
-
-      if (v1LoadBalancerIngress.getHostname() != null) {
-        internalAdvertisedHost =
-            InetAddress.getByName(v1LoadBalancerIngress.getHostname()).getHostAddress();
-      } else {
-        internalAdvertisedHost = v1LoadBalancerIngress.getIp();
-      }
+      internalAdvertisedHost =
+          getIpDetector(service)
+              .detectAdvertisedIp()
+              .orElseThrow(
+                  () -> new NatInitializationException("Unable to retrieve IP from service"));
 
       LOG.info("Setting host IP to: {}.", internalAdvertisedHost);
 
@@ -134,7 +126,8 @@ public class KubernetesNatManager extends AbstractNatManager {
                 }
               });
     } catch (Exception e) {
-      throw new RuntimeException("Failed update information using pod metadata.", e);
+      throw new RuntimeException(
+          "Failed update information using pod metadata : " + e.getMessage(), e);
     }
   }
 
@@ -151,5 +144,17 @@ public class KubernetesNatManager extends AbstractNatManager {
   @Override
   public CompletableFuture<List<NatPortMapping>> getPortMappings() {
     return CompletableFuture.completedFuture(forwardedPorts);
+  }
+
+  private IpDetector getIpDetector(final V1Service v1Service) throws NatInitializationException {
+    final String serviceType = v1Service.getSpec().getType();
+    switch (KubernetesServiceType.fromName(serviceType)) {
+      case CLUSTER_IP:
+        return () -> Optional.ofNullable(v1Service.getSpec().getClusterIP());
+      case LOAD_BALANCER:
+        return new LoadBalancerBasedDetector(v1Service);
+      default:
+        throw new NatInitializationException(String.format("%s is not implemented", serviceType));
+    }
   }
 }

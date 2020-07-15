@@ -14,37 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
-public class BeginSubOperation extends AbstractOperation {
+public class BeginSubOperation extends AbstractFixedCostOperation {
 
   public static final int OPCODE = 0x5c;
+  private final OperationResult invalidEntryResponse;
 
   public BeginSubOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "BEGINSUB", 0, 0, false, 1, gasCalculator);
+    super(OPCODE, "BEGINSUB", 0, 0, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    invalidEntryResponse =
+        new OperationResult(
+            Optional.of(gasCalculator.getBaseTierGasCost()),
+            Optional.of(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY));
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {}
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
-    return Optional.of(ExceptionalHaltReason.INVALID_SUB_ROUTINE_ENTRY);
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    return invalidEntryResponse;
   }
 }

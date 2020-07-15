@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Operation;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 import org.hyperledger.besu.ethereum.vm.operations.CallOperation;
 
 import java.io.File;
@@ -203,7 +202,7 @@ public class EvmToolCommand implements Runnable {
 
       Configurator.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int repeat = this.repeat;
-      final ProtocolSpec<?> protocolSpec = component.getProtocolSpec().apply(0);
+      final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
@@ -245,8 +244,8 @@ public class EvmToolCommand implements Runnable {
           mcp.process(
               messageFrame, new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
           if (lastLoop) {
-            if (!messageFrame.getExceptionalHaltReasons().isEmpty()) {
-              out.println(messageFrame.getExceptionalHaltReasons());
+            if (messageFrame.getExceptionalHaltReason().isPresent()) {
+              out.println(messageFrame.getExceptionalHaltReason().get());
             }
             if (messageFrame.getRevertReason().isPresent()) {
               out.println(
@@ -303,8 +302,8 @@ public class EvmToolCommand implements Runnable {
       stack.add(messageFrame.getStackItem(i).toShortHexString());
     }
     final String error =
-        messageFrame.getExceptionalHaltReasons().stream()
-            .findFirst()
+        messageFrame
+            .getExceptionalHaltReason()
             .map(ExceptionalHaltReason::getDescription)
             .orElse(
                 messageFrame
@@ -318,7 +317,9 @@ public class EvmToolCommand implements Runnable {
       results.put("pc", messageFrame.getPC());
       results.put("op", Bytes.of(currentOp.getOpcode()).toHexString());
       results.put("opName", currentOp.getName());
-      results.put("gasCost", currentOp.cost(messageFrame).asUInt256().toShortHexString());
+      messageFrame
+          .getGasCost()
+          .ifPresent(gasCost -> results.put("gasCost", gasCost.asUInt256().toShortHexString()));
     } else {
       final MessageFrame caller =
           messageFrame.getMessageFrameStack().toArray(new MessageFrame[0])[1];
@@ -361,11 +362,7 @@ public class EvmToolCommand implements Runnable {
     }
 
     @Override
-    public void traceExecution(
-        final MessageFrame frame,
-        final Optional<Gas> currentGasCost,
-        final ExecuteOperation executeOperation)
-        throws ExceptionalHaltException {
+    public void traceExecution(final MessageFrame frame, final ExecuteOperation executeOperation) {
       if (showJsonResults && lastLoop) {
         final JsonObject op =
             EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);

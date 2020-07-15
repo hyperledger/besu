@@ -36,11 +36,11 @@ import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.Optional;
 
-public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFactory {
+public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
   private final SynchronizerConfiguration syncConfig;
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final ValidationPolicy detachedValidationPolicy =
@@ -49,8 +49,8 @@ public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
 
   public FullSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
@@ -75,22 +75,22 @@ public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             target.peer(),
             target.commonAncestor(),
             syncConfig.getDownloaderCheckpointTimeoutsPermitted());
-    final DownloadHeadersStep<C> downloadHeadersStep =
-        new DownloadHeadersStep<>(
+    final DownloadHeadersStep downloadHeadersStep =
+        new DownloadHeadersStep(
             protocolSchedule,
             protocolContext,
             ethContext,
             detachedValidationPolicy,
             headerRequestSize,
             metricsSystem);
-    final CheckpointHeaderValidationStep<C> validateHeadersJoinUpStep =
-        new CheckpointHeaderValidationStep<>(
+    final CheckpointHeaderValidationStep validateHeadersJoinUpStep =
+        new CheckpointHeaderValidationStep(
             protocolSchedule, protocolContext, detachedValidationPolicy);
-    final DownloadBodiesStep<C> downloadBodiesStep =
-        new DownloadBodiesStep<>(protocolSchedule, ethContext, metricsSystem);
+    final DownloadBodiesStep downloadBodiesStep =
+        new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
-    final FullImportBlockStep<C> importBlockStep =
-        new FullImportBlockStep<>(protocolSchedule, protocolContext, ethContext);
+    final FullImportBlockStep importBlockStep =
+        new FullImportBlockStep(protocolSchedule, protocolContext, ethContext);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

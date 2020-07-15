@@ -14,40 +14,36 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
-public class ReturnSubOperation extends AbstractOperation {
+public class ReturnSubOperation extends AbstractFixedCostOperation {
+
+  private final OperationResult invalidRetsubResponse;
 
   public ReturnSubOperation(final GasCalculator gasCalculator) {
-    super(0x5d, "RETURNSUB", 0, 0, true, 1, gasCalculator);
+    super(0x5d, "RETURNSUB", 0, 0, true, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    invalidRetsubResponse =
+        new OperationResult(
+            Optional.of(gasCalculator.getLowTierGasCost()),
+            Optional.of(ExceptionalHaltReason.INVALID_RETSUB));
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getLowTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    frame.setPC(frame.popReturnStackItem());
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
-    if (frame.isReturnStackEmpty()) {
-      return Optional.of(ExceptionalHaltReason.INVALID_RETSUB);
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
     }
-    return Optional.empty();
+    if (frame.isReturnStackEmpty()) {
+      return invalidRetsubResponse;
+    }
+
+    frame.setPC(frame.popReturnStackItem());
+
+    return successResponse;
   }
 }

@@ -31,25 +31,48 @@ import org.junit.Test;
 public class LocalPermissioningConfigurationBuilderTest {
 
   private static final String PERMISSIONING_CONFIG_VALID = "/permissioning_config.toml";
-  private static final String PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY =
-      "/permissioning_config_account_whitelist_only.toml";
-  private static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY =
-      "/permissioning_config_node_whitelist_only.toml";
+
+  @Deprecated
+  private static final String PERMISSIONING_CONFIG_VALID_WHITELISTS =
+      "/permissioning_config_whitelists.toml";
+
+  private static final String PERMISSIONING_CONFIG_ACCOUNT_ALLOWLIST_ONLY =
+      "/permissioning_config_account_allowlist_only.toml";
+  private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY =
+      "/permissioning_config_node_allowlist_only.toml";
   private static final String PERMISSIONING_CONFIG_INVALID_ENODE =
       "/permissioning_config_invalid_enode.toml";
   private static final String PERMISSIONING_CONFIG_INVALID_ACCOUNT =
       "/permissioning_config_invalid_account.toml";
-  private static final String PERMISSIONING_CONFIG_EMPTY_WHITELISTS =
-      "/permissioning_config_empty_whitelists.toml";
-  private static final String PERMISSIONING_CONFIG_ABSENT_WHITELISTS =
-      "/permissioning_config_absent_whitelists.toml";
+  private static final String PERMISSIONING_CONFIG_EMPTY_ALLOWLISTS =
+      "/permissioning_config_empty_allowlists.toml";
+  private static final String PERMISSIONING_CONFIG_ABSENT_ALLOWLISTS =
+      "/permissioning_config_absent_allowlists.toml";
   private static final String PERMISSIONING_CONFIG_UNRECOGNIZED_KEY =
       "/permissioning_config_unrecognized_key.toml";
-  private static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE =
-      "/permissioning_config_node_whitelist_only_multiline.toml";
+  private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY_MULTILINE =
+      "/permissioning_config_node_allowlist_only_multiline.toml";
 
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
+
+  @Test
+  public void permissioningConfig_usingDeprecatedKeysIsStillValid() throws Exception {
+    final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
+    final String uri2 = "enode://" + VALID_NODE_ID + "@192.169.0.9:4568";
+
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_VALID_WHITELISTS);
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
+
+    LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
+
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getAccountAllowlist())
+        .containsExactly("0x0000000000000000000000000000000000000009");
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist())
+        .containsExactly(URI.create(uri), URI.create(uri2));
+  }
 
   @Test
   public void permissioningConfig() throws Exception {
@@ -61,42 +84,42 @@ public class LocalPermissioningConfigurationBuilderTest {
 
     LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
 
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist())
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getAccountAllowlist())
         .containsExactly("0x0000000000000000000000000000000000000009");
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist())
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist())
         .containsExactly(URI.create(uri), URI.create(uri2));
   }
 
   @Test
-  public void permissioningConfigWithOnlyNodeWhitelistSet() throws Exception {
+  public void permissioningConfigWithOnlyNodeAllowlistSet() throws Exception {
     final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
 
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
             true, toml.toAbsolutePath().toString(), false, toml.toAbsolutePath().toString());
 
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isFalse();
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist()).containsExactly(URI.create(uri));
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isFalse();
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist()).containsExactly(URI.create(uri));
   }
 
   @Test
-  public void permissioningConfigWithOnlyAccountWhitelistSet() throws Exception {
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY);
+  public void permissioningConfigWithOnlyAccountAllowlistSet() throws Exception {
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ACCOUNT_ALLOWLIST_ONLY);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
             false, toml.toAbsolutePath().toString(), true, toml.toAbsolutePath().toString());
 
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isFalse();
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist())
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isFalse();
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getAccountAllowlist())
         .containsExactly("0x0000000000000000000000000000000000000009");
   }
 
@@ -125,21 +148,21 @@ public class LocalPermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithEmptyWhitelistMustNotError() throws Exception {
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_EMPTY_WHITELISTS);
+  public void permissioningConfigWithEmptyAllowlistMustNotError() throws Exception {
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_EMPTY_ALLOWLISTS);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
 
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist()).isEmpty();
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist()).isEmpty();
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist()).isEmpty();
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getAccountAllowlist()).isEmpty();
   }
 
   @Test
-  public void permissioningConfigWithAbsentWhitelistMustThrowException() throws Exception {
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
+  public void permissioningConfigWithAbsentAllowlistMustThrowException() throws Exception {
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ABSENT_ALLOWLISTS);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> permissioningConfig(toml));
@@ -157,7 +180,7 @@ public class LocalPermissioningConfigurationBuilderTest {
     assertThat(thrown)
         .isInstanceOf(Exception.class)
         .hasMessageContaining("config option missing")
-        .hasMessageContaining(PermissioningConfigurationBuilder.ACCOUNTS_WHITELIST_KEY);
+        .hasMessageContaining(PermissioningConfigurationBuilder.ACCOUNTS_ALLOWLIST_KEY);
   }
 
   @Test
@@ -198,13 +221,13 @@ public class LocalPermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigFromMultilineFileMustParseCorrectly() throws Exception {
     final URL configFile =
-        this.getClass().getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE);
+        this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY_MULTILINE);
     final LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
             true, configFile.getPath(), false, configFile.getPath());
 
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist().size()).isEqualTo(5);
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist().size()).isEqualTo(5);
   }
 
   private LocalPermissioningConfiguration accountOnlyPermissioningConfig(final Path toml)

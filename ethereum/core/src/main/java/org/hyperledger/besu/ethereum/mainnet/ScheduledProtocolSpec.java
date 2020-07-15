@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 /** Tuple that associates a {@link ProtocolSpec} with a given block level starting point */
-public class ScheduledProtocolSpec<C> {
+public class ScheduledProtocolSpec {
   private final long block;
-  private final ProtocolSpec<C> spec;
+  private final ProtocolSpec spec;
 
-  public ScheduledProtocolSpec(final long block, final ProtocolSpec<C> spec) {
+  public ScheduledProtocolSpec(final long block, final ProtocolSpec spec) {
     this.block = block;
     this.spec = spec;
   }
@@ -28,7 +28,7 @@ public class ScheduledProtocolSpec<C> {
     return block;
   }
 
-  public ProtocolSpec<C> getSpec() {
+  public ProtocolSpec getSpec() {
     return spec;
   }
 }

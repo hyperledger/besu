@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import com.google.common.collect.Iterables;
@@ -39,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  * structure, and that the structure created contains data matching expectations from preceding
  * blocks.
  */
-public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidationRule<IbftContext> {
+public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -51,12 +51,13 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
 
   @Override
   public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<IbftContext> context) {
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
     try {
       final ValidatorProvider validatorProvider =
-          context.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+          context
+              .getConsensusState(IbftContext.class)
+              .getVoteTallyCache()
+              .getVoteTallyAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
       final Address proposer = IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
@@ -76,7 +77,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
         }
       }
 
-      final SortedSet<Address> sortedReportedValidators =
+      final NavigableSet<Address> sortedReportedValidators =
           new TreeSet<>(ibftExtraData.getValidators());
 
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), sortedReportedValidators)) {
