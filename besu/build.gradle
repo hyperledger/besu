@@ -63,10 +63,10 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-config'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.springframework.security:spring-security-crypto'
-  implementation 'org.fusesource.jansi:jansi'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
+  runtimeOnly 'org.fusesource.jansi:jansi'
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
