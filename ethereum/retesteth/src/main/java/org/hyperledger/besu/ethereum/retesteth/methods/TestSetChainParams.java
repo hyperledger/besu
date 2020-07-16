@@ -113,6 +113,7 @@ public class TestSetChainParams implements JsonRpcMethod {
     config.put("ethash", ethash);
 
     maybeMoveToNumber(params, "homesteadForkBlock", config, "homesteadBlock");
+    maybeMoveToNumber(params, "daoHardforkBlock", config, "daoForkBlock");
     maybeMoveToNumber(params, "EIP150ForkBlock", config, "eip150Block");
     maybeMoveToNumber(params, "EIP158ForkBlock", config, "eip158Block");
     maybeMoveToNumber(params, "byzantiumForkBlock", config, "byzantiumBlock");
