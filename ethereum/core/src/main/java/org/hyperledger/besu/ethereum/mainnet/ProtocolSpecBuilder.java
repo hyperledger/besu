@@ -299,15 +299,20 @@ public class ProtocolSpecBuilder {
               contractCreationProcessor,
               messageCallProcessor,
               privateTransactionValidator);
-      final Address address = Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
-      final PrivacyPrecompiledContract privacyPrecompiledContract =
-          (PrivacyPrecompiledContract)
-              precompileContractRegistry.get(address, Account.DEFAULT_VERSION);
-      privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
-      final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
-          (OnChainPrivacyPrecompiledContract)
-              precompileContractRegistry.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
-      onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
+
+      if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
+        final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
+            (OnChainPrivacyPrecompiledContract)
+                precompileContractRegistry.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+        onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
+            privateTransactionProcessor);
+      } else {
+        final PrivacyPrecompiledContract privacyPrecompiledContract =
+            (PrivacyPrecompiledContract)
+                precompileContractRegistry.get(Address.DEFAULT_PRIVACY, Account.DEFAULT_VERSION);
+        privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
+      }
+
       blockProcessor =
           new PrivacyBlockProcessor(
               blockProcessor,

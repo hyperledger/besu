@@ -83,11 +83,6 @@ public class PrivacyTest {
   public void onchainEnabledPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(true);
 
-    final PrecompiledContract privacyPrecompiledContract =
-        getPrecompile(besuController, Address.DEFAULT_PRIVACY);
-
-    assertThat(privacyPrecompiledContract.getName()).isEqualTo("Privacy");
-
     final PrecompiledContract onchainPrecompiledContract =
         getPrecompile(besuController, Address.ONCHAIN_PRIVACY);
 
@@ -100,7 +95,6 @@ public class PrivacyTest {
     final Path dbDir = dataDir.resolve("database");
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
-            .setPrivacyAddress(Address.PRIVACY)
             .setEnabled(true)
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
