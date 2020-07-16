@@ -48,10 +48,10 @@ public class AdminLogsRepairCache implements JsonRpcMethod {
             blockchainQueries
                 .getBlockchain()
                 .getBlockByNumber(bn)
-                .orElseThrow(() -> new IllegalStateException("Block not found")));
+                .orElseThrow(() -> new IllegalStateException("Block not found, " + bn)));
 
     final TransactionLogBloomCacher transactionLogBloomCacher =
-        blockchainQueries.getTransactionLogBloomCacher().orElseThrow();
+        blockchainQueries.getTransactionLogBloomCacher().orElseThrow(() -> new InternalError("Error attempting to get TransactionLogBloomCacher"));
 
     transactionLogBloomCacher.ensurePreviousSegmentsArePresent(
         blockNumber.orElse(blockchainQueries.headBlockNumber()), true);
