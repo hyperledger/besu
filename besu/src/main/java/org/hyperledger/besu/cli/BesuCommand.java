@@ -894,7 +894,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})")
+          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})",
+      hidden = true)
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
@@ -1842,7 +1843,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--privacy-url",
             "--privacy-public-key-file",
-            "--privacy-precompiled-address",
             "--privacy-multi-tenancy-enabled",
             "--privacy-tls-enabled"));
 
@@ -1905,7 +1905,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
         }
       }
-      privacyParametersBuilder.setPrivacyAddress(privacyPrecompiledAddress);
+
+      if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
+        logger.warn(
+            "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
+      }
+
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
