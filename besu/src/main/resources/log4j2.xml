@@ -16,13 +16,8 @@
     </Properties>
 
     <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n" />
-        </Console>
-
         <Routing name="Router">
             <Routes pattern="$${sys:root.log.logger}">
-                <Route ref="Console" key="Console" />
                 <Route key="Splunk">
                     <SplunkHttp name="Splunk"
                                 url="${sys:splunk.url}"
