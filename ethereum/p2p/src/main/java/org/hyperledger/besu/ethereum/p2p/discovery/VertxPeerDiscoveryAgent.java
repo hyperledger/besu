@@ -220,7 +220,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             handleIncomingPacket(endpoint, event.result());
           } else {
             if (event.cause() instanceof PeerDiscoveryPacketDecodingException) {
-              LOG.debug("Discarding invalid peer discovery packet: {}", event.cause().getMessage());
+              LOG.debug("Discarding invalid peer discovery packet", event.cause());
             } else {
               LOG.error("Encountered error while handling packet", event.cause());
             }

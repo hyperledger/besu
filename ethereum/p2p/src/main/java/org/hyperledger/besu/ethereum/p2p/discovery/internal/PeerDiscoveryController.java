@@ -302,6 +302,7 @@ public class PeerDiscoveryController {
         if (peerPermissions.allowInboundBonding(peer)) {
           peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
+          LOG.info("ping received {}", ping);
           if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
               && (bondingPeers.getIfPresent(sender.getId()) == null)) {
             bond(peer);
