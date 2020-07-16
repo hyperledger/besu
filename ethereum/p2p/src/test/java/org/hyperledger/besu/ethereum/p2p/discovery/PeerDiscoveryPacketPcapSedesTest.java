@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import static com.google.common.net.InetAddresses.isInetAddress;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.net.InetAddresses;
+import org.assertj.core.api.Condition;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -83,12 +84,13 @@ public class PeerDiscoveryPacketPcapSedesTest {
 
         assertThat(ping.getTo()).isNotNull();
         assertThat(ping.getFrom()).isNotNull();
-        assertThat(isInetAddress(ping.getTo().getHost())).isTrue();
-        assertThat(isInetAddress(ping.getFrom().getHost())).isTrue();
+        assertThat(ping.getTo().getHost()).satisfies(validInetAddressCondition);
+        assertThat(ping.getFrom().map(Endpoint::getHost))
+            .hasValueSatisfying(validInetAddressCondition);
         assertThat(ping.getTo().getUdpPort()).isPositive();
-        assertThat(ping.getFrom().getUdpPort()).isPositive();
+        assertThat(ping.getFrom().get().getUdpPort()).isPositive();
         ping.getTo().getTcpPort().ifPresent(p -> assertThat(p).isPositive());
-        ping.getFrom().getTcpPort().ifPresent(p -> assertThat(p).isPositive());
+        ping.getFrom().get().getTcpPort().ifPresent(p -> assertThat(p).isPositive());
         assertThat(ping.getExpiration()).isPositive();
         // because of the version upgrade the ping packet won't re-serialize, so we're done
         return;
@@ -98,7 +100,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
         final PongPacketData pong = packet.getPacketData(PongPacketData.class).get();
 
         assertThat(pong.getTo()).isNotNull();
-        assertThat(isInetAddress(pong.getTo().getHost())).isTrue();
+        assertThat(pong.getTo().getHost()).satisfies(validInetAddressCondition);
         assertThat(pong.getTo().getUdpPort()).isPositive();
         pong.getTo().getTcpPort().ifPresent(p -> assertThat(p).isPositive());
         assertThat(pong.getPingHash().toArray()).hasSize(32);
@@ -118,12 +120,12 @@ public class PeerDiscoveryPacketPcapSedesTest {
       case NEIGHBORS:
         assertThat(packet.getPacketData(NeighborsPacketData.class)).isPresent();
         final NeighborsPacketData neighbors = packet.getPacketData(NeighborsPacketData.class).get();
-        assertThat(neighbors.getExpiration()).isGreaterThan(0);
+        assertThat(neighbors.getExpiration()).isPositive();
         assertThat(neighbors.getNodes()).isNotEmpty();
 
         for (final DiscoveryPeer p : neighbors.getNodes()) {
           assertThat(NetworkUtility.isValidPort(p.getEndpoint().getUdpPort())).isTrue();
-          assertThat(isInetAddress(p.getEndpoint().getHost())).isTrue();
+          assertThat(p.getEndpoint().getHost()).satisfies(validInetAddressCondition);
           assertThat(p.getId().toArray()).hasSize(64);
         }
 
@@ -133,4 +135,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
     final byte[] encoded = packet.encode().getBytes();
     assertThat(encoded).isEqualTo(data);
   }
+
+  private final Condition<String> validInetAddressCondition =
+      new Condition<>(InetAddresses::isInetAddress, "checks for valid InetAddresses");
 }
