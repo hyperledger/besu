@@ -311,7 +311,9 @@ public class PeerDiscoveryControllerTest {
     // Setup ping to be sent to discoPeer
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final PingPacketData pingPacketData =
-        PingPacketData.create(localEndpoint, new Endpoint("0.1.2.3", 1, OptionalInt.of(1)));
+        PingPacketData.create(
+            localEndpoint,
+            new Endpoint("0.1.2.3", 1, OptionalInt.of(0)) /* This is a garbage endpoint */);
     final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
     mockPingPacketCreation(discoPeer, discoPeerPing);
 
