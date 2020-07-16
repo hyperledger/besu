@@ -722,10 +722,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal"})
   @Option(
-      names = {"--force-color-enabled"},
+      names = {"--color-enabled"},
       description =
           "Force color output to be enabled/disabled (default: colorized only if printing to console")
-  private static Boolean colorForceEnabled = null;
+  private static Boolean colorEnabled = null;
 
   @Option(
       names = {"--miner-enabled"},
@@ -1299,8 +1299,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public static Optional<Boolean> getColorForceEnabled() {
-    return Optional.ofNullable(colorForceEnabled);
+  public static Optional<Boolean> getColorEnabled() {
+    return Optional.ofNullable(colorEnabled);
   }
 
   private void configureNativeLibs() {

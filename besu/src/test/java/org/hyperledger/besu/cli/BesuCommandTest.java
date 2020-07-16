@@ -2659,8 +2659,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     Stream.of(true, false)
         .forEach(
             bool -> {
-              parseCommand("--force-color-enabled", bool.toString());
-              assertThat(BesuCommand.getColorForceEnabled()).contains(bool);
+              parseCommand("--color-enabled", bool.toString());
+              assertThat(BesuCommand.getColorEnabled()).contains(bool);
             });
   }
 

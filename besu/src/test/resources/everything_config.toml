@@ -11,7 +11,7 @@
 # Node Information
 data-path="~/besudata"
 logging="INFO"
-force-color-enabled=false
+color-enabled=false
 node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 
