@@ -541,7 +541,7 @@ public class PeerDiscoveryController {
     if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
       return;
     }
-    final PongPacketData data = PongPacketData.create(packetData.getFrom(), pingHash);
+    final PongPacketData data = PongPacketData.create(sender.getEndpoint(), pingHash);
     sendPacket(sender, PacketType.PONG, data);
   }
 

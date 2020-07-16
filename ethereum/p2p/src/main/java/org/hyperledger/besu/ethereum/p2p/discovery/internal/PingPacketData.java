@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Optional;
+
 public class PingPacketData implements PacketData {
 
   /* Fixed value that represents we're using v5 of the P2P discovery protocol. */
@@ -73,8 +75,8 @@ public class PingPacketData implements PacketData {
     out.endList();
   }
 
-  public Endpoint getFrom() {
-    return from;
+  public Optional<Endpoint> getFrom() {
+    return Optional.of(from);
   }
 
   public Endpoint getTo() {
