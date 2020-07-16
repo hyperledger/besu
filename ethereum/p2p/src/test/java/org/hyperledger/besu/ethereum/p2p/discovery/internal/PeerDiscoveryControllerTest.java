@@ -51,7 +51,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -283,37 +282,6 @@ public class PeerDiscoveryControllerTest {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final PingPacketData pingPacketData =
         PingPacketData.create(localEndpoint, discoPeer.getEndpoint());
-    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
-    mockPingPacketCreation(discoPeer, discoPeerPing);
-
-    controller.onMessage(discoPeerPing, discoPeer);
-
-    verify(outboundMessageHandler, times(1))
-        .send(eq(discoPeer), matchPacketOfType(PacketType.PONG));
-  }
-
-  /** This should reproduce the hive devp2p test SourceKnownPingFromSignatureMismatch */
-  @Test
-  public void shouldRespondToPingRequestWithGarbageFromField() {
-    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
-
-    final DiscoveryPeer discoPeer = peers.get(0);
-
-    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
-    controller =
-        getControllerBuilder()
-            .peers(discoPeer)
-            .outboundMessageHandler(outboundMessageHandler)
-            .build();
-
-    final Endpoint localEndpoint = localPeer.getEndpoint();
-
-    // Setup ping to be sent to discoPeer
-    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
-    final PingPacketData pingPacketData =
-        PingPacketData.create(
-            localEndpoint,
-            new Endpoint("0.1.2.3", 1, OptionalInt.of(0)) /* This is a garbage endpoint */);
     final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
     mockPingPacketCreation(discoPeer, discoPeerPing);
 

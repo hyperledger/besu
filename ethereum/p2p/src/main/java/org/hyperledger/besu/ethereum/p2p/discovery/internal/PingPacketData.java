@@ -16,10 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -54,34 +51,17 @@ public class PingPacketData implements PacketData {
   }
 
   static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationSec) {
-    return new PingPacketData(Optional.of(from), to, expirationSec);
+    return new PingPacketData(from, to, expirationSec);
   }
-
-  private static final Logger LOG = LogManager.getLogger();
 
   public static PingPacketData readFrom(final RLPInput in) {
     in.enterList();
-    LOG.info("entered list");
     // The first element signifies the "version", but this value is ignored as of EIP-8
     in.readBigIntegerScalar();
-    LOG.info("tossed version");
-    Optional<Endpoint> from;
-    try {
-      from = Optional.of(Endpoint.decodeStandalone(in));
-      LOG.info("got real from");
-    } catch (RLPException __) {
-      // We don't care if they send us a bad from field, we may be able to recover their endpoint
-      // another way
-      from = Optional.empty();
-      in.leaveListLenient();
-      LOG.info("empty from");
-    }
+    final Endpoint from = Endpoint.decodeStandalone(in);
     final Endpoint to = Endpoint.decodeStandalone(in);
-    LOG.info("got to");
     final long expiration = in.readLongScalar();
-    LOG.info("got expiration");
     in.leaveListLenient();
-    LOG.info("left list");
     return new PingPacketData(from, to, expiration);
   }
 
