@@ -53,7 +53,6 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -257,7 +256,7 @@ public final class DefaultP2PNetworkTest {
     network.start();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(
-            Peer.randomId(), new Endpoint("127.0.0.1", 999, OptionalInt.empty()));
+            Peer.randomId(), new Endpoint("127.0.0.1", 999, Optional.empty()));
     final PeerDiscoveryEvent.PeerBondedEvent peerBondedEvent =
         new PeerDiscoveryEvent.PeerBondedEvent(peer, System.currentTimeMillis());
 

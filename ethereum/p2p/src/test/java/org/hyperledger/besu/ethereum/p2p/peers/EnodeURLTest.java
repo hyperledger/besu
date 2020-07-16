@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import java.net.URI;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class EnodeURLTest {
             .nodeId(VALID_NODE_ID)
             .ipAddress(IPV4_ADDRESS)
             .listeningPort(P2P_PORT)
-            .discoveryPort(OptionalInt.of(P2P_PORT))
+            .discoveryPort(Optional.of(P2P_PORT))
             .build();
     assertThat(enode.getListeningPortOrZero()).isEqualTo(P2P_PORT);
     assertThat(enode.getDiscoveryPortOrZero()).isEqualTo(P2P_PORT);
@@ -55,7 +55,7 @@ public class EnodeURLTest {
             .nodeId(VALID_NODE_ID)
             .ipAddress(IPV4_ADDRESS)
             .listeningPort(P2P_PORT)
-            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .discoveryPort(Optional.of(DISCOVERY_PORT))
             .build();
     assertThat(enode.getListeningPortOrZero()).isEqualTo(P2P_PORT);
     assertThat(enode.getDiscoveryPortOrZero()).isEqualTo(DISCOVERY_PORT);
@@ -68,7 +68,7 @@ public class EnodeURLTest {
             .nodeId(VALID_NODE_ID)
             .ipAddress(IPV4_ADDRESS)
             .listeningPort(P2P_PORT)
-            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .discoveryPort(Optional.of(DISCOVERY_PORT))
             .build();
     final String enodeURLString =
         "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
@@ -102,7 +102,7 @@ public class EnodeURLTest {
             .nodeId(VALID_NODE_ID)
             .ipAddress(IPV6_FULL_ADDRESS)
             .listeningPort(P2P_PORT)
-            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .discoveryPort(Optional.of(DISCOVERY_PORT))
             .build();
     final String enodeURLString =
         "enode://"
@@ -126,7 +126,7 @@ public class EnodeURLTest {
             .nodeId(VALID_NODE_ID)
             .ipAddress(IPV6_COMPACT_ADDRESS)
             .listeningPort(P2P_PORT)
-            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .discoveryPort(Optional.of(DISCOVERY_PORT))
             .build();
     final String enodeURLString =
         "enode://"
@@ -153,7 +153,7 @@ public class EnodeURLTest {
     EnodeURL enodeURL = EnodeURL.fromString(enodeURLString);
     assertThat(enodeURL.getNodeId().toUnprefixedHexString()).isEqualTo(VALID_NODE_ID);
     assertThat("[" + enodeURL.getIpAsString() + "]").isEqualTo(IPV6_FULL_ADDRESS);
-    assertThat(enodeURL.getListeningPort()).isEqualTo(OptionalInt.of(P2P_PORT));
+    assertThat(enodeURL.getListeningPort()).isEqualTo(Optional.of(P2P_PORT));
     assertThat(enodeURL.getDiscoveryPortOrZero()).isEqualTo(0);
     assertThat(enodeURL.isListening()).isTrue();
     assertThat(enodeURL.isRunningDiscovery()).isFalse();
@@ -559,7 +559,7 @@ public class EnodeURLTest {
         EnodeURL.builder()
             .nodeId(VALID_NODE_ID)
             .ipAddress(IPV4_ADDRESS)
-            .discoveryPort(OptionalInt.empty())
+            .discoveryPort(Optional.empty())
             .listeningPort(P2P_PORT)
             .build();
 
@@ -578,7 +578,7 @@ public class EnodeURLTest {
             .nodeId(VALID_NODE_ID)
             .ipAddress(IPV4_ADDRESS)
             .discoveryPort(P2P_PORT)
-            .listeningPort(OptionalInt.empty())
+            .listeningPort(Optional.empty())
             .build();
 
     assertThat(enodeURL.getNodeId().toUnprefixedHexString()).isEqualTo(VALID_NODE_ID);

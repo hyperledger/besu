@@ -215,14 +215,16 @@ public class Runner implements AutoCloseable {
           .getLocalEnode()
           .ifPresent(
               enode -> {
-                if (enode.getDiscoveryPort().isPresent()) {
-                  properties.setProperty(
-                      "discovery", String.valueOf(enode.getDiscoveryPort().getAsInt()));
-                }
-                if (enode.getListeningPort().isPresent()) {
-                  properties.setProperty(
-                      "p2p", String.valueOf(enode.getListeningPort().getAsInt()));
-                }
+                enode
+                    .getDiscoveryPort()
+                    .ifPresent(
+                        discoveryPort ->
+                            properties.setProperty("discovery", String.valueOf(discoveryPort)));
+                enode
+                    .getDiscoveryPort()
+                    .ifPresent(
+                        listeningPort ->
+                            properties.setProperty("p2p", String.valueOf(listeningPort)));
               });
     }
 

@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.util.OptionalInt;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -216,7 +216,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             // Acquire the senders coordinates to build a Peer representation from them.
             final String host = datagram.sender().host();
             final int port = datagram.sender().port();
-            final Endpoint endpoint = new Endpoint(host, port, OptionalInt.empty());
+            final Endpoint endpoint = new Endpoint(host, port, Optional.empty());
             handleIncomingPacket(endpoint, event.result());
           } else {
             if (event.cause() instanceof PeerDiscoveryPacketDecodingException) {
