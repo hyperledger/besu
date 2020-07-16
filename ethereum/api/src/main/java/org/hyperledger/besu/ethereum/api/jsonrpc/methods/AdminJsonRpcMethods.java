@@ -81,7 +81,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new AdminPeers(p2pNetwork),
         new AdminChangeLogLevel(),
         new AdminGenerateLogBloomCache(blockchainQueries),
-        new AdminLogsRepairCache(p2pNetwork, blockchainQueries),
+        new AdminLogsRepairCache(blockchainQueries),
         new PluginsReloadConfiguration(namedPlugins));
   }
 }

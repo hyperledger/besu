@@ -16,14 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
-import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,12 +28,9 @@ import java.util.Optional;
 public class AdminLogsRepairCache implements JsonRpcMethod {
   private static final String STATUS = "Status";
 
-  private final P2PNetwork peerNetwork;
   private final BlockchainQueries blockchainQueries;
 
-  public AdminLogsRepairCache(
-      final P2PNetwork peerNetwork, final BlockchainQueries blockchainQueries) {
-    this.peerNetwork = peerNetwork;
+  public AdminLogsRepairCache(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }
 
@@ -48,17 +41,6 @@ public class AdminLogsRepairCache implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (!peerNetwork.isP2pEnabled()) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
-    }
-
-    final Optional<EnodeURL> maybeEnode = peerNetwork.getLocalEnode();
-    if (maybeEnode.isEmpty()) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
-    }
-
     final Optional<Long> blockNumber = requestContext.getOptionalParameter(0, Long.class);
 
     blockNumber.ifPresent(

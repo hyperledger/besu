@@ -20,16 +20,12 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.CachingStatus;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,9 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AdminLogsRepairCacheTest {
-  @Mock private P2PNetwork p2pNetwork;
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private EnodeURL enodeURL;
   @Mock private Blockchain blockchain;
   @Mock private TransactionLogBloomCacher transactionLogBloomCacher;
   @Mock private CachingStatus cachingStatus;
@@ -54,7 +48,7 @@ public class AdminLogsRepairCacheTest {
 
   @Before
   public void setup() {
-    adminLogsRepairCache = new AdminLogsRepairCache(p2pNetwork, blockchainQueries);
+    adminLogsRepairCache = new AdminLogsRepairCache(blockchainQueries);
   }
 
   @Test
@@ -67,8 +61,6 @@ public class AdminLogsRepairCacheTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), response);
 
-    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
-    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(enodeURL));
     when(blockchainQueries.getTransactionLogBloomCacher())
         .thenReturn(Optional.of(transactionLogBloomCacher));
     when(transactionLogBloomCacher.getCachingStatus()).thenReturn(cachingStatus);
@@ -89,8 +81,6 @@ public class AdminLogsRepairCacheTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), response);
 
-    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
-    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(enodeURL));
     when(blockchainQueries.getTransactionLogBloomCacher())
         .thenReturn(Optional.of(transactionLogBloomCacher));
     when(transactionLogBloomCacher.getCachingStatus())
@@ -109,43 +99,9 @@ public class AdminLogsRepairCacheTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_logsRepairCache", new String[] {"123456789"}));
 
-    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
-    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(enodeURL));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.empty());
 
     adminLogsRepairCache.response(request);
-  }
-
-  @Test
-  public void requestP2PDisabledTest() {
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "admin_logsRepairCache", new String[] {}));
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
-
-    when(p2pNetwork.isP2pEnabled()).thenReturn(false);
-
-    final JsonRpcResponse actualResponse = adminLogsRepairCache.response(request);
-
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void requestP2PNetworkDownTest() {
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "admin_logsRepairCache", new String[] {}));
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
-
-    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
-    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.empty());
-
-    final JsonRpcResponse actualResponse = adminLogsRepairCache.response(request);
-
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 }
