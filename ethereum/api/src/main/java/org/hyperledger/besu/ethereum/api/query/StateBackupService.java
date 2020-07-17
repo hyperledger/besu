@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -38,13 +39,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -53,12 +59,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.xerial.snappy.Snappy;
 
 public class StateBackupService {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long MAX_FILE_SIZE = 1 << 30; // 1 GiB max file size
 
+  private final String besuVesion;
   private final Lock submissionLock = new ReentrantLock();
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
@@ -69,10 +77,12 @@ public class StateBackupService {
   private RollingFileWriter leafFileWriter;
 
   public StateBackupService(
+      final String besuVesion,
       final Blockchain blockchain,
       final Path backupDir,
       final EthScheduler scheduler,
       final WorldStateStorage worldStateStorage) {
+    this.besuVesion = besuVesion;
     this.blockchain = blockchain;
     this.backupDir = backupDir;
     this.scheduler = scheduler;
@@ -83,7 +93,8 @@ public class StateBackupService {
     return backupDir;
   }
 
-  public BackupStatus requestBackup(final long block, final Optional<Path> backupDir) {
+  public BackupStatus requestBackup(
+      final long block, final boolean compress, final Optional<Path> backupDir) {
     boolean requestAccepted = false;
     try {
       if (submissionLock.tryLock(100, TimeUnit.MILLISECONDS)) {
@@ -92,11 +103,12 @@ public class StateBackupService {
             requestAccepted = true;
             this.backupDir = backupDir.orElse(this.backupDir);
             backupStatus.targetBlock = block;
+            backupStatus.compressed = compress;
             backupStatus.currentAccount = Bytes32.ZERO;
             scheduler.scheduleComputationTask(
                 () -> {
                   try {
-                    return backup(block);
+                    return backup(block, compress);
 
                   } catch (final IOException ioe) {
                     LOG.error("Error writing backups", ioe);
@@ -115,46 +127,47 @@ public class StateBackupService {
     return backupStatus;
   }
 
-  private File nextLeafFile(final int fileNumber) {
+  private File nextLeafFile(final int fileNumber, final boolean compressed) {
     return backupDir
-        .resolve("besu-leaf-backup-" + backupStatus.targetBlock + "-" + fileNumber + ".backup")
+        .resolve(
+            "besu-leaf-backup-"
+                + backupStatus.targetBlock
+                + "-"
+                + fileNumber
+                + (compressed ? ".cdat" : ".rdat"))
         .toFile();
   }
 
-  private File nextHeaderFile(final int fileNumber) {
-    return backupDir.resolve("besu-header-backup-" + fileNumber + ".rdat").toFile();
+  private File nextHeaderFile(final int fileNumber, final boolean compressed) {
+    return backupDir
+        .resolve("besu-header-backup-" + fileNumber + (compressed ? ".cdat" : ".rdat"))
+        .toFile();
   }
 
-  private File nextBodyFile(final int fileNumber) {
-    return backupDir.resolve("besu-body-backup-" + fileNumber + ".rdat").toFile();
+  private File nextBodyFile(final int fileNumber, final boolean compressed) {
+    return backupDir
+        .resolve("besu-body-backup-" + fileNumber + (compressed ? ".cdat" : ".rdat"))
+        .toFile();
   }
 
-  private File nextReceiptFile(final int fileNumber) {
-    return backupDir.resolve("besu-receipt-backup-" + fileNumber + ".rdat").toFile();
+  private File nextReceiptFile(final int fileNumber, final boolean compressed) {
+    return backupDir
+        .resolve("besu-receipt-backup-" + fileNumber + (compressed ? ".cdat" : ".rdat"))
+        .toFile();
   }
 
-  private BackupStatus backup(final long block) throws IOException {
+  private BackupStatus backup(final long block, final boolean compress) throws IOException {
     try {
       checkArgument(
           block >= 0 && block <= blockchain.getChainHeadBlockNumber(),
           "Backup Block must be within blockchain");
       backupStatus.targetBlock = block;
-      final Optional<BlockHeader> header = blockchain.getBlockHeader(backupStatus.targetBlock);
-      if (header.isEmpty()) {
-        backupStatus.currentAccount = null;
-        return backupStatus;
-      }
-      final Optional<Bytes> worldStateRoot =
-          worldStateStorage.getAccountStateTrieNode(header.get().getStateRoot());
-      if (worldStateRoot.isEmpty()) {
-        backupStatus.currentAccount = null;
-        return backupStatus;
-      }
+      backupStatus.compressed = compress;
       backupStatus.currentAccount = Bytes32.ZERO;
 
-      backupChaindata(block);
-
-      backupLeaves(header.get());
+      writeManifest();
+      backupChaindata();
+      backupLeaves();
 
       return backupStatus;
     } catch (final Throwable t) {
@@ -163,14 +176,38 @@ public class StateBackupService {
     }
   }
 
-  private void backupLeaves(final BlockHeader header) throws IOException {
-    try (final RollingFileWriter leafFileWriter = new RollingFileWriter(this::nextLeafFile)) {
+  private void writeManifest() throws IOException {
+    final Map<String, Object> manifest = new HashMap<>();
+    manifest.put("clientVersion", besuVesion);
+    manifest.put("compressed", backupStatus.compressed);
+    manifest.put("targetBlock", backupStatus.targetBlock);
+
+    Files.write(
+        backupDir.resolve("besu-backup-manifest.json"),
+        JsonUtil.getJson(manifest).getBytes(StandardCharsets.UTF_8));
+  }
+
+  private void backupLeaves() throws IOException {
+    final Optional<BlockHeader> header = blockchain.getBlockHeader(backupStatus.targetBlock);
+    if (header.isEmpty()) {
+      backupStatus.currentAccount = null;
+      return;
+    }
+    final Optional<Bytes> worldStateRoot =
+        worldStateStorage.getAccountStateTrieNode(header.get().getStateRoot());
+    if (worldStateRoot.isEmpty()) {
+      backupStatus.currentAccount = null;
+      return;
+    }
+
+    try (final RollingFileWriter leafFileWriter =
+        new RollingFileWriter(this::nextLeafFile, backupStatus.compressed)) {
       this.leafFileWriter = leafFileWriter;
 
       final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               worldStateStorage::getAccountStateTrieNode,
-              header.getStateRoot(),
+              header.get().getStateRoot(),
               Function.identity(),
               Function.identity());
 
@@ -221,11 +258,14 @@ public class StateBackupService {
     return State.CONTINUE;
   }
 
-  private void backupChaindata(final long endBlock) throws IOException {
-    try (final RollingFileWriter headerWriter = new RollingFileWriter(this::nextHeaderFile);
-        final RollingFileWriter bodyWriter = new RollingFileWriter(this::nextBodyFile);
-        final RollingFileWriter receiptsWriter = new RollingFileWriter(this::nextReceiptFile)) {
-      for (int blockNumber = 0; blockNumber < endBlock; blockNumber++) {
+  private void backupChaindata() throws IOException {
+    try (final RollingFileWriter headerWriter =
+            new RollingFileWriter(this::nextHeaderFile, backupStatus.compressed);
+        final RollingFileWriter bodyWriter =
+            new RollingFileWriter(this::nextBodyFile, backupStatus.compressed);
+        final RollingFileWriter receiptsWriter =
+            new RollingFileWriter(this::nextReceiptFile, backupStatus.compressed)) {
+      for (int blockNumber = 0; blockNumber <= backupStatus.targetBlock; blockNumber++) {
         final Optional<Block> block = blockchain.getBlockByNumber(blockNumber);
         if (block.isEmpty()) {
           throw new IllegalStateException(
@@ -269,27 +309,36 @@ public class StateBackupService {
   }
 
   static class RollingFileWriter implements Closeable {
+    final BiFunction<Integer, Boolean, File> filenameGenerator;
+    final boolean compressed;
     int currentSize;
     int fileNumber;
-    final Function<Integer, File> filenameGenerator;
     FileOutputStream out;
 
-    RollingFileWriter(final Function<Integer, File> filenameGenerator)
+    RollingFileWriter(
+        final BiFunction<Integer, Boolean, File> filenameGenerator, final boolean compressed)
         throws FileNotFoundException {
       this.filenameGenerator = filenameGenerator;
+      this.compressed = compressed;
       currentSize = 0;
       fileNumber = 1;
-      out = new FileOutputStream(filenameGenerator.apply(fileNumber));
+      out = new FileOutputStream(filenameGenerator.apply(fileNumber, compressed));
     }
 
     void writeBytes(final byte[] bytes) throws IOException {
-      currentSize += bytes.length;
+      final byte[] finalBytes;
+      if (compressed) {
+        finalBytes = Snappy.compress(bytes);
+      } else {
+        finalBytes = bytes;
+      }
+      currentSize += finalBytes.length;
       if (currentSize > MAX_FILE_SIZE) {
         out.close();
-        out = new FileOutputStream(filenameGenerator.apply(++fileNumber));
-        currentSize = bytes.length;
+        out = new FileOutputStream(filenameGenerator.apply(++fileNumber, compressed));
+        currentSize = finalBytes.length;
       }
-      out.write(bytes);
+      out.write(finalBytes);
     }
 
     @Override
@@ -301,6 +350,7 @@ public class StateBackupService {
   public static final class BackupStatus {
     long targetBlock;
     long storedBlock;
+    boolean compressed;
     Bytes32 currentAccount;
     Bytes32 currentStorage;
     AtomicLong accountCount = new AtomicLong(0);

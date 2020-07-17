@@ -19,6 +19,7 @@ package org.hyperledger.besu.cli.subcommands.operator;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 
+import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService.BackupStatus;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.io.File;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -56,6 +58,12 @@ public class BackupState implements Runnable {
       arity = "1..1")
   private final File backupDir = null;
 
+  @Option(
+      names = {"--compression-enabled"},
+      description = "Enable data compression",
+      arity = "1")
+  private final Boolean compress = true;
+
   @ParentCommand private OperatorSubCommand parentCommand;
 
   @Override
@@ -71,8 +79,9 @@ public class BackupState implements Runnable {
     try {
       final long targetBlock = Math.min(blockchain.getChainHeadBlockNumber(), this.block);
       final StateBackupService backup =
-          new StateBackupService(blockchain, backupDir.toPath(), scheduler, worldStateStorage);
-      final BackupStatus status = backup.requestBackup(targetBlock, Optional.empty());
+          new StateBackupService(
+              BesuInfo.version(), blockchain, backupDir.toPath(), scheduler, worldStateStorage);
+      final BackupStatus status = backup.requestBackup(targetBlock, compress, Optional.empty());
 
       final double refValue = Math.pow(2, 256) / 100.0d;
       while (status.isBackingUp()) {
@@ -88,13 +97,8 @@ public class BackupState implements Runnable {
               status.getCurrentAccountBytes().toUnsignedBigInteger().doubleValue() / refValue,
               status.getAccountCount(),
               status.getStorageCount());
-          }
-        try {
-          //noinspection BusyWait
-          Thread.sleep(TimeUnit.SECONDS.toMillis(10));
-        } catch (final InterruptedException e) {
-          e.printStackTrace();
         }
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
       }
 
       System.out.printf(
