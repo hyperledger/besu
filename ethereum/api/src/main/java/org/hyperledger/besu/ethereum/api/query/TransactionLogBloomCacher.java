@@ -217,7 +217,9 @@ public class TransactionLogBloomCacher {
                 if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
                   final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
                   final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
-                  if (!cacheFile.isFile() || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
+                  if (overrideCacheCheck
+                      || !cacheFile.isFile()
+                      || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
                     generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
                   }
                   cachedSegments.put(currentSegment, true);
