@@ -21,13 +21,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public class AdminLogsRepairCache implements JsonRpcMethod {
-  private static final String STATUS = "Status";
-
   private final BlockchainQueries blockchainQueries;
 
   public AdminLogsRepairCache(final BlockchainQueries blockchainQueries) {
@@ -59,12 +56,12 @@ public class AdminLogsRepairCache implements JsonRpcMethod {
     transactionLogBloomCacher.ensurePreviousSegmentsArePresent(
         blockNumber.orElse(blockchainQueries.headBlockNumber()), true);
 
-    final Map<String, Object> response = new HashMap<>();
-    response.put(STATUS, "Started");
-
-    if (transactionLogBloomCacher.getCachingStatus().isCaching()) {
-      response.put(STATUS, "Already running");
-    }
+    final Map<String, String> response =
+        Map.of(
+            "Status",
+            transactionLogBloomCacher.getCachingStatus().isCaching()
+                ? "Already running"
+                : "Started");
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }

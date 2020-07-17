@@ -56,7 +56,7 @@ public class AdminLogsRepairCacheTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_logsRepairCache", new String[] {}));
-    final Map<String, Object> response = new HashMap<>();
+    final Map<String, String> response = new HashMap<>();
     response.put("Status", "Started");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), response);
@@ -76,7 +76,7 @@ public class AdminLogsRepairCacheTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_logsRepairCache", new String[] {}));
-    final Map<String, Object> response = new HashMap<>();
+    final Map<String, String> response = new HashMap<>();
     response.put("Status", "Already running");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), response);
