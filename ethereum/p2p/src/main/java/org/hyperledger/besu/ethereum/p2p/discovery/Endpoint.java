@@ -18,12 +18,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetAddress;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import com.google.common.net.InetAddresses;
@@ -194,5 +196,25 @@ public class Endpoint {
     final Endpoint endpoint = decodeInline(in, size);
     in.leaveList();
     return endpoint;
+  }
+
+  /**
+   * Attempts to decodes the RLP stream as a standalone Endpoint instance, which is not part of a
+   * Peer. If the from field is malformed, consumes the rest of the items in the list and returns
+   * Optional.empty().
+   *
+   * @param in The RLP input stream from which to read.
+   * @return Some decoded endpoint if it was possible to decode it, empty otherwise.
+   */
+  public static Optional<Endpoint> maybeDecodeStandalone(final RLPInput in) {
+    final int size = in.enterList();
+    Optional<Endpoint> maybeEndpoint = Optional.empty();
+    try {
+      maybeEndpoint = Optional.of(decodeInline(in, size));
+    } catch (RLPException __) {
+      // skip the rest of the endpoint rlp here
+    }
+    in.leaveList();
+    return maybeEndpoint;
   }
 }
