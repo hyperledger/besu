@@ -208,13 +208,14 @@ public class Endpoint {
    */
   public static Optional<Endpoint> maybeDecodeStandalone(final RLPInput in) {
     final int size = in.enterList();
+    Optional<Endpoint> maybeEndpoint = Optional.empty();
     try {
-      return Optional.of(decodeInline(in, size));
+      maybeEndpoint = Optional.of(decodeInline(in, size));
     } catch (RLPException __) {
       // skip the rest of the endpoint rlp
       while (!in.isEndOfCurrentList()) in.skipNext();
-      in.leaveList();
-      return Optional.empty();
     }
+    in.leaveList();
+    return maybeEndpoint;
   }
 }
