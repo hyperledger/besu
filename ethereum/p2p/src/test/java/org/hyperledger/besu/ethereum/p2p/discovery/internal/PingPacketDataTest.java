@@ -127,7 +127,7 @@ public class PingPacketDataTest {
     out.writeIntScalar(version);
     ((RLPOutput) out).startList();
     out.writeInetAddress(InetAddresses.forString("0.1.2.3"));
-    out.writeUnsignedShort(1);
+    out.writeByte((byte) 1);
     out.writeUnsignedShort(0);
     ((RLPOutput) out).endList();
     to.encodeStandalone(out);

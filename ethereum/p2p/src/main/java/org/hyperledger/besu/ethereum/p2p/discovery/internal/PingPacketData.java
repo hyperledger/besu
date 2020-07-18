@@ -51,14 +51,14 @@ public class PingPacketData implements PacketData {
   }
 
   static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationSec) {
-    return new PingPacketData(from, to, expirationSec);
+    return new PingPacketData(Optional.of(from), to, expirationSec);
   }
 
   public static PingPacketData readFrom(final RLPInput in) {
     in.enterList();
     // The first element signifies the "version", but this value is ignored as of EIP-8
     in.readBigIntegerScalar();
-    final Endpoint from = Endpoint.decodeStandalone(in);
+    final Optional<Endpoint> from = Endpoint.maybeDecodeStandalone(in);
     final Endpoint to = Endpoint.decodeStandalone(in);
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
