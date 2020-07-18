@@ -16,16 +16,16 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.net.InetAddresses;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.time.Instant;
 import java.util.OptionalInt;
 
+import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.junit.Test;
 
 public class PingPacketDataTest {
