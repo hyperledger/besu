@@ -182,7 +182,7 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
-    final int port = sourceEndpoint.getUdpPort();
+    final int udpPort = sourceEndpoint.getUdpPort();
     final int tcpPort =
         packet
             .getPacketData(PingPacketData.class)
@@ -194,7 +194,7 @@ public abstract class PeerDiscoveryAgent {
                       ? Optional.of(maybePort.getAsInt())
                       : Optional.empty();
                 })
-            .orElse(port);
+            .orElse(udpPort);
 
     // Notify the peer controller.
     final String host = sourceEndpoint.getHost();
@@ -204,7 +204,7 @@ public abstract class PeerDiscoveryAgent {
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
                 .listeningPort(tcpPort)
-                .discoveryPort(port)
+                .discoveryPort(udpPort)
                 .build());
 
     controller.ifPresent(c -> c.onMessage(packet, peer));
