@@ -27,7 +27,7 @@ public class FindNeighborsPacketData implements PacketData {
   /* Node ID. */
   private final Bytes target;
 
-  /* In millis after epoch. */
+  /* In seconds after epoch. */
   private final long expiration;
 
   private FindNeighborsPacketData(final Bytes target, final long expiration) {

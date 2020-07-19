@@ -33,7 +33,7 @@ public class PingPacketData implements PacketData {
   /* Destination. */
   private final Endpoint to;
 
-  /* In millis after epoch. */
+  /* In seconds after epoch. */
   private final long expiration;
 
   private PingPacketData(

@@ -26,7 +26,7 @@ public class NeighborsPacketData implements PacketData {
 
   private final List<DiscoveryPeer> peers;
 
-  /* In millis after epoch. */
+  /* In seconds after epoch. */
   private final long expiration;
 
   private NeighborsPacketData(final List<DiscoveryPeer> peers, final long expiration) {
