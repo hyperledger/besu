@@ -37,7 +37,6 @@ public class NeighborsPacketData implements PacketData {
     this.expiration = expiration;
   }
 
-  @SuppressWarnings("unchecked")
   public static NeighborsPacketData create(final List<DiscoveryPeer> peers) {
     return new NeighborsPacketData(peers, PacketData.defaultExpiration());
   }
