@@ -417,7 +417,6 @@ public class EthStatsService {
                             .boxed()
                             .collect(Collectors.toList());
                   }
-                  System.out.println(list);
                   sendHistoryReport(list);
                 }
               }
