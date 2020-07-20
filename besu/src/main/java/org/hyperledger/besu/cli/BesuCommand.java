@@ -720,6 +720,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
   private final Level logLevel = null;
 
+  @SuppressWarnings({"FieldCanBeFinal"})
+  @Option(
+      names = {"--color-enabled"},
+      description =
+          "Force color output to be enabled/disabled (default: colorized only if printing to console")
+  private static Boolean colorEnabled = null;
+
   @Option(
       names = {"--miner-enabled"},
       description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
@@ -887,7 +894,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})")
+          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})",
+      hidden = true)
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
@@ -1296,6 +1304,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public void configureLogging(final boolean announce) {
+    // To change the configuration if color was enabled/disabled
+    Configurator.reconfigure();
     // set log level per CLI flags
     if (logLevel != null) {
       if (announce) {
@@ -1303,6 +1313,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       Configurator.setAllLevels("", logLevel);
     }
+  }
+
+  public static Optional<Boolean> getColorEnabled() {
+    return Optional.ofNullable(colorEnabled);
   }
 
   private void configureNativeLibs() {
@@ -1854,7 +1868,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--privacy-url",
             "--privacy-public-key-file",
-            "--privacy-precompiled-address",
             "--privacy-multi-tenancy-enabled",
             "--privacy-tls-enabled"));
 
@@ -1917,7 +1930,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
         }
       }
-      privacyParametersBuilder.setPrivacyAddress(privacyPrecompiledAddress);
+
+      if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
+        logger.warn(
+            "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
+      }
+
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));

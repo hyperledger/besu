@@ -2678,6 +2678,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
   }
 
+  @Test
+  public void colorCanBeEnabledOrDisabledExplicitly() {
+    Stream.of(true, false)
+        .forEach(
+            bool -> {
+              parseCommand("--color-enabled", bool.toString());
+              assertThat(BesuCommand.getColorEnabled()).contains(bool);
+            });
+  }
+
   @Ignore
   public void pruningIsEnabledIfSyncModeIsFast() {
     parseCommand("--sync-mode", "FAST");
@@ -2965,19 +2975,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final File file = new File("./specific/enclavePublicKey");
     file.deleteOnExit();
 
-    parseCommand(
-        "--privacy-url",
-        ENCLAVE_URI,
-        "--privacy-public-key-file",
-        file.toString(),
-        "--privacy-precompiled-address",
-        String.valueOf(Byte.MAX_VALUE - 1));
+    parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
     verifyOptionsConstraintLoggerCall(
-        "--privacy-enabled",
-        "--privacy-url",
-        "--privacy-precompiled-address",
-        "--privacy-public-key-file");
+        "--privacy-enabled", "--privacy-url", "--privacy-public-key-file");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
@@ -44,39 +43,35 @@ public class SStoreOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 key = UInt256.fromBytes(frame.getStackItem(0));
-    final UInt256 newValue = UInt256.fromBytes(frame.getStackItem(1));
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.isStatic()) {
+      return ILLEGAL_STATE_CHANGE;
+    }
 
-    final Account account = frame.getWorldState().get(frame.getRecipientAddress());
-    return gasCalculator().calculateStorageCost(account, key, newValue);
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value = UInt256.fromBytes(frame.popStackItem());
 
     final MutableAccount account =
         frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
-    assert account != null : "VM account should exists";
+    if (account == null) {
+      return ILLEGAL_STATE_CHANGE;
+    }
+    final Gas cost = gasCalculator().calculateStorageCost(account, key, value);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    final Gas remainingGas = frame.getRemainingGas();
+    if (remainingGas.compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+    if (remainingGas.compareTo(minumumGasRemaining) <= 0) {
+      return new OperationResult(
+          Optional.of(minumumGasRemaining), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
 
     // Increment the refund counter.
     frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
     account.setStorageValue(key, value);
     frame.storageWasUpdated(key, value.toBytes());
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
-    if (frame.isStatic()) {
-      return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) <= 0) {
-      return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
-    } else {
-      return Optional.empty();
-    }
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
@@ -78,6 +79,7 @@ public class RetestethContext {
   private ProtocolContext protocolContext;
   private BlockchainQueries blockchainQueries;
   private ProtocolSchedule protocolSchedule;
+  private BlockHeaderFunctions blockHeaderFunctions;
   private HeaderValidationMode headerValidationMode;
   private BlockReplay blockReplay;
   private RetestethClock retestethClock;
@@ -127,6 +129,7 @@ public class RetestethContext {
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
     }
+    blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
     final GenesisState genesisState = GenesisState.fromJson(genesisConfigString, protocolSchedule);
     coinbase = genesisState.getBlock().getHeader().getCoinbase();
@@ -209,6 +212,10 @@ public class RetestethContext {
 
   public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
+  }
+
+  public BlockHeaderFunctions getBlockHeaderFunctions() {
+    return blockHeaderFunctions;
   }
 
   public ProtocolContext getProtocolContext() {

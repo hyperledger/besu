@@ -24,6 +24,7 @@ public enum RpcMethod {
   ADMIN_REMOVE_PEER("admin_removePeer"),
   ADMIN_CHANGE_LOG_LEVEL("admin_changeLogLevel"),
   ADMIN_GENERATE_LOG_BLOOM_CACHE("admin_generateLogBloomCache"),
+  ADMIN_LOGS_REPAIR_CACHE("admin_logsRepairCache"),
   CLIQUE_DISCARD("clique_discard"),
   CLIQUE_GET_SIGNERS("clique_getSigners"),
   CLIQUE_GET_SIGNERS_AT_HASH("clique_getSignersAtHash"),
@@ -132,6 +133,7 @@ public enum RpcMethod {
   TRACE_TRANSACTION("trace_transaction"),
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
+  TX_POOL_BESU_PENDING_TRANSACTIONS("txpool_besuPendingTransactions"),
   WEB3_CLIENT_VERSION("web3_clientVersion"),
   WEB3_SHA3("web3_sha3"),
   PLUGINS_RELOAD_CONFIG("plugins_reloadPluginConfig");

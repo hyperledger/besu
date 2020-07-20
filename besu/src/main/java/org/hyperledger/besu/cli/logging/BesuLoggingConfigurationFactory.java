@@ -12,24 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.ehalt;
+package org.hyperledger.besu.cli.logging;
 
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.ConfigurationFactory;
+import org.apache.logging.log4j.core.config.ConfigurationSource;
 
-/** An exception to signal that an exceptional halt has occurred. */
-public class ExceptionalHaltException extends Exception {
-  private final ExceptionalHaltReason reason;
+public class BesuLoggingConfigurationFactory extends ConfigurationFactory {
 
-  public ExceptionalHaltException(final ExceptionalHaltReason reason) {
-    this.reason = reason;
+  @Override
+  protected String[] getSupportedTypes() {
+    return new String[] {".xml", "*"};
   }
 
   @Override
-  public String getMessage() {
-    return "Exceptional halt condition(s) triggered: " + this.reason;
-  }
-
-  public ExceptionalHaltReason getReasons() {
-    return reason;
+  public Configuration getConfiguration(
+      final LoggerContext loggerContext, final ConfigurationSource source) {
+    return new XmlExtensionConfiguration(loggerContext, source);
   }
 }
