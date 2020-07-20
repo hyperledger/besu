@@ -588,7 +588,7 @@ public class RunnerBuilder {
     }
 
     final Optional<EthStatsService> ethStatsService;
-    if (ethstatsUrl != null) {
+    if (!ethstatsUrl.isEmpty()) {
       ethStatsService =
           Optional.of(
               new EthStatsService(

@@ -1045,7 +1045,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = "<nodename:secret@host:port>",
       description = "Reporting URL of a ethstats server",
       arity = "1")
-  private String ethstatsUrl = null;
+  private String ethstatsUrl = "";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
@@ -1384,7 +1384,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateNetStatsParams() {
-    if (ethstatsUrl == null && !ethstatsContact.isEmpty()) {
+    if (ethstatsUrl.isEmpty() && !ethstatsContact.isEmpty()) {
       throw new ParameterException(
           this.commandLine,
           "The `--ethstats-contact` requires that an url to a ethstats server is provided. Either remove --ethstats-contact"
