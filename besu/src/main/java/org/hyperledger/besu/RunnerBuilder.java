@@ -20,6 +20,7 @@ import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 
+import com.google.common.base.Strings;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -588,7 +589,7 @@ public class RunnerBuilder {
     }
 
     final Optional<EthStatsService> ethStatsService;
-    if (!ethstatsUrl.isEmpty()) {
+    if (!Strings.isNullOrEmpty(ethstatsUrl)) {
       ethStatsService =
           Optional.of(
               new EthStatsService(

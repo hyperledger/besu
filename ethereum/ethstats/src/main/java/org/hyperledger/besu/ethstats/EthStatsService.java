@@ -396,7 +396,7 @@ public class EthStatsService {
               final JsonNode jsonNode = MAPPER.readTree(message);
               final JsonNode parameters = jsonNode.get(EMIT_FIELD);
               if (parameters.isArray()) {
-                EthStatsRequest.Type type =
+                final EthStatsRequest.Type type =
                     EthStatsRequest.Type.fromValue(parameters.get(0).asText());
                 if (type.equals(NODE_PONG)) {
                   sendLatencyReport();
@@ -406,7 +406,7 @@ public class EthStatsService {
                       stream(parameters.get(1).withArray("list").elements())
                           .map(JsonNode::asLong)
                           .collect(Collectors.toList());
-                  //  if the server does not send a list, we recover the last HISTORY_RANGE blocks
+                  //  if the server does not send a list, we recover the last 50 blocks
                   if (list.isEmpty()) {
                     final long chainHeadBlockNumber =
                         blockchainQueries.getBlockchain().getChainHeadBlockNumber();

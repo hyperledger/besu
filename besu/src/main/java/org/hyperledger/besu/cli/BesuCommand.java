@@ -33,6 +33,7 @@ import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAU
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
+import com.google.common.base.Strings;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
@@ -1384,7 +1385,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateNetStatsParams() {
-    if (ethstatsUrl.isEmpty() && !ethstatsContact.isEmpty()) {
+    if (Strings.isNullOrEmpty(ethstatsUrl) && !ethstatsContact.isEmpty()) {
       throw new ParameterException(
           this.commandLine,
           "The `--ethstats-contact` requires that an url to a ethstats server is provided. Either remove --ethstats-contact"
