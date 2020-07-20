@@ -21,8 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransactionReceiptTransaction;
 
-import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
-
 public class PrivGetExecutedTransactionReceiptSuccess implements Condition {
 
   private final PrivGetTransactionReceiptTransaction getTransactionReceiptTransaction;
@@ -34,9 +32,7 @@ public class PrivGetExecutedTransactionReceiptSuccess implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final PrivateTransactionReceipt transactionReceipt =
-        node.execute(getTransactionReceiptTransaction);
-    WaitUtils.waitFor(() -> assertThat(transactionReceipt).isNotNull());
-    assertThat(transactionReceipt.getStatus()).isEqualTo("0x1");
+    WaitUtils.waitFor(() -> assertThat(node.execute(getTransactionReceiptTransaction)).isNotNull());
+    assertThat(node.execute(getTransactionReceiptTransaction).getStatus()).isEqualTo("0x1");
   }
 }
