@@ -47,9 +47,9 @@ public class PrivacyReceiptAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
-    final PrivateTransaction validSignedPrivateTransaction =
+    final PrivateTransaction validTransaction =
         createSignedTransaction(alice, privacyGroupId, empty());
-    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(validTransaction);
 
     final Hash transactionHash =
         alice.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
@@ -67,10 +67,10 @@ public class PrivacyReceiptAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
-    final PrivateTransaction validSignedPrivateTransaction =
+    final PrivateTransaction invalidPayloadTransaction =
         createSignedTransaction(
-            alice, privacyGroupId, Optional.of(Bytes.fromBase64String("invalid")));
-    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
+            alice, privacyGroupId, Optional.of(Bytes.fromBase64String("invalidPayload")));
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(invalidPayloadTransaction);
 
     final Hash transactionHash =
         alice.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
