@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
+import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatService;
 
@@ -62,6 +63,7 @@ public class Runner implements AutoCloseable {
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<WebSocketService> websocketRpc;
   private final Optional<MetricsService> metrics;
+  private final Optional<EthStatsService> ethStatsService;
 
   private final BesuController besuController;
   private final Path dataDir;
@@ -78,6 +80,7 @@ public class Runner implements AutoCloseable {
       final Optional<WebSocketService> websocketRpc,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
+      final Optional<EthStatsService> ethStatsService,
       final BesuController besuController,
       final Path dataDir,
       final Optional<Path> pidPath,
@@ -91,6 +94,7 @@ public class Runner implements AutoCloseable {
     this.jsonRpc = jsonRpc;
     this.websocketRpc = websocketRpc;
     this.metrics = metrics;
+    this.ethStatsService = ethStatsService;
     this.besuController = besuController;
     this.dataDir = dataDir;
     this.stratumServer = stratumServer;
@@ -122,6 +126,9 @@ public class Runner implements AutoCloseable {
       writeBesuNetworksToFile();
       autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
       writePidFile();
+
+      ethStatsService.ifPresent(EthStatsService::start);
+
     } catch (final Exception ex) {
       LOG.error("Startup failed", ex);
       throw new IllegalStateException(ex);

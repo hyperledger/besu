@@ -1324,6 +1324,30 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void ethStatsOptionIsParsedCorrectly() {
+    final String url = "besu-node:secret@host:443";
+    parseCommand("--ethstats", url);
+    verify(mockRunnerBuilder).ethstatsUrl(url);
+  }
+
+  @Test
+  public void ethStatsContactOptionIsParsedCorrectly() {
+    final String contact = "contact@mail.net";
+    parseCommand("--ethstats", "besu-node:secret@host:443", "--ethstats-contact", contact);
+    verify(mockRunnerBuilder).ethstatsContact(contact);
+  }
+
+  @Test
+  public void ethStatsContactOptionCannotBeUsedWithoutEthStatsServerProvided() {
+    parseCommand("--ethstats-contact", "besu-updated");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--ethstats-contact` requires that an url to a ethstats server is provided. Either remove --ethstats-contact or provide an url (via --ethstats=nodename:secret@host:port)");
+  }
+
+  @Test
   public void helpShouldDisplayNatMethodInfo() {
     parseCommand("--help");
 

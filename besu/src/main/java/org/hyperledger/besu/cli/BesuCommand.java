@@ -1031,6 +1031,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--ethstats"},
+      paramLabel = "<nodename:secret@host:port>",
+      description = "Reporting URL of a ethstats server",
+      arity = "1")
+  private String ethstatsUrl = null;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--ethstats-contact"},
+      description = "Contact address to send to ethstats server",
+      arity = "1")
+  private String ethstatsContact = "";
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1305,6 +1320,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateP2PInterface(p2pInterface);
     validateMiningParams();
     validateNatParams();
+    validateNetStatsParams();
 
     return this;
   }
@@ -1350,6 +1366,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled"
               + " or select another mode (via --nat--method=XXXX)");
+    }
+  }
+
+  private void validateNetStatsParams() {
+    if (ethstatsUrl == null && !ethstatsContact.isEmpty()) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--ethstats-contact` requires that an url to a ethstats server is provided. Either remove --ethstats-contact"
+              + " or provide an url (via --ethstats=nodename:secret@host:port)");
     }
   }
 
@@ -2029,6 +2054,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
+            .ethstatsUrl(ethstatsUrl)
+            .ethstatsContact(ethstatsContact)
             .build();
 
     addShutdownHook(runner);
