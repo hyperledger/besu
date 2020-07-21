@@ -51,18 +51,8 @@ public class EnodeURL {
       final Optional<Integer> discoveryPort) {
     checkArgument(
         nodeId.size() == NODE_ID_SIZE, "Invalid node id.  Expected id of length: 64 bytes.");
-    listeningPort
-        .filter(NetworkUtility::isValidPort)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Invalid listening port.  Port should be between 1 - 65535."));
-    discoveryPort
-        .filter(NetworkUtility::isValidPort)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Invalid discovery port.  Port should be between 1 - 65535."));
+    listeningPort.ifPresent(port -> NetworkUtility.checkPort(port, "listening"));
+    discoveryPort.ifPresent(port -> NetworkUtility.checkPort(port, "discovery"));
 
     this.nodeId = nodeId;
     this.ip = address;

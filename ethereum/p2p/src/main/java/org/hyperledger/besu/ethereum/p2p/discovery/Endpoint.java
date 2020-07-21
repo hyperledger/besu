@@ -15,12 +15,13 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.NetworkUtility.checkPort;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.NetworkUtility;
+import org.hyperledger.besu.util.IllegalPortException;
 
 import java.net.InetAddress;
 import java.util.Objects;
@@ -37,20 +38,6 @@ public class Endpoint {
   private final String host;
   private final int udpPort;
   private final Optional<Integer> tcpPort;
-
-  private static class IllegalPortException extends IllegalArgumentException {
-    IllegalPortException(final String message) {
-      super(message);
-    }
-  }
-
-  private static void checkPort(final int port, final String portTypeName) {
-    if (!NetworkUtility.isValidPort(port)) {
-      throw new IllegalPortException(
-          String.format(
-              "%s port requires a value between 1 and 65535. Got %d.", portTypeName, port));
-    }
-  }
 
   public Endpoint(final String host, final int udpPort, final Optional<Integer> tcpPort) {
     checkArgument(
