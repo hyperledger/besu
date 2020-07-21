@@ -18,11 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import org.hyperledger.besu.util.IllegalPortException;
+
 import java.net.URI;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.util.IllegalPortException;
 import org.junit.Test;
 
 public class EnodeURLTest {

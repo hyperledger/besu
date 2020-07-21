@@ -221,7 +221,7 @@ public class Runner implements AutoCloseable {
                         discoveryPort ->
                             properties.setProperty("discovery", String.valueOf(discoveryPort)));
                 enode
-                    .getDiscoveryPort()
+                    .getListeningPort()
                     .ifPresent(
                         listeningPort ->
                             properties.setProperty("p2p", String.valueOf(listeningPort)));
