@@ -14,111 +14,46 @@
  */
 package org.hyperledger.besu.ethstats.authentication;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class NodeInfo {
+@Value.Immutable
+@JsonSerialize(as = ImmutableNodeInfo.class)
+@JsonDeserialize(as = ImmutableNodeInfo.class)
+public interface NodeInfo {
 
   @JsonProperty("name")
-  private final String name;
+  String getName();
 
   @JsonProperty("node")
-  private final String node;
+  String getNode();
 
   @JsonProperty("port")
-  private final String port;
+  String getPort();
 
   @JsonProperty("net")
-  private final String network;
+  String getNetwork();
 
   @JsonProperty("protocol")
-  private final String protocol;
+  String getProtocol();
 
   @JsonProperty("api")
-  private final String api;
+  String getApi();
 
   @JsonProperty("os")
-  private final String os;
+  String getOs();
 
   @JsonProperty("os_v")
-  private final String osVer;
+  String getOsVer();
 
   @JsonProperty("client")
-  private final String client;
+  String getClient();
 
   @JsonProperty("canUpdateHistory")
-  private final Boolean canUpdateHistory;
+  Boolean getCanUpdateHistory();
 
   @JsonProperty("contact")
-  private final String contact;
-
-  @JsonCreator
-  public NodeInfo(
-      final String name,
-      final String node,
-      final String port,
-      final String net,
-      final String protocol,
-      final String api,
-      final String os,
-      final String osVer,
-      final String client,
-      final Boolean canUpdateHistory,
-      final String contact) {
-    this.name = name;
-    this.node = node;
-    this.port = port;
-    this.network = net;
-    this.protocol = protocol;
-    this.api = api;
-    this.os = os;
-    this.osVer = osVer;
-    this.client = client;
-    this.canUpdateHistory = canUpdateHistory;
-    this.contact = contact;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getNode() {
-    return node;
-  }
-
-  public String getPort() {
-    return port;
-  }
-
-  public String getNetwork() {
-    return network;
-  }
-
-  public String getProtocol() {
-    return protocol;
-  }
-
-  public String getApi() {
-    return api;
-  }
-
-  public String getOs() {
-    return os;
-  }
-
-  public String getOsVer() {
-    return osVer;
-  }
-
-  public String getClient() {
-    return client;
-  }
-
-  public Boolean getCanUpdateHistory() {
-    return canUpdateHistory;
-  }
-
-  public String getContact() {
-    return contact;
-  }
+  String getContact();
 }

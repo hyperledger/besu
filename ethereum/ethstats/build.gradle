@@ -46,6 +46,9 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':plugin-api')
 
+  annotationProcessor "org.immutables:value"
+  implementation "org.immutables:value-annotations"
+
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.

@@ -14,28 +14,19 @@
  */
 package org.hyperledger.besu.ethstats.report;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class PingReport {
+@Value.Immutable
+@JsonSerialize(as = ImmutablePingReport.class)
+@JsonDeserialize(as = ImmutablePingReport.class)
+public interface PingReport {
 
   @JsonProperty("id")
-  private final String id;
+  String getId();
 
   @JsonProperty("clientTime")
-  private final String currentTime;
-
-  @JsonCreator
-  public PingReport(final String id, final String currentTime) {
-    this.id = id;
-    this.currentTime = currentTime;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public String getCurrentTime() {
-    return currentTime;
-  }
+  String getCurrentTime();
 }

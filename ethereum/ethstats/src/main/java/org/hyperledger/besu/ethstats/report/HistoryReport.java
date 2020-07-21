@@ -18,28 +18,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class HistoryReport {
+@Value.Immutable
+@JsonSerialize(as = ImmutableHistoryReport.class)
+@JsonDeserialize(as = ImmutableHistoryReport.class)
+public interface HistoryReport {
 
   @JsonProperty(value = "id")
-  private final String id;
+  String getId();
 
   @JsonProperty("history")
-  private final List<BlockResult> history;
-
-  @JsonCreator
-  public HistoryReport(final String id, final List<BlockResult> history) {
-    this.id = id;
-    this.history = history;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public List<BlockResult> getHistory() {
-    return history;
-  }
+  List<BlockResult> getHistory();
 }

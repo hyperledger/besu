@@ -14,28 +14,19 @@
  */
 package org.hyperledger.besu.ethstats.report;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class LatencyReport {
+@Value.Immutable
+@JsonSerialize(as = ImmutableLatencyReport.class)
+@JsonDeserialize(as = ImmutableLatencyReport.class)
+public interface LatencyReport {
 
   @JsonProperty("id")
-  private final String id;
+  String getId();
 
   @JsonProperty("latency")
-  private final String latency;
-
-  @JsonCreator
-  public LatencyReport(final String id, final String latency) {
-    this.id = id;
-    this.latency = latency;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public String getLatency() {
-    return latency;
-  }
+  String getLatency();
 }

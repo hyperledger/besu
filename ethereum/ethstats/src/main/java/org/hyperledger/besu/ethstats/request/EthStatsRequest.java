@@ -41,10 +41,12 @@ public class EthStatsRequest {
 
   @JsonIgnore
   public Type getType() {
-    if (!emit.isEmpty() && emit.get(0) instanceof String) {
-      return Type.fromValue((String) emit.get(0));
-    }
-    return Type.UNKNOWN;
+    return getEmit().stream()
+        .findFirst()
+        .filter(String.class::isInstance)
+        .map(String.class::cast)
+        .map(Type::fromValue)
+        .orElse(Type.UNKNOWN);
   }
 
   public List<Object> getEmit() {

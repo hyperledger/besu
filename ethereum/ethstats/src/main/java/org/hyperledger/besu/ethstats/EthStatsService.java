@@ -43,9 +43,17 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethstats.authentication.AuthenticationData;
+import org.hyperledger.besu.ethstats.authentication.ImmutableAuthenticationData;
+import org.hyperledger.besu.ethstats.authentication.ImmutableNodeInfo;
 import org.hyperledger.besu.ethstats.authentication.NodeInfo;
 import org.hyperledger.besu.ethstats.report.BlockReport;
 import org.hyperledger.besu.ethstats.report.HistoryReport;
+import org.hyperledger.besu.ethstats.report.ImmutableBlockReport;
+import org.hyperledger.besu.ethstats.report.ImmutableHistoryReport;
+import org.hyperledger.besu.ethstats.report.ImmutableLatencyReport;
+import org.hyperledger.besu.ethstats.report.ImmutableNodeStatsReport;
+import org.hyperledger.besu.ethstats.report.ImmutablePendingTransactionsReport;
+import org.hyperledger.besu.ethstats.report.ImmutablePingReport;
 import org.hyperledger.besu.ethstats.report.LatencyReport;
 import org.hyperledger.besu.ethstats.report.NodeStatsReport;
 import org.hyperledger.besu.ethstats.report.PendingTransactionsReport;
@@ -169,8 +177,7 @@ public class EthStatsService {
                           // send a full report after the connection
                           sendFullReport();
                         } else {
-                          LOG.error("Failed to login to ethstats server");
-                          retryConnect();
+                          LOG.error("Failed to login to ethstats server " + ack);
                         }
                       });
 
@@ -220,21 +227,25 @@ public class EthStatsService {
         final String os = PlatformDetector.getOSType();
         final String arch = PlatformDetector.getArch();
         final NodeInfo nodeInfo =
-            new NodeInfo(
-                netstatsUrl.getNodeName(),
-                clientVersion,
-                String.valueOf(port.getAsInt()),
-                chainId.get().toString(),
-                protocolManager.getSupportedCapabilities().toString(),
-                "No",
-                os,
-                arch,
-                "0.1.1",
-                true,
-                netstatsUrl.getContact());
+            ImmutableNodeInfo.builder()
+                .name(netstatsUrl.getNodeName())
+                .node(clientVersion)
+                .port(String.valueOf(port.getAsInt()))
+                .network(chainId.get().toString())
+                .protocol(protocolManager.getSupportedCapabilities().toString())
+                .api("No")
+                .os(os)
+                .osVer(arch)
+                .client("0.1.1")
+                .canUpdateHistory(true)
+                .contact(netstatsUrl.getContact())
+                .build();
         final AuthenticationData authenticationData =
-            new AuthenticationData(
-                enodeURL.getNodeId().toHexString(), nodeInfo, netstatsUrl.getSecret());
+            ImmutableAuthenticationData.builder()
+                .id(enodeURL.getNodeId().toHexString())
+                .info(nodeInfo)
+                .secret(netstatsUrl.getSecret())
+                .build();
         final EthStatsRequest hello = new EthStatsRequest(HELLO, authenticationData);
         sendMessage(
             webSocket,
@@ -274,22 +285,22 @@ public class EthStatsService {
   private void sendPing() {
     // we store the timestamp when we sent the ping
     pingTimestamp = System.currentTimeMillis();
-    final EthStatsRequest ping =
-        new EthStatsRequest(
-            NODE_PING,
-            new PingReport(enodeURL.getNodeId().toHexString(), String.valueOf(pingTimestamp)));
-    sendMessage(webSocket, ping);
+    final PingReport pingReport =
+        ImmutablePingReport.builder()
+            .id(enodeURL.getNodeId().toHexString())
+            .currentTime(String.valueOf(pingTimestamp))
+            .build();
+    sendMessage(webSocket, new EthStatsRequest(NODE_PING, pingReport));
   }
 
   /** Sends a latency report to the ethstats server */
   private void sendLatencyReport() {
-    final EthStatsRequest latency =
-        new EthStatsRequest(
-            LATENCY,
-            new LatencyReport(
-                enodeURL.getNodeId().toHexString(),
-                String.valueOf(System.currentTimeMillis() - pingTimestamp)));
-    sendMessage(webSocket, latency);
+    final LatencyReport latencyReport =
+        ImmutableLatencyReport.builder()
+            .id(enodeURL.getNodeId().toHexString())
+            .latency(String.valueOf(System.currentTimeMillis() - pingTimestamp))
+            .build();
+    sendMessage(webSocket, new EthStatsRequest(LATENCY, latencyReport));
   }
 
   /** Sends a block report concerning the last block */
@@ -299,10 +310,12 @@ public class EthStatsService {
         .map(tx -> blockResultFactory.transactionComplete(tx, false))
         .ifPresent(
             blockResult -> {
-              final EthStatsRequest block =
-                  new EthStatsRequest(
-                      BLOCK, new BlockReport(enodeURL.getNodeId().toHexString(), blockResult));
-              sendMessage(webSocket, block);
+              final BlockReport blockReport =
+                  ImmutableBlockReport.builder()
+                      .id(enodeURL.getNodeId().toHexString())
+                      .block(blockResult)
+                      .build();
+              sendMessage(webSocket, new EthStatsRequest(BLOCK, blockReport));
             });
   }
 
@@ -318,22 +331,24 @@ public class EthStatsService {
                 .ifPresent(blockResults::add));
 
     if (!blockResults.isEmpty()) {
-      final EthStatsRequest history =
-          new EthStatsRequest(
-              HISTORY, new HistoryReport(enodeURL.getNodeId().toHexString(), blockResults));
-      sendMessage(webSocket, history);
+      final HistoryReport historyReport =
+          ImmutableHistoryReport.builder()
+              .id(enodeURL.getNodeId().toHexString())
+              .history(blockResults)
+              .build();
+      sendMessage(webSocket, new EthStatsRequest(HISTORY, historyReport));
     }
   }
 
   /** Sends the number of pending transactions in the pool */
   private void sendPendingTransactionReport() {
     final int pendingTransactionsNumber = transactionPool.getPendingTransactions().size();
-    final EthStatsRequest pending =
-        new EthStatsRequest(
-            PENDING,
-            new PendingTransactionsReport(
-                enodeURL.getNodeId().toHexString(), pendingTransactionsNumber));
-    sendMessage(webSocket, pending);
+    final PendingTransactionsReport pendingTransactionsReport =
+        ImmutablePendingTransactionsReport.builder()
+            .id(enodeURL.getNodeId().toHexString())
+            .stats(pendingTransactionsNumber)
+            .build();
+    sendMessage(webSocket, new EthStatsRequest(PENDING, pendingTransactionsReport));
   }
 
   /** Sends information about the node (is mining, is syncing, etc.) */
@@ -348,14 +363,13 @@ public class EthStatsService {
     final long gasPrice = suggestGasPrice(blockchainQueries.getBlockchain().getChainHeadBlock());
     final long hashrate = miningCoordinator.hashesPerSecond().orElse(0L);
     final int peersNumber = protocolManager.ethContext().getEthPeers().peerCount();
-    final EthStatsRequest pending =
-        new EthStatsRequest(
-            STATS,
-            new NodeStatsReport(
-                enodeURL.getNodeId().toHexString(),
-                new NodeStatsReport.Stats(
-                    true, isMiningEnabled, hashrate, peersNumber, gasPrice, isSyncing, 100)));
-    sendMessage(webSocket, pending);
+
+    final NodeStatsReport nodeStatsReport =
+        ImmutableNodeStatsReport.builder()
+            .id(enodeURL.getNodeId().toHexString())
+            .stats(true, isMiningEnabled, hashrate, peersNumber, gasPrice, isSyncing, 100)
+            .build();
+    sendMessage(webSocket, new EthStatsRequest(STATS, nodeStatsReport));
   }
 
   private void sendMessage(
@@ -363,7 +377,7 @@ public class EthStatsService {
       final EthStatsRequest message,
       final Consumer<Boolean> handlerResult) {
     try {
-      LOG.debug("Send ethstats message {}", message.generateCommand());
+      LOG.debug("Send ethstats request {}", message.generateCommand());
       webSocket.writeTextMessage(
           message.generateCommand(),
           handler -> {

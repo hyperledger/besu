@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
+import org.hyperledger.besu.ethstats.util.ImmutableNetstatsUrl;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
 
 import java.math.BigInteger;
@@ -72,6 +73,15 @@ public class EthStatsServiceTest {
   @Mock private HttpClient httpClient;
   @Mock private WebSocket webSocket;
 
+  final NetstatsUrl netstatsUrl =
+      ImmutableNetstatsUrl.builder()
+          .nodeName("besu-node")
+          .secret("secret")
+          .host("127.0.0.1")
+          .port(1111)
+          .contact("contact@test.net")
+          .build();
+
   final EnodeURL node =
       EnodeURL.builder()
           .nodeId(
@@ -95,8 +105,6 @@ public class EthStatsServiceTest {
 
   @Test
   public void shouldRetryWhenLocalEnodeNotAvailable() throws Exception {
-    final NetstatsUrl netstatsUrl =
-        new NetstatsUrl("besu-node", "secret", "127.0.0.1", 1111, "contact@test.net");
     ethStatsService =
         new EthStatsService(
             netstatsUrl,
@@ -116,8 +124,6 @@ public class EthStatsServiceTest {
 
   @Test
   public void shouldSendHelloMessage() {
-    final NetstatsUrl netstatsUrl =
-        new NetstatsUrl("besu-node", "secret", "127.0.0.1", 1111, "contact@test.net");
     ethStatsService =
         new EthStatsService(
             netstatsUrl,
@@ -150,8 +156,7 @@ public class EthStatsServiceTest {
 
   @Test
   public void shouldRetryIfSendHelloMessageFailed() {
-    final NetstatsUrl netstatsUrl =
-        new NetstatsUrl("besu-node", "secret", "127.0.0.1", 1111, "contact@test.net");
+
     ethStatsService =
         new EthStatsService(
             netstatsUrl,
@@ -184,8 +189,6 @@ public class EthStatsServiceTest {
 
   @Test
   public void shouldSendFullReportIfHelloMessageSucceeded() {
-    final NetstatsUrl netstatsUrl =
-        new NetstatsUrl("besu-node", "secret", "127.0.0.1", 1111, "contact@test.net");
     ethStatsService =
         new EthStatsService(
             netstatsUrl,

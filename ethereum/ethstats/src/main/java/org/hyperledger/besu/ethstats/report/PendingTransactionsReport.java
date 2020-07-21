@@ -14,42 +14,30 @@
  */
 package org.hyperledger.besu.ethstats.report;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class PendingTransactionsReport {
+@Value.Immutable
+@Value.Style(deepImmutablesDetection = true, depluralize = true)
+@JsonSerialize(as = ImmutablePendingTransactionsReport.class)
+@JsonDeserialize(as = ImmutablePendingTransactionsReport.class)
+public interface PendingTransactionsReport {
 
   @JsonProperty("id")
-  private final String id;
+  String getId();
 
   @JsonProperty("stats")
-  private final Stats stats;
+  PStats getStats();
 
-  @JsonCreator
-  public PendingTransactionsReport(final String id, final int pending) {
-    this.id = id;
-    this.stats = new Stats(pending);
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public Stats getStats() {
-    return stats;
-  }
-
-  static class Stats {
+  @Value.Immutable
+  @Value.Style(allParameters = true)
+  @JsonSerialize(as = ImmutablePStats.class)
+  @JsonDeserialize(as = ImmutablePStats.class)
+  interface PStats {
 
     @JsonProperty("pending")
-    private final int pending;
-
-    public Stats(final int pending) {
-      this.pending = pending;
-    }
-
-    public int getPending() {
-      return pending;
-    }
+    int getPending();
   }
 }

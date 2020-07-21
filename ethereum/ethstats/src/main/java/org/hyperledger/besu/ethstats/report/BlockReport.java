@@ -16,28 +16,19 @@ package org.hyperledger.besu.ethstats.report;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class BlockReport {
+@Value.Immutable
+@JsonSerialize(as = ImmutableBlockReport.class)
+@JsonDeserialize(as = ImmutableBlockReport.class)
+public interface BlockReport {
 
   @JsonProperty("id")
-  private final String id;
+  String getId();
 
   @JsonProperty("block")
-  private final BlockResult block;
-
-  @JsonCreator
-  public BlockReport(final String id, final BlockResult block) {
-    this.id = id;
-    this.block = block;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public BlockResult getBlock() {
-    return block;
-  }
+  BlockResult getBlock();
 }

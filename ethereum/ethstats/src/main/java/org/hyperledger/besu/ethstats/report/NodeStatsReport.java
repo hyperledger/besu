@@ -14,97 +14,48 @@
  */
 package org.hyperledger.besu.ethstats.report;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class NodeStatsReport {
+@Value.Immutable
+@Value.Style(deepImmutablesDetection = true, depluralize = true)
+@JsonSerialize(as = ImmutableNodeStatsReport.class)
+@JsonDeserialize(as = ImmutableNodeStatsReport.class)
+public interface NodeStatsReport {
 
   @JsonProperty("id")
-  private final String id;
+  String getId();
 
   @JsonProperty("stats")
-  private final Stats stats;
+  NStats getStats();
 
-  @JsonCreator
-  public NodeStatsReport(final String id, final Stats stats) {
-    this.id = id;
-    this.stats = stats;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public Stats getStats() {
-    return stats;
-  }
-
-  public static class Stats {
+  @Value.Immutable
+  @Value.Style(allParameters = true)
+  @JsonSerialize(as = ImmutableNStats.class)
+  @JsonDeserialize(as = ImmutableNStats.class)
+  interface NStats {
 
     @JsonProperty("active")
-    private final boolean active;
+    boolean isActive();
 
     @JsonProperty("mining")
-    private final boolean mining;
+    boolean isMining();
 
     @JsonProperty("hashrate")
-    private final long hashrate;
+    long getHashrate();
 
     @JsonProperty("peers")
-    private final int peers;
+    int getPeers();
 
     @JsonProperty("gasPrice")
-    private final long gasPrice;
+    long getGasPrice();
 
     @JsonProperty("syncing")
-    private final boolean syncing;
+    boolean isSyncing();
 
     @JsonProperty("upTime")
-    private final int upTime;
-
-    public Stats(
-        final boolean active,
-        final boolean mining,
-        final long hashrate,
-        final int peers,
-        final long gasPrice,
-        final boolean syncing,
-        final int upTime) {
-      this.active = active;
-      this.mining = mining;
-      this.hashrate = hashrate;
-      this.peers = peers;
-      this.gasPrice = gasPrice;
-      this.syncing = syncing;
-      this.upTime = upTime;
-    }
-
-    public boolean isActive() {
-      return active;
-    }
-
-    public boolean isMining() {
-      return mining;
-    }
-
-    public long getHashrate() {
-      return hashrate;
-    }
-
-    public int getPeers() {
-      return peers;
-    }
-
-    public long getGasPrice() {
-      return gasPrice;
-    }
-
-    public boolean isSyncing() {
-      return syncing;
-    }
-
-    public int getUpTime() {
-      return upTime;
-    }
+    int getUpTime();
   }
 }

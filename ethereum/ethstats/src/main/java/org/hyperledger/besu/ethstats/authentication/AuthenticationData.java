@@ -14,36 +14,22 @@
  */
 package org.hyperledger.besu.ethstats.authentication;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
-public class AuthenticationData {
+@Value.Immutable
+@JsonSerialize(as = ImmutableAuthenticationData.class)
+@JsonDeserialize(as = ImmutableAuthenticationData.class)
+public interface AuthenticationData {
 
   @JsonProperty("id")
-  private final String id;
+  String getId();
 
   @JsonProperty("info")
-  private final NodeInfo info;
+  NodeInfo getInfo();
 
   @JsonProperty("secret")
-  private final String secret;
-
-  @JsonCreator
-  public AuthenticationData(final String id, final NodeInfo info, final String secret) {
-    this.id = id;
-    this.info = info;
-    this.secret = secret;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public NodeInfo getInfo() {
-    return info;
-  }
-
-  public String getSecret() {
-    return secret;
-  }
+  String getSecret();
 }
