@@ -68,7 +68,7 @@ public class PrivateTransactionReceipt {
         result.getRevertReason());
   }
 
-  private static int getStatusCode(TransactionProcessor.Result.Status result) {
+  private static int getStatusCode(final TransactionProcessor.Result.Status result) {
     if (result.equals(PrivateTransactionProcessor.Result.Status.SUCCESSFUL)) {
       return 1;
     } else if (result.equals(PrivateTransactionProcessor.Result.Status.INVALID)) {

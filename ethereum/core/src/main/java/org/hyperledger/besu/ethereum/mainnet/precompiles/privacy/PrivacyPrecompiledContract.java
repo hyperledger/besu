@@ -180,7 +180,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           result);
     }
 
-    return Bytes.EMPTY;
+    return result.getOutput();
   }
 
   void persistPrivateState(

@@ -39,6 +39,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -76,13 +78,10 @@ public class PrivacyPrecompiledContractTest {
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
 
-  private PrivateTransactionProcessor mockPrivateTxProcessor() {
+  private PrivateTransactionProcessor mockPrivateTxProcessor(
+      final PrivateTransactionProcessor.Result result) {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
-    final List<Log> logs = new ArrayList<>();
-    final PrivateTransactionProcessor.Result result =
-        PrivateTransactionProcessor.Result.successful(
-            logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),
             nullable(WorldUpdater.class),
@@ -138,7 +137,11 @@ public class PrivacyPrecompiledContractTest {
   public void testPayloadFoundInEnclave() {
     final Enclave enclave = mock(Enclave.class);
     final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
-    contract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
+    final List<Log> logs = new ArrayList<>();
+    contract.setPrivateTransactionProcessor(
+        mockPrivateTxProcessor(
+            PrivateTransactionProcessor.Result.successful(
+                logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
     byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
@@ -221,6 +224,37 @@ public class PrivacyPrecompiledContractTest {
 
     final Bytes expected = contract.compute(txEnclaveKey, messageFrame);
     assertThat(expected).isEqualTo(Bytes.EMPTY);
+  }
+
+  @Test
+  public void testInvalidPrivateTransaction() {
+    final Enclave enclave = mock(Enclave.class);
+    final PrivacyPrecompiledContract contract =
+        new PrivacyPrecompiledContract(
+            new SpuriousDragonGasCalculator(),
+            enclave,
+            worldStateArchive,
+            privateStateStorage,
+            privateStateRootResolver);
+
+    contract.setPrivateTransactionProcessor(
+        mockPrivateTxProcessor(
+            PrivateTransactionProcessor.Result.invalid(
+                ValidationResult.invalid(
+                    TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE))));
+
+    final PrivateTransaction privateTransaction = privateTransactionBesu();
+    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
+    final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
+
+    final ReceiveResponse response =
+        new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
+
+    when(enclave.receive(any(String.class))).thenReturn(response);
+
+    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
   private byte[] convertPrivateTransactionToBytes(final PrivateTransaction privateTransaction) {
