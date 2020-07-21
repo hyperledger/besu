@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.util.IllegalPortException;
 import org.junit.Test;
 
 public class EnodeURLTest {
@@ -250,9 +251,7 @@ public class EnodeURLTest {
     final String enodeURLString = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":";
     final Throwable thrown = catchThrowable(() -> EnodeURL.fromString(enodeURLString));
 
-    assertThat(thrown)
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid listening port.");
+    assertThat(thrown).hasCauseInstanceOf(IllegalPortException.class);
   }
 
   @Test
@@ -261,9 +260,7 @@ public class EnodeURLTest {
         "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":?discport=30301";
     final Throwable thrown = catchThrowable(() -> EnodeURL.fromString(enodeURLString));
 
-    assertThat(thrown)
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid listening port.");
+    assertThat(thrown).hasCauseInstanceOf(IllegalPortException.class);
   }
 
   @Test
@@ -271,9 +268,7 @@ public class EnodeURLTest {
     final String enodeURLString = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":98765";
     final Throwable thrown = catchThrowable(() -> EnodeURL.fromString(enodeURLString));
 
-    assertThat(thrown)
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid listening port.");
+    assertThat(thrown).hasCauseInstanceOf(IllegalPortException.class);
   }
 
   @Test
@@ -282,9 +277,7 @@ public class EnodeURLTest {
         "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT + "?discport=98765";
     final Throwable thrown = catchThrowable(() -> EnodeURL.fromString(enodeURLString));
 
-    assertThat(thrown)
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid discovery port.");
+    assertThat(thrown).hasCauseInstanceOf(IllegalPortException.class);
   }
 
   @Test
