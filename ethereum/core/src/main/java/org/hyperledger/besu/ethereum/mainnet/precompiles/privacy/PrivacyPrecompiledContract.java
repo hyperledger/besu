@@ -163,6 +163,9 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
+
+      processTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
+
       return Bytes.EMPTY;
     }
 
@@ -177,7 +180,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           result);
     }
 
-    return result.getOutput();
+    return Bytes.EMPTY;
   }
 
   void persistPrivateState(
@@ -206,17 +209,20 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         disposablePrivateState.rootHash(),
         privateStateUpdater);
 
-    final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
-
-    final PrivateTransactionReceipt privateTransactionReceipt =
-        new PrivateTransactionReceipt(
-            txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
-
-    privateStateUpdater.putTransactionReceipt(
-        currentBlockHash, commitmentHash, privateTransactionReceipt);
-
     maybeUpdateGroupHeadBlockMap(privacyGroupId, currentBlockHash, privateStateUpdater);
+
+    processTransactionReceipt(commitmentHash, currentBlockHash, result, privateStateUpdater);
+  }
+
+  void processTransactionReceipt(
+      final Hash pmtHash,
+      final Hash currentBlockHash,
+      final PrivateTransactionProcessor.Result result,
+      final PrivateStateStorage.Updater privateStateUpdater) {
+    final PrivateTransactionReceipt privateTransactionReceipt =
+        new PrivateTransactionReceipt(result);
+
+    privateStateUpdater.putTransactionReceipt(currentBlockHash, pmtHash, privateTransactionReceipt);
 
     privateStateUpdater.commit();
   }

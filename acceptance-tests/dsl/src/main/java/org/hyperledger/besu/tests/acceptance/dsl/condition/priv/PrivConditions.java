@@ -103,6 +103,11 @@ public class PrivConditions {
         transactions.getTransactionReceipt(transactionHash));
   }
 
+  public Condition getInvalidTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetInvalidTransactionReceiptSuccess(
+        transactions.getTransactionReceipt(transactionHash));
+  }
+
   public Condition multiTenancyValidationFail(
       final Transaction<?> transaction, final JsonRpcError error) {
     return new ExpectJsonRpcError(transaction, error);

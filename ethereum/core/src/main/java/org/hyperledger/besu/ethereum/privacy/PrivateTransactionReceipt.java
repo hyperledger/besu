@@ -32,11 +32,9 @@ import org.apache.tuweni.bytes.Bytes;
  * execution.
  */
 public class PrivateTransactionReceipt {
-
   @SuppressWarnings("unchecked")
   public static final PrivateTransactionReceipt FAILED =
-      new PrivateTransactionReceipt(
-          0, Collections.EMPTY_LIST, Bytes.EMPTY, Optional.ofNullable(null));
+      new PrivateTransactionReceipt(0, Collections.EMPTY_LIST, Bytes.EMPTY, Optional.empty());
 
   private final int status;
   private final List<Log> logs;
@@ -64,10 +62,20 @@ public class PrivateTransactionReceipt {
 
   public PrivateTransactionReceipt(final TransactionProcessor.Result result) {
     this(
-        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0,
+        getStatusCode(result.getStatus()),
         result.getLogs(),
         result.getOutput(),
         result.getRevertReason());
+  }
+
+  private static int getStatusCode(TransactionProcessor.Result.Status result) {
+    if (result.equals(PrivateTransactionProcessor.Result.Status.SUCCESSFUL)) {
+      return 1;
+    } else if (result.equals(PrivateTransactionProcessor.Result.Status.INVALID)) {
+      return 2;
+    } else {
+      return 0;
+    }
   }
 
   /**

@@ -151,6 +151,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
+
+      processTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
+
       return Bytes.EMPTY;
     }
 
@@ -165,7 +168,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           result);
     }
 
-    return result.getOutput();
+    return Bytes.EMPTY;
   }
 
   boolean canExecute(
