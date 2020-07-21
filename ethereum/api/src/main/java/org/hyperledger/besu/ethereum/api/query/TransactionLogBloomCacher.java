@@ -73,8 +73,12 @@ public class TransactionLogBloomCacher {
     this.cachedSegments = new TreeMap<>();
   }
 
+  public CachingStatus getCachingStatus() {
+    return cachingStatus;
+  }
+
   void cacheAll() {
-    ensurePreviousSegmentsArePresent(blockchain.getChainHeadBlockNumber());
+    ensurePreviousSegmentsArePresent(blockchain.getChainHeadBlockNumber(), false);
   }
 
   private static File calculateCacheFileName(final String name, final Path cacheDir) {
@@ -145,7 +149,7 @@ public class TransactionLogBloomCacher {
       final long blockNumber = blockHeader.getNumber();
       LOG.debug("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
       if (ensureChecks) {
-        ensurePreviousSegmentsArePresent(blockNumber);
+        ensurePreviousSegmentsArePresent(blockNumber, false);
       }
       final File cacheFile = reusedCacheFile.orElse(calculateCacheFileName(blockNumber, cacheDir));
       if (cacheFile.exists()) {
@@ -202,17 +206,20 @@ public class TransactionLogBloomCacher {
     return false;
   }
 
-  private void ensurePreviousSegmentsArePresent(final long blockNumber) {
+  public void ensurePreviousSegmentsArePresent(
+      final long blockNumber, final boolean overrideCacheCheck) {
     if (!cachingStatus.isCaching()) {
       scheduler.scheduleFutureTask(
           () -> {
             long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
             while (currentSegment > 0) {
               try {
-                if (!cachedSegments.getOrDefault(currentSegment, false)) {
+                if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
                   final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
                   final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
-                  if (!cacheFile.isFile() || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
+                  if (overrideCacheCheck
+                      || !cacheFile.isFile()
+                      || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
                     generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
                   }
                   cachedSegments.put(currentSegment, true);
