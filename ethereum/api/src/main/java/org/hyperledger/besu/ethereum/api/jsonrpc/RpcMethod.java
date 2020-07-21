@@ -24,6 +24,7 @@ public enum RpcMethod {
   ADMIN_REMOVE_PEER("admin_removePeer"),
   ADMIN_CHANGE_LOG_LEVEL("admin_changeLogLevel"),
   ADMIN_GENERATE_LOG_BLOOM_CACHE("admin_generateLogBloomCache"),
+  ADMIN_LOGS_REPAIR_CACHE("admin_logsRepairCache"),
   CLIQUE_DISCARD("clique_discard"),
   CLIQUE_GET_SIGNERS("clique_getSigners"),
   CLIQUE_GET_SIGNERS_AT_HASH("clique_getSignersAtHash"),
