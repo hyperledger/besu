@@ -344,10 +344,10 @@ public class EnodeURL {
             this.maybeHostname = Optional.of(ip);
           }
         } catch (UnknownHostException e) {
-          throw new IllegalArgumentException("Invalid ip or hostname.");
+          throw new IllegalArgumentException("Invalid ip address or hostname.");
         }
       } else {
-        throw new IllegalArgumentException("Invalid ip.");
+        throw new IllegalArgumentException("Invalid ip address.");
       }
       return this;
     }
