@@ -92,35 +92,39 @@ public class TransactionLogBloomCacher {
   public CachingStatus generateLogBloomCache(final long start, final long stop) {
     checkArgument(
         start % BLOCKS_PER_BLOOM_CACHE == 0, "Start block must be at the beginning of a file");
-    try {
-      cachingStatus.cachingCount.incrementAndGet();
-      LOG.info(
-          "Generating transaction log bloom cache from block {} to block {} in {}",
-          start,
-          stop,
-          cacheDir);
-      if (!Files.isDirectory(cacheDir) && !cacheDir.toFile().mkdirs()) {
-        LOG.error("Cache directory '{}' does not exist and could not be made.", cacheDir);
-        return cachingStatus;
-      }
-      for (long blockNum = start; blockNum < stop; blockNum += BLOCKS_PER_BLOOM_CACHE) {
-        LOG.info("Caching segment at {}", blockNum);
-        final File cacheFile = calculateCacheFileName(blockNum, cacheDir);
-        blockchain
-            .getBlockHeader(blockNum)
-            .ifPresent(
-                blockHeader ->
-                    cacheLogsBloomForBlockHeader(blockHeader, Optional.of(cacheFile), false));
-        try (final OutputStream os = new FileOutputStream(cacheFile)) {
-          fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, os);
+
+    if (!cachingStatus.isCaching()) {
+      try {
+        cachingStatus.cachingCount.incrementAndGet();
+        LOG.info(
+            "Generating transaction log bloom cache from block {} to block {} in {}",
+            start,
+            stop,
+            cacheDir);
+        if (!Files.isDirectory(cacheDir) && !cacheDir.toFile().mkdirs()) {
+          LOG.error("Cache directory '{}' does not exist and could not be made.", cacheDir);
+          return cachingStatus;
         }
+        for (long blockNum = start; blockNum < stop; blockNum += BLOCKS_PER_BLOOM_CACHE) {
+          LOG.info("Caching segment at {}", blockNum);
+          final File cacheFile = calculateCacheFileName(blockNum, cacheDir);
+          blockchain
+              .getBlockHeader(blockNum)
+              .ifPresent(
+                  blockHeader ->
+                      cacheLogsBloomForBlockHeader(blockHeader, Optional.of(cacheFile), false));
+          try (final OutputStream os = new FileOutputStream(cacheFile)) {
+            fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, os);
+          }
+        }
+      } catch (final Exception e) {
+        LOG.error("Unhandled caching exception", e);
+      } finally {
+        cachingStatus.cachingCount.decrementAndGet();
+        LOG.info("Caching request complete");
       }
-    } catch (final Exception e) {
-      LOG.error("Unhandled caching exception", e);
-    } finally {
-      cachingStatus.cachingCount.decrementAndGet();
-      LOG.info("Caching request complete");
     }
+
     return cachingStatus;
   }
 
@@ -203,6 +207,27 @@ public class TransactionLogBloomCacher {
     } catch (final InterruptedException e) {
       // ignore
     }
+    return false;
+  }
+
+  public boolean removeSegments(final Long startBlock, final Long stopBlock) {
+    if (!cachingStatus.isCaching()) {
+      LOG.info("Deleting segments from block {} to block {}", startBlock, stopBlock);
+      for (long blockNum = startBlock; blockNum <= stopBlock; blockNum += BLOCKS_PER_BLOOM_CACHE) {
+        try {
+          final long segmentNumber = (blockNum / BLOCKS_PER_BLOOM_CACHE) - 1;
+          final long fromBlock = segmentNumber * BLOCKS_PER_BLOOM_CACHE;
+          final File cacheFile = calculateCacheFileName(fromBlock, cacheDir);
+
+          cachedSegments.remove(segmentNumber);
+          Files.deleteIfExists(cacheFile.toPath());
+        } catch (final IOException e) {
+          LOG.error(
+              String.format("Unhandled exception removing cache for block number %d", blockNum), e);
+        }
+      }
+    }
+
     return false;
   }
 
