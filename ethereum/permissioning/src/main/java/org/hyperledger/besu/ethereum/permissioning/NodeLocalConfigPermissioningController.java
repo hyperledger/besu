@@ -250,6 +250,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
       final LocalPermissioningConfiguration updatedConfig =
           PermissioningConfigurationBuilder.permissioningConfiguration(
               configuration.isNodeAllowlistEnabled(),
+              configuration.getEnodeDnsConfiguration(),
               configuration.getNodePermissioningConfigFilePath(),
               configuration.isAccountAllowlistEnabled(),
               configuration.getAccountPermissioningConfigFilePath());

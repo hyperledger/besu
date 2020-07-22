@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +25,7 @@ public class LocalPermissioningConfiguration {
   private List<URI> nodeAllowlist;
   private List<String> accountAllowlist;
   private boolean nodeAllowlistEnabled;
+  private EnodeDnsConfiguration enodeDnsConfiguration = EnodeDnsConfiguration.dnsDisabled();
   private String nodePermissioningConfigFilePath;
   private boolean accountAllowlistEnabled;
   private String accountPermissioningConfigFilePath;
@@ -38,11 +41,19 @@ public class LocalPermissioningConfiguration {
     return config;
   }
 
+  public void setEnodeDnsConfiguration(final EnodeDnsConfiguration enodeDnsConfiguration) {
+    this.enodeDnsConfiguration = enodeDnsConfiguration;
+  }
+
   public void setNodeAllowlist(final Collection<URI> nodeAllowlist) {
     if (nodeAllowlist != null) {
       this.nodeAllowlist.addAll(nodeAllowlist);
       this.nodeAllowlistEnabled = true;
     }
+  }
+
+  public EnodeDnsConfiguration getEnodeDnsConfiguration() {
+    return enodeDnsConfiguration;
   }
 
   public boolean isNodeAllowlistEnabled() {

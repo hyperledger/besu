@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.permissioning;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 
 import java.net.URI;
@@ -41,6 +42,7 @@ public class PermissioningConfigurationBuilder {
 
   public static LocalPermissioningConfiguration permissioningConfiguration(
       final boolean nodePermissioningEnabled,
+      final EnodeDnsConfiguration enodeDnsConfiguration,
       final String nodePermissioningConfigFilepath,
       final boolean accountPermissioningEnabled,
       final String accountPermissioningConfigFilepath)
@@ -48,7 +50,7 @@ public class PermissioningConfigurationBuilder {
 
     final LocalPermissioningConfiguration permissioningConfiguration =
         LocalPermissioningConfiguration.createDefault();
-
+    permissioningConfiguration.setEnodeDnsConfiguration(enodeDnsConfiguration);
     loadNodePermissioning(
         permissioningConfiguration, nodePermissioningEnabled, nodePermissioningConfigFilepath);
     loadAccountPermissioning(
@@ -73,13 +75,16 @@ public class PermissioningConfigurationBuilder {
       permissioningConfiguration.setNodePermissioningConfigFilePath(
           nodePermissioningConfigFilepath);
 
+      // ICI
       if (nodeAllowlistTomlArray != null) {
         List<URI> nodesAllowlistToml =
             nodeAllowlistTomlArray
                 .toList()
                 .parallelStream()
                 .map(Object::toString)
-                .map(EnodeURL::asURI)
+                .map(
+                    url ->
+                        EnodeURL.asURI(url, permissioningConfiguration.getEnodeDnsConfiguration()))
                 .collect(Collectors.toList());
         permissioningConfiguration.setNodeAllowlist(nodesAllowlistToml);
       } else {

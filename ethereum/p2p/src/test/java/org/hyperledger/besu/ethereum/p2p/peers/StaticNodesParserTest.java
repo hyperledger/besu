@@ -73,7 +73,7 @@ public class StaticNodesParserTest {
   public void validFileLoadsWithExpectedEnodes() throws IOException, URISyntaxException {
     final URL resource = StaticNodesParserTest.class.getResource("valid_static_nodes.json");
     final File validFile = new File(resource.getFile());
-    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(validFile.toPath());
+    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(validFile.toPath(), false);
 
     assertThat(enodes)
         .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
@@ -84,7 +84,7 @@ public class StaticNodesParserTest {
     final URL resource = StaticNodesParserTest.class.getResource("invalid_static_nodes.json");
     final File invalidFile = new File(resource.getFile());
 
-    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath()))
+    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath(), false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -94,7 +94,7 @@ public class StaticNodesParserTest {
         StaticNodesParserTest.class.getResource("invalid_static_nodes_no_listening_port.json");
     final File invalidFile = new File(resource.getFile());
 
-    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath()))
+    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath(), false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Static node must be configured with a valid listening port");
   }
@@ -105,7 +105,7 @@ public class StaticNodesParserTest {
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), "This Is Not Json".getBytes(Charset.forName("UTF-8")));
 
-    assertThatThrownBy(() -> StaticNodesParser.fromPath(tempFile.toPath()))
+    assertThatThrownBy(() -> StaticNodesParser.fromPath(tempFile.toPath(), false))
         .isInstanceOf(DecodeException.class);
   }
 
@@ -113,7 +113,7 @@ public class StaticNodesParserTest {
   public void anEmptyCacheIsCreatedIfTheFileDoesNotExist() throws IOException {
     final Path path = Paths.get("./arbirtraryFilename.txt");
 
-    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(path);
+    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(path, false);
     assertThat(enodes.size()).isZero();
   }
 
@@ -122,7 +122,7 @@ public class StaticNodesParserTest {
     final File tempFile = testFolder.newFile("file.txt");
     tempFile.deleteOnExit();
 
-    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(tempFile.toPath());
+    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(tempFile.toPath(), false);
     assertThat(enodes.size()).isZero();
   }
 }

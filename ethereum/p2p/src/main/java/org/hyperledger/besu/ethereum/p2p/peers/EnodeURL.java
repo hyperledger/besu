@@ -21,7 +21,9 @@ import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,13 +41,15 @@ public class EnodeURL {
   private static final Pattern NODE_ID_PATTERN = Pattern.compile("^[0-9a-fA-F]{128}$");
 
   private final Bytes nodeId;
-  private final InetAddress ip;
+  private InetAddress ip;
+  private final Optional<String> maybeHostname;
   private final OptionalInt listeningPort;
   private final OptionalInt discoveryPort;
 
   private EnodeURL(
       final Bytes nodeId,
       final InetAddress address,
+      final Optional<String> maybeHostname,
       final OptionalInt listeningPort,
       final OptionalInt discoveryPort) {
     checkArgument(
@@ -59,6 +63,7 @@ public class EnodeURL {
 
     this.nodeId = nodeId;
     this.ip = address;
+    this.maybeHostname = maybeHostname;
     this.listeningPort = listeningPort;
     this.discoveryPort = discoveryPort;
   }
@@ -68,9 +73,14 @@ public class EnodeURL {
   }
 
   public static EnodeURL fromString(final String value) {
+    return fromString(value, EnodeDnsConfiguration.dnsDisabled());
+  }
+
+  public static EnodeURL fromString(
+      final String value, final EnodeDnsConfiguration enodeDnsConfiguration) {
     try {
       checkStringArgumentNotEmpty(value, "Invalid empty value.");
-      return fromURI(URI.create(value));
+      return fromURI(URI.create(value), enodeDnsConfiguration);
     } catch (IllegalArgumentException e) {
       String message =
           "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
@@ -82,6 +92,10 @@ public class EnodeURL {
   }
 
   public static EnodeURL fromURI(final URI uri) {
+    return fromURI(uri, EnodeDnsConfiguration.dnsDisabled());
+  }
+
+  public static EnodeURL fromURI(final URI uri, final EnodeDnsConfiguration enodeDnsConfiguration) {
     checkArgument(uri != null, "URI cannot be null");
     checkStringArgumentNotEmpty(uri.getScheme(), "Missing 'enode' scheme.");
     checkStringArgumentNotEmpty(uri.getHost(), "Missing or invalid ip address.");
@@ -112,7 +126,7 @@ public class EnodeURL {
     }
 
     return builder()
-        .ipAddress(host)
+        .ipAddress(host, enodeDnsConfiguration)
         .nodeId(id)
         .listeningPort(tcpPort)
         .discoveryPort(discoveryPort)
@@ -128,9 +142,9 @@ public class EnodeURL {
       return false;
     }
 
-    return Objects.equals(enodeA.nodeId, enodeB.nodeId)
-        && Objects.equals(enodeA.ip, enodeB.ip)
-        && Objects.equals(enodeA.listeningPort, enodeB.listeningPort);
+    return Objects.equals(enodeA.getNodeId(), enodeB.getNodeId())
+        && Objects.equals(enodeA.getIp(), enodeB.getIp())
+        && Objects.equals(enodeA.getListeningPort(), enodeB.getListeningPort());
   }
 
   public static Bytes parseNodeId(final String nodeId) {
@@ -149,7 +163,7 @@ public class EnodeURL {
         String.format(
             "enode://%s@%s:%d",
             nodeId.toUnprefixedHexString(),
-            InetAddresses.toUriString(ip),
+            InetAddresses.toUriString(getIp()),
             getListeningPortOrZero());
     final OptionalInt discPort = getDiscPortQueryParam();
     if (discPort.isPresent()) {
@@ -164,7 +178,7 @@ public class EnodeURL {
         String.format(
             "enode://%s@%s:%d",
             nodeId.toUnprefixedHexString(),
-            InetAddresses.toUriString(ip),
+            InetAddresses.toUriString(getIp()),
             getListeningPortOrZero());
 
     return URI.create(uri);
@@ -185,7 +199,11 @@ public class EnodeURL {
   }
 
   public static URI asURI(final String url) {
-    return fromString(url).toURI();
+    return asURI(url, EnodeDnsConfiguration.dnsDisabled());
+  }
+
+  public static URI asURI(final String url, final EnodeDnsConfiguration enodeDnsConfiguration) {
+    return fromString(url, enodeDnsConfiguration).toURI();
   }
 
   public Bytes getNodeId() {
@@ -193,10 +211,21 @@ public class EnodeURL {
   }
 
   public String getIpAsString() {
-    return ip.getHostAddress();
+    return getIp().getHostAddress();
   }
 
   public InetAddress getIp() {
+    this.ip =
+        maybeHostname
+            .map(
+                hostname -> {
+                  try {
+                    return InetAddress.getByName(hostname);
+                  } catch (UnknownHostException e) {
+                    return ip;
+                  }
+                })
+            .orElse(ip);
     return ip;
   }
 
@@ -233,15 +262,15 @@ public class EnodeURL {
       return false;
     }
     EnodeURL enodeURL = (EnodeURL) o;
-    return Objects.equals(nodeId, enodeURL.nodeId)
-        && Objects.equals(ip, enodeURL.ip)
-        && Objects.equals(listeningPort, enodeURL.listeningPort)
-        && Objects.equals(discoveryPort, enodeURL.discoveryPort);
+    return Objects.equals(getNodeId(), enodeURL.getNodeId())
+        && Objects.equals(getIp(), enodeURL.getIp())
+        && Objects.equals(getListeningPort(), enodeURL.getListeningPort())
+        && Objects.equals(getDiscoveryPort(), enodeURL.getDiscoveryPort());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeId, ip, listeningPort, discoveryPort);
+    return Objects.hash(getNodeId(), getIp(), getListeningPort(), getDiscoveryPort());
   }
 
   @Override
@@ -254,13 +283,14 @@ public class EnodeURL {
     private Bytes nodeId;
     private OptionalInt listeningPort;
     private OptionalInt discoveryPort;
+    private Optional<String> maybeHostname = Optional.empty();
     private InetAddress ip;
 
     private Builder() {};
 
     public EnodeURL build() {
       validate();
-      return new EnodeURL(nodeId, ip, listeningPort, discoveryPort);
+      return new EnodeURL(nodeId, ip, maybeHostname, listeningPort, discoveryPort);
     }
 
     private void validate() {
@@ -298,12 +328,26 @@ public class EnodeURL {
     }
 
     public Builder ipAddress(final String ip) {
+      return ipAddress(ip, EnodeDnsConfiguration.dnsDisabled());
+    }
+
+    public Builder ipAddress(final String ip, final EnodeDnsConfiguration enodeDnsConfiguration) {
       if (InetAddresses.isUriInetAddress(ip)) {
         this.ip = InetAddresses.forUriString(ip);
       } else if (InetAddresses.isInetAddress(ip)) {
         this.ip = InetAddresses.forString(ip);
+      } else if (enodeDnsConfiguration.dnsEnabled()) {
+        try {
+          System.out.println("ALLO " + enodeDnsConfiguration.updateEnabled() + " " + ip);
+          this.ip = InetAddress.getByName(ip);
+          if (enodeDnsConfiguration.updateEnabled()) {
+            this.maybeHostname = Optional.of(ip);
+          }
+        } catch (UnknownHostException e) {
+          throw new IllegalArgumentException("Invalid ip or hostname.");
+        }
       } else {
-        throw new IllegalArgumentException("Invalid ip address.");
+        throw new IllegalArgumentException("Invalid ip.");
       }
       return this;
     }
