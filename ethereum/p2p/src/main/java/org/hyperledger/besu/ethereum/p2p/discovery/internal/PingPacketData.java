@@ -20,26 +20,28 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Optional;
+
 public class PingPacketData implements PacketData {
 
   /* Fixed value that represents we're using v5 of the P2P discovery protocol. */
   private static final int VERSION = 5;
 
-  /* Source. */
-  private final Endpoint from;
+  /* Source. If the field is garbage this is empty and we might need to recover it another way. From our bonded peers, for example. */
+  private final Optional<Endpoint> maybeFrom;
 
   /* Destination. */
   private final Endpoint to;
 
-  /* In millis after epoch. */
+  /* In seconds after epoch. */
   private final long expiration;
 
-  private PingPacketData(final Endpoint from, final Endpoint to, final long expiration) {
-    checkArgument(from != null, "source endpoint cannot be null");
+  private PingPacketData(
+      final Optional<Endpoint> maybeFrom, final Endpoint to, final long expiration) {
     checkArgument(to != null, "destination endpoint cannot be null");
     checkArgument(expiration >= 0, "expiration cannot be negative");
 
-    this.from = from;
+    this.maybeFrom = maybeFrom;
     this.to = to;
     this.expiration = expiration;
   }
@@ -49,14 +51,14 @@ public class PingPacketData implements PacketData {
   }
 
   static PingPacketData create(final Endpoint from, final Endpoint to, final long expirationSec) {
-    return new PingPacketData(from, to, expirationSec);
+    return new PingPacketData(Optional.of(from), to, expirationSec);
   }
 
   public static PingPacketData readFrom(final RLPInput in) {
     in.enterList();
     // The first element signifies the "version", but this value is ignored as of EIP-8
     in.readBigIntegerScalar();
-    final Endpoint from = Endpoint.decodeStandalone(in);
+    final Optional<Endpoint> from = Endpoint.maybeDecodeStandalone(in);
     final Endpoint to = Endpoint.decodeStandalone(in);
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
@@ -67,14 +69,19 @@ public class PingPacketData implements PacketData {
   public void writeTo(final RLPOutput out) {
     out.startList();
     out.writeIntScalar(VERSION);
-    from.encodeStandalone(out);
+    maybeFrom
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Attempting to serialize invalid PING packet. Missing 'from' field"))
+        .encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(expiration);
     out.endList();
   }
 
-  public Endpoint getFrom() {
-    return from;
+  public Optional<Endpoint> getFrom() {
+    return maybeFrom;
   }
 
   public Endpoint getTo() {
@@ -87,6 +94,13 @@ public class PingPacketData implements PacketData {
 
   @Override
   public String toString() {
-    return "PingPacketData{" + "from=" + from + ", to=" + to + ", expiration=" + expiration + '}';
+    return "PingPacketData{"
+        + "from="
+        + maybeFrom.map(Object::toString).orElse("INVALID")
+        + ", to="
+        + to
+        + ", expiration="
+        + expiration
+        + '}';
   }
 }

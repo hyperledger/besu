@@ -182,24 +182,29 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
-    OptionalInt tcpPort = OptionalInt.empty();
-    if (packet.getPacketData(PingPacketData.class).isPresent()) {
-      final PingPacketData ping = packet.getPacketData(PingPacketData.class).orElseGet(null);
-      if (ping != null && ping.getFrom() != null && ping.getFrom().getTcpPort().isPresent()) {
-        tcpPort = ping.getFrom().getTcpPort();
-      }
-    }
+    final int udpPort = sourceEndpoint.getUdpPort();
+    final int tcpPort =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .flatMap(
+                fromEndpoint -> {
+                  final OptionalInt maybePort = fromEndpoint.getTcpPort();
+                  return maybePort.isPresent()
+                      ? Optional.of(maybePort.getAsInt())
+                      : Optional.empty();
+                })
+            .orElse(udpPort);
 
     // Notify the peer controller.
-    String host = sourceEndpoint.getHost();
-    int port = sourceEndpoint.getUdpPort();
+    final String host = sourceEndpoint.getHost();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
             EnodeURL.builder()
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
-                .listeningPort(tcpPort.orElse(port))
-                .discoveryPort(port)
+                .listeningPort(tcpPort)
+                .discoveryPort(udpPort)
                 .build());
 
     controller.ifPresent(c -> c.onMessage(packet, peer));
