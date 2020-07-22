@@ -168,7 +168,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           result);
     }
 
-    return Bytes.EMPTY;
+    return result.getOutput();
   }
 
   boolean canExecute(

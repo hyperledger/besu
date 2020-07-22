@@ -36,6 +36,10 @@ public class PrivateTransactionReceipt {
   public static final PrivateTransactionReceipt FAILED =
       new PrivateTransactionReceipt(0, Collections.EMPTY_LIST, Bytes.EMPTY, Optional.empty());
 
+  private static final int STATUS_FAILED = 0;
+  private static final int STATUS_SUCCESSFUL = 1;
+  private static final int STATUS_INVALID = 2;
+
   private final int status;
   private final List<Log> logs;
   private final Bytes output;
@@ -69,12 +73,13 @@ public class PrivateTransactionReceipt {
   }
 
   private static int getStatusCode(final TransactionProcessor.Result.Status result) {
-    if (result.equals(PrivateTransactionProcessor.Result.Status.SUCCESSFUL)) {
-      return 1;
-    } else if (result.equals(PrivateTransactionProcessor.Result.Status.INVALID)) {
-      return 2;
-    } else {
-      return 0;
+    switch (result) {
+      case SUCCESSFUL:
+        return STATUS_SUCCESSFUL;
+      case INVALID:
+        return STATUS_INVALID;
+      default:
+        return STATUS_FAILED;
     }
   }
 

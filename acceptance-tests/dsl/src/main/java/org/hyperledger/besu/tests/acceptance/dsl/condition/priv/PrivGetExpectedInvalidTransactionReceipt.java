@@ -21,11 +21,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransactionReceiptTransaction;
 
-public class PrivGetFailedTransactionReceiptSuccess implements Condition {
+public class PrivGetExpectedInvalidTransactionReceipt implements Condition {
 
   private final PrivGetTransactionReceiptTransaction getTransactionReceiptTransaction;
 
-  public PrivGetFailedTransactionReceiptSuccess(
+  public PrivGetExpectedInvalidTransactionReceipt(
       final PrivGetTransactionReceiptTransaction getTransactionReceiptTransaction) {
     this.getTransactionReceiptTransaction = getTransactionReceiptTransaction;
   }
@@ -33,6 +33,6 @@ public class PrivGetFailedTransactionReceiptSuccess implements Condition {
   @Override
   public void verify(final Node node) {
     WaitUtils.waitFor(() -> assertThat(node.execute(getTransactionReceiptTransaction)).isNotNull());
-    assertThat(node.execute(getTransactionReceiptTransaction).getStatus()).isEqualTo("0x0");
+    assertThat(node.execute(getTransactionReceiptTransaction).getStatus()).isEqualTo("0x2");
   }
 }
