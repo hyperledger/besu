@@ -15,17 +15,17 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.NetworkUtility.checkPort;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.NetworkUtility;
+import org.hyperledger.besu.util.IllegalPortException;
 
 import java.net.InetAddress;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
@@ -37,23 +37,9 @@ import org.apache.tuweni.bytes.Bytes;
 public class Endpoint {
   private final String host;
   private final int udpPort;
-  private final OptionalInt tcpPort;
+  private final Optional<Integer> tcpPort;
 
-  private static class IllegalPortException extends IllegalArgumentException {
-    IllegalPortException(final String message) {
-      super(message);
-    }
-  }
-
-  private static void checkPort(final int port, final String portTypeName) {
-    if (!NetworkUtility.isValidPort(port)) {
-      throw new IllegalPortException(
-          String.format(
-              "%s port requires a value between 1 and 65535. Got %d.", portTypeName, port));
-    }
-  }
-
-  public Endpoint(final String host, final int udpPort, final OptionalInt tcpPort) {
+  public Endpoint(final String host, final int udpPort, final Optional<Integer> tcpPort) {
     checkArgument(
         host != null && InetAddresses.isInetAddress(host), "host requires a valid IP address");
     checkPort(udpPort, "UDP");
@@ -72,7 +58,7 @@ public class Endpoint {
                 () ->
                     new IllegalArgumentException(
                         "Attempt to create a discovery endpoint for an enode with discovery disabled."));
-    final OptionalInt listeningPort = enode.getListeningPort();
+    final Optional<Integer> listeningPort = enode.getListeningPort();
     return new Endpoint(enode.getIp().getHostAddress(), discoveryPort, listeningPort);
   }
 
@@ -93,7 +79,7 @@ public class Endpoint {
     return udpPort;
   }
 
-  public OptionalInt getTcpPort() {
+  public Optional<Integer> getTcpPort() {
     return tcpPort;
   }
 
@@ -182,12 +168,12 @@ public class Endpoint {
 
     // Some mainnet packets have been shown to either not have the TCP port field at all,
     // or to have an RLP NULL value for it.
-    OptionalInt tcpPort = OptionalInt.empty();
+    Optional<Integer> tcpPort = Optional.empty();
     if (fieldCount == 3) {
       if (in.nextIsNull()) {
         in.skipNext();
       } else {
-        tcpPort = OptionalInt.of(in.readIntScalar());
+        tcpPort = Optional.of(in.readIntScalar());
       }
     }
     return new Endpoint(addr.getHostAddress(), udpPort, tcpPort);
