@@ -1388,7 +1388,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (Strings.isNullOrEmpty(ethstatsUrl) && !ethstatsContact.isEmpty()) {
       throw new ParameterException(
           this.commandLine,
-          "The `--ethstats-contact` requires that an url to a ethstats server is provided. Either remove --ethstats-contact"
+          "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact"
               + " or provide an url (via --ethstats=nodename:secret@host:port)");
     }
   }

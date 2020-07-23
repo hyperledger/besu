@@ -199,23 +199,23 @@ public class EthStatsService {
     }
   }
 
-  /** Ends the current connection and restart a new one. */
-  private void retryConnect() {
-    close();
-    protocolManager
-        .ethContext()
-        .getScheduler()
-        .scheduleFutureTask(this::start, Duration.ofSeconds(10));
-  }
-
   /** Ends the current web socket connection, observers and schedulers */
-  private void close() {
+  public void stop() {
     if (webSocket != null && !webSocket.isClosed()) {
       webSocket.close();
     }
     if (reportScheduler != null) {
       reportScheduler.cancel(true);
     }
+  }
+
+  /** Ends the current connection and restart a new one. */
+  private void retryConnect() {
+    stop();
+    protocolManager
+        .ethContext()
+        .getScheduler()
+        .scheduleFutureTask(this::start, Duration.ofSeconds(10));
   }
 
   /** Sends a hello request to the ethstats server in order to log in. */
