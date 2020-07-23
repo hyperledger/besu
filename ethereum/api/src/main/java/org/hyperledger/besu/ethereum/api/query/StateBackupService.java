@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.data.Hash;
 
 import java.io.Closeable;
-import java.io.File;
+import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -127,33 +127,52 @@ public class StateBackupService {
     return backupStatus;
   }
 
-  private File nextLeafFile(final int fileNumber, final boolean compressed) {
-    return backupDir
-        .resolve(
-            "besu-leaf-backup-"
-                + backupStatus.targetBlock
-                + "-"
-                + fileNumber
-                + (compressed ? ".cdat" : ".rdat"))
-        .toFile();
+  public static Path dataFileToIndex(final Path dataName) {
+    return Path.of(dataName.toString().replaceAll("(([.-]?[^0-9-.]+)+)?[.-]?\\d+\\.(.)dat", "$1.$3idx"));
   }
 
-  private File nextHeaderFile(final int fileNumber, final boolean compressed) {
-    return backupDir
-        .resolve("besu-header-backup-" + fileNumber + (compressed ? ".cdat" : ".rdat"))
-        .toFile();
+  public static Path leafFileName(
+      final Path backupDir,
+      final long targetBlock,
+      final int fileNumber,
+      final boolean compressed) {
+    return backupDir.resolve(
+        String.format(
+            "besu-leaf-backup-%08d-%04d.%sdat", targetBlock, fileNumber, compressed ? "c" : "r"));
   }
 
-  private File nextBodyFile(final int fileNumber, final boolean compressed) {
-    return backupDir
-        .resolve("besu-body-backup-" + fileNumber + (compressed ? ".cdat" : ".rdat"))
-        .toFile();
+  public static Path headerFileName(
+      final Path backupDir, final int fileNumber, final boolean compressed) {
+    return backupDir.resolve(
+        String.format("besu-header-backup-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
   }
 
-  private File nextReceiptFile(final int fileNumber, final boolean compressed) {
-    return backupDir
-        .resolve("besu-receipt-backup-" + fileNumber + (compressed ? ".cdat" : ".rdat"))
-        .toFile();
+  public static Path bodyFileName(
+      final Path backupDir, final int fileNumber, final boolean compressed) {
+    return backupDir.resolve(
+        String.format("besu-body-backup-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
+  }
+
+  public static Path receiptFileName(
+      final Path backupDir, final int fileNumber, final boolean compressed) {
+    return backupDir.resolve(
+        String.format("besu-receipt-backup-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
+  }
+
+  private Path leafFileName(final int fileNumber, final boolean compressed) {
+    return leafFileName(backupDir, backupStatus.targetBlock, fileNumber, compressed);
+  }
+
+  private Path headerFileName(final int fileNumber, final boolean compressed) {
+    return headerFileName(backupDir, fileNumber, compressed);
+  }
+
+  private Path bodyFileName(final int fileNumber, final boolean compressed) {
+    return bodyFileName(backupDir, fileNumber, compressed);
+  }
+
+  private Path receiptFileName(final int fileNumber, final boolean compressed) {
+    return receiptFileName(backupDir, fileNumber, compressed);
   }
 
   private BackupStatus backup(final long block, final boolean compress) throws IOException {
@@ -201,7 +220,7 @@ public class StateBackupService {
     }
 
     try (final RollingFileWriter leafFileWriter =
-        new RollingFileWriter(this::nextLeafFile, backupStatus.compressed)) {
+        new RollingFileWriter(this::leafFileName, backupStatus.compressed)) {
       this.leafFileWriter = leafFileWriter;
 
       final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie =
@@ -260,11 +279,11 @@ public class StateBackupService {
 
   private void backupChaindata() throws IOException {
     try (final RollingFileWriter headerWriter =
-            new RollingFileWriter(this::nextHeaderFile, backupStatus.compressed);
+            new RollingFileWriter(this::headerFileName, backupStatus.compressed);
         final RollingFileWriter bodyWriter =
-            new RollingFileWriter(this::nextBodyFile, backupStatus.compressed);
+            new RollingFileWriter(this::bodyFileName, backupStatus.compressed);
         final RollingFileWriter receiptsWriter =
-            new RollingFileWriter(this::nextReceiptFile, backupStatus.compressed)) {
+            new RollingFileWriter(this::receiptFileName, backupStatus.compressed)) {
       for (int blockNumber = 0; blockNumber <= backupStatus.targetBlock; blockNumber++) {
         final Optional<Block> block = blockchain.getBlockByNumber(blockNumber);
         if (block.isEmpty()) {
@@ -309,20 +328,23 @@ public class StateBackupService {
   }
 
   static class RollingFileWriter implements Closeable {
-    final BiFunction<Integer, Boolean, File> filenameGenerator;
+    final BiFunction<Integer, Boolean, Path> filenameGenerator;
     final boolean compressed;
     int currentSize;
     int fileNumber;
     FileOutputStream out;
+    final DataOutputStream index;
 
     RollingFileWriter(
-        final BiFunction<Integer, Boolean, File> filenameGenerator, final boolean compressed)
+        final BiFunction<Integer, Boolean, Path> filenameGenerator, final boolean compressed)
         throws FileNotFoundException {
       this.filenameGenerator = filenameGenerator;
       this.compressed = compressed;
       currentSize = 0;
-      fileNumber = 1;
-      out = new FileOutputStream(filenameGenerator.apply(fileNumber, compressed));
+      fileNumber = 0;
+      final Path firstOutputFile = filenameGenerator.apply(fileNumber, compressed);
+      out = new FileOutputStream(firstOutputFile.toFile());
+      index = new DataOutputStream(new FileOutputStream(dataFileToIndex(firstOutputFile).toFile()));
     }
 
     void writeBytes(final byte[] bytes) throws IOException {
@@ -332,12 +354,16 @@ public class StateBackupService {
       } else {
         finalBytes = bytes;
       }
+      int pos = currentSize;
       currentSize += finalBytes.length;
       if (currentSize > MAX_FILE_SIZE) {
         out.close();
-        out = new FileOutputStream(filenameGenerator.apply(++fileNumber, compressed));
+        out = new FileOutputStream(filenameGenerator.apply(++fileNumber, compressed).toFile());
         currentSize = finalBytes.length;
+        pos = 0;
       }
+      index.writeShort(fileNumber);
+      index.writeInt(pos);
       out.write(finalBytes);
     }
 
