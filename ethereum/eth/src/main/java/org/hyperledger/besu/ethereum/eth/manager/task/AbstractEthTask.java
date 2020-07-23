@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -70,7 +71,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   @Override
   public final CompletableFuture<T> run() {
-    if (!isCancelled() && started.compareAndSet(false, true)) {
+    if (!result.isCancelled() && started.compareAndSet(false, true)) {
       executeTaskTimed();
       result.whenComplete((r, t) -> cleanup());
     }
@@ -79,7 +80,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   @Override
   public final CompletableFuture<T> runAsync(final ExecutorService executor) {
-    if (!isCancelled() && started.compareAndSet(false, true)) {
+    if (!result.isCancelled() && started.compareAndSet(false, true)) {
       executor.execute(this::executeTaskTimed);
       result.whenComplete((r, t) -> cleanup());
     }
@@ -91,20 +92,18 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
     result.cancel(false);
   }
 
+  @VisibleForTesting
   public final boolean isDone() {
     return result.isDone();
   }
 
-  public final boolean isSucceeded() {
-    return isDone() && !result.isCompletedExceptionally();
-  }
-
   public final boolean isFailed() {
-    return isDone() && result.isCompletedExceptionally();
+    return result.isCompletedExceptionally();
   }
 
+  @VisibleForTesting
   public final boolean isCancelled() {
-    return isDone() && result.isCancelled();
+    return result.isCancelled();
   }
 
   /**
