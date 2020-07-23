@@ -59,7 +59,7 @@ public class PeerDiscoveryBootstrappingTest {
     final PingPacketData pingData = pingPacket.getPacketData(PingPacketData.class).get();
     assertThat(pingData.getExpiration())
         .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
-    assertThat(pingData.getFrom()).isEqualTo(agent.getAdvertisedPeer().get().getEndpoint());
+    assertThat(pingData.getFrom()).contains(agent.getAdvertisedPeer().get().getEndpoint());
     assertThat(pingData.getTo()).isEqualTo(testAgent.getAdvertisedPeer().get().getEndpoint());
   }
 
