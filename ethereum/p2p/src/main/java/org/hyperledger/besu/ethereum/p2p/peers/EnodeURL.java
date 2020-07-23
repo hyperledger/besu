@@ -252,7 +252,7 @@ public class EnodeURL {
     private Optional<Integer> discoveryPort;
     private InetAddress ip;
 
-    private Builder() {};
+    private Builder() {}
 
     public EnodeURL build() {
       validate();
