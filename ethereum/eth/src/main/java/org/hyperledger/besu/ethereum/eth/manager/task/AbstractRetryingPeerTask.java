@@ -73,12 +73,12 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   @Override
   protected void executeTask() {
-    if (result.get().isDone()) {
+    if (result.isDone()) {
       // Return if task is done
       return;
     }
     if (retryCount > maxRetries) {
-      result.get().completeExceptionally(new MaxRetriesReachedException());
+      result.completeExceptionally(new MaxRetriesReachedException());
       return;
     }
 
@@ -104,7 +104,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     final Throwable cause = ExceptionUtils.rootCause(error);
     if (!isRetryableError(cause)) {
       // Complete exceptionally
-      result.get().completeExceptionally(cause);
+      result.completeExceptionally(cause);
       return;
     }
 
