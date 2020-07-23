@@ -38,7 +38,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -187,13 +186,7 @@ public abstract class PeerDiscoveryAgent {
         packet
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
-            .flatMap(
-                fromEndpoint -> {
-                  final OptionalInt maybePort = fromEndpoint.getTcpPort();
-                  return maybePort.isPresent()
-                      ? Optional.of(maybePort.getAsInt())
-                      : Optional.empty();
-                })
+            .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
 
     // Notify the peer controller.
