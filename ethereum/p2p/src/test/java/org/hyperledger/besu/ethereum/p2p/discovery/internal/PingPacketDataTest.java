@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.time.Instant;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -32,13 +32,13 @@ public class PingPacketDataTest {
   public void serializeDeserialize() {
     final long currentTimeSec = Instant.now().getEpochSecond();
 
-    final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
-    final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final PingPacketData packet = PingPacketData.create(from, to);
     final Bytes serialized = RLP.encode(packet::writeTo);
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
-    assertThat(deserialized.getFrom()).isEqualTo(from);
+    assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getExpiration()).isGreaterThan(currentTimeSec);
   }
@@ -46,8 +46,8 @@ public class PingPacketDataTest {
   @Test
   public void readFrom() {
     final int version = 4;
-    final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
-    final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -61,7 +61,7 @@ public class PingPacketDataTest {
     final Bytes serialized = out.encoded();
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
-    assertThat(deserialized.getFrom()).isEqualTo(from);
+    assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }
@@ -69,8 +69,8 @@ public class PingPacketDataTest {
   @Test
   public void readFrom_withExtraFields() {
     final int version = 4;
-    final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
-    final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -86,7 +86,7 @@ public class PingPacketDataTest {
     final Bytes serialized = out.encoded();
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
-    assertThat(deserialized.getFrom()).isEqualTo(from);
+    assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }
@@ -94,8 +94,8 @@ public class PingPacketDataTest {
   @Test
   public void readFrom_unknownVersion() {
     final int version = 99;
-    final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
-    final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -109,7 +109,30 @@ public class PingPacketDataTest {
     final Bytes serialized = out.encoded();
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
-    assertThat(deserialized.getFrom()).isEqualTo(from);
+    assertThat(deserialized.getFrom()).contains(from);
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+  }
+
+  @Test
+  public void readFrom_lowPortValues() {
+    final int version = 4;
+    final Endpoint from = new Endpoint("0.1.2.1", 1, Optional.of(1));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long time = System.currentTimeMillis();
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(version);
+    from.encodeStandalone(out);
+    to.encodeStandalone(out);
+    out.writeLongScalar(time);
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }

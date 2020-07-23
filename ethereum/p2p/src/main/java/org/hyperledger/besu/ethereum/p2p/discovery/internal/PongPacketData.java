@@ -28,7 +28,7 @@ public class PongPacketData implements PacketData {
   /* Hash of the PING packet. */
   private final Bytes pingHash;
 
-  /* In millis after epoch. */
+  /* In seconds after epoch. */
   private final long expiration;
 
   private PongPacketData(final Endpoint to, final Bytes pingHash, final long expiration) {

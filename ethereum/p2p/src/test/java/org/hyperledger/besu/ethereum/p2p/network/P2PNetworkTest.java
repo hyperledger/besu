@@ -74,7 +74,7 @@ public class P2PNetworkTest {
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       Assertions.assertThat(
               connector
@@ -96,7 +96,7 @@ public class P2PNetworkTest {
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       final CompletableFuture<PeerConnection> firstFuture =
           connector.connect(createPeer(listenId, listenPort));
@@ -140,7 +140,7 @@ public class P2PNetworkTest {
       connector1.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       final Peer listeningPeer = createPeer(listenId, listenPort);
       Assertions.assertThat(
@@ -191,7 +191,7 @@ public class P2PNetworkTest {
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       final Peer listenerPeer = createPeer(listenId, listenPort);
       final CompletableFuture<PeerConnection> connectFuture = connector.connect(listenerPeer);
@@ -211,11 +211,11 @@ public class P2PNetworkTest {
 
       final EnodeURL localEnode = localNetwork.getLocalEnode().get();
       final Bytes localId = localEnode.getNodeId();
-      final int localPort = localEnode.getListeningPort().getAsInt();
+      final int localPort = localEnode.getListeningPort().get();
 
       final EnodeURL remoteEnode = remoteNetwork.getLocalEnode().get();
       final Bytes remoteId = remoteEnode.getNodeId();
-      final int remotePort = remoteEnode.getListeningPort().getAsInt();
+      final int remotePort = remoteEnode.getListeningPort().get();
 
       final Peer localPeer = createPeer(localId, localPort);
       final Peer remotePeer = createPeer(remoteId, remotePort);
