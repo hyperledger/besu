@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -31,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 
 public abstract class AbstractEthTask<T> implements EthTask<T> {

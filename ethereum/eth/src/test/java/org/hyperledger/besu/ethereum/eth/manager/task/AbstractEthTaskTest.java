@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.testutil.MockExecutorService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Lists;
-import org.hyperledger.besu.testutil.MockExecutorService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
