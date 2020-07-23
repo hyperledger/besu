@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.5.1
+
+### Additions and Improvements
+
+* http/2 is enabled for JSON-RPC Http API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
+* 
+
+### Bug fixes 
+
+ 
+### Known Issues 
+
+
 ## 1.5 Breaking changes
 
 When upgrading to 1.5, ensure you've taken into account the following breaking changes. 
