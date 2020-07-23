@@ -338,7 +338,6 @@ public class EnodeURL {
         this.ip = InetAddresses.forString(ip);
       } else if (enodeDnsConfiguration.dnsEnabled()) {
         try {
-          System.out.println("ALLO " + enodeDnsConfiguration.updateEnabled() + " " + ip);
           this.ip = InetAddress.getByName(ip);
           if (enodeDnsConfiguration.updateEnabled()) {
             this.maybeHostname = Optional.of(ip);
