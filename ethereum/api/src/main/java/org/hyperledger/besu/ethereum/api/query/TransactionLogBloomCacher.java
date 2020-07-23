@@ -210,25 +210,35 @@ public class TransactionLogBloomCacher {
     return false;
   }
 
-  public boolean removeSegments(final Long startBlock, final Long stopBlock) {
+  public void removeSegments(final Long startBlock, final Long stopBlock) {
     if (!cachingStatus.isCaching()) {
-      LOG.info("Deleting segments from block {} to block {}", startBlock, stopBlock);
+      LOG.info(
+          "Deleting transaction log bloom cache from block {} to block {} in {}",
+          startBlock,
+          stopBlock,
+          cacheDir);
+
       for (long blockNum = startBlock; blockNum <= stopBlock; blockNum += BLOCKS_PER_BLOOM_CACHE) {
         try {
-          final long segmentNumber = (blockNum / BLOCKS_PER_BLOOM_CACHE) - 1;
+          final long segmentNumber = blockNum / BLOCKS_PER_BLOOM_CACHE;
           final long fromBlock = segmentNumber * BLOCKS_PER_BLOOM_CACHE;
           final File cacheFile = calculateCacheFileName(fromBlock, cacheDir);
-
           cachedSegments.remove(segmentNumber);
-          Files.deleteIfExists(cacheFile.toPath());
+          if (Files.deleteIfExists(cacheFile.toPath())) {
+            LOG.info(
+                "Deleted transaction log bloom cache file: {}/{}", cacheDir, cacheFile.getName());
+          } else {
+            LOG.info(
+                "Unable to delete transaction log bloom cache file: {}/{}",
+                cacheDir,
+                cacheFile.getName());
+          }
         } catch (final IOException e) {
           LOG.error(
               String.format("Unhandled exception removing cache for block number %d", blockNum), e);
         }
       }
     }
-
-    return false;
   }
 
   public void ensurePreviousSegmentsArePresent(
@@ -237,7 +247,7 @@ public class TransactionLogBloomCacher {
       scheduler.scheduleFutureTask(
           () -> {
             long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
-            while (currentSegment > 0) {
+            while (currentSegment >= 0) {
               try {
                 if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
                   final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
