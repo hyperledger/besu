@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutablePingReport.class)
 @JsonDeserialize(as = ImmutablePingReport.class)
 public interface PingReport {

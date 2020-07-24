@@ -22,6 +22,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonSerialize(as = ImmutableNodeInfo.class)
 @JsonDeserialize(as = ImmutableNodeInfo.class)
+@Value.Style(allParameters = true)
 public interface NodeInfo {
 
   @JsonProperty("name")

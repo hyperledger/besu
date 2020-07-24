@@ -1042,7 +1042,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
-      names = {"--ethstats"},
+      names = {"--Xethstats"},
       paramLabel = "<nodename:secret@host:port>",
       description = "Reporting URL of a ethstats server",
       arity = "1")
@@ -1050,7 +1050,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
-      names = {"--ethstats-contact"},
+      names = {"--Xethstats-contact"},
       description = "Contact address to send to ethstats server",
       arity = "1")
   private String ethstatsContact = "";
@@ -1388,8 +1388,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (Strings.isNullOrEmpty(ethstatsUrl) && !ethstatsContact.isEmpty()) {
       throw new ParameterException(
           this.commandLine,
-          "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact"
-              + " or provide an url (via --ethstats=nodename:secret@host:port)");
+          "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
+              + " or provide an url (via --Xethstats=nodename:secret@host:port)");
     }
   }
 

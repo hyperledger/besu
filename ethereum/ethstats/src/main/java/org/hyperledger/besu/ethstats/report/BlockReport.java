@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableBlockReport.class)
 @JsonDeserialize(as = ImmutableBlockReport.class)
 public interface BlockReport {

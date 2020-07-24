@@ -155,8 +155,8 @@ target-gas-limit=8000000
 auto-log-bloom-caching-enabled=true
 
 # ethstats
-ethstats="nodename:secret@host:1234"
-ethstats-contact="contact@mail.n"
+Xethstats="nodename:secret@host:1234"
+Xethstats-contact="contact@mail.n"
 
 # feature flags
 Xsecp256k1-native-enabled=false

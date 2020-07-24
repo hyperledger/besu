@@ -22,6 +22,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonSerialize(as = ImmutableAuthenticationData.class)
 @JsonDeserialize(as = ImmutableAuthenticationData.class)
+@Value.Style(allParameters = true)
 public interface AuthenticationData {
 
   @JsonProperty("id")

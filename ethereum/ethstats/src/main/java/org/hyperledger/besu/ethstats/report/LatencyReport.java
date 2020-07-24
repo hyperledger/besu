@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableLatencyReport.class)
 @JsonDeserialize(as = ImmutableLatencyReport.class)
 public interface LatencyReport {

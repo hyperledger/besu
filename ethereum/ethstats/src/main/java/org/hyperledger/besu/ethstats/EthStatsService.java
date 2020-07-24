@@ -42,22 +42,17 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethstats.authentication.AuthenticationData;
 import org.hyperledger.besu.ethstats.authentication.ImmutableAuthenticationData;
 import org.hyperledger.besu.ethstats.authentication.ImmutableNodeInfo;
 import org.hyperledger.besu.ethstats.authentication.NodeInfo;
-import org.hyperledger.besu.ethstats.report.BlockReport;
-import org.hyperledger.besu.ethstats.report.HistoryReport;
 import org.hyperledger.besu.ethstats.report.ImmutableBlockReport;
 import org.hyperledger.besu.ethstats.report.ImmutableHistoryReport;
 import org.hyperledger.besu.ethstats.report.ImmutableLatencyReport;
 import org.hyperledger.besu.ethstats.report.ImmutableNodeStatsReport;
 import org.hyperledger.besu.ethstats.report.ImmutablePendingTransactionsReport;
 import org.hyperledger.besu.ethstats.report.ImmutablePingReport;
-import org.hyperledger.besu.ethstats.report.LatencyReport;
 import org.hyperledger.besu.ethstats.report.NodeStatsReport;
 import org.hyperledger.besu.ethstats.report.PendingTransactionsReport;
-import org.hyperledger.besu.ethstats.report.PingReport;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
 import org.hyperledger.besu.ethstats.util.PrimusHeartBeatsHelper;
@@ -177,7 +172,7 @@ public class EthStatsService {
                           // send a full report after the connection
                           sendFullReport();
                         } else {
-                          LOG.error("Failed to login to ethstats server " + ack);
+                          LOG.error("Failed to login to ethstats server {}", ack);
                         }
                       });
 
@@ -226,27 +221,26 @@ public class EthStatsService {
       if (port.isPresent() && chainId.isPresent()) {
         final String os = PlatformDetector.getOSType();
         final String arch = PlatformDetector.getArch();
+
         final NodeInfo nodeInfo =
-            ImmutableNodeInfo.builder()
-                .name(netstatsUrl.getNodeName())
-                .node(clientVersion)
-                .port(String.valueOf(port.getAsInt()))
-                .network(chainId.get().toString())
-                .protocol(protocolManager.getSupportedCapabilities().toString())
-                .api("No")
-                .os(os)
-                .osVer(arch)
-                .client("0.1.1")
-                .canUpdateHistory(true)
-                .contact(netstatsUrl.getContact())
-                .build();
-        final AuthenticationData authenticationData =
-            ImmutableAuthenticationData.builder()
-                .id(enodeURL.getNodeId().toHexString())
-                .info(nodeInfo)
-                .secret(netstatsUrl.getSecret())
-                .build();
-        final EthStatsRequest hello = new EthStatsRequest(HELLO, authenticationData);
+            ImmutableNodeInfo.of(
+                netstatsUrl.getNodeName(),
+                clientVersion,
+                String.valueOf(port.getAsInt()),
+                chainId.get().toString(),
+                protocolManager.getSupportedCapabilities().toString(),
+                "No",
+                os,
+                arch,
+                "0.1.1",
+                true,
+                netstatsUrl.getContact());
+
+        final EthStatsRequest hello =
+            new EthStatsRequest(
+                HELLO,
+                ImmutableAuthenticationData.of(
+                    enodeURL.getNodeId().toHexString(), nodeInfo, netstatsUrl.getSecret()));
         sendMessage(
             webSocket,
             hello,
@@ -285,22 +279,24 @@ public class EthStatsService {
   private void sendPing() {
     // we store the timestamp when we sent the ping
     pingTimestamp = System.currentTimeMillis();
-    final PingReport pingReport =
-        ImmutablePingReport.builder()
-            .id(enodeURL.getNodeId().toHexString())
-            .currentTime(String.valueOf(pingTimestamp))
-            .build();
-    sendMessage(webSocket, new EthStatsRequest(NODE_PING, pingReport));
+
+    sendMessage(
+        webSocket,
+        new EthStatsRequest(
+            NODE_PING,
+            ImmutablePingReport.of(
+                enodeURL.getNodeId().toHexString(), String.valueOf(pingTimestamp))));
   }
 
   /** Sends a latency report to the ethstats server */
   private void sendLatencyReport() {
-    final LatencyReport latencyReport =
-        ImmutableLatencyReport.builder()
-            .id(enodeURL.getNodeId().toHexString())
-            .latency(String.valueOf(System.currentTimeMillis() - pingTimestamp))
-            .build();
-    sendMessage(webSocket, new EthStatsRequest(LATENCY, latencyReport));
+    sendMessage(
+        webSocket,
+        new EthStatsRequest(
+            LATENCY,
+            ImmutableLatencyReport.of(
+                enodeURL.getNodeId().toHexString(),
+                String.valueOf(System.currentTimeMillis() - pingTimestamp))));
   }
 
   /** Sends a block report concerning the last block */
@@ -309,14 +305,12 @@ public class EthStatsService {
         .latestBlock()
         .map(tx -> blockResultFactory.transactionComplete(tx, false))
         .ifPresent(
-            blockResult -> {
-              final BlockReport blockReport =
-                  ImmutableBlockReport.builder()
-                      .id(enodeURL.getNodeId().toHexString())
-                      .block(blockResult)
-                      .build();
-              sendMessage(webSocket, new EthStatsRequest(BLOCK, blockReport));
-            });
+            blockResult ->
+                sendMessage(
+                    webSocket,
+                    new EthStatsRequest(
+                        BLOCK,
+                        ImmutableBlockReport.of(enodeURL.getNodeId().toHexString(), blockResult))));
   }
 
   /** Sends a report concerning a set of blocks (range, list of blocks) */
@@ -331,23 +325,24 @@ public class EthStatsService {
                 .ifPresent(blockResults::add));
 
     if (!blockResults.isEmpty()) {
-      final HistoryReport historyReport =
-          ImmutableHistoryReport.builder()
-              .id(enodeURL.getNodeId().toHexString())
-              .history(blockResults)
-              .build();
-      sendMessage(webSocket, new EthStatsRequest(HISTORY, historyReport));
+      sendMessage(
+          webSocket,
+          new EthStatsRequest(
+              HISTORY,
+              ImmutableHistoryReport.of(enodeURL.getNodeId().toHexString(), blockResults)));
     }
   }
 
   /** Sends the number of pending transactions in the pool */
   private void sendPendingTransactionReport() {
     final int pendingTransactionsNumber = transactionPool.getPendingTransactions().size();
+
     final PendingTransactionsReport pendingTransactionsReport =
         ImmutablePendingTransactionsReport.builder()
             .id(enodeURL.getNodeId().toHexString())
             .stats(pendingTransactionsNumber)
             .build();
+
     sendMessage(webSocket, new EthStatsRequest(PENDING, pendingTransactionsReport));
   }
 
