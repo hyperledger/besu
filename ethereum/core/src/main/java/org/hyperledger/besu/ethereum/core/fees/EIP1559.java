@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTI
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 public class EIP1559 {
@@ -31,16 +32,18 @@ public class EIP1559 {
 
   public EIP1559(final long forkBlockNumber) {
     initialForkBlknum = forkBlockNumber;
-    finalForkBlknum = initialForkBlknum + feeMarket.getDecayRange();
+    finalForkBlknum = initialForkBlknum + feeMarket.getMigrationDurationInBlocks();
   }
 
-  public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
+  public long computeBaseFee(
+      final long parentBaseFee, final long parentBlockGasUsed, final long targetGasUsed) {
     guardActivation();
-    long delta = parentBlockGasUsed - feeMarket.getTargetGasUsed();
+    assert targetGasUsed != 0L;
+    long delta = parentBlockGasUsed - targetGasUsed;
     long baseFee =
         parentBaseFee
             + floorDiv(
-                floorDiv(parentBaseFee * delta, feeMarket.getTargetGasUsed()),
+                floorDiv(parentBaseFee * delta, targetGasUsed),
                 feeMarket.getBasefeeMaxChangeDenominator());
     boolean neg = false;
     long diff = baseFee - parentBaseFee;
@@ -69,18 +72,18 @@ public class EIP1559 {
         <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
-  public long eip1559GasPool(final long blockNumber) {
+  public long eip1559GasPool(final long blockNumber, final long gasLimit) {
     guardActivation();
     if (blockNumber >= finalForkBlknum) {
-      return feeMarket.getMaxGas();
+      return gasLimit * 2;
     }
-    return (feeMarket.getMaxGas() / 2)
-        + ((blockNumber - initialForkBlknum) * feeMarket.getGasIncrementAmount());
+    return ((gasLimit / 2)
+        + ((blockNumber - initialForkBlknum) * feeMarket.getGasIncrementAmount(gasLimit)) * 2);
   }
 
-  public long legacyGasPool(final long blockNumber) {
+  public long legacyGasPool(final long blockNumber, final long gasLimit) {
     guardActivation();
-    return feeMarket.getMaxGas() - eip1559GasPool(blockNumber);
+    return gasLimit - (eip1559GasPool(blockNumber, gasLimit) / 2);
   }
 
   public boolean isEIP1559(final long blockNumber) {
@@ -134,5 +137,28 @@ public class EIP1559 {
     if (!ExperimentalEIPs.eip1559Enabled) {
       throw new RuntimeException("EIP-1559 is not enabled");
     }
+  }
+
+  public long targetGasUsed(final BlockHeader header) {
+    guardActivation();
+    final long blockNumber = header.getNumber();
+    final long migrationDuration = feeMarket.getMigrationDurationInBlocks();
+    final long gasTarget = header.getGasLimit();
+    return targetGasUsed(blockNumber, migrationDuration, gasTarget, initialForkBlknum);
+  }
+
+  public static long targetGasUsed(
+      final long blockNumber,
+      final long migrationDuration,
+      final long gasTarget,
+      final long forkBlock) {
+    final long blocksSinceStartOfMigration = blockNumber - forkBlock;
+    final long halfGasTarget = floorDiv(gasTarget, 2L);
+    return (blockNumber < forkBlock)
+        ? 0L
+        : (blockNumber > forkBlock + migrationDuration)
+            ? gasTarget
+            : halfGasTarget
+                + floorDiv(halfGasTarget * blocksSinceStartOfMigration, migrationDuration);
   }
 }
