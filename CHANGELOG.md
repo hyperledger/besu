@@ -9,10 +9,11 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 ### Additions and Improvements
 
 * HTTP/2 is enabled for JSON-RPC Http API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
-* 
+* Added fee cap for transactions submitted via RPC. [\#1137](https://github.com/hyperledger/besu/pull/1137) 
 
 ### Bug fixes 
 
+- Fixed missing results from eth_getLogs request. [\#1154](https://github.com/hyperledger/besu/pull/1154)
  
 ### Known Issues 
 
