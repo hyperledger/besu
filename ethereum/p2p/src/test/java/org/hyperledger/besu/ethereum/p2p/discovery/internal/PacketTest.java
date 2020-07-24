@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 
-import java.util.OptionalInt;
+import java.util.Optional;
 
 import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
@@ -37,7 +37,7 @@ public class PacketTest {
 
     assertThat(packet.getType()).isSameAs(PacketType.PONG);
     assertThat(packetData.getTo())
-        .isEqualTo(new Endpoint("180.181.122.26", 1025, OptionalInt.of(30303)));
+        .isEqualTo(new Endpoint("180.181.122.26", 1025, Optional.of(30303)));
     assertThat(packetData.getPingHash())
         .isEqualTo(
             Bytes.fromHexString(

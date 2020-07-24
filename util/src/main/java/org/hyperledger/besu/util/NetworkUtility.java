@@ -90,4 +90,12 @@ public class NetworkUtility {
   public static boolean isUnspecifiedAddress(final String ipAddress) {
     return INADDR_ANY.equals(ipAddress) || INADDR6_ANY.equals(ipAddress);
   }
+
+  public static void checkPort(final int port, final String portTypeName) {
+    if (!isValidPort(port)) {
+      throw new IllegalPortException(
+          String.format(
+              "%s port requires a value between 1 and 65535. Got %d.", portTypeName, port));
+    }
+  }
 }
