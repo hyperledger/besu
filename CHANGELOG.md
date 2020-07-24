@@ -9,11 +9,14 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 ### Additions and Improvements
 
 * HTTP/2 is enabled for JSON-RPC Http API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
-* 
+* Color output in consoles. It can be disabled with `--color-enabled=false`
 
 ### Bug fixes 
 
- 
+* When the default sync mode was changed to fast sync for named networks,
+there was one caveat we didn't address. The `dev` network should've been full sync by default.
+This has now been fixed.
+
 ### Known Issues 
 
 
