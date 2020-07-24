@@ -65,7 +65,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -216,7 +215,7 @@ public class EthStatsService {
   /** Sends a hello request to the ethstats server in order to log in. */
   private void sendHello() {
     try {
-      final OptionalInt port = enodeURL.getListeningPort();
+      final Optional<Integer> port = enodeURL.getListeningPort();
       final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
       if (port.isPresent() && chainId.isPresent()) {
         final String os = PlatformDetector.getOSType();
@@ -226,7 +225,7 @@ public class EthStatsService {
             ImmutableNodeInfo.of(
                 netstatsUrl.getNodeName(),
                 clientVersion,
-                String.valueOf(port.getAsInt()),
+                String.valueOf(port.get()),
                 chainId.get().toString(),
                 protocolManager.getSupportedCapabilities().toString(),
                 "No",

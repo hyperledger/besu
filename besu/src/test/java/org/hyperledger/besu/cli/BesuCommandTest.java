@@ -1326,14 +1326,14 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ethStatsOptionIsParsedCorrectly() {
     final String url = "besu-node:secret@host:443";
-    parseCommand("--ethstats", url);
+    parseCommand("--Xethstats", url);
     verify(mockRunnerBuilder).ethstatsUrl(url);
   }
 
   @Test
   public void ethStatsContactOptionIsParsedCorrectly() {
     final String contact = "contact@mail.net";
-    parseCommand("--Xethstats", "besu-node:secret@host:443", "--ethstats-contact", contact);
+    parseCommand("--Xethstats", "besu-node:secret@host:443", "--Xethstats-contact", contact);
     verify(mockRunnerBuilder).ethstatsContact(contact);
   }
 
