@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Map;
 import java.util.Optional;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class AdminLogsRemoveCache implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
