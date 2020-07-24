@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
 
 import java.util.Map;
 import java.util.Optional;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class AdminLogsRemoveCache implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
@@ -48,7 +49,7 @@ public class AdminLogsRemoveCache implements JsonRpcMethod {
 
     final long startBlock;
     if (startBlockParameter.isEmpty() || startBlockParameter.get().isEarliest()) {
-      startBlock = 0;
+      startBlock = BlockHeader.GENESIS_BLOCK_NUMBER;
     } else if (startBlockParameter.get().getNumber().isPresent()) {
       startBlock = startBlockParameter.get().getNumber().get();
       blockchainQueries
@@ -68,7 +69,7 @@ public class AdminLogsRemoveCache implements JsonRpcMethod {
         stopBlock = startBlock;
       }
     } else if (stopBlockParameter.get().isEarliest()) {
-      stopBlock = 0;
+      stopBlock = BlockHeader.GENESIS_BLOCK_NUMBER;
     } else if (stopBlockParameter.get().getNumber().isPresent()) {
       stopBlock = stopBlockParameter.get().getNumber().get();
       blockchainQueries
