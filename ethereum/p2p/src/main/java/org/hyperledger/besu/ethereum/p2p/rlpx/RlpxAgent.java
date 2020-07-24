@@ -437,7 +437,7 @@ public class RlpxAgent {
         .skip(maxRemotelyInitiatedConnections)
         .forEach(
             conn -> {
-              LOG.debug(
+              LOG.info(
                   "Too many remotely initiated connections. Disconnect low-priority connection: {}",
                   conn);
               conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
@@ -455,7 +455,7 @@ public class RlpxAgent {
         .filter(c -> !peerPrivileges.canExceedConnectionLimits(c.getPeer()))
         .forEach(
             conn -> {
-              LOG.debug("Too many connections. Disconnect low-priority connection: {}", conn);
+              LOG.info("Too many connections. Disconnect low-priority connection: {}", conn);
               conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
             });
   }
@@ -474,7 +474,8 @@ public class RlpxAgent {
     } else if (bIgnoresPeerLimits && !aIgnoresPeerLimits) {
       return 1;
     } else {
-      return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
+      // I'm reversing this so we churn connections intentionally
+      return -Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
     }
   }
 
