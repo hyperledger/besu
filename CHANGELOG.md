@@ -6,6 +6,17 @@
 - CLI option `--privacy-precompiled-address` option is deprecated. This address is now derived, based 
 on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
 
+### Additions and Improvements
+
+* HTTP/2 is enabled for JSON-RPC Http API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
+* 
+
+### Bug fixes 
+
+ 
+### Known Issues 
+
+
 ## 1.5 Breaking changes
 
 When upgrading to 1.5, ensure you've taken into account the following breaking changes. 
