@@ -9,10 +9,12 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 ### Additions and Improvements
 
 * HTTP/2 is enabled for JSON-RPC Http API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
-* 
+
+* Add compatibility with ClusterIP services for the Kubernetes Nat Manager  [\#1156](https://github.com/hyperledger/besu/pull/1156)
 
 ### Bug fixes 
 
+- Fix synchronization timeout issue when the blocks were too large [\#1149](https://github.com/hyperledger/besu/pull/1149)
  
 ### Known Issues 
 
