@@ -14,24 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-public class PopOperation extends AbstractOperation {
+public class PopOperation extends AbstractFixedCostOperation {
 
   public PopOperation(final GasCalculator gasCalculator) {
-    super(0x50, "POP", 1, 0, false, 1, gasCalculator);
+    super(0x50, "POP", 1, 0, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     frame.popStackItem();
+
+    return successResponse;
   }
 }

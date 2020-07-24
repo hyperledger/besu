@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -26,31 +24,30 @@ import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class JumpOperation extends AbstractOperation {
+public class JumpOperation extends AbstractFixedCostOperation {
+
+  private final OperationResult invalidJumpResponse;
 
   public JumpOperation(final GasCalculator gasCalculator) {
-    super(0x56, "JUMP", 1, 0, true, 1, gasCalculator);
+    super(0x56, "JUMP", 2, 0, true, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    invalidJumpResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getMidTierGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
-    frame.setPC(jumpDestination.intValue());
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
     final Code code = frame.getCode();
-
-    final UInt256 potentialJumpDestination = UInt256.fromBytes(frame.getStackItem(0));
-    return !code.isValidJumpDestination(evm, frame, potentialJumpDestination)
-        ? Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION)
-        : Optional.empty();
+    if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
+      return invalidJumpResponse;
+    } else {
+      frame.setPC(jumpDestination.intValue());
+      return successResponse;
+    }
   }
 }

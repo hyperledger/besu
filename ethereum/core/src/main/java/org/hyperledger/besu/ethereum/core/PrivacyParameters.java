@@ -43,7 +43,6 @@ public class PrivacyParameters {
   public static final URI DEFAULT_ENCLAVE_URL = URI.create("http://localhost:8888");
   public static final PrivacyParameters DEFAULT = new PrivacyParameters();
 
-  private Integer privacyAddress = Address.PRIVACY;
   private boolean enabled;
   private URI enclaveUri;
   private String enclavePublicKey;
@@ -59,11 +58,7 @@ public class PrivacyParameters {
   private PrivateWorldStateReader privateWorldStateReader;
 
   public Integer getPrivacyAddress() {
-    return privacyAddress;
-  }
-
-  private void setPrivacyAddress(final Integer privacyAddress) {
-    this.privacyAddress = privacyAddress;
+    return onchainPrivacyGroupsEnabled ? Address.PRIVACY - 1 : Address.PRIVACY;
   }
 
   public Boolean isEnabled() {
@@ -191,7 +186,6 @@ public class PrivacyParameters {
 
     private boolean enabled;
     private URI enclaveUrl;
-    private Integer privacyAddress = Address.PRIVACY;
     private File enclavePublicKeyFile;
     private String enclavePublicKey;
     private Path privateKeyPath;
@@ -202,11 +196,6 @@ public class PrivacyParameters {
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
     private boolean onchainPrivacyGroupsEnabled;
-
-    public Builder setPrivacyAddress(final Integer privacyAddress) {
-      this.privacyAddress = privacyAddress;
-      return this;
-    }
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -300,7 +289,6 @@ public class PrivacyParameters {
       }
       config.setEnabled(enabled);
       config.setEnclaveUri(enclaveUrl);
-      config.setPrivacyAddress(privacyAddress);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
       return config;

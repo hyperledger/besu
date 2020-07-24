@@ -31,11 +31,13 @@ import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Arrays;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,10 +54,10 @@ public class SStoreOperationTest {
 
   private static final Object[][] testData = {
     {
-      SStoreOperation.FRONTIER_MINIMUM, Gas.of(1), Gas.of(1), null,
+      SStoreOperation.FRONTIER_MINIMUM, Gas.of(200), Gas.of(200), null,
     },
     {
-      SStoreOperation.EIP_1706_MINIMUM, Gas.of(1), Gas.of(1), INSUFFICIENT_GAS,
+      SStoreOperation.EIP_1706_MINIMUM, Gas.of(200), Gas.of(200), INSUFFICIENT_GAS,
     },
     {
       SStoreOperation.FRONTIER_MINIMUM, Gas.of(10_000), Gas.of(10_000), null,
@@ -64,10 +66,10 @@ public class SStoreOperationTest {
       SStoreOperation.EIP_1706_MINIMUM, Gas.of(10_000), Gas.of(10_000), null,
     },
     {
-      SStoreOperation.FRONTIER_MINIMUM, Gas.of(10_000), Gas.of(1), null,
+      SStoreOperation.FRONTIER_MINIMUM, Gas.of(10_000), Gas.of(200), null,
     },
     {
-      SStoreOperation.EIP_1706_MINIMUM, Gas.of(10_000), Gas.of(1), INSUFFICIENT_GAS,
+      SStoreOperation.EIP_1706_MINIMUM, Gas.of(10_000), Gas.of(200), INSUFFICIENT_GAS,
     },
   };
 
@@ -115,6 +117,10 @@ public class SStoreOperationTest {
     final SStoreOperation operation = new SStoreOperation(gasCalculator, minimumGasAvailable);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    assertThat(operation.exceptionalHaltCondition(frame, null)).isEqualTo(expectedHalt);
+    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(Bytes32.fromHexString("0x01"));
+
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getHaltReason()).isEqualTo(expectedHalt);
   }
 }

@@ -12,24 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.ehalt;
+package org.hyperledger.besu.enclave;
 
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+public class EnclaveConfigurationException extends IllegalStateException {
 
-/** An exception to signal that an exceptional halt has occurred. */
-public class ExceptionalHaltException extends Exception {
-  private final ExceptionalHaltReason reason;
-
-  public ExceptionalHaltException(final ExceptionalHaltReason reason) {
-    this.reason = reason;
-  }
-
-  @Override
-  public String getMessage() {
-    return "Exceptional halt condition(s) triggered: " + this.reason;
-  }
-
-  public ExceptionalHaltReason getReasons() {
-    return reason;
+  public EnclaveConfigurationException(final String message) {
+    super(message);
   }
 }
