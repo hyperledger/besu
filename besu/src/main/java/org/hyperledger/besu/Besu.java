@@ -20,6 +20,7 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
@@ -59,20 +60,24 @@ public final class Besu {
       System.setProperty(
           "vertx.logger-delegate-factory-class-name",
           "io.vertx.core.logging.Log4j2LogDelegateFactory");
+      System.setProperty(
+          "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
+      System.setProperty("log4j.skipJansi", String.valueOf(false));
     } catch (SecurityException e) {
       System.out.println(
           "Could not set logging system property as the security manager prevented it:"
               + e.getMessage());
     }
-
     final Logger logger = getLogger();
-    Thread.setDefaultUncaughtExceptionHandler(
-        (thread, error) ->
-            logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
-    Thread.currentThread()
-        .setUncaughtExceptionHandler(
-            (thread, error) ->
-                logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+    Thread.setDefaultUncaughtExceptionHandler(log4jExceptionHandler(logger));
+    Thread.currentThread().setUncaughtExceptionHandler(log4jExceptionHandler(logger));
+
     return logger;
+  }
+
+  private static Thread.UncaughtExceptionHandler log4jExceptionHandler(final Logger logger) {
+    return (thread, error) ->
+        logger.error(
+            () -> String.format("Uncaught exception in thread \"%s\"", thread.getName()), error);
   }
 }

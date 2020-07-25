@@ -15,16 +15,17 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.NetworkUtility.checkPort;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.NetworkUtility;
+import org.hyperledger.besu.util.IllegalPortException;
 
 import java.net.InetAddress;
 import java.util.Objects;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
@@ -36,17 +37,13 @@ import org.apache.tuweni.bytes.Bytes;
 public class Endpoint {
   private final String host;
   private final int udpPort;
-  private final OptionalInt tcpPort;
+  private final Optional<Integer> tcpPort;
 
-  public Endpoint(final String host, final int udpPort, final OptionalInt tcpPort) {
+  public Endpoint(final String host, final int udpPort, final Optional<Integer> tcpPort) {
     checkArgument(
         host != null && InetAddresses.isInetAddress(host), "host requires a valid IP address");
-    checkArgument(
-        NetworkUtility.isValidPort(udpPort), "UDP port requires a value between 1 and 65535");
-    tcpPort.ifPresent(
-        p ->
-            checkArgument(
-                NetworkUtility.isValidPort(p), "TCP port requires a value between 1 and 65535"));
+    checkPort(udpPort, "UDP");
+    tcpPort.ifPresent(port -> checkPort(port, "TCP"));
 
     this.host = host;
     this.udpPort = udpPort;
@@ -54,11 +51,14 @@ public class Endpoint {
   }
 
   public static Endpoint fromEnode(final EnodeURL enode) {
-    checkArgument(
-        enode.getDiscoveryPort().isPresent(),
-        "Attempt to create a discovery endpoint for an enode with discovery disabled.");
-    final int discoveryPort = enode.getDiscoveryPort().getAsInt();
-    final OptionalInt listeningPort = enode.getListeningPort();
+    final int discoveryPort =
+        enode
+            .getDiscoveryPort()
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Attempt to create a discovery endpoint for an enode with discovery disabled."));
+    final Optional<Integer> listeningPort = enode.getListeningPort();
     return new Endpoint(enode.getIp().getHostAddress(), discoveryPort, listeningPort);
   }
 
@@ -79,7 +79,7 @@ public class Endpoint {
     return udpPort;
   }
 
-  public OptionalInt getTcpPort() {
+  public Optional<Integer> getTcpPort() {
     return tcpPort;
   }
 
@@ -144,12 +144,8 @@ public class Endpoint {
    */
   public void encodeInline(final RLPOutput out) {
     out.writeInetAddress(InetAddresses.forString(host));
-    out.writeUnsignedShort(udpPort);
-    if (tcpPort.isPresent()) {
-      out.writeUnsignedShort(tcpPort.getAsInt());
-    } else {
-      out.writeNull();
-    }
+    out.writeIntScalar(udpPort);
+    tcpPort.ifPresentOrElse(out::writeIntScalar, out::writeNull);
   }
 
   /**
@@ -164,20 +160,20 @@ public class Endpoint {
     checkGuard(
         fieldCount == 2 || fieldCount == 3,
         PeerDiscoveryPacketDecodingException::new,
-        "Invalid number of components in RLP representation of an endpoint: expected 2 o 3 elements but got %s",
+        "Invalid number of components in RLP representation of an endpoint: expected 2 or 3 elements but got %s",
         fieldCount);
 
     final InetAddress addr = in.readInetAddress();
-    final int udpPort = in.readUnsignedShort();
+    final int udpPort = in.readIntScalar();
 
     // Some mainnet packets have been shown to either not have the TCP port field at all,
     // or to have an RLP NULL value for it.
-    OptionalInt tcpPort = OptionalInt.empty();
+    Optional<Integer> tcpPort = Optional.empty();
     if (fieldCount == 3) {
       if (in.nextIsNull()) {
         in.skipNext();
       } else {
-        tcpPort = OptionalInt.of(in.readUnsignedShort());
+        tcpPort = Optional.of(in.readIntScalar());
       }
     }
     return new Endpoint(addr.getHostAddress(), udpPort, tcpPort);
@@ -194,5 +190,21 @@ public class Endpoint {
     final Endpoint endpoint = decodeInline(in, size);
     in.leaveList();
     return endpoint;
+  }
+
+  /**
+   * Attempts to decodes the RLP stream as a standalone Endpoint instance, which is not part of a
+   * Peer. If the from field is malformed, consumes the rest of the items in the list and returns
+   * Optional.empty().
+   *
+   * @param in The RLP input stream from which to read.
+   * @return Some decoded endpoint if it was possible to decode it, empty otherwise.
+   */
+  public static Optional<Endpoint> maybeDecodeStandalone(final RLPInput in) {
+    try {
+      return Optional.of(decodeStandalone(in));
+    } catch (IllegalPortException __) {
+      return Optional.empty();
+    }
   }
 }
