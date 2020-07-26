@@ -8,7 +8,8 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 
 ### Additions and Improvements
 
-* HTTP/2 is enabled for JSON-RPC Http API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
+* JSON-RPC HTTP API Authorization: exit early when checking user permissions. [\#1144](https://github.com/hyperledger/besu/pull/1144)
+* HTTP/2 is enabled for JSON-RPC HTTP API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
 * Color output in consoles. It can be disabled with `--color-enabled=false`
 * Add compatibility with ClusterIP services for the Kubernetes Nat Manager  [\#1156](https://github.com/hyperledger/besu/pull/1156)
 
