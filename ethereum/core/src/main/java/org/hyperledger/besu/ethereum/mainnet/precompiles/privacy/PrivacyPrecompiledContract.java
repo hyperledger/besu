@@ -164,7 +164,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           pmtHash,
           result.getValidationResult().getErrorMessage());
 
-      processTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
+      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
 
       return Bytes.EMPTY;
     }
@@ -211,20 +211,19 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     maybeUpdateGroupHeadBlockMap(privacyGroupId, currentBlockHash, privateStateUpdater);
 
-    processTransactionReceipt(commitmentHash, currentBlockHash, result, privateStateUpdater);
+    storeTransactionReceipt(commitmentHash, currentBlockHash, result, privateStateUpdater);
+
+    privateStateUpdater.commit();
   }
 
-  void processTransactionReceipt(
+  void storeTransactionReceipt(
       final Hash pmtHash,
       final Hash currentBlockHash,
       final PrivateTransactionProcessor.Result result,
       final PrivateStateStorage.Updater privateStateUpdater) {
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(result);
-
     privateStateUpdater.putTransactionReceipt(currentBlockHash, pmtHash, privateTransactionReceipt);
-
-    privateStateUpdater.commit();
   }
 
   void maybeUpdateGroupHeadBlockMap(

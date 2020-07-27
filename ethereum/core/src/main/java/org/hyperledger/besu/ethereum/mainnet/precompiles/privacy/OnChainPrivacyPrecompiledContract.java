@@ -152,7 +152,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           pmtHash,
           result.getValidationResult().getErrorMessage());
 
-      processTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
+      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
 
       return Bytes.EMPTY;
     }

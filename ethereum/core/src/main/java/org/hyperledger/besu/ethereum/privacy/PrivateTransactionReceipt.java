@@ -78,8 +78,10 @@ public class PrivateTransactionReceipt {
         return STATUS_SUCCESSFUL;
       case INVALID:
         return STATUS_INVALID;
-      default:
+      case FAILED:
         return STATUS_FAILED;
+      default:
+        throw new IllegalStateException("Unexpected private transaction status.");
     }
   }
 
@@ -94,9 +96,7 @@ public class PrivateTransactionReceipt {
     out.writeLongScalar(status);
     out.writeList(logs, Log::writeTo);
     out.writeBytes(output);
-    if (revertReason.isPresent()) {
-      out.writeBytes(revertReason.get());
-    }
+    revertReason.ifPresent(out::writeBytes);
     out.endList();
   }
 
