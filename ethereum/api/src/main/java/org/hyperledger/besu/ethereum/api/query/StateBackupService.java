@@ -64,7 +64,7 @@ import org.xerial.snappy.Snappy;
 public class StateBackupService {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final long MAX_FILE_SIZE = 1 << 30; // 1 GiB max file size
+  private static final long MAX_FILE_SIZE = 1 << 28; // 256 MiB max file size
 
   private final String besuVesion;
   private final Lock submissionLock = new ReentrantLock();
@@ -74,7 +74,7 @@ public class StateBackupService {
   private final BackupStatus backupStatus = new BackupStatus();
 
   private Path backupDir;
-  private RollingFileWriter leafFileWriter;
+  private RollingFileWriter accountFileWriter;
 
   public StateBackupService(
       final String besuVesion,
@@ -128,17 +128,17 @@ public class StateBackupService {
   }
 
   public static Path dataFileToIndex(final Path dataName) {
-    return Path.of(dataName.toString().replaceAll("(([.-]?[^0-9-.]+)+)?[.-]?\\d+\\.(.)dat", "$1.$3idx"));
+    return Path.of(dataName.toString().replaceAll("(.*)[-.]\\d\\d\\d\\d\\.(.)dat", "$1.$2idx"));
   }
 
-  public static Path leafFileName(
+  public static Path accountFileName(
       final Path backupDir,
       final long targetBlock,
       final int fileNumber,
       final boolean compressed) {
     return backupDir.resolve(
         String.format(
-            "besu-leaf-backup-%08d-%04d.%sdat", targetBlock, fileNumber, compressed ? "c" : "r"));
+            "besu-account-backup-%08d-%04d.%sdat", targetBlock, fileNumber, compressed ? "c" : "r"));
   }
 
   public static Path headerFileName(
@@ -159,8 +159,8 @@ public class StateBackupService {
         String.format("besu-receipt-backup-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
   }
 
-  private Path leafFileName(final int fileNumber, final boolean compressed) {
-    return leafFileName(backupDir, backupStatus.targetBlock, fileNumber, compressed);
+  private Path accountFileName(final int fileNumber, final boolean compressed) {
+    return accountFileName(backupDir, backupStatus.targetBlock, fileNumber, compressed);
   }
 
   private Path headerFileName(final int fileNumber, final boolean compressed) {
@@ -184,9 +184,10 @@ public class StateBackupService {
       backupStatus.compressed = compress;
       backupStatus.currentAccount = Bytes32.ZERO;
 
-      writeManifest();
       backupChaindata();
       backupLeaves();
+
+      writeManifest();
 
       return backupStatus;
     } catch (final Throwable t) {
@@ -200,6 +201,7 @@ public class StateBackupService {
     manifest.put("clientVersion", besuVesion);
     manifest.put("compressed", backupStatus.compressed);
     manifest.put("targetBlock", backupStatus.targetBlock);
+    manifest.put("accountCount", backupStatus.accountCount);
 
     Files.write(
         backupDir.resolve("besu-backup-manifest.json"),
@@ -219,9 +221,9 @@ public class StateBackupService {
       return;
     }
 
-    try (final RollingFileWriter leafFileWriter =
-        new RollingFileWriter(this::leafFileName, backupStatus.compressed)) {
-      this.leafFileWriter = leafFileWriter;
+    try (final RollingFileWriter accountFileWriter =
+        new RollingFileWriter(this::accountFileName, backupStatus.compressed)) {
+      this.accountFileWriter = accountFileWriter;
 
       final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
@@ -267,7 +269,7 @@ public class StateBackupService {
     accountOutput.endList();
 
     try {
-      leafFileWriter.writeBytes(accountOutput.encoded().toArrayUnsafe());
+      accountFileWriter.writeBytes(accountOutput.encoded().toArrayUnsafe());
     } catch (final IOException ioe) {
       LOG.error("Failure writing backup", ioe);
       return State.STOP;
@@ -370,6 +372,7 @@ public class StateBackupService {
     @Override
     public void close() throws IOException {
       out.close();
+      index.close();
     }
   }
 

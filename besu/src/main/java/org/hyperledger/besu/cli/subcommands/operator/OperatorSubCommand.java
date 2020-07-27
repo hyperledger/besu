@@ -30,7 +30,7 @@ import picocli.CommandLine.Spec;
     name = COMMAND_NAME,
     description = "Operator related actions such as generating configuration and caches.",
     mixinStandardHelpOptions = true,
-    subcommands = {GenerateBlockchainConfig.class, GenerateLogBloomCache.class, BackupState.class})
+    subcommands = {GenerateBlockchainConfig.class, GenerateLogBloomCache.class, BackupState.class, RestoreState.class})
 public class OperatorSubCommand implements Runnable {
 
   public static final String COMMAND_NAME = "operator";
