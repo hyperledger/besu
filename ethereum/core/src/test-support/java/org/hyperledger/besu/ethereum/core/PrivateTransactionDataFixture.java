@@ -123,6 +123,14 @@ public class PrivateTransactionDataFixture {
         .createTransaction(KEY_PAIR);
   }
 
+  public static PrivateTransaction privateContractDeploymentTransactionBesu(
+      final String privateFrom) {
+    return new PrivateTransactionTestFixture()
+        .payload(VALID_CONTRACT_DEPLOYMENT_PAYLOAD)
+        .privacyGroupId(Bytes.fromBase64String(privateFrom))
+        .createTransaction(KEY_PAIR);
+  }
+
   public static ReceiveResponse generateReceiveResponse(
       final PrivateTransaction privateTransaction) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();

@@ -11,6 +11,7 @@
 # Node Information
 data-path="~/besudata"
 logging="INFO"
+color-enabled=false
 node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 
@@ -21,7 +22,8 @@ security-module="localfile"
 identity="PegaSysEng"
 p2p-enabled=true
 nat-method="NONE"
-Xnat-kube-pod-name="besu"
+Xnat-kube-service-name="besu"
+Xnat-method-fallback-enabled=true
 discovery-enabled=false
 bootnodes=[
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
@@ -138,6 +140,7 @@ tx-pool-price-bump=13
 tx-pool-max-size=1234
 tx-pool-hashes-max-size=10000
 Xincoming-tx-messages-keep-alive-seconds=60
+rpc-tx-feecap=2000000000000000000
 
 # Revert Reason
 revert-reason-enabled=false

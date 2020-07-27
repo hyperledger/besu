@@ -31,7 +31,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_POD_NAME_FILTER;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
@@ -590,7 +590,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void nodePermissioningTomlPathMustUseOption() throws IOException {
-    final List<URI> allowlistedNodes =
+    final List<URI> allowedNodes =
         Lists.newArrayList(
             URI.create(
                 "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567"),
@@ -600,18 +600,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
     final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
 
-    final String allowlistedNodesString =
-        allowlistedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
+    final String allowedNodesString =
+        allowedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
     parseCommand(
         "--permissions-nodes-config-file-enabled",
         "--permissions-nodes-config-file",
         permToml.toString(),
         "--bootnodes",
-        allowlistedNodesString);
+        allowedNodesString);
     final LocalPermissioningConfiguration localPermissioningConfiguration =
         LocalPermissioningConfiguration.createDefault();
     localPermissioningConfiguration.setNodePermissioningConfigFilePath(permToml.toString());
-    localPermissioningConfiguration.setNodeAllowlist(allowlistedNodes);
+    localPermissioningConfiguration.setNodeAllowlist(allowedNodes);
 
     verify(mockRunnerBuilder)
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
@@ -1247,6 +1247,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void syncMode_full_by_default_for_dev() {
+    parseCommand("--network", "dev");
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FULL);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void helpShouldDisplayFastSyncOptions() {
     parseCommand("--help");
 
@@ -1335,7 +1347,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void natManagerPodNamePropertyDefaultIsBesu() {
     parseCommand();
 
-    verify(mockRunnerBuilder).natManagerPodName(eq(DEFAULT_BESU_POD_NAME_FILTER));
+    verify(mockRunnerBuilder).natManagerServiceName(eq(DEFAULT_BESU_SERVICE_NAME_FILTER));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1344,9 +1356,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void natManagerPodNamePropertyIsCorrectlyUpdated() {
     final String podName = "besu-updated";
-    parseCommand("--Xnat-kube-pod-name", podName);
+    parseCommand("--Xnat-kube-service-name", podName);
 
-    verify(mockRunnerBuilder).natManagerPodName(eq(podName));
+    verify(mockRunnerBuilder).natManagerServiceName(eq(podName));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1354,22 +1366,68 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void natManagerPodNameCannotBeUsedWithNatDockerMethod() {
-    parseCommand("--nat-method", "DOCKER", "--Xnat-kube-pod-name", "besu-updated");
+    parseCommand("--nat-method", "DOCKER", "--Xnat-kube-service-name", "besu-updated");
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
   }
 
   @Test
   public void natManagerPodNameCannotBeUsedWithNatNoneMethod() {
-    parseCommand("--nat-method", "NONE", "--Xnat-kube-pod-name", "besu-updated");
+    parseCommand("--nat-method", "NONE", "--Xnat-kube-service-name", "besu-updated");
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xnat-kube-pod-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-pod-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+  }
+
+  @Test
+  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithKubernetes() {
+
+    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "false");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
+    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "true");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithDocker() {
+
+    parseCommand("--nat-method", "DOCKER", "--Xnat-method-fallback-enabled", "false");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
+    parseCommand("--nat-method", "DOCKER", "--Xnat-method-fallback-enabled", "true");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithUpnp() {
+
+    parseCommand("--nat-method", "UPNP", "--Xnat-method-fallback-enabled", "false");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
+    parseCommand("--nat-method", "UPNP", "--Xnat-method-fallback-enabled", "true");
+    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void natMethodFallbackEnabledCannotBeUsedWithAutoMethod() {
+    parseCommand("--nat-method", "AUTO", "--Xnat-method-fallback-enabled", "false");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled or select another mode (via --nat--method=XXXX)");
   }
 
   @Test
@@ -1482,9 +1540,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     when(storageService.getByName("rocksdb-privacy"))
         .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+    final String coinbaseStr = String.format("%040x", 1);
 
     parseCommand(
         "--privacy-enabled",
+        "--miner-enabled",
+        "--miner-coinbase=" + coinbaseStr,
+        "--min-gas-price",
+        "0",
         "--privacy-url",
         ENCLAVE_URI,
         "--privacy-public-key-file",
@@ -2014,8 +2077,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains("Domain cannot be empty string or null string.");
   }
 
+  /** test deprecated CLI option * */
+  @Deprecated
   @Test
-  public void rpcHttpHostAllowlistAcceptsSingleArgument() {
+  public void rpcHttpHostWhitelistAcceptsSingleArgument() {
     parseCommand("--host-whitelist", "a");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -2031,8 +2096,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcHttpHostAllowlistAcceptsSingleArgument() {
+    parseCommand("--host-allowlist", "a");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(1);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a");
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
+        .doesNotContain("localhost");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void rpcHttpHostAllowlistAcceptsMultipleArguments() {
-    parseCommand("--host-whitelist", "a,b");
+    parseCommand("--host-allowlist", "a,b");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -2048,7 +2129,24 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcHttpHostAllowlistAcceptsDoubleComma() {
-    parseCommand("--host-whitelist", "a,,b");
+    parseCommand("--host-allowlist", "a,,b");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
+        .doesNotContain("*", "localhost");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Deprecated
+  @Test
+  public void rpcHttpHostWhitelistAllowlistAcceptsMultipleFlags() {
+    parseCommand("--host-whitelist=a", "--host-allowlist=b");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -2064,7 +2162,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcHttpHostAllowlistAcceptsMultipleFlags() {
-    parseCommand("--host-whitelist=a", "--host-whitelist=b");
+    parseCommand("--host-allowlist=a", "--host-allowlist=b");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -2081,7 +2179,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void rpcHttpHostAllowlistStarWithAnotherHostnameMustFail() {
     final String[] origins = {"friend", "*"};
-    parseCommand("--host-whitelist", String.join(",", origins));
+    parseCommand("--host-allowlist", String.join(",", origins));
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
@@ -2093,7 +2191,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void rpcHttpHostAllowlistStarWithAnotherHostnameMustFailStarFirst() {
     final String[] origins = {"*", "friend"};
-    parseCommand("--host-whitelist", String.join(",", origins));
+    parseCommand("--host-allowlist", String.join(",", origins));
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
@@ -2105,7 +2203,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void rpcHttpHostAllowlistAllWithAnotherHostnameMustFail() {
     final String[] origins = {"friend", "all"};
-    parseCommand("--host-whitelist", String.join(",", origins));
+    parseCommand("--host-allowlist", String.join(",", origins));
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
@@ -2117,7 +2215,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void rpcHttpHostAllowlistWithNoneMustBuildEmptyList() {
     final String[] origins = {"none"};
-    parseCommand("--host-whitelist", String.join(",", origins));
+    parseCommand("--host-allowlist", String.join(",", origins));
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -2131,7 +2229,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void rpcHttpHostAllowlistNoneWithAnotherDomainMustFail() {
     final String[] origins = {"http://domain1.com", "none"};
-    parseCommand("--host-whitelist", String.join(",", origins));
+    parseCommand("--host-allowlist", String.join(",", origins));
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
@@ -2143,7 +2241,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void rpcHttpHostAllowlistNoneWithAnotherDomainMustFailNoneFirst() {
     final String[] origins = {"none", "http://domain1.com"};
-    parseCommand("--host-whitelist", String.join(",", origins));
+    parseCommand("--host-allowlist", String.join(",", origins));
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
@@ -2154,7 +2252,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcHttpHostAllowlistEmptyValueFails() {
-    parseCommand("--host-whitelist=");
+    parseCommand("--host-allowlist=");
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
@@ -2529,7 +2627,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .startsWith(
-            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)or specify mining is enabled (--miner-enabled)");
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
   }
 
   @Test
@@ -2554,6 +2652,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
+  }
+
+  @Test
+  public void colorCanBeEnabledOrDisabledExplicitly() {
+    Stream.of(true, false)
+        .forEach(
+            bool -> {
+              parseCommand("--color-enabled", bool.toString());
+              assertThat(BesuCommand.getColorEnabled()).contains(bool);
+            });
   }
 
   @Ignore
@@ -2819,7 +2927,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-url",
         ENCLAVE_URI,
         "--privacy-public-key-file",
-        configFile.getPath());
+        configFile.getPath(),
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> enclaveArg =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2841,19 +2951,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final File file = new File("./specific/enclavePublicKey");
     file.deleteOnExit();
 
-    parseCommand(
-        "--privacy-url",
-        ENCLAVE_URI,
-        "--privacy-public-key-file",
-        file.toString(),
-        "--privacy-precompiled-address",
-        String.valueOf(Byte.MAX_VALUE - 1));
+    parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
     verifyOptionsConstraintLoggerCall(
-        "--privacy-enabled",
-        "--privacy-url",
-        "--privacy-precompiled-address",
-        "--privacy-public-key-file");
+        "--privacy-enabled", "--privacy-url", "--privacy-public-key-file");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -2889,7 +2990,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-authentication-enabled",
         "--privacy-multi-tenancy-enabled",
         "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file");
+        "/non/existent/file",
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2930,7 +3033,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void onChainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
-    parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2951,7 +3059,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled",
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled");
+        "--privacy-onchain-groups-enabled",
+        "--min-gas-price",
+        "0");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2978,6 +3088,15 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .startsWith("Privacy multi-tenancy and onchain privacy groups cannot be used together");
+  }
+
+  @Test
+  public void privacyMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
+    parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
@@ -3053,7 +3172,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
 
   @Test
-  public void errorIsRaisedIfStaticNodesAreNotAllowlisted() throws IOException {
+  public void errorIsRaisedIfStaticNodesAreNotAllowed() throws IOException {
     final File staticNodesFile = testFolder.newFile("static-nodes.json");
     staticNodesFile.deleteOnExit();
     final File permissioningConfig = testFolder.newFile("permissioning");
@@ -3121,6 +3240,24 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains(
             "Invalid value for option '--tx-pool-price-bump'",
             "should be a number between 0 and 100 inclusive");
+  }
+
+  @Test
+  public void transactionPoolTxFeeCap() {
+    final Wei txFeeCap = Wei.fromEth(2);
+    parseCommand("--rpc-tx-feecap", txFeeCap.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void invalidTansactionPoolTxFeeCapShouldFail() {
+    parseCommand("--rpc-tx-feecap", "abcd");
+    assertThat(commandErrorOutput.toString())
+        .contains("Invalid value for option '--rpc-tx-feecap'", "cannot convert 'abcd' to Wei");
   }
 
   @Test

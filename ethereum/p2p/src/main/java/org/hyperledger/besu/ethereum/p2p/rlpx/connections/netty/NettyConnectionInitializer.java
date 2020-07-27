@@ -112,7 +112,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
           if (!future.isSuccess() || socketAddress == null) {
             final String message =
                 String.format(
-                    "Unable start listening on %s:%s. Check for port conflicts.",
+                    "Unable to start listening on %s:%s. Check for port conflicts.",
                     config.getBindHost(), config.getBindPort());
             listeningPortFuture.completeExceptionally(
                 new IllegalStateException(message, future.cause()));
@@ -167,7 +167,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
     new Bootstrap()
         .group(workers)
         .channel(NioSocketChannel.class)
-        .remoteAddress(new InetSocketAddress(enode.getIp(), enode.getListeningPort().getAsInt()))
+        .remoteAddress(new InetSocketAddress(enode.getIp(), enode.getListeningPort().get()))
         .option(ChannelOption.TCP_NODELAY, true)
         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_SECONDS * 1000)
         .handler(

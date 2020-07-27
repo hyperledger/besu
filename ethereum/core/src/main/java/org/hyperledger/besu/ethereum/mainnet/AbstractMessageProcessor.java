@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,8 +67,7 @@ public abstract class AbstractMessageProcessor {
   private final Collection<Address> forceDeleteAccountsWhenEmpty;
   private final EVM evm;
 
-  protected AbstractMessageProcessor(
-      final EVM evm, final Collection<Address> forceDeleteAccountsWhenEmpty) {
+  AbstractMessageProcessor(final EVM evm, final Collection<Address> forceDeleteAccountsWhenEmpty) {
     this.evm = evm;
     this.forceDeleteAccountsWhenEmpty = forceDeleteAccountsWhenEmpty;
   }
@@ -108,7 +106,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  protected void exceptionalHalt(final MessageFrame frame) {
+  private void exceptionalHalt(final MessageFrame frame) {
     clearAccumulatedStateBesidesGasAndOutput(frame);
     frame.clearGasRemaining();
     frame.clearOutputData();
@@ -130,7 +128,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  protected void completedSuccess(final MessageFrame frame) {
+  private void completedSuccess(final MessageFrame frame) {
     frame.getWorldState().commit();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
@@ -141,7 +139,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  protected void completedFailed(final MessageFrame frame) {
+  private void completedFailed(final MessageFrame frame) {
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }
@@ -155,8 +153,6 @@ public abstract class AbstractMessageProcessor {
   private void codeExecute(final MessageFrame frame, final OperationTracer operationTracer) {
     try {
       evm.runToHalt(frame, operationTracer);
-    } catch (final ExceptionalHaltException e) {
-      frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     } catch (final ModificationNotAllowedException e) {
       frame.setState(MessageFrame.State.REVERT);
     }

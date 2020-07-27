@@ -39,7 +39,7 @@ public class WebSocketConfiguration {
   private List<RpcApi> rpcApis;
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
-  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private File authenticationPublicKeyFile;
   private long timeoutSec;
 
@@ -103,12 +103,12 @@ public class WebSocketConfiguration {
     return authenticationCredentialsFile;
   }
 
-  public void setHostsAllowlist(final List<String> hostsWhitelist) {
-    this.hostsWhitelist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsAllowlist) {
+    this.hostsAllowlist = hostsAllowlist;
   }
 
-  public Collection<String> getHostsWhitelist() {
-    return Collections.unmodifiableCollection(this.hostsWhitelist);
+  public Collection<String> getHostsAllowlist() {
+    return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
   public File getAuthenticationPublicKeyFile() {
@@ -142,7 +142,7 @@ public class WebSocketConfiguration {
         && Objects.equals(host, that.host)
         && Objects.equals(rpcApis, that.rpcApis)
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
-        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist)
         && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile)
         && timeoutSec == that.timeoutSec;
   }
@@ -156,7 +156,7 @@ public class WebSocketConfiguration {
         rpcApis,
         authenticationEnabled,
         authenticationCredentialsFile,
-        hostsWhitelist,
+        hostsAllowlist,
         authenticationPublicKeyFile,
         timeoutSec);
   }
@@ -170,7 +170,7 @@ public class WebSocketConfiguration {
         .add("rpcApis", rpcApis)
         .add("authenticationEnabled", authenticationEnabled)
         .add("authenticationCredentialsFile", authenticationCredentialsFile)
-        .add("hostsWhitelist", hostsWhitelist)
+        .add("hostsAllowlist", hostsAllowlist)
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
         .add("timeoutSec", timeoutSec)
         .toString();

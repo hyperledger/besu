@@ -33,39 +33,27 @@ public class ReturnDataCopyOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(0));
-    final UInt256 length = UInt256.fromBytes(frame.getStackItem(2));
-
-    return gasCalculator().dataCopyOperationGasCost(frame, offset, length);
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
-    final Bytes returnData = frame.getReturnData();
-
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
-
-    frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame, final EVM evm) {
     final Bytes returnData = frame.getReturnData();
-
-    final UInt256 start = UInt256.fromBytes(frame.getStackItem(1));
-    final UInt256 length = UInt256.fromBytes(frame.getStackItem(2));
     final UInt256 returnDataLength = UInt256.valueOf(returnData.size());
 
-    if (!start.fitsInt()
-        || !length.fitsInt()
-        || start.add(length).compareTo(returnDataLength) > 0) {
-      return Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS);
-    } else {
-      return Optional.empty();
+    if (!sourceOffset.fitsInt()
+        || !numBytes.fitsInt()
+        || sourceOffset.add(numBytes).compareTo(returnDataLength) > 0) {
+      return INVALID_RETURN_DATA_BUFFER_ACCESS;
     }
+
+    final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
+    frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
+
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

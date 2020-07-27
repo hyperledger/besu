@@ -27,11 +27,11 @@ import java.util.Optional;
 
 public class PermGetAccountsAllowlist implements JsonRpcMethod {
 
-  private final Optional<AccountLocalConfigPermissioningController> whitelistController;
+  private final Optional<AccountLocalConfigPermissioningController> allowlistController;
 
   public PermGetAccountsAllowlist(
-      final Optional<AccountLocalConfigPermissioningController> whitelistController) {
-    this.whitelistController = whitelistController;
+      final Optional<AccountLocalConfigPermissioningController> allowlistController) {
+    this.allowlistController = allowlistController;
   }
 
   @Override
@@ -41,12 +41,12 @@ public class PermGetAccountsAllowlist implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (whitelistController.isPresent()) {
+    if (allowlistController.isPresent()) {
       return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), whitelistController.get().getAccountWhitelist());
+          requestContext.getRequest().getId(), allowlistController.get().getAccountAllowlist());
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);
+          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_ALLOWLIST_NOT_ENABLED);
     }
   }
 }

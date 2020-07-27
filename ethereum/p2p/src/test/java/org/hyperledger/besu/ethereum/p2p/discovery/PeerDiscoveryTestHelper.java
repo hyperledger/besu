@@ -19,11 +19,13 @@ import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
@@ -89,6 +91,13 @@ public class PeerDiscoveryTestHelper {
             fromAgent.getAdvertisedPeer().get().getEndpoint(),
             toAgent.getAdvertisedPeer().get().getEndpoint()),
         fromAgent.getNodeKey());
+  }
+
+  public Packet createPongPacket(final MockPeerDiscoveryAgent toAgent, final Hash pingHash) {
+    return Packet.create(
+        PacketType.PONG,
+        PongPacketData.create(toAgent.getAdvertisedPeer().get().getEndpoint(), pingHash),
+        toAgent.getNodeKey());
   }
 
   public AgentBuilder agentBuilder() {

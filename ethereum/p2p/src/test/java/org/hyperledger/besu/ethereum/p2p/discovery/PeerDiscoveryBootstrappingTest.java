@@ -42,6 +42,7 @@ public class PeerDiscoveryBootstrappingTest {
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
 
     // Start an agent.
+    assertThat(testAgent.getAdvertisedPeer().isPresent()).isTrue();
     final PeerDiscoveryAgent agent =
         helper.startDiscoveryAgent(testAgent.getAdvertisedPeer().get());
 
@@ -51,12 +52,14 @@ public class PeerDiscoveryBootstrappingTest {
             .collect(toList());
     assertThat(incomingPackets.size()).isEqualTo(1);
     final Packet pingPacket = incomingPackets.get(0).packet;
+    assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
     assertThat(pingPacket.getNodeId()).isEqualTo(agent.getAdvertisedPeer().get().getId());
 
+    assertThat(pingPacket.getPacketData(PingPacketData.class).isPresent()).isTrue();
     final PingPacketData pingData = pingPacket.getPacketData(PingPacketData.class).get();
     assertThat(pingData.getExpiration())
         .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
-    assertThat(pingData.getFrom()).isEqualTo(agent.getAdvertisedPeer().get().getEndpoint());
+    assertThat(pingData.getFrom()).contains(agent.getAdvertisedPeer().get().getEndpoint());
     assertThat(pingData.getTo()).isEqualTo(testAgent.getAdvertisedPeer().get().getEndpoint());
   }
 
@@ -100,9 +103,11 @@ public class PeerDiscoveryBootstrappingTest {
         assertThat(packet.getType()).isEqualTo(PacketType.PING);
 
         // Assert on the content of the packet data.
+        assertThat(packet.getPacketData(PingPacketData.class).isPresent()).isTrue();
         final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
         assertThat(ping.getExpiration())
             .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+        assertThat(bootstrapAgent.getAdvertisedPeer().isPresent()).isTrue();
         assertThat(ping.getTo()).isEqualTo(bootstrapAgent.getAdvertisedPeer().get().getEndpoint());
       }
     }
@@ -114,6 +119,7 @@ public class PeerDiscoveryBootstrappingTest {
     final PeerDiscoveryAgent bootstrapAgent = helper.startDiscoveryAgent(emptyList());
 
     // Start other five agents, pointing to the one above as a bootstrap peer.
+    assertThat(bootstrapAgent.getAdvertisedPeer().isPresent()).isTrue();
     final List<MockPeerDiscoveryAgent> otherAgents =
         helper.startDiscoveryAgents(5, singletonList(bootstrapAgent.getAdvertisedPeer().get()));
 
@@ -128,8 +134,7 @@ public class PeerDiscoveryBootstrappingTest {
         .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
 
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
-    // and will
-    // bond with them, ultimately adding all 7 nodes in the network to its table.
+    // and will bond with them, ultimately adding all 7 nodes in the network to its table.
     final PeerDiscoveryAgent newAgent =
         helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer().get());
     assertThat(newAgent.streamDiscoveredPeers()).hasSize(6);

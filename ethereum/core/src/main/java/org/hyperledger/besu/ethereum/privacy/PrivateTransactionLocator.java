@@ -109,7 +109,7 @@ public class PrivateTransactionLocator {
    * @param enclaveKey participant public key that must match the private key used to decrypt the
    *     payload
    * @return an optional containing the private transaction, if found. Or an empty optional if the
-   *     private transaction couldnt' be found.
+   *     private transaction couldn't be found.
    */
   private Optional<TransactionFromEnclave> tryFetchingPrivateTransactionFromEnclave(
       final String payloadKey, final String enclaveKey) {
@@ -139,7 +139,7 @@ public class PrivateTransactionLocator {
             Bytes.fromBase64String(new String(receiveResponse.getPayload(), UTF_8)), false);
 
     /*
-     When using on-chain privacy groups, the payload is a list with the first element being the
+     When using onchain privacy groups, the payload is a list with the first element being the
      private transaction RLP and the second element being the version. This is why we have the
      nextIsList() check.
     */

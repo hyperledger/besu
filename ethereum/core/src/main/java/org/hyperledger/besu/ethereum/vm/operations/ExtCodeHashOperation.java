@@ -16,27 +16,33 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-public class ExtCodeHashOperation extends AbstractOperation {
+public class ExtCodeHashOperation extends AbstractFixedCostOperation {
 
   public ExtCodeHashOperation(final GasCalculator gasCalculator) {
-    super(0x3F, "EXTCODEHASH", 1, 1, false, 1, gasCalculator);
+    super(
+        0x3F,
+        "EXTCODEHASH",
+        1,
+        1,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.extCodeHashOperationGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().extCodeHashOperationGasCost();
-  }
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      return outOfGasResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final Address address = Words.toAddress(frame.popStackItem());
     final Account account = frame.getWorldState().get(address);
     if (account == null || account.isEmpty()) {
@@ -44,5 +50,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
     } else {
       frame.pushStackItem(account.getCodeHash());
     }
+
+    return successResponse;
   }
 }
