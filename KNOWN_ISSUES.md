@@ -7,7 +7,7 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 
 ## Scope of logs query causing Besu to hang
 
-[`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944). 
+[`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944) or to not return all valid results. 
 
 Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
 
@@ -46,3 +46,19 @@ A critical issue for privacy users with private transactions created using Hyper
 or earlier has been identified. If you have a network with private transaction created using v1.3.4 
 or earlier, please read the following and take the appropriate steps: 
 https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
+
+## Kubernetes permissioning uses Service IPs rather than pod IPs which can fail
+
+When using permissioning on Kubernetes, nodes don't join and start the network and chain as expected: they check permissions and allow the services. It appears that some of the socket connections use the pod IP which [causes Besu to halt](https://github.com/hyperledger/besu/issues/1190). 
+
+Workaround -> Do not use permissioning with Kubernetes. 
+
+A fix for this issue is being actively worked on. 
+
+## Restart caused by insufficient memory can cause inconsistent private state
+
+While running reorg testing on Besu and Orion, insufficient memory caused Besu to restart, resulting in the state on that machine to become inconsistent with the rest of the members of the privacy group. 
+
+Workaround -> Ensure you allocate enough memory for the Java Runtime Environment that the node does not run out of memory.
+
+A fix for this issue is being actively worked on. 
