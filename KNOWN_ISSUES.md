@@ -7,7 +7,7 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 
 ## Scope of logs query causing Besu to hang
 
-[`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944) or to not return all valid results. 
+[`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944). 
 
 Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
 
