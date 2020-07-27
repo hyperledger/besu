@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AbstractVerticle;
@@ -168,9 +167,9 @@ public class FilterManager extends AbstractVerticle {
         .filter(
             // Only keep filters where the "to" block could include the block in the event
             filter -> {
-              final OptionalLong maybeToBlockNumber = filter.getToBlock().getNumber();
+              final Optional<Long> maybeToBlockNumber = filter.getToBlock().getNumber();
               return maybeToBlockNumber.isEmpty()
-                  || maybeToBlockNumber.getAsLong() >= event.getBlock().getHeader().getNumber();
+                  || maybeToBlockNumber.get() >= event.getBlock().getHeader().getNumber();
             })
         .forEach(
             filter -> {
@@ -202,7 +201,7 @@ public class FilterManager extends AbstractVerticle {
     }
 
     pendingTransactionFilters.forEach(
-        (filter) -> {
+        filter -> {
           synchronized (filter) {
             filter.addTransactionHash(transaction.getHash());
           }

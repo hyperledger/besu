@@ -54,7 +54,8 @@ public class IbftGetValidatorsByBlockNumberTest {
   public void blockParameterIsParameter0() {
     request = new JsonRpcRequestContext(new JsonRpcRequest("?", "ignore", new String[] {"0x1245"}));
     BlockParameter blockParameter = method.blockParameter(request);
-    assertThat(blockParameter.getNumber().getAsLong()).isEqualTo(0x1245);
+    assertThat(blockParameter.getNumber()).isPresent();
+    assertThat(blockParameter.getNumber().get()).isEqualTo(0x1245);
   }
 
   @Test
