@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -23,6 +22,8 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.function.Supplier;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class CliqueBlockHashing {
   /**
