@@ -22,6 +22,7 @@ there was one caveat we didn't address. The `dev` network should've been full sy
 This has now been fixed.
 * Fix synchronization timeout issue when the blocks were too large [\#1149](https://github.com/hyperledger/besu/pull/1149)
 * Fix missing results from eth_getLogs request. [\#1154](https://github.com/hyperledger/besu/pull/1154)
+* Fix issue allowing for DDoS attacks. [\#1146](https://github.com/hyperledger/besu/pull/1146)
 
 ### Known Issues 
 
