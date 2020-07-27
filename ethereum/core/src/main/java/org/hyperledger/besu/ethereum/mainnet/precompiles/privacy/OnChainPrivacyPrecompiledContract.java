@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -152,7 +153,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           pmtHash,
           result.getValidationResult().getErrorMessage());
 
-      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
+      final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
+      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateUpdater);
+      privateStateUpdater.commit();
 
       return Bytes.EMPTY;
     }

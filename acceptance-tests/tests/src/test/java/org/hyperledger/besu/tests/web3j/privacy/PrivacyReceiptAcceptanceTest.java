@@ -91,9 +91,9 @@ public class PrivacyReceiptAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
-    final PrivateTransaction invalidPayloadTransaction =
+    final PrivateTransaction validTransaction =
         createSignedTransaction(alice, privacyGroupId, empty());
-    final BytesValueRLPOutput rlpOutput = getRLPOutput(invalidPayloadTransaction);
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(validTransaction);
 
     // Stop mining, to allow adding duplicate nonce block
     alice.getBesu().execute(minerTransactions.minerStop());

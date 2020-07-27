@@ -164,7 +164,9 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           pmtHash,
           result.getValidationResult().getErrorMessage());
 
-      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateStorage.updater());
+      final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
+      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateUpdater);
+      privateStateUpdater.commit();
 
       return Bytes.EMPTY;
     }
