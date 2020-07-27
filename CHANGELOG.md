@@ -6,6 +6,22 @@
 - CLI option `--privacy-precompiled-address` option is deprecated. This address is now derived, based 
 on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
 
+### Additions and Improvements
+
+* HTTP/2 is enabled for JSON-RPC Http API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
+* Color output in consoles. It can be disabled with `--color-enabled=false`
+* Add compatibility with ClusterIP services for the Kubernetes Nat Manager  [\#1156](https://github.com/hyperledger/besu/pull/1156)
+
+### Bug fixes 
+
+* When the default sync mode was changed to fast sync for named networks,
+there was one caveat we didn't address. The `dev` network should've been full sync by default.
+This has now been fixed.
+* Fix synchronization timeout issue when the blocks were too large [\#1149](https://github.com/hyperledger/besu/pull/1149)
+
+### Known Issues 
+
+
 ## 1.5 Breaking changes
 
 When upgrading to 1.5, ensure you've taken into account the following breaking changes. 
