@@ -13,6 +13,7 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 * HTTP/2 is enabled for JSON-RPC HTTP API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
 * Color output in consoles. It can be disabled with `--color-enabled=false` [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Add compatibility with ClusterIP services for the Kubernetes Nat Manager  [\#1156](https://github.com/hyperledger/besu/pull/1156)
+* In an IBFT2 network; a fixed block reward value and recipient address can be defined in genesis file [\#1132](https://github.com/hyperledger/besu/pull/1132)
 * Add fee cap for transactions submitted via RPC. [\#1137](https://github.com/hyperledger/besu/pull/1137) 
 
 ### Bug fixes 
