@@ -43,7 +43,7 @@ public class NodePermissioningControllerFactory {
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem) {
 
-    Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
+    final Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
 
     List<NodePermissioningProvider> providers = new ArrayList<>();
     if (permissioningConfiguration.getLocalConfig().isPresent()) {
@@ -70,14 +70,16 @@ public class NodePermissioningControllerFactory {
                 transactionSimulator,
                 metricsSystem);
         providers.add(smartContractProvider);
-      }
 
-      if (fixedNodes.isEmpty()) {
-        syncStatusProviderOptional = Optional.empty();
+        if (fixedNodes.isEmpty()) {
+          syncStatusProviderOptional = Optional.empty();
+        } else {
+          syncStatusProviderOptional =
+              Optional.of(
+                  new SyncStatusNodePermissioningProvider(synchronizer, fixedNodes, metricsSystem));
+        }
       } else {
-        syncStatusProviderOptional =
-            Optional.of(
-                new SyncStatusNodePermissioningProvider(synchronizer, fixedNodes, metricsSystem));
+        syncStatusProviderOptional = Optional.empty();
       }
     } else {
       syncStatusProviderOptional = Optional.empty();
@@ -86,7 +88,13 @@ public class NodePermissioningControllerFactory {
     NodePermissioningController nodePermissioningController =
         new NodePermissioningController(syncStatusProviderOptional, providers);
 
-    validatePermissioningContract(nodePermissioningController);
+    if (permissioningConfiguration.getSmartContractConfig().isPresent()
+        && permissioningConfiguration
+            .getSmartContractConfig()
+            .get()
+            .isSmartContractNodeAllowlistEnabled()) {
+      validatePermissioningContract(nodePermissioningController);
+    }
 
     return nodePermissioningController;
   }
