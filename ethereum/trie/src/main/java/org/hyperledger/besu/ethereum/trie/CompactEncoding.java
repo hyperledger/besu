@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
-abstract class CompactEncoding {
+public abstract class CompactEncoding {
   private CompactEncoding() {}
 
   static final byte LEAF_TERMINATOR = 0x10;

@@ -17,11 +17,11 @@
 package org.hyperledger.besu.cli.subcommands.operator;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
+import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -30,8 +30,9 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.trie.DefaultNodeFactory;
-import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.PersistVisitor;
+import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.io.Closeable;
@@ -42,7 +43,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
@@ -105,7 +105,7 @@ public class RestoreState implements Runnable {
       targetBlock = manifest.get("targetBlock").asLong();
       accountCount = manifest.get("accountCount").asLong();
 
-      restoreBlocks();
+      //      restoreBlocks();
       restoreAccounts();
 
       LOG.info("Restore complete");
@@ -132,8 +132,9 @@ public class RestoreState implements Runnable {
         final byte[] receiptEntry = receiptReader.readBytes();
         final BlockHeaderFunctions functions = new MainnetBlockHeaderFunctions();
 
-        BlockHeader header = BlockHeader.readFrom(
-            new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
+        final BlockHeader header =
+            BlockHeader.readFrom(
+                new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
         if (header.getNumber() == targetBlock) {
           System.out.println(header.getStateRoot());
         }
@@ -151,8 +152,8 @@ public class RestoreState implements Runnable {
 
   @SuppressWarnings("UnusedVariable")
   private void restoreAccounts() throws IOException {
-    final SimpleMerklePatriciaTrie<Bytes32, Bytes> accountLoadTrie =
-        new SimpleMerklePatriciaTrie<>(Function.identity());
+    final PersistVisitor<Bytes> persistVisitor = new PersistVisitor<>();
+    Node<Bytes> root = persistVisitor.initialRoot();
 
     try (final RollingFileReader reader =
         new RollingFileReader(this::accountFileName, compressed)) {
@@ -171,14 +172,16 @@ public class RestoreState implements Runnable {
         final Bytes accountRlp = accountInput.readBytes(); // account rlp
         final Bytes code = accountInput.readBytes(); // code
 
-        final StateTrieAccountValue trieAccount = StateTrieAccountValue.readFrom(new BytesValueRLPInput(accountRlp, false, true));
+        final StateTrieAccountValue trieAccount =
+            StateTrieAccountValue.readFrom(new BytesValueRLPInput(accountRlp, false, true));
         if (!trieAccount.getCodeHash().equals(Hash.hash(code))) {
           throw new RuntimeException("Code hash doesn't match");
         }
-          //        System.out.println(trieKey);
-          //        System.out.println(" - " + trieAccount.getStorageRoot());
+        //        System.out.println(trieKey);
+        final RestoreVisitor<Bytes> restoreVistor =
+            new RestoreVisitor<>(t -> t, accountRlp, persistVisitor);
 
-          accountLoadTrie.put(trieKey, accountRlp);
+        root = root.accept(restoreVistor, bytesToPath(trieKey));
 
         final int storageTrieSize = accountInput.enterList();
         for (int j = 0; j < storageTrieSize; j++) {
@@ -192,9 +195,10 @@ public class RestoreState implements Runnable {
         }
         accountInput.leaveList();
       }
-      System.out.println(accountLoadTrie.getRootHash());
-      LOG.info("Account data loaded");
     }
+    persistVisitor.finalize(root);
+    System.out.println(root.getHash());
+    LOG.info("Account data loaded");
   }
 
   static class RollingFileReader implements Closeable {
@@ -259,7 +263,6 @@ public class RestoreState implements Runnable {
       return done;
     }
   }
-
 
   @SuppressWarnings("unused")
   BesuController createBesuController() {
