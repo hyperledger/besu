@@ -85,13 +85,21 @@ public class PrivacyNodeFactory {
                 privacyAccount.getEnclaveKeyPath(), privacyAccount.getEnclavePrivateKeyPath())));
   }
 
-  public PrivacyNode createIbft2NodePrivacyEnabled(
+  public PrivacyNode createIbft2NodePrivacyMiningEnabled(
       final String name, final PrivacyAccount privacyAccount) throws IOException {
-    return createIbft2NodePrivacyEnabled(name, privacyAccount, Address.PRIVACY);
+    return createIbft2NodePrivacyEnabled(name, privacyAccount, Address.PRIVACY, true);
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
-      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      final String name, final PrivacyAccount privacyAccount) throws IOException {
+    return createIbft2NodePrivacyEnabled(name, privacyAccount, Address.PRIVACY, false);
+  }
+
+  public PrivacyNode createIbft2NodePrivacyEnabled(
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final int privacyAddress,
+      final boolean minerEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
@@ -99,7 +107,7 @@ public class PrivacyNodeFactory {
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
-                .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
+                .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(minerEnabled))
                 .webSocketConfiguration(node.createWebSocketEnabledConfig())
                 .devMode(false)
                 .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)

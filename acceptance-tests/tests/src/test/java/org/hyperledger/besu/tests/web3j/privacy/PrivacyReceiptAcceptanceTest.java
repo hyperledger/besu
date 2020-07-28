@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 
 import java.util.Optional;
 
@@ -33,10 +34,12 @@ import org.junit.Test;
 
 public class PrivacyReceiptAcceptanceTest extends PrivacyAcceptanceTestBase {
   private PrivacyNode alice;
+  final MinerTransactions minerTransactions = new MinerTransactions();
 
   @Before
   public void setUp() throws Exception {
-    alice = privacyBesu.createIbft2NodePrivacyEnabled("node1", privacyAccountResolver.resolve(0));
+    alice =
+        privacyBesu.createIbft2NodePrivacyMiningEnabled("node1", privacyAccountResolver.resolve(0));
     privacyCluster.start(alice);
   }
 
@@ -79,6 +82,37 @@ public class PrivacyReceiptAcceptanceTest extends PrivacyAcceptanceTestBase {
     alice.getBesu().verify(eth.expectSuccessfulTransactionReceipt(transactionHash.toString()));
     // Failed private transaction
     alice.getBesu().verify(priv.getFailedTransactionReceipt(transactionHash));
+  }
+
+  @Test
+  public void createPrivateTransactionReceiptInvalidTransaction() {
+    final CreatePrivacyGroupTransaction onlyAlice =
+        privacyTransactions.createPrivacyGroup("Only Alice", "", alice);
+
+    final String privacyGroupId = alice.execute(onlyAlice);
+
+    final PrivateTransaction validTransaction =
+        createSignedTransaction(alice, privacyGroupId, empty());
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(validTransaction);
+
+    // Stop mining, to allow adding duplicate nonce block
+    alice.getBesu().execute(minerTransactions.minerStop());
+
+    final Hash transactionHash1 =
+        alice.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
+    final Hash transactionHash2 =
+        alice.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
+
+    // Start mining again
+    alice.getBesu().execute(minerTransactions.minerStart());
+
+    // Successful PMTs
+    alice.getBesu().verify(eth.expectSuccessfulTransactionReceipt(transactionHash1.toString()));
+    alice.getBesu().verify(eth.expectSuccessfulTransactionReceipt(transactionHash2.toString()));
+    // Successful first private transaction
+    alice.getBesu().verify(priv.getSuccessfulTransactionReceipt(transactionHash1));
+    // Invalid second private transaction
+    alice.getBesu().verify(priv.getInvalidTransactionReceipt(transactionHash2));
   }
 
   private BytesValueRLPOutput getRLPOutput(final PrivateTransaction privateTransaction) {
