@@ -17,9 +17,7 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 
 ### Bug fixes 
 
-* When the default sync mode was changed to fast sync for named networks,
-there was one caveat we didn't address. The `dev` network should've been full sync by default.
-This has now been fixed. [\#1257](https://github.com/hyperledger/besu/pull/1257)
+* When the default sync mode was changed to fast sync for named networks, there was one caveat we didn't address. The `dev` network should've been full sync by default. This has now been fixed. [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Fix synchronization timeout issue when the blocks were too large [\#1149](https://github.com/hyperledger/besu/pull/1149)
 * Fix missing results from eth_getLogs request. [\#1154](https://github.com/hyperledger/besu/pull/1154)
 * Fix issue allowing Besu to be used for DDoS amplification. [\#1146](https://github.com/hyperledger/besu/pull/1146)
