@@ -93,8 +93,18 @@ public class PrivConditions {
         expectedTransactionCount);
   }
 
-  public Condition getTransactionReceipt(final Hash transactionHash) {
-    return new PrivGetTransactionReceiptSuccess(
+  public Condition getSuccessfulTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetExpectedSuccessfulTransactionReceipt(
+        transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition getFailedTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetExpectedFailedTransactionReceipt(
+        transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition getInvalidTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetExpectedInvalidTransactionReceipt(
         transactions.getTransactionReceipt(transactionHash));
   }
 

@@ -74,7 +74,7 @@ public class PrivGetLogs implements JsonRpcMethod {
                     privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery()))
             .orElseGet(
                 () -> {
-                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
+                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
                   final long toBlockNumber =
                       filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
                   return privacyQueries.matchingLogs(
