@@ -69,7 +69,11 @@ public class BackupState implements Runnable {
   @Override
   public void run() {
     checkArgument(
-        backupDir.exists() || backupDir.mkdirs(), "Backup directory does not exist and cannot be created.");
+        parentCommand.parentCommand.dataDir().toFile().exists(),
+        "DataDir (the blockchain being backed up) does not exist.");
+    checkArgument(
+        backupDir.exists() || backupDir.mkdirs(),
+        "Backup directory does not exist and cannot be created.");
 
     final BesuController besuController = createBesuController();
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();

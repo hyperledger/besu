@@ -138,7 +138,8 @@ public class StateBackupService {
       final boolean compressed) {
     return backupDir.resolve(
         String.format(
-            "besu-account-backup-%08d-%04d.%sdat", targetBlock, fileNumber, compressed ? "c" : "r"));
+            "besu-account-backup-%08d-%04d.%sdat",
+            targetBlock, fileNumber, compressed ? "c" : "r"));
   }
 
   public static Path headerFileName(

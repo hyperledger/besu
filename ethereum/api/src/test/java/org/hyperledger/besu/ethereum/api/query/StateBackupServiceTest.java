@@ -36,10 +36,10 @@ public class StateBackupServiceTest {
 
   @Test
   public void leafFileName() {
-    assertThat(StateBackupService.leafFileName(backupDir, 4_000_000, 42, false).toString())
-        .isEqualTo("/tmp/backup/besu-leaf-backup-04000000-0042.rdat");
-    assertThat(StateBackupService.leafFileName(backupDir, 6_000_000, 46, true).toString())
-        .isEqualTo("/tmp/backup/besu-leaf-backup-06000000-0046.cdat");
+    assertThat(StateBackupService.accountFileName(backupDir, 4_000_000, 42, false).toString())
+        .isEqualTo("/tmp/backup/besu-account-backup-04000000-0042.rdat");
+    assertThat(StateBackupService.accountFileName(backupDir, 6_000_000, 46, true).toString())
+        .isEqualTo("/tmp/backup/besu-account-backup-06000000-0046.cdat");
   }
 
   @Test
