@@ -16,13 +16,28 @@
 
 package org.hyperledger.besu.ethereum.trie;
 
+import java.util.function.BiConsumer;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PersistVisitor<V> implements NodeVisitor<V> {
+
+  private int branchNodeCount = 0;
+  private int extensionNodeCount = 0;
+  private int leafNodeCount = 0;
+
+  private final BiConsumer<Bytes32, Bytes> writer;
+
+  public PersistVisitor(final BiConsumer<Bytes32, Bytes> writer) {
+    this.writer = writer;
+  }
+
   public Node<V> initialRoot() {
     return NullNode.instance();
   }
 
-  public void finalize(final Node<V> root) {
+  public void persist(final Node<V> root) {
     if (root instanceof BranchNode) {
       visit((BranchNode<V>) root);
     } else if (root instanceof ExtensionNode) {
@@ -35,21 +50,37 @@ public class PersistVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
-  public void visit(final ExtensionNode<V> extensionNode) {
-    System.out.println("writing extensionNode - " + extensionNode.getHash() + " value - " + extensionNode.getRlp());
+  public void visit(final BranchNode<V> branchNode) {
+    writer.accept(branchNode.getHash(), branchNode.getRlp());
+    branchNodeCount++;
+    branchNode.getChildren().forEach(node -> node.accept(this));
   }
 
   @Override
-  public void visit(final BranchNode<V> branchNode) {
-    System.out.println("writing branchNode    - " + branchNode.getHash() + " value - " + branchNode.getRlp());
+  public void visit(final ExtensionNode<V> extensionNode) {
+    writer.accept(extensionNode.getHash(), extensionNode.getRlp());
+    extensionNodeCount++;
+    extensionNode.getChild().accept(this);
   }
 
   @Override
   public void visit(final LeafNode<V> leafNode) {
-    System.out.println("writing leafNode      - " + leafNode.getHash() + " value - " + leafNode.getRlp());
+    writer.accept(leafNode.getHash(), leafNode.getRlp());
+    leafNodeCount++;
   }
 
   @Override
-  public void visit(final NullNode<V> nullNode) {
+  public void visit(final NullNode<V> nullNode) {}
+
+  public int getBranchNodeCount() {
+    return branchNodeCount;
+  }
+
+  public int getExtensionNodeCount() {
+    return extensionNodeCount;
+  }
+
+  public int getLeafNodeCount() {
+    return leafNodeCount;
   }
 }

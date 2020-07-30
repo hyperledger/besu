@@ -22,6 +22,8 @@ import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -34,6 +36,7 @@ import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.PersistVisitor;
 import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.io.Closeable;
 import java.io.DataInputStream;
@@ -42,6 +45,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -72,9 +77,14 @@ public class RestoreState implements Runnable {
 
   @ParentCommand private OperatorSubCommand parentCommand;
 
+  private static final int TRIE_NODE_COMMIT_BATCH_SIZE = 100;
+
   private long targetBlock;
   private long accountCount;
+  private long trieNodeCount;
   private boolean compressed;
+  private BesuController besuController;
+  private WorldStateStorage.Updater updater;
 
   private Path accountFileName(final int fileNumber, final boolean compressed) {
     return StateBackupService.accountFileName(backupDir, targetBlock, fileNumber, compressed);
@@ -94,8 +104,6 @@ public class RestoreState implements Runnable {
 
   @Override
   public void run() {
-
-    // load state
     try {
       final ObjectNode manifest =
           JsonUtil.objectNodeFromString(
@@ -104,8 +112,9 @@ public class RestoreState implements Runnable {
       compressed = manifest.get("compressed").asBoolean(false);
       targetBlock = manifest.get("targetBlock").asLong();
       accountCount = manifest.get("accountCount").asLong();
+      besuController = createBesuController();
 
-      //      restoreBlocks();
+      restoreBlocks();
       restoreAccounts();
 
       LOG.info("Restore complete");
@@ -121,6 +130,7 @@ public class RestoreState implements Runnable {
         final RollingFileReader bodyReader = new RollingFileReader(this::bodyFileName, compressed);
         final RollingFileReader receiptReader =
             new RollingFileReader(this::receiptFileName, compressed)) {
+      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
       // target block is "including" the target block, so LE test not LT.
       for (int i = 0; i <= targetBlock; i++) {
         if (i % 100000 == 0) {
@@ -135,16 +145,18 @@ public class RestoreState implements Runnable {
         final BlockHeader header =
             BlockHeader.readFrom(
                 new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
-        if (header.getNumber() == targetBlock) {
-          System.out.println(header.getStateRoot());
-        }
-        BlockBody.readFrom(new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
+        final BlockBody body =
+            BlockBody.readFrom(
+                new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
         final RLPInput receiptsRlp = new BytesValueRLPInput(Bytes.wrap(receiptEntry), false, true);
         final int receiptsCount = receiptsRlp.enterList();
+        final List<TransactionReceipt> receipts = new ArrayList<>(receiptsCount);
         for (int j = 0; j < receiptsCount; j++) {
-          TransactionReceipt.readFrom(receiptsRlp, true);
+          receipts.add(TransactionReceipt.readFrom(receiptsRlp, true));
         }
         receiptsRlp.leaveList();
+
+        blockchain.appendBlock(new Block(header, body), receipts);
       }
     }
     LOG.info("Chain data loaded");
@@ -152,8 +164,14 @@ public class RestoreState implements Runnable {
 
   @SuppressWarnings("UnusedVariable")
   private void restoreAccounts() throws IOException {
-    final PersistVisitor<Bytes> persistVisitor = new PersistVisitor<>();
-    Node<Bytes> root = persistVisitor.initialRoot();
+    newWorldStateUpdater();
+    int storageBranchCount = 0;
+    int storageExtensionCount = 0;
+    int storageLeafCount = 0;
+
+    final PersistVisitor<Bytes> accountPersistVisitor =
+        new PersistVisitor<>(this::updateAccountState);
+    Node<Bytes> root = accountPersistVisitor.initialRoot();
 
     try (final RollingFileReader reader =
         new RollingFileReader(this::accountFileName, compressed)) {
@@ -168,20 +186,27 @@ public class RestoreState implements Runnable {
         if (length != 4) {
           throw new RuntimeException("Unexpected account length " + length);
         }
-        final Bytes32 trieKey = accountInput.readBytes32(); // trie hash
-        final Bytes accountRlp = accountInput.readBytes(); // account rlp
-        final Bytes code = accountInput.readBytes(); // code
+        final Bytes32 trieKey = accountInput.readBytes32();
+        final Bytes accountRlp = accountInput.readBytes();
+        final Bytes code = accountInput.readBytes();
 
         final StateTrieAccountValue trieAccount =
             StateTrieAccountValue.readFrom(new BytesValueRLPInput(accountRlp, false, true));
         if (!trieAccount.getCodeHash().equals(Hash.hash(code))) {
           throw new RuntimeException("Code hash doesn't match");
         }
-        //        System.out.println(trieKey);
-        final RestoreVisitor<Bytes> restoreVistor =
-            new RestoreVisitor<>(t -> t, accountRlp, persistVisitor);
+        if (code.size() > 0) {
+          updateCode(code);
+        }
 
-        root = root.accept(restoreVistor, bytesToPath(trieKey));
+        final RestoreVisitor<Bytes> accountTrieWriteVisitor =
+            new RestoreVisitor<>(t -> t, accountRlp, accountPersistVisitor);
+
+        root = root.accept(accountTrieWriteVisitor, bytesToPath(trieKey));
+
+        final PersistVisitor<Bytes> storagePersistVisitor =
+            new PersistVisitor<>(this::updateAccountStorage);
+        Node<Bytes> storageRoot = storagePersistVisitor.initialRoot();
 
         final int storageTrieSize = accountInput.enterList();
         for (int j = 0; j < storageTrieSize; j++) {
@@ -189,16 +214,63 @@ public class RestoreState implements Runnable {
           if (len != 2) {
             throw new RuntimeException("Unexpected storage trie entry length " + len);
           }
-          accountInput.readBytes();
-          accountInput.readBytes();
+          final Bytes32 storageTrieKey = Bytes32.wrap(accountInput.readBytes());
+          final Bytes storageTrieValue = Bytes.wrap(accountInput.readBytes());
+          final RestoreVisitor<Bytes> storageTrieWriteVisitor =
+              new RestoreVisitor<>(t -> t, storageTrieValue, storagePersistVisitor);
+          storageRoot = storageRoot.accept(storageTrieWriteVisitor, bytesToPath(storageTrieKey));
+
           accountInput.leaveList();
         }
+        storagePersistVisitor.persist(storageRoot);
+        storageBranchCount += storagePersistVisitor.getBranchNodeCount();
+        storageExtensionCount += storagePersistVisitor.getExtensionNodeCount();
+        storageLeafCount += storagePersistVisitor.getLeafNodeCount();
+
         accountInput.leaveList();
       }
     }
-    persistVisitor.finalize(root);
-    System.out.println(root.getHash());
+    accountPersistVisitor.persist(root);
+    updater.commit();
+    LOG.info("Account BranchNodes: {} ", accountPersistVisitor.getBranchNodeCount());
+    LOG.info("Account ExtensionNodes: {} ", accountPersistVisitor.getExtensionNodeCount());
+    LOG.info("Account LeafNodes: {} ", accountPersistVisitor.getLeafNodeCount());
+    LOG.info("Storage BranchNodes: {} ", storageBranchCount);
+    LOG.info("Storage LeafNodes: {} ", storageExtensionCount);
+    LOG.info("Storage ExtensionNodes: {} ", storageLeafCount);
     LOG.info("Account data loaded");
+  }
+
+  private void newWorldStateUpdater() {
+    if (updater != null) {
+      updater.commit();
+    }
+    final WorldStateStorage worldStateStorage =
+        besuController.getProtocolContext().getWorldStateArchive().getWorldStateStorage();
+    updater = worldStateStorage.updater();
+  }
+
+  private void maybeCommitUpdater() {
+    if (trieNodeCount % TRIE_NODE_COMMIT_BATCH_SIZE == 0) {
+      newWorldStateUpdater();
+    }
+  }
+
+  private void updateCode(final Bytes code) {
+    maybeCommitUpdater();
+    updater.putCode(code);
+  }
+
+  private void updateAccountState(final Bytes32 key, final Bytes value) {
+    maybeCommitUpdater();
+    updater.putAccountStateTrieNode(key, value);
+    trieNodeCount++;
+  }
+
+  private void updateAccountStorage(final Bytes32 key, final Bytes value) {
+    maybeCommitUpdater();
+    updater.putAccountStorageTrieNode(key, value);
+    trieNodeCount++;
   }
 
   static class RollingFileReader implements Closeable {

@@ -27,7 +27,10 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
   private final V value;
   private final NodeVisitor<V> persistVisitor;
 
-  public RestoreVisitor(final Function<V, Bytes> valueSerializer, final V value, final NodeVisitor<V> persistVisitor) {
+  public RestoreVisitor(
+      final Function<V, Bytes> valueSerializer,
+      final V value,
+      final NodeVisitor<V> persistVisitor) {
     this.nodeFactory = new DefaultNodeFactory<>(valueSerializer);
     this.value = value;
     this.persistVisitor = persistVisitor;
@@ -68,26 +71,30 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
   @Override
   public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
+    BranchNode<V> workingNode = branchNode;
 
     final byte childIndex = path.get(0);
     if (childIndex == CompactEncoding.LEAF_TERMINATOR) {
-      return branchNode.replaceValue(value);
+      return workingNode.replaceValue(value);
     }
 
     for (byte i = 0; i < childIndex; i++) {
-      persistNode(branchNode, i);
+      workingNode = persistNode(workingNode, i);
     }
 
-    final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
-    return branchNode.replaceChild(childIndex, updatedChild);
+    final Node<V> updatedChild = workingNode.child(childIndex).accept(this, path.slice(1));
+    return workingNode.replaceChild(childIndex, updatedChild);
   }
 
-  private void persistNode(final BranchNode<V> parent, final byte index) {
+  private BranchNode<V> persistNode(final BranchNode<V> parent, final byte index) {
     final Node<V> child = parent.getChildren().get(index);
     if (!(child instanceof StoredNode)) {
       child.accept(persistVisitor);
-      final PersistedNode<V> persistedNode = new PersistedNode<>(null, child.getHash());
-      parent.replaceChild(index, persistedNode);
+      final PersistedNode<V> persistedNode =
+          new PersistedNode<>(null, child.getHash(), child.getRlpRef());
+      return (BranchNode<V>) parent.replaceChild(index, persistedNode);
+    } else {
+      return parent;
     }
   }
 
@@ -130,10 +137,12 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
   static class PersistedNode<V> implements Node<V> {
     private final Bytes path;
     private final Bytes32 hash;
+    private final Bytes refRlp;
 
-    PersistedNode(final Bytes path, final Bytes32 hash) {
+    PersistedNode(final Bytes path, final Bytes32 hash, final Bytes refRlp) {
       this.path = path;
       this.hash = hash;
+      this.refRlp = refRlp;
     }
 
     /** @return True if the node needs to be persisted. */
@@ -184,8 +193,7 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
 
     @Override
     public Bytes getRlpRef() {
-      throw new UnsupportedOperationException(
-          "A persisted node cannot have rlp, as it's already been restored.");
+      return refRlp;
     }
 
     @Override
@@ -216,5 +224,4 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
       return "PersistedNode:" + "\n\tPath: " + getPath() + "\n\tHash: " + getHash();
     }
   }
-
 }
