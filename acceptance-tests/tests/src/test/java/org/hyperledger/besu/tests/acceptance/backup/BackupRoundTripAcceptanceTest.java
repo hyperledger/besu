@@ -17,11 +17,15 @@
 package org.hyperledger.besu.tests.acceptance.backup;
 
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest;
 import org.hyperledger.besu.tests.acceptance.database.DatabaseMigrationAcceptanceTest;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
+import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
@@ -34,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -113,6 +118,7 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
   @Test
   public void testShowsHelpAndExits() throws IOException {
 
+    // backup from existing files
     final BesuNode backupNode =
         besu.createNode(
             "backup " + testName,
@@ -124,8 +130,11 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
                 "--block=100"));
     cluster.startNode(backupNode);
     WaitUtils.waitFor(60, () -> backupNode.verify(exitedSuccessfully));
-    // TODO asserts against files
+    final ObjectNode backupManifest =
+        JsonUtil.objectNodeFromString(
+            Files.readString(backupPath.resolve("besu-backup-manifest.json")));
 
+    // restore to a new directory
     final BesuNode restoreNode =
         besu.createNode(
             "restore " + testName,
@@ -136,8 +145,27 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
                 "--backup-path=" + backupPath.toString()));
     cluster.startNode(restoreNode);
     WaitUtils.waitFor(60, () -> restoreNode.verify(exitedSuccessfully));
-    // TODO assert it starts up
 
+    // start up the backed-up version and assert some details
+    final BesuNode runningNode = besu.createNode(testName, this::configureNode);
+    cluster.start(runningNode);
+
+    // height matches
+    blockchain.currentHeight(expectedChainHeight).verify(runningNode);
+
+    // accounts have value
+    testAccounts.forEach(
+        accountData ->
+            accounts
+                .createAccount(Address.fromHexString(accountData.getAccountAddress()))
+                .balanceAtBlockEquals(
+                    Amount.wei(accountData.getExpectedBalance().toBigInteger()),
+                    accountData.getBlock())
+                .verify(runningNode));
+
+    runningNode.stop();
+
+    // backup from the restore
     final BesuNode rebackupBesuNode =
         besu.createNode(
             "rebackup " + testName,
@@ -149,7 +177,12 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
                 "--block=100"));
     cluster.startNode(rebackupBesuNode);
     WaitUtils.waitFor(60, () -> rebackupBesuNode.verify(exitedSuccessfully));
-    // TODO asserts against files
+    final ObjectNode rebackupManifest =
+        JsonUtil.objectNodeFromString(
+            Files.readString(rebackupPath.resolve("besu-backup-manifest.json")));
+
+    // expect that the backup and rebackup manifests match
+    assertThat(rebackupManifest).isEqualTo(backupManifest);
   }
 
   @NotNull
