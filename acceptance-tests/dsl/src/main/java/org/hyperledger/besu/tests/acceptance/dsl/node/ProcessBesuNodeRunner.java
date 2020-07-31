@@ -73,8 +73,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
 
-    node.getRunCommand().ifPresent(params::add);
-
     if (node.isDevMode()) {
       params.add("--network");
       params.add("DEV");
@@ -282,6 +280,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (level != null) {
       params.add("--logging=" + level);
     }
+
+    params.addAll(node.getRunCommand());
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
