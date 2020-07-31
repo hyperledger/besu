@@ -116,7 +116,7 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
   }
 
   @Test
-  public void testShowsHelpAndExits() throws IOException {
+  public void backupRoundtripAndBack() throws IOException {
 
     // backup from existing files
     final BesuNode backupNode =
