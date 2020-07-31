@@ -15,36 +15,20 @@
 
 package org.hyperledger.besu.tests.acceptance.database;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,11 +36,9 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
-  private final String testName;
-  private final String dataPath;
+public class DatabaseMigrationAcceptanceTest
+    extends org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest {
   private final long expectedChainHeight;
-  private Path hostDataPath;
   private BesuNode node;
   private final List<AccountData> testAccounts;
 
@@ -65,8 +47,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
       final String dataPath,
       final long expectedChainHeight,
       final List<AccountData> testAccounts) {
-    this.testName = testName;
-    this.dataPath = dataPath;
+    super(testName, dataPath);
     this.expectedChainHeight = expectedChainHeight;
     this.testAccounts = testAccounts;
   }
@@ -107,28 +88,9 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
             DatabaseMigrationAcceptanceTest.class
                 .getResource(String.format("%s/besu-db-archive.tar.gz", dataPath))
                 .toURI());
-    extract(databaseArchive, hostDataPath.toAbsolutePath().toString());
+    AbstractPreexistingNodeTest.extract(databaseArchive, hostDataPath.toAbsolutePath().toString());
     node = besu.createNode(testName, this::configureNode);
     cluster.start(node);
-  }
-
-  private BesuNodeConfigurationBuilder configureNode(
-      final BesuNodeConfigurationBuilder nodeBuilder) {
-    final String genesisData = getGenesisConfiguration();
-    return nodeBuilder
-        .devMode(false)
-        .dataPath(hostDataPath)
-        .genesisConfigProvider((nodes) -> Optional.of(genesisData))
-        .jsonRpcEnabled();
-  }
-
-  private String getGenesisConfiguration() {
-    try {
-      return Resources.toString(
-          hostDataPath.resolve("genesis.json").toUri().toURL(), Charsets.UTF_8);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Test
@@ -141,66 +103,10 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     testAccounts.forEach(
         accountData ->
             accounts
-                .createAccount(Address.fromHexString(accountData.accountAddress))
+                .createAccount(Address.fromHexString(accountData.getAccountAddress()))
                 .balanceAtBlockEquals(
-                    Amount.wei(accountData.expectedBalance.toBigInteger()), accountData.block)
+                    Amount.wei(accountData.getExpectedBalance().toBigInteger()),
+                    accountData.getBlock())
                 .verify(node));
-  }
-
-  private static void extract(final Path path, final String destDirectory) throws IOException {
-    try (TarArchiveInputStream fin =
-        new TarArchiveInputStream(
-            new GzipCompressorInputStream(new FileInputStream(path.toAbsolutePath().toString())))) {
-      TarArchiveEntry entry;
-      while ((entry = fin.getNextTarEntry()) != null) {
-        if (entry.isDirectory()) {
-          continue;
-        }
-        final File curfile = new File(destDirectory, entry.getName());
-        final File parent = curfile.getParentFile();
-        if (!parent.exists()) {
-          parent.mkdirs();
-        }
-        IOUtils.copy(fin, new FileOutputStream(curfile));
-      }
-    }
-  }
-
-  private Path copyDataDir(final URL url) {
-    if (url == null) {
-      throw new RuntimeException("Unable to locate resource.");
-    }
-
-    try {
-      final Path tmpDir = Files.createTempDirectory("data");
-      Files.delete(tmpDir);
-      final Path toCopy = Paths.get(url.toURI());
-      try (final Stream<Path> pathStream = Files.walk(toCopy)) {
-        pathStream.forEach(source -> copy(source, tmpDir.resolve(toCopy.relativize(source))));
-        return tmpDir.toAbsolutePath();
-      }
-    } catch (URISyntaxException | IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void copy(final Path source, final Path dest) {
-    try {
-      Files.copy(source, dest, REPLACE_EXISTING);
-    } catch (Exception e) {
-      throw new RuntimeException(e.getMessage(), e);
-    }
-  }
-
-  private static class AccountData {
-    private final String accountAddress;
-    private final BigInteger block;
-    private final Wei expectedBalance;
-
-    private AccountData(final String account, final BigInteger block, final Wei expectedBalance) {
-      this.accountAddress = account;
-      this.block = block;
-      this.expectedBalance = expectedBalance;
-    }
   }
 }

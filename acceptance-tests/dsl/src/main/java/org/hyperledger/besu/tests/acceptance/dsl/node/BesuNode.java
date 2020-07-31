@@ -88,7 +88,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private final String name;
   private final MiningParameters miningParameters;
-  private final Optional<String> runCommand;
+  private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -133,7 +133,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final Optional<PrivacyParameters> privacyParameters,
-      final Optional<String> runCommand)
+      final List<String> runCommand)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
@@ -613,7 +613,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return staticNodes != null && !staticNodes.isEmpty();
   }
 
-  public Optional<String> getRunCommand() {
+  public List<String> getRunCommand() {
     return runCommand;
   }
 
