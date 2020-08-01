@@ -66,6 +66,7 @@ public class StateBackupService {
   private static final Logger LOG = LogManager.getLogger();
   private static final long MAX_FILE_SIZE = 1 << 28; // 256 MiB max file size
   private static final Bytes ACCOUNT_END_MARKER;
+
   static {
     final BytesValueRLPOutput endMarker = new BytesValueRLPOutput();
     endMarker.startList();
@@ -280,7 +281,8 @@ public class StateBackupService {
             Function.identity(),
             Function.identity());
     storageTrie.visitLeafs(
-        (storageKey, storageValue) -> visitAccountStorage(storageKey, storageValue, accountFileWriter));
+        (storageKey, storageValue) ->
+            visitAccountStorage(storageKey, storageValue, accountFileWriter));
 
     try {
       accountFileWriter.writeBytes(ACCOUNT_END_MARKER.toArrayUnsafe());

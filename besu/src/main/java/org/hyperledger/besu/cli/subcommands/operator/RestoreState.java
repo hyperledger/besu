@@ -208,7 +208,6 @@ public class RestoreState implements Runnable {
             new PersistVisitor<>(this::updateAccountStorage);
         Node<Bytes> storageRoot = storagePersistVisitor.initialRoot();
 
-
         while (true) {
           final byte[] trieEntry = reader.readBytes();
           final BytesValueRLPInput trieInput =
