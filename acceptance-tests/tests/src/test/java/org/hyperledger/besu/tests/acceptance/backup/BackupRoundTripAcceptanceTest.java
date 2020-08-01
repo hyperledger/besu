@@ -125,7 +125,7 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
             configureNodeCommands(
                 hostDataPath,
                 "operator",
-                "backup-state",
+                "x-backup-state",
                 "--backup-path=" + backupPath.toString(),
                 "--block=100"));
     cluster.startNode(backupNode);
@@ -141,7 +141,7 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
             configureNodeCommands(
                 restorePath,
                 "operator",
-                "restore-state",
+                "x-restore-state",
                 "--backup-path=" + backupPath.toString()));
     cluster.startNode(restoreNode);
     WaitUtils.waitFor(60, () -> restoreNode.verify(exitedSuccessfully));
@@ -172,7 +172,7 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
             configureNodeCommands(
                 restorePath,
                 "operator",
-                "backup-state",
+                "x-backup-state",
                 "--backup-path=" + rebackupPath.toString(),
                 "--block=100"));
     cluster.startNode(rebackupBesuNode);
