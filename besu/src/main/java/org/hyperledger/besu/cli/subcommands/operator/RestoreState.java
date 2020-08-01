@@ -60,7 +60,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 @Command(
-    name = "restore-state",
+    name = "x-restore-state",
     description = "Restores the chain from a previously generated backup-state.",
     mixinStandardHelpOptions = true)
 public class RestoreState implements Runnable {
@@ -183,7 +183,7 @@ public class RestoreState implements Runnable {
         final BytesValueRLPInput accountInput =
             new BytesValueRLPInput(Bytes.of(accountEntry), false, true);
         final int length = accountInput.enterList();
-        if (length != 4) {
+        if (length != 3) {
           throw new RuntimeException("Unexpected account length " + length);
         }
         final Bytes32 trieKey = accountInput.readBytes32();
@@ -208,19 +208,25 @@ public class RestoreState implements Runnable {
             new PersistVisitor<>(this::updateAccountStorage);
         Node<Bytes> storageRoot = storagePersistVisitor.initialRoot();
 
-        final int storageTrieSize = accountInput.enterList();
-        for (int j = 0; j < storageTrieSize; j++) {
-          final int len = accountInput.enterList();
+
+        while (true) {
+          final byte[] trieEntry = reader.readBytes();
+          final BytesValueRLPInput trieInput =
+              new BytesValueRLPInput(Bytes.of(trieEntry), false, true);
+          final int len = trieInput.enterList();
+          if (len == 0) {
+            break;
+          }
           if (len != 2) {
             throw new RuntimeException("Unexpected storage trie entry length " + len);
           }
-          final Bytes32 storageTrieKey = Bytes32.wrap(accountInput.readBytes());
-          final Bytes storageTrieValue = Bytes.wrap(accountInput.readBytes());
+          final Bytes32 storageTrieKey = Bytes32.wrap(trieInput.readBytes());
+          final Bytes storageTrieValue = Bytes.wrap(trieInput.readBytes());
           final RestoreVisitor<Bytes> storageTrieWriteVisitor =
               new RestoreVisitor<>(t -> t, storageTrieValue, storagePersistVisitor);
           storageRoot = storageRoot.accept(storageTrieWriteVisitor, bytesToPath(storageTrieKey));
 
-          accountInput.leaveList();
+          trieInput.leaveList();
         }
         storagePersistVisitor.persist(storageRoot);
         storageBranchCount += storagePersistVisitor.getBranchNodeCount();

@@ -38,7 +38,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 @Command(
-    name = "backup-state",
+    name = "x-backup-state",
     description = "Backups up the state and accounts of a specified block.",
     mixinStandardHelpOptions = true)
 public class BackupState implements Runnable {

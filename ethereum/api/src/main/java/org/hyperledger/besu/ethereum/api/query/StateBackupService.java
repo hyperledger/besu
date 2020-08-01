@@ -65,6 +65,13 @@ public class StateBackupService {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long MAX_FILE_SIZE = 1 << 28; // 256 MiB max file size
+  private static final Bytes ACCOUNT_END_MARKER;
+  static {
+    final BytesValueRLPOutput endMarker = new BytesValueRLPOutput();
+    endMarker.startList();
+    endMarker.endList();
+    ACCOUNT_END_MARKER = endMarker.encoded();
+  }
 
   private final String besuVesion;
   private final Lock submissionLock = new ReentrantLock();
@@ -256,8 +263,16 @@ public class StateBackupService {
     accountOutput.writeBytes(nodeKey); // trie hash
     accountOutput.writeBytes(nodeValue); // account rlp
     accountOutput.writeBytes(code); // code
-    accountOutput.startList(); // storage
+    accountOutput.endList();
 
+    try {
+      accountFileWriter.writeBytes(accountOutput.encoded().toArrayUnsafe());
+    } catch (final IOException ioe) {
+      LOG.error("Failure writing backup", ioe);
+      return State.STOP;
+    }
+
+    // storage is written for each leaf, otherwise the whole trie would have to fit in memory
     final StoredMerklePatriciaTrie<Bytes32, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             worldStateStorage::getAccountStateTrieNode,
@@ -265,12 +280,10 @@ public class StateBackupService {
             Function.identity(),
             Function.identity());
     storageTrie.visitLeafs(
-        (storageKey, storageValue) -> visitAccountStorage(storageKey, storageValue, accountOutput));
-    accountOutput.endList();
-    accountOutput.endList();
+        (storageKey, storageValue) -> visitAccountStorage(storageKey, storageValue, accountFileWriter));
 
     try {
-      accountFileWriter.writeBytes(accountOutput.encoded().toArrayUnsafe());
+      accountFileWriter.writeBytes(ACCOUNT_END_MARKER.toArrayUnsafe());
     } catch (final IOException ioe) {
       LOG.error("Failure writing backup", ioe);
       return State.STOP;
@@ -318,13 +331,21 @@ public class StateBackupService {
   }
 
   private TrieIterator.State visitAccountStorage(
-      final Bytes32 nodeKey, final Node<Bytes> node, final BytesValueRLPOutput output) {
+      final Bytes32 nodeKey, final Node<Bytes> node, final RollingFileWriter accountFileWriter) {
     backupStatus.currentStorage = nodeKey;
 
+    final BytesValueRLPOutput output = new BytesValueRLPOutput();
     output.startList();
     output.writeBytes(nodeKey);
     output.writeBytes(node.getValue().orElse(Bytes.EMPTY));
     output.endList();
+
+    try {
+      accountFileWriter.writeBytes(output.encoded().toArrayUnsafe());
+    } catch (final IOException ioe) {
+      LOG.error("Failure writing backup", ioe);
+      return State.STOP;
+    }
 
     backupStatus.storageCount.incrementAndGet();
     return State.CONTINUE;
