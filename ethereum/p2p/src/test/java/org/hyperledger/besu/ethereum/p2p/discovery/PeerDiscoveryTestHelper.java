@@ -268,13 +268,7 @@ public class PeerDiscoveryTestHelper {
       MaintainedPeers maintainedPeers = new MaintainedPeers();
 
       return new MockPeerDiscoveryAgent(
-          nodeKey,
-          config,
-          peerPermissions,
-          agents,
-          natService,
-          maintainedPeers::subscribeAdd,
-          maintainedPeers::subscribeRemove);
+          nodeKey, config, peerPermissions, agents, natService, maintainedPeers);
     }
   }
 }
