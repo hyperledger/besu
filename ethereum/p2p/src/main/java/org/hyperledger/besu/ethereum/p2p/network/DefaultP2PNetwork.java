@@ -449,8 +449,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           peerPermissions,
           natService,
           metricsSystem,
-          maintainedPeers::subscribeAdd,
-          maintainedPeers::subscribeRemove);
+          maintainedPeers);
     }
 
     private RlpxAgent createRlpxAgent(

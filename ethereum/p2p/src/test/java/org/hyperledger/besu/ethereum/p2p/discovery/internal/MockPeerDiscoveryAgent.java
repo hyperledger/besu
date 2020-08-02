@@ -31,7 +31,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,16 +50,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService,
-      final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber,
-      final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber) {
-    super(
-        nodeKey,
-        config,
-        peerPermissions,
-        natService,
-        new NoOpMetricsSystem(),
-        peerAddedCallbackSubscriber,
-        peerRemovedCallbackSubscriber);
+      final MaintainedPeers maintainedPeers) {
+    super(nodeKey, config, peerPermissions, natService, new NoOpMetricsSystem(), maintainedPeers);
     this.agentNetwork = agentNetwork;
   }
 

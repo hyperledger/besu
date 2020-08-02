@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -83,8 +82,7 @@ public abstract class PeerDiscoveryAgent {
   /* Is discovery enabled? */
   private boolean isActive = false;
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
-  private final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber;
-  private final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber;
+  private final MaintainedPeers maintainedPeers;
 
   protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
@@ -92,8 +90,7 @@ public abstract class PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem,
-      final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber,
-      final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber) {
+      final MaintainedPeers maintainedPeers) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -107,8 +104,7 @@ public abstract class PeerDiscoveryAgent {
 
     this.config = config;
     this.nodeKey = nodeKey;
-    this.peerAddedCallbackSubscriber = peerAddedCallbackSubscriber;
-    this.peerRemovedCallbackSubscriber = peerRemovedCallbackSubscriber;
+    this.maintainedPeers = maintainedPeers;
     id = nodeKey.getPublicKey().getEncodedBytes();
   }
 
@@ -180,8 +176,7 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
-        .peerAddedCallbackSubscriber(peerAddedCallbackSubscriber)
-        .peerRemovedCallbackSubscriber(peerRemovedCallbackSubscriber)
+        .maintainedPeers(maintainedPeers)
         .build();
   }
 

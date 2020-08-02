@@ -160,8 +160,7 @@ public class PeerDiscoveryController {
       final PeerPermissions peerPermissions,
       final Subscribers<PeerBondedObserver> peerBondedObservers,
       final MetricsSystem metricsSystem,
-      final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber,
-      final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber) {
+      final MaintainedPeers maintainedPeers) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -176,8 +175,8 @@ public class PeerDiscoveryController {
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
-    peerAddedCallbackSubscriber.accept(this::onPeerAdded);
-    peerRemovedCallbackSubscriber.accept(this::onPeerRemoved);
+    maintainedPeers.subscribeAdd(this::onPeerAdded);
+    maintainedPeers.subscribeRemove(this::onPeerRemoved);
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -711,10 +710,7 @@ public class PeerDiscoveryController {
     private final List<DiscoveryPeer> bootstrapNodes = new ArrayList<>();
     private PeerTable peerTable;
     private Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
-    private Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber =
-        peerAddedCallback -> {};
-    private Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber =
-        peerRemovedCallback -> {};
+    private MaintainedPeers maintainedPeers = new MaintainedPeers();
 
     // Required dependencies
     private NodeKey nodeKey;
@@ -746,8 +742,7 @@ public class PeerDiscoveryController {
           peerPermissions,
           peerBondedObservers,
           metricsSystem,
-          peerAddedCallbackSubscriber,
-          peerRemovedCallbackSubscriber);
+          maintainedPeers);
     }
 
     private void validate() {
@@ -840,17 +835,9 @@ public class PeerDiscoveryController {
       return this;
     }
 
-    public Builder peerAddedCallbackSubscriber(
-        final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber) {
-      checkNotNull(peerAddedCallbackSubscriber);
-      this.peerAddedCallbackSubscriber = peerAddedCallbackSubscriber;
-      return this;
-    }
-
-    public Builder peerRemovedCallbackSubscriber(
-        final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackConsumer) {
-      checkNotNull(peerRemovedCallbackConsumer);
-      this.peerRemovedCallbackSubscriber = peerRemovedCallbackConsumer;
+    public Builder maintainedPeers(final MaintainedPeers maintainedPeers) {
+      checkNotNull(maintainedPeers);
+      this.maintainedPeers = maintainedPeers;
       return this;
     }
   }

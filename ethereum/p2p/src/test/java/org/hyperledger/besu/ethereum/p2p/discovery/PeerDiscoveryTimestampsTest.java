@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 import org.junit.Test;
 

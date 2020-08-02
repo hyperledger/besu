@@ -36,7 +36,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
@@ -65,16 +64,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem,
-      final Consumer<MaintainedPeers.PeerAddedCallback> peerAddedCallbackSubscriber,
-      final Consumer<MaintainedPeers.PeerRemovedCallback> peerRemovedCallbackSubscriber) {
-    super(
-        nodeKey,
-        config,
-        peerPermissions,
-        natService,
-        metricsSystem,
-        peerAddedCallbackSubscriber,
-        peerRemovedCallbackSubscriber);
+      final MaintainedPeers maintainedPeers) {
+    super(nodeKey, config, peerPermissions, natService, metricsSystem, maintainedPeers);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
 
