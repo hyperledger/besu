@@ -175,6 +175,8 @@ public class PeerDiscoveryController {
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
+
+    // Listening to the added and removed peer event to update the maintainted peers
     maintainedPeers.subscribeAdd(this::onPeerAdded);
     maintainedPeers.subscribeRemove(this::onPeerRemoved);
 
