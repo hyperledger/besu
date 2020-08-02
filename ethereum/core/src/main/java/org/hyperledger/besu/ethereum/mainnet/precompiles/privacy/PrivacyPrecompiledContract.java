@@ -134,6 +134,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final PrivateTransaction privateTransaction =
         PrivateTransaction.readFrom(bytesValueRLPInput.readAsRlp());
 
+    if (!privateFromMatchesSenderKey(
+        privateTransaction.getPrivateFrom(), receiveResponse.getSenderKey())) {
+      return Bytes.EMPTY;
+    }
+
     final Bytes32 privacyGroupId =
         Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
 
@@ -158,6 +163,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
+
+      final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
+      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateUpdater);
+      privateStateUpdater.commit();
+
       return Bytes.EMPTY;
     }
 
@@ -201,19 +211,21 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         disposablePrivateState.rootHash(),
         privateStateUpdater);
 
-    final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
-
-    final PrivateTransactionReceipt privateTransactionReceipt =
-        new PrivateTransactionReceipt(
-            txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
-
-    privateStateUpdater.putTransactionReceipt(
-        currentBlockHash, commitmentHash, privateTransactionReceipt);
-
     maybeUpdateGroupHeadBlockMap(privacyGroupId, currentBlockHash, privateStateUpdater);
 
+    storeTransactionReceipt(commitmentHash, currentBlockHash, result, privateStateUpdater);
+
     privateStateUpdater.commit();
+  }
+
+  void storeTransactionReceipt(
+      final Hash pmtHash,
+      final Hash currentBlockHash,
+      final PrivateTransactionProcessor.Result result,
+      final PrivateStateStorage.Updater privateStateUpdater) {
+    final PrivateTransactionReceipt privateTransactionReceipt =
+        new PrivateTransactionReceipt(result);
+    privateStateUpdater.putTransactionReceipt(currentBlockHash, pmtHash, privateTransactionReceipt);
   }
 
   void maybeUpdateGroupHeadBlockMap(

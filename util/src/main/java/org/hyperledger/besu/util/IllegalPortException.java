@@ -12,17 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.ehalt;
+package org.hyperledger.besu.util;
 
-import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-
-import java.util.EnumSet;
-import java.util.Optional;
-
-public interface ExceptionalHaltPredicate {
-
-  Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      MessageFrame frame, EnumSet<ExceptionalHaltReason> previousReasons, EVM evm);
+public class IllegalPortException extends IllegalArgumentException {
+  IllegalPortException(final String message) {
+    super(message);
+  }
 }

@@ -1,0 +1,38 @@
+{
+  "request": [
+    {
+      "jsonrpc": "2.0",
+      "method": "trace_transaction",
+      "params": [
+        "0xf2f9f56aab631d441ff7bd85a195cea43c7285a4e0bd03823f6c37b379eb0cbe"
+      ],
+      "id": 415
+    }
+  ],
+  "response": [
+    {
+      "jsonrpc": "2.0",
+      "result": [
+        {
+          "action": {
+            "creationMethod": "create",
+            "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+            "gas": "0x4a14",
+            "init": "0x6000f1",
+            "value": "0x0"
+          },
+          "blockHash": "0x13b7c6057ea2ccc0e869692a6d63b5c0e1eb2ff195c9e4e1b8b4df091d48901d",
+          "blockNumber": 29,
+          "error": "Stack underflow",
+          "subtraces": 0,
+          "traceAddress": [],
+          "transactionHash": "0xf2f9f56aab631d441ff7bd85a195cea43c7285a4e0bd03823f6c37b379eb0cbe",
+          "transactionPosition": 0,
+          "type": "create"
+        }
+      ],
+      "id": 415
+    }
+  ],
+  "statusCode": 200
+}

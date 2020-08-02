@@ -558,7 +558,9 @@ public class PeerDiscoveryController {
     if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
       return;
     }
-    final PongPacketData data = PongPacketData.create(packetData.getFrom(), pingHash);
+    // We don't care about the `from` field of the ping, we pong to the `sender`
+    final PongPacketData data = PongPacketData.create(sender.getEndpoint(), pingHash);
+
     sendPacket(sender, PacketType.PONG, data);
   }
 

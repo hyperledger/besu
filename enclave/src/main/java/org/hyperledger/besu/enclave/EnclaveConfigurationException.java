@@ -12,12 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.enclave;
 
-package org.hyperledger.besu.nat.docker;
+public class EnclaveConfigurationException extends IllegalStateException {
 
-import java.util.Optional;
-
-public interface IpDetector {
-
-  Optional<String> detectExternalIp();
+  public EnclaveConfigurationException(final String message) {
+    super(message);
+  }
 }

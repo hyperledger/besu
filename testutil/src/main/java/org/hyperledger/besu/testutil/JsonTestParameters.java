@@ -51,12 +51,11 @@ public class JsonTestParameters<S, T> {
   public static class Collector<S> {
 
     @Nullable private final Predicate<String> includes;
-    private final Predicate<String> blacklist;
+    private final Predicate<String> ignore;
 
-    private Collector(
-        @Nullable final Predicate<String> includes, final Predicate<String> blacklist) {
+    private Collector(@Nullable final Predicate<String> includes, final Predicate<String> ignore) {
       this.includes = includes;
-      this.blacklist = blacklist;
+      this.ignore = ignore;
     }
 
     // Reference tests are plentiful so we'll add quite a bit of element, so starting with a
@@ -69,10 +68,10 @@ public class JsonTestParameters<S, T> {
     }
 
     private boolean includes(final String name) {
-      // If there is no specific includes, everything is unless it is blacklisted, otherwise, only
-      // what is in includes is included and the blacklist is basically ignored.
+      // If there is no specific includes, everything is included unless it is ignored, otherwise,
+      // only what is in includes is included whether or not it is ignored.
       if (includes == null) {
-        return !blacklist.test(name);
+        return !ignore.test(name);
       } else {
         return includes.test(name);
       }
@@ -103,7 +102,7 @@ public class JsonTestParameters<S, T> {
   private Generator<S, T> generator;
 
   private final List<Predicate<String>> testIncludes = new ArrayList<>();
-  private final List<Predicate<String>> testBlackList = new ArrayList<>();
+  private final List<Predicate<String>> testIgnores = new ArrayList<>();
 
   private JsonTestParameters(final Class<S> jsonFileMappedType, final Class<T> testCaseSpec) {
     this.jsonFileMappedType = jsonFileMappedType;
@@ -138,19 +137,17 @@ public class JsonTestParameters<S, T> {
   }
 
   @SuppressWarnings({"unused"})
-  public JsonTestParameters<S, T> includeTests(final String... patterns) {
+  private void includeTests(final String... patterns) {
     addPatterns(patterns, testIncludes);
+  }
+
+  public JsonTestParameters<S, T> ignore(final String... patterns) {
+    addPatterns(patterns, testIgnores);
     return this;
   }
 
-  public JsonTestParameters<S, T> blacklist(final String... patterns) {
-    addPatterns(patterns, testBlackList);
-    return this;
-  }
-
-  public JsonTestParameters<S, T> blacklistAll() {
-    testBlackList.add(t -> true);
-    return this;
+  public void ignoreAll() {
+    testIgnores.add(t -> true);
   }
 
   public JsonTestParameters<S, T> generator(final Generator<S, T> generator) {
@@ -172,7 +169,7 @@ public class JsonTestParameters<S, T> {
     final Collector<T> collector =
         new Collector<>(
             testIncludes.isEmpty() ? null : t -> matchAny(t, testIncludes),
-            t -> matchAny(t, testBlackList));
+            t -> matchAny(t, testIgnores));
 
     for (final File file : filteredFiles) {
       final JsonTestCaseReader<S> testCase = parseFile(file);

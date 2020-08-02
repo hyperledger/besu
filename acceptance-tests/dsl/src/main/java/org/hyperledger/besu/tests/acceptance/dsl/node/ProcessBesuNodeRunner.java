@@ -73,8 +73,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
 
-    node.getRunCommand().ifPresent(params::add);
-
     if (node.isDevMode()) {
       params.add("--network");
       params.add("DEV");
@@ -122,8 +120,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--privacy-public-key-file");
         params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       }
-      params.add("--privacy-precompiled-address");
-      params.add(String.valueOf(node.getPrivacyParameters().getPrivacyAddress()));
       params.add("--privacy-marker-transaction-signing-key-file");
       params.add(node.homeDirectory().resolve("key").toString());
 
@@ -284,6 +280,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (level != null) {
       params.add("--logging=" + level);
     }
+
+    params.addAll(node.getRunCommand());
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =

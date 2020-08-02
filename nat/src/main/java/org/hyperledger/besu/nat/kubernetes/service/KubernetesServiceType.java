@@ -12,24 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.ehalt;
+package org.hyperledger.besu.nat.kubernetes.service;
 
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+public enum KubernetesServiceType {
+  CLUSTER_IP("ClusterIP"),
+  LOAD_BALANCER("LoadBalancer"),
+  UNKNOWN("");
 
-/** An exception to signal that an exceptional halt has occurred. */
-public class ExceptionalHaltException extends Exception {
-  private final ExceptionalHaltReason reason;
+  String name;
 
-  public ExceptionalHaltException(final ExceptionalHaltReason reason) {
-    this.reason = reason;
+  KubernetesServiceType(final String name) {
+    this.name = name;
   }
 
-  @Override
-  public String getMessage() {
-    return "Exceptional halt condition(s) triggered: " + this.reason;
-  }
-
-  public ExceptionalHaltReason getReasons() {
-    return reason;
+  public static KubernetesServiceType fromName(final String name) {
+    for (KubernetesServiceType value : values()) {
+      if (value.name.equals(name)) {
+        return value;
+      }
+    }
+    return UNKNOWN;
   }
 }

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public class BlockParameter {
 
   private final BlockParameterType type;
-  private final OptionalLong number;
+  private final Optional<Long> number;
   public static final BlockParameter EARLIEST = new BlockParameter("earliest");
   public static final BlockParameter LATEST = new BlockParameter("latest");
   public static final BlockParameter PENDING = new BlockParameter("pending");
@@ -36,27 +36,32 @@ public class BlockParameter {
   public BlockParameter(final String value) {
     final String normalizedValue = value.toLowerCase();
 
-    if (Objects.equals(normalizedValue, "earliest")) {
-      type = BlockParameterType.EARLIEST;
-      number = OptionalLong.of(BlockHeader.GENESIS_BLOCK_NUMBER);
-    } else if (Objects.equals(normalizedValue, "latest")) {
-      type = BlockParameterType.LATEST;
-      number = OptionalLong.empty();
-    } else if (Objects.equals(normalizedValue, "pending")) {
-      type = BlockParameterType.PENDING;
-      number = OptionalLong.empty();
-    } else {
-      type = BlockParameterType.NUMERIC;
-      number = OptionalLong.of(Long.decode(value));
+    switch (normalizedValue) {
+      case "earliest":
+        type = BlockParameterType.EARLIEST;
+        number = Optional.of(BlockHeader.GENESIS_BLOCK_NUMBER);
+        break;
+      case "latest":
+        type = BlockParameterType.LATEST;
+        number = Optional.empty();
+        break;
+      case "pending":
+        type = BlockParameterType.PENDING;
+        number = Optional.empty();
+        break;
+      default:
+        type = BlockParameterType.NUMERIC;
+        number = Optional.of(Long.decode(value));
+        break;
     }
   }
 
   public BlockParameter(final long value) {
     type = BlockParameterType.NUMERIC;
-    number = OptionalLong.of(value);
+    number = Optional.of(value);
   }
 
-  public OptionalLong getNumber() {
+  public Optional<Long> getNumber() {
     return number;
   }
 

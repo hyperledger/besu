@@ -113,7 +113,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         node.execute(
             privacyTransactions.sendRawTransaction(
                 getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
-    node.verify(priv.getTransactionReceipt(transactionHash));
+    node.verify(priv.getSuccessfulTransactionReceipt(transactionHash));
     node.verify(priv.getPrivateTransaction(transactionHash, validSignedPrivateTransaction));
   }
 
@@ -179,7 +179,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final Hash transactionReceipt =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
-    node.verify(priv.getTransactionReceipt(transactionReceipt));
+    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
     node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
   }
 
@@ -211,7 +211,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final Hash transactionReceipt =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
-    node.verify(priv.getTransactionReceipt(transactionReceipt));
+    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
   }
 
   @Test
@@ -234,7 +234,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final Hash transactionHash =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
-    node.verify(priv.getTransactionReceipt(transactionHash));
+    node.verify(priv.getSuccessfulTransactionReceipt(transactionHash));
 
     final String privateFrom = ENCLAVE_KEY;
     final String[] privateFor = {senderAddressBase64};
@@ -272,7 +272,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
   private void receiveEnclaveStub(final PrivateTransaction privTx) throws JsonProcessingException {
     final BytesValueRLPOutput rlpOutput = getRLPOutputForReceiveResponse(privTx);
-    final String senderKey = "QTFhVnRNeExDVUhtQlZIWG9aenpCZ1BiVy93ajVheERwVzlYOGw5MVNHbz0=";
+    final String senderKey = privTx.getPrivateFrom().toBase64String();
     final String receiveResponse =
         mapper.writeValueAsString(
             new ReceiveResponse(
