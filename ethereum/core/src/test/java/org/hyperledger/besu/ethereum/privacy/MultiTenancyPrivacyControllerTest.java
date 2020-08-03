@@ -68,7 +68,7 @@ public class MultiTenancyPrivacyControllerTest {
   public void setup() {
     multiTenancyPrivacyController =
         new MultiTenancyPrivacyController(
-            privacyController, Optional.of(BigInteger.valueOf(2018)), enclave);
+            privacyController, Optional.of(BigInteger.valueOf(2018)), enclave, false);
   }
 
   @Test
