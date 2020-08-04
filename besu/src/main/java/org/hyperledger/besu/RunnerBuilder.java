@@ -87,6 +87,8 @@ import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethstats.EthStatsService;
+import org.hyperledger.besu.ethstats.util.NetstatsUrl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
@@ -115,6 +117,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
@@ -143,6 +146,8 @@ public class RunnerBuilder {
   private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
 
+  private String ethstatsUrl;
+  private String ethstatsContact;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
@@ -232,6 +237,16 @@ public class RunnerBuilder {
   public RunnerBuilder fractionRemoteConnectionsAllowed(
       final float fractionRemoteConnectionsAllowed) {
     this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
+    return this;
+  }
+
+  public RunnerBuilder ethstatsUrl(final String ethstatsUrl) {
+    this.ethstatsUrl = ethstatsUrl;
+    return this;
+  }
+
+  public RunnerBuilder ethstatsContact(final String ethstatsContact) {
+    this.ethstatsContact = ethstatsContact;
     return this;
   }
 
@@ -573,6 +588,25 @@ public class RunnerBuilder {
       metricsService = Optional.of(createMetricsService(vertx, metricsConfiguration));
     }
 
+    final Optional<EthStatsService> ethStatsService;
+    if (!Strings.isNullOrEmpty(ethstatsUrl)) {
+      ethStatsService =
+          Optional.of(
+              new EthStatsService(
+                  NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact),
+                  blockchainQueries,
+                  besuController.getProtocolManager(),
+                  transactionPool,
+                  miningCoordinator,
+                  besuController.getSyncState(),
+                  vertx,
+                  BesuInfo.nodeName(identityString),
+                  besuController.getGenesisConfigOptions(),
+                  network));
+    } else {
+      ethStatsService = Optional.empty();
+    }
+
     return new Runner(
         vertx,
         networkRunner,
@@ -582,6 +616,7 @@ public class RunnerBuilder {
         webSocketService,
         stratumServer,
         metricsService,
+        ethStatsService,
         besuController,
         dataDir,
         pidPath,
