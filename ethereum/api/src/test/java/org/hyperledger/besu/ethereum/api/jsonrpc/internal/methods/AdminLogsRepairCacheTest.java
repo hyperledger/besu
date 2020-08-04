@@ -83,8 +83,6 @@ public class AdminLogsRepairCacheTest {
 
     when(blockchainQueries.getTransactionLogBloomCacher())
         .thenReturn(Optional.of(transactionLogBloomCacher));
-    when(transactionLogBloomCacher.getCachingStatus())
-        .thenReturn(new TransactionLogBloomCacher.CachingStatus());
     when(transactionLogBloomCacher.getCachingStatus()).thenReturn(cachingStatus);
     when(cachingStatus.isCaching()).thenReturn(true);
 
