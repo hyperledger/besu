@@ -12,7 +12,6 @@
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
-| Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Jason Frame      | jframe           | jframe           |
@@ -34,12 +33,9 @@
 
 ## Emeritus Maintainers
 
-None.
-<!--
-| Name | Github | LFID |
-|------|--------|------|
-| null | null   | null |
--->
+| Name         | Github  | LFID    |
+|--------------|---------|---------|
+| Edward Evans | EdJoJob | EdJoJob |
 
 ## Becoming a Maintainer
 

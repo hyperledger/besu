@@ -154,6 +154,10 @@ target-gas-limit=8000000
 # transaction log bloom filter caching
 auto-log-bloom-caching-enabled=true
 
+# ethstats
+Xethstats="nodename:secret@host:1234"
+Xethstats-contact="contact@mail.n"
+
 # feature flags
 Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false

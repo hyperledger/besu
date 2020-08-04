@@ -61,7 +61,7 @@ public class BesuNodeConfigurationBuilder {
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
-  private Optional<String> runCommand = Optional.empty();
+  private List<String> runCommand = new ArrayList<>();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -273,8 +273,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder run(final String command) {
-    this.runCommand = Optional.ofNullable(command);
+  public BesuNodeConfigurationBuilder run(final String... commands) {
+    this.runCommand = List.of(commands);
     return this;
   }
 
