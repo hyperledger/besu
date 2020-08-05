@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.nat.NatService;
@@ -82,15 +81,13 @@ public abstract class PeerDiscoveryAgent {
   /* Is discovery enabled? */
   private boolean isActive = false;
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
-  private final MaintainedPeers maintainedPeers;
 
   protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
-      final MetricsSystem metricsSystem,
-      final MaintainedPeers maintainedPeers) {
+      final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -104,7 +101,7 @@ public abstract class PeerDiscoveryAgent {
 
     this.config = config;
     this.nodeKey = nodeKey;
-    this.maintainedPeers = maintainedPeers;
+
     id = nodeKey.getPublicKey().getEncodedBytes();
   }
 
@@ -176,7 +173,6 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
-        .maintainedPeers(maintainedPeers)
         .build();
   }
 
