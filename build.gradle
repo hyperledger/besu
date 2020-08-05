@@ -544,6 +544,8 @@ distZip {
   }
 }
 
+def dockerVariants = ["openjdk-11", "graalvm", "openjdk-latest"]
+
 // rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
 tasks.register("dockerDistUntar") {
@@ -563,37 +565,52 @@ tasks.register("dockerDistUntar") {
   }
 }
 
-task distDocker(type: Exec) {
+task distDocker {
   dependsOn dockerDistUntar
+  inputs.dir("build/docker-besu/")
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "hyperledger/besu"
-  def image = "${imageName}:${dockerBuildVersion}"
   def dockerBuildDir = "build/docker-besu/"
-  workingDir "${dockerBuildDir}"
+  def imageName = "hyperledger/besu"
 
-  doFirst {
-    copy {
-      from file("${projectDir}/docker/Dockerfile")
-      into(workingDir)
+  doLast {
+    for (def variant in dockerVariants) {
+      copy {
+        from file("${projectDir}/docker/${variant}/Dockerfile")
+        into(dockerBuildDir)
+      }
+      exec {
+        def image = "${imageName}:${dockerBuildVersion}-${variant}"
+        executable "sh"
+        workingDir dockerBuildDir
+        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+      }
+    }
+    // tag the "default" (which is the variant in the zero position)
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
     }
   }
-
-  executable "sh"
-  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
 
-task testDocker(type: Exec) {
-  dependsOn distDocker
+task testDocker {
+//  dependsOn distDocker
   def dockerReportsDir = "docker/reports/"
-  def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
-  workingDir "docker"
 
   doFirst {
     new File(dockerReportsDir).mkdir()
   }
 
-  executable "sh"
-  args "-c", "bash test.sh ${image}"
+  doLast {
+    for (def variant in dockerVariants) {
+      exec {
+        def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+        workingDir "docker/${variant}"
+        executable "sh"
+        args "-c", "bash ../test.sh ${image}-${variant}"
+      }
+    }
+  }
 }
 
 task dockerUpload(type: Exec) {
