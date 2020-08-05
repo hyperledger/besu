@@ -106,7 +106,10 @@ public class PrivateWebSocketMethodsFactory {
             privacyParameters.getPrivateWorldStateReader());
     return privacyParameters.isMultiTenancyEnabled()
         ? new MultiTenancyPrivacyController(
-            defaultPrivacyController, chainId, privacyParameters.getEnclave())
+            defaultPrivacyController,
+            chainId,
+            privacyParameters.getEnclave(),
+            privacyParameters.isOnchainPrivacyGroupsEnabled())
         : defaultPrivacyController;
   }
 
