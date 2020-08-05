@@ -55,7 +55,7 @@ public interface NodeStatsReport {
     @JsonProperty("syncing")
     boolean isSyncing();
 
-    @JsonProperty("upTime")
+    @JsonProperty("uptime")
     int getUpTime();
   }
 }
