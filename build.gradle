@@ -544,7 +544,11 @@ distZip {
   }
 }
 
-def dockerVariants = ["openjdk-11", "graalvm", "openjdk-latest"]
+def dockerVariants = [
+  "openjdk-11",
+  "graalvm",
+  "openjdk-latest"
+]
 
 // rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
@@ -594,7 +598,7 @@ task distDocker {
 }
 
 task testDocker {
-//  dependsOn distDocker
+  dependsOn distDocker
   def dockerReportsDir = "docker/reports/"
 
   doFirst {
