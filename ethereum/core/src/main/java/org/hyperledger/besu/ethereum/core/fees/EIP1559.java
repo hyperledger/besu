@@ -78,7 +78,8 @@ public class EIP1559 {
       return gasLimit * 2;
     }
     return ((gasLimit / 2)
-        + ((blockNumber - initialForkBlknum) * feeMarket.getGasIncrementAmount(gasLimit)) * 2);
+            + ((blockNumber - initialForkBlknum) * feeMarket.getGasIncrementAmount(gasLimit)))
+        * 2;
   }
 
   public long legacyGasPool(final long blockNumber, final long gasLimit) {
