@@ -26,26 +26,14 @@ cleanup() {
 # Copy goss & any config into a folder which then gets mounted as a volume
 # Run the container and perform the checks
 setup_container(){
-info "Yoda"
-info "$*"
-info "$GOSS_PATH"
-info `pwd`
-
     info "Setting up test dir"
     cp "${GOSS_PATH}" "$tmp_dir/goss"
-    info "."
     chmod 755 "$tmp_dir/goss"
-    info "."
     [[ -e "${GOSS_FILES_PATH}/goss.yaml" ]] && cp "${GOSS_FILES_PATH}/goss.yaml" "$tmp_dir"
-    info "."
     [[ -e "${GOSS_FILES_PATH}/goss_wait.yaml" ]] && cp "${GOSS_FILES_PATH}/goss_wait.yaml" "$tmp_dir"
-    info "."
     [[ ! -z "${GOSS_VARS}" ]] && [[ -e "${GOSS_FILES_PATH}/${GOSS_VARS}" ]] && cp "${GOSS_FILES_PATH}/${GOSS_VARS}" "$tmp_dir"
-    info "."
     # copy the Dockerfile if path has been provided
-    info "."
     [[ ! -z "${3}" ]] && [[ "${3}" == *"Dockerfile"* ]] && cp "${3}" "$tmp_dir"
-    info "."
     info "Setup complete"
 
     # Switch between mount or cp files strategy
