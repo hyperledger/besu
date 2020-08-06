@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -138,20 +137,14 @@ public class MarkSweepPruner {
                 .setPriority(Thread.MIN_PRIORITY)
                 .setNameFormat(this.getClass().getSimpleName() + "-%d")
                 .build());
-    try {
-      createStateTrie(rootHash)
-          .visitAll(
-              node -> {
-                markNode(node.getHash());
-                node.getValue().ifPresent(this::processAccountState);
-              },
-              executorService)
-          .get();
-    } catch (InterruptedException e) {
-      throw new RuntimeException("Interrupted while marking");
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    createStateTrie(rootHash)
+        .visitAll(
+            node -> {
+              markNode(node.getHash());
+              node.getValue().ifPresent(this::processAccountState);
+            },
+            executorService)
+        .join();
     markStopwatch.stop();
     LOG.debug("Completed marking used nodes for pruning");
   }
