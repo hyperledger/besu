@@ -265,7 +265,7 @@ public class BlockTransactionSelector {
       gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();
     }
 
-    return transactionGasBudgetCalculator.hasBudget(
+    return !transactionGasBudgetCalculator.hasBudget(
         transaction,
         processableBlockHeader.getNumber(),
         processableBlockHeader.getGasLimit(),
