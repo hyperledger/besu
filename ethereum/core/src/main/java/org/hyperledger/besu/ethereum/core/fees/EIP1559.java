@@ -73,12 +73,19 @@ public class EIP1559 {
   }
 
   public long eip1559GasPool(final long blockNumber, final long gasLimit) {
+
     guardActivation();
+    final long eip1559GasTarget;
     if (blockNumber >= finalForkBlknum) {
-      return gasLimit * 2;
+      eip1559GasTarget = gasLimit * 2;
+    } else {
+      eip1559GasTarget =
+          (gasLimit / 2)
+              + (gasLimit / 2)
+                  * (blockNumber - initialForkBlknum)
+                  / feeMarket.getMigrationDurationInBlocks();
     }
-    return ((gasLimit / 2)
-        + ((blockNumber - initialForkBlknum) * feeMarket.getGasIncrementAmount(gasLimit)) * 2);
+    return eip1559GasTarget * 2;
   }
 
   public long legacyGasPool(final long blockNumber, final long gasLimit) {

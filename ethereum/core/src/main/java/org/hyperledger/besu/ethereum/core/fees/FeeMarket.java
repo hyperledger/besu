@@ -22,10 +22,6 @@ public interface FeeMarket {
 
   long getMigrationDurationInBlocks();
 
-  default long getGasIncrementAmount(final long gasLimit) {
-    return gasLimit / 2 / getMigrationDurationInBlocks();
-  }
-
   long getInitialBasefee();
 
   static FeeMarket eip1559() {

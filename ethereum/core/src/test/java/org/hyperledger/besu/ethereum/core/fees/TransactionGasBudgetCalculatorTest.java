@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Arrays;
@@ -69,15 +68,24 @@ public class TransactionGasBudgetCalculatorTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
+    // LEGACY_INITIAL_GAS_LIMIT: BLOCK_GAS_TARGET / 2. The maximum amount of gas that legacy
+    // transactions can use in INITIAL_FORK_BLOCK_NUMBER
+    // EIP1559_INITIAL_GAS_TARGET: BLOCK_GAS_TARGET / 2. The maximum amount of gas that EIP-1559
+    // transactions can use in INITIAL_FORK_BLOCK_NUMBER.
+    // EIP1559_GAS_LIMIT: EIP1559_GAS_TARGET * 2. The maximum amount of gas EIP-1559 transactions
+    // can use in a given block.
     return Arrays.asList(
         new Object[][] {
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 0L, true},
           {FRONTIER_CALCULATOR, false, 11L, 1L, 10L, 0L, false},
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 6L, false},
           {EIP1559_CALCULATOR, false, 5L, EIP_1559_FORK_BLOCK, 10L, 0L, true},
-          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) + 1, 1L, MAX_GAS, 0L, true},
+          {EIP1559_CALCULATOR, false, (MAX_GAS / 2), 1L, MAX_GAS, 0L, true},
+          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) + 1, 1L, MAX_GAS, 0L, false},
           {EIP1559_CALCULATOR, false, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
-          {EIP1559_CALCULATOR, true, (MAX_GAS / 2) + 1, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, false},
+          {EIP1559_CALCULATOR, true, (MAX_GAS / 2) + 1, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, true},
+          {EIP1559_CALCULATOR, true, MAX_GAS + 1, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, false},
+          {EIP1559_CALCULATOR, true, MAX_GAS, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, true},
           {EIP1559_CALCULATOR, true, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
           {
             EIP1559_CALCULATOR,
@@ -113,7 +121,7 @@ public class TransactionGasBudgetCalculatorTest {
             EIP_1559_FORK_BLOCK + 1,
             MAX_GAS,
             0L,
-            true
+            false
           }
         });
   }
@@ -133,16 +141,10 @@ public class TransactionGasBudgetCalculatorTest {
     assertThat(
             gasBudgetCalculator.hasBudget(
                 transaction(isEIP1559, transactionGasLimit),
-                blockHeader(blockNumber, blockHeaderGasLimit),
+                blockNumber,
+                blockHeaderGasLimit,
                 gasUsed))
         .isEqualTo(expectedHasBudget);
-  }
-
-  private BlockHeader blockHeader(final long blockNumber, final long gasLimit) {
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getNumber()).thenReturn(blockNumber);
-    when(blockHeader.getGasLimit()).thenReturn(gasLimit);
-    return blockHeader;
   }
 
   private Transaction transaction(final boolean isEIP1559, final long gasLimit) {
