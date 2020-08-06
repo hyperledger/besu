@@ -15,17 +15,21 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -35,6 +39,8 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <V> The type of values stored by this trie.
  */
 public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
+  private static final Logger LOG = LogManager.getLogger();
+
   private final GetVisitor<V> getVisitor = new GetVisitor<>();
   private final RemoveVisitor<V> removeVisitor = new RemoveVisitor<>();
   private final StoredNodeFactory<V> nodeFactory;
@@ -135,14 +141,17 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public CompletableFuture<Void> visitAll(
       final Consumer<Node<V>> nodeConsumer, final ExecutorService executorService) {
     nodeConsumer.accept(root);
-    return CompletableFuture.allOf(
+    final Set<CompletableFuture<Void>> rootChildFutures =
         root.getChildren().stream()
             .map(
                 rootChild ->
                     CompletableFuture.runAsync(
                         () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer)),
                         executorService))
-            .toArray(CompletableFuture[]::new));
+            .collect(toUnmodifiableSet());
+    rootChildFutures.forEach(
+        rootChildFuture -> rootChildFuture.thenRun(() -> LOG.info("finished a mark work item")));
+    return CompletableFuture.allOf(rootChildFutures.toArray(CompletableFuture[]::new));
   }
 
   @Override
