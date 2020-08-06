@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static java.lang.Integer.parseInt;
 
+import com.google.common.collect.Iterables;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -231,38 +232,29 @@ public class MarkSweepPruner {
     markLock.lock();
     try {
       pendingMarks.add(hash);
-      maybeFlushPendingMarks();
+      if (pendingMarks.size() >= operationsPerTransaction) {
+        flushPendingMarks();
+      }
     } finally {
       markLock.unlock();
-    }
-  }
-
-  private void markNodes(final Collection<Bytes32> nodeHashes) {
-    markedNodesCounter.inc(nodeHashes.size());
-    markLock.lock();
-    try {
-      pendingMarks.addAll(nodeHashes);
-      maybeFlushPendingMarks();
-    } finally {
-      markLock.unlock();
-    }
-  }
-
-  private void maybeFlushPendingMarks() {
-    if (pendingMarks.size() >= operationsPerTransaction) {
-      flushPendingMarks();
     }
   }
 
   private void flushPendingMarks() {
     final KeyValueStorageTransaction transaction = markStorage.startTransaction();
-    markLock.lock();
-    try {
-      pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
-      pendingMarks.clear();
-    } finally {
-      markLock.unlock();
-    }
+    pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
     transaction.commit();
+    pendingMarks.clear();
+  }
+
+  private void markNodes(final Collection<Bytes32> nodeHashes) {
+    Iterables.partition(nodeHashes, operationsPerTransaction)
+        .forEach(
+            nodeHashBatch -> {
+              final KeyValueStorageTransaction transaction = markStorage.startTransaction();
+              nodeHashBatch.forEach(nodeHash -> transaction.put(nodeHash.toArrayUnsafe(), IN_USE));
+              transaction.commit();
+              markedNodesCounter.inc(nodeHashBatch.size());
+            });
   }
 }
