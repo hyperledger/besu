@@ -259,8 +259,8 @@ public class BlockTransactionSelector {
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
 
     final long gasUsed;
-    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
-      gasUsed = transactionSelectionResult.getTotalCumulativeGasUsed();
+    if (ExperimentalEIPs.eip1559Enabled && transaction.isEIP1559Transaction()) {
+      gasUsed = transactionSelectionResult.getEip1559CumulativeGasUsed();
     } else {
       gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();
     }
