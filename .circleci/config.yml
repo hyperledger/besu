@@ -169,11 +169,11 @@ jobs:
           at: ~/project
       - setup_remote_docker
       - run:
-          name: hadoLint_java_11
+          name: hadoLint_openjdk_11
           command: |
             docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
       - run:
-          name: hadoLint_java_latest
+          name: hadoLint_openjdk_latest
           command: |
             docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
       - run:
