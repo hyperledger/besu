@@ -266,6 +266,16 @@ public class FilterManager extends AbstractVerticle {
     return logs;
   }
 
+  public BlockParameter getToBlock(final String filterId) {
+    final LogFilter filter = filterRepository.getFilter(filterId, LogFilter.class).orElse(null);
+    if (filter == null) {
+      return null;
+    } else {
+      filter.resetExpireTime();
+      return filter.getToBlock();
+    }
+  }
+
   public List<LogWithMetadata> logs(final String filterId) {
     final LogFilter filter = filterRepository.getFilter(filterId, LogFilter.class).orElse(null);
     if (filter == null) {

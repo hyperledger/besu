@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PrivGetFilterLogs implements JsonRpcMethod {
 
@@ -53,7 +55,12 @@ public class PrivGetFilterLogs implements JsonRpcMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final String filterId = request.getRequiredParameter(1, String.class);
 
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(request, privacyGroupId);
+    // TODO either need the filterManager to do the check (but it doesn't have the
+    // privacyController)
+    // OR get the toBlock from the filterManager
+    final BlockParameter blockParameter = filterManager.getToBlock(filterId);
+    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+        request, privacyGroupId, blockParameter.getNumber());
 
     final List<LogWithMetadata> logs = filterManager.logs(filterId);
     if (logs != null) {
@@ -65,8 +72,13 @@ public class PrivGetFilterLogs implements JsonRpcMethod {
   }
 
   private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
-      final JsonRpcRequestContext request, final String privacyGroupId) {
+      final JsonRpcRequestContext request,
+      final String privacyGroupId,
+      final Optional<Long> optionalBlockNumber) {
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    // TODO check group membership at previous block (they could have been removed as of blockNumber
+    // but should still get previous logs)
+    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(
+        privacyGroupId, enclavePublicKey, optionalBlockNumber);
   }
 }
