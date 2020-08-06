@@ -191,7 +191,7 @@ public class ProtocolScheduleBuilder {
               config
                       .getEIP1559BlockNumber()
                       .orElseThrow(() -> new RuntimeException("EIP-1559 must be enabled"))
-                  + feeMarket.getDecayRange()),
+                  + feeMarket.getMigrationDurationInBlocks()),
           MainnetProtocolSpecs.eip1559FinalizedDefinition(
               chainId,
               config.getContractSizeLimit(),

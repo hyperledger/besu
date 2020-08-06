@@ -94,26 +94,4 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
         .isFalse();
     disableEIP1559();
   }
-
-  @Test
-  public void shouldReturnTrueIfValidBaseFeeAfterForkBlock() {
-    enableEIP1559();
-    assertThat(
-            validationRule.validate(
-                blockHeader(FORK_BLOCK + 1, 0, Optional.of(987500000L)),
-                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee()))))
-        .isTrue();
-    disableEIP1559();
-  }
-
-  @Test
-  public void shouldReturnFalseIfInvalidBaseFeeAfterForkBlock() {
-    enableEIP1559();
-    assertThat(
-            validationRule.validate(
-                blockHeader(FORK_BLOCK + 1, 0, Optional.of(987500001L)),
-                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee()))))
-        .isFalse();
-    disableEIP1559();
-  }
 }

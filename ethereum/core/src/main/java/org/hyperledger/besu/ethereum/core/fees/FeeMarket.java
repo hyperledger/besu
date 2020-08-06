@@ -20,24 +20,18 @@ public interface FeeMarket {
 
   long getBasefeeMaxChangeDenominator();
 
-  long getTargetGasUsed();
+  long getMigrationDurationInBlocks();
 
-  long getMaxGas();
-
-  long getDecayRange();
-
-  long getGasIncrementAmount();
+  default long getGasIncrementAmount(final long gasLimit) {
+    return gasLimit / 2 / getMigrationDurationInBlocks();
+  }
 
   long getInitialBasefee();
-
-  long getSlackCoefficient();
 
   static FeeMarket eip1559() {
     return new FeeMarketConfig(
         ExperimentalEIPs.basefeeMaxChangeDenominator,
-        ExperimentalEIPs.targetGasUsed,
-        ExperimentalEIPs.slackCoefficient,
-        ExperimentalEIPs.decayRange,
+        ExperimentalEIPs.migrationDurationInBlocks,
         ExperimentalEIPs.initialBasefee);
   }
 }
