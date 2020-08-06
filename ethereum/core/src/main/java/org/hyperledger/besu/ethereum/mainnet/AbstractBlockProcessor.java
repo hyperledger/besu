@@ -119,7 +119,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     for (final Transaction transaction : transactions) {
       final long remainingGasBudget = blockHeader.getGasLimit() - gasUsed;
-      if (!gasBudgetCalculator.hasBudget(transaction, blockHeader, gasUsed)) {
+      if (!gasBudgetCalculator.hasBudget(
+          transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), gasUsed)) {
         LOG.warn(
             "Transaction processing error: transaction gas limit {} exceeds available block budget remaining {}",
             transaction.getGasLimit(),
