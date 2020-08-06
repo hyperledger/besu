@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import java.util.List;
@@ -128,9 +127,8 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public CompletableFuture<Void> visitAll(final Consumer<Node<V>> nodeConsumer) {
+  public void visitAll(final Consumer<Node<V>> nodeConsumer) {
     root.accept(new AllNodesVisitor<>(nodeConsumer));
-    return completedFuture(null);
   }
 
   @Override
