@@ -138,7 +138,7 @@ public class Pruner {
 
   private void mark(final BlockHeader header) {
     final Hash stateRoot = header.getStateRoot();
-    LOG.debug(
+    LOG.info(
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
         markBlockNumber,
         stateRoot);
@@ -150,7 +150,7 @@ public class Pruner {
   }
 
   private void sweep() {
-    LOG.debug(
+    LOG.info(
         "Begin sweeping unused nodes for pruning. Keeping full state for blocks {} to {}",
         markBlockNumber,
         markBlockNumber + blocksRetained);
