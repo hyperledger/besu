@@ -17,6 +17,7 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -304,16 +305,13 @@ public class StateBackupService {
             new RollingFileWriter(this::receiptFileName, backupStatus.compressed)) {
       for (int blockNumber = 0; blockNumber <= backupStatus.targetBlock; blockNumber++) {
         final Optional<Block> block = blockchain.getBlockByNumber(blockNumber);
-        if (block.isEmpty()) {
-          throw new IllegalStateException(
-              "Block data for " + blockNumber + " was not found in the archive");
-        }
+        checkState(
+            block.isPresent(), "Block data for %s was not found in the archive", blockNumber);
+
         final Optional<List<TransactionReceipt>> receipts =
             blockchain.getTxReceipts(block.get().getHash());
-        if (receipts.isEmpty()) {
-          throw new IllegalStateException(
-              "Receipts for " + blockNumber + " was not found in the archive");
-        }
+        checkState(
+            receipts.isPresent(), "Receipts for %s was not found in the archive", blockNumber);
 
         final BytesValueRLPOutput headerOutput = new BytesValueRLPOutput();
         block.get().getHeader().writeTo(headerOutput);
