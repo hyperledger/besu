@@ -45,6 +45,7 @@ dependencies {
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
   implementation project(':ethereum:stratum')
+  implementation project(':ethereum:ethstats')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
