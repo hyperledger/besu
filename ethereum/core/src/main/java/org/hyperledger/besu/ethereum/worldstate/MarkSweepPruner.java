@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static java.lang.Integer.parseInt;
 
-import com.google.common.collect.Iterables;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -230,12 +229,20 @@ public class MarkSweepPruner {
 
   @VisibleForTesting
   void markNode(final Bytes32 hash) {
+    markThenMaybeFlush(() -> pendingMarks.add(hash));
+  }
+
+  private void markNodes(final Collection<Bytes32> nodeHashes) {
+    markThenMaybeFlush(() -> pendingMarks.addAll(nodeHashes));
+  }
+
+  private void markThenMaybeFlush(final Runnable nodeMarker) {
     // We use the read lock here because pendingMarks is threadsafe and we want to allow all the
     // marking threads access simultaneously.
     final Lock addLock = markLock.readLock();
     addLock.lock();
     try {
-      pendingMarks.add(hash);
+      nodeMarker.run();
     } finally {
       addLock.unlock();
     }
@@ -264,16 +271,5 @@ public class MarkSweepPruner {
     pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
     transaction.commit();
     pendingMarks.clear();
-  }
-
-  private void markNodes(final Collection<Bytes32> nodeHashes) {
-    Iterables.partition(nodeHashes, operationsPerTransaction)
-        .forEach(
-            nodeHashBatch -> {
-              final KeyValueStorageTransaction transaction = markStorage.startTransaction();
-              nodeHashBatch.forEach(nodeHash -> transaction.put(nodeHash.toArrayUnsafe(), IN_USE));
-              transaction.commit();
-              markedNodesCounter.inc(nodeHashBatch.size());
-            });
   }
 }
