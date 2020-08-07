@@ -104,23 +104,18 @@ public class PrivGetLogs implements JsonRpcMethod {
       final Hash blockHash) {
     final Optional<BlockHeader> blockHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
     if (blockHeader.isEmpty()) {
-      return getEmptyList();
+      return Collections.emptyList();
     }
     final long blockNumber = blockHeader.get().getNumber();
-    // check if they were a member at that block
     checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, blockNumber);
     return privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery());
-  }
-
-  private List<LogWithMetadata> getEmptyList() {
-    return Collections.emptyList();
   }
 
   private void checkIfAuthenticatedUserWasMemberAtBlock(
       final JsonRpcRequestContext request, final String privacyGroupId, final long blockNumber) {
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
     // check group membership at previous block (they could have been removed as of blockNumber but
-    // should still get previous logs)
+    // membership will be correct as at previous block)
     final long blockNumberToCheck = blockNumber == 0 ? 0 : blockNumber - 1;
     privacyController.verifyPrivacyGroupContainsEnclavePublicKey(
         privacyGroupId, enclavePublicKey, Optional.of(blockNumberToCheck));
