@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -72,39 +73,48 @@ public class PrivGetLogs implements JsonRpcMethod {
             .getBlockHash()
             .map(
                 blockHash -> {
-                  final Optional<BlockHeader> blockHeader =
-                      blockchainQueries.getBlockHeaderByHash(blockHash);
-                  if (blockHeader.isEmpty()) {
-                    return getEmptyList();
-                  }
-                  final long blockNumber = blockHeader.get().getNumber();
-                  // check if they were a member at that block
-                  checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
-                      requestContext, privacyGroupId, blockNumber);
-                  return privacyQueries.matchingLogs(
-                      privacyGroupId, blockHash, filter.getLogsQuery());
+                  return findLogsForBlockHash(requestContext, privacyGroupId, filter, blockHash);
                 })
             .orElseGet(
                 () -> {
-                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
-                  final long toBlockNumber =
-                      filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
-                  // TODO they could have been a member of the group for part of the range
-                  checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
-                      requestContext, privacyGroupId, toBlockNumber);
-                  return privacyQueries.matchingLogs(
-                      privacyGroupId, fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+                  return findLogsForBlockRange(requestContext, privacyGroupId, filter);
                 });
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new LogsResult(matchingLogs));
   }
 
+  private List<LogWithMetadata> findLogsForBlockRange(
+      JsonRpcRequestContext requestContext, String privacyGroupId, FilterParameter filter) {
+    final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
+    final long toBlockNumber =
+        filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
+    // TODO they could have been a member of the group for part of the range
+    checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, toBlockNumber);
+    return privacyQueries.matchingLogs(
+        privacyGroupId, fromBlockNumber, toBlockNumber, filter.getLogsQuery());
+  }
+
+  private List<LogWithMetadata> findLogsForBlockHash(
+      JsonRpcRequestContext requestContext,
+      String privacyGroupId,
+      FilterParameter filter,
+      Hash blockHash) {
+    final Optional<BlockHeader> blockHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
+    if (blockHeader.isEmpty()) {
+      return getEmptyList();
+    }
+    final long blockNumber = blockHeader.get().getNumber();
+    // check if they were a member at that block
+    checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, blockNumber);
+    return privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery());
+  }
+
   private List<LogWithMetadata> getEmptyList() {
     return Collections.emptyList();
   }
 
-  private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+  private void checkIfAuthenticatedUserWasMemberAtBlock(
       final JsonRpcRequestContext request, final String privacyGroupId, final long blockNumber) {
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
     // check group membership at previous block (they could have been removed as of blockNumber but
