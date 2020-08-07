@@ -85,7 +85,9 @@ public class PrivGetLogs implements JsonRpcMethod {
   }
 
   private List<LogWithMetadata> findLogsForBlockRange(
-      JsonRpcRequestContext requestContext, String privacyGroupId, FilterParameter filter) {
+      final JsonRpcRequestContext requestContext,
+      final String privacyGroupId,
+      final FilterParameter filter) {
     final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
@@ -96,10 +98,10 @@ public class PrivGetLogs implements JsonRpcMethod {
   }
 
   private List<LogWithMetadata> findLogsForBlockHash(
-      JsonRpcRequestContext requestContext,
-      String privacyGroupId,
-      FilterParameter filter,
-      Hash blockHash) {
+      final JsonRpcRequestContext requestContext,
+      final String privacyGroupId,
+      final FilterParameter filter,
+      final Hash blockHash) {
     final Optional<BlockHeader> blockHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
     if (blockHeader.isEmpty()) {
       return getEmptyList();
