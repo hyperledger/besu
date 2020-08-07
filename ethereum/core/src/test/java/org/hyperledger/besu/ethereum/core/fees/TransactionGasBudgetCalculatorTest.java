@@ -90,7 +90,7 @@ public class TransactionGasBudgetCalculatorTest {
           {
             EIP1559_CALCULATOR,
             true,
-            (MAX_GAS / 2) + FEE_MARKET.getGasIncrementAmount(MAX_GAS),
+            (MAX_GAS / 2) + MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks(),
             EIP_1559_FORK_BLOCK + 1,
             MAX_GAS,
             0L,
@@ -99,7 +99,7 @@ public class TransactionGasBudgetCalculatorTest {
           {
             EIP1559_CALCULATOR,
             true,
-            (MAX_GAS / 2) + FEE_MARKET.getGasIncrementAmount(MAX_GAS) + 1,
+            (MAX_GAS / 2) + MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks() + 1,
             EIP_1559_FORK_BLOCK + 1,
             MAX_GAS,
             0L,
@@ -108,7 +108,7 @@ public class TransactionGasBudgetCalculatorTest {
           {
             EIP1559_CALCULATOR,
             false,
-            (MAX_GAS / 2) - FEE_MARKET.getGasIncrementAmount(MAX_GAS),
+            (MAX_GAS / 2) - MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks(),
             EIP_1559_FORK_BLOCK + 1,
             MAX_GAS,
             0L,
@@ -117,7 +117,7 @@ public class TransactionGasBudgetCalculatorTest {
           {
             EIP1559_CALCULATOR,
             false,
-            (MAX_GAS / 2) - FEE_MARKET.getGasIncrementAmount(MAX_GAS) + 1,
+            (MAX_GAS / 2) - MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks() + 1,
             EIP_1559_FORK_BLOCK + 1,
             MAX_GAS,
             0L,

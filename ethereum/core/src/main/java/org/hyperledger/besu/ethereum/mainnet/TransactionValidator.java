@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 
+import java.util.Optional;
+
 /** Validates transaction based on some criteria. */
 public interface TransactionValidator {
 
@@ -29,7 +31,8 @@ public interface TransactionValidator {
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
-  ValidationResult<TransactionInvalidReason> validate(Transaction transaction);
+  ValidationResult<TransactionInvalidReason> validate(
+      Transaction transaction, Optional<Long> baseFee);
 
   /**
    * Asserts whether a transaction is valid for the sender accounts current state.

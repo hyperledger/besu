@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -51,6 +52,9 @@ public class MainnetTransactionValidatorTest {
   private static final KeyPair senderKeys = KeyPair.generate();
 
   @Mock private GasCalculator gasCalculator;
+
+  @Mock private TransactionPriceCalculator transactionPriceCalculator;
+
   final FeeMarket feeMarket = FeeMarket.eip1559();
 
   private final Transaction basicTransaction =
@@ -74,7 +78,7 @@ public class MainnetTransactionValidatorTest {
             .createTransaction(senderKeys);
     when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
 
-    assertThat(validator.validate(transaction))
+    assertThat(validator.validate(transaction, Optional.empty()))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT));
@@ -84,7 +88,7 @@ public class MainnetTransactionValidatorTest {
   public void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
-    assertThat(validator.validate(basicTransaction))
+    assertThat(validator.validate(basicTransaction, Optional.empty()))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason
@@ -95,7 +99,7 @@ public class MainnetTransactionValidatorTest {
   public void shouldRejectTransactionWhenTransactionHasIncorrectChainId() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.valueOf(2)));
-    assertThat(validator.validate(basicTransaction))
+    assertThat(validator.validate(basicTransaction, Optional.empty()))
         .isEqualTo(
             ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID));
   }
@@ -245,6 +249,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
+            Optional.of(transactionPriceCalculator),
             false,
             Optional.empty(),
             Optional.of(eip1559),
@@ -254,7 +259,7 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(21000)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    assertThat(validator.validate(transaction))
+    assertThat(validator.validate(transaction, Optional.empty()))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
