@@ -36,7 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -63,7 +65,7 @@ public class MarkSweepPruner {
   private final Counter sweptNodesCounter;
   private final Stopwatch markStopwatch;
   private volatile long nodeAddedListenerId;
-  private final ReentrantLock markLock = new ReentrantLock(true);
+  private final ReadWriteLock markLock = new ReentrantReadWriteLock();
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final int prunerThreads;
 
@@ -228,15 +230,32 @@ public class MarkSweepPruner {
 
   @VisibleForTesting
   void markNode(final Bytes32 hash) {
-    markedNodesCounter.inc();
-    markLock.lock();
+    // We use the read lock here because pendingMarks is threadsafe and we want to allow all the
+    // marking threads access simultaneously.
+    final Lock addLock = markLock.readLock();
+    addLock.lock();
     try {
       pendingMarks.add(hash);
-      if (pendingMarks.size() >= operationsPerTransaction) {
-        flushPendingMarks();
-      }
     } finally {
-      markLock.unlock();
+      addLock.unlock();
+    }
+    markedNodesCounter.inc();
+
+    // However, when the size of pendingMarks grows too large, we want all the treads to stop adding
+    // because we're going to clear the set.
+    // Therefore, we need to take out a write lock.
+    if (pendingMarks.size() >= operationsPerTransaction) {
+      final Lock flushLock = markLock.writeLock();
+      flushLock.lock();
+      try {
+        // Check once again that the condition holds. If it doesn't, that means another thread
+        // already flushed them.
+        if (pendingMarks.size() >= operationsPerTransaction) {
+          flushPendingMarks();
+        }
+      } finally {
+        flushLock.unlock();
+      }
     }
   }
 
