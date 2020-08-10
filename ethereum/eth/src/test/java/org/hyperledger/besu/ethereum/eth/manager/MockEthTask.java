@@ -49,11 +49,11 @@ public class MockEthTask extends AbstractEthTask<Object> {
 
   void complete() {
     if (hasBeenStarted() && countdown.getCount() == 0) {
-      result.get().complete(null);
+      result.complete(null);
     }
   }
 
   void fail() {
-    result.get().completeExceptionally(new RuntimeException("Failure forced for testing"));
+    result.completeExceptionally(new RuntimeException("Failure forced for testing"));
   }
 }
