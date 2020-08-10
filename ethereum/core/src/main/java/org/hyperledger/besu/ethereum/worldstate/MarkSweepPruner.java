@@ -248,8 +248,8 @@ public class MarkSweepPruner {
     }
     markedNodesCounter.inc();
 
-    // However, when the size of pendingMarks grows too large, we want all the treads to stop adding
-    // because we're going to clear the set.
+    // However, when the size of pendingMarks grows too large, we want all the threads to stop
+    // adding because we're going to clear the set.
     // Therefore, we need to take out a write lock.
     if (pendingMarks.size() >= operationsPerTransaction) {
       final Lock flushLock = markLock.writeLock();
