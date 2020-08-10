@@ -4,7 +4,7 @@
 
 ### Additions and Improvements
 
-* Experimental offline backup and restore has been added via the CLI `operator x-backup-state` and 
+* Experimental offline backup and restore has been added via the `operator x-backup-state` and 
   `operator x-restore-state` CLI commands.  Data formats will be fluid for as long as the `x-` 
   prefix is present in the CLI so it is advised not to rely on these backups for disaster recovery.
 
