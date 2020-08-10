@@ -153,7 +153,6 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
         .addParticipants(Collections.singletonList(thirdParticipant.raw()))
         .send();
     final byte[] version2 = defaultPrivacyGroupManagementContract.getVersion().send();
-    defaultPrivacyGroupManagementContract.lock().send();
     defaultPrivacyGroupManagementContract.removeParticipant(secondParticipant.raw()).send();
     final byte[] version3 = defaultPrivacyGroupManagementContract.getVersion().send();
 
