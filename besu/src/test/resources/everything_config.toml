@@ -11,6 +11,7 @@
 # Node Information
 data-path="~/besudata"
 logging="INFO"
+color-enabled=false
 node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 
@@ -152,6 +153,10 @@ target-gas-limit=8000000
 
 # transaction log bloom filter caching
 auto-log-bloom-caching-enabled=true
+
+# ethstats
+Xethstats="nodename:secret@host:1234"
+Xethstats-contact="contact@mail.n"
 
 # feature flags
 Xsecp256k1-native-enabled=false

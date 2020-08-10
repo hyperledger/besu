@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatService;
@@ -33,7 +34,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.util.OptionalInt;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -62,8 +63,9 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
-      final MetricsSystem metricsSystem) {
-    super(nodeKey, config, peerPermissions, natService, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final MaintainedPeers maintainedPeers) {
+    super(nodeKey, config, peerPermissions, natService, metricsSystem, maintainedPeers);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
 
@@ -216,7 +218,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             // Acquire the senders coordinates to build a Peer representation from them.
             final String host = datagram.sender().host();
             final int port = datagram.sender().port();
-            final Endpoint endpoint = new Endpoint(host, port, OptionalInt.empty());
+            final Endpoint endpoint = new Endpoint(host, port, Optional.empty());
             handleIncomingPacket(endpoint, event.result());
           } else {
             if (event.cause() instanceof PeerDiscoveryPacketDecodingException) {

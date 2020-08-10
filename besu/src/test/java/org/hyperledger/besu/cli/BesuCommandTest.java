@@ -1324,6 +1324,30 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void ethStatsOptionIsParsedCorrectly() {
+    final String url = "besu-node:secret@host:443";
+    parseCommand("--Xethstats", url);
+    verify(mockRunnerBuilder).ethstatsUrl(url);
+  }
+
+  @Test
+  public void ethStatsContactOptionIsParsedCorrectly() {
+    final String contact = "contact@mail.net";
+    parseCommand("--Xethstats", "besu-node:secret@host:443", "--Xethstats-contact", contact);
+    verify(mockRunnerBuilder).ethstatsContact(contact);
+  }
+
+  @Test
+  public void ethStatsContactOptionCannotBeUsedWithoutEthStatsServerProvided() {
+    parseCommand("--Xethstats-contact", "besu-updated");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact or provide an url (via --Xethstats=nodename:secret@host:port)");
+  }
+
+  @Test
   public void helpShouldDisplayNatMethodInfo() {
     parseCommand("--help");
 
@@ -2652,6 +2676,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
+  }
+
+  @Test
+  public void colorCanBeEnabledOrDisabledExplicitly() {
+    Stream.of(true, false)
+        .forEach(
+            bool -> {
+              parseCommand("--color-enabled", bool.toString());
+              assertThat(BesuCommand.getColorEnabled()).contains(bool);
+            });
   }
 
   @Ignore

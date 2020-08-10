@@ -136,7 +136,10 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
             privacyParameters.getPrivateWorldStateReader());
     return privacyParameters.isMultiTenancyEnabled()
         ? new MultiTenancyPrivacyController(
-            defaultPrivacyController, chainId, privacyParameters.getEnclave())
+            defaultPrivacyController,
+            chainId,
+            privacyParameters.getEnclave(),
+            privacyParameters.isOnchainPrivacyGroupsEnabled())
         : defaultPrivacyController;
   }
 

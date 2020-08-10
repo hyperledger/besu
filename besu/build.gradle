@@ -44,6 +44,7 @@ dependencies {
   implementation project(':ethereum:retesteth')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:stratum')
+  implementation project(':ethereum:ethstats')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
@@ -66,6 +67,7 @@ dependencies {
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
+  runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
