@@ -12,7 +12,7 @@
 
 * New docker images are being generated to use the lastest version of OpenJDK (currently 14.0.1) with the tag suffix of `-openjdk-latest`, for example `1.5.2-openjdk-latest`.
 * New docker images are being generated to use [GraalVM](https://www.graalvm.org/) with the tag suffix of `-graalvm`, for example `1.5.2-graalvm`.
-* The existing images based on Java 11 are also being tagged with `-openjdk-11`.  
+* The existing images based on Java 11 are also being tagged with the suffix `-openjdk-11`, for example `1.5.2-openjdk-11`, as well as `1.5.2`.  
 
 The intent is that the major Java VM version or Java VM type shipped with the default docker images (`latest`, `1.5.x`, etc.) may be changed durring future quarterly releases but will remain consistent within quarterly releases.
 
