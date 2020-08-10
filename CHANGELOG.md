@@ -9,6 +9,7 @@
   prefix is present in the CLI so it is advised not to rely on these backups for disaster recovery.
 
 ### Bug Fixes
+- Offchain permissioning - fixed bug where sync status check prevented peering if static nodes configured. [\#1252](https://github.com/hyperledger/besu/issues/1252)
 
 #### Previously identified known issues
  
