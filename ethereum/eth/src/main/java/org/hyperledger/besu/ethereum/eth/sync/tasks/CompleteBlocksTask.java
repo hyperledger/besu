@@ -128,10 +128,8 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     blocksResult.forEach((block) -> blocks.put(block.getHeader().getNumber(), block));
 
     if (incompleteHeaders().isEmpty()) {
-      result
-          .get()
-          .complete(
-              headers.stream().map(h -> blocks.get(h.getNumber())).collect(Collectors.toList()));
+      result.complete(
+          headers.stream().map(h -> blocks.get(h.getNumber())).collect(Collectors.toList()));
     }
 
     return completedFuture(blocksResult);
