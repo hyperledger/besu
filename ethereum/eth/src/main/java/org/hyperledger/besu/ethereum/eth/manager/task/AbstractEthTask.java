@@ -71,7 +71,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   @Override
   public final CompletableFuture<T> run() {
-    if (!result.isCancelled() && started.compareAndSet(false, true)) {
+    if (!result.isDone() && started.compareAndSet(false, true)) {
       executeTaskTimed();
       result.whenComplete((r, t) -> cleanup());
     }
@@ -80,7 +80,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   @Override
   public final CompletableFuture<T> runAsync(final ExecutorService executor) {
-    if (!result.isCancelled() && started.compareAndSet(false, true)) {
+    if (!result.isDone() && started.compareAndSet(false, true)) {
       executor.execute(this::executeTaskTimed);
       result.whenComplete((r, t) -> cleanup());
     }
