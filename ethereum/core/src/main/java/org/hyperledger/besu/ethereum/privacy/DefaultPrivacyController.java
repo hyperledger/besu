@@ -25,6 +25,7 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -514,5 +515,23 @@ public class DefaultPrivacyController implements PrivacyController {
   public void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey) {
     // NO VALIDATION NEEDED
+  }
+
+  @Override
+  public void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
+      throws MultiTenancyValidationException {
+    verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+  }
+
+  @Override
+  public PrivateTransactionSimulator getTransactionSimulator() {
+    return privateTransactionSimulator;
+  }
+
+  @Override
+  public Optional<Hash> getBlockHashByBlockNumber(final Optional<Long> blockNumber) {
+    return blockNumber.flatMap(
+        blockNum -> blockchain.getBlockByNumber(blockNum).map(Block::getHash));
   }
 }
