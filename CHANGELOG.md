@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- GraphQL queries of `miner` in IBFT networks will no longer return an error.  PR [\#1282](https://github.com/hyperledger/besu/pull/1282) issue [\#1272](https://github.com/hyperledger/besu/issues/1272).
+
 #### Previously identified known issues
  
 - [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
