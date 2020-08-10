@@ -58,13 +58,16 @@ public class PrivGetFilterChanges implements JsonRpcMethod {
     final String filterId = requestContext.getRequiredParameter(1, String.class);
 
     final BlockParameter blockParameter = filterManager.getToBlock(filterId);
-    checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, blockParameter);
+    // null blockParameter means filter not found
+    if (blockParameter != null) {
+      checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, blockParameter);
 
-    final List<LogWithMetadata> logs = filterManager.logsChanges(filterId);
-    if (logs != null) {
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), new LogsResult(logs));
+      final List<LogWithMetadata> logs = filterManager.logsChanges(filterId);
+      if (logs != null) {
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(), new LogsResult(logs));
+      }
     }
-
     return new JsonRpcErrorResponse(
         requestContext.getRequest().getId(), JsonRpcError.FILTER_NOT_FOUND);
   }
