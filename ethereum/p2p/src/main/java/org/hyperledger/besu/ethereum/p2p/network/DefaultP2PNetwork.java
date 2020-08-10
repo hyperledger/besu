@@ -443,7 +443,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx, nodeKey, config.getDiscovery(), peerPermissions, natService, metricsSystem);
+          vertx,
+          nodeKey,
+          config.getDiscovery(),
+          peerPermissions,
+          natService,
+          metricsSystem,
+          maintainedPeers);
     }
 
     private RlpxAgent createRlpxAgent(

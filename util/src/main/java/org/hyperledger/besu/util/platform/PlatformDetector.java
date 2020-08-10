@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util;
+package org.hyperledger.besu.util.platform;
 
 import java.util.Locale;
 
@@ -27,6 +27,7 @@ public class PlatformDetector {
   private static String _os;
   private static String _osType;
   private static String _vm;
+  private static String _arch;
 
   public static String getOSType() {
     if (_osType == null) {
@@ -40,6 +41,13 @@ public class PlatformDetector {
       detect();
     }
     return _os;
+  }
+
+  public static String getArch() {
+    if (_arch == null) {
+      detect();
+    }
+    return _arch;
   }
 
   public static String getVM() {
@@ -58,6 +66,7 @@ public class PlatformDetector {
     final String detectedJavaVersion = normalizeJavaVersion("java.specification.version");
 
     _os = detectedOS + '-' + detectedArch;
+    _arch = detectedArch;
     _osType = detectedOS;
     _vm = detectedVM + "-java-" + detectedJavaVersion;
   }
@@ -160,7 +169,7 @@ public class PlatformDetector {
   }
 
   static String normalizeVM(final String javaVendor, final String javaVmName) {
-    if (javaVmName.contains("graalvm")) {
+    if (javaVmName.contains("graalvm") || javaVendor.contains("graalvm")) {
       return "graalvm";
     }
     if (javaVendor.contains("oracle")) {

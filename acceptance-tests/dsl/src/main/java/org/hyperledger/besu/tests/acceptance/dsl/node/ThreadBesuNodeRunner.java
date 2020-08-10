@@ -111,7 +111,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
     ThreadContext.put("node", node.getName());
 
-    if (node.getRunCommand().isPresent()) {
+    if (!node.getRunCommand().isEmpty()) {
       throw new UnsupportedOperationException("commands are not supported with thread runner");
     }
 
