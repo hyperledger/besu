@@ -76,7 +76,8 @@ public class PrivGetFilterLogs implements JsonRpcMethod {
         privacyGroupId, enclavePublicKey, getBlockNumberToCheckForGroupMembership(blockParameter));
   }
 
-  private Optional<Long> getBlockNumberToCheckForGroupMembership(BlockParameter blockParameter) {
+  private Optional<Long> getBlockNumberToCheckForGroupMembership(
+      final BlockParameter blockParameter) {
     // TODO check group membership at previous block (they could have been removed as of blockNumber
     // but should still get previous logs)
     if (blockParameter.isEarliest()) {

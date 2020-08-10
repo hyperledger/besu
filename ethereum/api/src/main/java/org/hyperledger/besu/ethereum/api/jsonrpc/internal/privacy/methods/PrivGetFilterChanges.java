@@ -79,7 +79,8 @@ public class PrivGetFilterChanges implements JsonRpcMethod {
   }
 
   @VisibleForTesting
-  public Optional<Long> getBlockNumberToCheckForGroupMembership(BlockParameter blockParameter) {
+  public Optional<Long> getBlockNumberToCheckForGroupMembership(
+      final BlockParameter blockParameter) {
     // TODO check group membership at previous block (they could have been removed as of blockNumber
     // but should still get previous logs)
     if (blockParameter.isEarliest()) {
