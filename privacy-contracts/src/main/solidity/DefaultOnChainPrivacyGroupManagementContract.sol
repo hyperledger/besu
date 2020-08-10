@@ -3,6 +3,7 @@ import "./OnChainPrivacyGroupManagementInterface.sol";
 
 contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupManagementInterface {
 
+    address private _owner;
     bool private _canExecute;
     bytes32 private _version;
     bytes32[] private distributionList;
@@ -12,62 +13,58 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
         return _version;
     }
 
-    // overrides
     function canExecute() external view returns (bool) {
         return _canExecute;
     }
 
-    // TODO: should take the enclave key as first argument
     function lock() public {
         require(_canExecute);
+        require(tx.origin == _owner, "Origin not the owner.");
         _canExecute = false;
     }
 
-    // TODO: should take the enclave key as first argument
     function unlock() public {
         require(!_canExecute);
+        require(tx.origin == _owner, "Origin not the owner.");
         _canExecute = true;
     }
 
-    function addParticipants(bytes32 _enclaveKey, bytes32[] memory _accounts) public returns (bool) {
+    function addParticipants(bytes32[] memory _accounts) public returns (bool) {
         require(!_canExecute);
-        if(distributionList.length == 0) {
-            addParticipant(_enclaveKey);
+        if (_owner == address(0x0)) {
+            _owner = tx.origin;
         }
-        require(isMember(_enclaveKey));
-        bool result = addAll(_enclaveKey, _accounts);
+        require(tx.origin == _owner, "Origin not the owner.");
+        bool result = addAll(_accounts);
         _canExecute = true;
         updateVersion();
         return result;
     }
 
-    function removeParticipant(bytes32 _enclaveKey, bytes32 _account) public returns (bool) {
-        require(isMember(_enclaveKey));
+    function removeParticipant(bytes32 _account) public returns (bool) {
+        require(tx.origin == _owner, "Origin not the owner.");
         bool result = removeInternal(_account);
         updateVersion();
         emit ParticipantRemoved(result, _account);
         return result;
     }
 
-    function getParticipants(bytes32 _enclaveKey) public view returns (bytes32[] memory) {
-        require(isMember(_enclaveKey));
+    function getParticipants() public view returns (bytes32[] memory) {
         return distributionList;
     }
 
-    function canUpgrade(bytes32 _enclaveKey) external view returns (bool) {
-        require(isMember(_enclaveKey));
+    function canUpgrade() external returns (bool) {
+        emit CanUpgrade(tx.origin, _owner);
+        require(tx.origin == _owner, "Origin not the owner.");
         return true;
     }
 
 
     //internal functions
-    function addAll(bytes32 _enclaveKey, bytes32[] memory _accounts) internal returns (bool) {
+    function addAll(bytes32[] memory _accounts) internal returns (bool) {
         bool allAdded = true;
         for (uint i = 0; i < _accounts.length; i++) {
-            if (_enclaveKey == _accounts[i]) {
-                emit ParticipantAdded(false, _accounts[i], "Adding own account as a Member is not permitted");
-                allAdded = allAdded && false;
-            } else if (isMember(_accounts[i])) {
+            if (isMember(_accounts[i])) {
                 emit ParticipantAdded(false, _accounts[i], "Account is already a Member");
                 allAdded = allAdded && false;
             } else {
@@ -121,5 +118,10 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
     event ParticipantRemoved(
         bool success,
         bytes32 account
+    );
+
+    event CanUpgrade(
+        address origin,
+        address owner
     );
 }

@@ -50,7 +50,7 @@ import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -255,10 +255,12 @@ public class EeaSendRawTransactionTest {
     when(privacyController.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.retrieveOnChainPrivacyGroup(any(Bytes.class), any(String.class)))
-        .thenReturn(
-            Optional.of(
-                new PrivacyGroup("", PrivacyGroup.Type.ONCHAIN, "", "", Collections.emptyList())));
+    final Optional<PrivacyGroup> optionalPrivacyGroup =
+        Optional.of(
+            new PrivacyGroup(
+                "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
+    when(privacyController.retrieveOnChainPrivacyGroup(any(), any()))
+        .thenReturn(optionalPrivacyGroup);
     when(privacyController.buildAndSendAddPayload(
             any(PrivateTransaction.class), any(Bytes32.class), any(String.class)))
         .thenReturn(Optional.of(ENCLAVE_PUBLIC_KEY));

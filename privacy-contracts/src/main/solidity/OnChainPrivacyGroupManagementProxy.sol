@@ -1,5 +1,6 @@
 pragma solidity ^0.5.12;
 
+pragma solidity ^0.5.9;
 import "./OnChainPrivacyGroupManagementInterface.sol";
 
 contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInterface {
@@ -14,27 +15,27 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         implementation = _newImp;
     }
 
-    function addParticipants(bytes32 enclaveKey, bytes32[] memory participants) public returns (bool) {
+    function addParticipants(bytes32[] memory participants) public returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        return privacyInterface.addParticipants(enclaveKey, participants);
+        return privacyInterface.addParticipants(participants);
     }
 
-    function getParticipants(bytes32 enclaveKey) view public returns (bytes32[] memory) {
+    function getParticipants() view public returns (bytes32[] memory) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        return privacyInterface.getParticipants(enclaveKey);
+        return privacyInterface.getParticipants();
     }
 
-    function removeParticipant(bytes32 enclaveKey, bytes32 account) public returns (bool) {
+    function removeParticipant(bytes32 account) public returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        return privacyInterface.removeParticipant(enclaveKey, account);
+        return privacyInterface.removeParticipant(account);
     }
 
-    function lock(bytes32 enclaveKey) public {
+    function lock() public {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.lock();
     }
 
-    function unlock(bytes32 enclaveKey) public {
+    function unlock() public {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.unlock();
     }
@@ -49,17 +50,17 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         return privacyInterface.getVersion();
     }
 
-    function canUpgrade(bytes32 _enclaveKey) external view returns (bool) {
+    function canUpgrade() external returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        return privacyInterface.canUpgrade(_enclaveKey);
+        return privacyInterface.canUpgrade();
     }
 
-    function upgradeTo(bytes32 _enclaveKey, address _newImplementation) external {
-        require(implementation != _newImplementation);
-        require(this.canUpgrade(_enclaveKey));
-        bytes32[] memory participants = this.getParticipants(_enclaveKey);
+    function upgradeTo(address _newImplementation) external {
+        require(implementation != _newImplementation, "The contract to upgrade to has to be different from the current management contract");
+        require(this.canUpgrade(), "Origin not allowed to upgrade the management contract.");
+        bytes32[] memory participants = this.getParticipants();
         _setImplementation(_newImplementation);
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        privacyInterface.addParticipants(_enclaveKey, participants);
+        privacyInterface.addParticipants(participants);
     }
 }

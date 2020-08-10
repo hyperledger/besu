@@ -36,7 +36,7 @@ public class FindOnChainPrivacyGroupTransaction
   public List<PrivacyRequestFactory.OnChainPrivacyGroup> execute(final NodeRequests node) {
     try {
       return node.privacy().privxFindOnChainPrivacyGroup(nodes).send().getGroups();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }

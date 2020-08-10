@@ -29,6 +29,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.Priv
 
 import java.util.List;
 
+import org.web3j.crypto.Credentials;
 import org.web3j.tx.Contract;
 
 public class PrivacyTransactions {
@@ -49,13 +50,16 @@ public class PrivacyTransactions {
   }
 
   public AddToOnChainPrivacyGroupTransaction addToPrivacyGroup(
-      final String privacyGroupId, final PrivacyNode adder, final PrivacyNode... nodes) {
-    return new AddToOnChainPrivacyGroupTransaction(privacyGroupId, adder, nodes);
+      final String privacyGroupId,
+      final PrivacyNode adder,
+      final Credentials signer,
+      final PrivacyNode... nodes) {
+    return new AddToOnChainPrivacyGroupTransaction(privacyGroupId, adder, signer, nodes);
   }
 
   public LockOnChainPrivacyGroupTransaction privxLockPrivacyGroupAndCheck(
-      final String privacyGroupId, final PrivacyNode locker) {
-    return new LockOnChainPrivacyGroupTransaction(privacyGroupId, locker);
+      final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
+    return new LockOnChainPrivacyGroupTransaction(privacyGroupId, locker, signer);
   }
 
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
@@ -87,8 +91,12 @@ public class PrivacyTransactions {
   }
 
   public RemoveFromOnChainPrivacyGroupTransaction removeFromPrivacyGroup(
-      final String privacyGroupId, final PrivacyNode remover, final PrivacyNode nodeToRemove) {
-    return new RemoveFromOnChainPrivacyGroupTransaction(privacyGroupId, remover, nodeToRemove);
+      final String privacyGroupId,
+      final PrivacyNode remover,
+      final Credentials signer,
+      final PrivacyNode nodeToRemove) {
+    return new RemoveFromOnChainPrivacyGroupTransaction(
+        privacyGroupId, remover, signer, nodeToRemove);
   }
 
   public EeaSendRawTransactionTransaction sendRawTransaction(final String transaction) {

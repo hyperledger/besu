@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.ADD_TO_GROUP_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
@@ -288,9 +288,7 @@ public class DefaultPrivacyController implements PrivacyController {
     // get the privateFor list from the management contract
     final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
-            privacyGroupId.toBase64String(),
-            buildCallParams(
-                Bytes.fromBase64String(enclavePublicKey), GET_PARTICIPANTS_METHOD_SIGNATURE));
+            privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
 
     if (privateTransactionSimulatorResultOptional.isPresent()
         && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
@@ -324,21 +322,16 @@ public class DefaultPrivacyController implements PrivacyController {
 
   private List<String> getParticipantsFromParameter(final Bytes input) {
     final List<String> participants = new ArrayList<>();
-    final Bytes mungedParticipants = input.slice(4 + 32 + 32 + 32);
+    final Bytes mungedParticipants = input.slice(4 + 32 + 32);
     for (int i = 0; i <= mungedParticipants.size() - 32; i += 32) {
       participants.add(mungedParticipants.slice(i, 32).toBase64String());
     }
     return participants;
   }
 
-  private CallParameter buildCallParams(final Bytes enclavePublicKey, final Bytes methodCall) {
+  private CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
-        Address.ZERO,
-        Address.ONCHAIN_PRIVACY_PROXY,
-        3000000,
-        Wei.of(1000),
-        Wei.ZERO,
-        Bytes.concatenate(methodCall, enclavePublicKey));
+        Address.ZERO, Address.ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
   private List<PrivateTransactionMetadata> buildTransactionMetadataList(
@@ -411,7 +404,7 @@ public class DefaultPrivacyController implements PrivacyController {
         && privateTransaction
             .getPayload()
             .toHexString()
-            .startsWith(ADD_TO_GROUP_METHOD_SIGNATURE.toHexString());
+            .startsWith(ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
   }
 
   @Override
@@ -455,8 +448,7 @@ public class DefaultPrivacyController implements PrivacyController {
         final Optional<PrivateTransactionProcessor.Result> result =
             privateTransactionSimulator.process(
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
-                buildCallParams(
-                    Bytes.fromBase64String(enclavePublicKey), GET_VERSION_METHOD_SIGNATURE));
+                buildCallParams(GET_VERSION_METHOD_SIGNATURE));
         new VersionedPrivateTransaction(privateTransaction, result).writeTo(rlpOutput);
         final List<String> onChainPrivateFor =
             resolveOnChainPrivateFor(privateTransaction, maybePrivacyGroup);
