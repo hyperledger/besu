@@ -271,7 +271,6 @@ public class FilterManager extends AbstractVerticle {
     if (filter == null) {
       return null;
     } else {
-      filter.resetExpireTime();
       return filter.getToBlock();
     }
   }
