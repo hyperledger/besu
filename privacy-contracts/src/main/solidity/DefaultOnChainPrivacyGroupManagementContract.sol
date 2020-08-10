@@ -42,6 +42,7 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
     }
 
     function removeParticipant(bytes32 _account) public returns (bool) {
+        require(_canExecute);
         require(tx.origin == _owner, "Origin not the owner.");
         bool result = removeInternal(_account);
         updateVersion();
@@ -54,7 +55,6 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
     }
 
     function canUpgrade() external returns (bool) {
-        emit CanUpgrade(tx.origin, _owner);
         require(tx.origin == _owner, "Origin not the owner.");
         return true;
     }
@@ -118,10 +118,5 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
     event ParticipantRemoved(
         bool success,
         bytes32 account
-    );
-
-    event CanUpgrade(
-        address origin,
-        address owner
     );
 }

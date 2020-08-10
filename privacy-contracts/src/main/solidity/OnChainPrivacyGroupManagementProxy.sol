@@ -56,8 +56,9 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
     }
 
     function upgradeTo(address _newImplementation) external {
-        require(implementation != _newImplementation, "The contract to upgrade to has to be different from the current management contract");
-        require(this.canUpgrade(), "Origin not allowed to upgrade the management contract.");
+        require(this.canExecute(), "The contract is locked.");
+        require(implementation != _newImplementation, "The contract to upgrade to has to be different from the current management contract.");
+        require(this.canUpgrade(), "Not allowed to upgrade the management contract.");
         bytes32[] memory participants = this.getParticipants();
         _setImplementation(_newImplementation);
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
