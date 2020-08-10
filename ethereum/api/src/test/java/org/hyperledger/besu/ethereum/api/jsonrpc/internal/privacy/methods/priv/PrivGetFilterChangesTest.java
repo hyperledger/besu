@@ -167,6 +167,17 @@ public class PrivGetFilterChangesTest {
         .hasMessageContaining("msg");
   }
 
+  @Test
+  public void getBlockNumberToCheckForGroupMembership() {
+    assertThat(method.getBlockNumberToCheckForGroupMembership(blockParameter)).isEmpty();
+    assertThat(method.getBlockNumberToCheckForGroupMembership(new BlockParameter("earliest")))
+        .get()
+        .isEqualTo(0L);
+    assertThat(method.getBlockNumberToCheckForGroupMembership(new BlockParameter(100L)))
+        .get()
+        .isEqualTo(99L);
+  }
+
   private JsonRpcRequestContext privGetFilterChangesRequest(
       final String privacyGroupId, final String filterId) {
     return new JsonRpcRequestContext(

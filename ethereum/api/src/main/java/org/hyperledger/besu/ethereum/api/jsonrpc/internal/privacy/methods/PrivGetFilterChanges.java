@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class PrivGetFilterChanges implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
@@ -55,12 +57,8 @@ public class PrivGetFilterChanges implements JsonRpcMethod {
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
     final String filterId = requestContext.getRequiredParameter(1, String.class);
 
-    // TODO either need the filterManager to do the check (but it doesn't have the
-    // privacyController)
-    // OR get the toBlock from the filterManager
     final BlockParameter blockParameter = filterManager.getToBlock(filterId);
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
-        requestContext, privacyGroupId, blockParameter.getNumber());
+    checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, blockParameter);
 
     final List<LogWithMetadata> logs = filterManager.logsChanges(filterId);
     if (logs != null) {
@@ -71,14 +69,30 @@ public class PrivGetFilterChanges implements JsonRpcMethod {
         requestContext.getRequest().getId(), JsonRpcError.FILTER_NOT_FOUND);
   }
 
-  private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+  private void checkIfAuthenticatedUserWasMemberAtBlock(
       final JsonRpcRequestContext request,
       final String privacyGroupId,
-      final Optional<Long> optionalBlockNumber) {
+      final BlockParameter blockParameter) {
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(
+        privacyGroupId, enclavePublicKey, getBlockNumberToCheckForGroupMembership(blockParameter));
+  }
+
+  @VisibleForTesting
+  public Optional<Long> getBlockNumberToCheckForGroupMembership(BlockParameter blockParameter) {
     // TODO check group membership at previous block (they could have been removed as of blockNumber
     // but should still get previous logs)
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(
-        privacyGroupId, enclavePublicKey, optionalBlockNumber);
+    if (blockParameter.isEarliest()) {
+      return Optional.of(0L);
+    } else if (blockParameter.isLatest()) {
+      // TODO if empty is passed, membership will be checked at chain head. If they were removed in
+      // that block, they get nothing
+      // TODO would be nice to return Optional.of(head - 1);
+      return Optional.empty();
+    } else if (blockParameter.isNumeric()) {
+      return Optional.of(blockParameter.getNumber().get() - 1);
+    } else {
+      return Optional.empty();
+    }
   }
 }
