@@ -92,4 +92,12 @@ public interface PrivacyController {
   void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey)
       throws MultiTenancyValidationException;
+
+  void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
+      throws MultiTenancyValidationException;
+
+  PrivateTransactionSimulator getTransactionSimulator();
+
+  Optional<Hash> getBlockHashByBlockNumber(Optional<Long> blockNumber);
 }

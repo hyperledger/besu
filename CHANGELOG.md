@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.5.2 
+
+### Additions and Improvements
+
+* Experimental offline backup and restore has been added via the `operator x-backup-state` and 
+  `operator x-restore-state` CLI commands.  Data formats will be fluid for as long as the `x-` 
+  prefix is present in the CLI so it is advised not to rely on these backups for disaster recovery.
+
+### Bug Fixes
+
+#### Previously identified known issues
+ 
+- [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
+- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
+- [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
+
 ## 1.5.1
 
 ### Deprecated 
@@ -11,20 +31,30 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 * In an IBFT2 network, a fixed block reward value and recipient address can be defined in genesis file [\#1132](https://github.com/hyperledger/besu/pull/1132)
 * JSON-RPC HTTP API Authorization: exit early when checking user permissions. [\#1144](https://github.com/hyperledger/besu/pull/1144)
 * HTTP/2 is enabled for JSON-RPC HTTP API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
-* Color output in consoles. It can be disabled with `--color-enabled=false`
+* Color output in consoles. It can be disabled with `--color-enabled=false` [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Add compatibility with ClusterIP services for the Kubernetes Nat Manager  [\#1156](https://github.com/hyperledger/besu/pull/1156)
+* In an IBFT2 network; a fixed block reward value and recipient address can be defined in genesis file [\#1132](https://github.com/hyperledger/besu/pull/1132)
 * Add fee cap for transactions submitted via RPC. [\#1137](https://github.com/hyperledger/besu/pull/1137) 
 
 ### Bug fixes 
 
-* When the default sync mode was changed to fast sync for named networks,
-there was one caveat we didn't address. The `dev` network should've been full sync by default.
-This has now been fixed.
+* When the default sync mode was changed to fast sync for named networks, there was one caveat we didn't address. The `dev` network should've been full sync by default. This has now been fixed. [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Fix synchronization timeout issue when the blocks were too large [\#1149](https://github.com/hyperledger/besu/pull/1149)
 * Fix missing results from eth_getLogs request. [\#1154](https://github.com/hyperledger/besu/pull/1154)
+* Fix issue allowing Besu to be used for DDoS amplification. [\#1146](https://github.com/hyperledger/besu/pull/1146)
 
 ### Known Issues 
 
+Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+
+#### Previously identified known issues
+ 
+- [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
+- [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
 
 ## 1.5 Breaking changes
 

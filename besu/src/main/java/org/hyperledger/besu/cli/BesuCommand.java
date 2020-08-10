@@ -159,6 +159,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -1039,6 +1040,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--Xethstats"},
+      paramLabel = "<nodename:secret@host:port>",
+      description = "Reporting URL of a ethstats server",
+      arity = "1")
+  private String ethstatsUrl = "";
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--Xethstats-contact"},
+      description = "Contact address to send to ethstats server",
+      arity = "1")
+  private String ethstatsContact = "";
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1319,6 +1335,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateP2PInterface(p2pInterface);
     validateMiningParams();
     validateNatParams();
+    validateNetStatsParams();
 
     return this;
   }
@@ -1364,6 +1381,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled"
               + " or select another mode (via --nat--method=XXXX)");
+    }
+  }
+
+  private void validateNetStatsParams() {
+    if (Strings.isNullOrEmpty(ethstatsUrl) && !ethstatsContact.isEmpty()) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
+              + " or provide an url (via --Xethstats=nodename:secret@host:port)");
     }
   }
 
@@ -2047,6 +2073,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
+            .ethstatsUrl(ethstatsUrl)
+            .ethstatsContact(ethstatsContact)
             .build();
 
     addShutdownHook(runner);
