@@ -169,7 +169,7 @@ public class PlatformDetector {
   }
 
   static String normalizeVM(final String javaVendor, final String javaVmName) {
-    if (javaVmName.contains("graalvm")) {
+    if (javaVmName.contains("graalvm") || javaVendor.contains("graalvm")) {
       return "graalvm";
     }
     if (javaVendor.contains("oracle")) {

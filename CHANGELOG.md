@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.5.2 
+
+### Additions and Improvements
+
+* Experimental offline backup and restore has been added via the `operator x-backup-state` and 
+  `operator x-restore-state` CLI commands.  Data formats will be fluid for as long as the `x-` 
+  prefix is present in the CLI so it is advised not to rely on these backups for disaster recovery.
+
+### Bug Fixes
+
+#### Previously identified known issues
+ 
+- [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
+- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
+- [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
+
 ## 1.5.1
 
 ### Deprecated 
