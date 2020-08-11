@@ -9,9 +9,15 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 
 [`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944). 
 
-Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
+Workaround -> Limit the number of blocks queried by each `eth_getLogs` call.
 
-A fix for this issue is being actively worked on.
+## Logs queries missing results against chain head
+
+When using `eth_getLogs` against the head of Goerli to retrieve Eth2 deposit log events, [some results seem to be missing](https://github.com/hyperledger/besu/issues/1153). 
+
+Workaround -> Use `eth_getLogs` against historical blocks rather than the chain head directly. 
+
+A fix for this issue is actively being worked on. 
 
 ## Eth/65 loses peers 
 
