@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
@@ -113,6 +114,7 @@ public class BlockTransactionSelector {
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
   private final TransactionPriceCalculator transactionPriceCalculator;
+  private final TransactionGasBudgetCalculator transactionGasBudgetCalculator;
   private final Optional<EIP1559> eip1559;
 
   private final TransactionSelectionResults transactionSelectionResult =
@@ -130,6 +132,7 @@ public class BlockTransactionSelector {
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final TransactionPriceCalculator transactionPriceCalculator,
+      final TransactionGasBudgetCalculator gasBudgetCalculator,
       final Optional<EIP1559> eip1559) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
@@ -142,6 +145,7 @@ public class BlockTransactionSelector {
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
     this.transactionPriceCalculator = transactionPriceCalculator;
+    this.transactionGasBudgetCalculator = gasBudgetCalculator;
     this.eip1559 = eip1559;
   }
 
@@ -254,23 +258,18 @@ public class BlockTransactionSelector {
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
 
-    final long blockGasRemaining;
-    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
-      if (transaction.isEIP1559Transaction()) {
-        blockGasRemaining =
-            processableBlockHeader.getGasLimit()
-                - transactionSelectionResult.getEip1559CumulativeGasUsed();
-      } else {
-        blockGasRemaining =
-            processableBlockHeader.getGasLimit()
-                - transactionSelectionResult.getFrontierCumulativeGasUsed();
-      }
+    final long gasUsed;
+    if (ExperimentalEIPs.eip1559Enabled && transaction.isEIP1559Transaction()) {
+      gasUsed = transactionSelectionResult.getEip1559CumulativeGasUsed();
     } else {
-      blockGasRemaining =
-          processableBlockHeader.getGasLimit()
-              - transactionSelectionResult.getFrontierCumulativeGasUsed();
+      gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();
     }
-    return (transaction.getGasLimit() > blockGasRemaining);
+
+    return !transactionGasBudgetCalculator.hasBudget(
+        transaction,
+        processableBlockHeader.getNumber(),
+        processableBlockHeader.getGasLimit(),
+        gasUsed);
   }
 
   private boolean blockOccupancyAboveThreshold() {

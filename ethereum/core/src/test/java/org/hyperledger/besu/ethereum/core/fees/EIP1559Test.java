@@ -86,20 +86,26 @@ public class EIP1559Test {
 
   @Test
   public void eip1559GasPool() {
-    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(10000024L);
+    // LEGACY_GAS_LIMIT: BLOCK_GAS_TARGET - EIP1559_GAS_TARGET. The maximum amount of gas legacy
+    // transactions can use in a given block.
+    // EIP1559_GAS_LIMIT: EIP1559_GAS_TARGET * 2. The maximum amount of gas EIP-1559 transactions
+    // can use in a given block.
+    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(20000024L);
     assertThat(
             eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)
                 + eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo(25000012L);
+        .isEqualTo((MAX_GAS - 20000024L / 2) + 20000024L);
   }
 
   @Test
   public void legacyGasPool() {
-    assertThat(eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(14999988L);
+    // LEGACY_GAS_LIMIT: BLOCK_GAS_TARGET - EIP1559_GAS_TARGET. The maximum amount of gas legacy
+    // transactions can use in a given block.
+    assertThat(eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(9999988L);
     assertThat(
             eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)
                 + eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo(25000012L);
+        .isEqualTo(9999988L + (MAX_GAS - 9999988L) * 2);
   }
 
   @Test

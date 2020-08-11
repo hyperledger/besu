@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -122,6 +123,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -161,6 +163,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -218,6 +221,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -262,6 +266,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -297,6 +302,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final Transaction tx = createTransaction(1);
@@ -333,6 +339,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
@@ -390,6 +397,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
@@ -451,6 +459,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
@@ -534,6 +543,7 @@ public class BlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             TransactionPriceCalculator.frontier(),
+            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
