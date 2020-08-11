@@ -203,7 +203,7 @@ public class PeerDiscoveryController {
 
   private void onPeerAdded(final Peer peer, final boolean wasAdded) {
     if (wasAdded) {
-      addToPeerTable(DiscoveryPeer.fromEnode(peer.getEnodeURL()));
+      DiscoveryPeer.from(peer).ifPresent(this::addToPeerTable);
     }
   }
 
