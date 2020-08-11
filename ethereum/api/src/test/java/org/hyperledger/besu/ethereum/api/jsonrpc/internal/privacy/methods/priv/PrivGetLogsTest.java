@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -127,6 +129,9 @@ public class PrivGetLogsTest {
     final Hash blockHash = Hash.hash(Bytes32.random());
     final List<Address> addresses = List.of(Address.ZERO);
     final List<List<LogTopic>> logTopics = List.of(List.of(LogTopic.of(Bytes32.random())));
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockchainQueries.getBlockHeaderByHash(blockHash)).thenReturn(Optional.of(blockHeader));
+    when(blockHeader.getNumber()).thenReturn(100L);
 
     final FilterParameter blockHashFilter =
         new FilterParameter(null, null, addresses, logTopics, blockHash);
@@ -149,6 +154,9 @@ public class PrivGetLogsTest {
 
     final List<LogWithMetadata> logWithMetadataList = logWithMetadataList(3);
     final LogsResult expectedLogsResult = new LogsResult(logWithMetadataList);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockchainQueries.getBlockHeaderByHash(blockHash)).thenReturn(Optional.of(blockHeader));
+    when(blockHeader.getNumber()).thenReturn(100L);
 
     when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockHash), any(LogsQuery.class)))
         .thenReturn(logWithMetadataList);
@@ -189,11 +197,17 @@ public class PrivGetLogsTest {
   public void multiTenancyCheckFailure() {
     final User user = mock(User.class);
     final FilterParameter filterParameter = mock(FilterParameter.class);
+    final BlockParameter blockParameter = new BlockParameter(100L);
 
     when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(ENCLAVE_KEY);
+    when(filterParameter.isValid()).thenReturn(true);
+    when(filterParameter.getBlockHash()).thenReturn(Optional.empty());
+    when(filterParameter.getFromBlock()).thenReturn(blockParameter);
+    when(filterParameter.getToBlock()).thenReturn(blockParameter);
     doThrow(new MultiTenancyValidationException("msg"))
         .when(privacyController)
-        .verifyPrivacyGroupContainsEnclavePublicKey(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
+        .verifyPrivacyGroupContainsEnclavePublicKey(
+            eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY), eq(Optional.of(99L)));
 
     final JsonRpcRequestContext request =
         privGetLogRequestWithUser(PRIVACY_GROUP_ID, filterParameter, user);
