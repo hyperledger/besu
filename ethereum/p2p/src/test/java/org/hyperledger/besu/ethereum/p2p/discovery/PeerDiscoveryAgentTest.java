@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAge
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
+import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
@@ -208,6 +209,115 @@ public class PeerDiscoveryAgentTest {
 
     agent.start(999);
     assertThat(agent.streamDiscoveredPeers()).hasSize(0);
+  }
+
+  @Test
+  public void bond_supplyGenericPeer() {
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
+    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final Peer genericPeer = DefaultPeer.fromEnodeURL(remotePeer.getEnodeURL());
+
+    final PeerPermissions peerPermissions = mock(PeerPermissions.class);
+    final MockPeerDiscoveryAgent agent =
+        helper.createDiscoveryAgent(helper.agentBuilder().peerPermissions(peerPermissions));
+
+    when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(true);
+
+    // Start agent and bond
+    assertThat(agent.start(30303)).isCompleted();
+    assertThat(agent.streamDiscoveredPeers()).isEmpty();
+    agent.bond(genericPeer);
+
+    // We should send an outgoing ping
+    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    assertThat(remoteIncomingPackets).hasSize(2);
+    final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
+    assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
+    // The remote peer will send a PING and we'll respond with a return PONG
+    assertThat(firstMsg.fromAgent).isEqualTo(agent);
+    final IncomingPacket secondMsg = remoteIncomingPackets.get(1);
+    assertThat(secondMsg.packet.getType()).isEqualTo(PacketType.PONG);
+    assertThat(secondMsg.fromAgent).isEqualTo(agent);
+
+    // The peer should now be bonded
+    assertThat(agent.streamDiscoveredPeers()).contains(remotePeer);
+  }
+
+  @Test
+  public void bond_allowOutgoingBonding() {
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
+    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+
+    final PeerPermissions peerPermissions = mock(PeerPermissions.class);
+    final MockPeerDiscoveryAgent agent =
+        helper.createDiscoveryAgent(helper.agentBuilder().peerPermissions(peerPermissions));
+
+    when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(false);
+    when(peerPermissions.isPermitted(
+            any(), eq(remotePeer), eq(Action.DISCOVERY_ALLOW_OUTBOUND_BONDING)))
+        .thenReturn(true);
+
+    // Start agent and bond
+    assertThat(agent.start(30303)).isCompleted();
+    agent.bond(remotePeer);
+
+    // We should send an outgoing ping
+    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    assertThat(remoteIncomingPackets).hasSize(1);
+    final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
+    assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
+    assertThat(firstMsg.fromAgent).isEqualTo(agent);
+  }
+
+  @Test
+  public void bond_peerWithDiscoveryDisabled() {
+    // Create a peer with discovery disabled
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
+    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final EnodeURL enodeWithDiscoveryDisabled =
+        EnodeURL.builder().configureFromEnode(remotePeer.getEnodeURL()).disableDiscovery().build();
+    final Peer peerWithDisabledDiscovery = DefaultPeer.fromEnodeURL(enodeWithDiscoveryDisabled);
+
+    final PeerPermissions peerPermissions = mock(PeerPermissions.class);
+    final MockPeerDiscoveryAgent agent =
+        helper.createDiscoveryAgent(helper.agentBuilder().peerPermissions(peerPermissions));
+
+    when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(true);
+
+    // Start agent and bond
+    assertThat(agent.start(30303)).isCompleted();
+    agent.bond(peerWithDisabledDiscovery);
+
+    // We should not send any messages to peer with discovery disabled
+    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    assertThat(remoteIncomingPackets).hasSize(0);
+  }
+
+  @Test
+  public void bond_disallowOutgoingBonding() {
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
+    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+
+    final PeerPermissions peerPermissions = mock(PeerPermissions.class);
+    final MockPeerDiscoveryAgent agent =
+        helper.createDiscoveryAgent(helper.agentBuilder().peerPermissions(peerPermissions));
+
+    when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(true);
+    when(peerPermissions.isPermitted(
+            any(), eq(remotePeer), eq(Action.DISCOVERY_ALLOW_OUTBOUND_BONDING)))
+        .thenReturn(false);
+
+    // Start agent and bond
+    assertThat(agent.start(30303)).isCompleted();
+    agent.bond(remotePeer);
+
+    // We should not send an outgoing ping
+    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    assertThat(remoteIncomingPackets).hasSize(0);
   }
 
   @Test
