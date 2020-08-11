@@ -5,12 +5,6 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
-## Scope of logs query causing Besu to hang
-
-[`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944). 
-
-Workaround -> Limit the number of blocks queried by each `eth_getLogs` call.
-
 ## Logs queries missing results against chain head
 
 When using `eth_getLogs` against the head of Goerli to retrieve Eth2 deposit log events, [some results seem to be missing](https://github.com/hyperledger/besu/issues/1153). 
