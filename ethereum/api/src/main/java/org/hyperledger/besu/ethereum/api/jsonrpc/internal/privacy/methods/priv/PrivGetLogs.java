@@ -91,8 +91,7 @@ public class PrivGetLogs implements JsonRpcMethod {
     final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
-    // TODO they could have been a member of the group for part of the range
-    checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, toBlockNumber);
+    checkMembershipForAuthenticatedUser(requestContext, privacyGroupId, toBlockNumber);
     return privacyQueries.matchingLogs(
         privacyGroupId, fromBlockNumber, toBlockNumber, filter.getLogsQuery());
   }
@@ -107,11 +106,11 @@ public class PrivGetLogs implements JsonRpcMethod {
       return Collections.emptyList();
     }
     final long blockNumber = blockHeader.get().getNumber();
-    checkIfAuthenticatedUserWasMemberAtBlock(requestContext, privacyGroupId, blockNumber);
+    checkMembershipForAuthenticatedUser(requestContext, privacyGroupId, blockNumber);
     return privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery());
   }
 
-  private void checkIfAuthenticatedUserWasMemberAtBlock(
+  private void checkMembershipForAuthenticatedUser(
       final JsonRpcRequestContext request, final String privacyGroupId, final long blockNumber) {
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
     // check group membership at previous block (they could have been removed as of blockNumber but
