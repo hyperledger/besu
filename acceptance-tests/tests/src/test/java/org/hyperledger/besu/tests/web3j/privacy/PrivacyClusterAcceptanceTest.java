@@ -47,7 +47,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private static final long POW_CHAIN_ID = 2018;
 
-  private static final String eventEmmitterDeployed =
+  private static final String eventEmitterDeployed =
       "0x6080604052600436106100565763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633fa4f245811461005b5780636057361d1461008257806367e404ce146100ae575b600080fd5b34801561006757600080fd5b506100706100ec565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100ac600480360360208110156100a557600080fd5b50356100f2565b005b3480156100ba57600080fd5b506100c3610151565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea165627a7a72305820c7f729cb24e05c221f5aa913700793994656f233fe2ce3b9fd9a505ea17e8d8a0029";
 
   private PrivacyNode alice;
@@ -188,7 +188,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             contractAddress,
             "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
             null,
-            eventEmmitterDeployed,
+            eventEmitterDeployed,
             Collections.emptyList(),
             "0x023955c49d6265c579561940287449242704d5fd239ff07ea36a3fc7aface61c",
             "0x82e521ee16ff13104c5f81e8354ecaaafd5450b710b07f620204032bfe76041a",
