@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 
 import java.util.List;
 import java.util.Optional;
@@ -262,6 +263,37 @@ public class FilterManagerLogFilterTest {
 
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any());
     assertThat(logs.get(0)).isEqualTo(logWithMetadata);
+  }
+
+  @Test
+  public void removalEvent_uninstallsFilter() {
+    // TODO use enclaveKey
+    final String enclavePublicKey = PRIVACY_GROUP_ID;
+    final LogWithMetadata logWithMetadata = logWithMetadata();
+    when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any()))
+        .thenReturn(Lists.newArrayList(logWithMetadata));
+
+    final String privateLogFilterId =
+        filterManager.installPrivateLogFilter(PRIVACY_GROUP_ID, latest(), latest(), logsQuery());
+
+    final List<LogWithMetadata> logs = filterManager.logs(privateLogFilterId);
+
+    verify(blockchainQueries, times(2)).headBlockNumber();
+    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any(), any());
+
+    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any());
+    assertThat(logs.get(0)).isEqualTo(logWithMetadata);
+
+    // signal removal of user from group
+    privateTransactionEvent(PRIVACY_GROUP_ID, enclavePublicKey);
+
+    assertThat(filterManager.logs(privateLogFilterId)).isNull();
+    assertThat(filterRepository.getFilter(privateLogFilterId, PrivateLogFilter.class)).isEmpty();
+  }
+
+  private void privateTransactionEvent(final String privacyGroupId, final String enclavePublicKey) {
+    PrivateTransactionEvent event = new PrivateTransactionEvent(privacyGroupId, enclavePublicKey);
+    filterManager.recordPrivateTransactionEvent(event);
   }
 
   private LogWithMetadata logWithMetadata() {

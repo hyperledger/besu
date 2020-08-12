@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -189,6 +190,21 @@ public class FilterManager extends AbstractVerticle {
                       : logsWithMetadata.stream()
                           .filter(logsQuery::matches)
                           .collect(toUnmodifiableList()));
+            });
+  }
+
+  public void recordPrivateTransactionEvent(final PrivateTransactionEvent event) {
+    // if isGroupRemovalEvent()
+
+    // remove all private log filters that match event.privacyGroupId, event.userId
+    filterRepository.getFiltersOfType(PrivateLogFilter.class).stream()
+        .filter(
+            privateLogFilter ->
+                privateLogFilter.getPrivacyGroupId().equals(event.getPrivacyGroupId())
+                    && privateLogFilter.getEnclavePublicKey().equals(event.getEnclavePublicKey()))
+        .forEach(
+            privateLogFilter -> {
+              uninstallFilter(privateLogFilter.getId());
             });
   }
 

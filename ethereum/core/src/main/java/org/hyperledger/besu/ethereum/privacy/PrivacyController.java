@@ -88,6 +88,7 @@ public interface PrivacyController {
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 
   boolean isGroupAdditionTransaction(PrivateTransaction privateTransaction);
+
   boolean isGroupRemovalTransaction(PrivateTransaction privateTransaction);
 
   void verifyPrivacyGroupContainsEnclavePublicKey(

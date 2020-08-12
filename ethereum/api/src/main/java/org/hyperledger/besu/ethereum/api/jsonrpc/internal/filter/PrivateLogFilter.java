@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 public class PrivateLogFilter extends LogFilter {
 
   private final String privacyGroupId;
+  private final String enclavePublicKey;
 
   PrivateLogFilter(
       final String id,
@@ -29,9 +30,15 @@ public class PrivateLogFilter extends LogFilter {
       final LogsQuery logsQuery) {
     super(id, fromBlock, toBlock, logsQuery);
     this.privacyGroupId = privacyGroupId;
+    // TODO add enclavePublicKey to constructor
+    this.enclavePublicKey = privacyGroupId;
   }
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
+  }
+
+  public String getEnclavePublicKey() {
+    return enclavePublicKey;
   }
 }
