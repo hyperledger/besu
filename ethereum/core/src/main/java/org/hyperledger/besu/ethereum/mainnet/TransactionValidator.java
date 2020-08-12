@@ -27,6 +27,7 @@ public interface TransactionValidator {
    * Asserts whether a transaction is valid.
    *
    * @param transaction the transaction to validate
+   * @param baseFee optional baseFee
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
