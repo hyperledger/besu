@@ -111,7 +111,8 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
 
     assertThat(maintainedPeers.contains(peer)).isTrue();
-    verify(rlpxAgent, times(1)).connect(peer);
+    verify(rlpxAgent).connect(peer);
+    verify(discoveryAgent).bond(peer);
   }
 
   @Test
@@ -123,6 +124,7 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
     assertThat(network.addMaintainConnectionPeer(peer)).isFalse();
     verify(rlpxAgent, times(2)).connect(peer);
+    verify(discoveryAgent, times(2)).bond(peer);
     assertThat(maintainedPeers.contains(peer)).isTrue();
   }
 
@@ -136,9 +138,10 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.removeMaintainedConnectionPeer(peer)).isTrue();
 
     assertThat(maintainedPeers.contains(peer)).isFalse();
-    verify(rlpxAgent, times(1)).connect(peer);
-    verify(rlpxAgent, times(1)).disconnect(peer.getId(), DisconnectReason.REQUESTED);
-    verify(discoveryAgent, times(1)).dropPeer(peer);
+    verify(rlpxAgent).connect(peer);
+    verify(discoveryAgent).bond(peer);
+    verify(rlpxAgent).disconnect(peer.getId(), DisconnectReason.REQUESTED);
+    verify(discoveryAgent).dropPeer(peer);
   }
 
   @Test
