@@ -72,8 +72,19 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       verifyPrivacyGroupContainsEnclavePublicKey(
           privateTransaction.getPrivacyGroupId().get().toBase64String(), enclavePublicKey);
     }
-    return privacyController.sendTransaction(
-        privateTransaction, enclavePublicKey, maybePrivacyGroup);
+
+    final String transactionResult =
+        privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
+
+    if (isGroupRemovalTransaction(privateTransaction)) {
+      // TODO send removal event
+      PrivateTransactionEvent removalEvent =
+          new PrivateTransactionEvent(
+              privateTransaction.getPrivacyGroupId().get().toBase64String(),
+              privateTransaction.getPrivateFrom().toBase64String());
+    }
+
+    return transactionResult;
   }
 
   @Override
