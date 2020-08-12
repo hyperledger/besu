@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.nat.NatService;
@@ -307,7 +308,10 @@ public abstract class PeerDiscoveryAgent {
     return isActive;
   }
 
-  public void bond(final DiscoveryPeer peer) {
-    controller.ifPresent(c -> c.handleBondingRequest(peer));
+  public void bond(final Peer peer) {
+    controller.ifPresent(
+        c -> {
+          DiscoveryPeer.from(peer).ifPresent(c::handleBondingRequest);
+        });
   }
 }

@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.5.2 
+
+### Additions and Improvements
+
+* Experimental offline backup and restore has been added via the `operator x-backup-state` and `operator x-restore-state` CLI commands.  Data formats will be fluid for as long as the `x-` prefix is present in the CLI so it is advised not to rely on these backups for disaster recovery. [\#1235](https://github.com/hyperledger/besu/pull/1235)
+* Experimental ethstats support added via the `Xethstats` and `Xethstats-contact` CLI commands. [\#1239](https://github.com/hyperledger/besu/pull/1239)
+* Peers added via the JSON-RPC `admin_addPeer` and `admin_removePeer` will be shared or no longer shared via discovery respectively.  Previously they were not shared. [\#1177](https://github.com/hyperledger/besu/pull/1177) contributed by [br0tchain](https://github.com/br0tchain).
+* New Docker Images (see below). [\#1277](https://github.com/hyperledger/besu/pull/1277)
+* Reworked static peer discovery handling. [\#1292](https://github.com/hyperledger/besu/pull/1292)
+
+### New Java VMs in Docker Image
+
+* New docker images are being generated to use the latest version of OpenJDK (currently 14.0.1) with the tag suffix of `-openjdk-latest`, for example `1.5.2-openjdk-latest`.
+* New docker images are being generated to use [GraalVM](https://www.graalvm.org/) with the tag suffix of `-graalvm`, for example `1.5.2-graalvm`.
+* The existing images based on Java 11 are also being tagged with the suffix `-openjdk-11`, for example `1.5.2-openjdk-11`, as well as `1.5.2`.  
+
+The intent is that the major Java VM version or Java VM type shipped with the default docker images (`latest`, `1.5.x`, etc.) may be changed during future quarterly releases but will remain consistent within quarterly releases.
+
+### Bug Fixes
+- Offchain permissioning - fixed bug where sync status check prevented peering if static nodes configured. [\#1252](https://github.com/hyperledger/besu/issues/1252)
+
+- GraphQL queries of `miner` in IBFT networks will no longer return an error.  PR [\#1282](https://github.com/hyperledger/besu/pull/1282) issue [\#1272](https://github.com/hyperledger/besu/issues/1272).
+
+#### Previously identified known issues
+ 
+- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
+- [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
+
+### New and Old Maintainer
+
+- [David Mechler](https://github.com/hyperledger/besu/commits?author=davemec) has been added as a [new maintainer](https://github.com/hyperledger/besu/pull/1267).
+- [Edward Evans](https://github.com/hyperledger/besu/commits?author=EdJoJob) voluntarily moved to [emeritus status](https://github.com/hyperledger/besu/pull/1270).
+
 ## 1.5.1
 
 ### Deprecated 
@@ -11,21 +48,30 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 * In an IBFT2 network, a fixed block reward value and recipient address can be defined in genesis file [\#1132](https://github.com/hyperledger/besu/pull/1132)
 * JSON-RPC HTTP API Authorization: exit early when checking user permissions. [\#1144](https://github.com/hyperledger/besu/pull/1144)
 * HTTP/2 is enabled for JSON-RPC HTTP API over TLS. [\#1145](https://github.com/hyperledger/besu/pull/1145)
-* Color output in consoles. It can be disabled with `--color-enabled=false`
+* Color output in consoles. It can be disabled with `--color-enabled=false` [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Add compatibility with ClusterIP services for the Kubernetes Nat Manager  [\#1156](https://github.com/hyperledger/besu/pull/1156)
+* In an IBFT2 network; a fixed block reward value and recipient address can be defined in genesis file [\#1132](https://github.com/hyperledger/besu/pull/1132)
 * Add fee cap for transactions submitted via RPC. [\#1137](https://github.com/hyperledger/besu/pull/1137) 
 
 ### Bug fixes 
 
-* When the default sync mode was changed to fast sync for named networks,
-there was one caveat we didn't address. The `dev` network should've been full sync by default.
-This has now been fixed.
+* When the default sync mode was changed to fast sync for named networks, there was one caveat we didn't address. The `dev` network should've been full sync by default. This has now been fixed. [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Fix synchronization timeout issue when the blocks were too large [\#1149](https://github.com/hyperledger/besu/pull/1149)
 * Fix missing results from eth_getLogs request. [\#1154](https://github.com/hyperledger/besu/pull/1154)
-* Fix issue allowing for DDoS attacks. [\#1146](https://github.com/hyperledger/besu/pull/1146)
+* Fix issue allowing Besu to be used for DDoS amplification. [\#1146](https://github.com/hyperledger/besu/pull/1146)
 
 ### Known Issues 
 
+Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
+
+#### Previously identified known issues
+ 
+- [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
+- [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
 
 ## 1.5 Breaking changes
 

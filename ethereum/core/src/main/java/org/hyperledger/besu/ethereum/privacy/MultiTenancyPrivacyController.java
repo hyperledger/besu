@@ -38,13 +38,20 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   private final PrivacyController privacyController;
   private final Enclave enclave;
   private final PrivateTransactionValidator privateTransactionValidator;
+  private final Optional<OnchainPrivacyGroupContract> onchainPrivacyGroupContract;
 
   public MultiTenancyPrivacyController(
       final PrivacyController privacyController,
       final Optional<BigInteger> chainId,
-      final Enclave enclave) {
+      final Enclave enclave,
+      final boolean onchainPrivacyGroupsEnabled) {
     this.privacyController = privacyController;
     this.enclave = enclave;
+    this.onchainPrivacyGroupContract =
+        onchainPrivacyGroupsEnabled
+            ? Optional.of(
+                new OnchainPrivacyGroupContract(privacyController.getTransactionSimulator()))
+            : Optional.empty();
     privateTransactionValidator = new PrivateTransactionValidator(chainId);
   }
 
@@ -157,7 +164,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       final String enclavePublicKey,
       final CallParameter callParams,
       final long blockNumber) {
-    verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    verifyPrivacyGroupContainsEnclavePublicKey(
+        privacyGroupId, enclavePublicKey, Optional.of(blockNumber));
     return privacyController.simulatePrivateTransaction(
         privacyGroupId, enclavePublicKey, callParams, blockNumber);
   }
@@ -245,10 +253,36 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   @Override
   public void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey) {
-    final PrivacyGroup privacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
+    verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey, Optional.empty());
+  }
+
+  @Override
+  public void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
+      throws MultiTenancyValidationException {
+    // TODO: There's potentially a bug here where an onchain privacyGroup
+    // that isn't found will default to the offchain privacy group.
+    final PrivacyGroup privacyGroup =
+        onchainPrivacyGroupContract
+            .flatMap(
+                contract ->
+                    contract.getPrivacyGroup(
+                        privacyGroupId, getBlockHashByBlockNumber(blockNumber)))
+            .orElse(enclave.retrievePrivacyGroup(privacyGroupId));
+
     if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
       throw new MultiTenancyValidationException(
           "Privacy group must contain the enclave public key");
     }
+  }
+
+  @Override
+  public PrivateTransactionSimulator getTransactionSimulator() {
+    return privacyController.getTransactionSimulator();
+  }
+
+  @Override
+  public Optional<Hash> getBlockHashByBlockNumber(final Optional<Long> blockNumber) {
+    return privacyController.getBlockHashByBlockNumber(blockNumber);
   }
 }

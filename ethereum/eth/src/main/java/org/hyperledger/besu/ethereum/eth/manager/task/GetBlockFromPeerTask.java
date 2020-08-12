@@ -75,13 +75,13 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                     "Failed to download block {} from peer {}.",
                     hash,
                     assignedPeer.map(EthPeer::toString).orElse("<any>"));
-                result.get().completeExceptionally(t);
+                result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
                 LOG.info("Failed to download block {} from peer {}.", hash, r.getPeer());
-                result.get().completeExceptionally(new IncompleteResultsException());
+                result.completeExceptionally(new IncompleteResultsException());
               } else {
                 LOG.debug("Successfully downloaded block {} from peer {}.", hash, r.getPeer());
-                result.get().complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
+                result.complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
               }
             });
   }

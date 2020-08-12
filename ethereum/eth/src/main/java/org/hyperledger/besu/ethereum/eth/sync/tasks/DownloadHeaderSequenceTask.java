@@ -143,7 +143,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                 "Finished downloading headers from {} to {}.",
                 headers[0].getNumber(),
                 headers[segmentLength - 1].getNumber());
-            result.get().complete(Arrays.asList(headers));
+            result.complete(Arrays.asList(headers));
           }
         });
   }

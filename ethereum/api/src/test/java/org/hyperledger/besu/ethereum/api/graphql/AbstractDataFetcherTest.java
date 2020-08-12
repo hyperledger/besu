@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.util.Optional;
@@ -24,15 +26,12 @@ import java.util.Set;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
 public abstract class AbstractDataFetcherTest {
 
   DataFetcher<Optional<NormalBlockAdapter>> fetcher;
-  private GraphQLDataFetchers fetchers;
 
   @Mock protected Set<Capability> supportedCapabilities;
 
@@ -42,11 +41,13 @@ public abstract class AbstractDataFetcherTest {
 
   @Mock protected BlockchainQueries query;
 
-  @Rule public ExpectedException thrown = ExpectedException.none();
+  @Mock protected BlockHeader header;
+
+  @Mock protected MutableWorldState mutableWorldState;
 
   @Before
   public void before() {
-    fetchers = new GraphQLDataFetchers(supportedCapabilities);
+    final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
     fetcher = fetchers.getBlockDataFetcher();
     Mockito.when(environment.getContext()).thenReturn(context);
     Mockito.when(context.getBlockchainQueries()).thenReturn(query);

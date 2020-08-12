@@ -227,6 +227,8 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.autoLogBloomCaching(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.pidPath(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.ethstatsUrl(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final Bytes32 keyPairPrvKey =

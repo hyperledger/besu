@@ -198,16 +198,14 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImported = blockImporter.importBlock(protocolContext, block, validateHeaders);
       if (!blockImported) {
-        result
-            .get()
-            .completeExceptionally(
-                new InvalidBlockException(
-                    "Failed to import block", block.getHeader().getNumber(), block.getHash()));
+        result.completeExceptionally(
+            new InvalidBlockException(
+                "Failed to import block", block.getHeader().getNumber(), block.getHash()));
         return;
       }
-      result.get().complete(block);
+      result.complete(block);
     } catch (final Exception e) {
-      result.get().completeExceptionally(e);
+      result.completeExceptionally(e);
     }
   }
 
