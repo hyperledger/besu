@@ -25,13 +25,13 @@ public class PrivateLogFilter extends LogFilter {
   PrivateLogFilter(
       final String id,
       final String privacyGroupId,
+      final String enclavePublicKey,
       final BlockParameter fromBlock,
       final BlockParameter toBlock,
       final LogsQuery logsQuery) {
     super(id, fromBlock, toBlock, logsQuery);
     this.privacyGroupId = privacyGroupId;
-    // TODO add enclavePublicKey to constructor
-    this.enclavePublicKey = privacyGroupId;
+    this.enclavePublicKey = enclavePublicKey;
   }
 
   public String getPrivacyGroupId() {

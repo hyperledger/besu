@@ -130,6 +130,7 @@ public class PrivNewFilterTest {
     verify(filterManager)
         .installPrivateLogFilter(
             eq(PRIVACY_GROUP_ID),
+            eq(ENCLAVE_KEY),
             refEq(BlockParameter.EARLIEST),
             refEq(BlockParameter.LATEST),
             eq((expectedQuery)));

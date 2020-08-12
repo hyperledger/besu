@@ -128,12 +128,14 @@ public class FilterManager extends AbstractVerticle {
    */
   public String installPrivateLogFilter(
       final String privacyGroupId,
+      final String enclavePublicKey,
       final BlockParameter fromBlock,
       final BlockParameter toBlock,
       final LogsQuery logsQuery) {
     final String filterId = filterIdGenerator.nextId();
     filterRepository.save(
-        new PrivateLogFilter(filterId, privacyGroupId, fromBlock, toBlock, logsQuery));
+        new PrivateLogFilter(
+            filterId, privacyGroupId, enclavePublicKey, fromBlock, toBlock, logsQuery));
     return filterId;
   }
 
