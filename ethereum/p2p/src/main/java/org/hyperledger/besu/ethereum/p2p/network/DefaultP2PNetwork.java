@@ -265,6 +265,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
     final boolean wasAdded = maintainedPeers.add(peer);
+    peerDiscoveryAgent.bond(peer);
     rlpxAgent.connect(peer);
     return wasAdded;
   }
@@ -443,13 +444,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx,
-          nodeKey,
-          config.getDiscovery(),
-          peerPermissions,
-          natService,
-          metricsSystem,
-          maintainedPeers);
+          vertx, nodeKey, config.getDiscovery(), peerPermissions, natService, metricsSystem);
     }
 
     private RlpxAgent createRlpxAgent(
