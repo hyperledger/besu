@@ -20,6 +20,8 @@ The intent is that the major Java VM version or Java VM type shipped with the de
 ### Bug Fixes
 - Offchain permissioning - fixed bug where sync status check prevented peering if static nodes configured. [\#1252](https://github.com/hyperledger/besu/issues/1252)
 
+- GraphQL queries of `miner` in IBFT networks will no longer return an error.  PR [\#1282](https://github.com/hyperledger/besu/pull/1282) issue [\#1272](https://github.com/hyperledger/besu/issues/1272).
+
 #### Previously identified known issues
  
 - [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
