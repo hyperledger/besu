@@ -247,7 +247,6 @@ public class PrivacyRequestFactory {
         encodeAddToGroupFunctionCall(
             addresses.stream().map(Bytes::fromBase64String).collect(Collectors.toList()));
 
-    // 0xb4926e2500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a
     final RawPrivateTransaction privateTransaction =
         RawPrivateTransaction.createTransaction(
             BigInteger.ZERO,
