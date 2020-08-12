@@ -219,6 +219,11 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
+  public boolean isGroupRemovalTransaction(final PrivateTransaction privateTransaction) {
+    return privacyController.isGroupRemovalTransaction(privateTransaction);
+  }
+
+  @Override
   public Optional<Bytes> getContractCode(
       final String privacyGroupId,
       final Address contractAddress,
