@@ -14,11 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Streams.stream;
-import static java.util.stream.Collectors.toList;
-import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.*;
+import io.vertx.core.http.*;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.PfxOptions;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CorsHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
@@ -30,12 +43,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.*;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -59,32 +67,12 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxException;
-import io.vertx.core.http.ClientAuth;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServer;
-import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.PfxOptions;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.CorsHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Streams.stream;
+import static java.util.stream.Collectors.toList;
+import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
 
 public class JsonRpcHttpService {
 
@@ -446,7 +434,7 @@ public class JsonRpcHttpService {
         } else {
           final JsonArray array = new JsonArray(json);
           if (array.size() < 1) {
-            handleJsonRpcError(routingContext, null, JsonRpcError.INVALID_REQUEST);
+            handleJsonRpcError(routingContext, null, INVALID_REQUEST);
             return;
           }
           AuthenticationUtils.getUser(
@@ -492,14 +480,24 @@ public class JsonRpcHttpService {
   }
 
   private HttpResponseStatus status(final JsonRpcResponse response) {
-
     switch (response.getType()) {
       case UNAUTHORIZED:
         return HttpResponseStatus.UNAUTHORIZED;
       case ERROR:
-        return HttpResponseStatus.BAD_REQUEST;
+        return statusCodeFromError(((JsonRpcErrorResponse) response).getError());
       case SUCCESS:
       case NONE:
+      default:
+        return HttpResponseStatus.OK;
+    }
+  }
+
+  private HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
+    switch (error) {
+      case INVALID_REQUEST:
+      case INVALID_PARAMS:
+      case PARSE_ERROR:
+        return HttpResponseStatus.BAD_REQUEST;
       default:
         return HttpResponseStatus.OK;
     }
@@ -523,8 +521,7 @@ public class JsonRpcHttpService {
             .map(
                 obj -> {
                   if (!(obj instanceof JsonObject)) {
-                    return Future.succeededFuture(
-                        errorResponse(null, JsonRpcError.INVALID_REQUEST));
+                    return Future.succeededFuture(errorResponse(null, INVALID_REQUEST));
                   }
 
                   final JsonObject req = (JsonObject) obj;
@@ -551,7 +548,9 @@ public class JsonRpcHttpService {
                 return;
               }
               if (res.failed()) {
-                response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
+                //
+                // response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
+                response.setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
                 return;
               }
               final JsonRpcResponse[] completed =
@@ -576,7 +575,7 @@ public class JsonRpcHttpService {
       id = new JsonRpcRequestId(requestJson.getValue("id")).getValue();
       requestBody = requestJson.mapTo(JsonRpcRequest.class);
     } catch (final IllegalArgumentException exception) {
-      return errorResponse(id, JsonRpcError.INVALID_REQUEST);
+      return errorResponse(id, INVALID_REQUEST);
     }
     // Handle notifications
     if (requestBody.isNotification()) {
@@ -603,7 +602,7 @@ public class JsonRpcHttpService {
             new JsonRpcRequestContext(requestBody, () -> !ctx.response().closed()));
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug("Invalid Params", e);
-        return errorResponse(id, JsonRpcError.INVALID_PARAMS);
+        return errorResponse(id, INVALID_PARAMS);
       } catch (final RuntimeException e) {
         LOG.error("Error processing JSON-RPC requestBody", e);
         return errorResponse(id, JsonRpcError.INTERNAL_ERROR);
@@ -636,7 +635,8 @@ public class JsonRpcHttpService {
     final HttpServerResponse response = routingContext.response();
     if (!response.closed()) {
       response
-          .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+              //          .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+              .setStatusCode(statusCodeFromError(error).code())
           .end(Json.encode(new JsonRpcErrorResponse(id, error)));
     }
   }
