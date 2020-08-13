@@ -59,7 +59,6 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_getBalance_0x19");
     specs.add("eth_getBalance_invalidAccountBlockNumber");
     specs.add("eth_getBalance_invalidAccountLatest");
-    specs.add("eth_getBalance_invalidHexAddress");
     specs.add("eth_getBalance_latest");
     specs.add("eth_getBalance_toobig_bn");
     specs.add("eth_getBalance_without_addr");
@@ -125,7 +124,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
             EthGraphQLHttpBySpecTest.class.getResource(testSpecFile), Charsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
     final String rawRequestBody = spec.getString("request");
-    final RequestBody requestBody = RequestBody.create(GRAPHQL, rawRequestBody);
+    final RequestBody requestBody = RequestBody.create(rawRequestBody, GRAPHQL);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
     importBlocks(1, BLOCKS.size());
