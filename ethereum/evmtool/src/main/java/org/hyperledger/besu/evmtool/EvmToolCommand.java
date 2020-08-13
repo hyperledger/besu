@@ -73,7 +73,8 @@ import picocli.CommandLine.Option;
     descriptionHeading = "%nDescription:%n%n",
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
-    footer = "Hyperledger Besu is licensed under the Apache License 2.0")
+    footer = "Hyperledger Besu is licensed under the Apache License 2.0",
+    subcommands = {StateTestSubCommand.class})
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
