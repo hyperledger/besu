@@ -13,5 +13,5 @@
       "message" : "Filter not found"
     }
   },
-  "statusCode": 400
+  "statusCode": 200
 }
