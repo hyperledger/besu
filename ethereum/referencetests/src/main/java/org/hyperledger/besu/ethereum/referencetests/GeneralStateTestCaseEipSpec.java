@@ -11,8 +11,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
 
 public class GeneralStateTestCaseEipSpec {
 
-  private final String eip;
+  private final String fork;
 
   // Creating the actual transaction is expensive because the json test file does not give us the
   // transaction but rather the private key to sign, and so we have to do the signing. And we don't
@@ -45,42 +46,64 @@ public class GeneralStateTestCaseEipSpec {
 
   private final BlockHeader blockHeader;
 
+  private final int dataIndex;
+  private final int gasIndex;
+  private final int valueIndex;
+
   GeneralStateTestCaseEipSpec(
-      final String eip,
+      final String fork,
       final Supplier<Transaction> transactionSupplier,
       final WorldState initialWorldState,
       final Hash expectedRootHash,
       final Hash expectedLogsHash,
-      final BlockHeader blockHeader) {
-    this.eip = eip;
+      final BlockHeader blockHeader,
+      final int dataIndex,
+      final int gasIndex,
+      final int valueIndex) {
+    this.fork = fork;
     this.transactionSupplier = transactionSupplier;
     this.initialWorldState = initialWorldState;
     this.expectedRootHash = expectedRootHash;
     this.expectedLogsHash = expectedLogsHash;
     this.blockHeader = blockHeader;
+    this.dataIndex = dataIndex;
+    this.gasIndex = gasIndex;
+    this.valueIndex = valueIndex;
   }
 
-  String eip() {
-    return eip;
+  public String getFork() {
+    return fork;
   }
 
-  WorldState initialWorldState() {
+  public WorldState getInitialWorldState() {
     return initialWorldState;
   }
 
-  Hash expectedRootHash() {
+  public Hash getExpectedRootHash() {
     return expectedRootHash;
   }
 
-  Hash expectedLogsHash() {
+  public Hash getExpectedLogsHash() {
     return expectedLogsHash;
   }
 
-  Transaction transaction() {
+  public Transaction getTransaction() {
     return transactionSupplier.get();
   }
 
-  BlockHeader blockHeader() {
+  public BlockHeader getBlockHeader() {
     return blockHeader;
+  }
+
+  public int getDataIndex() {
+    return dataIndex;
+  }
+
+  public int getGasIndex() {
+    return gasIndex;
+  }
+
+  public int getValueIndex() {
+    return valueIndex;
   }
 }

@@ -11,8 +11,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
@@ -42,10 +43,11 @@ import org.apache.tuweni.bytes.Bytes32;
  *   <li>in the state test json, gas, value and data for the transaction are arrays. This is how
  *       state tests deal with milestone versioning: for a given milestone, the actual value to use
  *       is defined by the indexes of the "post" section of the json. Those indexes are passed to
- *       this class in {@link #get(Indexes)}.
+ *       this class in {@link #get(GeneralStateTestCaseSpec.Indexes)}.
  *   <li>the signature of the transaction is not provided in the json directly. Instead, the private
  *       key of the sender is provided, and the transaction must thus be signed (also in {@link
- *       #get(Indexes)}) through {@link Transaction.Builder#signAndBuild(KeyPair)}.
+ *       #get(GeneralStateTestCaseSpec.Indexes)}) through {@link
+ *       Transaction.Builder#signAndBuild(KeyPair)}.
  * </ul>
  */
 public class StateTestVersionedTransaction {
