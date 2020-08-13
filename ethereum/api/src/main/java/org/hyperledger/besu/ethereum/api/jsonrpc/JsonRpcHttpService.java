@@ -548,8 +548,6 @@ public class JsonRpcHttpService {
                 return;
               }
               if (res.failed()) {
-                //
-                // response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
                 response.setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
                 return;
               }
