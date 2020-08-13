@@ -5,8 +5,10 @@
 ### Additions and Improvements
 
 * Experimental offline backup and restore has been added via the `operator x-backup-state` and `operator x-restore-state` CLI commands.  Data formats will be fluid for as long as the `x-` prefix is present in the CLI so it is advised not to rely on these backups for disaster recovery. [\#1235](https://github.com/hyperledger/besu/pull/1235)
-* Peers added via the JSON-RPC `admin_addPeer` and `admin_removePeer` will be shared or no longer shared via discovery respectively.  Previously they were not shared.  [\#1177](https://github.com/hyperledger/besu/pull/1177) contributed by [br0tchain](https://github.com/br0tchain).
+* Experimental ethstats support added via the `Xethstats` and `Xethstats-contact` CLI commands. [\#1239](https://github.com/hyperledger/besu/pull/1239)
+* Peers added via the JSON-RPC `admin_addPeer` and `admin_removePeer` will be shared or no longer shared via discovery respectively.  Previously they were not shared. [\#1177](https://github.com/hyperledger/besu/pull/1177) contributed by [br0tchain](https://github.com/br0tchain).
 * New Docker Images (see below). [\#1277](https://github.com/hyperledger/besu/pull/1277)
+* Reworked static peer discovery handling. [\#1292](https://github.com/hyperledger/besu/pull/1292)
 
 ### New Java VMs in Docker Image
 
@@ -19,9 +21,10 @@ The intent is that the major Java VM version or Java VM type shipped with the de
 ### Bug Fixes
 - Offchain permissioning - fixed bug where sync status check prevented peering if static nodes configured. [\#1252](https://github.com/hyperledger/besu/issues/1252)
 
+- GraphQL queries of `miner` in IBFT networks will no longer return an error.  PR [\#1282](https://github.com/hyperledger/besu/pull/1282) issue [\#1272](https://github.com/hyperledger/besu/issues/1272).
+
 #### Previously identified known issues
  
-- [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
 - [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
