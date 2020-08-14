@@ -32,13 +32,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class EIP1559BaseFeeTest {
 
   private final EIP1559 eip1559 = new EIP1559(0);
 
-  @Parameterized.Parameters
+  @Parameters
   public static Collection<Object[]> data() {
     try {
       final List<Object[]> data = new ArrayList<>();
