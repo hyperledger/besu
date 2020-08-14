@@ -57,10 +57,6 @@ public class Scalars {
             throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
           }
           String inputValue = ((StringValue) input).getValue();
-          if (!Quantity.isValid(inputValue)) {
-            throw new CoercingParseLiteralException(
-                "Address value '" + inputValue + "' is not prefixed with 0x");
-          }
           try {
             return Address.fromHexStringStrict(inputValue);
           } catch (final IllegalArgumentException e) {
