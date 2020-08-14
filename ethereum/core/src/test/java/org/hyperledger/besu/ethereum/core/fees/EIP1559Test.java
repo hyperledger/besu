@@ -82,6 +82,8 @@ public class EIP1559Test {
             eip1559.isValidBaseFee(
                 feeMarket.getInitialBasefee(), feeMarket.getInitialBasefee() * 15L / 10L))
         .isFalse();
+    assertThat(eip1559.isValidBaseFee(feeMarket.getInitialBasefee(), 0)).isFalse();
+    assertThat(eip1559.isValidBaseFee(0, 0)).isFalse();
   }
 
   @Test

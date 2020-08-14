@@ -700,5 +700,11 @@
     "parentGasUsed":10000000,
     "parentTargetGasUsed":9000000,
     "expectedBaseFee":1063811730
+  },
+  {
+    "parentBaseFee":0,
+    "parentGasUsed":10000000,
+    "parentTargetGasUsed":9000000,
+    "expectedBaseFee": 1
   }
 ]
