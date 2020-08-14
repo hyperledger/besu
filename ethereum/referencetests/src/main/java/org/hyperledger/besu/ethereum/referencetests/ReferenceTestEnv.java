@@ -34,7 +34,15 @@ import org.apache.tuweni.bytes.Bytes;
 @JsonIgnoreProperties("previousHash")
 public class ReferenceTestEnv extends BlockHeader {
 
-  /** Public constructor. */
+  /**
+   * Public constructor.
+   *
+   * @param coinbase Coinbase/beneficiary for the mock block being tested.
+   * @param difficulty Difficulty for the mock block being tested.
+   * @param gasLimit Gas Limit for the mock block being tested.
+   * @param number Block number for the mock block being tested.
+   * @param timestamp Timestamp for the mock block being tested.
+   */
   @JsonCreator
   public ReferenceTestEnv(
       @JsonProperty("currentCoinbase") final String coinbase,

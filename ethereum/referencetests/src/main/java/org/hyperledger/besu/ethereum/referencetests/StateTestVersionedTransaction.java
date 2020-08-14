@@ -62,7 +62,17 @@ public class StateTestVersionedTransaction {
   private final List<Wei> values;
   private final List<Bytes> payloads;
 
-  /** Constructor for populating a mock account with json data. */
+  /**
+   * Constructor for populating a mock transaction with json data.
+   *
+   * @param nonce Nonce of the mock transaction.
+   * @param gasPrice Gas price of the mock transaction.
+   * @param gasLimit Gas Limit of the mock transaction.
+   * @param to Recipient account of the mock transaction.
+   * @param value Amount of ether transferred in the mock transaction.
+   * @param secretKey Secret Key of the mock transaction.
+   * @param data Call data of the mock transaction.
+   */
   @JsonCreator
   public StateTestVersionedTransaction(
       @JsonProperty("nonce") final String nonce,

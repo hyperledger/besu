@@ -63,14 +63,17 @@ public class EnvironmentInformation {
   /**
    * Public constructor.
    *
-   * @param code The code to be executed.
    * @param account The address of the currently executing account.
+   * @param balance Balance of the account being executed
    * @param caller The caller address.
-   * @param origin The sender address of the original transaction.
+   * @param code The code to be executed.
    * @param data The data of the current environment that pertains to the input data passed with the
-   *     message call instruction or transaction.
-   * @param value The deposited value by the instruction/transaction responsible for this execution.
+   * @param gas The amount of gas allocated to the transaction
    * @param gasPrice The gas price specified by the originating transaction.
+   * @param origin The sender address of the original transaction. message call instruction or
+   *     transaction.
+   * @param value The deposited value by the instruction/transaction responsible for this execution.
+   * @param version the account version of the account
    */
   @SuppressWarnings("unused") // jackson reflected constructor
   @JsonCreator
@@ -133,61 +136,110 @@ public class EnvironmentInformation {
     this.blockHeader = blockHeader;
   }
 
-  /** Returns the block header. */
+  /**
+   * Returns the block header.
+   *
+   * @return the block header
+   */
   public BlockHeader getBlockHeader() {
     return blockHeader;
   }
 
-  /** Returns the address of the currently executing account. */
+  /**
+   * Returns the address of the currently executing account.
+   *
+   * @return the address of the currently executing account.
+   */
   public Address getAccountAddress() {
     return accountAddress;
   }
 
-  /** Returns the balance of the currently executing account */
+  /**
+   * Returns the balance of the currently executing account
+   *
+   * @return the balance of the currently executing account
+   */
   public Wei getAccountBalance() {
     return accountBalance;
   }
 
-  /** Returns address of the caller. */
+  /**
+   * Returns address of the caller.
+   *
+   * @return address of the caller.
+   */
   public Address getCallerAddress() {
     return callerAddress;
   }
 
-  /** Returns the call value. */
+  /**
+   * Returns the call value.
+   *
+   * @return the call value.
+   */
   public Wei getValue() {
     return value;
   }
 
-  /** Returns code to be executed. */
+  /**
+   * Returns code to be executed.
+   *
+   * @return code to be executed.
+   */
   public Code getCode() {
     return code;
   }
 
-  /** Returns the input data to be used. */
+  /**
+   * Returns the input data to be used.
+   *
+   * @return the input data to be used.
+   */
   public Bytes getData() {
     return data;
   }
 
-  /** Returns the call depth of the current message-call/contract creation. */
+  /**
+   * Returns the call depth of the current message-call/contract creation.
+   *
+   * @return the call depth of the current message-call/contract creation.
+   */
   public int getDepth() {
     return depth;
   }
 
-  /** Returns the gas price specified by the originating transaction. */
+  /**
+   * Returns the gas price specified by the originating transaction.
+   *
+   * @return the gas price specified by the originating transaction.
+   */
   public Wei getGasPrice() {
     return gasPrice;
   }
 
-  /** Returns the amount of gas available. */
+  /**
+   * Returns the amount of gas available.
+   *
+   * @return the amount of gas available.
+   */
   public Gas getGas() {
     return gas;
   }
 
-  /** Returns the sender address of the original transaction. */
+  /**
+   * Returns the sender address of the original transaction.
+   *
+   * @return the sender address of the original transaction.
+   */
   public Address getOriginAddress() {
     return originAddress;
   }
 
+  /**
+   * Returns the account version.
+   *
+   * @return the account version.
+   */
   public int getVersion() {
     return version;
   }

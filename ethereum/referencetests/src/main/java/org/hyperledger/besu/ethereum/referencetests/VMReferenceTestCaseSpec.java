@@ -113,7 +113,11 @@ public class VMReferenceTestCaseSpec {
     return out;
   }
 
-  /** Returns true if this test case should expect the VM to exceptionally halt; otherwise false. */
+  /**
+   * Returns true if this test case should expect the VM to exceptionally halt; otherwise false.
+   *
+   * @return if an exceptional halt is expected
+   */
   public boolean isExceptionHaltExpected() {
     return exceptionalHaltExpected;
   }
