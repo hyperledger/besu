@@ -211,7 +211,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-        transactionValidator.validate(transaction);
+        transactionValidator.validate(transaction, blockHeader.getBaseFee());
     // Make sure the transaction is intrinsically valid before trying to
     // compare against a sender account (because the transaction may not
     // be signed correctly to extract the sender).
@@ -355,7 +355,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-    if (blockHeader.getBaseFee().isPresent()) {
+    if (blockHeader.getBaseFee().isPresent() && transaction.isEIP1559Transaction()) {
       final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
       if (transactionGasPrice.compareTo(baseFee) < 0) {
         return Result.failed(
@@ -367,9 +367,12 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
             Optional.empty());
       }
     }
+    final CoinbaseFeePriceCalculator coinbaseCreditService =
+        transaction.isFrontierTransaction()
+            ? CoinbaseFeePriceCalculator.frontier()
+            : coinbaseFeePriceCalculator;
     final Wei coinbaseWeiDelta =
-        coinbaseFeePriceCalculator.price(
-            coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+        coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
     coinbase.incrementBalance(coinbaseWeiDelta);
 
