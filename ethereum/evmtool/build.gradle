@@ -38,11 +38,14 @@ dependencies {
   implementation project(':consensus:ibft')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:referencetests')
+  implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')
   implementation project(':util')
 
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.dagger:dagger'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
