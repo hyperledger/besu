@@ -11,8 +11,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -22,6 +23,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -30,6 +33,9 @@ import com.google.common.collect.ImmutableMap;
 public class ReferenceTestProtocolSchedules {
 
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
+
+  private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
+      Arrays.asList("Frontier", "Homestead", "EIP150");
 
   public static ReferenceTestProtocolSchedules create() {
     final ImmutableMap.Builder<String, ProtocolSchedule> builder = ImmutableMap.builder();
@@ -76,5 +82,9 @@ public class ReferenceTestProtocolSchedules {
     return new ProtocolScheduleBuilder(
             options, CHAIN_ID, Function.identity(), PrivacyParameters.DEFAULT, false)
         .createProtocolSchedule();
+  }
+
+  public static boolean shouldClearEmptyAccounts(final String fork) {
+    return !SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS.contains(fork);
   }
 }
