@@ -66,6 +66,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = COMMAND_NAME,
@@ -75,6 +76,8 @@ public class StateTestSubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final String COMMAND_NAME = "state-test";
+
+  @ParentCommand private EvmToolCommand parentCommand;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
   @Parameters
@@ -99,14 +102,16 @@ public class StateTestSubCommand implements Runnable {
             .getTypeFactory()
             .constructParametricType(Map.class, String.class, GeneralStateTestCaseSpec.class);
     try {
-      for (final File stateTestFile : stateTestFiles) {
+      if (stateTestFiles.isEmpty()) {
+        // if no state tests were specified use standard input
         final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-            objectMapper.readValue(stateTestFile, javaType);
-        for (final var generalStateTestEntry : generalStateTests.entrySet()) {
-          generalStateTestEntry
-              .getValue()
-              .finalStateSpecs()
-              .forEach((fork, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+            objectMapper.readValue(System.in, javaType);
+        executeStateTest(generalStateTests);
+      } else {
+        for (final File stateTestFile : stateTestFiles) {
+          final Map<String, GeneralStateTestCaseSpec> generalStateTests =
+              objectMapper.readValue(stateTestFile, javaType);
+          executeStateTest(generalStateTests);
         }
       }
     } catch (final IOException e) {
@@ -114,9 +119,20 @@ public class StateTestSubCommand implements Runnable {
     }
   }
 
+  private void executeStateTest(final Map<String, GeneralStateTestCaseSpec> generalStateTests) {
+    for (final var generalStateTestEntry : generalStateTests.entrySet()) {
+      generalStateTestEntry
+          .getValue()
+          .finalStateSpecs()
+          .forEach((fork, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+    }
+  }
+
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
-    final EVMToolTracer tracer = // You should have picked Mercy.
-        new EVMToolTracer(System.out, true);
+    final OperationTracer tracer = // You should have picked Mercy.
+        parentCommand.showJsonResults
+            ? new EVMToolTracer(System.out, true)
+            : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
 

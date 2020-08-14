@@ -121,7 +121,7 @@ public class EvmToolCommand implements Runnable {
   @Option(
       names = {"--json"},
       description = "output json output for each opcode")
-  private final Boolean showJsonResults = false;
+  final Boolean showJsonResults = false;
 
   @Option(
       names = {"--nomemory"},
