@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
@@ -22,9 +23,11 @@ import org.hyperledger.besu.consensus.clique.headervalidationrules.VoteValidatio
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
@@ -60,5 +63,12 @@ public class BlockHeaderValidationRulesetFactory {
         .addRule(new CliqueDifficultyValidationRule())
         .addRule(new SignerRateLimitValidationRule())
         .addRule(new CoinbaseHeaderValidationRule(epochManager));
+  }
+
+  public static BlockHeaderValidator.Builder cliqueEip1559BlockHeaderValidator(
+      final long secondsBetweenBlocks, final EpochManager epochManager, final EIP1559 eip1559) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
+    return cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager)
+        .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }
