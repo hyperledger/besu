@@ -57,6 +57,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
+@SuppressWarnings("unchecked")
 public class TransactionPoolFactoryTest {
 
   @Test
@@ -159,7 +160,8 @@ public class TransactionPoolFactoryTest {
     when(pendingTransactions.addLocalTransaction(any())).thenReturn(TransactionAddedStatus.ADDED);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     when(schedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
-    when(transactionValidator.validate(any())).thenReturn(ValidationResult.valid());
+    when(transactionValidator.validate(any(), any(Optional.class)))
+        .thenReturn(ValidationResult.valid());
     when(transactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(worldStateArchive.get(any())).thenReturn(Optional.of(worldState));
