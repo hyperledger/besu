@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 
 public class EIP1559 {
   private final long initialForkBlknum;
@@ -63,13 +64,18 @@ public class EIP1559 {
       baseFee = parentBaseFee + max;
     }
 
+    if (baseFee <= 0) {
+      baseFee = Wei.ONE.toLong();
+    }
+
     return baseFee;
   }
 
   public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {
     guardActivation();
-    return Math.abs(baseFee - parentBaseFee)
-        <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
+    return baseFee > 0
+        && Math.abs(baseFee - parentBaseFee)
+            <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
   public long eip1559GasPool(final long blockNumber, final long gasLimit) {
