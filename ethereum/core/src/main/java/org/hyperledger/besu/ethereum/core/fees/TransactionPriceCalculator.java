@@ -31,6 +31,9 @@ public interface TransactionPriceCalculator {
 
   static TransactionPriceCalculator eip1559() {
     return (transaction, maybeBaseFee) -> {
+      if (transaction.isFrontierTransaction()) {
+        return transaction.getGasPrice();
+      }
       ExperimentalEIPs.eip1559MustBeEnabled();
       final Wei gasPremium =
           Wei.of((BigInteger) transaction.getGasPremium().orElseThrow().getValue());
