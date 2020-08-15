@@ -143,4 +143,3 @@ task dockerUpload(type: Exec) {
   executable "sh"
   args "-c", cmd
 }
-
