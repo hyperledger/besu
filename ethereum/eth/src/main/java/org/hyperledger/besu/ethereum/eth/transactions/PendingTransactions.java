@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -71,7 +72,8 @@ public class PendingTransactions {
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
   private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(TransactionInfo::getGasPrice)
+              .thenComparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
@@ -401,6 +403,10 @@ public class PendingTransactions {
 
     public Transaction getTransaction() {
       return transaction;
+    }
+
+    public Wei getGasPrice() {
+      return transaction.getGasPrice();
     }
 
     public long getSequence() {
