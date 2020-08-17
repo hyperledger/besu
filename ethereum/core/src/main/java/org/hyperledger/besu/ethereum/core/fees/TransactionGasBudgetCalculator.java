@@ -14,38 +14,40 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 @FunctionalInterface
 public interface TransactionGasBudgetCalculator {
 
   boolean hasBudget(
-      final Transaction transaction, final BlockHeader blockHeader, final long gasUsed);
+      final Transaction transaction,
+      final long blockNumber,
+      final long gasLimit,
+      final long gasUsed);
 
   static TransactionGasBudgetCalculator frontier() {
-    return gasBudgetCalculator((blockHeader, ignored) -> blockHeader.getGasLimit());
+    return gasBudgetCalculator((blockNumber, gasLimit, ignored) -> gasLimit);
   }
 
   static TransactionGasBudgetCalculator eip1559(final EIP1559 eip1559) {
     return gasBudgetCalculator(
-        (blockHeader, transaction) ->
+        (blockNumber, gasLimit, transaction) ->
             transaction.isEIP1559Transaction()
-                ? eip1559.eip1559GasPool(blockHeader.getNumber())
-                : eip1559.legacyGasPool(blockHeader.getNumber()));
+                ? eip1559.eip1559GasPool(blockNumber, gasLimit)
+                : eip1559.legacyGasPool(blockNumber, gasLimit));
   }
 
   static TransactionGasBudgetCalculator gasBudgetCalculator(
       final BlockGasLimitCalculator blockGasLimitCalculator) {
-    return (transaction, blockHeader, gasUsed) -> {
+    return (transaction, blockNumber, gasLimit, gasUsed) -> {
       final long remainingGasBudget =
-          blockGasLimitCalculator.apply(blockHeader, transaction) - gasUsed;
+          blockGasLimitCalculator.apply(blockNumber, gasLimit, transaction) - gasUsed;
       return Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) <= 0;
     };
   }
 
   @FunctionalInterface
   interface BlockGasLimitCalculator {
-    long apply(BlockHeader blockHeader, Transaction transaction);
+    long apply(final long blockNumber, final long gasLimit, Transaction transaction);
   }
 }

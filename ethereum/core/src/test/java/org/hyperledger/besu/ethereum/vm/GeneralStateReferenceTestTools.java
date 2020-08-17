@@ -27,6 +27,10 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
+import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
@@ -108,9 +112,9 @@ public class GeneralStateReferenceTestTools {
   }
 
   public static void executeTest(final GeneralStateTestCaseEipSpec spec) {
-    final BlockHeader blockHeader = spec.blockHeader();
-    final WorldState initialWorldState = spec.initialWorldState();
-    final Transaction transaction = spec.transaction();
+    final BlockHeader blockHeader = spec.getBlockHeader();
+    final WorldState initialWorldState = spec.getInitialWorldState();
+    final Transaction transaction = spec.getTransaction();
 
     final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
     // Several of the GeneralStateTests check if the transaction could potentially
@@ -121,9 +125,9 @@ public class GeneralStateReferenceTestTools {
       return;
     }
 
-    final TransactionProcessor processor = transactionProcessor(spec.eip());
+    final TransactionProcessor processor = transactionProcessor(spec.getFork());
     final WorldUpdater worldStateUpdater = worldState.updater();
-    final TestBlockchain blockchain = new TestBlockchain(blockHeader.getNumber());
+    final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     final TransactionProcessor.Result result =
         processor.processTransaction(
             blockchain,
@@ -134,20 +138,20 @@ public class GeneralStateReferenceTestTools {
             new BlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock());
-    final Account coinbase = worldStateUpdater.getOrCreate(spec.blockHeader().getCoinbase());
-    if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.eip())) {
+    final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+    if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
 
     // Check the world state root hash.
-    final Hash expectedRootHash = spec.expectedRootHash();
+    final Hash expectedRootHash = spec.getExpectedRootHash();
     assertThat(worldState.rootHash())
         .withFailMessage("Unexpected world state root hash; computed state: %s", worldState)
         .isEqualTo(expectedRootHash);
 
     // Check the logs.
-    final Hash expectedLogsHash = spec.expectedLogsHash();
+    final Hash expectedLogsHash = spec.getExpectedLogsHash();
     final List<Log> logs = result.getLogs();
     assertThat(Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo))))
         .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)

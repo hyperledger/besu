@@ -11,11 +11,11 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderMock;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
@@ -38,8 +38,8 @@ public class GeneralStateTestCaseSpec {
 
   @JsonCreator
   public GeneralStateTestCaseSpec(
-      @JsonProperty("env") final BlockHeaderMock blockHeader,
-      @JsonProperty("pre") final WorldStateMock initialWorldState,
+      @JsonProperty("env") final ReferenceTestEnv blockHeader,
+      @JsonProperty("pre") final ReferenceTestWorldState initialWorldState,
       @JsonProperty("post") final Map<String, List<PostSection>> postSection,
       @JsonProperty("transaction") final StateTestVersionedTransaction versionedTransaction) {
     this.finalStateSpecs =
@@ -48,7 +48,7 @@ public class GeneralStateTestCaseSpec {
 
   private Map<String, List<GeneralStateTestCaseEipSpec>> generate(
       final BlockHeader blockHeader,
-      final WorldStateMock initialWorldState,
+      final ReferenceTestWorldState initialWorldState,
       final Map<String, List<PostSection>> postSections,
       final StateTestVersionedTransaction versionedTransaction) {
 
@@ -62,14 +62,22 @@ public class GeneralStateTestCaseSpec {
         final Supplier<Transaction> txSupplier = () -> versionedTransaction.get(p.indexes);
         specs.add(
             new GeneralStateTestCaseEipSpec(
-                eip, txSupplier, initialWorldState, p.rootHash, p.logsHash, blockHeader));
+                eip,
+                txSupplier,
+                initialWorldState,
+                p.rootHash,
+                p.logsHash,
+                blockHeader,
+                p.indexes.data,
+                p.indexes.gas,
+                p.indexes.value));
       }
       res.put(eip, specs);
     }
     return res;
   }
 
-  Map<String, List<GeneralStateTestCaseEipSpec>> finalStateSpecs() {
+  public Map<String, List<GeneralStateTestCaseEipSpec>> finalStateSpecs() {
     return finalStateSpecs;
   }
 

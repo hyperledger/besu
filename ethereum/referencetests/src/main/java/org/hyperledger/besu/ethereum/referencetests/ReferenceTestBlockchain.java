@@ -11,8 +11,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -48,7 +49,7 @@ import org.apache.tuweni.bytes.Bytes;
  * (GeneralStateTests) require a block's hash to be to be the hash of the string of it's block
  * number.
  */
-public class TestBlockchain implements Blockchain {
+public class ReferenceTestBlockchain implements Blockchain {
 
   // Maximum number of blocks prior to the chain head that can be retrieved by hash.
   private static final long MAXIMUM_BLOCKS_BEHIND_HEAD = 256;
@@ -58,11 +59,11 @@ public class TestBlockchain implements Blockchain {
       "Chain head is inherently non-deterministic. The block currently being processed should be treated as the chain head.";
   private final Map<Hash, BlockHeader> hashToHeader = new HashMap<>();
 
-  public TestBlockchain() {
+  public ReferenceTestBlockchain() {
     this(0);
   }
 
-  public TestBlockchain(final long chainHeadBlockNumber) {
+  public ReferenceTestBlockchain(final long chainHeadBlockNumber) {
     for (long blockNumber = Math.max(0L, chainHeadBlockNumber - MAXIMUM_BLOCKS_BEHIND_HEAD);
         blockNumber < chainHeadBlockNumber;
         blockNumber++) {
@@ -161,7 +162,7 @@ public class TestBlockchain implements Blockchain {
   }
 
   public static class NonDeterministicOperationException extends RuntimeException {
-    public NonDeterministicOperationException(final String message) {
+    NonDeterministicOperationException(final String message) {
       super(message);
     }
   }
