@@ -49,6 +49,7 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
@@ -210,6 +211,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
+  final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
+
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
@@ -423,12 +426,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
+      hidden = true,
       names = {"--Xnat-kube-service-name"},
       description =
           "Specify the name of the service that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
   private String natManagerServiceName = DEFAULT_BESU_SERVICE_NAME_FILTER;
 
   @Option(
+      hidden = true,
       names = {"--Xnat-method-fallback-enabled"},
       description =
           "Enable fallback to NONE for the nat manager in case of failure. If False BESU will exit on failure. (default: ${DEFAULT-VALUE})",
@@ -750,12 +755,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer stratumPort = 8008;
 
   @Option(
+      hidden = true,
       names = {"--Xminer-remote-sealers-limit"},
       description =
           "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
   private final Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
 
   @Option(
+      hidden = true,
       names = {"--Xminer-remote-sealers-hashrate-ttl"},
       description =
           "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
@@ -1040,21 +1047,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  @Option(
-      names = {"--Xethstats"},
-      paramLabel = "<nodename:secret@host:port>",
-      description = "Reporting URL of a ethstats server",
-      arity = "1")
-  private String ethstatsUrl = "";
-
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  @Option(
-      names = {"--Xethstats-contact"},
-      description = "Contact address to send to ethstats server",
-      arity = "1")
-  private String ethstatsContact = "";
-
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1221,6 +1213,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("P2P Network", networkingOptions)
             .put("Synchronizer", synchronizerOptions)
             .put("TransactionPool", transactionPoolOptions)
+            .put("Ethstats", ethstatsOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1385,7 +1378,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateNetStatsParams() {
-    if (Strings.isNullOrEmpty(ethstatsUrl) && !ethstatsContact.isEmpty()) {
+    if (Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl())
+        && !ethstatsOptions.getEthstatsContact().isEmpty()) {
       throw new ParameterException(
           this.commandLine,
           "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
@@ -2073,8 +2067,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
-            .ethstatsUrl(ethstatsUrl)
-            .ethstatsContact(ethstatsContact)
+            .ethstatsUrl(ethstatsOptions.getEthstatsUrl())
+            .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .build();
 
     addShutdownHook(runner);

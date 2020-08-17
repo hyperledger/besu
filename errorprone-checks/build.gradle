@@ -30,6 +30,7 @@ dependencies {
   implementation 'com.google.auto.service:auto-service'
   implementation 'com.google.errorprone:error_prone_annotation'
   implementation 'com.google.errorprone:error_prone_core'
+  implementation 'info.picocli:picocli'
 
   testImplementation 'com.google.errorprone:error_prone_test_helpers'
   testImplementation 'junit:junit'
