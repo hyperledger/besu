@@ -145,18 +145,21 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
 
     try {
-      // TODO: Do we need to check anything for legacy private transactions
-      if (privateTransaction.getPrivateFor().isEmpty()
-          && !enclave
-              .retrievePrivacyGroup(privacyGroupId.toBase64String())
-              .getMembers()
-              .contains(privateFrom.toBase64String())) {
+      if (!enclave
+          .retrievePrivacyGroup(privacyGroupId.toBase64String())
+          .getMembers()
+          .contains(privateFrom.toBase64String())) {
         return Bytes.EMPTY;
       }
     } catch (final EnclaveClientException e) {
-      // TODO: do I have to catch anything else here? This exception is thrown when the privacy
-      // group can not be found
+      // This exception is thrown when the privacy group can not be found
       return Bytes.EMPTY;
+    } catch (final EnclaveServerException e) {
+      LOG.error("Enclave is responding with an error, perhaps it has a misconfiguration?", e);
+      throw e;
+    } catch (final EnclaveIOException e) {
+      LOG.error("Can not communicate with enclave is it up?", e);
+      throw e;
     }
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);

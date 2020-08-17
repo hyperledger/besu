@@ -272,8 +272,7 @@ public class DefaultPrivacyController implements PrivacyController {
         .keySet()
         .forEach(
             c -> {
-              final Optional<PrivacyGroup> maybePrivacyGroup =
-                  retrieveOnChainPrivacyGroup(c, enclavePublicKey);
+              final Optional<PrivacyGroup> maybePrivacyGroup = retrieveOnChainPrivacyGroup(c);
               if (maybePrivacyGroup.isPresent()
                   && maybePrivacyGroup.get().getMembers().containsAll(addresses)) {
                 privacyGroups.add(maybePrivacyGroup.get());
@@ -282,9 +281,7 @@ public class DefaultPrivacyController implements PrivacyController {
     return privacyGroups;
   }
 
-  @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(
-      final Bytes privacyGroupId, final String enclavePublicKey) {
+  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(final Bytes privacyGroupId) {
     // get the privateFor list from the management contract
     final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
@@ -305,8 +302,45 @@ public class DefaultPrivacyController implements PrivacyController {
       } else {
         return Optional.empty();
       }
+    } else {
+      return Optional.empty();
     }
-    return Optional.empty();
+  }
+
+  @Override
+  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+      final Bytes privacyGroupId,
+      final String enclavePublicKey,
+      final PrivateTransaction privateTransaction) {
+    // get the privateFor list from the management contract
+    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
+        privateTransactionSimulator.process(
+            privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
+
+    final List<String> members = new ArrayList<>();
+    if (privateTransactionSimulatorResultOptional.isPresent()
+        && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
+      final RLPInput rlpInput =
+          RLP.input(privateTransactionSimulatorResultOptional.get().getOutput());
+      if (rlpInput.nextSize() > 0) {
+        members.addAll(decodeList(rlpInput.raw()));
+        if (!members.contains(enclavePublicKey)) {
+          return Optional.empty();
+        }
+      }
+    }
+    if (isGroupAdditionTransaction(privateTransaction)) {
+      final List<String> participantsFromParameter =
+          getParticipantsFromParameter(privateTransaction.getPayload());
+      members.addAll(participantsFromParameter);
+    }
+    if (members.isEmpty()) {
+      return Optional.empty();
+    } else {
+      return Optional.of(
+          new PrivacyGroup(
+              privacyGroupId.toBase64String(), PrivacyGroup.Type.ONCHAIN, "", "", members));
+    }
   }
 
   private List<String> decodeList(final Bytes rlpEncodedList) {
@@ -441,22 +475,21 @@ public class DefaultPrivacyController implements PrivacyController {
       final Optional<PrivacyGroup> maybePrivacyGroup) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
 
-    if (maybePrivacyGroup.isPresent() || isGroupAdditionTransaction(privateTransaction)) {
-      if (isGroupAdditionTransaction(privateTransaction)
-          || maybePrivacyGroup.get().getType() == PrivacyGroup.Type.ONCHAIN) {
+    if (maybePrivacyGroup.isPresent()) {
+      final PrivacyGroup privacyGroup = maybePrivacyGroup.get();
+      if (privacyGroup.getType() == PrivacyGroup.Type.ONCHAIN) {
         // onchain privacy group
         final Optional<PrivateTransactionProcessor.Result> result =
             privateTransactionSimulator.process(
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
                 buildCallParams(GET_VERSION_METHOD_SIGNATURE));
         new VersionedPrivateTransaction(privateTransaction, result).writeTo(rlpOutput);
-        final List<String> onChainPrivateFor =
-            resolveOnChainPrivateFor(privateTransaction, maybePrivacyGroup);
+        final List<String> onChainPrivateFor = privacyGroup.getMembers();
         return enclave.send(
             rlpOutput.encoded().toBase64String(),
             privateTransaction.getPrivateFrom().toBase64String(),
             onChainPrivateFor);
-      } else if (maybePrivacyGroup.get().getType() == PrivacyGroup.Type.PANTHEON) {
+      } else if (privacyGroup.getType() == PrivacyGroup.Type.PANTHEON) {
         // offchain privacy group
         privateTransaction.writeTo(rlpOutput);
         return enclave.send(
@@ -487,18 +520,6 @@ public class DefaultPrivacyController implements PrivacyController {
           privateTransaction.getPrivateFor().get().stream()
               .map(Bytes::toBase64String)
               .collect(Collectors.toList()));
-    }
-    return privateFor;
-  }
-
-  private List<String> resolveOnChainPrivateFor(
-      final PrivateTransaction privateTransaction, final Optional<PrivacyGroup> privacyGroup) {
-    final ArrayList<String> privateFor = new ArrayList<>();
-    if (isGroupAdditionTransaction(privateTransaction)) {
-      privateFor.addAll(getParticipantsFromParameter(privateTransaction.getPayload()));
-    }
-    if (privacyGroup.isPresent()) {
-      privateFor.addAll(privacyGroup.get().getMembers());
     }
     return privateFor;
   }

@@ -259,7 +259,7 @@ public class EeaSendRawTransactionTest {
         Optional.of(
             new PrivacyGroup(
                 "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
-    when(privacyController.retrieveOnChainPrivacyGroup(any(), any()))
+    when(privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(any(), any(), any()))
         .thenReturn(optionalPrivacyGroup);
     when(privacyController.buildAndSendAddPayload(
             any(PrivateTransaction.class), any(Bytes32.class), any(String.class)))
@@ -323,7 +323,7 @@ public class EeaSendRawTransactionTest {
         new EeaSendRawTransaction(
             transactionPool, privacyController, enclavePublicKeyProvider, true);
 
-    when(privacyController.retrieveOnChainPrivacyGroup(any(Bytes.class), any(String.class)))
+    when(privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(any(), any(), any()))
         .thenReturn(Optional.empty());
 
     final JsonRpcRequestContext request =

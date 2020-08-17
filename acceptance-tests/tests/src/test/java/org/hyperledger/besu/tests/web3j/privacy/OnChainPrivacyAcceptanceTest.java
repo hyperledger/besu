@@ -279,11 +279,6 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
 
-    //    boolean b = true;
-    //    while (b) {
-    //      int i = 0;
-    //      if (i == 1) b = false;
-    //    }
     bob.execute(
         privacyTransactions.privxLockPrivacyGroupAndCheck(privacyGroupId, bob, aliceCredentials));
 
@@ -489,14 +484,6 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
    */
   private String createOnChainPrivacyGroup(final PrivacyNode... members) {
 
-    System.out.println("Public keys start:");
-    Arrays.stream(members)
-        .map(m -> m.getOrion().getPublicKeys())
-        .forEach(
-            k -> {
-              System.out.println(k);
-            });
-    System.out.println("Public keys end!");
     final PrivacyNode groupCreator = members[0];
 
     final CreateOnChainPrivacyGroupTransaction createTx =

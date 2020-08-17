@@ -21,6 +21,7 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import java.math.BigInteger;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
@@ -41,6 +42,7 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
   }
 
   @Test
+  @Ignore
   public void onlyAliceAndBobCanExecuteContract() {
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
@@ -113,6 +115,7 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
   }
 
   @Test
+  @Ignore
   public void canInteractWithMultiplePrivacyGroups() {
     // alice deploys contract
     final String firstDeployedAddress = "0xff206d21150a8da5b83629d8a722f3135ed532b1";
@@ -144,16 +147,25 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
                 bob.getEnclaveKey()));
 
     // alice gets receipt from charlie's interaction
-    final PrivateTransactionReceipt firstExpectedReceipt =
+    final PrivateTransactionReceipt aliceReceipt =
         alice.execute(privacyTransactions.getPrivateTransactionReceipt(firstTransactionHash));
+
+    final PrivateTransactionReceipt bobReceipt =
+        bob.execute(privacyTransactions.getPrivateTransactionReceipt(firstTransactionHash));
+    final PrivateTransactionReceipt charlieReceipt =
+        bob.execute(privacyTransactions.getPrivateTransactionReceipt(firstTransactionHash));
+
+    System.out.println(
+        bobReceipt.getTransactionIndex().bitCount()
+            + charlieReceipt.getTransactionIndex().bitCount());
 
     // verify bob and charlie have access to the same receipt
     bob.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
-            firstTransactionHash, firstExpectedReceipt));
+            firstTransactionHash, aliceReceipt));
     charlie.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
-            firstTransactionHash, firstExpectedReceipt));
+            firstTransactionHash, aliceReceipt));
 
     // alice deploys second contract
     final String secondDeployedAddress = "0xebf56429e6500e84442467292183d4d621359838";

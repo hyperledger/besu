@@ -15,9 +15,9 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         implementation = _newImp;
     }
 
-    function addParticipants(bytes32[] memory participants) public returns (bool) {
+    function addParticipants(bytes32[] memory _publicEnclaveKeys) public returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        return privacyInterface.addParticipants(participants);
+        return privacyInterface.addParticipants(_publicEnclaveKeys);
     }
 
     function getParticipants() view public returns (bytes32[] memory) {
@@ -25,9 +25,11 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         return privacyInterface.getParticipants();
     }
 
-    function removeParticipant(bytes32 account) public returns (bool) {
+    function removeParticipant(bytes32 _member) public returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        return privacyInterface.removeParticipant(account);
+        bool result = privacyInterface.removeParticipant(_member);
+        emit ParticipantRemoved(result, _member);
+    return result;
     }
 
     function lock() public {
@@ -64,4 +66,11 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         privacyInterface.addParticipants(participants);
     }
+
+    event ParticipantRemoved(
+        bool success,
+        bytes32 publicEnclaveKey
+    );
+
+
 }

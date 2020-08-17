@@ -29,24 +29,24 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
         _canExecute = true;
     }
 
-    function addParticipants(bytes32[] memory _accounts) public returns (bool) {
+    function addParticipants(bytes32[] memory _publicEnclaveKeys) public returns (bool) {
         require(!_canExecute);
         if (_owner == address(0x0)) {
+        // The account creating this group is set to be the owner
             _owner = tx.origin;
         }
         require(tx.origin == _owner, "Origin not the owner.");
-        bool result = addAll(_accounts);
+        bool result = addAll(_publicEnclaveKeys);
         _canExecute = true;
         updateVersion();
         return result;
     }
 
-    function removeParticipant(bytes32 _account) public returns (bool) {
+    function removeParticipant(bytes32 _member) public returns (bool) {
         require(_canExecute);
         require(tx.origin == _owner, "Origin not the owner.");
-        bool result = removeInternal(_account);
+        bool result = removeInternal(_member);
         updateVersion();
-        emit ParticipantRemoved(result, _account);
         return result;
     }
 
@@ -55,51 +55,50 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
     }
 
     function canUpgrade() external returns (bool) {
-        require(tx.origin == _owner, "Origin not the owner.");
-        return true;
+        return tx.origin == _owner;
     }
 
 
     //internal functions
-    function addAll(bytes32[] memory _accounts) internal returns (bool) {
+    function addAll(bytes32[] memory _publicEnclaveKeys) internal returns (bool) {
         bool allAdded = true;
-        for (uint i = 0; i < _accounts.length; i++) {
-            if (isMember(_accounts[i])) {
-                emit ParticipantAdded(false, _accounts[i], "Account is already a Member");
+        for (uint i = 0; i < _publicEnclaveKeys.length; i++) {
+            if (isMember(_publicEnclaveKeys[i])) {
+                emit ParticipantAdded(false, _publicEnclaveKeys[i], "Account is already a Member");
                 allAdded = allAdded && false;
             } else {
-                bool result = addParticipant(_accounts[i]);
+                bool result = addParticipant(_publicEnclaveKeys[i]);
                 string memory message = result ? "Member account added successfully" : "Account is already a Member";
-                emit ParticipantAdded(result, _accounts[i], message);
+                emit ParticipantAdded(result, _publicEnclaveKeys[i], message);
                 allAdded = allAdded && result;
             }
         }
         return allAdded;
     }
 
-    function isMember(bytes32 _account) internal view returns (bool) {
-        return distributionIndexOf[_account] != 0;
+    function isMember(bytes32 _publicEnclaveKey) internal view returns (bool) {
+        return distributionIndexOf[_publicEnclaveKey] != 0;
     }
 
-    function addParticipant(bytes32 _participant) internal returns (bool) {
-        if (distributionIndexOf[_participant] == 0) {
-            distributionIndexOf[_participant] = distributionList.push(_participant);
+    function addParticipant(bytes32 _publicEnclaveKey) internal returns (bool) {
+        if (distributionIndexOf[_publicEnclaveKey] == 0) {
+            distributionIndexOf[_publicEnclaveKey] = distributionList.push(_publicEnclaveKey);
             return true;
         }
         return false;
     }
 
-    function removeInternal(bytes32 _participant) internal returns (bool) {
-        uint256 index = distributionIndexOf[_participant];
+    function removeInternal(bytes32 _member) internal returns (bool) {
+        uint256 index = distributionIndexOf[_member];
         if (index > 0 && index <= distributionList.length) {
             //move last address into index being vacated (unless we are dealing with last index)
             if (index != distributionList.length) {
-                bytes32 lastAccount = distributionList[distributionList.length - 1];
-                distributionList[index - 1] = lastAccount;
-                distributionIndexOf[lastAccount] = index;
+                bytes32 lastPublicKey = distributionList[distributionList.length - 1];
+                distributionList[index - 1] = lastPublicKey;
+                distributionIndexOf[lastPublicKey] = index;
             }
             distributionList.length -= 1;
-            distributionIndexOf[_participant] = 0;
+            distributionIndexOf[_member] = 0;
             return true;
         }
         return false;
@@ -111,12 +110,7 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
 
     event ParticipantAdded(
         bool success,
-        bytes32 account,
+        bytes32 publicEnclaveKey,
         string message
-    );
-
-    event ParticipantRemoved(
-        bool success,
-        bytes32 account
     );
 }

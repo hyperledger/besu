@@ -104,7 +104,7 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void onlyOwnerCanUpgrade() throws Exception {
+  public void nonOwnerCannotUpgrade() throws Exception {
     onChainPrivacyGroupManagementProxy
         .addParticipants(Arrays.asList(firstParticipant.raw(), secondParticipant.raw()))
         .send();
@@ -114,12 +114,6 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
 
     final DefaultOnChainPrivacyGroupManagementContract upgradedContract =
-        minerNode.execute(
-            contractTransactions.createSmartContract(
-                DefaultOnChainPrivacyGroupManagementContract.class));
-
-    // make sure that only the owner can upgrade the contract
-    final DefaultOnChainPrivacyGroupManagementContract newUpgradedContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
                 DefaultOnChainPrivacyGroupManagementContract.class));
@@ -139,10 +133,25 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
     // contract is the proxy contract and uses genesis account 2. It should not be able to upgrade
     // the contract, because it is not the owner of "upgradedContract"
     assertThatThrownBy(
-            () -> proxyContractAccount2.upgradeTo(newUpgradedContract.getContractAddress()).send())
+            () -> proxyContractAccount2.upgradeTo(upgradedContract.getContractAddress()).send())
         .isInstanceOf(TransactionException.class);
+  }
 
-    // upgrade works for the right user
+  @Test
+  public void ownerCanUpgrade() throws Exception {
+    onChainPrivacyGroupManagementProxy
+        .addParticipants(Arrays.asList(firstParticipant.raw(), secondParticipant.raw()))
+        .send();
+    final List<byte[]> participants = onChainPrivacyGroupManagementProxy.getParticipants().send();
+    assertThat(participants.size()).isEqualTo(2);
+    assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
+    assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
+
+    final DefaultOnChainPrivacyGroupManagementContract upgradedContract =
+        minerNode.execute(
+            contractTransactions.createSmartContract(
+                DefaultOnChainPrivacyGroupManagementContract.class));
+
     onChainPrivacyGroupManagementProxy.upgradeTo(upgradedContract.getContractAddress()).send();
     final List<byte[]> participantsAfterUpgrade =
         onChainPrivacyGroupManagementProxy.getParticipants().send();

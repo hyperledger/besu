@@ -259,7 +259,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         blockchain,
         disposablePrivateState,
         privateWorldStateUpdater)) {
-      LOG.error(
+      LOG.debug(
           "PrivateTransaction with hash {} cannot execute in privacy group {} because private from {} is not a member.",
           messageFrame.getTransactionHash(),
           privacyGroupId.toBase64String(),

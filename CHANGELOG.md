@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.3
+
+### Breaking Changes
+
+When upgrading to 1.5.3, ensure you've taken into account the following breaking changes.
+
+#### On-Chain Privacy Group Management
+
+This early access feature was changed in a way that makes on-chain privacy groups created with previous versions no longer usable. 
+
 ## 1.5.2 
 
 ### Additions and Improvements
