@@ -35,8 +35,9 @@ public class EthSendRawTransactionTransaction implements Transaction<String> {
   public String execute(final NodeRequests node) {
     try {
       EthSendTransaction response = node.eth().ethSendRawTransaction(transactionData).send();
-      assertThat(response.getTransactionHash()).isNotNull();
-      return response.getTransactionHash();
+      assertThat(response).isNotNull();
+      assertThat(response.hasError()).isTrue();
+      return response.getError().getMessage();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
