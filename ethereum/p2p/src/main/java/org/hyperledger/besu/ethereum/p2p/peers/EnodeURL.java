@@ -159,11 +159,12 @@ public class EnodeURL {
   }
 
   public URI toURI() {
+
     final String uri =
         String.format(
             "enode://%s@%s:%d",
             nodeId.toUnprefixedHexString(),
-            InetAddresses.toUriString(getIp()),
+            maybeHostname.orElse(InetAddresses.toUriString(getIp())),
             getListeningPortOrZero());
     final OptionalInt discPort = getDiscPortQueryParam();
     if (discPort.isPresent()) {
@@ -178,7 +179,7 @@ public class EnodeURL {
         String.format(
             "enode://%s@%s:%d",
             nodeId.toUnprefixedHexString(),
-            InetAddresses.toUriString(getIp()),
+                maybeHostname.orElse(InetAddresses.toUriString(getIp())),
             getListeningPortOrZero());
 
     return URI.create(uri);
@@ -228,6 +229,7 @@ public class EnodeURL {
             .orElse(ip);
     return ip;
   }
+
 
   public boolean isListening() {
     return listeningPort.isPresent();
@@ -338,12 +340,16 @@ public class EnodeURL {
         this.ip = InetAddresses.forString(ip);
       } else if (enodeDnsConfiguration.dnsEnabled()) {
         try {
-          this.ip = InetAddress.getByName(ip);
           if (enodeDnsConfiguration.updateEnabled()) {
             this.maybeHostname = Optional.of(ip);
           }
+          this.ip = InetAddress.getByName(ip);
         } catch (UnknownHostException e) {
-          throw new IllegalArgumentException("Invalid ip address or hostname.");
+          if(!enodeDnsConfiguration.updateEnabled()){
+            throw new IllegalArgumentException("Invalid ip address or hostname.");
+          }else{
+            this.ip = InetAddresses.forString("127.0.0.1");
+          }
         }
       } else {
         throw new IllegalArgumentException("Invalid ip address.");

@@ -1436,8 +1436,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info("Connecting to {} static nodes.", staticNodes.size());
     logger.trace("Static Nodes = {}", staticNodes);
-    final List<URI> enodeURIs =
-        ethNetworkConfig.getBootNodes().stream().map(EnodeURL::toURI).collect(Collectors.toList());
+    final List<EnodeURL> enodeURIs =        ethNetworkConfig.getBootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
@@ -1447,7 +1446,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(
             p ->
                 ensureAllNodesAreInAllowlist(
-                    staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
+                    staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
     logger.info("Security Module: {}", securityModuleName);
@@ -1461,7 +1460,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void ensureAllNodesAreInAllowlist(
-      final Collection<URI> enodeAddresses,
+      final Collection<EnodeURL> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
     try {
       PermissioningConfigurationValidator.areAllNodesAreInAllowlist(

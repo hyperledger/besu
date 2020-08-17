@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.util;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 
 import java.net.URI;
@@ -25,20 +26,17 @@ import java.util.stream.Collectors;
 public class PermissioningConfigurationValidator {
 
   public static void areAllNodesAreInAllowlist(
-      final Collection<URI> nodeURIs,
+      final Collection<EnodeURL> nodeURIs,
       final LocalPermissioningConfiguration permissioningConfiguration)
       throws Exception {
 
     if (permissioningConfiguration.isNodeAllowlistEnabled() && nodeURIs != null) {
-      final List<URI> allowlistNodesWithoutQueryParam =
-          permissioningConfiguration.getNodeAllowlist().stream()
-              .map(PermissioningConfigurationValidator::removeQueryFromURI)
-              .collect(Collectors.toList());
+      final List<EnodeURL> allowlistNodesWithoutQueryParam =
+          permissioningConfiguration.getNodeAllowlist();
 
-      final List<URI> nodeURIsNotInAllowlist =
+      final List<EnodeURL> nodeURIsNotInAllowlist =
           nodeURIs.stream()
-              .map(PermissioningConfigurationValidator::removeQueryFromURI)
-              .filter(uri -> !allowlistNodesWithoutQueryParam.contains(uri))
+              .filter(enodeURL -> !allowlistNodesWithoutQueryParam.contains(enodeURL))
               .collect(Collectors.toList());
 
       if (!nodeURIsNotInAllowlist.isEmpty()) {
@@ -48,22 +46,7 @@ public class PermissioningConfigurationValidator {
     }
   }
 
-  private static URI removeQueryFromURI(final URI uri) {
-    try {
-      return new URI(
-          uri.getScheme(),
-          uri.getUserInfo(),
-          uri.getHost(),
-          uri.getPort(),
-          uri.getPath(),
-          null,
-          uri.getFragment());
-    } catch (URISyntaxException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  private static Collection<String> enodesAsStrings(final List<URI> enodes) {
-    return enodes.parallelStream().map(URI::toASCIIString).collect(Collectors.toList());
+  private static Collection<String> enodesAsStrings(final List<EnodeURL> enodes) {
+    return enodes.parallelStream().map(EnodeURL::toString).collect(Collectors.toList());
   }
 }

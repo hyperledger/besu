@@ -100,8 +100,8 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
 
   private void readNodesFromConfig(final LocalPermissioningConfiguration configuration) {
     if (configuration.isNodeAllowlistEnabled() && configuration.getNodeAllowlist() != null) {
-      for (URI uri : configuration.getNodeAllowlist()) {
-        addNode(EnodeURL.fromString(uri.toString()));
+      for (EnodeURL enodeURL : configuration.getNodeAllowlist()) {
+        addNode(enodeURL);
       }
     }
   }

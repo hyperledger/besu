@@ -61,6 +61,7 @@ public class PermissioningConfigurationBuilder {
     return permissioningConfiguration;
   }
 
+
   private static LocalPermissioningConfiguration loadNodePermissioning(
       final LocalPermissioningConfiguration permissioningConfiguration,
       final boolean localConfigNodePermissioningEnabled,
@@ -75,16 +76,15 @@ public class PermissioningConfigurationBuilder {
       permissioningConfiguration.setNodePermissioningConfigFilePath(
           nodePermissioningConfigFilepath);
 
-      // ICI
       if (nodeAllowlistTomlArray != null) {
-        List<URI> nodesAllowlistToml =
+        List<EnodeURL> nodesAllowlistToml =
             nodeAllowlistTomlArray
                 .toList()
                 .parallelStream()
-                .map(Object::toString)
-                .map(
+                    .map(Object::toString)
+                    .map(
                     url ->
-                        EnodeURL.asURI(url, permissioningConfiguration.getEnodeDnsConfiguration()))
+                        EnodeURL.fromString(url, permissioningConfiguration.getEnodeDnsConfiguration()))
                 .collect(Collectors.toList());
         permissioningConfiguration.setNodeAllowlist(nodesAllowlistToml);
       } else {
@@ -171,4 +171,5 @@ public class PermissioningConfigurationBuilder {
     }
     return toml;
   }
+
 }
