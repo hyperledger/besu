@@ -11,14 +11,17 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
+
+import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A mock for representing EVM Code associated with an account. */
-public class CodeMock extends Code {
+public class ReferenceTestCode extends Code {
 
   /**
    * Public constructor.
@@ -26,7 +29,7 @@ public class CodeMock extends Code {
    * @param bytes - A hex string representation of the code.
    */
   @JsonCreator
-  public CodeMock(final String bytes) {
+  public ReferenceTestCode(final String bytes) {
     super(Bytes.fromHexString(bytes));
   }
 }

@@ -77,6 +77,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+@SuppressWarnings("unchecked")
 public class TransactionPoolTest {
 
   private static final int MAX_TRANSACTIONS = 5;
@@ -312,7 +313,7 @@ public class TransactionPoolTest {
   @Test
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToInvariantChecks() {
     givenTransactionIsValid(transaction2);
-    when(transactionValidator.validate(eq(transaction1)))
+    when(transactionValidator.validate(eq(transaction1), any(Optional.class)))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
 
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
@@ -325,7 +326,7 @@ public class TransactionPoolTest {
   @Test
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToStateDependentChecks() {
     givenTransactionIsValid(transaction2);
-    when(transactionValidator.validate(eq(transaction1))).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction1), any(Optional.class))).thenReturn(valid());
     when(transactionValidator.validateForSender(transaction1, null, true))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
 
@@ -343,7 +344,8 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -371,7 +373,8 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -426,7 +429,8 @@ public class TransactionPoolTest {
     final Transaction transaction2 =
         builder.nonce(1).gasPrice(Wei.of(5)).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -450,7 +454,8 @@ public class TransactionPoolTest {
     final Transaction transaction2 =
         builder.nonce(1).gasPrice(Wei.of(5)).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -508,7 +513,7 @@ public class TransactionPoolTest {
     when(peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)).thenReturn(false);
     when(peerPendingTransactionTracker.isPeerSupported(validPeer, EthProtocol.ETH65))
         .thenReturn(true);
-    when(transactionValidator.validate(any())).thenReturn(valid());
+    when(transactionValidator.validate(any(), any(Optional.class))).thenReturn(valid());
     transactionPool.addTransactionHash(transaction1.getHash());
     transactionPool.handleConnect(peer);
     verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer, transaction1.getHash());
@@ -551,7 +556,8 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -577,7 +583,8 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
@@ -619,7 +626,8 @@ public class TransactionPoolTest {
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
     final Transaction transactionRemote = builder.nonce(2).createTransaction(KEY_PAIR1);
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             any(Transaction.class),
             nullable(Account.class),
@@ -641,7 +649,7 @@ public class TransactionPoolTest {
   public void shouldCallValidatorWithExpectedValidationParameters() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidator.validate(eq(transaction1))).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction1), any(Optional.class))).thenReturn(valid());
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(valid());
 
@@ -675,7 +683,8 @@ public class TransactionPoolTest {
             metricsSystem,
             Optional.empty(),
             TransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             any(Transaction.class),
             nullable(Account.class),
@@ -772,7 +781,7 @@ public class TransactionPoolTest {
   }
 
   private void givenTransactionIsValid(final Transaction transaction) {
-    when(transactionValidator.validate(eq(transaction))).thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction), any(Optional.class))).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
