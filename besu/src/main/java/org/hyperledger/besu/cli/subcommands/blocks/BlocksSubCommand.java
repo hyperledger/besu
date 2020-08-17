@@ -133,7 +133,7 @@ public class BlocksSubCommand implements Runnable {
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File containing blocks to import.",
         arity = "0..*")
-    private final List<Path> blockImportFileOption = blockImportFiles;
+    private final List<Path> blockImportFileOption = new ArrayList<>();
 
     @Option(
         names = "--format",
@@ -164,11 +164,12 @@ public class BlocksSubCommand implements Runnable {
     @Override
     public void run() {
       parentCommand.parentCommand.configureLogging(false);
+      blockImportFiles.addAll(blockImportFileOption);
 
       checkCommand(parentCommand);
       checkNotNull(parentCommand.rlpBlockImporter);
       checkNotNull(parentCommand.jsonBlockImporterFactory);
-      if (blockImportFileOption.isEmpty()) {
+      if (blockImportFiles.isEmpty()) {
         throw new ParameterException(spec.commandLine(), "No files specified to import.");
       }
       LOG.info("Import {} block data from {} files", format, blockImportFiles.size());
