@@ -11,8 +11,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -31,8 +32,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** Represent a mock worldState for testing. */
-public class WorldStateMock extends DefaultMutableWorldState {
+/** Represent a worldState for testing. */
+public class ReferenceTestWorldState extends DefaultMutableWorldState {
 
   public static class AccountMock {
     private final long nonce;
@@ -41,7 +42,7 @@ public class WorldStateMock extends DefaultMutableWorldState {
     private final int version;
     private final Map<UInt256, UInt256> storage;
 
-    private static final Map<UInt256, UInt256> parseStorage(final Map<String, String> values) {
+    private static Map<UInt256, UInt256> parseStorage(final Map<String, String> values) {
       final Map<UInt256, UInt256> storage = new HashMap<>();
       for (final Map.Entry<String, String> entry : values.entrySet()) {
         storage.put(UInt256.fromHexString(entry.getKey()), UInt256.fromHexString(entry.getValue()));
@@ -87,7 +88,7 @@ public class WorldStateMock extends DefaultMutableWorldState {
     }
   }
 
-  public static void insertAccount(
+  static void insertAccount(
       final WorldUpdater updater, final Address address, final AccountMock toCopy) {
     final MutableAccount account = updater.getOrCreate(address).getMutable();
     account.setNonce(toCopy.getNonce());
@@ -100,8 +101,8 @@ public class WorldStateMock extends DefaultMutableWorldState {
   }
 
   @JsonCreator
-  public static WorldStateMock create(final Map<String, AccountMock> accounts) {
-    final WorldStateMock worldState = new WorldStateMock();
+  public static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
+    final ReferenceTestWorldState worldState = new ReferenceTestWorldState();
     final WorldUpdater updater = worldState.updater();
 
     for (final Map.Entry<String, AccountMock> entry : accounts.entrySet()) {
@@ -112,7 +113,7 @@ public class WorldStateMock extends DefaultMutableWorldState {
     return worldState;
   }
 
-  private WorldStateMock() {
+  public ReferenceTestWorldState() {
     super(
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
