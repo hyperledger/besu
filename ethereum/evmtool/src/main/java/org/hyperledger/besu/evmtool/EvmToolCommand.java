@@ -15,6 +15,8 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import static picocli.CommandLine.ScopeType.INHERIT;
+
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -82,65 +84,69 @@ public class EvmToolCommand implements Runnable {
   @Option(
       names = {"--code"},
       paramLabel = "<code>",
-      description = "code to be executed")
+      description = "Byte stream of code to be executed.")
   private final Bytes codeHexString = Bytes.EMPTY;
 
   @Option(
       names = {"--gas"},
+      description = "Amount of gas for this invocation.",
       paramLabel = "<int>")
   private final Gas gas = Gas.of(10_000_000_000L);
 
   @Option(
       names = {"--price"},
+      description = "Price of gas (in GWei) for this invocation",
       paramLabel = "<int>")
   private final Wei gasPriceGWei = Wei.ZERO;
 
   @Option(
       names = {"--sender"},
       paramLabel = "<address>",
-      description = "address of ORIGIN")
+      description = "Calling address for this invocation.")
   private final Address sender = Address.fromHexString("0x00");
 
   @Option(
       names = {"--receiver"},
       paramLabel = "<address>",
-      description = "address of ADDRESS")
+      description = "Receiving address for this invocation.")
   private final Address receiver = Address.fromHexString("0x00");
 
   @Option(
       names = {"--input"},
       paramLabel = "<code>",
-      description = "CALLDATA")
+      description = "The CALLDATA for this invocation")
   private final Bytes callData = Bytes.EMPTY;
 
   @Option(
       names = {"--value"},
+      description = "The amount of ether attached to this invocation",
       paramLabel = "<int>")
   private final Wei ethValue = Wei.ZERO;
 
   @Option(
       names = {"--json"},
-      description = "output json output for each opcode")
+      description = "Trace each opcode as a json object.",
+      scope = INHERIT)
   final Boolean showJsonResults = false;
 
   @Option(
       names = {"--nomemory"},
-      description = "disable showing the full memory output for each op")
+      description = "Disable showing the full memory output for each op.")
   private final Boolean showMemory = true;
 
   @Option(
       names = {"--prestate", "--genesis"},
-      description = "a chain specification, the same one that the client normally would use")
+      description = "The genesis file containing account data for this invocation.")
   private final File genesisFile = null;
 
   @Option(
       names = {"--chain"},
-      description = "Name of a well know chain")
+      description = "Name of a well known network that will be used for this invocation.")
   private final NetworkName network = null;
 
   @Option(
       names = {"--repeat"},
-      description = "Number of times to repeat before gathering timing")
+      description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
 
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
