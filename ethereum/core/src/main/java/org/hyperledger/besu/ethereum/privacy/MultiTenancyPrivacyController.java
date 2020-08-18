@@ -73,18 +73,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
           privateTransaction.getPrivacyGroupId().get().toBase64String(), enclavePublicKey);
     }
 
-    final String transactionResult =
-        privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
-
-    if (isGroupRemovalTransaction(privateTransaction)) {
-      // TODO send removal event
-      PrivateTransactionEvent removalEvent =
-          new PrivateTransactionEvent(
-              privateTransaction.getPrivacyGroupId().get().toBase64String(),
-              privateTransaction.getPrivateFrom().toBase64String());
-    }
-
-    return transactionResult;
+    return privacyController.sendTransaction(
+        privateTransaction, enclavePublicKey, maybePrivacyGroup);
   }
 
   @Override
@@ -227,11 +217,6 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   @Override
   public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     return privacyController.isGroupAdditionTransaction(privateTransaction);
-  }
-
-  @Override
-  public boolean isGroupRemovalTransaction(final PrivateTransaction privateTransaction) {
-    return privacyController.isGroupRemovalTransaction(privateTransaction);
   }
 
   @Override

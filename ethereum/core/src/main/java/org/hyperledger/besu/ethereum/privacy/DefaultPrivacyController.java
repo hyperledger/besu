@@ -18,7 +18,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.ADD_TO_GROUP_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -413,16 +412,6 @@ public class DefaultPrivacyController implements PrivacyController {
             .getPayload()
             .toHexString()
             .startsWith(ADD_TO_GROUP_METHOD_SIGNATURE.toHexString());
-  }
-
-  @Override
-  public boolean isGroupRemovalTransaction(final PrivateTransaction privateTransaction) {
-    return privateTransaction.getTo().isPresent()
-        && privateTransaction.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY)
-        && privateTransaction
-        .getPayload()
-        .toHexString()
-        .startsWith(REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
   }
 
   @Override

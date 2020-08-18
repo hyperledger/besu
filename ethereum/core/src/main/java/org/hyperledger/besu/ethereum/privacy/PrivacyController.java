@@ -89,8 +89,6 @@ public interface PrivacyController {
 
   boolean isGroupAdditionTransaction(PrivateTransaction privateTransaction);
 
-  boolean isGroupRemovalTransaction(PrivateTransaction privateTransaction);
-
   void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey)
       throws MultiTenancyValidationException;
