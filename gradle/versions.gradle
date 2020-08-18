@@ -43,7 +43,7 @@ dependencyManagement {
 
     dependency 'commons-io:commons-io:2.7'
 
-    dependency 'info.picocli:picocli:4.1.4'
+    dependency 'info.picocli:picocli:4.5.0'
 
     dependency 'io.kubernetes:client-java:5.0.0'
 
