@@ -3,7 +3,7 @@ package org.hyperledger.besu.ethereum.vm.blockchain;
 import static org.hyperledger.besu.ethereum.vm.BlockchainReferenceTestTools.executeTest;
 import static org.hyperledger.besu.ethereum.vm.BlockchainReferenceTestTools.generateTestParametersForConfig;
 
-import org.hyperledger.besu.ethereum.vm.BlockchainReferenceTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 
 import java.util.Collection;
 
@@ -25,16 +25,14 @@ public class %%TESTS_NAME%% {
     return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH);
   }
 
-  private final String name;
   private final BlockchainReferenceTestCaseSpec spec;
 
   public %%TESTS_NAME%%(
       final String name,
       final BlockchainReferenceTestCaseSpec spec,
       final boolean runTest) {
-    this.name = name;
     this.spec = spec;
-    assumeTrue("Test was blacklisted", runTest);
+    assumeTrue("Test " + name + " was ignored", runTest);
   }
 
   @Test

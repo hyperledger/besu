@@ -11,37 +11,47 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.core;
 
+package org.hyperledger.besu.ethereum.referencetests;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.vm.TestBlockchain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
-/** A memory mock for testing. */
+/** A memory holder for testing. */
 @JsonIgnoreProperties("previousHash")
-public class BlockHeaderMock extends BlockHeader {
+public class ReferenceTestEnv extends BlockHeader {
 
   /**
    * Public constructor.
    *
-   * @param coinbase The beneficiary address.
-   * @param gasLimit The gas limit of the current block.
-   * @param number The number to execute.
+   * @param coinbase Coinbase/beneficiary for the mock block being tested.
+   * @param difficulty Difficulty for the mock block being tested.
+   * @param gasLimit Gas Limit for the mock block being tested.
+   * @param number Block number for the mock block being tested.
+   * @param timestamp Timestamp for the mock block being tested.
    */
   @JsonCreator
-  public BlockHeaderMock(
+  public ReferenceTestEnv(
       @JsonProperty("currentCoinbase") final String coinbase,
       @JsonProperty("currentDifficulty") final String difficulty,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
       @JsonProperty("currentTimestamp") final String timestamp) {
     super(
-        TestBlockchain.generateTestBlockHash(Long.decode(number) - 1),
+        generateTestBlockHash(Long.decode(number) - 1),
         Hash.EMPTY, // ommersHash
         Address.fromHexString(coinbase),
         Hash.EMPTY, // stateRoot
@@ -58,5 +68,10 @@ public class BlockHeaderMock extends BlockHeader {
         Hash.ZERO,
         0L,
         new MainnetBlockHeaderFunctions());
+  }
+
+  private static Hash generateTestBlockHash(final long number) {
+    final byte[] bytes = Long.toString(number).getBytes(UTF_8);
+    return Hash.hash(Bytes.wrap(bytes));
   }
 }

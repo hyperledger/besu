@@ -12,21 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.apache.tuweni.bytes.Bytes;
+package org.hyperledger.errorpronechecks;
 
-/** A mock for representing EVM Code associated with an account. */
-public class CodeMock extends Code {
+import picocli.CommandLine;
 
-  /**
-   * Public constructor.
-   *
-   * @param bytes - A hex string representation of the code.
-   */
-  @JsonCreator
-  public CodeMock(final String bytes) {
-    super(Bytes.fromHexString(bytes));
-  }
+import java.util.Objects;
+
+public class ExperimentalCliOptionNotHiddenPositiveCases {
+
+  // BUG: Diagnostic contains:  Experimental options must be hidden.
+  @CommandLine.Option(
+          hidden = false,
+          names = {"--Xexperimental"})
+  private String experimental = "";
+
+  // BUG: Diagnostic contains:  Experimental options must be hidden.
+  @CommandLine.Option(
+          names = {"--Xexperimental2"})
+  private String experimental2 = "";
 }

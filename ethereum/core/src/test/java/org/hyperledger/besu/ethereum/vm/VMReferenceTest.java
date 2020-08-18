@@ -24,6 +24,9 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
+import org.hyperledger.besu.ethereum.referencetests.EnvironmentInformation;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
+import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
@@ -101,7 +104,8 @@ public class VMReferenceTest extends AbstractRetryingTest {
 
     final ReturnStack returnStack = new ReturnStack();
 
-    final TestBlockchain blockchain = new TestBlockchain(execEnv.getBlockHeader().getNumber());
+    final ReferenceTestBlockchain blockchain =
+        new ReferenceTestBlockchain(execEnv.getBlockHeader().getNumber());
     final MessageFrame frame =
         MessageFrame.builder()
             .type(MessageFrame.Type.MESSAGE_CALL)
