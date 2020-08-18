@@ -57,7 +57,7 @@ public interface BesuEvents {
   /**
    * Remove the blockAdded listener from besu notifications.
    *
-   * @param listenerIdentifier The id that was returned from addBlockAddedListener;
+   * @param listenerIdentifier The id that was returned from addBlockPropagatedListener
    */
   void removeBlockPropagatedListener(long listenerIdentifier);
 
@@ -72,7 +72,7 @@ public interface BesuEvents {
   /**
    * Remove the block added listener from besu notifications.
    *
-   * @param listenerIdentifier The id that was returned from addBlockAddedListener;
+   * @param listenerIdentifier The id that was returned from addBlockAddedListener
    */
   void removeBlockAddedListener(long listenerIdentifier);
 
@@ -87,7 +87,7 @@ public interface BesuEvents {
   /**
    * Remove the block reorg listener from besu notifications.
    *
-   * @param listenerIdentifier The id that was returned from addBlockReorgListener;
+   * @param listenerIdentifier The id that was returned from addBlockReorgListener
    */
   void removeBlockReorgListener(long listenerIdentifier);
 
@@ -103,7 +103,7 @@ public interface BesuEvents {
   /**
    * Remove the blockAdded listener from besu notifications.
    *
-   * @param listenerIdentifier The id that was returned from addTransactionAddedListener;
+   * @param listenerIdentifier The id that was returned from addTransactionAddedListener
    */
   void removeTransactionAddedListener(long listenerIdentifier);
 
@@ -119,7 +119,7 @@ public interface BesuEvents {
   /**
    * Remove the transactionDropped listener from besu notifications.
    *
-   * @param listenerIdentifier The id that was returned from addTransactionDroppedListener;
+   * @param listenerIdentifier The id that was returned from addTransactionDroppedListener
    */
   void removeTransactionDroppedListener(long listenerIdentifier);
 
@@ -134,7 +134,7 @@ public interface BesuEvents {
   /**
    * Remove the sync status listener from besu notifications.
    *
-   * @param listenerIdentifier The id that was returned from addTransactionDroppedListener;
+   * @param listenerIdentifier The id that was returned from addSyncStatusListener
    */
   void removeSyncStatusListener(long listenerIdentifier);
 
@@ -145,15 +145,14 @@ public interface BesuEvents {
    * @param addresses The addresses from which the log filter will be created
    * @param topics The topics from which the log filter will be created
    * @param logListener The listener that will accept the log.
-   * @return The id of the listener to be referred to used to remove the listener.
+   * @return The id of the listener to be used to remove the listener.
    */
   long addLogListener(List<Address> addresses, List<List<Bytes32>> topics, LogListener logListener);
 
   /**
    * Remove the log listener with the associated id.
    *
-   * @param listenerIdentifier The id of the listener that was returned when the listener was
-   *     created.
+   * @param listenerIdentifier The id of the listener that was returned from addLogListener
    */
   void removeLogListener(long listenerIdentifier);
 
@@ -233,8 +232,7 @@ public interface BesuEvents {
     /**
      * Invoked for each log (both added and removed) when a new block is added to the blockchain.
      *
-     * @param logWithMetadata the log with associated metadata. see
-     *     https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getfilterchanges
+     * @param logWithMetadata the log with associated metadata. see https://eth.wiki/json-rpc/API
      */
     void onLogEmitted(LogWithMetadata logWithMetadata);
   }
