@@ -105,6 +105,11 @@ public class EthPeers {
 
   private void reattemptPendingPeerRequests() {
     synchronized (this) {
+      pendingRequests.stream()
+          .filter(
+              pendingPeerRequest ->
+                  pendingPeerRequest.getAssignedPeer().map(EthPeer::isDisconnected).orElse(false))
+          .forEach(PendingPeerRequest::abort);
       pendingRequests.removeIf(PendingPeerRequest::attemptExecution);
     }
   }
