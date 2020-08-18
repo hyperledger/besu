@@ -44,7 +44,7 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
-        .contains("Missing required option '--password=<password>'");
+        .contains("Missing required option: '--password=<password>'");
   }
 
   @Test
