@@ -19,6 +19,7 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -245,6 +246,25 @@ public class EthPeersTest {
 
     verifyZeroInteractions(peerRequest);
     assertRequestFailure(pendingRequest, CancellationException.class);
+  }
+
+  // We had a bug where if a peer was busy when it was disconnected, pending peer requests that were
+  // *explicitly* assigned to that peer would never be attempted and thus never completed
+  @Test
+  public void shouldAttemptRequestWithBusyDisconnectedAssignedPeer() throws Exception {
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final EthPeer ethPeer = peer.getEthPeer();
+    useAllAvailableCapacity(ethPeer);
+
+    final PendingPeerRequest pendingRequest =
+        ethPeers.executePeerRequest(peerRequest, 100, Optional.of(ethPeer));
+
+    ethPeer.disconnect(DisconnectReason.UNKNOWN);
+
+    when(peerRequest.sendRequest(eq(ethPeer))).thenThrow(new PeerNotConnected(""));
+    ethPeers.registerDisconnect(ethPeer.getConnection());
+
+    assertRequestFailure(pendingRequest, PeerDisconnectedException.class);
   }
 
   private void freeUpCapacity(final EthPeer ethPeer) {
