@@ -81,11 +81,11 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
     return seenTransactionsForPeer != null && seenTransactionsForPeer.contains(hash);
   }
 
-  private <T> Set<T> createTransactionsSet() {
+  private Set<Hash> createTransactionsSet() {
     return Collections.newSetFromMap(
-        new LinkedHashMap<T, Boolean>(1 << 4, 0.75f, true) {
+        new LinkedHashMap<>(1 << 4, 0.75f, true) {
           @Override
-          protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
+          protected boolean removeEldestEntry(final Map.Entry<Hash, Boolean> eldest) {
             return size() > MAX_TRACKED_SEEN_TRANSACTIONS;
           }
         });
