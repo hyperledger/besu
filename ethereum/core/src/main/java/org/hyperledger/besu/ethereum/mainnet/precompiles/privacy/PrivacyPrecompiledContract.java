@@ -145,10 +145,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
 
     try {
-      if (!enclave
-          .retrievePrivacyGroup(privacyGroupId.toBase64String())
-          .getMembers()
-          .contains(privateFrom.toBase64String())) {
+      if (privateTransaction.getPrivateFor().isEmpty()
+          && !enclave
+              .retrievePrivacyGroup(privacyGroupId.toBase64String())
+              .getMembers()
+              .contains(privateFrom.toBase64String())) {
         return Bytes.EMPTY;
       }
     } catch (final EnclaveClientException e) {

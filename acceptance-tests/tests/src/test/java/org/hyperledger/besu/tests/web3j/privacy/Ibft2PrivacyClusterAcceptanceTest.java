@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import java.math.BigInteger;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
@@ -42,7 +41,6 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
   }
 
   @Test
-  @Ignore
   public void onlyAliceAndBobCanExecuteContract() {
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
@@ -115,7 +113,6 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
   }
 
   @Test
-  @Ignore
   public void canInteractWithMultiplePrivacyGroups() {
     // alice deploys contract
     final String firstDeployedAddress = "0xff206d21150a8da5b83629d8a722f3135ed532b1";
