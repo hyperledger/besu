@@ -26,6 +26,13 @@ import java.util.Optional;
 public interface StorageService {
 
   /**
+   * Name of the storage factory used for node data
+   *
+   * @return name of the storage factory used for node data
+   */
+  String getKeyValueStorageName();
+
+  /**
    * Registers a factory as available for creating key-value storage instances.
    *
    * @param factory creates instances providing key-value storage.

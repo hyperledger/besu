@@ -29,9 +29,20 @@ public class StorageServiceImpl implements StorageService {
   private final List<SegmentIdentifier> segments;
   private final Map<String, KeyValueStorageFactory> factories;
 
+  private String keyValueStorageName;
+
   public StorageServiceImpl() {
     this.segments = List.of(KeyValueSegmentIdentifier.values());
     this.factories = new ConcurrentHashMap<>();
+  }
+
+  @Override
+  public String getKeyValueStorageName() {
+    return keyValueStorageName;
+  }
+
+  public void setKeyValueStorageName(final String keyValueStorageName) {
+    this.keyValueStorageName = keyValueStorageName;
   }
 
   @Override

@@ -65,6 +65,7 @@ import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
+import org.hyperledger.besu.cli.util.InterceptingResultHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
@@ -114,6 +115,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -1128,6 +1130,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       configureLogging(true);
       configureNativeLibs();
+
+      if (this.pluginCommonConfiguration == null) {
+        this.pluginCommonConfiguration = besuPluginContext
+                .getService(BesuConfiguration.class)
+                .orElseThrow(() -> new IllegalStateException("Common plugin configuration cannot be null"));
+      }
+
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
@@ -1153,6 +1162,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
+    besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
@@ -1174,7 +1184,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME,
         new PublicKeySubCommand(
-            resultHandler.out(), this::addConfigurationService, this::buildNodeKey));
+            resultHandler.out(), this::buildNodeKey));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1242,6 +1252,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
+  public BesuContext getContext() {
+    return besuPluginContext;
+  }
+
   private SecurityModule defaultSecurityModule() {
     return new KeyPairSecurityModule(loadKeyPair());
   }
@@ -1251,18 +1265,42 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return KeyPairUtil.loadKeyPair(nodePrivateKeyFile());
   }
 
-  private void parse(
-      final AbstractParseResultHandler<List<Object>> resultHandler,
-      final BesuExceptionHandler exceptionHandler,
-      final String... args) {
-    // Create a handler that will search for a config file option and use it for
-    // default values
-    // and eventually it will run regular parsing of the remaining options.
-    final ConfigOptionSearchAndRunHandler configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
-    commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
-  }
+    private void parse(
+            final AbstractParseResultHandler<List<Object>> resultHandler,
+            final BesuExceptionHandler exceptionHandler,
+            final String... args) {
+        // Create a handler that will have access to the parsed besu command before it is executed, allowing it to
+        // add the BesuConfiguration service to the plugin context before execution.
+        final InterceptingResultHandler besuConfigHandler =
+                new InterceptingResultHandler(
+                        resultHandler,
+                        exceptionHandler,
+                        command -> {
+                            // create and add the common plugin configuration service
+                            final Path dataDir = command.dataDir();
+
+                            besuPluginContext.addService(
+                                    BesuConfiguration.class,
+                                    new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH))
+                            );
+
+                            // set the underlying key value storage name on the storage service
+                            storageService.setKeyValueStorageName(command.keyValueStorageName);
+                        }
+                );
+
+        // Create a handler that will search for a config file option and use it for
+        // default values
+        // and eventually it will run regular parsing of the remaining options.
+        final ConfigOptionSearchAndRunHandler configParsingHandler =
+                new ConfigOptionSearchAndRunHandler(
+                        besuConfigHandler,
+                        exceptionHandler,
+                        CONFIG_FILE_OPTION_NAME,
+                        environment
+                );
+        commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
+    }
 
   private void startSynchronization() {
     synchronize(
