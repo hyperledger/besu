@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -97,6 +98,7 @@ public class StateTestSubCommand implements Runnable {
   @Override
   public void run() {
     final ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
     final JavaType javaType =
         objectMapper
             .getTypeFactory()
@@ -104,9 +106,14 @@ public class StateTestSubCommand implements Runnable {
     try {
       if (stateTestFiles.isEmpty()) {
         // if no state tests were specified use standard input
-        final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-            objectMapper.readValue(System.in, javaType);
-        executeStateTest(generalStateTests);
+        while (true) {
+          final Map<String, GeneralStateTestCaseSpec> generalStateTests =
+              objectMapper.readValue(System.in, javaType);
+          if (generalStateTests == null || generalStateTests.isEmpty()) {
+            break;
+          }
+          executeStateTest(generalStateTests);
+        }
       } else {
         for (final File stateTestFile : stateTestFiles) {
           final Map<String, GeneralStateTestCaseSpec> generalStateTests =
