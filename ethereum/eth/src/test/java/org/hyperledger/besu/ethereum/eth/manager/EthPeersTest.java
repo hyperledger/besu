@@ -259,8 +259,6 @@ public class EthPeersTest {
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.of(ethPeer));
 
-    ethPeer.disconnect(DisconnectReason.UNKNOWN);
-
     when(peerRequest.sendRequest(eq(ethPeer))).thenThrow(new PeerNotConnected(""));
     ethPeers.registerDisconnect(ethPeer.getConnection());
 
