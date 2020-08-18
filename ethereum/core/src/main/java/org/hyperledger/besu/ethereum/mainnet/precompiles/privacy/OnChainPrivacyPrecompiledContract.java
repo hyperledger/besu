@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
@@ -41,6 +43,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -57,6 +60,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   private static final SECP256K1.Signature FAKE_SIGNATURE =
       SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
 
+  private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
+      Subscribers.create();
+
   private static final Logger LOG = LogManager.getLogger();
 
   public OnChainPrivacyPrecompiledContract(
@@ -68,6 +74,14 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateStateRootResolver(),
         "OnChainPrivacy");
+  }
+
+  public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
+    return privateTransactionEventObservers.subscribe(observer);
+  }
+
+  public boolean removePrivateTransactionObserver(final long observerId) {
+    return privateTransactionEventObservers.unsubscribe(observerId);
   }
 
   @Override
@@ -158,6 +172,15 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       privateStateUpdater.commit();
 
       return Bytes.EMPTY;
+    }
+
+    if (privateTransaction.isGroupRemovalTransaction()) {
+      final PrivateTransactionEvent removalEvent =
+          new PrivateTransactionEvent(
+              privateTransaction.getPrivacyGroupId().get().toBase64String(),
+              privateTransaction.getPrivateFrom().toBase64String());
+      privateTransactionEventObservers.forEach(
+          sub -> sub.onPrivateTransactionProcessed(removalEvent));
     }
 
     if (messageFrame.isPersistingPrivateState()) {

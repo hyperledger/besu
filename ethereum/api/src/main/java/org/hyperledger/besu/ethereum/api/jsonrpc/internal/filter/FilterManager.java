@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,7 +39,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AbstractVerticle;
 
 /** Manages JSON-RPC filter events. */
-public class FilterManager extends AbstractVerticle {
+public class FilterManager extends AbstractVerticle implements PrivateTransactionObserver {
 
   private static final int FILTER_TIMEOUT_CHECK_TIMER = 10000;
 
@@ -195,9 +196,8 @@ public class FilterManager extends AbstractVerticle {
             });
   }
 
-  public void recordPrivateTransactionEvent(final PrivateTransactionEvent event) {
-    // if isGroupRemovalEvent()
-
+  @Override
+  public void onPrivateTransactionProcessed(final PrivateTransactionEvent event) {
     // remove all private log filters that match event.privacyGroupId, event.userId
     filterRepository.getFiltersOfType(PrivateLogFilter.class).stream()
         .filter(
