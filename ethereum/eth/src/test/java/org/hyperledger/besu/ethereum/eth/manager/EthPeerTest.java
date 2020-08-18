@@ -148,8 +148,6 @@ public class EthPeerTest {
     assertThat(peer.getLastRequestTimestamp()).isEqualTo(clock.millis());
   }
 
-  // We had a bug where if a peer was busy when it was disconnected, pending peer requests that were
-  // *explicitly* assigned to that peer would never be completed
   @Test
   public void closeStreamsOnPeerDisconnect() throws PeerNotConnected {
     final EthPeer peer = createPeer();
