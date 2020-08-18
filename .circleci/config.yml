@@ -62,6 +62,9 @@ commands:
       - store_artifacts:
           path: acceptance-tests/tests/build/acceptanceTestLogs
           destination: acceptance-tests-logs
+      - store_artifacts:
+          path: /home/circleci/project/acceptance-tests/tests/core.*
+          destination: acceptance-tests-logs
 
 jobs:
   assemble:
