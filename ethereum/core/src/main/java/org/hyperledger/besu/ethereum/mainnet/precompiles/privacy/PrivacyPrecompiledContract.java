@@ -158,7 +158,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       LOG.error("Enclave is responding with an error, perhaps it has a misconfiguration?", e);
       throw e;
     } catch (final EnclaveIOException e) {
-      LOG.error("Can not communicate with enclave is it up?", e);
+      LOG.error("Can not communicate with enclave, is it up?", e);
       throw e;
     }
 

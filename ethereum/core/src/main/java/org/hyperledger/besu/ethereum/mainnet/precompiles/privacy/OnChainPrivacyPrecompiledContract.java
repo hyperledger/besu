@@ -260,7 +260,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         disposablePrivateState,
         privateWorldStateUpdater)) {
       LOG.debug(
-          "PrivateTransaction with hash {} cannot execute in privacy group {} because private from {} is not a member.",
+          "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom {} is not a member.",
           messageFrame.getTransactionHash(),
           privacyGroupId.toBase64String(),
           privateFrom.toBase64String());
