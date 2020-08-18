@@ -122,6 +122,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
    * Installs a new private log filter
    *
    * @param privacyGroupId String privacyGroupId
+   * @param enclavePublicKey String enclavePublicKey of user creating the filter
    * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
