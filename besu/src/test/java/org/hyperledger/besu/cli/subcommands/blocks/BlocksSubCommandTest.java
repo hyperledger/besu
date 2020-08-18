@@ -233,7 +233,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--data-path=" + folder.getRoot().getAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME);
-    final String expectedErrorOutputStart = "Missing required option '--to=<FILE>'";
+    final String expectedErrorOutputStart = "Missing required option: '--to=<FILE>'";
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
 
