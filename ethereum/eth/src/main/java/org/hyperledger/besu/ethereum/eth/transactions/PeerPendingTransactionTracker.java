@@ -41,7 +41,7 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
   public synchronized void markTransactionsHashesAsSeen(
       final EthPeer peer, final Collection<Hash> transactions) {
     final Set<Hash> seenTransactionsForPeer = getOrCreateSeenTransactionsForPeer(peer);
-    transactions.stream().forEach(seenTransactionsForPeer::add);
+    seenTransactionsForPeer.addAll(transactions);
   }
 
   public synchronized void addToPeerSendQueue(final EthPeer peer, final Hash hash) {
