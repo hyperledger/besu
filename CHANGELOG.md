@@ -17,6 +17,14 @@
 - [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
 - [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
 
+### Breaking Changes
+
+When upgrading to 1.5.3, ensure you've taken into account the following breaking changes.
+
+#### Onchain Privacy Group Management
+
+This early access feature was changed in a way that makes onchain privacy groups created with previous versions no longer usable. 
+
 ## 1.5.2 
 
 ### Additions and Improvements

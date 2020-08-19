@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
+import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivateTransactionTestFixture {
 
@@ -82,6 +84,11 @@ public class PrivateTransactionTestFixture {
     }
 
     return builder.signAndBuild(keys);
+  }
+
+  public VersionedPrivateTransaction createVersionedPrivateTransaction(final KeyPair keyPair) {
+    final PrivateTransaction transaction = createTransaction(keyPair);
+    return new VersionedPrivateTransaction(transaction, Bytes32.ZERO);
   }
 
   public PrivateTransactionTestFixture nonce(final long nonce) {
