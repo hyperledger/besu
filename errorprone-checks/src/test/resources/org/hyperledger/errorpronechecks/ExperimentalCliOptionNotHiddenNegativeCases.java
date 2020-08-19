@@ -12,22 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
-import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
-import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+package org.hyperledger.errorpronechecks;
 
-import java.io.IOException;
+import picocli.CommandLine;
 
-import org.junit.Test;
+import java.util.Objects;
 
-public class RunHelpTest extends AcceptanceTestBase {
+public class ExperimentalCliOptionNotHiddenNegativeCases {
 
-  @Test
-  public void testShowsHelpAndExits() throws IOException {
-    final BesuNode node = besu.runCommand("--help");
-    cluster.runNodeStart(node);
-    WaitUtils.waitFor(5000, () -> node.verify(exitedSuccessfully));
-  }
+  @CommandLine.Option(
+          hidden = true,
+          names = {"--Xexperimental"})
+  private String experimental = "";
+
+  @CommandLine.Option(
+          hidden = false,
+          names = {"--notExperimental"})
+  private String notExperimental = "";
+
+  @CommandLine.Option(
+          names = {"--notExperimental2"})
+  private String notExperimental2 = "";
 }

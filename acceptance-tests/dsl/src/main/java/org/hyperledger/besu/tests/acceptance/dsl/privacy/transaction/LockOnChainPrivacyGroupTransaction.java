@@ -20,22 +20,26 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
+import org.web3j.crypto.Credentials;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.utils.Base64String;
 
 public class LockOnChainPrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
   private final PrivacyNode locker;
+  private final Credentials signer;
 
-  public LockOnChainPrivacyGroupTransaction(final String privacyGroupId, final PrivacyNode locker) {
+  public LockOnChainPrivacyGroupTransaction(
+      final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
     this.locker = locker;
+    this.signer = signer;
   }
 
   @Override
   public String execute(final NodeRequests node) {
     try {
-      return node.privacy().privxLockPrivacyGroup(locker, privacyGroupId);
+      return node.privacy().privxLockPrivacyGroup(locker, privacyGroupId, signer);
     } catch (final IOException | TransactionException e) {
       throw new RuntimeException(e);
     }
