@@ -147,15 +147,6 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
     final PrivateTransactionReceipt aliceReceipt =
         alice.execute(privacyTransactions.getPrivateTransactionReceipt(firstTransactionHash));
 
-    final PrivateTransactionReceipt bobReceipt =
-        bob.execute(privacyTransactions.getPrivateTransactionReceipt(firstTransactionHash));
-    final PrivateTransactionReceipt charlieReceipt =
-        bob.execute(privacyTransactions.getPrivateTransactionReceipt(firstTransactionHash));
-
-    System.out.println(
-        bobReceipt.getTransactionIndex().bitCount()
-            + charlieReceipt.getTransactionIndex().bitCount());
-
     // verify bob and charlie have access to the same receipt
     bob.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(

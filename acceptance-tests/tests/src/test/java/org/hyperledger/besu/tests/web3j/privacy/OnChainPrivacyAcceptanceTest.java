@@ -101,9 +101,9 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(commitmentHash));
 
-    lockPrivacyGroup(privacyGroupId, alice, Credentials.create(alice.getTransactionSigningKey()));
-    addMembersToPrivacyGroup(
-        privacyGroupId, alice, Credentials.create(alice.getTransactionSigningKey()), charlie);
+    final Credentials aliceCredentials = Credentials.create(alice.getTransactionSigningKey());
+    lockPrivacyGroup(privacyGroupId, alice, aliceCredentials);
+    addMembersToPrivacyGroup(privacyGroupId, alice, aliceCredentials, charlie);
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob, charlie);
 
     charlie.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
@@ -265,17 +265,8 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
             privacyTransactions.privxLockPrivacyGroupAndCheck(
                 privacyGroupId, alice, aliceCredentials));
 
-    final String hash =
-        alice.execute(
-            privacyTransactions.addToPrivacyGroup(privacyGroupId, alice, aliceCredentials, bob));
-
-    System.out.println(hash);
-
-    final Object[] aliceKeys = alice.getOrion().getPublicKeys().toArray();
-    final Object[] bobKeys = bob.getOrion().getPublicKeys().toArray();
-    final Address aliceAddress = alice.getAddress();
-
-    System.out.println(aliceKeys.length + bobKeys.length + aliceAddress.toString());
+    alice.execute(
+        privacyTransactions.addToPrivacyGroup(privacyGroupId, alice, aliceCredentials, bob));
 
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
 

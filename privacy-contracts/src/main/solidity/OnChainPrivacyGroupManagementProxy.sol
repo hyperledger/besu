@@ -28,7 +28,9 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
     function removeParticipant(bytes32 _member) public returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         bool result = privacyInterface.removeParticipant(_member);
-        emit ParticipantRemoved(result, _member);
+        if (result) {
+            emit ParticipantRemoved(_member);
+        }
     return result;
     }
 
@@ -68,7 +70,6 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
     }
 
     event ParticipantRemoved(
-        bool success,
         bytes32 publicEnclaveKey
     );
 
