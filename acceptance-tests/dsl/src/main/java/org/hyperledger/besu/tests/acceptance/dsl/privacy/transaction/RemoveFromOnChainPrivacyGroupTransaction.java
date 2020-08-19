@@ -20,26 +20,31 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-import org.web3j.protocol.exceptions.TransactionException;
+import org.web3j.crypto.Credentials;
 import org.web3j.utils.Base64String;
 
 public class RemoveFromOnChainPrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
   private final PrivacyNode remover;
   private final String toRemove;
+  private final Credentials signer;
 
   public RemoveFromOnChainPrivacyGroupTransaction(
-      final String privacyGroupId, final PrivacyNode remover, final PrivacyNode toRemove) {
+      final String privacyGroupId,
+      final PrivacyNode remover,
+      final Credentials signer,
+      final PrivacyNode toRemove) {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
     this.remover = remover;
+    this.signer = signer;
     this.toRemove = toRemove.getOrion().getDefaultPublicKey();
   }
 
   @Override
   public String execute(final NodeRequests node) {
     try {
-      return node.privacy().privxRemoveFromPrivacyGroup(privacyGroupId, remover, toRemove);
-    } catch (IOException | TransactionException e) {
+      return node.privacy().privxRemoveFromPrivacyGroup(privacyGroupId, remover, signer, toRemove);
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }
