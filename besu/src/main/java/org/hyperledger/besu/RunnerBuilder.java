@@ -795,12 +795,14 @@ public class RunnerBuilder {
     }
   }
 
+  // TODO where do I need to unsubscribe the filterManager
   private void createPrivateTransactionObserver(
       final FilterManager filterManager, final PrivacyParameters privacyParameters) {
 
-    // TODO add filter manager as private event observer on PrivacyBlockProcessor
+    // register filterManager as observer of events fired by the onchain precompile
+    // filterManager needs to remove filters when the creator is removed from onchain groups
     if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
-      // TODO onchainPrecompiledContract.addObserver(filterManager);
+      // TODO this is prob not the right way to get the precompile
       PrecompiledContract precompiledContract =
           besuController
               .getProtocolSchedule()

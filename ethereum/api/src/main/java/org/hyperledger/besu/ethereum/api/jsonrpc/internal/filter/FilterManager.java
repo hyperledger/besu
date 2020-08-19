@@ -199,7 +199,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
 
   @Override
   public void onPrivateTransactionProcessed(final PrivateTransactionEvent event) {
-    // remove all private log filters that match event.privacyGroupId, event.userId
+    // when user removed from privacy group, remove all filters created by that user in that group
     filterRepository.getFiltersOfType(PrivateLogFilter.class).stream()
         .filter(
             privateLogFilter ->
