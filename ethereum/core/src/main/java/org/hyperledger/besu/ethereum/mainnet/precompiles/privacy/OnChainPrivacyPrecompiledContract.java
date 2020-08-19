@@ -47,8 +47,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -192,12 +192,12 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     if (privateTransaction.isGroupRemovalTransaction()) {
       // get first participant parameter - there will be only one for removal transaction
-      final String removedParticipant = getParticipantsFromParameter(privateTransaction.getPayload()).get(0);
+      final String removedParticipant =
+          getParticipantsFromParameter(privateTransaction.getPayload()).get(0);
 
       final PrivateTransactionEvent removalEvent =
           new PrivateTransactionEvent(
-              privateTransaction.getPrivacyGroupId().get().toBase64String(),
-              removedParticipant);
+              privateTransaction.getPrivacyGroupId().get().toBase64String(), removedParticipant);
       privateTransactionEventObservers.forEach(
           sub -> sub.onPrivateTransactionProcessed(removalEvent));
     }
