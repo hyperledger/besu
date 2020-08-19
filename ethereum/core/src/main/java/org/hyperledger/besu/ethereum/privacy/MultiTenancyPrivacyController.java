@@ -72,7 +72,6 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       verifyPrivacyGroupContainsEnclavePublicKey(
           privateTransaction.getPrivacyGroupId().get().toBase64String(), enclavePublicKey);
     }
-
     return privacyController.sendTransaction(
         privateTransaction, enclavePublicKey, maybePrivacyGroup);
   }
