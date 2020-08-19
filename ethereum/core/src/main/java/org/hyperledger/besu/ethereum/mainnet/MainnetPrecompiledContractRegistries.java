@@ -183,7 +183,8 @@ public abstract class MainnetPrecompiledContractRegistries {
           accountVersion,
           new PrivacyPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
-              precompiledContractConfiguration.getPrivacyParameters()));
+              precompiledContractConfiguration.getPrivacyParameters(),
+              "Privacy"));
     }
   }
 }
