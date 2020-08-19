@@ -144,13 +144,13 @@ public class Memory {
     ensureCapacityForBytes(offset.intValue(), numBytes.intValue());
   }
 
-    /**
-     * Expands the active words to accommodate the specified byte position.
-     *
-     * @param offset The location in memory to start with.
-     * @param numBytes The number of bytes to get.
-     */
-    void ensureCapacityForBytes(final int offset, final int numBytes) {
+  /**
+   * Expands the active words to accommodate the specified byte position.
+   *
+   * @param offset The location in memory to start with.
+   * @param numBytes The number of bytes to get.
+   */
+  void ensureCapacityForBytes(final int offset, final int numBytes) {
     // Do not increase the memory capacity if no bytes are being written
     // regardless of what the address may be.
     if (numBytes == 0) {
