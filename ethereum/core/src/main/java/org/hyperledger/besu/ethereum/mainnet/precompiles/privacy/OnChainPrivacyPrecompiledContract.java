@@ -191,10 +191,13 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     }
 
     if (privateTransaction.isGroupRemovalTransaction()) {
+      // get first participant parameter - there will be only one for removal transaction
+      final String removedParticipant = getParticipantsFromParameter(privateTransaction.getPayload()).get(0);
+
       final PrivateTransactionEvent removalEvent =
           new PrivateTransactionEvent(
               privateTransaction.getPrivacyGroupId().get().toBase64String(),
-              privateTransaction.getPrivateFrom().toBase64String());
+              removedParticipant);
       privateTransactionEventObservers.forEach(
           sub -> sub.onPrivateTransactionProcessed(removalEvent));
     }
