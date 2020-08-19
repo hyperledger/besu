@@ -18,9 +18,11 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A mock for representing EVM Code associated with an account. */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ReferenceTestCode extends Code {
 
   /**

@@ -41,16 +41,15 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.isStatic()) {
-      return ILLEGAL_STATE_CHANGE;
-    }
-
     final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
     final Gas cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     final Optional<Gas> optionalCost = Optional.of(cost);
-    if (frame.getRemainingGas().compareTo(cost) < 0) {
+    if (frame.isStatic()) {
+      return new OperationResult(
+          optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (frame.getRemainingGas().compareTo(cost) < 0) {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 

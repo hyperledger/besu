@@ -42,10 +42,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
 
     // Short-circuit if value is unreasonably large

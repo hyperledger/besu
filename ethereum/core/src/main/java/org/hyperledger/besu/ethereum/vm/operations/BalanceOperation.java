@@ -31,11 +31,7 @@ public class BalanceOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address accountAddress = Words.toAddress(frame.popStackItem());
     final Account account = frame.getWorldState().get(accountAddress);
     frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());

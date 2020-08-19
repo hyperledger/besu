@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.vm.FixedStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
@@ -34,6 +34,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class EVM {
   private static final Logger LOG = getLogger();
+
+  protected static final OperationResult OVERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+  protected static final OperationResult UNDERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
   private final OperationRegistry operations;
   private final Operation invalidOperation;
@@ -76,9 +83,9 @@ public class EVM {
           try {
             result = frame.getCurrentOperation().execute(frame, this);
           } catch (final OverflowException oe) {
-            result = AbstractOperation.OVERFLOW_RESPONSE;
+            result = OVERFLOW_RESPONSE;
           } catch (final UnderflowException ue) {
-            result = AbstractOperation.UNDERFLOW_RESPONSE;
+            result = UNDERFLOW_RESPONSE;
           }
           frame.setGasCost(result.getGasCost());
           logState(frame, result.getGasCost().orElse(Gas.ZERO));

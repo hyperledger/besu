@@ -35,11 +35,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.Operation;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.operations.CallOperation;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,14 +49,12 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.base.Stopwatch;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -131,8 +126,9 @@ public class EvmToolCommand implements Runnable {
 
   @Option(
       names = {"--nomemory"},
-      description = "Disable showing the full memory output for each op.")
-  private final Boolean showMemory = true;
+      description = "Disable showing the full memory output for each op.",
+      scope = INHERIT)
+  private final Boolean noMemory = false;
 
   @Option(
       names = {"--prestate", "--genesis"},
@@ -209,15 +205,23 @@ public class EvmToolCommand implements Runnable {
 
       Configurator.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int repeat = this.repeat;
+      Configurator.setLevel(
+          "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
       final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
+      Configurator.setLevel("org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;
       do {
-
         final boolean lastLoop = repeat == 0;
+
+        final OperationTracer tracer = // You should have picked Mercy.
+            lastLoop && showJsonResults
+                ? new EVMToolTracer(System.out, !noMemory)
+                : OperationTracer.NO_TRACING;
+
         final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
         messageFrameStack.add(
             MessageFrame.builder()
@@ -248,8 +252,7 @@ public class EvmToolCommand implements Runnable {
         stopwatch.start();
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
-          mcp.process(
-              messageFrame, new EvmToolOperationTracer(lastLoop, precompileContractRegistry));
+          mcp.process(messageFrame, tracer);
           if (lastLoop) {
             if (messageFrame.getExceptionalHaltReason().isPresent()) {
               out.println(messageFrame.getExceptionalHaltReason().get());
@@ -298,99 +301,6 @@ public class EvmToolCommand implements Runnable {
 
     } catch (final IOException e) {
       LOG.fatal(e);
-    }
-  }
-
-  private JsonObject createEvmTraceOperation(
-      final MessageFrame messageFrame,
-      final PrecompileContractRegistry precompileContractRegistry) {
-    final JsonArray stack = new JsonArray();
-    for (int i = 0; i < messageFrame.stackSize(); i++) {
-      stack.add(messageFrame.getStackItem(i).toShortHexString());
-    }
-    final String error =
-        messageFrame
-            .getExceptionalHaltReason()
-            .map(ExceptionalHaltReason::getDescription)
-            .orElse(
-                messageFrame
-                    .getRevertReason()
-                    .map(bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8))
-                    .orElse(""));
-
-    final JsonObject results = new JsonObject();
-    final Operation currentOp = messageFrame.getCurrentOperation();
-    if (currentOp != null) {
-      results.put("pc", messageFrame.getPC());
-      results.put("op", Bytes.of(currentOp.getOpcode()).toHexString());
-      results.put("opName", currentOp.getName());
-      messageFrame
-          .getGasCost()
-          .ifPresent(gasCost -> results.put("gasCost", gasCost.asUInt256().toShortHexString()));
-    } else {
-      final MessageFrame caller =
-          messageFrame.getMessageFrameStack().toArray(new MessageFrame[0])[1];
-      final CallOperation callOp = (CallOperation) caller.getCurrentOperation();
-
-      results.put("address", messageFrame.getContractAddress().toShortHexString());
-      results.put(
-          "contract",
-          precompileContractRegistry
-              .get(messageFrame.getContractAddress(), Account.DEFAULT_VERSION)
-              .getName());
-      results.put(
-          "gasCost",
-          callOp
-              .gasAvailableForChildCall(caller)
-              .minus(messageFrame.getRemainingGas())
-              .toHexString());
-    }
-    results.put("gas", messageFrame.getRemainingGas().asUInt256().toShortHexString());
-    if (!showMemory) {
-      results.put(
-          "memory",
-          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize()).toHexString());
-    }
-    results.put("memSize", messageFrame.memoryByteSize());
-    results.put("depth", messageFrame.getMessageStackDepth() + 1);
-    results.put("stack", stack);
-    results.put("error", error);
-    return results;
-  }
-
-  private class EvmToolOperationTracer implements OperationTracer {
-    private final boolean lastLoop;
-    private final PrecompileContractRegistry precompiledContractRegistries;
-
-    EvmToolOperationTracer(
-        final boolean lastLoop, final PrecompileContractRegistry precompiledContractRegistries) {
-      this.lastLoop = lastLoop;
-      this.precompiledContractRegistries = precompiledContractRegistries;
-    }
-
-    @Override
-    public void traceExecution(final MessageFrame frame, final ExecuteOperation executeOperation) {
-      if (showJsonResults && lastLoop) {
-        final JsonObject op =
-            EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);
-        final Stopwatch timer = Stopwatch.createStarted();
-        executeOperation.execute();
-        timer.stop();
-        op.put("timens", timer.elapsed().toNanos());
-        out.println(op);
-      } else {
-        executeOperation.execute();
-      }
-    }
-
-    @Override
-    public void tracePrecompileCall(
-        final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
-      if (showJsonResults && lastLoop) {
-        final JsonObject op =
-            EvmToolCommand.this.createEvmTraceOperation(frame, precompiledContractRegistries);
-        out.println(op);
-      }
     }
   }
 }

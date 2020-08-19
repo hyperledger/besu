@@ -29,11 +29,7 @@ public class GasOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Gas gasRemaining = frame.getRemainingGas().minus(gasCost);
     final Bytes32 value = Bytes32.leftPad(Bytes.of(gasRemaining.getBytes()));
     frame.pushStackItem(value);
