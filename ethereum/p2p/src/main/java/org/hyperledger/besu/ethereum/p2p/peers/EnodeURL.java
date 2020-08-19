@@ -179,7 +179,7 @@ public class EnodeURL {
         String.format(
             "enode://%s@%s:%d",
             nodeId.toUnprefixedHexString(),
-                maybeHostname.orElse(InetAddresses.toUriString(getIp())),
+            maybeHostname.orElse(InetAddresses.toUriString(getIp())),
             getListeningPortOrZero());
 
     return URI.create(uri);
@@ -229,7 +229,6 @@ public class EnodeURL {
             .orElse(ip);
     return ip;
   }
-
 
   public boolean isListening() {
     return listeningPort.isPresent();
@@ -345,9 +344,9 @@ public class EnodeURL {
           }
           this.ip = InetAddress.getByName(ip);
         } catch (UnknownHostException e) {
-          if(!enodeDnsConfiguration.updateEnabled()){
+          if (!enodeDnsConfiguration.updateEnabled()) {
             throw new IllegalArgumentException("Invalid ip address or hostname.");
-          }else{
+          } else {
             this.ip = InetAddresses.forString("127.0.0.1");
           }
         }

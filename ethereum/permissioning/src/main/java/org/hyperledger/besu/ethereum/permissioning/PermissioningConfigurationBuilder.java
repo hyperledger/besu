@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 
-import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,7 +60,6 @@ public class PermissioningConfigurationBuilder {
     return permissioningConfiguration;
   }
 
-
   private static LocalPermissioningConfiguration loadNodePermissioning(
       final LocalPermissioningConfiguration permissioningConfiguration,
       final boolean localConfigNodePermissioningEnabled,
@@ -81,10 +79,11 @@ public class PermissioningConfigurationBuilder {
             nodeAllowlistTomlArray
                 .toList()
                 .parallelStream()
-                    .map(Object::toString)
-                    .map(
+                .map(Object::toString)
+                .map(
                     url ->
-                        EnodeURL.fromString(url, permissioningConfiguration.getEnodeDnsConfiguration()))
+                        EnodeURL.fromString(
+                            url, permissioningConfiguration.getEnodeDnsConfiguration()))
                 .collect(Collectors.toList());
         permissioningConfiguration.setNodeAllowlist(nodesAllowlistToml);
       } else {
@@ -171,5 +170,4 @@ public class PermissioningConfigurationBuilder {
     }
     return toml;
   }
-
 }
