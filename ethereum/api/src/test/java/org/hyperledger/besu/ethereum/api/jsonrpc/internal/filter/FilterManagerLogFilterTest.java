@@ -297,7 +297,7 @@ public class FilterManagerLogFilterTest {
 
   private void privateTransactionEvent(final String privacyGroupId, final String enclavePublicKey) {
     PrivateTransactionEvent event = new PrivateTransactionEvent(privacyGroupId, enclavePublicKey);
-    filterManager.onPrivateTransactionProcessed(event);
+    filterManager.processRemovalEvent(event);
   }
 
   private LogWithMetadata logWithMetadata() {

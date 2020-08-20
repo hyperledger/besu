@@ -47,6 +47,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
   private final FilterRepository filterRepository;
   private final BlockchainQueries blockchainQueries;
   private final Optional<PrivacyQueries> privacyQueries;
+  private final List<PrivateTransactionEvent> removalEvents;
 
   FilterManager(
       final BlockchainQueries blockchainQueries,
@@ -61,6 +62,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
     transactionPool.subscribePendingTransactions(this::recordPendingTransactionEvent);
     this.blockchainQueries = blockchainQueries;
     this.privacyQueries = privacyQueries;
+    this.removalEvents = new ArrayList<>();
   }
 
   @Override
@@ -167,6 +169,9 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
           }
         });
 
+    removalEvents.stream().forEach(removalEvent -> processRemovalEvent(removalEvent));
+    removalEvents.clear();
+
     final List<LogWithMetadata> logsWithMetadata = event.getLogsWithMetadata();
     filterRepository.getFiltersOfType(LogFilter.class).stream()
         .filter(
@@ -199,16 +204,8 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
 
   @Override
   public void onPrivateTransactionProcessed(final PrivateTransactionEvent event) {
-    // when user removed from privacy group, remove all filters created by that user in that group
-    filterRepository.getFiltersOfType(PrivateLogFilter.class).stream()
-        .filter(
-            privateLogFilter ->
-                privateLogFilter.getPrivacyGroupId().equals(event.getPrivacyGroupId())
-                    && privateLogFilter.getEnclavePublicKey().equals(event.getEnclavePublicKey()))
-        .forEach(
-            privateLogFilter -> {
-              uninstallFilter(privateLogFilter.getId());
-            });
+    // the list will be processed at the end of the block
+    removalEvents.add(event);
   }
 
   @VisibleForTesting
@@ -225,6 +222,20 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
             filter.addTransactionHash(transaction.getHash());
           }
         });
+  }
+
+  @VisibleForTesting
+  void processRemovalEvent(final PrivateTransactionEvent event) {
+    // when user removed from privacy group, remove all filters created by that user in that group
+    filterRepository.getFiltersOfType(PrivateLogFilter.class).stream()
+        .filter(
+            privateLogFilter ->
+                privateLogFilter.getPrivacyGroupId().equals(event.getPrivacyGroupId())
+                    && privateLogFilter.getEnclavePublicKey().equals(event.getEnclavePublicKey()))
+        .forEach(
+            privateLogFilter -> {
+              uninstallFilter(privateLogFilter.getId());
+            });
   }
 
   /**
