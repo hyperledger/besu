@@ -799,7 +799,8 @@ public class RunnerBuilder {
       final FilterManager filterManager, final PrivacyParameters privacyParameters) {
     // register filterManager as observer of events fired by the onchain precompile.
     // filterManager needs to remove filters when the creator is removed from onchain group
-    if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
+    if (privacyParameters.isOnchainPrivacyGroupsEnabled()
+        && privacyParameters.isMultiTenancyEnabled()) {
       final PrecompiledContract onchainPrivacyPrecompiledContract =
           besuController
               .getProtocolSchedule()
