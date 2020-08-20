@@ -52,6 +52,7 @@ public class PrivNewFilter implements JsonRpcMethod {
     final FilterParameter filter = request.getRequiredParameter(1, FilterParameter.class);
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
 
+    // no need to pass blockNumber. To create a filter, you need to be a current member of the group
     checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(enclavePublicKey, privacyGroupId);
 
     if (!filter.isValid()) {
