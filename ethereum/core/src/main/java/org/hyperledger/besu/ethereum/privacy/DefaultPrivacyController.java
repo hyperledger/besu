@@ -534,7 +534,7 @@ public class DefaultPrivacyController implements PrivacyController {
   public void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException {
-    verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    // NO VALIDATION NEEDED
   }
 
   @Override
