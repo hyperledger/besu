@@ -60,7 +60,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -801,15 +800,14 @@ public class RunnerBuilder {
     // filterManager needs to remove filters when the creator is removed from onchain group
     if (privacyParameters.isOnchainPrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
-      final PrecompiledContract onchainPrivacyPrecompiledContract =
-          besuController
-              .getProtocolSchedule()
-              .getByBlockNumber(1)
-              .getPrecompileContractRegistry()
-              .get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
-      OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
-          (OnChainPrivacyPrecompiledContract) onchainPrivacyPrecompiledContract;
-      onChainPrivacyPrecompiledContract.addPrivateTransactionObserver(filterManager);
+      final OnChainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
+          (OnChainPrivacyPrecompiledContract)
+              besuController
+                  .getProtocolSchedule()
+                  .getByBlockNumber(1)
+                  .getPrecompileContractRegistry()
+                  .get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+      onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(filterManager);
     }
   }
 
