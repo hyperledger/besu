@@ -17,8 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.versionedPrivateTransactionBesu;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -29,7 +28,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveConfigurationException;
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -46,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -65,13 +64,13 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
-public class PrivacyPrecompiledContractTest {
+public class OnChainPrivacyPrecompiledContractTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
-  private final String actual = "Test String";
-  private final Bytes txEnclaveKey = Bytes.wrap(actual.getBytes(UTF_8));
+  private final Bytes txEnclaveKey = Bytes.random(32);
   private MessageFrame messageFrame;
   private Blockchain blockchain;
   private final String DEFAULT_OUTPUT = "0x01";
@@ -139,30 +138,30 @@ public class PrivacyPrecompiledContractTest {
   @Test
   public void testPayloadFoundInEnclave() {
     final Enclave enclave = mock(Enclave.class);
-    when(enclave.retrievePrivacyGroup(PAYLOAD_TEST_PRIVACY_GROUP_ID))
-        .thenReturn(
-            new PrivacyGroup(
-                PAYLOAD_TEST_PRIVACY_GROUP_ID,
-                PrivacyGroup.Type.PANTHEON,
-                "",
-                "",
-                Arrays.asList(VALID_BASE64_ENCLAVE_KEY.toBase64String())));
-    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
             PrivateTransactionProcessor.Result.successful(
                 logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
-    final PrivateTransaction privateTransaction = privateTransactionBesu();
-    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
-    final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
+    final VersionedPrivateTransaction versionedPrivateTransaction =
+        versionedPrivateTransactionBesu();
+    final byte[] payload = convertVersionedPrivateTransactionToBytes(versionedPrivateTransaction);
+    final String privateFrom =
+        versionedPrivateTransaction.getPrivateTransaction().getPrivateFrom().toBase64String();
 
     final ReceiveResponse response =
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
-    when(enclave.receive(any(String.class))).thenReturn(response);
+    when(enclave.receive(any())).thenReturn(response);
 
-    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+    final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
+    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
+    Mockito.doReturn(true)
+        .when(contractSpy)
+        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+
+    final Bytes actual = contractSpy.compute(txEnclaveKey, messageFrame);
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -191,9 +190,10 @@ public class PrivacyPrecompiledContractTest {
   @Test
   public void testEnclaveBelowRequiredVersion() {
     final Enclave enclave = mock(Enclave.class);
-    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
-    final PrivateTransaction privateTransaction = privateTransactionBesu();
-    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
+    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final VersionedPrivateTransaction versionedPrivateTransaction =
+        versionedPrivateTransactionBesu();
+    final byte[] payload = convertVersionedPrivateTransactionToBytes(versionedPrivateTransaction);
 
     final ReceiveResponse responseWithoutSenderKey =
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, null);
@@ -205,28 +205,12 @@ public class PrivacyPrecompiledContractTest {
   }
 
   @Test
-  public void testPrivateTransactionWithoutPrivateFrom() {
-    final Enclave enclave = mock(Enclave.class);
-    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
-    final PrivateTransaction privateTransaction = spy(privateTransactionBesu());
-    when(privateTransaction.getPrivateFrom()).thenReturn(Bytes.EMPTY);
-    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
-
-    final String senderKey = privateTransaction.getPrivateFrom().toBase64String();
-    final ReceiveResponse response =
-        new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, senderKey);
-    when(enclave.receive(eq(txEnclaveKey.toBase64String()))).thenReturn(response);
-
-    final Bytes expected = contract.compute(txEnclaveKey, messageFrame);
-    assertThat(expected).isEqualTo(Bytes.EMPTY);
-  }
-
-  @Test
   public void testPayloadNotMatchingPrivateFrom() {
     final Enclave enclave = mock(Enclave.class);
-    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
-    final PrivateTransaction privateTransaction = privateTransactionBesu();
-    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
+    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final VersionedPrivateTransaction versionedPrivateTransaction =
+        versionedPrivateTransactionBesu();
+    final byte[] payload = convertVersionedPrivateTransactionToBytes(versionedPrivateTransaction);
 
     final String wrongSenderKey = Bytes.random(32).toBase64String();
     final ReceiveResponse responseWithWrongSenderKey =
@@ -240,46 +224,44 @@ public class PrivacyPrecompiledContractTest {
   @Test
   public void testPrivateFromNotMemberOfGroup() {
     final Enclave enclave = mock(Enclave.class);
-    when(enclave.retrievePrivacyGroup(PAYLOAD_TEST_PRIVACY_GROUP_ID))
-        .thenReturn(
-            new PrivacyGroup(
-                PAYLOAD_TEST_PRIVACY_GROUP_ID,
-                PrivacyGroup.Type.PANTHEON,
-                "",
-                "",
-                Arrays.asList(VALID_BASE64_ENCLAVE_KEY.toBase64String())));
-    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
-    contract.setPrivateTransactionProcessor(
-        mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.successful(
-                new ArrayList<>(), 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
+    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
+    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
+    Mockito.doReturn(false)
+        .when(contractSpy)
+        .isContractLocked(any(), any(), any(), any(), any(), any(), any());
+    Mockito.doReturn(true)
+        .when(contractSpy)
+        .onChainPrivacyGroupVersionMatches(any(), any(), any(), any(), any(), any(), any(), any());
+    final PrivateTransactionProcessor.Result mockResult =
+        mock(PrivateTransactionProcessor.Result.class);
+    Mockito.doReturn(mockResult)
+        .when(contractSpy)
+        .simulateTransaction(any(), any(), any(), any(), any(), any(), any(), any());
+    Mockito.doReturn(Arrays.asList(Bytes.ofUnsignedInt(1L)))
+        .when(contractSpy)
+        .getMembersFromResult(any());
 
-    final PrivateTransaction privateTransaction = privateTransactionBesu();
-    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
-    final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
+    final VersionedPrivateTransaction privateTransaction = versionedPrivateTransactionBesu();
+    final byte[] payload = convertVersionedPrivateTransactionToBytes(privateTransaction);
+    final String privateFrom =
+        privateTransaction.getPrivateTransaction().getPrivateFrom().toBase64String();
 
     final ReceiveResponse response =
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes actual = contractSpy.compute(txEnclaveKey, messageFrame);
 
-    assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
   public void testInvalidPrivateTransaction() {
     final Enclave enclave = mock(Enclave.class);
-    when(enclave.retrievePrivacyGroup(PAYLOAD_TEST_PRIVACY_GROUP_ID))
-        .thenReturn(
-            new PrivacyGroup(
-                PAYLOAD_TEST_PRIVACY_GROUP_ID,
-                PrivacyGroup.Type.PANTHEON,
-                "",
-                "",
-                Arrays.asList(VALID_BASE64_ENCLAVE_KEY.toBase64String())));
-    final PrivacyPrecompiledContract contract =
-        new PrivacyPrecompiledContract(
+
+    final OnChainPrivacyPrecompiledContract contract =
+        new OnChainPrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
@@ -292,29 +274,37 @@ public class PrivacyPrecompiledContractTest {
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE))));
 
-    final PrivateTransaction privateTransaction = privateTransactionBesu();
-    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
-    final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
+    final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
+    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
+    Mockito.doReturn(true)
+        .when(contractSpy)
+        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+
+    final VersionedPrivateTransaction privateTransaction = versionedPrivateTransactionBesu();
+    final byte[] payload = convertVersionedPrivateTransactionToBytes(privateTransaction);
+    final String privateFrom =
+        privateTransaction.getPrivateTransaction().getPrivateFrom().toBase64String();
 
     final ReceiveResponse response =
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
 
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes actual = contractSpy.compute(txEnclaveKey, messageFrame);
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
-  private byte[] convertPrivateTransactionToBytes(final PrivateTransaction privateTransaction) {
+  private byte[] convertVersionedPrivateTransactionToBytes(
+      final VersionedPrivateTransaction privateTransaction) {
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     privateTransaction.writeTo(bytesValueRLPOutput);
 
     return bytesValueRLPOutput.encoded().toBase64String().getBytes(UTF_8);
   }
 
-  private PrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
-    return new PrivacyPrecompiledContract(
+  private OnChainPrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
+    return new OnChainPrivacyPrecompiledContract(
         new SpuriousDragonGasCalculator(),
         enclave,
         worldStateArchive,

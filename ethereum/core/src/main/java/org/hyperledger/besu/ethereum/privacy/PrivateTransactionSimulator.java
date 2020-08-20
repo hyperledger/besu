@@ -48,8 +48,7 @@ public class PrivateTransactionSimulator {
   private static final SECP256K1.Signature FAKE_SIGNATURE =
       SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
 
-  private static final Address DEFAULT_FROM =
-      Address.fromHexString("0x0000000000000000000000000000000000000000");
+  private static final Address DEFAULT_FROM = Address.ZERO;
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
