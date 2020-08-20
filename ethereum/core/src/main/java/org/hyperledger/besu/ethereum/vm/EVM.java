@@ -43,12 +43,10 @@ public class EVM {
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
   private final OperationRegistry operations;
-  private final Operation invalidOperation;
   private final Operation endOfScriptStop;
 
   public EVM(final OperationRegistry operations, final GasCalculator gasCalculator) {
     this.operations = operations;
-    this.invalidOperation = new InvalidOperation(gasCalculator);
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
   }
 
@@ -137,6 +135,12 @@ public class EVM {
       return endOfScriptStop;
     }
 
-    return operations.getOrDefault(bytecode.get(offset), contractAccountVersion, invalidOperation);
+    final byte opcode = bytecode.get(offset);
+    final Operation operation = operations.get(opcode, contractAccountVersion);
+    if (operation == null) {
+      return new InvalidOperation(opcode, null);
+    } else {
+      return operation;
+    }
   }
 }
