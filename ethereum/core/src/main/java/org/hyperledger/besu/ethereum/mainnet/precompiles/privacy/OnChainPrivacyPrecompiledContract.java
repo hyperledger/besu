@@ -190,17 +190,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return Bytes.EMPTY;
     }
 
-    if (privateTransaction.isGroupRemovalTransaction()) {
-      // get first participant parameter - there will be only one for removal transaction
-      final String removedParticipant =
-          getParticipantsFromParameter(privateTransaction.getPayload()).get(0);
-
-      final PrivateTransactionEvent removalEvent =
-          new PrivateTransactionEvent(
-              privateTransaction.getPrivacyGroupId().get().toBase64String(), removedParticipant);
-      privateTransactionEventObservers.forEach(
-          sub -> sub.onPrivateTransactionProcessed(removalEvent));
-    }
+    sendParticipantRemovedEvent(privateTransaction);
 
     if (messageFrame.isPersistingPrivateState()) {
       persistPrivateState(
@@ -213,6 +203,20 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     }
 
     return result.getOutput();
+  }
+
+  private void sendParticipantRemovedEvent(PrivateTransaction privateTransaction) {
+    if (privateTransaction.isGroupRemovalTransaction()) {
+      // get first participant parameter - there is only one for removal transaction
+      final String removedParticipant =
+          getRemovedParticipantFromParameter(privateTransaction.getPayload());
+
+      final PrivateTransactionEvent removalEvent =
+          new PrivateTransactionEvent(
+              privateTransaction.getPrivacyGroupId().get().toBase64String(), removedParticipant);
+      privateTransactionEventObservers.forEach(
+          sub -> sub.onPrivateTransactionProcessed(removalEvent));
+    }
   }
 
   boolean canExecute(
@@ -347,6 +351,11 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       participants.add(mungedParticipants.slice(i, 32).toBase64String());
     }
     return participants;
+  }
+
+  private String getRemovedParticipantFromParameter(final Bytes input) {
+    final Bytes mungedParticipants = input.slice(4);
+    return mungedParticipants.slice(0, 32).toBase64String();
   }
 
   private List<Bytes> decodeList(final Bytes rlpEncodedList) {
