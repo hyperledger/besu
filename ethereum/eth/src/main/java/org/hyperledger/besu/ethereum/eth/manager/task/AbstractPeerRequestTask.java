@@ -40,7 +40,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
 
   private Duration timeout = DEFAULT_TIMEOUT;
   private final int requestCode;
-  private volatile PendingPeerRequest responseStream;
+  private volatile PendingPeerRequest pendingPeerRequest;
 
   protected AbstractPeerRequestTask(
       final EthContext ethContext, final int requestCode, final MetricsSystem metricsSystem) {
@@ -56,8 +56,8 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   @Override
   protected final void executeTask() {
     final CompletableFuture<R> promise = new CompletableFuture<>();
-    responseStream = sendRequest();
-    responseStream.then(
+    pendingPeerRequest = sendRequest();
+    pendingPeerRequest.then(
         stream -> {
           // Start the timeout now that the request has actually been sent
           ethContext.getScheduler().failAfterTimeout(promise, timeout);
@@ -71,7 +71,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     promise.whenComplete(
         (r, t) -> {
           final Optional<RequestManager.ResponseStream> responseStream =
-              this.responseStream.abort();
+              this.pendingPeerRequest.abort();
           if (t != null) {
             t = ExceptionUtils.rootCause(t);
             if (t instanceof TimeoutException && responseStream.isPresent()) {
@@ -113,7 +113,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   @Override
   protected void cleanup() {
     super.cleanup();
-    responseStream.abort().ifPresent(RequestManager.ResponseStream::close);
+    pendingPeerRequest.abort().ifPresent(RequestManager.ResponseStream::close);
   }
 
   protected abstract PendingPeerRequest sendRequest();
