@@ -73,7 +73,8 @@ import picocli.CommandLine.Option;
     descriptionHeading = "%nDescription:%n%n",
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
-    footer = "Hyperledger Besu is licensed under the Apache License 2.0")
+    footer = "Hyperledger Besu is licensed under the Apache License 2.0",
+    subcommands = {StateTestSubCommand.class})
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
@@ -120,7 +121,7 @@ public class EvmToolCommand implements Runnable {
   @Option(
       names = {"--json"},
       description = "output json output for each opcode")
-  private final Boolean showJsonResults = false;
+  final Boolean showJsonResults = false;
 
   @Option(
       names = {"--nomemory"},

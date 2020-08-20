@@ -43,7 +43,7 @@ public class NodePermissioningControllerFactory {
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem) {
 
-    Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
+    final Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
 
     List<NodePermissioningProvider> providers = new ArrayList<>();
     if (permissioningConfiguration.getLocalConfig().isPresent()) {
@@ -60,17 +60,20 @@ public class NodePermissioningControllerFactory {
       }
     }
 
-    if (permissioningConfiguration.getSmartContractConfig().isPresent()) {
-      SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-          permissioningConfiguration.getSmartContractConfig().get();
-      if (smartContractPermissioningConfiguration.isSmartContractNodeAllowlistEnabled()) {
-        NodeSmartContractPermissioningController smartContractProvider =
-            new NodeSmartContractPermissioningController(
-                smartContractPermissioningConfiguration.getNodeSmartContractAddress(),
-                transactionSimulator,
-                metricsSystem);
-        providers.add(smartContractProvider);
-      }
+    if (permissioningConfiguration.getSmartContractConfig().isPresent()
+        && permissioningConfiguration
+            .getSmartContractConfig()
+            .get()
+            .isSmartContractNodeAllowlistEnabled()) {
+      NodeSmartContractPermissioningController smartContractProvider =
+          new NodeSmartContractPermissioningController(
+              permissioningConfiguration
+                  .getSmartContractConfig()
+                  .get()
+                  .getNodeSmartContractAddress(),
+              transactionSimulator,
+              metricsSystem);
+      providers.add(smartContractProvider);
 
       if (fixedNodes.isEmpty()) {
         syncStatusProviderOptional = Optional.empty();
@@ -86,7 +89,14 @@ public class NodePermissioningControllerFactory {
     NodePermissioningController nodePermissioningController =
         new NodePermissioningController(syncStatusProviderOptional, providers);
 
-    validatePermissioningContract(nodePermissioningController);
+    permissioningConfiguration
+        .getSmartContractConfig()
+        .ifPresent(
+            config -> {
+              if (config.isSmartContractNodeAllowlistEnabled()) {
+                validatePermissioningContract(nodePermissioningController);
+              }
+            });
 
     return nodePermissioningController;
   }

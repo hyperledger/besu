@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import java.util.Map;
@@ -192,7 +193,7 @@ public class DebugOperationTracerTest {
 
   private MessageFrameTestFixture validMessageFrameBuilder() {
     final BlockHeader blockHeader = new BlockHeaderTestFixture().number(1).buildHeader();
-    final TestBlockchain blockchain = new TestBlockchain(blockHeader.getNumber());
+    final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     return new MessageFrameTestFixture()
         .initialGas(INITIAL_GAS)
         .worldState(worldUpdater)

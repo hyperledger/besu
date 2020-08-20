@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.util;
 
+import static java.util.stream.Collectors.toList;
+
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,13 +32,16 @@ public class PermissioningConfigurationValidator {
       throws Exception {
 
     if (permissioningConfiguration.isNodeAllowlistEnabled() && nodeURIs != null) {
-      final List<EnodeURL> allowlistNodesWithoutQueryParam =
-          permissioningConfiguration.getNodeAllowlist();
+      final List<URI> allowlistNodesWithoutQueryParam =
+          permissioningConfiguration.getNodeAllowlist().stream()
+              .map(EnodeURL::toURIWithoutDiscoveryPort)
+              .collect(toList());
 
-      final List<EnodeURL> nodeURIsNotInAllowlist =
+      final List<URI> nodeURIsNotInAllowlist =
           nodeURIs.stream()
-              .filter(enodeURL -> !allowlistNodesWithoutQueryParam.contains(enodeURL))
-              .collect(Collectors.toList());
+              .map(EnodeURL::toURIWithoutDiscoveryPort)
+              .filter(uri -> !allowlistNodesWithoutQueryParam.contains(uri))
+              .collect(toList());
 
       if (!nodeURIsNotInAllowlist.isEmpty()) {
         throw new Exception(
@@ -44,7 +50,7 @@ public class PermissioningConfigurationValidator {
     }
   }
 
-  private static Collection<String> enodesAsStrings(final List<EnodeURL> enodes) {
-    return enodes.parallelStream().map(EnodeURL::toString).collect(Collectors.toList());
+  private static Collection<String> enodesAsStrings(final List<URI> enodes) {
+    return enodes.parallelStream().map(URI::toASCIIString).collect(Collectors.toList());
   }
 }

@@ -62,6 +62,9 @@ commands:
       - store_artifacts:
           path: acceptance-tests/tests/build/acceptanceTestLogs
           destination: acceptance-tests-logs
+      - store_artifacts:
+          path: /home/circleci/project/acceptance-tests/tests/hs_err_pid*
+          destination: acceptance-tests-logs
 
 jobs:
   assemble:
@@ -169,9 +172,17 @@ jobs:
           at: ~/project
       - setup_remote_docker
       - run:
-          name: hadoLint
+          name: hadoLint_openjdk_11
           command: |
-            docker run --rm -i hadolint/hadolint < docker/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+      - run:
+          name: hadoLint_openjdk_latest
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - run:
+          name: hadoLint_graalvm
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
       - run:
           name: build image
           command: |

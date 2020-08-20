@@ -43,23 +43,19 @@ public class EnodeURL {
   private final Bytes nodeId;
   private InetAddress ip;
   private final Optional<String> maybeHostname;
-  private final OptionalInt listeningPort;
-  private final OptionalInt discoveryPort;
+  private final Optional<Integer> listeningPort;
+  private final Optional<Integer> discoveryPort;
 
   private EnodeURL(
       final Bytes nodeId,
       final InetAddress address,
       final Optional<String> maybeHostname,
-      final OptionalInt listeningPort,
-      final OptionalInt discoveryPort) {
+      final Optional<Integer> listeningPort,
+      final Optional<Integer> discoveryPort) {
     checkArgument(
         nodeId.size() == NODE_ID_SIZE, "Invalid node id.  Expected id of length: 64 bytes.");
-    checkArgument(
-        !listeningPort.isPresent() || NetworkUtility.isValidPort(listeningPort.getAsInt()),
-        "Invalid listening port.  Port should be between 1 - 65535.");
-    checkArgument(
-        !discoveryPort.isPresent() || NetworkUtility.isValidPort(discoveryPort.getAsInt()),
-        "Invalid discovery port.  Port should be between 1 - 65535.");
+    listeningPort.ifPresent(port -> NetworkUtility.checkPort(port, "listening"));
+    discoveryPort.ifPresent(port -> NetworkUtility.checkPort(port, "discovery"));
 
     this.nodeId = nodeId;
     this.ip = address;
@@ -112,17 +108,16 @@ public class EnodeURL {
     int tcpPort = uri.getPort();
 
     // Parse discport if it exists
-    OptionalInt discoveryPort = OptionalInt.empty();
+    Optional<Integer> discoveryPort = Optional.empty();
     String query = uri.getQuery();
     if (query != null) {
       final Matcher discPortMatcher = DISCPORT_QUERY_STRING_REGEX.matcher(query);
       if (discPortMatcher.matches()) {
-        Integer discPort = Ints.tryParse(discPortMatcher.group(1));
-        discoveryPort = discPort == null ? discoveryPort : OptionalInt.of(discPort);
+        discoveryPort = Optional.ofNullable(Ints.tryParse(discPortMatcher.group(1)));
       }
       checkArgument(discoveryPort.isPresent(), "Invalid discovery port: '" + query + "'.");
     } else {
-      discoveryPort = OptionalInt.of(tcpPort);
+      discoveryPort = Optional.of(tcpPort);
     }
 
     return builder()
@@ -238,7 +233,7 @@ public class EnodeURL {
     return discoveryPort.isPresent();
   }
 
-  public OptionalInt getListeningPort() {
+  public Optional<Integer> getListeningPort() {
     return listeningPort;
   }
 
@@ -246,7 +241,7 @@ public class EnodeURL {
     return listeningPort.orElse(0);
   }
 
-  public OptionalInt getDiscoveryPort() {
+  public Optional<Integer> getDiscoveryPort() {
     return discoveryPort;
   }
 
@@ -282,12 +277,12 @@ public class EnodeURL {
   public static class Builder {
 
     private Bytes nodeId;
-    private OptionalInt listeningPort;
-    private OptionalInt discoveryPort;
+    private Optional<Integer> listeningPort;
+    private Optional<Integer> discoveryPort;
     private Optional<String> maybeHostname = Optional.empty();
     private InetAddress ip;
 
-    private Builder() {};
+    private Builder() {}
 
     public EnodeURL build() {
       validate();
@@ -363,12 +358,12 @@ public class EnodeURL {
     }
 
     public Builder disableListening() {
-      this.listeningPort = OptionalInt.empty();
+      this.listeningPort = Optional.empty();
       return this;
     }
 
     public Builder disableDiscovery() {
-      this.discoveryPort = OptionalInt.empty();
+      this.discoveryPort = Optional.empty();
       return this;
     }
 
@@ -381,16 +376,12 @@ public class EnodeURL {
      * An optional listening port value. If the value is empty of equal to 0, the listening port
      * will be empty - indicating the corresponding node is not listening.
      *
-     * @param listeningPort If non-empty represents the port to listen on, if empty means the node
-     *     is not listening
+     * @param maybeListeningPort If non-empty represents the port to listen on, if empty means the
+     *     node is not listening
      * @return The modified builder
      */
-    public Builder listeningPort(final OptionalInt listeningPort) {
-      if (listeningPort.isPresent() && listeningPort.getAsInt() == 0) {
-        this.listeningPort = OptionalInt.empty();
-      } else {
-        this.listeningPort = listeningPort;
-      }
+    public Builder listeningPort(final Optional<Integer> maybeListeningPort) {
+      this.listeningPort = maybeListeningPort.filter(port -> port != 0);
       return this;
     }
 
@@ -402,29 +393,19 @@ public class EnodeURL {
      * @return The modified builder
      */
     public Builder listeningPort(final int listeningPort) {
-      if (listeningPort == 0) {
-        this.listeningPort = OptionalInt.empty();
-      } else {
-        this.listeningPort = OptionalInt.of(listeningPort);
-      }
-      return this;
+      return listeningPort(Optional.of(listeningPort));
     }
 
     /**
      * The port on which to listen for discovery messages. A value that is empty or equal to 0,
      * indicates that the node is not listening for discovery messages.
      *
-     * @param discoveryPort If non-empty and non-zero, represents the port on which to listen for
-     *     discovery messages. Otherwise, indicates that the node is not running discovery.
+     * @param maybeDiscoveryPort If non-empty and non-zero, represents the port on which to listen
+     *     for discovery messages. Otherwise, indicates that the node is not running discovery.
      * @return The modified builder
      */
-    public Builder discoveryPort(final OptionalInt discoveryPort) {
-      if (discoveryPort.isPresent() && discoveryPort.getAsInt() == 0) {
-        this.discoveryPort = OptionalInt.empty();
-      } else {
-        this.discoveryPort = discoveryPort;
-      }
-
+    public Builder discoveryPort(final Optional<Integer> maybeDiscoveryPort) {
+      this.discoveryPort = maybeDiscoveryPort.filter(port -> port != 0);
       return this;
     }
 
@@ -437,12 +418,7 @@ public class EnodeURL {
      * @return The modified builder
      */
     public Builder discoveryPort(final int discoveryPort) {
-      if (discoveryPort == 0) {
-        this.discoveryPort = OptionalInt.empty();
-      } else {
-        this.discoveryPort = OptionalInt.of(discoveryPort);
-      }
-      return this;
+      return discoveryPort(Optional.of(discoveryPort));
     }
   }
 }
