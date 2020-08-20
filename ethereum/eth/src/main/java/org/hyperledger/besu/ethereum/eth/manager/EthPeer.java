@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -393,6 +394,11 @@ public class EthPeer {
 
   public Set<Capability> getAgreedCapabilities() {
     return connection.getAgreedCapabilities();
+  }
+
+  @VisibleForTesting
+  PeerConnection getConnection() {
+    return connection;
   }
 
   public Bytes nodeId() {
