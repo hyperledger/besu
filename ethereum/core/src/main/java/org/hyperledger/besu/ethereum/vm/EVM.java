@@ -84,7 +84,7 @@ public class EVM {
           logState(frame, result.getGasCost().orElse(Gas.ZERO));
           final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
           if (haltReason.isPresent()) {
-            LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
+            LOG.trace("MessageFrame evaluation halted because of {}", haltReason.get());
             frame.setExceptionalHaltReason(haltReason);
             frame.setState(State.EXCEPTIONAL_HALT);
           } else if (result.getGasCost().isPresent()) {

@@ -34,6 +34,8 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
@@ -46,6 +48,7 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -64,6 +67,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   // Dummy signature for transactions to not fail being processed.
   private static final SECP256K1.Signature FAKE_SIGNATURE =
       SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+
+  private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
+      Subscribers.create();
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -85,6 +91,14 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privateStateStorage,
         privateStateRootResolver,
         "OnChainPrivacy");
+  }
+
+  public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
+    return privateTransactionEventObservers.subscribe(observer);
+  }
+
+  public boolean removePrivateTransactionObserver(final long observerId) {
+    return privateTransactionEventObservers.unsubscribe(observerId);
   }
 
   @Override
@@ -176,6 +190,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return Bytes.EMPTY;
     }
 
+    sendParticipantRemovedEvent(privateTransaction);
+
     if (messageFrame.isPersistingPrivateState()) {
       persistPrivateState(
           pmtHash,
@@ -187,6 +203,20 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     }
 
     return result.getOutput();
+  }
+
+  private void sendParticipantRemovedEvent(final PrivateTransaction privateTransaction) {
+    if (privateTransaction.isGroupRemovalTransaction()) {
+      // get first participant parameter - there is only one for removal transaction
+      final String removedParticipant =
+          getRemovedParticipantFromParameter(privateTransaction.getPayload());
+
+      final PrivateTransactionEvent removalEvent =
+          new PrivateTransactionEvent(
+              privateTransaction.getPrivacyGroupId().get().toBase64String(), removedParticipant);
+      privateTransactionEventObservers.forEach(
+          sub -> sub.onPrivateTransactionProcessed(removalEvent));
+    }
   }
 
   boolean canExecute(
@@ -321,6 +351,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       participants.add(mungedParticipants.slice(i, 32).toBase64String());
     }
     return participants;
+  }
+
+  private String getRemovedParticipantFromParameter(final Bytes input) {
+    return input.slice(4).toBase64String();
   }
 
   private List<Bytes> decodeList(final Bytes rlpEncodedList) {

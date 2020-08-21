@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes32;
@@ -115,7 +116,9 @@ public class PrivNewFilterTest {
   @Test
   public void filterWithExpectedQueryIsCreated() {
     final List<Address> addresses = List.of(Address.ZERO);
+    final User user = mock(User.class);
     final List<List<LogTopic>> logTopics = List.of(List.of(LogTopic.of(Bytes32.random())));
+    when(enclavePublicKeyProvider.getEnclaveKey(eq(Optional.of(user)))).thenReturn(ENCLAVE_KEY);
 
     final FilterParameter filter =
         new FilterParameter(
@@ -124,12 +127,14 @@ public class PrivNewFilterTest {
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();
 
-    final JsonRpcRequestContext request = privNewFilterRequest(PRIVACY_GROUP_ID, filter);
+    final JsonRpcRequestContext request =
+        privNewFilterRequestWithUser(PRIVACY_GROUP_ID, filter, user);
     method.response(request);
 
     verify(filterManager)
         .installPrivateLogFilter(
             eq(PRIVACY_GROUP_ID),
+            eq(ENCLAVE_KEY),
             refEq(BlockParameter.EARLIEST),
             refEq(BlockParameter.LATEST),
             eq((expectedQuery)));
