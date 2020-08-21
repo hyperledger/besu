@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -39,6 +38,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <V> The type of values stored by this trie.
  */
 public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
+  @SuppressWarnings("UnusedVariable")
   private static final Logger LOG = LogManager.getLogger();
 
   private final GetVisitor<V> getVisitor = new GetVisitor<>();
@@ -141,17 +141,17 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public CompletableFuture<Void> visitAll(
       final Consumer<Node<V>> nodeConsumer, final ExecutorService executorService) {
     nodeConsumer.accept(root);
-    final Set<CompletableFuture<Void>> rootChildFutures =
+    // rootChildFutures.forEach(
+    // rootChildFuture -> rootChildFuture.thenRun(() -> LOG.info("finished a mark work item")));
+    return CompletableFuture.allOf(
         root.getChildren().stream()
             .map(
                 rootChild ->
                     CompletableFuture.runAsync(
                         () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer)),
                         executorService))
-            .collect(toUnmodifiableSet());
-    rootChildFutures.forEach(
-        rootChildFuture -> rootChildFuture.thenRun(() -> LOG.info("finished a mark work item")));
-    return CompletableFuture.allOf(rootChildFutures.toArray(CompletableFuture[]::new));
+            .collect(toUnmodifiableSet())
+            .toArray(CompletableFuture[]::new));
   }
 
   @Override

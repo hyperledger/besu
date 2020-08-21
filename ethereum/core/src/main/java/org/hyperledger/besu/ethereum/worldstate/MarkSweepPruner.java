@@ -33,7 +33,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -115,7 +116,7 @@ public class MarkSweepPruner {
         () -> markStopwatch.elapsed(TimeUnit.SECONDS));
 
     this.prunerThreads =
-        parseInt(Optional.ofNullable(System.getProperty("PRUNER_THREADS")).orElse("1"));
+        parseInt(Optional.ofNullable(System.getProperty("PRUNER_THREADS")).orElse("2"));
     LOG.info("Using {} pruner threads", prunerThreads);
   }
 
@@ -132,8 +133,12 @@ public class MarkSweepPruner {
     markOperationCounter.inc();
     markStopwatch.start();
     final ExecutorService executorService =
-        Executors.newFixedThreadPool(
+        new ThreadPoolExecutor(
+            0,
             prunerThreads,
+            5L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingDeque<>(),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
@@ -143,10 +148,17 @@ public class MarkSweepPruner {
         .visitAll(
             node -> {
               markNode(node.getHash());
-              node.getValue().ifPresent(this::processAccountState);
+              node.getValue().ifPresent(value -> processAccountState(value, executorService));
             },
             executorService)
         .join();
+    executorService.shutdown();
+    try {
+      // Wait for all the marking tasks to complete
+      executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOG.info("interrupted while marking", e);
+    }
     markStopwatch.stop();
     LOG.info("Completed marking used nodes for pruning");
   }
@@ -217,14 +229,12 @@ public class MarkSweepPruner {
         Function.identity());
   }
 
-  private void processAccountState(final Bytes value) {
+  private void processAccountState(final Bytes value, final ExecutorService executorService) {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     markNode(accountValue.getCodeHash());
 
-    // use the single-threaded visitAll here since it's going to be called from one of the umbrella
-    // threads at the whole state trie level
     createStorageTrie(accountValue.getStorageRoot())
-        .visitAll(storageNode -> markNode(storageNode.getHash()));
+        .visitAll(storageNode -> markNode(storageNode.getHash()), executorService);
   }
 
   @VisibleForTesting
