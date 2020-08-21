@@ -354,8 +354,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   }
 
   private String getRemovedParticipantFromParameter(final Bytes input) {
-    final Bytes mungedParticipants = input.slice(4);
-    return mungedParticipants.slice(0, 32).toBase64String();
+    return input.slice(4).toBase64String();
   }
 
   private List<Bytes> decodeList(final Bytes rlpEncodedList) {
