@@ -1348,6 +1348,33 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void dnsEnabledOptionIsParsedCorrectly() {
+    TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
+
+    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isEqualTo(true);
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isEqualTo(false);
+  }
+
+  @Test
+  public void dnsUpdateEnabledOptionIsParsedCorrectly() {
+    TestBesuCommand besuCommand =
+        parseCommand("--Xdns-enabled", "true", "--Xdns-update-enabled", "true");
+
+    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isEqualTo(true);
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void dnsUpdateEnabledOptionCannotBeUsedWithoutDnsEnabled() {
+    parseCommand("--Xdns-update-enabled", "true");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
+  }
+
+  @Test
   public void helpShouldDisplayNatMethodInfo() {
     parseCommand("--help");
 

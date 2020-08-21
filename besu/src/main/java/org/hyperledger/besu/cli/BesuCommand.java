@@ -1038,14 +1038,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--dns-enabled"},
+      names = {"--Xdns-enabled"},
       description = "Enabled DNS support",
       arity = "1")
   private final Boolean dnsEnabled = Boolean.FALSE;
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--dns-update-enabled"},
+      names = {"--Xdns-update-enabled"},
       description = "Allow to detect an IP update automatically",
       arity = "1")
   private final Boolean dnsUpdateEnabled = Boolean.FALSE;
@@ -1333,6 +1333,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
+    validateDnsOptionsParams();
 
     return this;
   }
@@ -1388,6 +1389,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
               + " or provide an url (via --Xethstats=nodename:secret@host:port)");
+    }
+  }
+
+  private void validateDnsOptionsParams() {
+    if (!dnsEnabled && dnsUpdateEnabled) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
+              + " or specify dns is enabled (--Xdns-enabled)");
     }
   }
 

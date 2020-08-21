@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -209,12 +210,15 @@ public class PermissionedNodeBuilder {
         localConfigNodesPermissioningFile = createTemporaryPermissionsFile();
       }
 
-      List<String> nodesAsListOfStrings =
+      final List<String> nodesAsListOfStrings =
           localConfigPermittedNodes.stream().map(URI::toASCIIString).collect(Collectors.toList());
+      final List<EnodeURL> nodesAsListOfEnodeUrl =
+          localConfigPermittedNodes.stream().map(EnodeURL::fromURI).collect(Collectors.toList());
+
       initPermissioningConfigurationFile(
           ALLOWLIST_TYPE.NODES, nodesAsListOfStrings, localConfigNodesPermissioningFile);
 
-      localPermissioningConfiguration.setNodeAllowlist(localConfigPermittedNodes);
+      localPermissioningConfiguration.setNodeAllowlist(nodesAsListOfEnodeUrl);
       localPermissioningConfiguration.setNodePermissioningConfigFilePath(
           localConfigNodesPermissioningFile.toAbsolutePath().toString());
     }
