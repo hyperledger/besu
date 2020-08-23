@@ -12,24 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+package org.hyperledger.besu.ethereum.privacy;
 
-public class PrivateLogFilter extends LogFilter {
-
+public class PrivateTransactionEvent {
   private final String privacyGroupId;
   private final String enclavePublicKey;
 
-  PrivateLogFilter(
-      final String id,
-      final String privacyGroupId,
-      final String enclavePublicKey,
-      final BlockParameter fromBlock,
-      final BlockParameter toBlock,
-      final LogsQuery logsQuery) {
-    super(id, fromBlock, toBlock, logsQuery);
+  public PrivateTransactionEvent(final String privacyGroupId, final String enclavePublicKey) {
     this.privacyGroupId = privacyGroupId;
     this.enclavePublicKey = enclavePublicKey;
   }
