@@ -128,7 +128,7 @@ public class EvmToolCommand implements Runnable {
       names = {"--nomemory"},
       description = "Disable showing the full memory output for each op.",
       scope = INHERIT)
-  private final Boolean noMemory = false;
+  final Boolean noMemory = false;
 
   @Option(
       names = {"--prestate", "--genesis"},

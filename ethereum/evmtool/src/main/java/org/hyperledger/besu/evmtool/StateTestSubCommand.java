@@ -128,7 +128,7 @@ public class StateTestSubCommand implements Runnable {
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
-            ? new EVMToolTracer(System.out, true)
+            ? new EVMToolTracer(System.out, !parentCommand.noMemory)
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
