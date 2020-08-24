@@ -100,5 +100,8 @@ public interface PrivacyController {
 
   PrivateTransactionSimulator getTransactionSimulator();
 
-  Optional<Hash> getBlockHashByBlockNumber(Optional<Long> blockNumber);
+  Optional<Hash> getBlockHashByBlockNumber(final Long blockNumber);
+
+  Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber);
 }
