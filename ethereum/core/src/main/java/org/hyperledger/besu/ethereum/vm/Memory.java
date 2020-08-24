@@ -113,7 +113,7 @@ public class Memory {
     if (location.fitsInt() && numBytes.fitsInt()) {
       // Fast common path (note that we work on int but use long arithmetic to avoid issues)
       final long byteSize = location.toLong() + numBytes.toLong();
-      int wordSize = (int) (byteSize / Bytes32.SIZE);
+      int wordSize = Math.toIntExact(byteSize / Bytes32.SIZE);
       if (byteSize % Bytes32.SIZE != 0) wordSize += 1;
       return wordSize > dataSize256 ? UInt256.valueOf(wordSize) : activeWords;
     } else {
