@@ -63,8 +63,7 @@ commands:
           path: acceptance-tests/tests/build/acceptanceTestLogs
           destination: acceptance-tests-logs
       - store_artifacts:
-          path: /home/circleci/project/acceptance-tests/tests/hs_err_pid*
-          destination: acceptance-tests-logs
+          path: acceptance-tests/tests/build/jvmErrorLogs
 
 jobs:
   assemble:
