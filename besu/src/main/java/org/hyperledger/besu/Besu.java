@@ -24,20 +24,16 @@ import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-import java.lang.reflect.Field;
-
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.RunLast;
-import sun.misc.Unsafe;
 
 public final class Besu {
   private static final int SUCCESS_EXIT_CODE = 0;
   private static final int ERROR_EXIT_CODE = 1;
 
   public static void main(final String... args) {
-    crash();
     final Logger logger = setupLogging();
 
     final BesuCommand besuCommand =
@@ -56,17 +52,6 @@ public final class Besu {
         besuCommand.exceptionHandler().andExit(ERROR_EXIT_CODE),
         System.in,
         args);
-  }
-
-  private static void crash() {
-    try {
-      final Field f = Unsafe.class.getDeclaredField("theUnsafe");
-      f.setAccessible(true);
-      final Unsafe unsafe = (Unsafe) f.get(null);
-      unsafe.putAddress(0, 0);
-    } catch (final NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static Logger setupLogging() {

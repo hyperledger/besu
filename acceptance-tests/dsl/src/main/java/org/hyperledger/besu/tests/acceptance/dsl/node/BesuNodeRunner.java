@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -22,14 +23,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
+import sun.misc.Unsafe;
 
 public interface BesuNodeRunner {
 
   static BesuNodeRunner instance() {
+    crash();
     if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
       return new ProcessBesuNodeRunner();
     } else {
       return new ThreadBesuNodeRunner();
+    }
+  }
+
+  // TODO: Remove
+  private static void crash() {
+    try {
+      final Field f = Unsafe.class.getDeclaredField("theUnsafe");
+      f.setAccessible(true);
+      final Unsafe unsafe = (Unsafe) f.get(null);
+      unsafe.putAddress(0, 0);
+    } catch (final NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException(e);
     }
   }
 
