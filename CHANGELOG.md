@@ -5,6 +5,7 @@
 ### Additions and Improvements
 
 * The EvmTool now processes State Tests from the Ethereum Reference Tests. [\#1311](https://github.com/hyperledger/besu/pull/1311)
+* Experimental dns support added via the `Xdns-enabled` and `Xdns-update-enabled` CLI commands. [\#1247](https://github.com/hyperledger/besu/pull/1247)
 
 ### Bug Fixes
 
