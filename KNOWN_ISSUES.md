@@ -55,10 +55,9 @@ Workaround -> Do not use permissioning with Kubernetes.
 
 A fix for this issue is being actively worked on. 
 
-## Restart caused by insufficient memory can cause inconsistent private state
+## Changes not saved to database correctly causing inconsistent private states
 
-While running reorg testing on Besu and Orion, insufficient memory caused Besu to restart, resulting in the state on that machine to become inconsistent with the rest of the members of the privacy group. 
-
-Workaround -> Ensure you allocate enough memory for the Java Runtime Environment that the node does not run out of memory.
+While running reorg testing on Besu and Orion, inconsistent private states were observed in some long running tests
+when state changes were not saved to the database correctly.  
 
 A fix for this issue is being actively worked on. 
