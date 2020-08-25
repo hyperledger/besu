@@ -33,6 +33,10 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
 
+  protected static final OperationResult UNDERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+
   protected AbstractCallOperation(
       final int opcode,
       final String name,
@@ -171,8 +175,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       final Account account = frame.getWorldState().get(frame.getRecipientAddress());
       final Wei balance = account.getBalance();
       if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() >= 1024) {
-        frame.expandMemory(inputDataOffset(frame).intValue(), inputDataLength(frame).intValue());
-        frame.expandMemory(outputDataOffset(frame).intValue(), outputDataLength(frame).intValue());
+        frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
+        frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
         frame.incrementRemainingGas(gasAvailableForChildCall(frame).plus(cost));
         frame.popStackItems(getStackItemsConsumed());
         frame.pushStackItem(Bytes32.ZERO);
@@ -227,7 +231,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final int outputSizeAsInt = outputSize.intValue();
 
     if (outputSizeAsInt > outputData.size()) {
-      frame.expandMemory(outputOffset.intValue(), outputSizeAsInt);
+      frame.expandMemory(outputOffset, outputSize);
       frame.writeMemory(outputOffset, UInt256.valueOf(outputData.size()), outputData, true);
     } else {
       frame.writeMemory(outputOffset, outputSize, outputData, true);

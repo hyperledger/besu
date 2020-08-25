@@ -18,8 +18,12 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.hyperledger.besu.ethereum.vm.FixedStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.util.Optional;
 
@@ -27,6 +31,8 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
 
   protected final OperationResult successResponse;
   protected final OperationResult outOfGasResponse;
+  private final OperationResult underflowResponse;
+  private final OperationResult overflowResponse;
   protected final Gas gasCost;
 
   protected AbstractFixedCostOperation(
@@ -51,5 +57,28 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
     outOfGasResponse =
         new OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    underflowResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+    overflowResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
   }
+
+  @Override
+  public final OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+        return outOfGasResponse;
+      } else {
+        return executeFixedCostOperation(frame, evm);
+      }
+    } catch (final UnderflowException ufe) {
+      return underflowResponse;
+    } catch (final OverflowException ofe) {
+      return overflowResponse;
+    }
+  }
+
+  protected abstract OperationResult executeFixedCostOperation(MessageFrame frame, EVM evm);
 }

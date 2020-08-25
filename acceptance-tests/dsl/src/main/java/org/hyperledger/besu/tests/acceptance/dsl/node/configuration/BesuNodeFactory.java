@@ -68,6 +68,7 @@ public class BesuNodeFactory {
         config.getPlugins(),
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
+        config.isDnsEnabled(),
         config.getPrivacyParameters(),
         config.getRunCommand());
   }

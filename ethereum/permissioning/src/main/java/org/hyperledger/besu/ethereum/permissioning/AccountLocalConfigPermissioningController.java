@@ -209,6 +209,7 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       final LocalPermissioningConfiguration updatedConfig =
           PermissioningConfigurationBuilder.permissioningConfiguration(
               configuration.isNodeAllowlistEnabled(),
+              configuration.getEnodeDnsConfiguration(),
               configuration.getNodePermissioningConfigFilePath(),
               configuration.isAccountAllowlistEnabled(),
               configuration.getAccountPermissioningConfigFilePath());
