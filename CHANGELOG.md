@@ -5,6 +5,7 @@
 ### Additions and Improvements
 
 * The EvmTool now processes State Tests from the Ethereum Reference Tests. [\#1311](https://github.com/hyperledger/besu/pull/1311)
+* Add genesis config option `ecip1017EraRounds` for Ethereum Classic chanis. [\#1329](https://github.com/hyperledger/besu/pull/1329)
 
 ### Bug Fixes
 
