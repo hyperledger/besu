@@ -31,6 +31,10 @@ public class SStoreOperation extends AbstractOperation {
   public static final Gas FRONTIER_MINIMUM = Gas.ZERO;
   public static final Gas EIP_1706_MINIMUM = Gas.of(2300);
 
+  protected static final OperationResult ILLEGAL_STATE_CHANGE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+
   private final Gas minumumGasRemaining;
 
   public SStoreOperation(final GasCalculator gasCalculator, final Gas minumumGasRemaining) {
@@ -44,9 +48,6 @@ public class SStoreOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.isStatic()) {
-      return ILLEGAL_STATE_CHANGE;
-    }
 
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value = UInt256.fromBytes(frame.popStackItem());
@@ -59,10 +60,12 @@ public class SStoreOperation extends AbstractOperation {
     final Gas cost = gasCalculator().calculateStorageCost(account, key, value);
     final Optional<Gas> optionalCost = Optional.of(cost);
     final Gas remainingGas = frame.getRemainingGas();
-    if (remainingGas.compareTo(cost) < 0) {
+    if (frame.isStatic()) {
+      return new OperationResult(
+          optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (remainingGas.compareTo(cost) < 0) {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-    }
-    if (remainingGas.compareTo(minumumGasRemaining) <= 0) {
+    } else if (remainingGas.compareTo(minumumGasRemaining) <= 0) {
       return new OperationResult(
           Optional.of(minumumGasRemaining), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }

@@ -14,39 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.ArrayDeque;
+import org.hyperledger.besu.ethereum.vm.FixedStack;
 
 /**
  * This class describes the behaviour of the Return stack introduce on the
  * https://eips.ethereum.org/EIPS/eip-2315
  */
-public class ReturnStack extends ArrayDeque<Integer> {
+public class ReturnStack extends FixedStack<Integer> {
 
   // as defined on https://eips.ethereum.org/EIPS/eip-2315
   private static final int MAX_RETURN_STACK_SIZE = 1023;
 
   public ReturnStack() {
-    super(MAX_RETURN_STACK_SIZE);
-  }
-
-  public boolean isFull() {
-    return this.size() >= MAX_RETURN_STACK_SIZE;
-  }
-
-  @Override
-  public Integer pop() {
-    try {
-      return super.pop();
-    } catch (Exception e) {
-      throw new IllegalStateException("return stack underflow");
-    }
-  }
-
-  @Override
-  public void push(final Integer value) {
-    checkState(!isFull(), "return stack overflow");
-    super.push(value);
+    super(MAX_RETURN_STACK_SIZE, Integer.class);
   }
 }
