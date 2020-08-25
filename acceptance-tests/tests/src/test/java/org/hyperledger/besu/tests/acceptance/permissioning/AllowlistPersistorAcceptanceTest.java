@@ -25,8 +25,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import org.web3j.protocol.exceptions.ClientConnectionException;
 
 public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
 
@@ -36,6 +38,8 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
       "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
   private static final String ENODE_THREE =
       "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+  private static final String ENODE_FOURTH =
+      "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567";
 
   private Node node;
   private Account senderA;
@@ -98,5 +102,12 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO, ENODE_ONE, ENODE_THREE));
+  }
+
+  @Test
+  public void manipulatedNodesWhitelistWithHostnameShouldNotWorkWhenDnsDisabled() {
+    Assertions.assertThatThrownBy(() -> node.verify(perm.addNodesToAllowlist(ENODE_FOURTH)))
+        .isInstanceOf(ClientConnectionException.class)
+        .hasMessageContaining("Request contains an invalid node");
   }
 }

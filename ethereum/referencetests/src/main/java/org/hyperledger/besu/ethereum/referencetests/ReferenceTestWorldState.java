@@ -28,11 +28,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Represent a worldState for testing. */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ReferenceTestWorldState extends DefaultMutableWorldState {
 
   public static class AccountMock {

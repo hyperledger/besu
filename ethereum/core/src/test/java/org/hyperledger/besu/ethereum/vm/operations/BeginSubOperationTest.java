@@ -87,7 +87,7 @@ public class BeginSubOperationTest {
   public void shouldHaltWithInvalidSubRoutineEntryWhenBeginSubIsExecuted() {
     final BeginSubOperation operation = new BeginSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0x04"))
             .code(new Code(Bytes.fromHexString("0x6104005c")))
             .returnStack(new ReturnStack())

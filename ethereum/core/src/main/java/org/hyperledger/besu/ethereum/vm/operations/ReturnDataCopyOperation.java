@@ -28,6 +28,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class ReturnDataCopyOperation extends AbstractOperation {
 
+  protected static final OperationResult INVALID_RETURN_DATA_BUFFER_ACCESS =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS));
+
   public ReturnDataCopyOperation(final GasCalculator gasCalculator) {
     super(0x3E, "RETURNDATACOPY", 3, 0, false, 1, gasCalculator);
   }

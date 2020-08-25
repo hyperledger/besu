@@ -27,11 +27,7 @@ public class AddressOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address address = frame.getRecipientAddress();
     frame.pushStackItem(Words.fromAddress(address));
 

@@ -109,6 +109,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
 
   public BesuNode(
@@ -132,6 +133,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
+      final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand)
       throws IOException {
@@ -174,6 +176,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         });
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
     LOG.info("Created BesuNode {}", this.toString());
   }
@@ -607,6 +610,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public List<String> getStaticNodes() {
     return staticNodes;
+  }
+
+  public boolean isDnsEnabled() {
+    return isDnsEnabled;
   }
 
   public boolean hasStaticNodes() {

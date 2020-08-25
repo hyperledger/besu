@@ -27,7 +27,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController.NodesAllowlistResult;
 import org.hyperledger.besu.ethereum.permissioning.node.NodeAllowlistUpdatedEvent;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -35,7 +37,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,6 +67,9 @@ public class NodeLocalConfigPermissioningControllerTest {
   private final EnodeURL selfEnode =
       EnodeURL.fromString(
           "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111");
+  private final String enodeDns =
+      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567";
+
   @Mock private MetricsSystem metricsSystem;
   @Mock private Counter checkCounter;
   @Mock private Counter checkPermittedCounter;
@@ -340,7 +344,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeAllowlist())
-        .thenReturn(Arrays.asList(URI.create(expectedEnodeURL)));
+        .thenReturn(Arrays.asList(EnodeURL.fromString(expectedEnodeURL)));
     controller =
         new NodeLocalConfigPermissioningController(
             permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
@@ -360,7 +364,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getNodePermissioningConfigFilePath()).thenReturn("foo");
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeAllowlist())
-        .thenReturn(Arrays.asList(URI.create(expectedEnodeURI)));
+        .thenReturn(Arrays.asList(EnodeURL.fromString(expectedEnodeURI)));
     controller =
         new NodeLocalConfigPermissioningController(
             permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
@@ -459,7 +463,8 @@ public class NodeLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
-    when(permissioningConfig.getNodeAllowlist()).thenReturn(Arrays.asList(URI.create(enode1)));
+    when(permissioningConfig.getNodeAllowlist())
+        .thenReturn(Arrays.asList(EnodeURL.fromString(enode1)));
     controller =
         new NodeLocalConfigPermissioningController(
             permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
@@ -482,7 +487,8 @@ public class NodeLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
-    when(permissioningConfig.getNodeAllowlist()).thenReturn(Arrays.asList(URI.create(enode1)));
+    when(permissioningConfig.getNodeAllowlist())
+        .thenReturn(Arrays.asList(EnodeURL.fromString(enode1)));
     controller =
         new NodeLocalConfigPermissioningController(
             permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
@@ -491,6 +497,52 @@ public class NodeLocalConfigPermissioningControllerTest {
     controller.reload();
 
     verifyZeroInteractions(consumer);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void getNodeAllowlistShouldWorkWhenOnlyDnsEnabled() throws Exception {
+    final Path permissionsFile = createPermissionsFileWithNode(enodeDns);
+    final LocalPermissioningConfiguration permissioningConfig =
+        mock(LocalPermissioningConfiguration.class);
+
+    final EnodeDnsConfiguration enodeDnsConfiguration =
+        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build();
+
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
+        .thenReturn(permissionsFile.toAbsolutePath().toString());
+    when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeAllowlist())
+        .thenReturn(singletonList(EnodeURL.fromString(enodeDns, enodeDnsConfiguration)));
+    controller =
+        new NodeLocalConfigPermissioningController(
+            permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
+    assertThat(controller.getNodesAllowlist()).hasSize(1);
+    assertThat(controller.getNodesAllowlist())
+        .contains(
+            "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:4567");
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void getNodeAllowlistShouldWorkWhenDnsAndUpdateEnabled() throws Exception {
+    final Path permissionsFile = createPermissionsFileWithNode(enodeDns);
+    final LocalPermissioningConfiguration permissioningConfig =
+        mock(LocalPermissioningConfiguration.class);
+
+    final EnodeDnsConfiguration enodeDnsConfiguration =
+        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build();
+
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
+        .thenReturn(permissionsFile.toAbsolutePath().toString());
+    when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeAllowlist())
+        .thenReturn(singletonList(EnodeURL.fromString(enodeDns, enodeDnsConfiguration)));
+    controller =
+        new NodeLocalConfigPermissioningController(
+            permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
+    assertThat(controller.getNodesAllowlist()).hasSize(1);
+    assertThat(controller.getNodesAllowlist()).contains(enodeDns);
   }
 
   private Path createPermissionsFileWithNode(final String node) throws IOException {
