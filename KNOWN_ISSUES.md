@@ -58,6 +58,10 @@ A fix for this issue is being actively worked on.
 ## Changes not saved to database correctly causing inconsistent private states
 
 While running reorg testing on Besu and Orion, inconsistent private states were observed in some long running tests
-when state changes were not saved to the database correctly.  
+when state changes were not saved to the database correctly when executing the private transaction.  
+
+Workaround -> As the private transaction payloads have all been distributed and the privacy marker 
+transactions included in the chain, resynchronizing the node with an inconsistent state will re-execute 
+the private transactions. 
 
 A fix for this issue is being actively worked on. 
