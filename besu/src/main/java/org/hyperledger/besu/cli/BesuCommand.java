@@ -312,7 +312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "Default is a predefined list.",
       split = ",",
       arity = "0..*")
-  private final List<String> bootnodes = null;
+  private final List<String> bootNodes = null;
 
   @Option(
       names = {"--max-peers"},
@@ -2187,7 +2187,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         }
       }
 
-      if (bootnodes == null) {
+      if (bootNodes == null) {
         // We default to an empty bootnodes list if the option is not provided on CLI
         // because
         // mainnet bootnodes won't work as the default value for a custom genesis,
@@ -2202,11 +2202,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setNetworkId(networkId);
     }
 
-    if (bootnodes != null) {
+    if (bootNodes != null) {
       try {
 
         final List<EnodeURL> listBootNodes =
-            bootnodes.stream()
+            bootNodes.stream()
                 .filter(value -> !value.isEmpty())
                 .map(url -> EnodeURL.fromString(url, getEnodeDnsConfiguration()))
                 .collect(Collectors.toList());

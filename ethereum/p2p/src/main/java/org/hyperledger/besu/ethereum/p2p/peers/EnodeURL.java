@@ -210,6 +210,17 @@ public class EnodeURL {
     return getIp().getHostAddress();
   }
 
+  /**
+   * Get IP of the EnodeURL
+   *
+   * <p>If "dns" and "dns-update" are enabled -> DNS lookup every time to have the IP up to date and
+   * not to rely on an invalid cache
+   *
+   * <p>If the "dns" is enabled but "dns-update" is disabled -> IP is retrieved only one time and
+   * the hostname is no longer stored (maybeHostname is empty).
+   *
+   * @return ip
+   */
   public InetAddress getIp() {
     this.ip =
         maybeHostname
