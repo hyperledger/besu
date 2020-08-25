@@ -138,7 +138,7 @@ public class LocalPermissioningConfigurationValidatorTest {
   }
 
   @Test
-  public void nodeAllowlistCheckShouldWorkWithHostnameIfDndEnabled() throws Exception {
+  public void nodeAllowlistCheckShouldWorkWithHostnameIfDnsEnabled() throws Exception {
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_VALID_HOSTNAME);
     final Path toml = Files.createTempFile("toml", "");
     toml.toFile().deleteOnExit();

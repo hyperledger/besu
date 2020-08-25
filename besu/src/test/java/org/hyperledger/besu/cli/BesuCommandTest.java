@@ -1351,8 +1351,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void dnsEnabledOptionIsParsedCorrectly() {
     TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
 
-    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isEqualTo(true);
-    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isEqualTo(false);
+    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
   }
 
   @Test
@@ -1360,8 +1360,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     TestBesuCommand besuCommand =
         parseCommand("--Xdns-enabled", "true", "--Xdns-update-enabled", "true");
 
-    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isEqualTo(true);
-    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isEqualTo(true);
+    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isTrue();
   }
 
   @Test

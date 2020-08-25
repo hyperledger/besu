@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration.dnsDisabled;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 
 import java.io.IOException;
 import java.net.URL;
@@ -54,7 +56,8 @@ public class LocalPermissioningConfigurationBuilderTest {
       "/permissioning_config_unrecognized_key.toml";
   private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY_MULTILINE =
       "/permissioning_config_node_allowlist_only_multiline.toml";
-
+  private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_WITH_DNS =
+      "/permissioning_config_node_allowlist_with_dns.toml";
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
 
@@ -113,6 +116,47 @@ public class LocalPermissioningConfigurationBuilderTest {
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist())
         .containsExactly(EnodeURL.fromString(uri));
+  }
+
+  @Test
+  public void permissioningConfigWithNodeAllowlistSetWithDnsEnabled() throws Exception {
+    final String uri = "enode://" + VALID_NODE_ID + "@127.0.0.1:4567";
+
+    final URL configFile =
+        this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_WITH_DNS);
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
+
+    LocalPermissioningConfiguration permissioningConfiguration =
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            true,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build(),
+            toml.toAbsolutePath().toString(),
+            false,
+            toml.toAbsolutePath().toString());
+
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isFalse();
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist())
+        .containsExactly(EnodeURL.fromString(uri));
+  }
+
+  @Test
+  public void permissioningConfigWithNodeAllowlistSetWithDnsDisabled() throws Exception {
+
+    final URL configFile =
+        this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_WITH_DNS);
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
+
+    assertThatThrownBy(
+            () ->
+                PermissioningConfigurationBuilder.permissioningConfiguration(
+                    true,
+                    dnsDisabled(),
+                    toml.toAbsolutePath().toString(),
+                    false,
+                    toml.toAbsolutePath().toString()))
+        .hasMessageContaining("Invalid enode URL syntax")
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

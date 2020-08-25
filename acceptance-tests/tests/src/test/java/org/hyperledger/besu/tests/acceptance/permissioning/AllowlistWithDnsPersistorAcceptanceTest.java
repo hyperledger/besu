@@ -25,31 +25,25 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.exceptions.ClientConnectionException;
 
-public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
+public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase {
 
   private static final String ENODE_ONE =
-      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567";
   private static final String ENODE_TWO =
       "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
   private static final String ENODE_THREE =
-      "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
-  private static final String ENODE_FOURTH =
-      "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567";
+      "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.11:4567";
 
   private Node node;
   private Account senderA;
-  private Account senderB;
   private Path tempFile;
 
   @Before
   public void setUp() throws Exception {
     senderA = accounts.getPrimaryBenefactor();
-    senderB = accounts.getSecondaryBenefactor();
     tempFile = Files.createTempFile("test", "test");
 
     this.node =
@@ -59,36 +53,15 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
             .nodesPermittedInConfig(new ArrayList<>())
             .accountsConfigFile(tempFile)
             .accountsPermittedInConfig(Collections.singletonList(senderA.getAddress()))
+            .dnsEnabled(true)
             .build();
 
     cluster.start(this.node);
   }
 
   @Test
-  public void manipulatedAccountsWhitelistIsPersisted() {
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
+  public void manipulatedNodesWhitelistWithHostnameShouldWorkWhenDnsEnabled() {
 
-    node.execute(permissioningTransactions.addAccountsToAllowlist(senderB.getAddress()));
-    node.verify(perm.expectAccountsAllowlist(senderA.getAddress(), senderB.getAddress()));
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress(), senderB.getAddress()));
-
-    node.execute(permissioningTransactions.removeAccountsFromAllowlist(senderB.getAddress()));
-    node.verify(perm.expectAccountsAllowlist(senderA.getAddress()));
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
-
-    node.execute(permissioningTransactions.removeAccountsFromAllowlist(senderA.getAddress()));
-    node.verify(perm.expectAccountsAllowlist());
-    node.verify(perm.expectPermissioningAllowlistFileKeyValue(ALLOWLIST_TYPE.ACCOUNTS, tempFile));
-  }
-
-  @Test
-  public void manipulatedNodesWhitelistIsPersisted() {
     node.verify(perm.addNodesToAllowlist(ENODE_ONE, ENODE_TWO));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
@@ -102,12 +75,5 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO, ENODE_ONE, ENODE_THREE));
-  }
-
-  @Test
-  public void manipulatedNodesWhitelistWithHostnameShouldNotWorkWhenDnsDisabled() {
-    Assertions.assertThatThrownBy(() -> node.verify(perm.addNodesToAllowlist(ENODE_FOURTH)))
-        .isInstanceOf(ClientConnectionException.class)
-        .hasMessageContaining("Request contains an invalid node");
   }
 }

@@ -72,6 +72,7 @@ public class PermissionedNodeBuilder {
   private String accountPermissioningSmartContractAddress = null;
 
   private List<String> staticNodes = new ArrayList<>();
+  private boolean isDnsEnabled = false;
   private boolean mining = true;
 
   public PermissionedNodeBuilder name(final String name) {
@@ -140,6 +141,11 @@ public class PermissionedNodeBuilder {
     return this;
   }
 
+  public PermissionedNodeBuilder dnsEnabled(final boolean isDnsEnabled) {
+    this.isDnsEnabled = isDnsEnabled;
+    return this;
+  }
+
   public PermissionedNodeBuilder disableMining() {
     this.mining = false;
     return this;
@@ -189,6 +195,8 @@ public class PermissionedNodeBuilder {
       builder.staticNodes(staticNodes);
     }
 
+    builder.dnsEnabled(isDnsEnabled);
+
     if (genesisFile != null) {
       builder.genesisConfigProvider((a) -> Optional.of(genesisFile));
       builder.devMode(false);
@@ -210,15 +218,15 @@ public class PermissionedNodeBuilder {
         localConfigNodesPermissioningFile = createTemporaryPermissionsFile();
       }
 
-      final List<String> nodesAsListOfStrings =
-          localConfigPermittedNodes.stream().map(URI::toASCIIString).collect(Collectors.toList());
-      final List<EnodeURL> nodesAsListOfEnodeUrl =
+      final List<EnodeURL> nodeAllowList =
           localConfigPermittedNodes.stream().map(EnodeURL::fromURI).collect(Collectors.toList());
 
       initPermissioningConfigurationFile(
-          ALLOWLIST_TYPE.NODES, nodesAsListOfStrings, localConfigNodesPermissioningFile);
+          ALLOWLIST_TYPE.NODES,
+          nodeAllowList.stream().map(EnodeURL::toString).collect(Collectors.toList()),
+          localConfigNodesPermissioningFile);
 
-      localPermissioningConfiguration.setNodeAllowlist(nodesAsListOfEnodeUrl);
+      localPermissioningConfiguration.setNodeAllowlist(nodeAllowList);
       localPermissioningConfiguration.setNodePermissioningConfigFilePath(
           localConfigNodesPermissioningFile.toAbsolutePath().toString());
     }
