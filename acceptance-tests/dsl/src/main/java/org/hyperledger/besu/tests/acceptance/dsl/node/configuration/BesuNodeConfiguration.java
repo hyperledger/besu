@@ -49,6 +49,7 @@ public class BesuNodeConfiguration {
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private final boolean isDnsEnabled;
   private final Optional<PrivacyParameters> privacyParameters;
   private final List<String> runCommand;
 
@@ -73,6 +74,7 @@ public class BesuNodeConfiguration {
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
+      final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand) {
     this.name = name;
@@ -95,6 +97,7 @@ public class BesuNodeConfiguration {
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    this.isDnsEnabled = isDnsEnabled;
     this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
   }
@@ -177,6 +180,10 @@ public class BesuNodeConfiguration {
 
   public List<String> getStaticNodes() {
     return staticNodes;
+  }
+
+  public boolean isDnsEnabled() {
+    return isDnsEnabled;
   }
 
   public Optional<PrivacyParameters> getPrivacyParameters() {

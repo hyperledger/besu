@@ -16,28 +16,40 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class JumpSubOperation extends AbstractFixedCostOperation {
 
+  private final OperationResult overflowResponse;
+  private final OperationResult invalidJumpDestinationResponse;
+
   public JumpSubOperation(final GasCalculator gasCalculator) {
     super(0x5e, "JUMPSUB", 1, 0, true, 1, gasCalculator, gasCalculator.getHighTierGasCost());
+    this.overflowResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+    this.invalidJumpDestinationResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Code code = frame.getCode();
 
     if (frame.isReturnStackFull()) {
-      return OVERFLOW_RESPONSE;
+      return overflowResponse;
     }
 
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
     if (!code.isValidJumpSubDestination(evm, frame, location)) {
-      return INVALID_JUMP_DESTINATION;
+      return invalidJumpDestinationResponse;
     }
 
     frame.pushReturnStackItem(frame.getPC() + 1);

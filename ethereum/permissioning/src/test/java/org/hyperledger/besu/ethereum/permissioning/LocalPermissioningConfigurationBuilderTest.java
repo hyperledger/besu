@@ -16,10 +16,14 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration.dnsDisabled;
+
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,7 +56,8 @@ public class LocalPermissioningConfigurationBuilderTest {
       "/permissioning_config_unrecognized_key.toml";
   private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY_MULTILINE =
       "/permissioning_config_node_allowlist_only_multiline.toml";
-
+  private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_WITH_DNS =
+      "/permissioning_config_node_allowlist_with_dns.toml";
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
 
@@ -71,7 +76,7 @@ public class LocalPermissioningConfigurationBuilderTest {
         .containsExactly("0x0000000000000000000000000000000000000009");
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist())
-        .containsExactly(URI.create(uri), URI.create(uri2));
+        .containsExactly(EnodeURL.fromString(uri), EnodeURL.fromString(uri2));
   }
 
   @Test
@@ -89,7 +94,7 @@ public class LocalPermissioningConfigurationBuilderTest {
         .containsExactly("0x0000000000000000000000000000000000000009");
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist())
-        .containsExactly(URI.create(uri), URI.create(uri2));
+        .containsExactly(EnodeURL.fromString(uri), EnodeURL.fromString(uri2));
   }
 
   @Test
@@ -101,11 +106,57 @@ public class LocalPermissioningConfigurationBuilderTest {
 
     LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
-            true, toml.toAbsolutePath().toString(), false, toml.toAbsolutePath().toString());
+            true,
+            dnsDisabled(),
+            toml.toAbsolutePath().toString(),
+            false,
+            toml.toAbsolutePath().toString());
 
     assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isFalse();
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeAllowlist()).containsExactly(URI.create(uri));
+    assertThat(permissioningConfiguration.getNodeAllowlist())
+        .containsExactly(EnodeURL.fromString(uri));
+  }
+
+  @Test
+  public void permissioningConfigWithNodeAllowlistSetWithDnsEnabled() throws Exception {
+    final String uri = "enode://" + VALID_NODE_ID + "@127.0.0.1:4567";
+
+    final URL configFile =
+        this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_WITH_DNS);
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
+
+    LocalPermissioningConfiguration permissioningConfiguration =
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            true,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build(),
+            toml.toAbsolutePath().toString(),
+            false,
+            toml.toAbsolutePath().toString());
+
+    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isFalse();
+    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeAllowlist())
+        .containsExactly(EnodeURL.fromString(uri));
+  }
+
+  @Test
+  public void permissioningConfigWithNodeAllowlistSetWithDnsDisabled() throws Exception {
+
+    final URL configFile =
+        this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_WITH_DNS);
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
+
+    assertThatThrownBy(
+            () ->
+                PermissioningConfigurationBuilder.permissioningConfiguration(
+                    true,
+                    dnsDisabled(),
+                    toml.toAbsolutePath().toString(),
+                    false,
+                    toml.toAbsolutePath().toString()))
+        .hasMessageContaining("Invalid enode URL syntax")
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -115,7 +166,11 @@ public class LocalPermissioningConfigurationBuilderTest {
 
     LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
-            false, toml.toAbsolutePath().toString(), true, toml.toAbsolutePath().toString());
+            false,
+            dnsDisabled(),
+            toml.toAbsolutePath().toString(),
+            true,
+            toml.toAbsolutePath().toString());
 
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isFalse();
     assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
@@ -200,7 +255,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
     LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
-            true, toml.toString(), true, toml.toString());
+            true, dnsDisabled(), toml.toString(), true, toml.toString());
 
     assertThat(permissioningConfiguration.getNodePermissioningConfigFilePath())
         .isEqualTo(toml.toString());
@@ -224,7 +279,7 @@ public class LocalPermissioningConfigurationBuilderTest {
         this.getClass().getResource(PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY_MULTILINE);
     final LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
-            true, configFile.getPath(), false, configFile.getPath());
+            true, dnsDisabled(), configFile.getPath(), false, configFile.getPath());
 
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist().size()).isEqualTo(5);
@@ -233,18 +288,22 @@ public class LocalPermissioningConfigurationBuilderTest {
   private LocalPermissioningConfiguration accountOnlyPermissioningConfig(final Path toml)
       throws Exception {
     return PermissioningConfigurationBuilder.permissioningConfiguration(
-        false, null, true, toml.toAbsolutePath().toString());
+        false, dnsDisabled(), null, true, toml.toAbsolutePath().toString());
   }
 
   private LocalPermissioningConfiguration nodeOnlyPermissioningConfig(final Path toml)
       throws Exception {
     return PermissioningConfigurationBuilder.permissioningConfiguration(
-        true, toml.toAbsolutePath().toString(), false, null);
+        true, dnsDisabled(), toml.toAbsolutePath().toString(), false, null);
   }
 
   private LocalPermissioningConfiguration permissioningConfig(final Path toml) throws Exception {
     return PermissioningConfigurationBuilder.permissioningConfiguration(
-        true, toml.toAbsolutePath().toString(), true, toml.toAbsolutePath().toString());
+        true,
+        dnsDisabled(),
+        toml.toAbsolutePath().toString(),
+        true,
+        toml.toAbsolutePath().toString());
   }
 
   private Path createTempFile(final String filename, final byte[] contents) throws IOException {
