@@ -28,10 +28,7 @@ public class CallDataSizeOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes callData = frame.getInputData();
     frame.pushStackItem(UInt256.valueOf(callData.size()).toBytes());
 

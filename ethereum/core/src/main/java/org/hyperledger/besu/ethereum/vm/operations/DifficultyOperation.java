@@ -26,11 +26,7 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Difficulty difficulty = frame.getBlockHeader().getDifficulty();
     frame.pushStackItem(difficulty.toBytes());
 
