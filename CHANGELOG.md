@@ -2,7 +2,7 @@
 
 ### Additions and Improvements
 
-* Added `priv_debugGetStateRoot` JSON RPC API to retrieve the state root of a specified privacy group. [\#1326](https://github.com/hyperledger/besu/pull/1326)
+* Added `priv_debugGetStateRoot` JSON-RPC API to retrieve the state root of a specified privacy group. [\#1326](https://github.com/hyperledger/besu/pull/1326)
 
 ## 1.5.3 
 
