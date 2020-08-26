@@ -47,14 +47,6 @@ or earlier has been identified. If you have a network with private transaction c
 or earlier, please read the following and take the appropriate steps: 
 https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
 
-## Kubernetes permissioning uses Service IPs rather than pod IPs which can fail
-
-When using permissioning on Kubernetes, nodes don't join and start the network and chain as expected: they check permissions and allow the services. It appears that some of the socket connections use the pod IP which [causes Besu to halt](https://github.com/hyperledger/besu/issues/1190). 
-
-Workaround -> Do not use permissioning with Kubernetes. 
-
-A fix for this issue is being actively worked on. 
-
 ## Changes not saved to database correctly causing inconsistent private states
 
 While running reorg testing on Besu and Orion, inconsistent private states were observed in some long running tests
