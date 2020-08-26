@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -147,6 +148,14 @@ public class PrivateTransaction {
           .restriction(restriction)
           .build();
     }
+  }
+
+  public boolean isGroupRemovalTransaction() {
+    return this.getTo().isPresent()
+        && this.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY)
+        && this.getPayload()
+            .toHexString()
+            .startsWith(REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
   }
 
   private static Object resolvePrivateForOrPrivacyGroupId(final RLPInput item) {
@@ -356,7 +365,7 @@ public class PrivateTransaction {
               .orElseThrow(
                   () ->
                       new IllegalStateException(
-                          "Cannot recover public key from " + "signature for " + this));
+                          "Cannot recover public key from signature for " + this));
       sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     }
     return sender;

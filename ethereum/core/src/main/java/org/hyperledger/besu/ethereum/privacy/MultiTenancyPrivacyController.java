@@ -230,15 +230,15 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(
-      final Bytes privacyGroupId, final String enclavePublicKey) {
+  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+      final Bytes privacyGroupId,
+      final String enclavePublicKey,
+      final PrivateTransaction privateTransaction) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.retrieveOnChainPrivacyGroup(privacyGroupId, enclavePublicKey);
-    if (maybePrivacyGroup.isPresent()
-        && !maybePrivacyGroup.get().getMembers().contains(enclavePublicKey)) {
-      throw new MultiTenancyValidationException(
-          "Privacy group must contain the enclave public key");
-    }
+        privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+            privacyGroupId, enclavePublicKey, privateTransaction);
+    // The check that the enclavePublicKey is a member (if the group already exists) is done in the
+    // DefaultPrivacyController.
     return maybePrivacyGroup;
   }
 

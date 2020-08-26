@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.5.3 
+
+### Additions and Improvements
+
+* The EvmTool now processes State Tests from the Ethereum Reference Tests. [\#1311](https://github.com/hyperledger/besu/pull/1311)
+* Experimental dns support added via the `Xdns-enabled` and `Xdns-update-enabled` CLI commands. [\#1247](https://github.com/hyperledger/besu/pull/1247)
+* Add genesis config option `ecip1017EraRounds` for Ethereum Classic chanis. [\#1329](https://github.com/hyperledger/besu/pull/1329)
+
+### Bug Fixes
+
+#### Previously identified known issues
+ 
+- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
+- [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
+
+### Breaking Change to Onchain Privacy Group Management 
+
+This [early access feature](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) was
+changed in a way that makes onchain privacy groups created with previous versions no longer usable. 
+
+To enhance control over permissions on the privacy group management contract:
+
+* The enclave key was removed as the first parameter for `addParticipant` and `removeParticipant`. 
+* The owner of the privacy group management contract is the signer of the private transaction that creates
+  the privacy group. In the default onchain privacy group management contract implementation, only the 
+  owner can add and remove participants, and upgrade the management contract.
+  
+The onchain privacy support in the current version of the web3js-eea library (v0.9) will not be compatible
+with Besu v1.5.3.  We are actively working on an upgrade to webj3-eea that will support these changes.   
+
 ## 1.5.2 
 
 ### Additions and Improvements

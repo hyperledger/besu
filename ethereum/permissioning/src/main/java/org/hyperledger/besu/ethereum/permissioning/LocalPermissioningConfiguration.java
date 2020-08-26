@@ -14,20 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import java.net.URI;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class LocalPermissioningConfiguration {
-  private List<URI> nodeAllowlist;
+  private List<EnodeURL> nodeAllowlist;
   private List<String> accountAllowlist;
   private boolean nodeAllowlistEnabled;
+  private EnodeDnsConfiguration enodeDnsConfiguration = EnodeDnsConfiguration.dnsDisabled();
   private String nodePermissioningConfigFilePath;
   private boolean accountAllowlistEnabled;
   private String accountPermissioningConfigFilePath;
 
-  public List<URI> getNodeAllowlist() {
+  public List<EnodeURL> getNodeAllowlist() {
     return nodeAllowlist;
   }
 
@@ -38,11 +41,19 @@ public class LocalPermissioningConfiguration {
     return config;
   }
 
-  public void setNodeAllowlist(final Collection<URI> nodeAllowlist) {
+  public void setEnodeDnsConfiguration(final EnodeDnsConfiguration enodeDnsConfiguration) {
+    this.enodeDnsConfiguration = enodeDnsConfiguration;
+  }
+
+  public void setNodeAllowlist(final Collection<EnodeURL> nodeAllowlist) {
     if (nodeAllowlist != null) {
       this.nodeAllowlist.addAll(nodeAllowlist);
       this.nodeAllowlistEnabled = true;
     }
+  }
+
+  public EnodeDnsConfiguration getEnodeDnsConfiguration() {
+    return enodeDnsConfiguration;
   }
 
   public boolean isNodeAllowlistEnabled() {

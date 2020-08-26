@@ -12,21 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.p2p.peers;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.apache.tuweni.bytes.Bytes;
+import org.immutables.value.Value;
 
-/** A mock for representing EVM Code associated with an account. */
-public class CodeMock extends Code {
+@Value.Immutable
+public interface EnodeDnsConfiguration {
 
-  /**
-   * Public constructor.
-   *
-   * @param bytes - A hex string representation of the code.
-   */
-  @JsonCreator
-  public CodeMock(final String bytes) {
-    super(Bytes.fromHexString(bytes));
+  EnodeDnsConfiguration DEFAULT_CONFIG =
+      ImmutableEnodeDnsConfiguration.builder().dnsEnabled(false).updateEnabled(false).build();
+
+  static EnodeDnsConfiguration dnsDisabled() {
+    return DEFAULT_CONFIG;
   }
+
+  boolean dnsEnabled();
+
+  boolean updateEnabled();
 }

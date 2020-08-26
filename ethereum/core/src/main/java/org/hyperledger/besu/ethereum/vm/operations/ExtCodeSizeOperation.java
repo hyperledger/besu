@@ -39,11 +39,7 @@ public class ExtCodeSizeOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address address = Words.toAddress(frame.popStackItem());
     final Account account = frame.getWorldState().get(address);
     frame.pushStackItem(
