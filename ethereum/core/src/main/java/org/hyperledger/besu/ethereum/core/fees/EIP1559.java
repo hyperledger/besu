@@ -174,4 +174,8 @@ public class EIP1559 {
             : halfGasTarget
                 + floorDiv(halfGasTarget * blocksSinceStartOfMigration, migrationDuration);
   }
+
+  public FeeMarket getFeeMarket() {
+    return feeMarket;
+  }
 }

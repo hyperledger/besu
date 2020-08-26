@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -223,12 +222,17 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             isCancelled::get,
             miningBeneficiary,
             protocolSpec.getTransactionPriceCalculator(),
+            protocolSpec.getGasBudgetCalculator(),
             protocolSpec.getEip1559());
 
     if (transactions.isPresent()) {
-      return selector.evaluateTransactions(transactions.get());
+      return selector.evaluateTransactions(
+          processableBlockHeader.getNumber(),
+          processableBlockHeader.getGasLimit(),
+          transactions.get());
     } else {
-      return selector.buildTransactionListForBlock();
+      return selector.buildTransactionListForBlock(
+          processableBlockHeader.getNumber(), processableBlockHeader.getGasLimit());
     }
   }
 
@@ -266,7 +270,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
       final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
       if (eip1559.isForkBlock(newBlockNumber)) {
-        baseFee = FeeMarket.eip1559().getInitialBasefee();
+        baseFee = eip1559.getFeeMarket().getInitialBasefee();
       } else {
         baseFee =
             eip1559.computeBaseFee(
