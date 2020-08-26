@@ -10,13 +10,14 @@
 
 ### Bug Fixes
 
+* K8S Permissioning to use of Service IP's rather than pod IP's which can fail [\#1190](https://github.com/hyperledger/besu/issues/1190)
+
 #### Previously identified known issues
  
 - [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
-- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
 
 ### Breaking Change to Onchain Privacy Group Management 
