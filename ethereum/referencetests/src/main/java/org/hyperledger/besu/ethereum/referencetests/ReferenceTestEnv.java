@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A memory holder for testing. */
-@JsonIgnoreProperties("previousHash")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ReferenceTestEnv extends BlockHeader {
 
   /**

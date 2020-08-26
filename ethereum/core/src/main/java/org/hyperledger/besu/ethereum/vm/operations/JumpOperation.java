@@ -36,11 +36,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
     final Code code = frame.getCode();
     if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {

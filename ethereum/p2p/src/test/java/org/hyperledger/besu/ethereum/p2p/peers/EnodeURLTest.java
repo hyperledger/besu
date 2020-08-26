@@ -377,6 +377,82 @@ public class EnodeURLTest {
   }
 
   @Test
+  public void fromString_withHostnameEnodeURLShouldFailWhenDnsDisabled() {
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
+
+    assertThatThrownBy(
+            () ->
+                EnodeURL.fromString(
+                    enodeURLString,
+                    ImmutableEnodeDnsConfiguration.builder()
+                        .dnsEnabled(false)
+                        .updateEnabled(false)
+                        .build()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid enode URL syntax");
+  }
+
+  @Test
+  public void fromString_withHostnameEnodeURLShouldFailWhenDnsDisabledAndUpdateEnabled() {
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
+
+    assertThatThrownBy(
+            () ->
+                EnodeURL.fromString(
+                    enodeURLString,
+                    ImmutableEnodeDnsConfiguration.builder()
+                        .dnsEnabled(false)
+                        .updateEnabled(true)
+                        .build()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid enode URL syntax");
+  }
+
+  @Test
+  public void fromString_withHostnameEnodeURLShouldWorkWhenDnsEnabled() {
+    final EnodeURL expectedEnodeURL =
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress("127.0.0.1")
+            .listeningPort(P2P_PORT)
+            .discoveryPort(Optional.of(DISCOVERY_PORT))
+            .build();
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
+
+    final EnodeURL enodeURL =
+        EnodeURL.fromString(
+            enodeURLString,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build());
+    ;
+
+    assertThat(enodeURL).isEqualTo(expectedEnodeURL);
+  }
+
+  @Test
+  public void fromString_withHostnameEnodeURLShouldWorkWhenDnsEnabledAndUpdateEnabled() {
+    final EnodeURL expectedEnodeURL =
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress("127.0.0.1")
+            .listeningPort(P2P_PORT)
+            .discoveryPort(Optional.of(DISCOVERY_PORT))
+            .build();
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
+
+    final EnodeURL enodeURL =
+        EnodeURL.fromString(
+            enodeURLString,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build());
+    ;
+
+    assertThat(enodeURL).isEqualTo(expectedEnodeURL);
+  }
+
+  @Test
   public void toURI_WithDiscoveryPortCreateExpectedURI() {
     final String enodeURLString =
         "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
@@ -393,6 +469,78 @@ public class EnodeURLTest {
     final URI createdURI = EnodeURL.fromString(enodeURLString).toURI();
 
     assertThat(createdURI).isEqualTo(expectedURI);
+  }
+
+  @Test
+  public void toURI_WithHostnameShouldWorkWhenDnsEnabled() {
+    final String enodeURLString = "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT;
+    final URI expectedURI =
+        URI.create("enode://" + VALID_NODE_ID + "@" + "127.0.0.1" + ":" + P2P_PORT);
+    final URI createdURI =
+        EnodeURL.fromString(
+                enodeURLString,
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(false)
+                    .build())
+            .toURI();
+
+    assertThat(createdURI).isEqualTo(expectedURI);
+  }
+
+  @Test
+  public void toURI_WithHostnameShouldWorkWhenDnsEnabledAndUpdateEnabled() {
+    final String enodeURLString = "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT;
+    final URI expectedURI = URI.create(enodeURLString);
+    final URI createdURI =
+        EnodeURL.fromString(
+                enodeURLString,
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(true)
+                    .build())
+            .toURI();
+
+    assertThat(createdURI).isEqualTo(expectedURI);
+  }
+
+  @Test
+  public void fromURI_withHostnameShouldFailWhenDnsDisabled() {
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
+    final URI expectedURI = URI.create(enodeURLString);
+
+    assertThatThrownBy(
+            () ->
+                EnodeURL.fromURI(
+                    expectedURI,
+                    ImmutableEnodeDnsConfiguration.builder()
+                        .dnsEnabled(false)
+                        .updateEnabled(false)
+                        .build()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid ip address");
+  }
+
+  @Test
+  public void fromURI_withHostnameEnodeURLShouldWorkWhenDnsEnabled() {
+    final EnodeURL expectedEnodeURL =
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress("127.0.0.1")
+            .listeningPort(P2P_PORT)
+            .discoveryPort(Optional.of(DISCOVERY_PORT))
+            .build();
+
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
+    final URI expectedURI = URI.create(enodeURLString);
+
+    final EnodeURL enodeURL =
+        EnodeURL.fromURI(
+            expectedURI,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build());
+    assertThat(enodeURL).isEqualTo(expectedEnodeURL);
   }
 
   @Test

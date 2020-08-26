@@ -33,6 +33,10 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
 
+  protected static final OperationResult UNDERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+
   protected AbstractCallOperation(
       final int opcode,
       final String name,

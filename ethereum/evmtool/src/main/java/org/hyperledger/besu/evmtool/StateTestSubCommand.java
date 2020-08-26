@@ -21,7 +21,6 @@ import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -36,33 +35,25 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.Operation;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -97,6 +88,7 @@ public class StateTestSubCommand implements Runnable {
   @Override
   public void run() {
     final ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
     final JavaType javaType =
         objectMapper
             .getTypeFactory()
@@ -104,9 +96,14 @@ public class StateTestSubCommand implements Runnable {
     try {
       if (stateTestFiles.isEmpty()) {
         // if no state tests were specified use standard input
-        final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-            objectMapper.readValue(System.in, javaType);
-        executeStateTest(generalStateTests);
+        while (true) {
+          final Map<String, GeneralStateTestCaseSpec> generalStateTests =
+              objectMapper.readValue(System.in, javaType);
+          if (generalStateTests == null || generalStateTests.isEmpty()) {
+            break;
+          }
+          executeStateTest(generalStateTests);
+        }
       } else {
         for (final File stateTestFile : stateTestFiles) {
           final Map<String, GeneralStateTestCaseSpec> generalStateTests =
@@ -131,7 +128,7 @@ public class StateTestSubCommand implements Runnable {
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
-            ? new EVMToolTracer(System.out, true)
+            ? new EVMToolTracer(System.out, !parentCommand.noMemory)
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
@@ -176,7 +173,8 @@ public class StateTestSubCommand implements Runnable {
       summaryLine.put("output", result.getOutput().toUnprefixedHexString());
       summaryLine.put(
           "gasUsed",
-          shortNumber(UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
+          EVMToolTracer.shortNumber(
+              UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
       summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
 
       // Check the world state root hash.
@@ -185,10 +183,14 @@ public class StateTestSubCommand implements Runnable {
       summaryLine.put("d", spec.getDataIndex());
       summaryLine.put("g", spec.getGasIndex());
       summaryLine.put("v", spec.getValueIndex());
-      summaryLine.put("postHash", worldState.rootHash().equals(spec.getExpectedRootHash()));
+      summaryLine.put("postHash", worldState.rootHash().toHexString());
       final List<Log> logs = result.getLogs();
       final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
-      summaryLine.put("postLogs", actualLogsHash.equals(spec.getExpectedLogsHash()));
+      summaryLine.put("postLogsHash", actualLogsHash.toHexString());
+      summaryLine.put(
+          "pass",
+          worldState.rootHash().equals(spec.getExpectedRootHash())
+              && actualLogsHash.equals(spec.getExpectedLogsHash()));
 
       System.out.println(summaryLine);
     }
@@ -199,72 +201,5 @@ public class StateTestSubCommand implements Runnable {
         .getByName(name)
         .getByBlockNumber(0)
         .getTransactionProcessor();
-  }
-
-  class EVMToolTracer implements OperationTracer {
-
-    private final PrintStream out;
-    private final boolean showMemory;
-
-    EVMToolTracer(final PrintStream out, final boolean showMemory) {
-      this.out = out;
-      this.showMemory = showMemory;
-    }
-
-    @Override
-    public void traceExecution(
-        final MessageFrame messageFrame, final ExecuteOperation executeOperation) {
-      final ObjectNode traceLine = objectMapper.createObjectNode();
-
-      final Operation currentOp = messageFrame.getCurrentOperation();
-      traceLine.put("pc", messageFrame.getPC());
-      traceLine.put("op", Bytes.of(currentOp.getOpcode()).toHexString());
-      traceLine.put("gas", shortNumber(messageFrame.getRemainingGas().asUInt256()));
-      traceLine.putNull("gasCost");
-      if (!showMemory) {
-        traceLine.put(
-            "memory",
-            messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize()).toHexString());
-      }
-      traceLine.put("memSize", messageFrame.memoryByteSize());
-      final ArrayNode stack = traceLine.putArray("stack");
-      for (int i = 0; i < messageFrame.stackSize(); i++) {
-        stack.add(shortBytes(messageFrame.getStackItem(i)));
-      }
-      traceLine.put("depth", messageFrame.getMessageStackDepth() + 1);
-
-      final OperationResult executeResult = executeOperation.execute();
-      traceLine.put(
-          "gasCost",
-          executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
-      final String error =
-          executeResult
-              .getHaltReason()
-              .map(ExceptionalHaltReason::getDescription)
-              .orElse(
-                  messageFrame
-                      .getRevertReason()
-                      .map(bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8))
-                      .orElse(null));
-      traceLine.put("error", error);
-      traceLine.put("opName", currentOp.getName());
-      out.println(traceLine.toString());
-    }
-
-    @Override
-    public void tracePrecompileCall(
-        final MessageFrame frame, final Gas gasRequirement, final Bytes output) {}
-
-    @Override
-    public void traceAccountCreationResult(
-        final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
-  }
-
-  private static String shortNumber(final UInt256 number) {
-    return number.isZero() ? "0x0" : number.toShortHexString();
-  }
-
-  private static String shortBytes(final Bytes bytes) {
-    return bytes.isZero() ? "0x0" : bytes.toShortHexString();
   }
 }

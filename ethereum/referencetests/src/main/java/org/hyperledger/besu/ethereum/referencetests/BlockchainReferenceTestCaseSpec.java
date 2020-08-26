@@ -42,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
-@JsonIgnoreProperties({"_info", "postState", "postStateHash"})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockchainReferenceTestCaseSpec {
 
   private final String network;

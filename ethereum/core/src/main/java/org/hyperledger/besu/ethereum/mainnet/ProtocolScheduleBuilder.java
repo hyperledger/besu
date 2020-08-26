@@ -234,12 +234,18 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         config.getGothamBlockNumber(),
         ClassicProtocolSpecs.gothamDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getDefuseDifficultyBombBlockNumber(),
         ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getAtlantisBlockNumber(),
@@ -247,7 +253,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getAghartaBlockNumber(),
@@ -255,7 +262,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getPhoenixBlockNumber(),
@@ -263,7 +271,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds()));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
