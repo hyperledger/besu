@@ -265,9 +265,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
     final PrivacyGroup privacyGroup =
         onchainPrivacyGroupContract
             .flatMap(
-                contract ->
-                    contract.getPrivacyGroup(
-                        privacyGroupId, getBlockHashByBlockNumber(blockNumber.get())))
+                contract -> contract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber))
             .orElse(enclave.retrievePrivacyGroup(privacyGroupId));
 
     if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
@@ -279,11 +277,6 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   @Override
   public PrivateTransactionSimulator getTransactionSimulator() {
     return privacyController.getTransactionSimulator();
-  }
-
-  @Override
-  public Optional<Hash> getBlockHashByBlockNumber(final Long blockNumber) {
-    return privacyController.getBlockHashByBlockNumber(blockNumber);
   }
 
   @Override
