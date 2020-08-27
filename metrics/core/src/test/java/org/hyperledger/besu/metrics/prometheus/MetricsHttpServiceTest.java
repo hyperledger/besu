@@ -21,6 +21,7 @@ import static org.hyperledger.besu.util.NetworkUtility.urlForSocketAddress;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
+import io.prometheus.client.exporter.common.TextFormat;
 import io.vertx.core.Vertx;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -187,6 +188,7 @@ public class MetricsHttpServiceTest {
 
       // We should have JVM metrics already loaded, verify a simple key.
       assertThat(props).containsKey("jvm_threads_deadlocked");
+      assertThat(resp.header("Content-Type")).contains(TextFormat.CONTENT_TYPE_004);
     }
   }
 
