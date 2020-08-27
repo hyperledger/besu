@@ -1,13 +1,20 @@
 # Changelog
 
+### Additions and Improvements
+
+* Added `priv_debugGetStateRoot` JSON-RPC API to retrieve the state root of a specified privacy group. [\#1326](https://github.com/hyperledger/besu/pull/1326)
+
 ## 1.5.3 
 
 ### Additions and Improvements
 
 * The EvmTool now processes State Tests from the Ethereum Reference Tests. [\#1311](https://github.com/hyperledger/besu/pull/1311)
 * Experimental dns support added via the `Xdns-enabled` and `Xdns-update-enabled` CLI commands. [\#1247](https://github.com/hyperledger/besu/pull/1247)
+* Add genesis config option `ecip1017EraRounds` for Ethereum Classic chains. [\#1329](https://github.com/hyperledger/besu/pull/1329)
 
 ### Bug Fixes
+
+* K8S Permissioning to use of Service IP's rather than pod IP's which can fail [\#1190](https://github.com/hyperledger/besu/issues/1190)
 
 #### Previously identified known issues
  
@@ -15,7 +22,6 @@
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
-- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
 
 ### Breaking Change to Onchain Privacy Group Management 

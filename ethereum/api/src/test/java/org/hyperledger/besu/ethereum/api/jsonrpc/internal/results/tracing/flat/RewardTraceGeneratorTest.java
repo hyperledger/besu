@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,7 +63,7 @@ public class RewardTraceGeneratorTest {
       Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d88"));
   private final Wei blockReward = Wei.of(10000);
   private final BlockHeader ommerHeader = gen.header(0x09);
-
+  private final OptionalLong eraRounds = OptionalLong.of(5000000);
   private Block block;
 
   @Before
@@ -149,7 +150,8 @@ public class RewardTraceGeneratorTest {
             transactionReceiptFactory,
             blockReward,
             BlockHeader::getCoinbase,
-            true);
+            true,
+            eraRounds);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =
