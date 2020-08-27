@@ -183,17 +183,18 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return EthProtocol.NAME;
   }
 
+  @SuppressWarnings("UnusedVariable")
   private List<Capability> calculateCapabilities(
       final boolean fastSyncEnabled, final boolean eth65Enabled) {
     final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
-    if (!fastSyncEnabled) {
-      capabilities.add(EthProtocol.ETH62);
-    }
-    capabilities.add(EthProtocol.ETH63);
-    capabilities.add(EthProtocol.ETH64);
-    if (eth65Enabled) {
-      capabilities.add(EthProtocol.ETH65);
-    }
+    //    if (!fastSyncEnabled) {
+    //      capabilities.add(EthProtocol.ETH62);
+    //    }
+    //    capabilities.add(EthProtocol.ETH63);
+    //    capabilities.add(EthProtocol.ETH64);
+    //    if (eth65Enabled) {
+    capabilities.add(EthProtocol.ETH65);
+    //    }
 
     return capabilities.build();
   }
