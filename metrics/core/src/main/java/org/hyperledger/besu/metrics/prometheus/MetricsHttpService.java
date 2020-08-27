@@ -94,7 +94,6 @@ class MetricsHttpService implements MetricsService {
     router
         .route("/metrics")
         .method(HttpMethod.GET)
-        .produces(TextFormat.CONTENT_TYPE_004)
         .handler(this::metricsRequest);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
