@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+* The metrics HTTP server no longer rejects requests containing `Accept` header that doesn't precisely match the prometheus text format [\#1345](https://github.com/hyperledger/besu/pull/1345)
+
 #### Previously identified known issues
  
 - [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
