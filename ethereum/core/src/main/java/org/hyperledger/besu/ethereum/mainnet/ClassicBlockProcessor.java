@@ -32,7 +32,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final long DEFALUT_ERA_LENGTH = 5_000_000L;
+  private static final long DEFAULT_ERA_LENGTH = 5_000_000L;
 
   private final long eraLength;
 
@@ -50,7 +50,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         TransactionGasBudgetCalculator.frontier());
-    eraLength = eraLen.orElse(DEFALUT_ERA_LENGTH);
+    eraLength = eraLen.orElse(DEFAULT_ERA_LENGTH);
   }
 
   @Override

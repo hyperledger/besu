@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGe
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDebugGetStateRoot;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDistributeRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivFindPrivacyGroup;
@@ -65,57 +66,44 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
-      return mapOf(
-          new PrivGetTransactionReceipt(
-              getPrivacyParameters().getPrivateStateStorage(),
-              privacyController,
-              enclavePublicKeyProvider),
-          new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-          new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider),
-          new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider),
-          new PrivDistributeRawTransaction(
-              privacyController,
-              enclavePublicKeyProvider,
-              getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
-          new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
-          new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
-          new PrivGetLogs(
-              getBlockchainQueries(),
-              getPrivacyQueries(),
-              privacyController,
-              enclavePublicKeyProvider),
-          new PrivNewFilter(filterManager, privacyController, enclavePublicKeyProvider),
-          new PrivUninstallFilter(filterManager, privacyController, enclavePublicKeyProvider),
-          new PrivGetFilterLogs(filterManager, privacyController, enclavePublicKeyProvider),
-          new PrivGetFilterChanges(filterManager, privacyController, enclavePublicKeyProvider));
-    } else {
-      return mapOf(
-          new PrivGetTransactionReceipt(
-              getPrivacyParameters().getPrivateStateStorage(),
-              privacyController,
-              enclavePublicKeyProvider),
-          new PrivCreatePrivacyGroup(privacyController, enclavePublicKeyProvider),
-          new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider),
-          new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider),
-          new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-          new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider),
-          new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider),
-          new PrivDistributeRawTransaction(
-              privacyController,
-              enclavePublicKeyProvider,
-              getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
-          new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
-          new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
-          new PrivGetLogs(
-              getBlockchainQueries(),
-              getPrivacyQueries(),
-              privacyController,
-              enclavePublicKeyProvider),
-          new PrivNewFilter(filterManager, privacyController, enclavePublicKeyProvider),
-          new PrivUninstallFilter(filterManager, privacyController, enclavePublicKeyProvider),
-          new PrivGetFilterLogs(filterManager, privacyController, enclavePublicKeyProvider),
-          new PrivGetFilterChanges(filterManager, privacyController, enclavePublicKeyProvider));
+
+    final Map<String, JsonRpcMethod> RPC_METHODS =
+        mapOf(
+            new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
+            new PrivDebugGetStateRoot(
+                getBlockchainQueries(), enclavePublicKeyProvider, privacyController),
+            new PrivDistributeRawTransaction(
+                privacyController,
+                enclavePublicKeyProvider,
+                getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
+            new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
+            new PrivGetLogs(
+                getBlockchainQueries(),
+                getPrivacyQueries(),
+                privacyController,
+                enclavePublicKeyProvider),
+            new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider),
+            new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
+            new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider),
+            new PrivGetTransactionReceipt(
+                getPrivacyParameters().getPrivateStateStorage(),
+                privacyController,
+                enclavePublicKeyProvider),
+            new PrivGetFilterLogs(filterManager, privacyController, enclavePublicKeyProvider),
+            new PrivGetFilterChanges(filterManager, privacyController, enclavePublicKeyProvider),
+            new PrivNewFilter(filterManager, privacyController, enclavePublicKeyProvider),
+            new PrivUninstallFilter(filterManager, privacyController, enclavePublicKeyProvider));
+
+    if (!getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+      final Map<String, JsonRpcMethod> OFFCHAIN_METHODS =
+          mapOf(
+              new PrivCreatePrivacyGroup(privacyController, enclavePublicKeyProvider),
+              new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider),
+              new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider));
+      OFFCHAIN_METHODS.forEach(
+          (key, jsonRpcMethod) ->
+              RPC_METHODS.merge(key, jsonRpcMethod, (oldVal, newVal) -> newVal));
     }
+    return RPC_METHODS;
   }
 }

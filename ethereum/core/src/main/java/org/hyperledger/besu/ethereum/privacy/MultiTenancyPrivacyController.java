@@ -265,9 +265,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
     final PrivacyGroup privacyGroup =
         onchainPrivacyGroupContract
             .flatMap(
-                contract ->
-                    contract.getPrivacyGroup(
-                        privacyGroupId, getBlockHashByBlockNumber(blockNumber)))
+                contract -> contract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber))
             .orElse(enclave.retrievePrivacyGroup(privacyGroupId));
 
     if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
@@ -282,7 +280,11 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<Hash> getBlockHashByBlockNumber(final Optional<Long> blockNumber) {
-    return privacyController.getBlockHashByBlockNumber(blockNumber);
+  public Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber) {
+    verifyPrivacyGroupContainsEnclavePublicKey(
+        privacyGroupId, enclavePublicKey, Optional.of(blockNumber));
+    return privacyController.getStateRootByBlockNumber(
+        privacyGroupId, enclavePublicKey, blockNumber);
   }
 }

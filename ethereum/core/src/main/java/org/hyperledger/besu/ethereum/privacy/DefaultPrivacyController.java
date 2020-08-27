@@ -25,7 +25,6 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -70,6 +69,7 @@ public class DefaultPrivacyController implements PrivacyController {
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
   private final PrivateTransactionLocator privateTransactionLocator;
+  private final PrivateStateRootResolver privateStateRootResolver;
 
   public DefaultPrivacyController(
       final Blockchain blockchain,
@@ -87,7 +87,8 @@ public class DefaultPrivacyController implements PrivacyController {
         privateMarkerTransactionFactory,
         privateTransactionSimulator,
         privateNonceProvider,
-        privateWorldStateReader);
+        privateWorldStateReader,
+        privacyParameters.getPrivateStateRootResolver());
   }
 
   public DefaultPrivacyController(
@@ -98,7 +99,8 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
       final PrivateNonceProvider privateNonceProvider,
-      final PrivateWorldStateReader privateWorldStateReader) {
+      final PrivateWorldStateReader privateWorldStateReader,
+      final PrivateStateRootResolver privateStateRootResolver) {
     this.blockchain = blockchain;
     this.privateStateStorage = privateStateStorage;
     this.enclave = enclave;
@@ -109,6 +111,7 @@ public class DefaultPrivacyController implements PrivacyController {
     this.privateWorldStateReader = privateWorldStateReader;
     this.privateTransactionLocator =
         new PrivateTransactionLocator(blockchain, enclave, privateStateStorage);
+    this.privateStateRootResolver = privateStateRootResolver;
   }
 
   @Override
@@ -543,8 +546,13 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<Hash> getBlockHashByBlockNumber(final Optional<Long> blockNumber) {
-    return blockNumber.flatMap(
-        blockNum -> blockchain.getBlockByNumber(blockNum).map(Block::getHash));
+  public Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber) {
+    return blockchain
+        .getBlockByNumber(blockNumber)
+        .map(
+            block ->
+                privateStateRootResolver.resolveLastStateRoot(
+                    Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)), block.getHash()));
   }
 }
