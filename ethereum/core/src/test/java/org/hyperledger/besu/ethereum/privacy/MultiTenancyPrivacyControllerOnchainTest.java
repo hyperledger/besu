@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -66,15 +65,12 @@ public class MultiTenancyPrivacyControllerOnchainTest {
 
   @Test
   public void simulatePrivateTransactionSucceedsForPresentEnclaveKey() {
-    final Optional<Hash> blockHash = Optional.of(mock(Hash.class));
-
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID)).thenReturn(ONCHAIN_PRIVACY_GROUP);
     when(privacyController.simulatePrivateTransaction(any(), any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
                 PrivateTransactionProcessor.Result.successful(
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
-    when(privacyController.getBlockHashByBlockNumber(any())).thenReturn(blockHash);
     final Optional<PrivateTransactionProcessor.Result> result =
         multiTenancyPrivacyController.simulatePrivateTransaction(
             PRIVACY_GROUP_ID,
@@ -88,10 +84,7 @@ public class MultiTenancyPrivacyControllerOnchainTest {
 
   @Test(expected = MultiTenancyValidationException.class)
   public void simulatePrivateTransactionFailsForAbsentEnclaveKey() {
-    final Optional<Hash> blockHash = Optional.of(mock(Hash.class));
-
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID)).thenReturn(ONCHAIN_PRIVACY_GROUP);
-    when(privacyController.getBlockHashByBlockNumber(any())).thenReturn(blockHash);
 
     multiTenancyPrivacyController.simulatePrivateTransaction(
         PRIVACY_GROUP_ID,
