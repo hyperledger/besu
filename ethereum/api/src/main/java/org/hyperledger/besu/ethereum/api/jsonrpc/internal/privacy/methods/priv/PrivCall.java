@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
+import java.util.Optional;
+
 public class PrivCall extends AbstractBlockParameterMethod {
 
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
@@ -60,6 +62,8 @@ public class PrivCall extends AbstractBlockParameterMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+
+    checkMembershipForAuthenticatedUser(request, privacyGroupId, blockNumber);
 
     return privacyController
         .simulatePrivateTransaction(privacyGroupId, enclavePublicKey, callParams, blockNumber)
@@ -93,5 +97,16 @@ public class PrivCall extends AbstractBlockParameterMethod {
       throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
     }
     return callParams;
+  }
+
+  // TODO this is duplicated from PrivGetLogs
+  private void checkMembershipForAuthenticatedUser(
+      final JsonRpcRequestContext request, final String privacyGroupId, final long blockNumber) {
+    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    // check group membership at previous block (they could have been removed as of blockNumber but
+    // membership will be correct as at previous block)
+    final long blockNumberToCheck = blockNumber == 0 ? 0 : blockNumber - 1;
+    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(
+        privacyGroupId, enclavePublicKey, Optional.of(blockNumberToCheck));
   }
 }
