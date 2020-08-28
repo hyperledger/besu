@@ -93,7 +93,7 @@ public class FullSyncTargetManagerTest {
     when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
         .thenReturn(true);
     final RespondingEthPeer bestPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 1);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 4);
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
     bestPeer.respond(responder);
