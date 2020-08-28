@@ -433,7 +433,9 @@ public class DefaultBlockchain implements MutableBlockchain {
         || oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber()
             > reorgLoggingThreshold) {
       LOG.warn(
-          "Chain Reorganization\n{}",
+          "Chain Reorganization +{} new / -{} old\n{}",
+          () -> newChainHeadWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
+          () -> oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
           () ->
               Streams.zip(
                       Stream.of("Old", "New", "Ancestor"),
