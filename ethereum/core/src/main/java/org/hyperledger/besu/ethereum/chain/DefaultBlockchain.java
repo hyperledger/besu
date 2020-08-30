@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.chain;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.ethereum.core.Block;
@@ -47,13 +48,17 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DefaultBlockchain implements MutableBlockchain {
-
+  private static final Logger LOG = LogManager.getLogger();
   protected final BlockchainStorage blockchainStorage;
 
   private final Subscribers<BlockAddedObserver> blockAddedObservers = Subscribers.create();
   private final Subscribers<ChainReorgObserver> blockReorgObservers = Subscribers.create();
+  private final long reorgLoggingThreshold;
 
   private volatile BlockHeader chainHeader;
   private volatile Difficulty totalDifficulty;
@@ -63,7 +68,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
       final BlockchainStorage blockchainStorage,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final long reorgLoggingThreshold) {
     checkNotNull(genesisBlock);
     checkNotNull(blockchainStorage);
     checkNotNull(metricsSystem);
@@ -118,21 +124,27 @@ public class DefaultBlockchain implements MutableBlockchain {
         "chain_head_ommer_count",
         "Number of ommers in the current chain head block",
         () -> chainHeadOmmerCount);
+    this.reorgLoggingThreshold = reorgLoggingThreshold;
   }
 
   public static MutableBlockchain createMutable(
       final Block genesisBlock,
       final BlockchainStorage blockchainStorage,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final long reorgLoggingThreshold) {
     checkNotNull(genesisBlock);
-    return new DefaultBlockchain(Optional.of(genesisBlock), blockchainStorage, metricsSystem);
+    return new DefaultBlockchain(
+        Optional.of(genesisBlock), blockchainStorage, metricsSystem, reorgLoggingThreshold);
   }
 
   public static Blockchain create(
-      final BlockchainStorage blockchainStorage, final MetricsSystem metricsSystem) {
+      final BlockchainStorage blockchainStorage,
+      final MetricsSystem metricsSystem,
+      final long reorgLoggingThreshold) {
     checkArgument(
         validateStorageNonEmpty(blockchainStorage), "Cannot create Blockchain from empty storage");
-    return new DefaultBlockchain(Optional.empty(), blockchainStorage, metricsSystem);
+    return new DefaultBlockchain(
+        Optional.empty(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
   }
 
   private static boolean validateStorageNonEmpty(final BlockchainStorage blockchainStorage) {
@@ -377,6 +389,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
       currentOldChainWithReceipts = getParentBlockWithReceipts(currentOldChainWithReceipts);
     }
+    final BlockWithReceipts commonAncestorWithReceipts = currentNewChainWithReceipts;
 
     // Update indexed transactions
     newTransactions.forEach(
@@ -398,6 +411,9 @@ public class DefaultBlockchain implements MutableBlockchain {
             .findAny();
     parentFork.ifPresent(forks::remove);
     updater.setForkHeads(forks);
+
+    maybeLogReorg(newChainHeadWithReceipts, oldChainWithReceipts, commonAncestorWithReceipts);
+
     return BlockAddedEvent.createForChainReorg(
         newChainHeadWithReceipts.getBlock(),
         newTransactions.values().stream().flatMap(Collection::stream).collect(toList()),
@@ -406,6 +422,35 @@ public class DefaultBlockchain implements MutableBlockchain {
         Stream.concat(removedLogsWithMetadata.stream(), addedLogsWithMetadata.stream())
             .collect(Collectors.toUnmodifiableList()),
         currentNewChainWithReceipts.getBlock().getHash());
+  }
+
+  private void maybeLogReorg(
+      final BlockWithReceipts newChainHeadWithReceipts,
+      final BlockWithReceipts oldChainWithReceipts,
+      final BlockWithReceipts commonAncestorWithReceipts) {
+    if (newChainHeadWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber()
+            > reorgLoggingThreshold
+        || oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber()
+            > reorgLoggingThreshold) {
+      LOG.warn(
+          "Chain Reorganization +{} new / -{} old\n{}",
+          () -> newChainHeadWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
+          () -> oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
+          () ->
+              Streams.zip(
+                      Stream.of("Old", "New", "Ancestor"),
+                      Stream.of(
+                              oldChainWithReceipts,
+                              newChainHeadWithReceipts,
+                              commonAncestorWithReceipts)
+                          .map(
+                              blockWithReceipts ->
+                                  String.format(
+                                      "hash: %s, height: %s",
+                                      blockWithReceipts.getHash(), blockWithReceipts.getNumber())),
+                      (label, values) -> String.format("%10s - %s", label, values))
+                  .collect(joining("\n")));
+    }
   }
 
   @Override
