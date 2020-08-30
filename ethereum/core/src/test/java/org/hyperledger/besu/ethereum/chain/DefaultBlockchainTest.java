@@ -164,7 +164,8 @@ public class DefaultBlockchainTest {
     final Blockchain blockchain =
         DefaultBlockchain.create(
             createStorage(kvStore),
-            PrometheusMetricsSystem.init(MetricsConfiguration.builder().enabled(true).build()));
+            PrometheusMetricsSystem.init(MetricsConfiguration.builder().enabled(true).build()),
+            0);
 
     for (int i = 0; i < blocks.size(); i++) {
       assertBlockDataIsStored(blockchain, blocks.get(i), blockReceipts.get(i));
@@ -948,10 +949,10 @@ public class DefaultBlockchainTest {
       final KeyValueStorage kvStore, final Block genesisBlock) {
     return (DefaultBlockchain)
         DefaultBlockchain.createMutable(
-            genesisBlock, createStorage(kvStore), new NoOpMetricsSystem());
+            genesisBlock, createStorage(kvStore), new NoOpMetricsSystem(), 0);
   }
 
   private Blockchain createBlockchain(final KeyValueStorage kvStore) {
-    return DefaultBlockchain.create(createStorage(kvStore), new NoOpMetricsSystem());
+    return DefaultBlockchain.create(createStorage(kvStore), new NoOpMetricsSystem(), 0);
   }
 }
