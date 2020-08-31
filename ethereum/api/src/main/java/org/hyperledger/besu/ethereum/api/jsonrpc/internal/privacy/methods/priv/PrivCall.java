@@ -61,6 +61,9 @@ public class PrivCall extends AbstractBlockParameterMethod {
 
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
 
+    PrivUtil.checkMembershipForAuthenticatedUser(
+        privacyController, enclavePublicKeyProvider, request, privacyGroupId, blockNumber);
+
     return privacyController
         .simulatePrivateTransaction(privacyGroupId, enclavePublicKey, callParams, blockNumber)
         .map(
