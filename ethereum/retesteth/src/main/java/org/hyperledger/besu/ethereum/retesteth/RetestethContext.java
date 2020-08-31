@@ -207,7 +207,8 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        0);
   }
 
   public ProtocolSchedule getProtocolSchedule() {

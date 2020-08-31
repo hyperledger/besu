@@ -93,6 +93,7 @@ public abstract class BesuControllerBuilder {
   private PrunerConfiguration prunerConfiguration;
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+  private long reorgLoggingThreshold;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -188,6 +189,11 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
+  public BesuControllerBuilder reorgLoggingThreshold(final long reorgLoggingThreshold) {
+    this.reorgLoggingThreshold = reorgLoggingThreshold;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -213,7 +219,8 @@ public abstract class BesuControllerBuilder {
             genesisState,
             protocolSchedule,
             metricsSystem,
-            this::createConsensusContext);
+            this::createConsensusContext,
+            reorgLoggingThreshold);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
