@@ -28,9 +28,11 @@ import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -148,20 +150,30 @@ public class EnclaveTest {
     assertThat(privacyGroupResponse.getDescription()).isEqualTo(description);
     assertThat(privacyGroupResponse.getType()).isEqualTo(PrivacyGroup.Type.PANTHEON);
 
-    PrivacyGroup[] findPrivacyGroupResponse = enclave.findPrivacyGroup(publicKeys);
+    Awaitility.await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              final PrivacyGroup[] findPrivacyGroupResponse = enclave.findPrivacyGroup(publicKeys);
 
-    assertThat(findPrivacyGroupResponse.length).isEqualTo(1);
-    assertThat(findPrivacyGroupResponse[0].getPrivacyGroupId())
-        .isEqualTo(privacyGroupResponse.getPrivacyGroupId());
+              assertThat(findPrivacyGroupResponse.length).isEqualTo(1);
+              assertThat(findPrivacyGroupResponse[0].getPrivacyGroupId())
+                  .isEqualTo(privacyGroupResponse.getPrivacyGroupId());
+            });
 
     final String response =
         enclave.deletePrivacyGroup(privacyGroupResponse.getPrivacyGroupId(), publicKeys.get(0));
 
     assertThat(privacyGroupResponse.getPrivacyGroupId()).isEqualTo(response);
 
-    findPrivacyGroupResponse = enclave.findPrivacyGroup(publicKeys);
+    Awaitility.await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              final PrivacyGroup[] findPrivacyGroupResponse = enclave.findPrivacyGroup(publicKeys);
 
-    assertThat(findPrivacyGroupResponse.length).isEqualTo(0);
+              assertThat(findPrivacyGroupResponse.length).isEqualTo(0);
+            });
   }
 
   @Test
