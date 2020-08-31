@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.io.IOException;
@@ -462,9 +463,11 @@ public abstract class MainnetProtocolSpecs {
         final MutableWorldState worldState,
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
-        final List<BlockHeader> ommers) {
+        final List<BlockHeader> ommers,
+        final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
-      return wrapped.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
+      return wrapped.processBlock(
+          blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

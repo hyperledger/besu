@@ -22,7 +22,6 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -37,10 +36,11 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -74,22 +74,20 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   private static final Logger LOG = LogManager.getLogger();
 
   public OnChainPrivacyPrecompiledContract(
-      final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    super(gasCalculator, privacyParameters, "OnChainPrivacy");
-  }
-
-  public OnChainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
-      final PrivateStateStorage privateStateStorage,
       final PrivateStateRootResolver privateStateRootResolver) {
+    super(gasCalculator, enclave, worldStateArchive, privateStateRootResolver, "OnChainPrivacy");
+  }
+
+  public OnChainPrivacyPrecompiledContract(
+      final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     super(
         gasCalculator,
-        enclave,
-        worldStateArchive,
-        privateStateStorage,
-        privateStateRootResolver,
+        privacyParameters.getEnclave(),
+        privacyParameters.getPrivateWorldStateArchive(),
+        privacyParameters.getPrivateStateRootResolver(),
         "OnChainPrivacy");
   }
 
@@ -143,10 +141,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
-    final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
 
+    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
     final Hash lastRootHash =
-        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, currentBlockHash);
+        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -183,9 +181,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           pmtHash,
           result.getValidationResult().getErrorMessage());
 
-      final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateUpdater);
-      privateStateUpdater.commit();
+      privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
 
       return Bytes.EMPTY;
     }
@@ -193,13 +189,12 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     sendParticipantRemovedEvent(privateTransaction);
 
     if (messageFrame.isPersistingPrivateState()) {
-      persistPrivateState(
-          pmtHash,
-          currentBlockHash,
-          privacyGroupId,
-          disposablePrivateState,
-          privateWorldStateUpdater,
-          result);
+
+      privateWorldStateUpdater.commit();
+      disposablePrivateState.persist();
+
+      storePrivateMetadata(
+          pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
     return result.getOutput();

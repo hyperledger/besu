@@ -47,6 +47,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -56,11 +58,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -78,6 +80,7 @@ public class PrivacyPrecompiledContractTest {
   final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
+  final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
 
@@ -108,19 +111,10 @@ public class PrivacyPrecompiledContractTest {
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
-    final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
-    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
-        .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.EMPTY));
-    when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
-    when(storageUpdater.putPrivateBlockMetadata(
-            nullable(Bytes32.class), nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
-    when(storageUpdater.putPrivacyGroupHeadBlockMap(nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
-    when(storageUpdater.putTransactionReceipt(
-            nullable(Bytes32.class), nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
-    when(privateStateStorage.updater()).thenReturn(storageUpdater);
+    when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
+        .thenReturn(PrivacyGroupHeadBlockMap.empty());
+    when(privateMetadataUpdater.getPrivateBlockMetadata(any()))
+        .thenReturn(new PrivateBlockMetadata(Collections.emptyList()));
 
     messageFrame = mock(MessageFrame.class);
     blockchain = mock(Blockchain.class);
@@ -134,6 +128,10 @@ public class PrivacyPrecompiledContractTest {
     when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
+    final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
+    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
+        .thenReturn(PrivacyGroupHeadBlockMap.empty());
   }
 
   @Test
@@ -283,7 +281,6 @@ public class PrivacyPrecompiledContractTest {
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            privateStateStorage,
             privateStateRootResolver);
 
     contract.setPrivateTransactionProcessor(
@@ -315,10 +312,6 @@ public class PrivacyPrecompiledContractTest {
 
   private PrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
     return new PrivacyPrecompiledContract(
-        new SpuriousDragonGasCalculator(),
-        enclave,
-        worldStateArchive,
-        privateStateStorage,
-        privateStateRootResolver);
+        new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateRootResolver);
   }
 }
