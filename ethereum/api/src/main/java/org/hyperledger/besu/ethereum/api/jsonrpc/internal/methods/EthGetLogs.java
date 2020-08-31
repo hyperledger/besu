@@ -58,7 +58,7 @@ public class EthGetLogs implements JsonRpcMethod {
                         blockHash, filter.getLogsQuery(), requestContext::isAlive))
             .orElseGet(
                 () -> {
-                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
+                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
                   final long toBlockNumber =
                       filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
                   return blockchain.matchingLogs(

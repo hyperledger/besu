@@ -41,16 +41,20 @@ public class CliqueMiningCoordinator extends AbstractMiningCoordinator<CliqueBlo
 
   @Override
   public void onResumeMining() {
-    if (miningTracker.isSigner(blockchain.getChainHeadHeader())) {
+    if (isSigner()) {
       LOG.info("Resuming block production operations");
     }
   }
 
   @Override
   public void onPauseMining() {
-    if (miningTracker.isSigner(blockchain.getChainHeadHeader())) {
+    if (isSigner()) {
       LOG.info("Pausing block production while behind chain head");
     }
+  }
+
+  public boolean isSigner() {
+    return miningTracker.isSigner(blockchain.getChainHeadHeader());
   }
 
   @Override

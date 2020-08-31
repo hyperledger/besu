@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -30,18 +31,29 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.util.Subscribers;
 
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -56,7 +68,18 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   private static final SECP256K1.Signature FAKE_SIGNATURE =
       SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
 
+  private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
+      Subscribers.create();
+
   private static final Logger LOG = LogManager.getLogger();
+
+  public OnChainPrivacyPrecompiledContract(
+      final GasCalculator gasCalculator,
+      final Enclave enclave,
+      final WorldStateArchive worldStateArchive,
+      final PrivateStateRootResolver privateStateRootResolver) {
+    super(gasCalculator, enclave, worldStateArchive, privateStateRootResolver, "OnChainPrivacy");
+  }
 
   public OnChainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
@@ -66,6 +89,14 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
         "OnChainPrivacy");
+  }
+
+  public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
+    return privateTransactionEventObservers.subscribe(observer);
+  }
+
+  public boolean removePrivateTransactionObserver(final long observerId) {
+    return privateTransactionEventObservers.unsubscribe(observerId);
   }
 
   @Override
@@ -95,12 +126,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     final PrivateTransaction privateTransaction =
         versionedPrivateTransaction.getPrivateTransaction();
 
-    if (!privateFromMatchesSenderKey(
-        privateTransaction.getPrivateFrom(), receiveResponse.getSenderKey())) {
+    final Bytes privateFrom = privateTransaction.getPrivateFrom();
+    if (!privateFromMatchesSenderKey(privateFrom, receiveResponse.getSenderKey())) {
       return Bytes.EMPTY;
     }
-
-    final Bytes32 version = versionedPrivateTransaction.getVersion();
 
     final Optional<Bytes> maybeGroupId = privateTransaction.getPrivacyGroupId();
     if (maybeGroupId.isEmpty()) {
@@ -122,22 +151,23 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
+    final WorldUpdater publicWorldState = messageFrame.getWorldState();
+    final Blockchain blockchain = messageFrame.getBlockchain();
+
     maybeInjectDefaultManagementAndProxy(
         lastRootHash, disposablePrivateState, privateWorldStateUpdater);
-
-    final Blockchain blockchain = messageFrame.getBlockchain();
-    final WorldUpdater publicWorldState = messageFrame.getWorldState();
 
     if (!canExecute(
         messageFrame,
         currentBlockHeader,
         privateTransaction,
-        version,
+        versionedPrivateTransaction.getVersion(),
         publicWorldState,
         privacyGroupId,
         blockchain,
         disposablePrivateState,
-        privateWorldStateUpdater)) {
+        privateWorldStateUpdater,
+        privateFrom)) {
       return Bytes.EMPTY;
     }
 
@@ -150,8 +180,13 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
+
+      privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
+
       return Bytes.EMPTY;
     }
+
+    sendParticipantRemovedEvent(privateTransaction);
 
     if (messageFrame.isPersistingPrivateState()) {
 
@@ -165,6 +200,20 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return result.getOutput();
   }
 
+  private void sendParticipantRemovedEvent(final PrivateTransaction privateTransaction) {
+    if (privateTransaction.isGroupRemovalTransaction()) {
+      // get first participant parameter - there is only one for removal transaction
+      final String removedParticipant =
+          getRemovedParticipantFromParameter(privateTransaction.getPayload());
+
+      final PrivateTransactionEvent removalEvent =
+          new PrivateTransactionEvent(
+              privateTransaction.getPrivacyGroupId().get().toBase64String(), removedParticipant);
+      privateTransactionEventObservers.forEach(
+          sub -> sub.onPrivateTransactionProcessed(removalEvent));
+    }
+  }
+
   boolean canExecute(
       final MessageFrame messageFrame,
       final ProcessableBlockHeader currentBlockHeader,
@@ -174,13 +223,14 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Bytes32 privacyGroupId,
       final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
+      final WorldUpdater privateWorldStateUpdater,
+      final Bytes privateFrom) {
 
     final boolean isAddingParticipant =
         privateTransaction
             .getPayload()
             .toHexString()
-            .startsWith(OnChainGroupManagement.ADD_TO_GROUP_METHOD_SIGNATURE.toHexString());
+            .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
 
     final boolean isPrivacyGroupLocked =
         isContractLocked(
@@ -217,9 +267,99 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         blockchain,
         disposablePrivateState,
         privateWorldStateUpdater)) {
+      LOG.debug(
+          "Privacy group version mismatch while trying to execute transaction with commitment {}",
+          messageFrame.getTransactionHash());
       return false;
     }
+
+    if (!isMemberOfPrivacyGroup(
+        isAddingParticipant,
+        privateTransaction,
+        privateFrom,
+        privacyGroupId,
+        messageFrame,
+        currentBlockHeader,
+        publicWorldState,
+        blockchain,
+        disposablePrivateState,
+        privateWorldStateUpdater)) {
+      LOG.debug(
+          "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom {} is not a member.",
+          messageFrame.getTransactionHash(),
+          privacyGroupId.toBase64String(),
+          privateFrom.toBase64String());
+      return false;
+    }
+
     return true;
+  }
+
+  private boolean isMemberOfPrivacyGroup(
+      final boolean isAddingParticipant,
+      final PrivateTransaction privateTransaction,
+      final Bytes privateFrom,
+      final Bytes32 privacyGroupId,
+      final MessageFrame messageFrame,
+      final ProcessableBlockHeader currentBlockHeader,
+      final WorldUpdater publicWorldState,
+      final Blockchain blockchain,
+      final MutableWorldState disposablePrivateState,
+      final WorldUpdater privateWorldStateUpdater) {
+    final PrivateTransactionProcessor.Result result =
+        simulateTransaction(
+            messageFrame,
+            currentBlockHeader,
+            publicWorldState,
+            privacyGroupId,
+            blockchain,
+            disposablePrivateState,
+            privateWorldStateUpdater,
+            OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE);
+    final List<Bytes> list = getMembersFromResult(result);
+    List<String> participantsFromParameter = Collections.emptyList();
+    if (list.isEmpty() && isAddingParticipant) {
+      // creating a new group, so we are checking whether the privateFrom is one of the members of
+      // the new group
+      participantsFromParameter = getParticipantsFromParameter(privateTransaction.getPayload());
+    }
+    return list.contains(privateFrom)
+        || participantsFromParameter.contains(privateFrom.toBase64String());
+  }
+
+  List<Bytes> getMembersFromResult(final PrivateTransactionProcessor.Result result) {
+    List<Bytes> list = Collections.emptyList();
+    if (result != null && result.isSuccessful()) {
+      final RLPInput rlpInput = RLP.input(result.getOutput());
+      if (rlpInput.nextSize() > 0) {
+        list = decodeList(rlpInput.raw());
+      }
+    }
+    return list;
+  }
+
+  // TODO: this method is copied from DefaultPrivacyController. Fix the duplication in a separate GI
+  private List<String> getParticipantsFromParameter(final Bytes input) {
+    final List<String> participants = new ArrayList<>();
+    final Bytes mungedParticipants = input.slice(4 + 32 + 32);
+    for (int i = 0; i <= mungedParticipants.size() - 32; i += 32) {
+      participants.add(mungedParticipants.slice(i, 32).toBase64String());
+    }
+    return participants;
+  }
+
+  private String getRemovedParticipantFromParameter(final Bytes input) {
+    return input.slice(4).toBase64String();
+  }
+
+  private List<Bytes> decodeList(final Bytes rlpEncodedList) {
+    final ArrayList<Bytes> decodedElements = new ArrayList<>();
+    // first 32 bytes is dynamic list offset
+    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list
+    for (int i = 0; i < lengthOfList.toLong(); ++i) {
+      decodedElements.add(Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32))); // participant
+    }
+    return decodedElements;
   }
 
   protected boolean isContractLocked(

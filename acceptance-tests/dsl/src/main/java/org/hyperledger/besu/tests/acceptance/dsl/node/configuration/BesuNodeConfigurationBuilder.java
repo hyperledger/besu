@@ -60,8 +60,9 @@ public class BesuNodeConfigurationBuilder {
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
+  private boolean isDnsEnabled = false;
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
-  private Optional<String> runCommand = Optional.empty();
+  private List<String> runCommand = new ArrayList<>();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -268,13 +269,18 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder dnsEnabled(final boolean isDnsEnabled) {
+    this.isDnsEnabled = isDnsEnabled;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = Optional.ofNullable(privacyParameters);
     return this;
   }
 
-  public BesuNodeConfigurationBuilder run(final String command) {
-    this.runCommand = Optional.ofNullable(command);
+  public BesuNodeConfigurationBuilder run(final String... commands) {
+    this.runCommand = List.of(commands);
     return this;
   }
 
@@ -300,6 +306,7 @@ public class BesuNodeConfigurationBuilder {
         plugins,
         extraCLIOptions,
         staticNodes,
+        isDnsEnabled,
         privacyParameters,
         runCommand);
   }

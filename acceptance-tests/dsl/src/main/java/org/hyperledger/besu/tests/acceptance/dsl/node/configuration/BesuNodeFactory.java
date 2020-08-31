@@ -68,6 +68,7 @@ public class BesuNodeFactory {
         config.getPlugins(),
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
+        config.isDnsEnabled(),
         config.getPrivacyParameters(),
         config.getRunCommand());
   }
@@ -303,7 +304,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .genesisConfigProvider(genesis::createIbft2GenesisConfig)
@@ -362,7 +363,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .genesisConfigProvider(

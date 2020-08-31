@@ -57,13 +57,15 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private static final Logger LOG = LogManager.getLogger();
 
   public PrivacyPrecompiledContract(
-      final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
+      final GasCalculator gasCalculator,
+      final PrivacyParameters privacyParameters,
+      final String name) {
     this(
         gasCalculator,
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
-        "Privacy");
+        name);
   }
 
   @VisibleForTesting
@@ -121,13 +123,32 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final PrivateTransaction privateTransaction =
         PrivateTransaction.readFrom(bytesValueRLPInput.readAsRlp());
 
-    if (!privateFromMatchesSenderKey(
-        privateTransaction.getPrivateFrom(), receiveResponse.getSenderKey())) {
+    final Bytes privateFrom = privateTransaction.getPrivateFrom();
+    if (!privateFromMatchesSenderKey(privateFrom, receiveResponse.getSenderKey())) {
       return Bytes.EMPTY;
     }
 
     final Bytes32 privacyGroupId =
         Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
+
+    try {
+      if (privateTransaction.getPrivateFor().isEmpty()
+          && !enclave
+              .retrievePrivacyGroup(privacyGroupId.toBase64String())
+              .getMembers()
+              .contains(privateFrom.toBase64String())) {
+        return Bytes.EMPTY;
+      }
+    } catch (final EnclaveClientException e) {
+      // This exception is thrown when the privacy group can not be found
+      return Bytes.EMPTY;
+    } catch (final EnclaveServerException e) {
+      LOG.error("Enclave is responding with an error, perhaps it has a misconfiguration?", e);
+      throw e;
+    } catch (final EnclaveIOException e) {
+      LOG.error("Can not communicate with enclave, is it up?", e);
+      throw e;
+    }
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
@@ -149,6 +170,9 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
+
+      privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
+
       return Bytes.EMPTY;
     }
 

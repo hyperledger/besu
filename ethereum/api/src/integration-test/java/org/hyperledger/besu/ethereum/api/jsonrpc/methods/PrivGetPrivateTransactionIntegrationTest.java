@@ -132,7 +132,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
     privacyController =
         new DefaultPrivacyController(
-            blockchain, privateStateStorage, enclave, null, null, null, null, null);
+            blockchain, privateStateStorage, enclave, null, null, null, null, null, null);
   }
 
   @After

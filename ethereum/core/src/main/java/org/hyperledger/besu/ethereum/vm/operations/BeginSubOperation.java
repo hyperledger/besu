@@ -35,7 +35,7 @@ public class BeginSubOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return invalidEntryResponse;
   }
 }

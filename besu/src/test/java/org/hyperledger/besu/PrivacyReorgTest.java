@@ -16,6 +16,9 @@ package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
@@ -24,6 +27,7 @@ import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -43,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
@@ -62,6 +67,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -118,6 +124,7 @@ public class PrivacyReorgTest {
   private OrionTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
+  private DefaultPrivacyController privacyController;
 
   @Before
   public void setUp() throws IOException {
@@ -140,6 +147,9 @@ public class PrivacyReorgTest {
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .build();
     privacyParameters.setEnclavePublicKey(ENCLAVE_PUBLIC_KEY.toBase64String());
+    privacyController = mock(DefaultPrivacyController.class);
+    when(privacyController.retrieveOffChainPrivacyGroup(any(), any()))
+        .thenReturn(Optional.of(new PrivacyGroup()));
 
     privateStateRootResolver =
         new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());

@@ -165,20 +165,26 @@ public abstract class MainnetPrecompiledContractRegistries {
       final PrecompileContractRegistry registry,
       final PrecompiledContractConfiguration precompiledContractConfiguration,
       final int accountVersion) {
-    final Address address =
-        Address.privacyPrecompiled(
-            precompiledContractConfiguration.getPrivacyParameters().getPrivacyAddress());
-    registry.put(
-        address,
-        accountVersion,
-        new PrivacyPrecompiledContract(
-            precompiledContractConfiguration.getGasCalculator(),
-            precompiledContractConfiguration.getPrivacyParameters()));
-    registry.put(
-        Address.ONCHAIN_PRIVACY,
-        accountVersion,
-        new OnChainPrivacyPrecompiledContract(
-            precompiledContractConfiguration.getGasCalculator(),
-            precompiledContractConfiguration.getPrivacyParameters()));
+
+    if (!precompiledContractConfiguration.getPrivacyParameters().isEnabled()) {
+      return;
+    }
+
+    if (precompiledContractConfiguration.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+      registry.put(
+          Address.ONCHAIN_PRIVACY,
+          accountVersion,
+          new OnChainPrivacyPrecompiledContract(
+              precompiledContractConfiguration.getGasCalculator(),
+              precompiledContractConfiguration.getPrivacyParameters()));
+    } else {
+      registry.put(
+          Address.DEFAULT_PRIVACY,
+          accountVersion,
+          new PrivacyPrecompiledContract(
+              precompiledContractConfiguration.getGasCalculator(),
+              precompiledContractConfiguration.getPrivacyParameters(),
+              "Privacy"));
+    }
   }
 }

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.nat.NatService;
@@ -38,7 +39,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -182,24 +182,23 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
-    OptionalInt tcpPort = OptionalInt.empty();
-    if (packet.getPacketData(PingPacketData.class).isPresent()) {
-      final PingPacketData ping = packet.getPacketData(PingPacketData.class).orElseGet(null);
-      if (ping != null && ping.getFrom() != null && ping.getFrom().getTcpPort().isPresent()) {
-        tcpPort = ping.getFrom().getTcpPort();
-      }
-    }
+    final int udpPort = sourceEndpoint.getUdpPort();
+    final int tcpPort =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .flatMap(Endpoint::getTcpPort)
+            .orElse(udpPort);
 
     // Notify the peer controller.
-    String host = sourceEndpoint.getHost();
-    int port = sourceEndpoint.getUdpPort();
+    final String host = sourceEndpoint.getHost();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
             EnodeURL.builder()
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
-                .listeningPort(tcpPort.orElse(port))
-                .discoveryPort(port)
+                .listeningPort(tcpPort)
+                .discoveryPort(udpPort)
                 .build());
 
     controller.ifPresent(c -> c.onMessage(packet, peer));
@@ -309,7 +308,10 @@ public abstract class PeerDiscoveryAgent {
     return isActive;
   }
 
-  public void bond(final DiscoveryPeer peer) {
-    controller.ifPresent(c -> c.handleBondingRequest(peer));
+  public void bond(final Peer peer) {
+    controller.ifPresent(
+        c -> {
+          DiscoveryPeer.from(peer).ifPresent(c::handleBondingRequest);
+        });
   }
 }

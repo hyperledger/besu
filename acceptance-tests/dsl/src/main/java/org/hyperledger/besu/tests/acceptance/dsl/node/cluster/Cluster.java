@@ -130,7 +130,7 @@ public class Cluster implements AutoCloseable {
     }
   }
 
-  private void startNode(final RunnableNode node) {
+  public void startNode(final RunnableNode node) {
     this.startNode(node, false);
   }
 

@@ -5,13 +5,13 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
-## Scope of logs query causing Besu to hang
+## Logs queries missing results against chain head
 
-[`eth_getLogs` queries that are too large or too broad can cause Besu to never return](https://github.com/hyperledger/besu/issues/944). 
+When using `eth_getLogs` against the head of Goerli to retrieve Eth2 deposit log events, [some results seem to be missing](https://github.com/hyperledger/besu/issues/1153). 
 
-Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
+Workaround -> Use `eth_getLogs` against historical blocks rather than the chain head directly. 
 
-A fix for this issue is being actively worked on.
+A fix for this issue is actively being worked on. 
 
 ## Eth/65 loses peers 
 
@@ -46,3 +46,14 @@ A critical issue for privacy users with private transactions created using Hyper
 or earlier has been identified. If you have a network with private transaction created using v1.3.4 
 or earlier, please read the following and take the appropriate steps: 
 https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
+
+## Changes not saved to database correctly causing inconsistent private states
+
+While running reorg testing on Besu and Orion, inconsistent private states were observed in some long running tests
+when state changes were not saved to the database correctly when executing the private transaction.  
+
+Workaround -> As the private transaction payloads have all been distributed and the privacy marker 
+transactions included in the chain, resynchronizing the node with an inconsistent state will re-execute 
+the private transactions. 
+
+A fix for this issue is being actively worked on. 

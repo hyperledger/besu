@@ -21,7 +21,9 @@ import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,26 +41,25 @@ public class EnodeURL {
   private static final Pattern NODE_ID_PATTERN = Pattern.compile("^[0-9a-fA-F]{128}$");
 
   private final Bytes nodeId;
-  private final InetAddress ip;
-  private final OptionalInt listeningPort;
-  private final OptionalInt discoveryPort;
+  private InetAddress ip;
+  private final Optional<String> maybeHostname;
+  private final Optional<Integer> listeningPort;
+  private final Optional<Integer> discoveryPort;
 
   private EnodeURL(
       final Bytes nodeId,
       final InetAddress address,
-      final OptionalInt listeningPort,
-      final OptionalInt discoveryPort) {
+      final Optional<String> maybeHostname,
+      final Optional<Integer> listeningPort,
+      final Optional<Integer> discoveryPort) {
     checkArgument(
         nodeId.size() == NODE_ID_SIZE, "Invalid node id.  Expected id of length: 64 bytes.");
-    checkArgument(
-        !listeningPort.isPresent() || NetworkUtility.isValidPort(listeningPort.getAsInt()),
-        "Invalid listening port.  Port should be between 1 - 65535.");
-    checkArgument(
-        !discoveryPort.isPresent() || NetworkUtility.isValidPort(discoveryPort.getAsInt()),
-        "Invalid discovery port.  Port should be between 1 - 65535.");
+    listeningPort.ifPresent(port -> NetworkUtility.checkPort(port, "listening"));
+    discoveryPort.ifPresent(port -> NetworkUtility.checkPort(port, "discovery"));
 
     this.nodeId = nodeId;
     this.ip = address;
+    this.maybeHostname = maybeHostname;
     this.listeningPort = listeningPort;
     this.discoveryPort = discoveryPort;
   }
@@ -68,9 +69,14 @@ public class EnodeURL {
   }
 
   public static EnodeURL fromString(final String value) {
+    return fromString(value, EnodeDnsConfiguration.dnsDisabled());
+  }
+
+  public static EnodeURL fromString(
+      final String value, final EnodeDnsConfiguration enodeDnsConfiguration) {
     try {
       checkStringArgumentNotEmpty(value, "Invalid empty value.");
-      return fromURI(URI.create(value));
+      return fromURI(URI.create(value), enodeDnsConfiguration);
     } catch (IllegalArgumentException e) {
       String message =
           "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
@@ -82,6 +88,10 @@ public class EnodeURL {
   }
 
   public static EnodeURL fromURI(final URI uri) {
+    return fromURI(uri, EnodeDnsConfiguration.dnsDisabled());
+  }
+
+  public static EnodeURL fromURI(final URI uri, final EnodeDnsConfiguration enodeDnsConfiguration) {
     checkArgument(uri != null, "URI cannot be null");
     checkStringArgumentNotEmpty(uri.getScheme(), "Missing 'enode' scheme.");
     checkStringArgumentNotEmpty(uri.getHost(), "Missing or invalid ip address.");
@@ -98,21 +108,20 @@ public class EnodeURL {
     int tcpPort = uri.getPort();
 
     // Parse discport if it exists
-    OptionalInt discoveryPort = OptionalInt.empty();
+    Optional<Integer> discoveryPort = Optional.empty();
     String query = uri.getQuery();
     if (query != null) {
       final Matcher discPortMatcher = DISCPORT_QUERY_STRING_REGEX.matcher(query);
       if (discPortMatcher.matches()) {
-        Integer discPort = Ints.tryParse(discPortMatcher.group(1));
-        discoveryPort = discPort == null ? discoveryPort : OptionalInt.of(discPort);
+        discoveryPort = Optional.ofNullable(Ints.tryParse(discPortMatcher.group(1)));
       }
       checkArgument(discoveryPort.isPresent(), "Invalid discovery port: '" + query + "'.");
     } else {
-      discoveryPort = OptionalInt.of(tcpPort);
+      discoveryPort = Optional.of(tcpPort);
     }
 
     return builder()
-        .ipAddress(host)
+        .ipAddress(host, enodeDnsConfiguration)
         .nodeId(id)
         .listeningPort(tcpPort)
         .discoveryPort(discoveryPort)
@@ -128,9 +137,9 @@ public class EnodeURL {
       return false;
     }
 
-    return Objects.equals(enodeA.nodeId, enodeB.nodeId)
-        && Objects.equals(enodeA.ip, enodeB.ip)
-        && Objects.equals(enodeA.listeningPort, enodeB.listeningPort);
+    return Objects.equals(enodeA.getNodeId(), enodeB.getNodeId())
+        && Objects.equals(enodeA.getIp(), enodeB.getIp())
+        && Objects.equals(enodeA.getListeningPort(), enodeB.getListeningPort());
   }
 
   public static Bytes parseNodeId(final String nodeId) {
@@ -145,11 +154,12 @@ public class EnodeURL {
   }
 
   public URI toURI() {
+
     final String uri =
         String.format(
             "enode://%s@%s:%d",
             nodeId.toUnprefixedHexString(),
-            InetAddresses.toUriString(ip),
+            maybeHostname.orElse(InetAddresses.toUriString(getIp())),
             getListeningPortOrZero());
     final OptionalInt discPort = getDiscPortQueryParam();
     if (discPort.isPresent()) {
@@ -164,7 +174,7 @@ public class EnodeURL {
         String.format(
             "enode://%s@%s:%d",
             nodeId.toUnprefixedHexString(),
-            InetAddresses.toUriString(ip),
+            maybeHostname.orElse(InetAddresses.toUriString(getIp())),
             getListeningPortOrZero());
 
     return URI.create(uri);
@@ -185,7 +195,11 @@ public class EnodeURL {
   }
 
   public static URI asURI(final String url) {
-    return fromString(url).toURI();
+    return asURI(url, EnodeDnsConfiguration.dnsDisabled());
+  }
+
+  public static URI asURI(final String url, final EnodeDnsConfiguration enodeDnsConfiguration) {
+    return fromString(url, enodeDnsConfiguration).toURI();
   }
 
   public Bytes getNodeId() {
@@ -193,10 +207,32 @@ public class EnodeURL {
   }
 
   public String getIpAsString() {
-    return ip.getHostAddress();
+    return getIp().getHostAddress();
   }
 
+  /**
+   * Get IP of the EnodeURL
+   *
+   * <p>If "dns" and "dns-update" are enabled -&gt; DNS lookup every time to have the IP up to date
+   * and not to rely on an invalid cache
+   *
+   * <p>If the "dns" is enabled but "dns-update" is disabled -&gt; IP is retrieved only one time and
+   * the hostname is no longer stored (maybeHostname is empty).
+   *
+   * @return ip
+   */
   public InetAddress getIp() {
+    this.ip =
+        maybeHostname
+            .map(
+                hostname -> {
+                  try {
+                    return InetAddress.getByName(hostname);
+                  } catch (UnknownHostException e) {
+                    return ip;
+                  }
+                })
+            .orElse(ip);
     return ip;
   }
 
@@ -208,7 +244,7 @@ public class EnodeURL {
     return discoveryPort.isPresent();
   }
 
-  public OptionalInt getListeningPort() {
+  public Optional<Integer> getListeningPort() {
     return listeningPort;
   }
 
@@ -216,7 +252,7 @@ public class EnodeURL {
     return listeningPort.orElse(0);
   }
 
-  public OptionalInt getDiscoveryPort() {
+  public Optional<Integer> getDiscoveryPort() {
     return discoveryPort;
   }
 
@@ -233,15 +269,15 @@ public class EnodeURL {
       return false;
     }
     EnodeURL enodeURL = (EnodeURL) o;
-    return Objects.equals(nodeId, enodeURL.nodeId)
-        && Objects.equals(ip, enodeURL.ip)
-        && Objects.equals(listeningPort, enodeURL.listeningPort)
-        && Objects.equals(discoveryPort, enodeURL.discoveryPort);
+    return Objects.equals(getNodeId(), enodeURL.getNodeId())
+        && Objects.equals(getIp(), enodeURL.getIp())
+        && Objects.equals(getListeningPort(), enodeURL.getListeningPort())
+        && Objects.equals(getDiscoveryPort(), enodeURL.getDiscoveryPort());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeId, ip, listeningPort, discoveryPort);
+    return Objects.hash(getNodeId(), getIp(), getListeningPort(), getDiscoveryPort());
   }
 
   @Override
@@ -252,15 +288,16 @@ public class EnodeURL {
   public static class Builder {
 
     private Bytes nodeId;
-    private OptionalInt listeningPort;
-    private OptionalInt discoveryPort;
+    private Optional<Integer> listeningPort;
+    private Optional<Integer> discoveryPort;
+    private Optional<String> maybeHostname = Optional.empty();
     private InetAddress ip;
 
-    private Builder() {};
+    private Builder() {}
 
     public EnodeURL build() {
       validate();
-      return new EnodeURL(nodeId, ip, listeningPort, discoveryPort);
+      return new EnodeURL(nodeId, ip, maybeHostname, listeningPort, discoveryPort);
     }
 
     private void validate() {
@@ -298,10 +335,27 @@ public class EnodeURL {
     }
 
     public Builder ipAddress(final String ip) {
+      return ipAddress(ip, EnodeDnsConfiguration.dnsDisabled());
+    }
+
+    public Builder ipAddress(final String ip, final EnodeDnsConfiguration enodeDnsConfiguration) {
       if (InetAddresses.isUriInetAddress(ip)) {
         this.ip = InetAddresses.forUriString(ip);
       } else if (InetAddresses.isInetAddress(ip)) {
         this.ip = InetAddresses.forString(ip);
+      } else if (enodeDnsConfiguration.dnsEnabled()) {
+        try {
+          if (enodeDnsConfiguration.updateEnabled()) {
+            this.maybeHostname = Optional.of(ip);
+          }
+          this.ip = InetAddress.getByName(ip);
+        } catch (UnknownHostException e) {
+          if (!enodeDnsConfiguration.updateEnabled()) {
+            throw new IllegalArgumentException("Invalid ip address or hostname.");
+          } else {
+            this.ip = InetAddresses.forString("127.0.0.1");
+          }
+        }
       } else {
         throw new IllegalArgumentException("Invalid ip address.");
       }
@@ -315,12 +369,12 @@ public class EnodeURL {
     }
 
     public Builder disableListening() {
-      this.listeningPort = OptionalInt.empty();
+      this.listeningPort = Optional.empty();
       return this;
     }
 
     public Builder disableDiscovery() {
-      this.discoveryPort = OptionalInt.empty();
+      this.discoveryPort = Optional.empty();
       return this;
     }
 
@@ -333,16 +387,12 @@ public class EnodeURL {
      * An optional listening port value. If the value is empty of equal to 0, the listening port
      * will be empty - indicating the corresponding node is not listening.
      *
-     * @param listeningPort If non-empty represents the port to listen on, if empty means the node
-     *     is not listening
+     * @param maybeListeningPort If non-empty represents the port to listen on, if empty means the
+     *     node is not listening
      * @return The modified builder
      */
-    public Builder listeningPort(final OptionalInt listeningPort) {
-      if (listeningPort.isPresent() && listeningPort.getAsInt() == 0) {
-        this.listeningPort = OptionalInt.empty();
-      } else {
-        this.listeningPort = listeningPort;
-      }
+    public Builder listeningPort(final Optional<Integer> maybeListeningPort) {
+      this.listeningPort = maybeListeningPort.filter(port -> port != 0);
       return this;
     }
 
@@ -354,29 +404,19 @@ public class EnodeURL {
      * @return The modified builder
      */
     public Builder listeningPort(final int listeningPort) {
-      if (listeningPort == 0) {
-        this.listeningPort = OptionalInt.empty();
-      } else {
-        this.listeningPort = OptionalInt.of(listeningPort);
-      }
-      return this;
+      return listeningPort(Optional.of(listeningPort));
     }
 
     /**
      * The port on which to listen for discovery messages. A value that is empty or equal to 0,
      * indicates that the node is not listening for discovery messages.
      *
-     * @param discoveryPort If non-empty and non-zero, represents the port on which to listen for
-     *     discovery messages. Otherwise, indicates that the node is not running discovery.
+     * @param maybeDiscoveryPort If non-empty and non-zero, represents the port on which to listen
+     *     for discovery messages. Otherwise, indicates that the node is not running discovery.
      * @return The modified builder
      */
-    public Builder discoveryPort(final OptionalInt discoveryPort) {
-      if (discoveryPort.isPresent() && discoveryPort.getAsInt() == 0) {
-        this.discoveryPort = OptionalInt.empty();
-      } else {
-        this.discoveryPort = discoveryPort;
-      }
-
+    public Builder discoveryPort(final Optional<Integer> maybeDiscoveryPort) {
+      this.discoveryPort = maybeDiscoveryPort.filter(port -> port != 0);
       return this;
     }
 
@@ -389,12 +429,7 @@ public class EnodeURL {
      * @return The modified builder
      */
     public Builder discoveryPort(final int discoveryPort) {
-      if (discoveryPort == 0) {
-        this.discoveryPort = OptionalInt.empty();
-      } else {
-        this.discoveryPort = OptionalInt.of(discoveryPort);
-      }
-      return this;
+      return discoveryPort(Optional.of(discoveryPort));
     }
   }
 }

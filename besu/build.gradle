@@ -43,7 +43,9 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:retesteth')
   implementation project(':ethereum:rlp')
+  implementation project(':ethereum:trie')
   implementation project(':ethereum:stratum')
+  implementation project(':ethereum:ethstats')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
@@ -63,9 +65,12 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-config'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'org.xerial.snappy:snappy-java'
+
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
+  runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')

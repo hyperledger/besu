@@ -358,14 +358,13 @@ public abstract class MainnetProtocolSpecs {
   // TODO EIP-1559 change for the actual fork name when known
   static ProtocolSpecBuilder eip1559Definition(
       final Optional<BigInteger> chainId,
+      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final TransactionPriceCalculator transactionPriceCalculator =
-        TransactionPriceCalculator.eip1559();
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
@@ -373,6 +372,7 @@ public abstract class MainnetProtocolSpecs {
             gasCalculator ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    transactionPriceCalculator,
                     true,
                     chainId,
                     Optional.of(eip1559),
@@ -390,10 +390,10 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     stackSizeLimit,
                     Account.DEFAULT_VERSION,
-                    transactionPriceCalculator,
+                    transactionPriceCalculator.orElseThrow(),
                     CoinbaseFeePriceCalculator.eip1559()))
         .name("EIP-1559")
-        .transactionPriceCalculator(transactionPriceCalculator)
+        .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
@@ -404,12 +404,14 @@ public abstract class MainnetProtocolSpecs {
   // TODO EIP-1559 change for the actual fork name when known
   static ProtocolSpecBuilder eip1559FinalizedDefinition(
       final Optional<BigInteger> chainId,
+      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
     return eip1559Definition(
             chainId,
+            transactionPriceCalculator,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
@@ -418,6 +420,7 @@ public abstract class MainnetProtocolSpecs {
             gasCalculator ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    transactionPriceCalculator,
                     true,
                     chainId,
                     Optional.of(

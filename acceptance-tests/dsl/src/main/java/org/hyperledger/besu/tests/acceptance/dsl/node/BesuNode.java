@@ -88,7 +88,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private final String name;
   private final MiningParameters miningParameters;
-  private final Optional<String> runCommand;
+  private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -109,6 +109,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
 
   public BesuNode(
@@ -132,8 +133,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
+      final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
-      final Optional<String> runCommand)
+      final List<String> runCommand)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
@@ -174,6 +176,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         });
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
     LOG.info("Created BesuNode {}", this.toString());
   }
@@ -609,11 +612,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return staticNodes;
   }
 
+  public boolean isDnsEnabled() {
+    return isDnsEnabled;
+  }
+
   public boolean hasStaticNodes() {
     return staticNodes != null && !staticNodes.isEmpty();
   }
 
-  public Optional<String> getRunCommand() {
+  public List<String> getRunCommand() {
     return runCommand;
   }
 

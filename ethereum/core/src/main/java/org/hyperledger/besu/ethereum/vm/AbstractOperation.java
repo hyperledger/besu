@@ -14,29 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import java.util.Optional;
-
 /**
  * All {@link Operation} implementations should inherit from this class to get the setting of some
  * members for free.
  */
 public abstract class AbstractOperation implements Operation {
-
-  protected static final OperationResult ILLEGAL_STATE_CHANGE =
-      new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
-  protected static final OperationResult INVALID_JUMP_DESTINATION =
-      new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
-  protected static final OperationResult INVALID_RETURN_DATA_BUFFER_ACCESS =
-      new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS));
-  protected static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
-  protected static final OperationResult OVERFLOW_RESPONSE =
-      new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
 
   private final int opcode;
   private final String name;

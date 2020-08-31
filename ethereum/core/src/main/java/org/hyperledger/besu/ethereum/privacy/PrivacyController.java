@@ -83,7 +83,8 @@ public interface PrivacyController {
       final Hash blockHash,
       final String enclavePublicKey);
 
-  Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(Bytes privacyGroupId, String enclavePublicKey);
+  Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+      Bytes privacyGroupId, String enclavePublicKey, final PrivateTransaction privateTransaction);
 
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 
@@ -92,4 +93,13 @@ public interface PrivacyController {
   void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey)
       throws MultiTenancyValidationException;
+
+  void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
+      throws MultiTenancyValidationException;
+
+  PrivateTransactionSimulator getTransactionSimulator();
+
+  Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber);
 }

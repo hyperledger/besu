@@ -27,18 +27,19 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AbstractVerticle;
 
 /** Manages JSON-RPC filter events. */
-public class FilterManager extends AbstractVerticle {
+public class FilterManager extends AbstractVerticle implements PrivateTransactionObserver {
 
   private static final int FILTER_TIMEOUT_CHECK_TIMER = 10000;
 
@@ -46,6 +47,7 @@ public class FilterManager extends AbstractVerticle {
   private final FilterRepository filterRepository;
   private final BlockchainQueries blockchainQueries;
   private final Optional<PrivacyQueries> privacyQueries;
+  private final List<PrivateTransactionEvent> removalEvents;
 
   FilterManager(
       final BlockchainQueries blockchainQueries,
@@ -60,6 +62,7 @@ public class FilterManager extends AbstractVerticle {
     transactionPool.subscribePendingTransactions(this::recordPendingTransactionEvent);
     this.blockchainQueries = blockchainQueries;
     this.privacyQueries = privacyQueries;
+    this.removalEvents = new ArrayList<>();
   }
 
   @Override
@@ -121,6 +124,7 @@ public class FilterManager extends AbstractVerticle {
    * Installs a new private log filter
    *
    * @param privacyGroupId String privacyGroupId
+   * @param enclavePublicKey String enclavePublicKey of user creating the filter
    * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
@@ -128,12 +132,14 @@ public class FilterManager extends AbstractVerticle {
    */
   public String installPrivateLogFilter(
       final String privacyGroupId,
+      final String enclavePublicKey,
       final BlockParameter fromBlock,
       final BlockParameter toBlock,
       final LogsQuery logsQuery) {
     final String filterId = filterIdGenerator.nextId();
     filterRepository.save(
-        new PrivateLogFilter(filterId, privacyGroupId, fromBlock, toBlock, logsQuery));
+        new PrivateLogFilter(
+            filterId, privacyGroupId, enclavePublicKey, fromBlock, toBlock, logsQuery));
     return filterId;
   }
 
@@ -163,14 +169,17 @@ public class FilterManager extends AbstractVerticle {
           }
         });
 
+    removalEvents.stream().forEach(removalEvent -> processRemovalEvent(removalEvent));
+    removalEvents.clear();
+
     final List<LogWithMetadata> logsWithMetadata = event.getLogsWithMetadata();
     filterRepository.getFiltersOfType(LogFilter.class).stream()
         .filter(
             // Only keep filters where the "to" block could include the block in the event
             filter -> {
-              final OptionalLong maybeToBlockNumber = filter.getToBlock().getNumber();
+              final Optional<Long> maybeToBlockNumber = filter.getToBlock().getNumber();
               return maybeToBlockNumber.isEmpty()
-                  || maybeToBlockNumber.getAsLong() >= event.getBlock().getHeader().getNumber();
+                  || maybeToBlockNumber.get() >= event.getBlock().getHeader().getNumber();
             })
         .forEach(
             filter -> {
@@ -193,6 +202,12 @@ public class FilterManager extends AbstractVerticle {
             });
   }
 
+  @Override
+  public void onPrivateTransactionProcessed(final PrivateTransactionEvent event) {
+    // the list will be processed at the end of the block
+    removalEvents.add(event);
+  }
+
   @VisibleForTesting
   void recordPendingTransactionEvent(final Transaction transaction) {
     final Collection<PendingTransactionFilter> pendingTransactionFilters =
@@ -202,11 +217,25 @@ public class FilterManager extends AbstractVerticle {
     }
 
     pendingTransactionFilters.forEach(
-        (filter) -> {
+        filter -> {
           synchronized (filter) {
             filter.addTransactionHash(transaction.getHash());
           }
         });
+  }
+
+  @VisibleForTesting
+  void processRemovalEvent(final PrivateTransactionEvent event) {
+    // when user removed from privacy group, remove all filters created by that user in that group
+    filterRepository.getFiltersOfType(PrivateLogFilter.class).stream()
+        .filter(
+            privateLogFilter ->
+                privateLogFilter.getPrivacyGroupId().equals(event.getPrivacyGroupId())
+                    && privateLogFilter.getEnclavePublicKey().equals(event.getEnclavePublicKey()))
+        .forEach(
+            privateLogFilter -> {
+              uninstallFilter(privateLogFilter.getId());
+            });
   }
 
   /**

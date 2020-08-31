@@ -77,10 +77,10 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
             if (t instanceof TimeoutException && responseStream.isPresent()) {
               responseStream.get().getPeer().recordRequestTimeout(requestCode);
             }
-            result.get().completeExceptionally(t);
+            result.completeExceptionally(t);
           } else if (r != null) {
             // If we got a response we must have had a response stream...
-            result.get().complete(new PeerTaskResult<>(responseStream.get().getPeer(), r));
+            result.complete(new PeerTaskResult<>(responseStream.get().getPeer(), r));
           }
         });
   }
