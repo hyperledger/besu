@@ -87,6 +87,7 @@ import org.hyperledger.besu.ethereum.permissioning.account.AccountPermissioningC
 import org.hyperledger.besu.ethereum.permissioning.node.InsufficientPeersPermissioningProvider;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -586,6 +587,8 @@ public class RunnerBuilder {
                   protocolSchedule,
                   blockchainQueries,
                   transactionPool));
+
+      createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
 
     Optional<MetricsService> metricsService = Optional.empty();
@@ -795,9 +798,9 @@ public class RunnerBuilder {
   }
 
   private void createPrivateTransactionObserver(
-      final FilterManager filterManager, final PrivacyParameters privacyParameters) {
-    // register filterManager as observer of events fired by the onchain precompile.
-    // filterManager needs to remove filters when the creator is removed from onchain group
+      final PrivateTransactionObserver privateTransactionObserver,
+      final PrivacyParameters privacyParameters) {
+    // register privateTransactionObserver as observer of events fired by the onchain precompile.
     if (privacyParameters.isOnchainPrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
       final OnChainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
@@ -807,7 +810,7 @@ public class RunnerBuilder {
                   .getByBlockNumber(1)
                   .getPrecompileContractRegistry()
                   .get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
-      onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(filterManager);
+      onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }
 
