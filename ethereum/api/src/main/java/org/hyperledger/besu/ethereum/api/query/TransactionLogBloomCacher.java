@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -51,7 +52,8 @@ public class TransactionLogBloomCacher {
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
   private static final int BLOOM_BITS_LENGTH = 256;
-  private static final int EXPECTED_BLOOM_FILE_SIZE = BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH;
+  private static final int EXPECTED_BLOOM_FILE_SIZE =
+      BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH + Long.BYTES;
   public static final String CURRENT = "current";
   private final Map<Long, Boolean> cachedSegments;
 
@@ -113,9 +115,7 @@ public class TransactionLogBloomCacher {
               .ifPresent(
                   blockHeader ->
                       cacheLogsBloomForBlockHeader(blockHeader, Optional.of(cacheFile), false));
-          try (final OutputStream os = new FileOutputStream(cacheFile)) {
-            fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, os);
-          }
+          fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, cacheFile);
         }
       } catch (final Exception e) {
         LOG.error("Unhandled caching exception", e);
@@ -128,17 +128,23 @@ public class TransactionLogBloomCacher {
     return cachingStatus;
   }
 
-  private void fillCacheFile(final long startBlock, final long stopBlock, final OutputStream fos)
+  private void fillCacheFile(final long startBlock, final long stopBlock, final File currentFile)
       throws IOException {
     long blockNum = startBlock;
-    while (blockNum < stopBlock) {
-      final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNum);
-      if (maybeHeader.isEmpty()) {
-        break;
+    try (final OutputStream out = new FileOutputStream(currentFile)) {
+      while (blockNum < stopBlock) {
+        final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNum);
+        if (maybeHeader.isEmpty()) {
+          break;
+        }
+        fillCacheFileWithBlock(maybeHeader.get(), out);
+        cachingStatus.currentBlock = blockNum;
+        blockNum++;
       }
-      fillCacheFileWithBlock(maybeHeader.get(), fos);
-      cachingStatus.currentBlock = blockNum;
-      blockNum++;
+    }
+    try (final RandomAccessFile writer = new RandomAccessFile(currentFile, "rw")) {
+      writer.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
+      writer.writeLong(blockNum - startBlock);
     }
   }
 
@@ -157,7 +163,12 @@ public class TransactionLogBloomCacher {
       }
       final File cacheFile = reusedCacheFile.orElse(calculateCacheFileName(blockNumber, cacheDir));
       if (cacheFile.exists()) {
-        cacheSingleBlock(blockHeader, cacheFile);
+        try {
+          cacheSingleBlock(blockHeader, cacheFile);
+        } catch (final InvalidCacheException e) {
+          cacheFile.delete();
+          scheduler.scheduleComputationTask(() -> this.populateLatestSegment(blockNumber));
+        }
       } else {
         scheduler.scheduleComputationTask(() -> this.populateLatestSegment(blockNumber));
       }
@@ -169,11 +180,36 @@ public class TransactionLogBloomCacher {
   }
 
   private void cacheSingleBlock(final BlockHeader blockHeader, final File cacheFile)
-      throws IOException {
+      throws IOException, InvalidCacheException {
     try (final RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
-      final long offset = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE) * BLOOM_BITS_LENGTH;
+
+      writer.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
+
+      long nbCachedBlocks;
+      try {
+        nbCachedBlocks = writer.readLong();
+      } catch (IOException e) {
+        nbCachedBlocks = 0;
+      }
+
+      final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
+      final long offset = blockIndex * BLOOM_BITS_LENGTH;
       writer.seek(offset);
-      writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+      if (blockIndex <= nbCachedBlocks) {
+        // blockIndex<nbCachedBlocks -> reorg detected
+        final int distanceHeader = (int) Math.max(1, (nbCachedBlocks - blockIndex));
+        byte[] input =
+            Arrays.copyOf(
+                ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()),
+                distanceHeader * BLOOM_BITS_LENGTH);
+        writer.write(input);
+        writer.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
+        writer.writeLong(blockIndex + 1);
+
+      } else {
+        // block missing
+        throw new InvalidCacheException();
+      }
     }
   }
 
@@ -185,9 +221,7 @@ public class TransactionLogBloomCacher {
           final long segmentNumber = eventBlockNumber / BLOCKS_PER_BLOOM_CACHE;
           long blockNumber =
               Math.min((segmentNumber + 1) * BLOCKS_PER_BLOOM_CACHE - 1, eventBlockNumber);
-          try (final OutputStream out = new FileOutputStream(currentFile)) {
-            fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, out);
-          }
+          fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, currentFile);
           while (blockNumber <= eventBlockNumber && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
             cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
             blockNumber++;
@@ -198,7 +232,7 @@ public class TransactionLogBloomCacher {
               StandardCopyOption.REPLACE_EXISTING,
               StandardCopyOption.ATOMIC_MOVE);
           return true;
-        } catch (final IOException e) {
+        } catch (final IOException | InvalidCacheException e) {
           LOG.error("Unhandled caching exception.", e);
         } finally {
           populateLastFragmentLock.unlock();
@@ -243,20 +277,39 @@ public class TransactionLogBloomCacher {
 
   public void ensurePreviousSegmentsArePresent(
       final long blockNumber, final boolean overrideCacheCheck) {
+
     if (!cachingStatus.isCaching()) {
       scheduler.scheduleFutureTask(
           () -> {
             long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
+
             while (currentSegment >= 0) {
               try {
                 if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
                   final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
                   final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
+                  boolean isValidCacheFile = true;
+
                   if (overrideCacheCheck
                       || !cacheFile.isFile()
                       || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
+                    isValidCacheFile = false;
+                  } else {
+                    try (RandomAccessFile reader = new RandomAccessFile(cacheFile, "r")) {
+                      reader.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
+                      if (reader.readLong() != BLOCKS_PER_BLOOM_CACHE) {
+                        isValidCacheFile = false;
+                      }
+                    } catch (Exception e) {
+                      isValidCacheFile = false;
+                    }
+                  }
+
+                  if (!isValidCacheFile) {
+                    LOG.debug("Invalid cache file " + cacheFile.getName());
                     generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
                   }
+
                   cachedSegments.put(currentSegment, true);
                 }
               } finally {
@@ -344,4 +397,6 @@ public class TransactionLogBloomCacher {
       return requestAccepted;
     }
   }
+
+  public static class InvalidCacheException extends Exception {}
 }

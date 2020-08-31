@@ -31,7 +31,6 @@ public class AutoTransactionLogBloomCachingService {
   private final Blockchain blockchain;
   private final TransactionLogBloomCacher transactionLogBloomCacher;
   private OptionalLong blockAddedSubscriptionId = OptionalLong.empty();
-  private OptionalLong chainReorgSubscriptionId = OptionalLong.empty();
 
   public AutoTransactionLogBloomCachingService(
       final Blockchain blockchain, final TransactionLogBloomCacher transactionLogBloomCacher) {
@@ -55,13 +54,6 @@ public class AutoTransactionLogBloomCachingService {
                           event.getBlock().getHeader(), Optional.empty(), true);
                     }
                   }));
-      chainReorgSubscriptionId =
-          OptionalLong.of(
-              blockchain.observeChainReorg(
-                  (blockWithReceipts, __) ->
-                      transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          blockWithReceipts.getHeader(), Optional.empty(), true)));
-
       transactionLogBloomCacher
           .getScheduler()
           .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));
@@ -73,6 +65,5 @@ public class AutoTransactionLogBloomCachingService {
   public void stop() {
     LOG.info("Shutting down Auto transaction logs caching service.");
     blockAddedSubscriptionId.ifPresent(blockchain::removeObserver);
-    chainReorgSubscriptionId.ifPresent(blockchain::removeChainReorgObserver);
   }
 }
