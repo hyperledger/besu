@@ -590,11 +590,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void nodePermissioningTomlPathMustUseOption() throws IOException {
-    final List<URI> allowedNodes =
+    final List<EnodeURL> allowedNodes =
         Lists.newArrayList(
-            URI.create(
+            EnodeURL.fromString(
                 "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567"),
-            URI.create(
+            EnodeURL.fromString(
                 "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.169.0.9:4568"));
 
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
@@ -1345,6 +1345,33 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact or provide an url (via --Xethstats=nodename:secret@host:port)");
+  }
+
+  @Test
+  public void dnsEnabledOptionIsParsedCorrectly() {
+    TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
+
+    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
+  }
+
+  @Test
+  public void dnsUpdateEnabledOptionIsParsedCorrectly() {
+    TestBesuCommand besuCommand =
+        parseCommand("--Xdns-enabled", "true", "--Xdns-update-enabled", "true");
+
+    assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isTrue();
+  }
+
+  @Test
+  public void dnsUpdateEnabledOptionCannotBeUsedWithoutDnsEnabled() {
+    parseCommand("--Xdns-update-enabled", "true");
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
   }
 
   @Test

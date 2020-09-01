@@ -34,6 +34,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public abstract class AbstractCreateOperation extends AbstractOperation {
 
+  protected static final OperationResult UNDERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+
   AbstractCreateOperation(
       final int opcode,
       final String name,
@@ -54,9 +58,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.isStatic()) {
-      return ILLEGAL_STATE_CHANGE;
-    }
     // manual check because some reads won't come until the "complete" step.
     if (frame.stackSize() < getStackItemsConsumed()) {
       return UNDERFLOW_RESPONSE;
@@ -65,7 +66,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Gas cost = cost(frame);
     final Optional<Gas> optionalCost = Optional.ofNullable(cost);
     if (cost != null) {
-      if (frame.getRemainingGas().compareTo(cost) < 0) {
+      if (frame.isStatic()) {
+        return new OperationResult(
+            optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      } else if (frame.getRemainingGas().compareTo(cost) < 0) {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       }

@@ -116,6 +116,12 @@ public class PrivateTransactionDataFixture {
         .createTransaction(KEY_PAIR);
   }
 
+  public static VersionedPrivateTransaction versionedPrivateTransactionBesu() {
+    return new PrivateTransactionTestFixture()
+        .privacyGroupId(VALID_BASE64_ENCLAVE_KEY)
+        .createVersionedPrivateTransaction((KEY_PAIR));
+  }
+
   public static PrivateTransaction privateContractDeploymentTransactionBesu() {
     return new PrivateTransactionTestFixture()
         .payload(VALID_CONTRACT_DEPLOYMENT_PAYLOAD)

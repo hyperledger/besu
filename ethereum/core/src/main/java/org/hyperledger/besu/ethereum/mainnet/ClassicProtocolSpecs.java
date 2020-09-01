@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 public class ClassicProtocolSpecs {
   private static final Wei MAX_BLOCK_REWARD = Wei.fromEth(5);
@@ -62,7 +63,8 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder gothamDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
+      final OptionalInt configStackSizeLimit,
+      final OptionalLong ecip1017EraRounds) {
     return dieHardDefinition(chainId, contractSizeLimit, configStackSizeLimit)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
@@ -78,15 +80,17 @@ public class ClassicProtocolSpecs {
                     transactionReceiptFactory,
                     blockReward,
                     miningBeneficiaryCalculator,
-                    skipZeroBlockRewards))
+                    skipZeroBlockRewards,
+                    ecip1017EraRounds))
         .name("Gotham");
   }
 
   public static ProtocolSpecBuilder defuseDifficultyBombDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
-    return gothamDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+      final OptionalInt configStackSizeLimit,
+      final OptionalLong ecip1017EraRounds) {
+    return gothamDefinition(chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
             gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
@@ -97,11 +101,13 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    return gothamDefinition(chainId, configContractSizeLimit, configStackSizeLimit)
+    return gothamDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, ecip1017EraRounds)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
@@ -144,9 +150,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
     return atlantisDefinition(
-            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds)
         .evmBuilder(MainnetEvmRegistries::constantinople)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .evmBuilder(gasCalculator -> MainnetEvmRegistries.constantinople(gasCalculator))
@@ -158,9 +169,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
     return aghartaDefinition(
-            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->

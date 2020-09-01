@@ -11,10 +11,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
-
-import static org.hyperledger.besu.ethereum.vm.WorldStateMock.insertAccount;
+package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -43,14 +42,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
-@JsonIgnoreProperties({"_info", "postState", "postStateHash"})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockchainReferenceTestCaseSpec {
 
   private final String network;
 
   private final CandidateBlock[] candidateBlocks;
 
-  private final BlockHeaderMock genesisBlockHeader;
+  private final ReferenceTestBlockHeader genesisBlockHeader;
 
   private final Hash lastBlockHash;
 
@@ -62,15 +61,16 @@ public class BlockchainReferenceTestCaseSpec {
   private final ProtocolContext protocolContext;
 
   private static WorldStateArchive buildWorldStateArchive(
-      final Map<String, WorldStateMock.AccountMock> accounts) {
+      final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
     final WorldStateArchive worldStateArchive =
         InMemoryStorageProvider.createInMemoryWorldStateArchive();
 
     final MutableWorldState worldState = worldStateArchive.getMutable();
     final WorldUpdater updater = worldState.updater();
 
-    for (final Map.Entry<String, WorldStateMock.AccountMock> entry : accounts.entrySet()) {
-      insertAccount(updater, Address.fromHexString(entry.getKey()), entry.getValue());
+    for (final Map.Entry<String, ReferenceTestWorldState.AccountMock> entry : accounts.entrySet()) {
+      ReferenceTestWorldState.insertAccount(
+          updater, Address.fromHexString(entry.getKey()), entry.getValue());
     }
 
     updater.commit();
@@ -88,9 +88,9 @@ public class BlockchainReferenceTestCaseSpec {
   public BlockchainReferenceTestCaseSpec(
       @JsonProperty("network") final String network,
       @JsonProperty("blocks") final CandidateBlock[] candidateBlocks,
-      @JsonProperty("genesisBlockHeader") final BlockHeaderMock genesisBlockHeader,
+      @JsonProperty("genesisBlockHeader") final ReferenceTestBlockHeader genesisBlockHeader,
       @SuppressWarnings("unused") @JsonProperty("genesisRLP") final String genesisRLP,
-      @JsonProperty("pre") final Map<String, WorldStateMock.AccountMock> accounts,
+      @JsonProperty("pre") final Map<String, ReferenceTestWorldState.AccountMock> accounts,
       @JsonProperty("lastblockhash") final String lastBlockHash,
       @JsonProperty("sealEngine") final String sealEngine) {
     this.network = network;
@@ -135,10 +135,10 @@ public class BlockchainReferenceTestCaseSpec {
     return sealEngine;
   }
 
-  public static class BlockHeaderMock extends BlockHeader {
+  public static class ReferenceTestBlockHeader extends BlockHeader {
 
     @JsonCreator
-    public BlockHeaderMock(
+    public ReferenceTestBlockHeader(
         @JsonProperty("parentHash") final String parentHash,
         @JsonProperty("uncleHash") final String uncleHash,
         @JsonProperty("coinbase") final String coinbase,
@@ -214,7 +214,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("blockHeader") final Object blockHeader,
         @JsonProperty("transactions") final Object transactions,
         @JsonProperty("uncleHeaders") final Object uncleHeaders) {
-      Boolean valid = true;
+      boolean valid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
       try {

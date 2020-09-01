@@ -55,7 +55,8 @@ public class ExecutionContextTestFixture {
             genesis,
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 keyValueStorage, new MainnetBlockHeaderFunctions()),
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            0);
     this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = new ProtocolContext(blockchain, stateArchive, null);

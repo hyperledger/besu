@@ -54,11 +54,14 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -436,6 +439,8 @@ public class RunnerBuilder {
             .build();
     vertx.deployVerticle(filterManager);
 
+    createPrivateTransactionObserver(filterManager, privacyParameters);
+
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
     final MiningParameters miningParameters = besuController.getMiningParameters();
@@ -786,6 +791,23 @@ public class RunnerBuilder {
     // monitoring private logs
     if (privacyParameters.isEnabled()) {
       blockchain.observeBlockAdded(logsSubscriptionService::checkPrivateLogs);
+    }
+  }
+
+  private void createPrivateTransactionObserver(
+      final FilterManager filterManager, final PrivacyParameters privacyParameters) {
+    // register filterManager as observer of events fired by the onchain precompile.
+    // filterManager needs to remove filters when the creator is removed from onchain group
+    if (privacyParameters.isOnchainPrivacyGroupsEnabled()
+        && privacyParameters.isMultiTenancyEnabled()) {
+      final OnChainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
+          (OnChainPrivacyPrecompiledContract)
+              besuController
+                  .getProtocolSchedule()
+                  .getByBlockNumber(1)
+                  .getPrecompileContractRegistry()
+                  .get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+      onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(filterManager);
     }
   }
 

@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -135,6 +136,11 @@ public class PrivacyPrecompiledContractIntegrationTest {
     when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
+    final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
+    when(privateMetadataUpdater.getPrivateBlockMetadata(any())).thenReturn(null);
+    when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
+        .thenReturn(PrivacyGroupHeadBlockMap.empty());
+    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
 
     worldStateArchive = mock(WorldStateArchive.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
@@ -145,7 +151,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     privateStateStorage = mock(PrivateStateStorage.class);
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
-        .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.EMPTY));
+        .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
     when(storageUpdater.putPrivateBlockMetadata(
             nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
@@ -184,7 +190,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            privateStateStorage,
             new PrivateStateRootResolver(privateStateStorage));
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());

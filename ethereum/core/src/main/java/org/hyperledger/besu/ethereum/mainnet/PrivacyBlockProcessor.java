@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -79,20 +80,23 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
-      final List<BlockHeader> ommers) {
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+
+    if (privateMetadataUpdater != null) {
+      throw new IllegalArgumentException("PrivateMetadataUpdater passed in is not null.");
+    }
 
     maybeRehydrate(blockchain, blockHeader, transactions);
 
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-        new PrivacyGroupHeadBlockMap(
-            privateStateStorage
-                .getPrivacyGroupHeadBlockMap(blockHeader.getParentHash())
-                .orElse(PrivacyGroupHeadBlockMap.EMPTY));
-    privateStateStorage
-        .updater()
-        .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockMap)
-        .commit();
-    return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
+    final PrivateMetadataUpdater metadataUpdater =
+        new PrivateMetadataUpdater(blockHeader, privateStateStorage);
+
+    final Result result =
+        blockProcessor.processBlock(
+            blockchain, worldState, blockHeader, transactions, ommers, metadataUpdater);
+    metadataUpdater.commit();
+    return result;
   }
 
   void maybeRehydrate(

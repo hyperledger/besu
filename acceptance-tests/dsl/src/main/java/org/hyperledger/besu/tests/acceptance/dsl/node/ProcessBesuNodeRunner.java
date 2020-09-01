@@ -138,6 +138,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       createStaticNodes(node);
     }
 
+    if (node.isDnsEnabled()) {
+      params.add("--Xdns-enabled");
+      params.add("true");
+      params.add("--Xdns-update-enabled");
+      params.add("true");
+    }
+
     if (node.isJsonRpcEnabled()) {
       params.add("--rpc-http-enabled");
       params.add("--rpc-http-host");

@@ -52,7 +52,8 @@ public class ProtocolContext {
       final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
-      final BiFunction<Blockchain, WorldStateArchive, Object> consensusContextFactory) {
+      final BiFunction<Blockchain, WorldStateArchive, Object> consensusContextFactory,
+      final long reorgLoggingThreshold) {
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
     final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
@@ -60,7 +61,8 @@ public class ProtocolContext {
         storageProvider.createWorldStatePreimageStorage();
 
     final MutableBlockchain blockchain =
-        DefaultBlockchain.createMutable(genesisState.getBlock(), blockchainStorage, metricsSystem);
+        DefaultBlockchain.createMutable(
+            genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
 
     final WorldStateArchive worldStateArchive =
         new WorldStateArchive(worldStateStorage, preimageStorage);

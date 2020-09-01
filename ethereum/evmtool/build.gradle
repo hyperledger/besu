@@ -38,11 +38,14 @@ dependencies {
   implementation project(':consensus:ibft')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:referencetests')
+  implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')
   implementation project(':util')
 
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.dagger:dagger'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
@@ -61,4 +64,66 @@ startScripts {
     unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
     windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
   }
+}
+
+// rename the top level dir from besu-<version> to besu and this makes it really
+// simple for use in docker
+tasks.register("dockerDistUntar") {
+  dependsOn distTar
+  dependsOn distZip
+  def dockerBuildDir = "${buildDir}/docker-besu-evmtool"
+  def distTarFile = distTar.outputs.files.singleFile
+  def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar", "")
+
+  doFirst {
+    new File(dockerBuildDir).mkdir()
+    copy {
+      from tarTree(distTarFile)
+      into(dockerBuildDir)
+    }
+    file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/besu-evmtool")
+  }
+}
+
+task distDocker(type: Exec) {
+  dependsOn dockerDistUntar
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def imageName = "hyperledger/besu-evmtool"
+  def image = "${imageName}:${dockerBuildVersion}"
+  def dockerBuildDir = "${buildDir}/docker-besu-evmtool/"
+  workingDir "${dockerBuildDir}"
+
+  doFirst {
+    copy {
+      from file("${projectDir}/src/main/docker/Dockerfile")
+      into(workingDir)
+    }
+  }
+
+  executable "sh"
+  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+}
+
+task dockerUpload(type: Exec) {
+  dependsOn distDocker
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def imageName = "hyperledger/besu-evmtool"
+  def image = "${imageName}:${dockerBuildVersion}"
+  def cmd = "docker push '${image}'"
+  def additionalTags = []
+
+  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+    additionalTags.add('develop')
+  }
+
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+    additionalTags.add('latest')
+    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  additionalTags.each { tag ->
+    cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
+  }
+  executable "sh"
+  args "-c", cmd
 }
