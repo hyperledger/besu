@@ -35,7 +35,6 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final P2PNetwork p2pNetwork;
   private final BigInteger networkId;
-  //  private final ProtocolSchedule protocolSchedule;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
