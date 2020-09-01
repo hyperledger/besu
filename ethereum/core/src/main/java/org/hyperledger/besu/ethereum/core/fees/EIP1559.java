@@ -40,6 +40,11 @@ public class EIP1559 {
       final long parentBaseFee, final long parentBlockGasUsed, final long targetGasUsed) {
     guardActivation();
     assert targetGasUsed != 0L;
+
+    if (parentBlockGasUsed == targetGasUsed) {
+      return parentBaseFee - Wei.ONE.toLong();
+    }
+
     long delta = parentBlockGasUsed - targetGasUsed;
     long baseFee =
         parentBaseFee
@@ -54,6 +59,7 @@ public class EIP1559 {
     }
 
     long max = floorDiv(parentBaseFee, feeMarket.getBasefeeMaxChangeDenominator());
+    long min = Wei.ONE.toLong();
     if (max < 1) {
       max = 1;
     }
@@ -62,10 +68,11 @@ public class EIP1559 {
         max = -max;
       }
       baseFee = parentBaseFee + max;
-    }
-
-    if (baseFee <= 0) {
-      baseFee = Wei.ONE.toLong();
+    } else if (diff < min) {
+      if (neg) {
+        min = -min;
+      }
+      baseFee = parentBaseFee + min;
     }
 
     return baseFee;

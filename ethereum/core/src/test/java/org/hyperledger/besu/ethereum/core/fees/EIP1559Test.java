@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTI
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -65,10 +66,10 @@ public class EIP1559Test {
   }
 
   @Test
-  public void assertThatBaseFeeDoesNotChangeWhenAtTargetGasUsed() {
+  public void assertThatBaseFeeIsDecrementedByOneWhenAtTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(feeMarket.getInitialBasefee(), TARGET_GAS_USED, TARGET_GAS_USED))
-        .isEqualTo(feeMarket.getInitialBasefee());
+        .isEqualTo(feeMarket.getInitialBasefee() - Wei.ONE.toLong());
   }
 
   @Test
