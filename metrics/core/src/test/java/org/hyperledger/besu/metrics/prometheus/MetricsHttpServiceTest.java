@@ -21,6 +21,7 @@ import static org.hyperledger.besu.util.NetworkUtility.urlForSocketAddress;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
+import io.prometheus.client.exporter.common.TextFormat;
 import io.vertx.core.Vertx;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -171,6 +172,23 @@ public class MetricsHttpServiceTest {
 
       // We should have JVM metrics already loaded, verify a simple key.
       assertThat(props).isEmpty();
+    }
+  }
+
+  @Test
+  // There is only one available representation so content negotiation should not be used
+  public void acceptHeaderIgnored() throws Exception {
+    final Request metricsRequest =
+        new Request.Builder().addHeader("Accept", "text/xml").url(baseUrl + "/metrics").build();
+    try (final Response resp = client.newCall(metricsRequest).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+      // Check general format of result, it maps to java.util.Properties
+      final Properties props = new Properties();
+      props.load(resp.body().byteStream());
+
+      // We should have JVM metrics already loaded, verify a simple key.
+      assertThat(props).containsKey("jvm_threads_deadlocked");
+      assertThat(resp.header("Content-Type")).contains(TextFormat.CONTENT_TYPE_004);
     }
   }
 

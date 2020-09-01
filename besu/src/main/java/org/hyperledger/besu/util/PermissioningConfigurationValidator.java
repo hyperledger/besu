@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.util;
 
+import static java.util.stream.Collectors.toList;
+
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,41 +27,26 @@ import java.util.stream.Collectors;
 public class PermissioningConfigurationValidator {
 
   public static void areAllNodesAreInAllowlist(
-      final Collection<URI> nodeURIs,
+      final Collection<EnodeURL> nodeURIs,
       final LocalPermissioningConfiguration permissioningConfiguration)
       throws Exception {
 
     if (permissioningConfiguration.isNodeAllowlistEnabled() && nodeURIs != null) {
       final List<URI> allowlistNodesWithoutQueryParam =
           permissioningConfiguration.getNodeAllowlist().stream()
-              .map(PermissioningConfigurationValidator::removeQueryFromURI)
-              .collect(Collectors.toList());
+              .map(EnodeURL::toURIWithoutDiscoveryPort)
+              .collect(toList());
 
       final List<URI> nodeURIsNotInAllowlist =
           nodeURIs.stream()
-              .map(PermissioningConfigurationValidator::removeQueryFromURI)
+              .map(EnodeURL::toURIWithoutDiscoveryPort)
               .filter(uri -> !allowlistNodesWithoutQueryParam.contains(uri))
-              .collect(Collectors.toList());
+              .collect(toList());
 
       if (!nodeURIsNotInAllowlist.isEmpty()) {
         throw new Exception(
             "Specified node(s) not in nodes-allowlist " + enodesAsStrings(nodeURIsNotInAllowlist));
       }
-    }
-  }
-
-  private static URI removeQueryFromURI(final URI uri) {
-    try {
-      return new URI(
-          uri.getScheme(),
-          uri.getUserInfo(),
-          uri.getHost(),
-          uri.getPort(),
-          uri.getPath(),
-          null,
-          uri.getFragment());
-    } catch (URISyntaxException e) {
-      throw new IllegalArgumentException(e);
     }
   }
 

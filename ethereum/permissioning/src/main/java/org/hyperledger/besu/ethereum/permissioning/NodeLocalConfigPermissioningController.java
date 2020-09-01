@@ -24,7 +24,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -100,8 +99,8 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
 
   private void readNodesFromConfig(final LocalPermissioningConfiguration configuration) {
     if (configuration.isNodeAllowlistEnabled() && configuration.getNodeAllowlist() != null) {
-      for (URI uri : configuration.getNodeAllowlist()) {
-        addNode(EnodeURL.fromString(uri.toString()));
+      for (EnodeURL enodeURL : configuration.getNodeAllowlist()) {
+        addNode(enodeURL);
       }
     }
   }
@@ -112,7 +111,9 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
       return inputValidationResult;
     }
     final List<EnodeURL> peers =
-        enodeURLs.stream().map(EnodeURL::fromString).collect(Collectors.toList());
+        enodeURLs.stream()
+            .map(url -> EnodeURL.fromString(url, configuration.getEnodeDnsConfiguration()))
+            .collect(Collectors.toList());
 
     for (EnodeURL peer : peers) {
       if (nodesAllowlist.contains(peer)) {
@@ -144,7 +145,9 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
       return inputValidationResult;
     }
     final List<EnodeURL> peers =
-        enodeURLs.stream().map(EnodeURL::fromString).collect(Collectors.toList());
+        enodeURLs.stream()
+            .map(url -> EnodeURL.fromString(url, configuration.getEnodeDnsConfiguration()))
+            .collect(Collectors.toList());
 
     boolean anyBootnode = peers.stream().anyMatch(fixedNodes::contains);
     if (anyBootnode) {
@@ -228,7 +231,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   public boolean isPermitted(final String enodeURL) {
-    return isPermitted(EnodeURL.fromString(enodeURL));
+    return isPermitted(EnodeURL.fromString(enodeURL, configuration.getEnodeDnsConfiguration()));
   }
 
   public boolean isPermitted(final EnodeURL node) {
@@ -250,6 +253,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
       final LocalPermissioningConfiguration updatedConfig =
           PermissioningConfigurationBuilder.permissioningConfiguration(
               configuration.isNodeAllowlistEnabled(),
+              configuration.getEnodeDnsConfiguration(),
               configuration.getNodePermissioningConfigFilePath(),
               configuration.isAccountAllowlistEnabled(),
               configuration.getAccountPermissioningConfigFilePath());

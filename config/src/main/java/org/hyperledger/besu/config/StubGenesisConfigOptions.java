@@ -49,6 +49,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
+  private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
 
   @Override
   public String getConsensusEngine() {
@@ -199,6 +200,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalInt getEvmStackSize() {
     return stackSizeLimit;
+  }
+
+  @Override
+  public OptionalLong getEcip1017EraRounds() {
+    return ecip1017EraRounds;
   }
 
   @Override
