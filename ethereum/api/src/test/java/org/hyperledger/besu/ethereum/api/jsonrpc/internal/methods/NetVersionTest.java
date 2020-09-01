@@ -43,7 +43,7 @@ public class NetVersionTest {
   }
 
   @Test
-  public void shouldReturnChainId() {
+  public void shouldReturnNetworkId() {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, NETWORK_ID.toString());
 
@@ -53,7 +53,7 @@ public class NetVersionTest {
   }
 
   @Test
-  public void shouldReturnNullWhenNoChainId() {
+  public void shouldReturnNullWhenNoNetworkId() {
     method = new NetVersion(Optional.empty());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "null");
 
