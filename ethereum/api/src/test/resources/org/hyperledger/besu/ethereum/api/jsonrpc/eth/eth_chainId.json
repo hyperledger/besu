@@ -1,0 +1,14 @@
+{
+  "request": {
+    "id": 8,
+    "jsonrpc": "2.0",
+    "method": "eth_chainId",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "result": "0x1"
+  },
+  "statusCode": 200
+}

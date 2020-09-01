@@ -1,0 +1,14 @@
+{
+  "request": {
+    "id": 7,
+    "jsonrpc": "2.0",
+    "method": "net_version",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "result": "123"
+  },
+  "statusCode": 200
+}
