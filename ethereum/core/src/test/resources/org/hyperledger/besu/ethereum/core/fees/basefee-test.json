@@ -702,6 +702,12 @@
     "expectedBaseFee":1063811730
   },
   {
+    "parentBaseFee":1,
+    "parentGasUsed":0,
+    "parentTargetGasUsed":9000000,
+    "expectedBaseFee": 0
+  },
+  {
     "parentBaseFee":0,
     "parentGasUsed":10000000,
     "parentTargetGasUsed":9000000,

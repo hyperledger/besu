@@ -80,9 +80,8 @@ public class EIP1559 {
 
   public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {
     guardActivation();
-    return baseFee > 0
-        && Math.abs(baseFee - parentBaseFee)
-            <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
+    return Math.abs(baseFee - parentBaseFee)
+        <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
   public long eip1559GasPool(final long blockNumber, final long gasLimit) {
