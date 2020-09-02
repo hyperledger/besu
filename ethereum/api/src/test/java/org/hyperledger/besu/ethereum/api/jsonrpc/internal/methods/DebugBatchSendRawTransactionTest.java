@@ -102,4 +102,25 @@ public class DebugBatchSendRawTransactionTest {
         .hasSize(1)
         .containsExactly(new ExecutionStatus(0, false, "Invalid raw transaction hex"));
   }
+
+  @Test
+  public void errorSingleTransactionSignatureInvalidV() {
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                VERSION,
+                NAME,
+                new Object[] {
+                  "0xf868808203e882520894627306090abab3a6e1400e9345bc60c78a8bef57872386f26fc10000801fa0ac74ecfa0e9b85785f042c143ead4780931234cc9a032fce99fab1f45e0d90faa02fd17e8eb433d4ca47727653232045d4f81322619c0852d3fe8ddcfcedb66a43"
+                }));
+
+    final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
+    assertThat(response).isNotNull();
+    final List<ExecutionStatus> result = (List<ExecutionStatus>) response.getResult();
+    assertThat(result)
+        .isNotNull()
+        .hasSize(1)
+        .containsExactly(
+            new ExecutionStatus(0, false, "An unsupported encoded `v` value of 31 was found"));
+  }
 }

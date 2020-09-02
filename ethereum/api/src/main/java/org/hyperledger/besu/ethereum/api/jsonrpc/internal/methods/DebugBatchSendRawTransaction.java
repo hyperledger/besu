@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
@@ -73,7 +72,7 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
       return validationResult.either(
           () -> new ExecutionStatus(index),
           errorReason -> new ExecutionStatus(index, false, errorReason.name()));
-    } catch (final InvalidJsonRpcRequestException e) {
+    } catch (final Throwable e) {
       return new ExecutionStatus(index, false, e.getMessage());
     }
   }
