@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -225,7 +226,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
-      final DefaultEvmAccount sender = worldState.getOrCreate(senderAddress);
+      final EvmAccount sender = worldState.getOrCreate(senderAddress);
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
       if (!validationResult.isValid()) {

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.query.StateBackupService;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService.BackupStatus;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -78,7 +79,7 @@ public class BackupState implements Runnable {
     final BesuController besuController = createBesuController();
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
     final WorldStateStorage worldStateStorage =
-        besuController.getProtocolContext().getWorldStateArchive().getWorldStateStorage();
+        ((DefaultWorldStateArchive)besuController.getProtocolContext().getWorldStateArchive()).getWorldStateStorage();
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
     try {
       final long targetBlock = Math.min(blockchain.getChainHeadBlockNumber(), this.block);

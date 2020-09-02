@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class CommitVisitor<V> implements NodeVisitor<V> {
+public class CommitVisitor<V> implements NodeVisitor<V> {
 
   private final NodeUpdater nodeUpdater;
 

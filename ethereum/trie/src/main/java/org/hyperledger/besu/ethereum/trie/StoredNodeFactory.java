@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class StoredNodeFactory<V> implements NodeFactory<V> {
+public class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode NULL_NODE = NullNode.instance();
 
@@ -37,7 +37,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   private final Function<V, Bytes> valueSerializer;
   private final Function<Bytes, V> valueDeserializer;
 
-  StoredNodeFactory(
+  public StoredNodeFactory(
       final NodeLoader nodeLoader,
       final Function<V, Bytes> valueSerializer,
       final Function<Bytes, V> valueDeserializer) {

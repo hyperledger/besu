@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class PutVisitor<V> implements PathNodeVisitor<V> {
+public class PutVisitor<V> implements PathNodeVisitor<V> {
   private final NodeFactory<V> nodeFactory;
   private final V value;
 
-  PutVisitor(final NodeFactory<V> nodeFactory, final V value) {
+  public PutVisitor(final NodeFactory<V> nodeFactory, final V value) {
     this.nodeFactory = nodeFactory;
     this.value = value;
   }

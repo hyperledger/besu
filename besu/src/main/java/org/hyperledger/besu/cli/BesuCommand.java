@@ -109,6 +109,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueSto
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormat;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -127,6 +128,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -254,6 +256,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
   final Path dataPath = getDefaultBesuDataPath(this);
+
+  // Use Bonsai DB
+  @Option(
+      names = {"--Xworld-state-storage-format"},
+      hidden=true,
+      description = "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
+      arity = "1")
+  private final WorldStateStorageFormat worldStateStorageFormat = WorldStateStorageFormat.FOREST;
 
   // Genesis file path with null default option if the option
   // is not defined on command line as this default is handled by Runner
@@ -1470,7 +1480,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .genesisConfigOverrides(genesisConfigOverrides)
         .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
         .requiredBlocks(requiredBlocks)
-        .reorgLoggingThreshold(reorgLoggingThreshold);
+        .reorgLoggingThreshold(reorgLoggingThreshold)
+        .worldStateStorageFormat(worldStateStorageFormat);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -1914,22 +1925,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private PrivacyKeyValueStorageFactory privacyKeyValueStorageFactory(final String name) {
     return (PrivacyKeyValueStorageFactory)
-        storageService
-            .getByName(name)
-            .orElseThrow(
-                () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
+        storageFactory(name);
   }
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
-            storageService
-                .getByName(name)
-                .orElseThrow(
-                    () -> new StorageException("No KeyValueStorageFactory found for key: " + name)))
+            storageFactory(name))
         .withCommonConfiguration(pluginCommonConfiguration)
         .withMetricsSystem(getMetricsSystem())
         .build();
+  }
+
+  private KeyValueStorageFactory storageFactory(String name) {
+    return storageService
+        .getByName(name)
+        .orElseThrow(
+            () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
   private SynchronizerConfiguration buildSyncConfig() {

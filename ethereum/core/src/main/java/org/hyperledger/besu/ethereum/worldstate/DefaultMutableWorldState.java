@@ -27,9 +27,11 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.DumpVisitor;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -191,6 +193,12 @@ public class DefaultMutableWorldState implements MutableWorldState {
     // Push changes to underlying storage
     preimageUpdater.commit();
     stateUpdater.commit();
+  }
+
+  @Override
+  public void dumpTrie(final PrintStream out) {
+    ((StoredMerklePatriciaTrie<Bytes32, Bytes>) accountStateTrie)
+        .acceptAtRoot(new DumpVisitor<>(out));
   }
 
   private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
@@ -357,7 +365,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
+    public Collection<Account> getTouchedAccounts() {
       return new ArrayList<>(updatedAccounts());
     }
 

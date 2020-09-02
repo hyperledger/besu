@@ -28,55 +28,23 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class WorldStateArchive {
-  private final WorldStateStorage worldStateStorage;
-  private final WorldStatePreimageStorage preimageStorage;
-  private final WorldStateProofProvider worldStateProof;
+public interface WorldStateArchive {
+  Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
-  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+  Optional<WorldState> get(final Hash rootHash);
 
-  public WorldStateArchive(
-      final WorldStateStorage worldStateStorage, final WorldStatePreimageStorage preimageStorage) {
-    this.worldStateStorage = worldStateStorage;
-    this.preimageStorage = preimageStorage;
-    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
-  }
+  boolean isWorldStateAvailable(final Hash rootHash);
 
-  public Optional<WorldState> get(final Hash rootHash) {
-    return getMutable(rootHash).map(state -> state);
-  }
+  Optional<MutableWorldState> getMutable(final Hash rootHash);
 
-  public boolean isWorldStateAvailable(final Hash rootHash) {
-    return worldStateStorage.isWorldStateAvailable(rootHash);
-  }
+  WorldState get();
 
-  public Optional<MutableWorldState> getMutable(final Hash rootHash) {
-    if (!worldStateStorage.isWorldStateAvailable(rootHash)) {
-      return Optional.empty();
-    }
-    return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
-  }
+  MutableWorldState getMutable();
 
-  public WorldState get() {
-    return get(EMPTY_ROOT_HASH).get();
-  }
+  Optional<Bytes> getNodeData(final Hash hash);
 
-  public MutableWorldState getMutable() {
-    return getMutable(EMPTY_ROOT_HASH).get();
-  }
-
-  public Optional<Bytes> getNodeData(final Hash hash) {
-    return worldStateStorage.getNodeData(hash);
-  }
-
-  public WorldStateStorage getWorldStateStorage() {
-    return worldStateStorage;
-  }
-
-  public Optional<WorldStateProof> getAccountProof(
+  Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
       final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
-  }
+      final List<UInt256> accountStorageKeys);
 }

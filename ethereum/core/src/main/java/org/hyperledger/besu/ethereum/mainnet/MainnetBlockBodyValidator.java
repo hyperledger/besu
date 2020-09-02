@@ -68,11 +68,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
+    if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)
+//        || worldStateRootHash
+//            .toHexString()
+//            .equals("0xfe77dd4ad7c2a3fa4c11868a00e4d728adcdfef8d2e3c13b256b06cbdbb02ec9")) {
+    ) {
       LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
       receipts.forEach(
           receipt ->
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
+      context.getWorldStateArchive().getMutable(worldStateRootHash).orElseThrow().dumpTrie(System.out);
       return false;
     }
 

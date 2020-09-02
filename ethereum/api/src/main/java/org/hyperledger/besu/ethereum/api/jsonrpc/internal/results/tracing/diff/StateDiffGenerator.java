@@ -53,14 +53,14 @@ public class StateDiffGenerator {
 
     final StateDiffTrace stateDiffResult = new StateDiffTrace();
 
-    for (final UpdateTrackingAccount<?> updatedAccount : transactionUpdater.getTouchedAccounts()) {
+    for (final Account updatedAccount : transactionUpdater.getTouchedAccounts()) {
       final Address accountAddress = updatedAccount.getAddress();
       final Account rootAccount = previousUpdater.get(accountAddress);
 
       // calculate storage diff
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
       for (final Map.Entry<UInt256, UInt256> entry :
-          updatedAccount.getUpdatedStorage().entrySet()) {
+          ((UpdateTrackingAccount<?>)updatedAccount).getUpdatedStorage().entrySet()) { //FIXME cast
         final UInt256 newValue = entry.getValue();
         if (rootAccount == null) {
           if (!UInt256.ZERO.equals(newValue)) {

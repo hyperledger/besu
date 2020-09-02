@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -49,6 +50,7 @@ public class ProtocolContext {
 
   public static ProtocolContext init(
       final StorageProvider storageProvider,
+      final WorldStateArchive worldStateArchive,
       final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
@@ -56,16 +58,11 @@ public class ProtocolContext {
       final long reorgLoggingThreshold) {
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
-    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
-    final WorldStatePreimageStorage preimageStorage =
-        storageProvider.createWorldStatePreimageStorage();
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
             genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
 
-    final WorldStateArchive worldStateArchive =
-        new WorldStateArchive(worldStateStorage, preimageStorage);
     genesisState.writeStateTo(worldStateArchive.getMutable());
 
     return new ProtocolContext(

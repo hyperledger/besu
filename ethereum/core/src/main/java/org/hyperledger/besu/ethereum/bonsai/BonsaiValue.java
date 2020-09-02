@@ -11,11 +11,26 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.core;
 
-public class ModificationNotAllowedException extends RuntimeException {
-  public ModificationNotAllowedException() {
-    super("This account may not be modified");
+package org.hyperledger.besu.ethereum.bonsai;
+
+import javax.annotation.Nullable;
+
+import org.immutables.value.Value;
+
+@Value.Immutable
+@Value.Style(allParameters = true)
+public interface BonsaiValue<T> {
+  @Nullable
+  T getOriginal();
+
+  @Nullable
+  T getUpdated();
+
+  default T touched() {
+    final T value = getUpdated();
+    return value == null ? getOriginal() : value;
   }
 }
