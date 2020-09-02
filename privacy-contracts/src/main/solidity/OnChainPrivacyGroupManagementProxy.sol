@@ -1,6 +1,18 @@
-pragma solidity ^0.5.12;
-
-pragma solidity ^0.5.9;
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+pragma solidity ^0.6.0;
 import "./OnChainPrivacyGroupManagementInterface.sol";
 
 contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInterface {
@@ -15,46 +27,46 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         implementation = _newImp;
     }
 
-    function addParticipants(bytes32[] memory _publicEnclaveKeys) public returns (bool) {
+    function addParticipants(bytes32[] memory _publicEnclaveKeys) public override returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.addParticipants(_publicEnclaveKeys);
     }
 
-    function getParticipants() view public returns (bytes32[] memory) {
+    function getParticipants() view public override returns (bytes32[] memory) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.getParticipants();
     }
 
-    function removeParticipant(bytes32 _member) public returns (bool) {
+    function removeParticipant(bytes32 _participant) public override returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
-        bool result = privacyInterface.removeParticipant(_member);
+        bool result = privacyInterface.removeParticipant(_participant);
         if (result) {
-            emit ParticipantRemoved(_member);
+            emit ParticipantRemoved(_participant);
         }
     return result;
     }
 
-    function lock() public {
+    function lock() public override {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.lock();
     }
 
-    function unlock() public {
+    function unlock() public override {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.unlock();
     }
 
-    function canExecute() public view returns (bool) {
+    function canExecute() public view override returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.canExecute();
     }
 
-    function getVersion() public view returns (bytes32) {
+    function getVersion() public view override returns (bytes32) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.getVersion();
     }
 
-    function canUpgrade() external returns (bool) {
+    function canUpgrade() external override returns (bool) {
         OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
         return privacyInterface.canUpgrade();
     }
