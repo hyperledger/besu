@@ -10,6 +10,7 @@
 ### Bug Fixes
 
 * The metrics HTTP server no longer rejects requests containing `Accept` header that doesn't precisely match the prometheus text format [\#1345](https://github.com/hyperledger/besu/pull/1345)
+* JSON-RPC method `net_version` should return network ID instead of chain ID [\#1355](https://github.com/hyperledger/besu/pull/1355)
 
 #### Previously identified known issues
  

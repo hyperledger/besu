@@ -98,7 +98,7 @@ public class JsonRpcMethodsFactory {
                   supportedCapabilities),
               new NetJsonRpcMethods(
                   p2pNetwork,
-                  protocolSchedule,
+                  networkId,
                   jsonRpcConfiguration,
                   webSocketConfiguration,
                   metricsConfiguration),
