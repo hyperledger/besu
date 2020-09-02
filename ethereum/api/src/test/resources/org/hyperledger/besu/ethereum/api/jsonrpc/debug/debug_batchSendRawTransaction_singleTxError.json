@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc":"2.0",
+    "method":"debug_batchSendRawTransaction",
+    "params":[
+      "0x416"   ],
+    "id":1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "index": 0,
+        "success": false,
+        "errorMessage": "Invalid raw transaction hex"
+      }
+    ]
+  },
+  "statusCode": 200
+}
