@@ -48,6 +48,7 @@ public class SubscriptionRequestMapperTest {
   private SubscriptionRequestMapper mapper;
   // These tests aren't passing through WebSocketRequestHandler, so connectionId is null.
   private final String CONNECTION_ID = null;
+  private static final String ENCLAVE_PUBLIC_KEY = "enclave_public_key";
 
   @Before
   public void before() {
@@ -380,8 +381,6 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"priv_subscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\"}]}");
 
-    final String enclavePublicKey = "enclave_public_key";
-
     final PrivateSubscribeRequest expectedSubscribeRequest =
         new PrivateSubscribeRequest(
             SubscriptionType.LOGS,
@@ -394,11 +393,11 @@ public class SubscriptionRequestMapperTest {
             null,
             null,
             "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
-            enclavePublicKey);
+            ENCLAVE_PUBLIC_KEY);
 
     final PrivateSubscribeRequest subscribeRequest =
         mapper.mapPrivateSubscribeRequest(
-            new JsonRpcRequestContext(jsonRpcRequest), enclavePublicKey);
+            new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
 
     assertThat(subscribeRequest)
         .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
@@ -414,7 +413,7 @@ public class SubscriptionRequestMapperTest {
     thrown.expectMessage("Invalid subscribe request. Invalid private subscription type.");
 
     mapper.mapPrivateSubscribeRequest(
-        new JsonRpcRequestContext(jsonRpcRequest), "enclave_public_key");
+        new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
   }
 
   @Test

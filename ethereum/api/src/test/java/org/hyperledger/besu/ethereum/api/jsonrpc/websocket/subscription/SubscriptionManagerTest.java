@@ -240,6 +240,8 @@ public class SubscriptionManagerTest {
     subscriptionManager.onPrivateTransactionProcessed(
         new PrivateTransactionEvent(privacyGroupId, enclavePublicKey));
 
+    subscriptionManager.onBlockAdded();
+
     assertThat(
             subscriptionManager
                 .subscriptionsOfType(SubscriptionType.LOGS, PrivateLogsSubscription.class)

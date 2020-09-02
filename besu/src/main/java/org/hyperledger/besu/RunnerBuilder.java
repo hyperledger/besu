@@ -563,7 +563,7 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins());
 
       final SubscriptionManager subscriptionManager =
-          createSubscriptionManager(vertx, transactionPool);
+          createSubscriptionManager(vertx, transactionPool, blockchainQueries);
 
       createLogsSubscriptionService(
           context.getBlockchain(),
@@ -756,8 +756,11 @@ public class RunnerBuilder {
   }
 
   private SubscriptionManager createSubscriptionManager(
-      final Vertx vertx, final TransactionPool transactionPool) {
-    final SubscriptionManager subscriptionManager = new SubscriptionManager(metricsSystem);
+      final Vertx vertx,
+      final TransactionPool transactionPool,
+      final BlockchainQueries blockchainQueries) {
+    final SubscriptionManager subscriptionManager =
+        new SubscriptionManager(metricsSystem, blockchainQueries.getBlockchain());
     final PendingTransactionSubscriptionService pendingTransactions =
         new PendingTransactionSubscriptionService(subscriptionManager);
     final PendingTransactionDroppedSubscriptionService pendingTransactionsRemoved =
