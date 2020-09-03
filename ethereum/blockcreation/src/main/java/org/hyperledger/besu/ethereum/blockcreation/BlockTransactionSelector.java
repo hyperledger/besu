@@ -165,6 +165,8 @@ public class BlockTransactionSelector {
   /**
    * Evaluate the given transactions and return the result of that evaluation.
    *
+   * @param blockNumber block number of the current block
+   * @param gasLimit gas limit of the current block
    * @param transactions The set of transactions to evaluate.
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
