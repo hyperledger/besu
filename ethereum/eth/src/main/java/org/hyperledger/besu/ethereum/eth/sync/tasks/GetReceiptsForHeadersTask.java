@@ -116,7 +116,7 @@ public class GetReceiptsForHeadersTask
     receipts.putAll(responseData);
 
     if (isComplete()) {
-      result.get().complete(receipts);
+      result.complete(receipts);
     }
 
     return CompletableFuture.completedFuture(responseData);

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
@@ -32,7 +31,6 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -106,7 +104,7 @@ public class JumpSubOperationTest {
   public void shouldHaltWithInvalidJumpDestinationWhenLocationIsNotBeginSub() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0x05"))
             .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
             .returnStack(new ReturnStack())
@@ -121,7 +119,7 @@ public class JumpSubOperationTest {
   public void shouldJumpWhenLocationIsBeginSub() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0x04"))
             .code(new Code(Bytes.fromHexString("0x60045e005c5d")))
             .returnStack(new ReturnStack())
@@ -137,7 +135,7 @@ public class JumpSubOperationTest {
   public void shouldJumpWhenLocationIsBeginSubAndAtEndOfCode() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0x04"))
             .code(new Code(Bytes.fromHexString("0x60045e005c")))
             .returnStack(new ReturnStack())
@@ -153,7 +151,7 @@ public class JumpSubOperationTest {
   public void shouldHaltWithInvalidJumpDestinationWhenLocationIsWayOutsideOfCodeRange() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frameDestinationGreaterThanCodeSize =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0xFFFFFFFF"))
             .code(new Code(Bytes.fromHexString("0x6801000000000000000c5e005c60115e5d5c5d")))
             .returnStack(new ReturnStack())
@@ -168,7 +166,7 @@ public class JumpSubOperationTest {
   public void shouldHaltWithInvalidJumpDestinationWhenLocationIsJustOutsideOfCodeRange() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frameDestinationEqualsToCodeSize =
-        createMessageFrameBuilder(Gas.of(1))
+        createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0x05"))
             .code(new Code(Bytes.fromHexString("0x60045e005c")))
             .returnStack(new ReturnStack())
@@ -183,10 +181,11 @@ public class JumpSubOperationTest {
   public void shouldHaltWithInsufficientStackItemsWhenLocationIsNotAvailable() {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(new ReturnStack()).build();
+        createMessageFrameBuilder(Gas.of(100)).returnStack(new ReturnStack()).build();
     frame.setPC(CURRENT_PC);
 
-    assertThatThrownBy(() -> operation.execute(frame, null)).isInstanceOf(UnderflowException.class);
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
   }
 
   @Test
@@ -194,7 +193,7 @@ public class JumpSubOperationTest {
     final JumpSubOperation operation = new JumpSubOperation(gasCalculator);
     final ReturnStack returnStack = new ReturnStack();
     final MessageFrame frame =
-        createMessageFrameBuilder(Gas.of(1)).returnStack(returnStack).build();
+        createMessageFrameBuilder(Gas.of(100)).returnStack(returnStack).build();
     frame.setPC(CURRENT_PC);
 
     assertThat(frame.isReturnStackFull()).isFalse();

@@ -69,7 +69,7 @@ public class RetryingGetHeaderFromPeerByNumberTask
         .thenApply(
             peerResult -> {
               if (!peerResult.getResult().isEmpty()) {
-                result.get().complete(peerResult.getResult());
+                result.complete(peerResult.getResult());
               }
               return peerResult.getResult();
             });

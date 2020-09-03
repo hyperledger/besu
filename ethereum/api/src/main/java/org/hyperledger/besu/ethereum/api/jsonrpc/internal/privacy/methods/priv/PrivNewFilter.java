@@ -50,8 +50,10 @@ public class PrivNewFilter implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final FilterParameter filter = request.getRequiredParameter(1, FilterParameter.class);
+    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
 
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(request, privacyGroupId);
+    // no need to pass blockNumber. To create a filter, you need to be a current member of the group
+    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(enclavePublicKey, privacyGroupId);
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
@@ -59,14 +61,17 @@ public class PrivNewFilter implements JsonRpcMethod {
 
     final String logFilterId =
         filterManager.installPrivateLogFilter(
-            privacyGroupId, filter.getFromBlock(), filter.getToBlock(), filter.getLogsQuery());
+            privacyGroupId,
+            enclavePublicKey,
+            filter.getFromBlock(),
+            filter.getToBlock(),
+            filter.getLogsQuery());
 
     return new JsonRpcSuccessResponse(request.getRequest().getId(), logFilterId);
   }
 
   private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
-      final JsonRpcRequestContext request, final String privacyGroupId) {
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+      final String enclavePublicKey, final String privacyGroupId) {
     privacyController.verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
   }
 }

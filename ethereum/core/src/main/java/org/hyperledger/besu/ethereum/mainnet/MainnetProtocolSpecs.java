@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.io.IOException;
@@ -357,14 +358,13 @@ public abstract class MainnetProtocolSpecs {
   // TODO EIP-1559 change for the actual fork name when known
   static ProtocolSpecBuilder eip1559Definition(
       final Optional<BigInteger> chainId,
+      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final TransactionPriceCalculator transactionPriceCalculator =
-        TransactionPriceCalculator.eip1559();
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
@@ -372,6 +372,7 @@ public abstract class MainnetProtocolSpecs {
             gasCalculator ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    transactionPriceCalculator,
                     true,
                     chainId,
                     Optional.of(eip1559),
@@ -389,10 +390,10 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     stackSizeLimit,
                     Account.DEFAULT_VERSION,
-                    transactionPriceCalculator,
+                    transactionPriceCalculator.orElseThrow(),
                     CoinbaseFeePriceCalculator.eip1559()))
         .name("EIP-1559")
-        .transactionPriceCalculator(transactionPriceCalculator)
+        .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
@@ -403,12 +404,14 @@ public abstract class MainnetProtocolSpecs {
   // TODO EIP-1559 change for the actual fork name when known
   static ProtocolSpecBuilder eip1559FinalizedDefinition(
       final Optional<BigInteger> chainId,
+      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions) {
     return eip1559Definition(
             chainId,
+            transactionPriceCalculator,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
@@ -417,6 +420,7 @@ public abstract class MainnetProtocolSpecs {
             gasCalculator ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    transactionPriceCalculator,
                     true,
                     chainId,
                     Optional.of(
@@ -459,9 +463,11 @@ public abstract class MainnetProtocolSpecs {
         final MutableWorldState worldState,
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
-        final List<BlockHeader> ommers) {
+        final List<BlockHeader> ommers,
+        final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
-      return wrapped.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
+      return wrapped.processBlock(
+          blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

@@ -155,6 +155,12 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public void visitLeafs(final TrieIterator.LeafHandler<V> handler) {
+    final TrieIterator<V> visitor = new TrieIterator<>(handler, true);
+    root.accept(visitor, CompactEncoding.bytesToPath(Bytes32.ZERO));
+  }
+
+  @Override
   public Bytes32 getRootHash() {
     return root.getHash();
   }

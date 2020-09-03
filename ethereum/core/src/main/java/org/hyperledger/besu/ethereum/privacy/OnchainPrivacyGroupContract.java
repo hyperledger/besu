@@ -47,19 +47,35 @@ public class OnchainPrivacyGroupContract {
     this.privateTransactionSimulator = privateTransactionSimulator;
   }
 
-  public Optional<PrivacyGroup> getPrivacyGroup(
+  public Optional<PrivacyGroup> getPrivacyGroupById(final String privacyGroupId) {
+    return getPrivacyGroup(privacyGroupId, Optional.empty(), Optional.empty());
+  }
+
+  public Optional<PrivacyGroup> getPrivacyGroupByIdAndBlockNumber(
+      final String privacyGroupId, final Optional<Long> blockNumber) {
+    return getPrivacyGroup(privacyGroupId, Optional.empty(), blockNumber);
+  }
+
+  public Optional<PrivacyGroup> getPrivacyGroupByIdAndBlockHash(
       final String privacyGroupId, final Optional<Hash> blockHash) {
+    return getPrivacyGroup(privacyGroupId, blockHash, Optional.empty());
+  }
+
+  private Optional<PrivacyGroup> getPrivacyGroup(
+      final String privacyGroupId,
+      final Optional<Hash> blockHash,
+      final Optional<Long> blockNumber) {
 
     final CallParameter callParams = buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE);
     final Optional<PrivateTransactionProcessor.Result> result;
 
     if (blockHash.isPresent()) {
       result = privateTransactionSimulator.process(privacyGroupId, callParams, blockHash.get());
-
+    } else if (blockNumber.isPresent()) {
+      result = privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber.get());
     } else {
       result = privateTransactionSimulator.process(privacyGroupId, callParams);
     }
-
     return readPrivacyGroupFromResult(privacyGroupId, result);
   }
 

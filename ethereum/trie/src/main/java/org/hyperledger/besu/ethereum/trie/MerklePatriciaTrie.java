@@ -92,4 +92,6 @@ public interface MerklePatriciaTrie<K, V> {
   void visitAll(Consumer<Node<V>> nodeConsumer);
 
   CompletableFuture<Void> visitAll(Consumer<Node<V>> nodeConsumer, ExecutorService executorService);
+
+  void visitLeafs(final TrieIterator.LeafHandler<V> handler);
 }

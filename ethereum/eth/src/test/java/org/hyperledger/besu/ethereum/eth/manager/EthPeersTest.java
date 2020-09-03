@@ -247,6 +247,23 @@ public class EthPeersTest {
     assertRequestFailure(pendingRequest, CancellationException.class);
   }
 
+  // We had a bug where if a peer was busy when it was disconnected, pending peer requests that were
+  // *explicitly* assigned to that peer would never be attempted and thus never completed
+  @Test
+  public void shouldFailRequestWithBusyDisconnectedAssignedPeer() throws Exception {
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final EthPeer ethPeer = peer.getEthPeer();
+    useAllAvailableCapacity(ethPeer);
+
+    final PendingPeerRequest pendingRequest =
+        ethPeers.executePeerRequest(peerRequest, 100, Optional.of(ethPeer));
+
+    ethPeer.disconnect(DisconnectReason.UNKNOWN);
+    ethPeers.registerDisconnect(ethPeer.getConnection());
+
+    assertRequestFailure(pendingRequest, CancellationException.class);
+  }
+
   private void freeUpCapacity(final EthPeer ethPeer) {
     ethPeers.dispatchMessage(ethPeer, new EthMessage(ethPeer, NodeDataMessage.create(emptyList())));
   }

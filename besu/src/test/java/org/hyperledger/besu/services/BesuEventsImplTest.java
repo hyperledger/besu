@@ -73,6 +73,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+@SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
 public class BesuEventsImplTest {
 
@@ -104,7 +105,8 @@ public class BesuEventsImplTest {
             gen.genesisBlock(),
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            0);
 
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
@@ -118,7 +120,8 @@ public class BesuEventsImplTest {
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
     when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
-    when(mockTransactionValidator.validate(any())).thenReturn(ValidationResult.valid());
+    when(mockTransactionValidator.validate(any(), any(Optional.class)))
+        .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(mockWorldStateArchive.get(any())).thenReturn(Optional.of(mockWorldState));

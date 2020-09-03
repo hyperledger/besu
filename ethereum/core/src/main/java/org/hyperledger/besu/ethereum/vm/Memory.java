@@ -112,8 +112,8 @@ public class Memory {
 
     if (location.fitsInt() && numBytes.fitsInt()) {
       // Fast common path (note that we work on int but use long arithmetic to avoid issues)
-      final int byteSize = Math.addExact(location.intValue(), numBytes.intValue());
-      int wordSize = (byteSize / Bytes32.SIZE);
+      final long byteSize = location.toLong() + numBytes.toLong();
+      int wordSize = Math.toIntExact(byteSize / Bytes32.SIZE);
       if (byteSize % Bytes32.SIZE != 0) wordSize += 1;
       return wordSize > dataSize256 ? UInt256.valueOf(wordSize) : activeWords;
     } else {
@@ -135,16 +135,28 @@ public class Memory {
   /**
    * Expands the active words to accommodate the specified byte position.
    *
-   * @param address The location in memory to start with.
+   * @param offset The location in memory to start with.
    * @param numBytes The number of bytes to get.
    */
-  void ensureCapacityForBytes(final int address, final int numBytes) {
+  void ensureCapacityForBytes(final UInt256 offset, final UInt256 numBytes) {
+    if (!offset.fitsInt()) return;
+    if (!numBytes.fitsInt()) return;
+    ensureCapacityForBytes(offset.intValue(), numBytes.intValue());
+  }
+
+  /**
+   * Expands the active words to accommodate the specified byte position.
+   *
+   * @param offset The location in memory to start with.
+   * @param numBytes The number of bytes to get.
+   */
+  void ensureCapacityForBytes(final int offset, final int numBytes) {
     // Do not increase the memory capacity if no bytes are being written
     // regardless of what the address may be.
     if (numBytes == 0) {
       return;
     }
-    final int lastByteIndex = Math.addExact(address, numBytes);
+    final int lastByteIndex = Math.addExact(offset, numBytes);
     final int lastWordRequired = ((lastByteIndex - 1) / Bytes32.SIZE);
     maybeExpandCapacity(lastWordRequired + 1);
   }

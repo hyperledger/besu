@@ -118,4 +118,10 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
                         executorService))
             .toArray(CompletableFuture[]::new));
   }
+
+  @Override
+  public void visitLeafs(final TrieIterator.LeafHandler<V> handler) {
+    final TrieIterator<V> visitor = new TrieIterator<>(handler, true);
+    root.accept(visitor, CompactEncoding.bytesToPath(Bytes32.ZERO));
+  }
 }

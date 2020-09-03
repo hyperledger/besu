@@ -98,8 +98,9 @@ public class DefaultPrivacyControllerTest {
   private Enclave enclave;
   private String enclavePublicKey;
   private PrivateNonceProvider privateNonceProvider;
-  private PrivateWorldStateReader privateWorldStateReader;
+  private PrivateStateRootResolver privateStateRootResolver;
   private PrivateTransactionSimulator privateTransactionSimulator;
+  private PrivateWorldStateReader privateWorldStateReader;
   private Blockchain blockchain;
   private PrivateStateStorage privateStateStorage;
 
@@ -145,6 +146,7 @@ public class DefaultPrivacyControllerTest {
     privateTransactionSimulator = mock(PrivateTransactionSimulator.class);
     privateStateStorage = mock(PrivateStateStorage.class);
     privateNonceProvider = mock(ChainHeadPrivateNonceProvider.class);
+    privateStateRootResolver = mock(PrivateStateRootResolver.class);
     when(privateNonceProvider.getNonce(any(), any())).thenReturn(1L);
 
     privateWorldStateReader = mock(PrivateWorldStateReader.class);
@@ -163,7 +165,8 @@ public class DefaultPrivacyControllerTest {
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
             privateNonceProvider,
-            privateWorldStateReader);
+            privateWorldStateReader,
+            privateStateRootResolver);
     brokenPrivacyController =
         new DefaultPrivacyController(
             blockchain,
@@ -174,7 +177,8 @@ public class DefaultPrivacyControllerTest {
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
             privateNonceProvider,
-            privateWorldStateReader);
+            privateWorldStateReader,
+            privateStateRootResolver);
   }
 
   @Test

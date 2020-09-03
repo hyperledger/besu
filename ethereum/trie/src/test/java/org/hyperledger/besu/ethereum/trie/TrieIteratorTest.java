@@ -53,7 +53,7 @@ public class TrieIteratorTest {
 
   private final DefaultNodeFactory<String> nodeFactory =
       new DefaultNodeFactory<>(this::valueSerializer);
-  private final TrieIterator<String> iterator = new TrieIterator<>(leafHandler);
+  private final TrieIterator<String> iterator = new TrieIterator<>(leafHandler, false);
 
   private Bytes valueSerializer(final String value) {
     return Bytes.wrap(value.getBytes(StandardCharsets.UTF_8));

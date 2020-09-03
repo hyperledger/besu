@@ -20,18 +20,25 @@ import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 public class PrivateLogFilter extends LogFilter {
 
   private final String privacyGroupId;
+  private final String enclavePublicKey;
 
   PrivateLogFilter(
       final String id,
       final String privacyGroupId,
+      final String enclavePublicKey,
       final BlockParameter fromBlock,
       final BlockParameter toBlock,
       final LogsQuery logsQuery) {
     super(id, fromBlock, toBlock, logsQuery);
     this.privacyGroupId = privacyGroupId;
+    this.enclavePublicKey = enclavePublicKey;
   }
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
+  }
+
+  public String getEnclavePublicKey() {
+    return enclavePublicKey;
   }
 }

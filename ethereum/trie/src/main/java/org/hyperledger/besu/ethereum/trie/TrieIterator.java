@@ -26,9 +26,11 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   private final Deque<Bytes> paths = new ArrayDeque<>();
   private final LeafHandler<V> leafHandler;
   private State state = State.SEARCHING;
+  private final boolean unload;
 
-  public TrieIterator(final LeafHandler<V> leafHandler) {
+  public TrieIterator(final LeafHandler<V> leafHandler, final boolean unload) {
     this.leafHandler = leafHandler;
+    this.unload = unload;
   }
 
   @Override
@@ -42,6 +44,9 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
 
     paths.push(node.getPath());
     node.getChild().accept(this, remainingPath);
+    if (unload) {
+      node.getChild().unload();
+    }
     paths.pop();
     return node;
   }
@@ -60,7 +65,11 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     paths.push(node.getPath());
     for (byte i = iterateFrom; i < BranchNode.RADIX && state.continueIterating(); i++) {
       paths.push(Bytes.of(i));
-      node.child(i).accept(this, remainingPath);
+      final Node<V> child = node.child(i);
+      child.accept(this, remainingPath);
+      if (unload) {
+        child.unload();
+      }
       paths.pop();
     }
     paths.pop();

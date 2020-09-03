@@ -68,7 +68,10 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
 
-    maximumPossibleCommonAncestorNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
+    maximumPossibleCommonAncestorNumber =
+        Math.min(
+            protocolContext.getBlockchain().getChainHeadBlockNumber(),
+            peer.chainState().getEstimatedHeight());
     minimumPossibleCommonAncestorNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
     commonAncestorCandidate =
         protocolContext.getBlockchain().getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
@@ -89,12 +92,12 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   protected void executeTask() {
     if (maximumPossibleCommonAncestorNumber == minimumPossibleCommonAncestorNumber) {
       // Bingo, we found our common ancestor.
-      result.get().complete(commonAncestorCandidate);
+      result.complete(commonAncestorCandidate);
       return;
     }
     if (maximumPossibleCommonAncestorNumber < BlockHeader.GENESIS_BLOCK_NUMBER
-        && !result.get().isDone()) {
-      result.get().completeExceptionally(new IllegalStateException("No common ancestor."));
+        && !result.isDone()) {
+      result.completeExceptionally(new IllegalStateException("No common ancestor."));
       return;
     }
     requestHeaders()
@@ -102,8 +105,8 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
         .whenComplete(
             (peerResult, error) -> {
               if (error != null) {
-                result.get().completeExceptionally(error);
-              } else if (!result.get().isDone()) {
+                result.completeExceptionally(error);
+              } else if (!result.isDone()) {
                 executeTaskTimed();
               }
             });

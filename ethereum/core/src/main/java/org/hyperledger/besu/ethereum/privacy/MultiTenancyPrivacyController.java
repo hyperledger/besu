@@ -230,15 +230,15 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(
-      final Bytes privacyGroupId, final String enclavePublicKey) {
+  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+      final Bytes privacyGroupId,
+      final String enclavePublicKey,
+      final PrivateTransaction privateTransaction) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.retrieveOnChainPrivacyGroup(privacyGroupId, enclavePublicKey);
-    if (maybePrivacyGroup.isPresent()
-        && !maybePrivacyGroup.get().getMembers().contains(enclavePublicKey)) {
-      throw new MultiTenancyValidationException(
-          "Privacy group must contain the enclave public key");
-    }
+        privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+            privacyGroupId, enclavePublicKey, privateTransaction);
+    // The check that the enclavePublicKey is a member (if the group already exists) is done in the
+    // DefaultPrivacyController.
     return maybePrivacyGroup;
   }
 
@@ -265,9 +265,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
     final PrivacyGroup privacyGroup =
         onchainPrivacyGroupContract
             .flatMap(
-                contract ->
-                    contract.getPrivacyGroup(
-                        privacyGroupId, getBlockHashByBlockNumber(blockNumber)))
+                contract -> contract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber))
             .orElse(enclave.retrievePrivacyGroup(privacyGroupId));
 
     if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
@@ -282,7 +280,11 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<Hash> getBlockHashByBlockNumber(final Optional<Long> blockNumber) {
-    return privacyController.getBlockHashByBlockNumber(blockNumber);
+  public Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber) {
+    verifyPrivacyGroupContainsEnclavePublicKey(
+        privacyGroupId, enclavePublicKey, Optional.of(blockNumber));
+    return privacyController.getStateRootByBlockNumber(
+        privacyGroupId, enclavePublicKey, blockNumber);
   }
 }

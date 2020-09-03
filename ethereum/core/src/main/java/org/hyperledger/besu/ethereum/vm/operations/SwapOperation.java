@@ -15,14 +15,18 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 
 public class SwapOperation extends AbstractFixedCostOperation {
 
   private final int index;
+  protected final OperationResult underflowResponse;
 
   public SwapOperation(final int index, final GasCalculator gasCalculator) {
     super(
@@ -35,16 +39,16 @@ public class SwapOperation extends AbstractFixedCostOperation {
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;
+    this.underflowResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     // getStackItem doesn't under/overflow.  Check explicitly.
     if (frame.stackSize() < getStackItemsConsumed()) {
-      return UNDERFLOW_RESPONSE;
+      return underflowResponse;
     }
 
     final Bytes32 tmp = frame.getStackItem(0);

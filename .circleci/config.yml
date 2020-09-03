@@ -62,6 +62,8 @@ commands:
       - store_artifacts:
           path: acceptance-tests/tests/build/acceptanceTestLogs
           destination: acceptance-tests-logs
+      - store_artifacts:
+          path: acceptance-tests/tests/build/jvmErrorLogs
 
 jobs:
   assemble:

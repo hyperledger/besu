@@ -11,10 +11,10 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.core.BlockHeaderMock;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.WorldState;
 
@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * <p>Note: this class will be auto-generated with the JSON test specification.
  */
-@JsonIgnoreProperties({"_info", "callcreates", "logs"})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VMReferenceTestCaseSpec {
 
   /** The environment information to execute. */
@@ -39,20 +39,20 @@ public class VMReferenceTestCaseSpec {
 
   private final Gas finalGas;
 
-  private final WorldStateMock initialWorldState;
+  private final ReferenceTestWorldState initialWorldState;
 
   private final boolean exceptionalHaltExpected;
 
-  private final WorldStateMock finalWorldState;
+  private final ReferenceTestWorldState finalWorldState;
 
   @JsonCreator
   public VMReferenceTestCaseSpec(
       @JsonProperty("exec") final EnvironmentInformation exec,
-      @JsonProperty("env") final BlockHeaderMock env,
+      @JsonProperty("env") final ReferenceTestEnv env,
       @JsonProperty("gas") final String finalGas,
       @JsonProperty("out") final String out,
-      @JsonProperty("pre") final WorldStateMock initialWorldState,
-      @JsonProperty("post") final WorldStateMock finalWorldState) {
+      @JsonProperty("pre") final ReferenceTestWorldState initialWorldState,
+      @JsonProperty("post") final ReferenceTestWorldState finalWorldState) {
     this.exec = exec;
     this.initialWorldState = initialWorldState;
     this.initialWorldState.persist();
@@ -113,7 +113,11 @@ public class VMReferenceTestCaseSpec {
     return out;
   }
 
-  /** @return True if this test case should expect the VM to exceptionally halt; otherwise false. */
+  /**
+   * Returns true if this test case should expect the VM to exceptionally halt; otherwise false.
+   *
+   * @return if an exceptional halt is expected
+   */
   public boolean isExceptionHaltExpected() {
     return exceptionalHaltExpected;
   }

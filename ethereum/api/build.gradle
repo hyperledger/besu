@@ -41,6 +41,7 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
+  implementation project(':ethereum:trie')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
@@ -59,6 +60,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'org.xerial.snappy:snappy-java'
 
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 

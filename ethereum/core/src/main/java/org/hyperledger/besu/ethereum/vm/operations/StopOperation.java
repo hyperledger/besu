@@ -27,7 +27,7 @@ public class StopOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     frame.setOutputData(Bytes.EMPTY);
     return successResponse;
