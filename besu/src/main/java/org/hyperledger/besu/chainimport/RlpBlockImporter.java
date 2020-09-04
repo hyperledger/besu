@@ -41,7 +41,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Logger;
@@ -177,8 +176,7 @@ public class RlpBlockImporter implements Closeable {
                 ? HeaderValidationMode.LIGHT_DETACHED_ONLY
                 : HeaderValidationMode.DETACHED_ONLY);
     if (!validHeader) {
-      LOG.error(
-          "Invalid block at block number {}.", header.getNumber());
+      LOG.error("Invalid block at block number {}.", header.getNumber());
       throw new IllegalStateException("Invalid header at block number " + header.getNumber() + ".");
     }
   }
@@ -200,8 +198,7 @@ public class RlpBlockImporter implements Closeable {
                   : HeaderValidationMode.SKIP_DETACHED,
               skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
       if (!blockImported) {
-        LOG.error(
-            "Invalid block at block number {}.", header.getNumber());
+        LOG.error("Invalid block at block number {}.", header.getNumber());
         throw new IllegalStateException(
             "Invalid block at block number " + header.getNumber() + ".");
       }

@@ -15,9 +15,6 @@
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PRUNING_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.WORLD_STATE;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -60,11 +57,11 @@ public class KeyValueStorageProviderBuilder {
     final KeyValueStorage worldStatePreImageStorage =
         new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
 
+    // this tickles init needed for isSegmentIsolationSupported
+    storageFactory.create(KeyValueSegmentIdentifier.BLOCKCHAIN, commonConfiguration, metricsSystem);
     return new KeyValueStorageProvider(
-        storageFactory.create(BLOCKCHAIN, commonConfiguration, metricsSystem),
-        storageFactory.create(WORLD_STATE, commonConfiguration, metricsSystem),
+        segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
         worldStatePreImageStorage,
-        storageFactory.create(PRUNING_STATE, commonConfiguration, metricsSystem),
         storageFactory.isSegmentIsolationSupported());
   }
 }

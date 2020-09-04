@@ -16,7 +16,17 @@
 
 package org.hyperledger.besu.ethereum.worldstate;
 
-public enum WorldStateStorageFormat {
-  FOREST, // Original format.  Store all tries
-  BONSAI; // New format.  Store one trie, and trie logs to roll forward and backward.
+public enum DataStorageFormat {
+  FOREST(1), // Original format.  Store all tries
+  BONSAI(2); // New format.  Store one trie, and trie logs to roll forward and backward.
+
+  private final int databaseVersion;
+
+  DataStorageFormat(final int databaseVersion) {
+    this.databaseVersion = databaseVersion;
+  }
+
+  public int getDatabaseVersion() {
+    return databaseVersion;
+  }
 }

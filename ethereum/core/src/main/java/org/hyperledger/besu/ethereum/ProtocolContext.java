@@ -21,10 +21,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.function.BiFunction;
@@ -63,7 +60,9 @@ public class ProtocolContext {
         DefaultBlockchain.createMutable(
             genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
 
-    genesisState.writeStateTo(worldStateArchive.getMutable());
+    if (blockchain.getChainHeadBlockNumber() < 1) {
+      genesisState.writeStateTo(worldStateArchive.getMutable());
+    }
 
     return new ProtocolContext(
         blockchain,

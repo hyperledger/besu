@@ -21,39 +21,40 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 public class KeyValueStorageProvider implements StorageProvider {
 
-  private final KeyValueStorage blockchainStorage;
-  private final KeyValueStorage worldStateStorage;
+  private final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
-  private final KeyValueStorage pruningStorage;
   private final boolean isWorldStateIterable;
+  private final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
 
   public KeyValueStorageProvider(
-      final KeyValueStorage blockchainStorage,
-      final KeyValueStorage worldStateStorage,
+      final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final KeyValueStorage pruningStorage,
-      final boolean isWorldStateIterable) {
-    this.blockchainStorage = blockchainStorage;
-    this.worldStateStorage = worldStateStorage;
+      final boolean segmentIsolationSupported) {
+    this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
-    this.pruningStorage = pruningStorage;
-    this.isWorldStateIterable = isWorldStateIterable;
+    this.isWorldStateIterable = segmentIsolationSupported;
   }
 
   @Override
   public BlockchainStorage createBlockchainStorage(final ProtocolSchedule protocolSchedule) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        blockchainStorage, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
+        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN),
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
   }
 
   @Override
   public WorldStateStorage createWorldStateStorage() {
-    return new WorldStateKeyValueStorage(worldStateStorage);
+    return new WorldStateKeyValueStorage(
+        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN));
   }
 
   @Override
@@ -62,8 +63,8 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
-  public KeyValueStorage createPruningStorage() {
-    return pruningStorage;
+  public KeyValueStorage getStorageBySegmentIdentifier(final SegmentIdentifier segment) {
+    return storageInstances.computeIfAbsent(segment, storageCreator);
   }
 
   @Override
@@ -73,8 +74,8 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   @Override
   public void close() throws IOException {
-    blockchainStorage.close();
-    worldStateStorage.close();
-    pruningStorage.close();
+    for (final KeyValueStorage kvs : storageInstances.values()) {
+      kvs.close();
+    }
   }
 }

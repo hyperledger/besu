@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
@@ -37,8 +36,7 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public EvmAccount createAccount(
-      final Address address, final long nonce, final Wei balance) {
+  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     return privateWorldUpdater.createAccount(address);
   }
 
@@ -60,7 +58,7 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
     }
     final EvmAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
-      ((DefaultEvmAccount)publicAccount).setImmutable(true); // FIXME
+      ((DefaultEvmAccount) publicAccount).setImmutable(true); // FIXME
       return publicAccount;
     }
     return privateAccount;

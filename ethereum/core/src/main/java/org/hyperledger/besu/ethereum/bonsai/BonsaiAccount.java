@@ -180,7 +180,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   static BonsaiAccount fromRLP(
       final BonsaiMutableWorldState context,
       final Address address,
-      final Bytes encoded, boolean mutable)
+      final Bytes encoded,
+      final boolean mutable)
       throws RLPException {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
@@ -199,7 +200,15 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     in.leaveList();
 
     return new BonsaiAccount(
-        context, address, Hash.hash(address), nonce, balance, storageRoot, codeHash, version, mutable);
+        context,
+        address,
+        Hash.hash(address),
+        nonce,
+        balance,
+        storageRoot,
+        codeHash,
+        version,
+        mutable);
   }
 
   @Override

@@ -119,7 +119,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
             : new StoredNode<>(nodeFactory, rootHash);
   }
 
-  public void acceptAtRoot(NodeVisitor<V> visitor) {
+  public void acceptAtRoot(final NodeVisitor<V> visitor) {
     root.accept(visitor);
   }
 

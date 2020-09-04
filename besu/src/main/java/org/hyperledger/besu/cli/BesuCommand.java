@@ -108,8 +108,8 @@ import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueSto
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormat;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -259,11 +259,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Use Bonsai DB
   @Option(
-      names = {"--Xworld-state-storage-format"},
-      hidden=true,
-      description = "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
+      names = {"--Xdata-storage-format"},
+      hidden = true,
+      description =
+          "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
-  private final WorldStateStorageFormat worldStateStorageFormat = WorldStateStorageFormat.FOREST;
+  private final DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
 
   // Genesis file path with null default option if the option
   // is not defined on command line as this default is handled by Runner
@@ -1481,7 +1482,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
-        .worldStateStorageFormat(worldStateStorageFormat);
+        .worldStateStorageFormat(dataStorageFormat);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -1924,20 +1925,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private PrivacyKeyValueStorageFactory privacyKeyValueStorageFactory(final String name) {
-    return (PrivacyKeyValueStorageFactory)
-        storageFactory(name);
+    return (PrivacyKeyValueStorageFactory) storageFactory(name);
   }
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
     return new KeyValueStorageProviderBuilder()
-        .withStorageFactory(
-            storageFactory(name))
+        .withStorageFactory(storageFactory(name))
         .withCommonConfiguration(pluginCommonConfiguration)
         .withMetricsSystem(getMetricsSystem())
         .build();
   }
 
-  private KeyValueStorageFactory storageFactory(String name) {
+  private KeyValueStorageFactory storageFactory(final String name) {
     return storageService
         .getByName(name)
         .orElseThrow(
@@ -2259,6 +2258,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     @Override
     public Path getDataPath() {
       return dataDir();
+    }
+
+    @Override
+    public int getDatabaseVersion() {
+      return dataStorageFormat.getDatabaseVersion();
     }
   }
 }

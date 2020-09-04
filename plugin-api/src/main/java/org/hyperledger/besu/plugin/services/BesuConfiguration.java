@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import java.nio.file.Path;
 
 /** Generally useful configuration provided by Besu. */
@@ -32,4 +34,14 @@ public interface BesuConfiguration {
    * @return location of the data directory in the file system of the client.
    */
   Path getDataPath();
+
+  /**
+   * Database version. This sets the list of segmentIdentifiers that should be initialized.
+   *
+   * @return Database version.
+   */
+  @Unstable
+  default int getDatabaseVersion() {
+    return 1;
+  }
 }

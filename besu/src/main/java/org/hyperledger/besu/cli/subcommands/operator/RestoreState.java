@@ -252,7 +252,8 @@ public class RestoreState implements Runnable {
       updater.commit();
     }
     final WorldStateStorage worldStateStorage =
-        ((DefaultWorldStateArchive)besuController.getProtocolContext().getWorldStateArchive()).getWorldStateStorage();
+        ((DefaultWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
+            .getWorldStateStorage();
     updater = worldStateStorage.updater();
   }
 

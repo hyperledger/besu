@@ -60,7 +60,9 @@ public class StateDiffGenerator {
       // calculate storage diff
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
       for (final Map.Entry<UInt256, UInt256> entry :
-          ((UpdateTrackingAccount<?>)updatedAccount).getUpdatedStorage().entrySet()) { //FIXME cast
+          ((UpdateTrackingAccount<?>) updatedAccount)
+              .getUpdatedStorage()
+              .entrySet()) { // FIXME cast
         final UInt256 newValue = entry.getValue();
         if (rootAccount == null) {
           if (!UInt256.ZERO.equals(newValue)) {

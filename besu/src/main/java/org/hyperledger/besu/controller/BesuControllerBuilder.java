@@ -53,6 +53,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -60,7 +62,6 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormat;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.io.Closeable;
@@ -99,7 +100,7 @@ public abstract class BesuControllerBuilder {
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
   private long reorgLoggingThreshold;
-  private WorldStateStorageFormat worldStateStorageFormat = WorldStateStorageFormat.FOREST;
+  private DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -200,9 +201,8 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
-  public BesuControllerBuilder worldStateStorageFormat(
-      final WorldStateStorageFormat worldStateStorageFormat) {
-    this.worldStateStorageFormat = worldStateStorageFormat;
+  public BesuControllerBuilder worldStateStorageFormat(final DataStorageFormat dataStorageFormat) {
+    this.dataStorageFormat = dataStorageFormat;
     return this;
   }
 
@@ -255,7 +255,8 @@ public abstract class BesuControllerBuilder {
                     new MarkSweepPruner(
                         ((DefaultWorldStateArchive) worldStateArchive).getWorldStateStorage(),
                         blockchain,
-                        storageProvider.createPruningStorage(),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.PRUNING_STATE),
                         metricsSystem),
                     blockchain,
                     prunerConfiguration));
@@ -419,11 +420,10 @@ public abstract class BesuControllerBuilder {
         genesisConfig.getForks());
   }
 
-  public WorldStateArchive createWorldStateArchive(WorldStateStorage worldStateStorage) {
-    switch (worldStateStorageFormat) {
+  public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {
+    switch (dataStorageFormat) {
       case BONSAI:
-
-        return new BonsaiWorldStateArchive(null);
+        return new BonsaiWorldStateArchive(null, storageProvider);
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

@@ -43,14 +43,17 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
+  @Override
   public Optional<WorldState> get(final Hash rootHash) {
     return getMutable(rootHash).map(state -> state);
   }
 
+  @Override
   public boolean isWorldStateAvailable(final Hash rootHash) {
     return worldStateStorage.isWorldStateAvailable(rootHash);
   }
 
+  @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash) {
     if (!worldStateStorage.isWorldStateAvailable(rootHash)) {
       return Optional.empty();
@@ -58,14 +61,17 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
   }
 
+  @Override
   public WorldState get() {
     return get(EMPTY_ROOT_HASH).get();
   }
 
+  @Override
   public MutableWorldState getMutable() {
     return getMutable(EMPTY_ROOT_HASH).get();
   }
 
+  @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
     return worldStateStorage.getNodeData(hash);
   }
@@ -74,6 +80,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     return worldStateStorage;
   }
 
+  @Override
   public Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
       final Address accountAddress,

@@ -21,8 +21,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,22 +33,23 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldStateArchive implements WorldStateArchive {
 
-  BonsaiMutableWorldState persistedState;
+  private final BonsaiMutableWorldState persistedState;
 
-  public BonsaiWorldStateArchive(final MutableWorldState fallback) {
+  public BonsaiWorldStateArchive(final MutableWorldState fallback, final StorageProvider provider) {
     // FIXME not for production
     persistedState =
         new BonsaiMutableWorldState(
             fallback,
-            new InMemoryKeyValueStorage(),
-            new InMemoryKeyValueStorage(),
-            new InMemoryKeyValueStorage(),
-            new InMemoryKeyValueStorage());
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE));
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash) {
-    if (rootHash.equals(persistedState.currentRoot.getHash())) {
+    if (rootHash.equals(persistedState.rootHash())) {
       return Optional.of(persistedState);
     } else {
       return Optional.empty();
@@ -61,11 +63,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash) {
-    if (rootHash.equals(persistedState.currentRoot.getHash())) {
+    if (rootHash.equals(persistedState.rootHash())) {
       return Optional.of(persistedState);
     } else {
 
-      System.out.println(persistedState.currentRoot.getHash());
+      System.out.println(persistedState.rootHash());
       return Optional.empty();
     }
   }

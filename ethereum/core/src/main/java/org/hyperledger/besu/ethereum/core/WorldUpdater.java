@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
-
 import java.util.Collection;
 import java.util.Optional;
 
