@@ -33,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -57,7 +56,6 @@ public class TransactionLogBloomCacher {
   private final Map<Long, Boolean> cachedSegments;
 
   private final Lock submissionLock = new ReentrantLock();
-  private final Map<Long, Lock> populateLastFragmentLock = new HashMap<>();
 
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
