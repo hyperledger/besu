@@ -12,16 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.query;
+package org.hyperledger.besu.ethereum.api.query.cache;
+
+import static java.util.Objects.requireNonNull;
+import static org.hyperledger.besu.ethereum.api.query.cache.LogBloomCacheMetadata.DEFAULT_VERSION;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,6 +49,19 @@ public class AutoTransactionLogBloomCachingService {
       final Path cacheDir = transactionLogBloomCacher.getCacheDir();
       if (!cacheDir.toFile().exists() || !cacheDir.toFile().isDirectory()) {
         Files.createDirectory(cacheDir);
+      }
+      final LogBloomCacheMetadata logBloomCacheMetadata =
+          LogBloomCacheMetadata.lookUpFrom(cacheDir);
+      if (logBloomCacheMetadata.getVersion() == 0) {
+        try (Stream<Path> walk = Files.walk(cacheDir)) {
+          walk.map(Path::toFile).forEach(File::delete);
+          if (requireNonNull(cacheDir.toFile().list()).length > 0) {
+            throw new IOException("Unable to delete outdated cache files");
+          }
+          new LogBloomCacheMetadata(DEFAULT_VERSION).writeToDirectory(cacheDir);
+        } catch (Exception e) {
+          LOG.error("Failed to update cache {}", e.getMessage());
+        }
       }
       blockAddedSubscriptionId =
           OptionalLong.of(

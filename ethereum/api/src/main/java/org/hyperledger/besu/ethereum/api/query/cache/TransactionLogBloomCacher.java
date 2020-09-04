@@ -14,7 +14,7 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.api.query;
+package org.hyperledger.besu.ethereum.api.query.cache;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -51,9 +50,8 @@ public class TransactionLogBloomCacher {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
-  private static final int BLOOM_BITS_LENGTH = 256;
-  private static final int EXPECTED_BLOOM_FILE_SIZE =
-      BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH + Long.BYTES;
+  public static final int BLOOM_BITS_LENGTH = 256;
+  private static final int EXPECTED_BLOOM_FILE_SIZE = BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH;
   public static final String CURRENT = "current";
   private final Map<Long, Boolean> cachedSegments;
 
@@ -142,10 +140,6 @@ public class TransactionLogBloomCacher {
         blockNum++;
       }
     }
-    try (final RandomAccessFile writer = new RandomAccessFile(currentFile, "rw")) {
-      writer.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
-      writer.writeLong(blockNum - startBlock);
-    }
   }
 
   void cacheLogsBloomForBlockHeader(
@@ -183,33 +177,27 @@ public class TransactionLogBloomCacher {
       throws IOException, InvalidCacheException {
     try (final RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
 
-      writer.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
-
-      long nbCachedBlocks;
-      try {
-        nbCachedBlocks = writer.readLong();
-      } catch (IOException e) {
-        nbCachedBlocks = 0;
-      }
-
+      long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
       final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
       final long offset = blockIndex * BLOOM_BITS_LENGTH;
-      writer.seek(offset);
-      if (blockIndex <= nbCachedBlocks) {
-        // blockIndex<nbCachedBlocks -> reorg detected
-        final int distanceHeader = (int) Math.max(1, (nbCachedBlocks - blockIndex));
-        byte[] input =
-            Arrays.copyOf(
-                ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()),
-                distanceHeader * BLOOM_BITS_LENGTH);
-        writer.write(input);
-        writer.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
-        writer.writeLong(blockIndex + 1);
 
-      } else {
-        // block missing
+      LOG.info("Current " + blockIndex + " " + nbCachedBlocks);
+      // detect missing block
+      if (blockIndex > nbCachedBlocks) {
+        LOG.info("Detect invalid cache file");
         throw new InvalidCacheException();
       }
+      writer.seek(offset);
+      writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+
+      // remove invalid logs when there was a reorg
+      final long validCacheSize = offset + BLOOM_BITS_LENGTH;
+
+      LOG.info("Current length " + writer.length() + " " + validCacheSize);
+      if (writer.length() > validCacheSize) {
+        writer.setLength(validCacheSize);
+      }
+      LOG.info("New length " + writer.length());
     }
   }
 
@@ -222,7 +210,9 @@ public class TransactionLogBloomCacher {
           long blockNumber =
               Math.min((segmentNumber + 1) * BLOCKS_PER_BLOOM_CACHE - 1, eventBlockNumber);
           fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, currentFile);
+
           while (blockNumber <= eventBlockNumber && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
+
             cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
             blockNumber++;
           }
@@ -282,37 +272,21 @@ public class TransactionLogBloomCacher {
       scheduler.scheduleFutureTask(
           () -> {
             long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
-
             while (currentSegment >= 0) {
               try {
                 if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
                   final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
                   final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
-                  boolean isValidCacheFile = true;
 
                   if (overrideCacheCheck
                       || !cacheFile.isFile()
                       || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
-                    isValidCacheFile = false;
-                  } else {
-                    try (RandomAccessFile reader = new RandomAccessFile(cacheFile, "r")) {
-                      reader.seek(BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH);
-                      if (reader.readLong() != BLOCKS_PER_BLOOM_CACHE) {
-                        isValidCacheFile = false;
-                      }
-                    } catch (Exception e) {
-                      isValidCacheFile = false;
-                    }
-                  }
-
-                  if (!isValidCacheFile) {
-                    LOG.debug("Invalid cache file " + cacheFile.getName());
                     generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
                   }
-
                   cachedSegments.put(currentSegment, true);
                 }
               } finally {
+
                 currentSegment--;
               }
             }
