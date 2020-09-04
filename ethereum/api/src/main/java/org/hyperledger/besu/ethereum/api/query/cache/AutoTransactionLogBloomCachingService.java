@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.query.cache;
 
-import static java.util.Objects.requireNonNull;
 import static org.hyperledger.besu.ethereum.api.query.cache.LogBloomCacheMetadata.DEFAULT_VERSION;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -52,17 +51,16 @@ public class AutoTransactionLogBloomCachingService {
       }
       final LogBloomCacheMetadata logBloomCacheMetadata =
           LogBloomCacheMetadata.lookUpFrom(cacheDir);
+      System.out.println(cacheDir.getFileName());
       if (logBloomCacheMetadata.getVersion() == 0) {
         try (Stream<Path> walk = Files.walk(cacheDir)) {
-          walk.map(Path::toFile).forEach(File::delete);
-          if (requireNonNull(cacheDir.toFile().list()).length > 0) {
-            throw new IOException("Unable to delete outdated cache files");
-          }
-          new LogBloomCacheMetadata(DEFAULT_VERSION).writeToDirectory(cacheDir);
+          walk.filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
         } catch (Exception e) {
           LOG.error("Failed to update cache {}", e.getMessage());
         }
+        new LogBloomCacheMetadata(DEFAULT_VERSION).writeToDirectory(cacheDir);
       }
+
       blockAddedSubscriptionId =
           OptionalLong.of(
               blockchain.observeBlockAdded(
