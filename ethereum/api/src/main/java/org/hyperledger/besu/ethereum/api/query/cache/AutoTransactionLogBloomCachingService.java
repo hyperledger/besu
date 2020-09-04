@@ -67,7 +67,7 @@ public class AutoTransactionLogBloomCachingService {
                   event -> {
                     if (event.isNewCanonicalHead()) {
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          event.getBlock().getHeader(), Optional.empty(), true);
+                          event.getBlock().getHeader(), Optional.empty());
                     }
                   }));
       transactionLogBloomCacher

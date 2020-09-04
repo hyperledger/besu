@@ -140,7 +140,7 @@ public class TransactionLogBloomCacherTest {
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 3);
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(3).get(), Optional.of(logBloom), true);
+        blockchain.getBlockHeader(3).get(), Optional.of(logBloom));
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 4);
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
@@ -159,7 +159,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.of(logBloom), true);
+        blockchain.getBlockHeader(4).get(), Optional.of(logBloom));
 
     for (int i = 0; i < 5; i++) {
       assertThat(blockHeaders.get(i).getLogsBloom().toArray())
@@ -198,11 +198,11 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.of(logBloom), true);
+        blockchain.getBlockHeader(4).get(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(1).get(), Optional.of(logBloom), true);
+        blockchain.getBlockHeader(1).get(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 2);
 
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
