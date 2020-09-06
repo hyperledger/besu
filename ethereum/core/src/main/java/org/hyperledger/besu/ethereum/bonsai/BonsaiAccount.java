@@ -37,20 +37,20 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, EvmAccount {
-  private final BonsaiMutableWorldState context;
+  private final BonsaiPersistedWorldState context;
   private final boolean mutable;
 
   private final Address address;
   private final Hash addressHash;
+  private Hash codeHash;
   private long nonce;
   private Wei balance;
-  private final Hash storageRoot;
-  private final Hash codeHash;
+  private Hash storageRoot;
   private Bytes code;
   private int version;
 
   private BonsaiAccount(
-      final BonsaiMutableWorldState context,
+      final BonsaiPersistedWorldState context,
       final Address address,
       final Hash addressHash,
       final long nonce,
@@ -71,7 +71,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   BonsaiAccount(
-      final BonsaiMutableWorldState context,
+      final BonsaiPersistedWorldState context,
       final Address address,
       final Hash addressHash,
       final long nonce,
@@ -105,80 +105,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  @Override
-  public Address getAddress() {
-    return address;
-  }
-
-  @Override
-  public Hash getAddressHash() {
-    return addressHash;
-  }
-
-  @Override
-  public long getNonce() {
-    return nonce;
-  }
-
-  @Override
-  public Wei getBalance() {
-    return balance;
-  }
-
-  @Override
-  public Bytes getCode() {
-    if (code == null) {
-      code = context.getCode(address, codeHash);
-    }
-    return code;
-  }
-
-  @Override
-  public Hash getCodeHash() {
-    return codeHash;
-  }
-
-  @Override
-  public int getVersion() {
-    return version;
-  }
-
-  @Override
-  public UInt256 getStorageValue(final UInt256 key) {
-    throw new RuntimeException("LOL no");
-  }
-
-  @Override
-  public UInt256 getOriginalStorageValue(final UInt256 key) {
-    throw new RuntimeException("LOL no");
-  }
-
-  @Override
-  public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
-      final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("LOL no");
-  }
-
-  Bytes serializeAccount() {
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.startList();
-
-    out.writeLongScalar(nonce);
-    out.writeUInt256Scalar(balance);
-    out.writeBytes(storageRoot);
-    out.writeBytes(codeHash);
-
-    if (version != Account.DEFAULT_VERSION) {
-      // version of zero is never written out.
-      out.writeIntScalar(version);
-    }
-
-    out.endList();
-    return out.encoded();
-  }
-
   static BonsaiAccount fromRLP(
-      final BonsaiMutableWorldState context,
+      final BonsaiPersistedWorldState context,
       final Address address,
       final Bytes encoded,
       final boolean mutable)
@@ -212,11 +140,31 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   @Override
+  public Address getAddress() {
+    return address;
+  }
+
+  @Override
+  public Hash getAddressHash() {
+    return addressHash;
+  }
+
+  @Override
+  public long getNonce() {
+    return nonce;
+  }
+
+  @Override
   public void setNonce(final long value) {
     if (!mutable) {
       throw new UnsupportedOperationException("Account is immutable");
     }
     nonce = value;
+  }
+
+  @Override
+  public Wei getBalance() {
+    return balance;
   }
 
   @Override
@@ -228,11 +176,35 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   @Override
+  public Bytes getCode() {
+    if (code == null) {
+      code = context.getCode(address, codeHash);
+    }
+    return code;
+  }
+
+  @Override
   public void setCode(final Bytes code) {
     if (!mutable) {
       throw new UnsupportedOperationException("Account is immutable");
     }
     this.code = code;
+    if (code == null) {
+      this.codeHash = Hash.EMPTY;
+    } else {
+      this.codeHash = Hash.hash(code);
+    }
+    context.setCode(address, code);
+  }
+
+  @Override
+  public Hash getCodeHash() {
+    return codeHash;
+  }
+
+  @Override
+  public int getVersion() {
+    return version;
   }
 
   @Override
@@ -244,8 +216,45 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   @Override
-  public void setStorageValue(final UInt256 key, final UInt256 value) {
+  public UInt256 getStorageValue(final UInt256 key) {
+    return context.getStorageValue(address, key);
+  }
+
+  @Override
+  public UInt256 getOriginalStorageValue(final UInt256 key) {
+    return context.getOriginalStorageValue(address, key);
+  }
+
+  @Override
+  public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
+      final Bytes32 startKeyHash, final int limit) {
     throw new RuntimeException("LOL no");
+  }
+
+  Bytes serializeAccount() {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+
+    out.writeLongScalar(nonce);
+    out.writeUInt256Scalar(balance);
+    out.writeBytes(storageRoot);
+    out.writeBytes(codeHash);
+
+    if (version != Account.DEFAULT_VERSION) {
+      // version of zero is never written out.
+      out.writeIntScalar(version);
+    }
+
+    out.endList();
+    return out.encoded();
+  }
+
+  @Override
+  public void setStorageValue(final UInt256 key, final UInt256 value) {
+    if (!mutable) {
+      throw new UnsupportedOperationException("Account is immutable");
+    }
+    context.setStorageValue(address, key, value);
   }
 
   @Override
@@ -269,5 +278,16 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
 
   public MutableAccount mutableCopy() {
     return new BonsaiAccount(this, true);
+  }
+
+  public Hash getStorageRoot() {
+    return storageRoot;
+  }
+
+  public void setStorageRoot(final Hash storageRoot) {
+    if (!mutable) {
+      throw new UnsupportedOperationException("Account is immutable");
+    }
+    this.storageRoot = storageRoot;
   }
 }

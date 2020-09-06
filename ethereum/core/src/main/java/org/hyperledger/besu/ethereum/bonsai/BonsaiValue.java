@@ -33,4 +33,12 @@ public interface BonsaiValue<T> {
     final T value = getUpdated();
     return value == null ? getOriginal() : value;
   }
+
+  default BonsaiValue<T> merge(final BonsaiValue<T> original, final BonsaiValue<T> updated) {
+    return ImmutableBonsaiValue.of(original.getOriginal(), updated.getUpdated());
+  }
+
+  default BonsaiValue<T> revise(final T updated) {
+    return ImmutableBonsaiValue.of(getOriginal(), updated);
+  }
 }
