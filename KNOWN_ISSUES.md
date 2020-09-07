@@ -5,14 +5,6 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
-## Logs queries missing results against chain head
-
-When using `eth_getLogs` against the head of Goerli to retrieve Eth2 deposit log events, [some results seem to be missing](https://github.com/hyperledger/besu/issues/1153). 
-
-Workaround -> Use `eth_getLogs` against historical blocks rather than the chain head directly. 
-
-A fix for this issue is actively being worked on. 
-
 ## Eth/65 loses peers 
 
 From v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 

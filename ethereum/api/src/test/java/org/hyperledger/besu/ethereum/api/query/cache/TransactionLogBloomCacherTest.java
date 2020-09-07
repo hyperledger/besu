@@ -40,7 +40,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -108,12 +107,6 @@ public class TransactionLogBloomCacherTest {
         .thenAnswer(
             invocation -> {
               invocation.getArgument(0, Runnable.class).run();
-              return null;
-            });
-    when(scheduler.scheduleComputationTask(any(Supplier.class)))
-        .thenAnswer(
-            invocation -> {
-              invocation.getArgument(0, Supplier.class).get();
               return null;
             });
     transactionLogBloomCacher =

@@ -173,10 +173,8 @@ public class TransactionLogBloomCacher {
       final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
       final long offset = blockIndex * BLOOM_BITS_LENGTH;
 
-      LOG.info("Current " + blockIndex + " " + nbCachedBlocks);
       // detect missing block
       if (blockIndex > nbCachedBlocks) {
-        LOG.info("Detect invalid cache file");
         throw new InvalidCacheException();
       }
       writer.seek(offset);
@@ -185,11 +183,9 @@ public class TransactionLogBloomCacher {
       // remove invalid logs when there was a reorg
       final long validCacheSize = offset + BLOOM_BITS_LENGTH;
 
-      LOG.info("Current length " + writer.length() + " " + validCacheSize);
       if (writer.length() > validCacheSize) {
         writer.setLength(validCacheSize);
       }
-      LOG.info("New length " + writer.length());
     }
   }
 
@@ -251,7 +247,6 @@ public class TransactionLogBloomCacher {
 
   public void ensurePreviousSegmentsArePresent(
       final long blockNumber, final boolean overrideCacheCheck) {
-
     if (!cachingStatus.isCaching()) {
       scheduler.scheduleFutureTask(
           () -> {
@@ -261,7 +256,6 @@ public class TransactionLogBloomCacher {
                 if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
                   final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
                   final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
-
                   if (overrideCacheCheck
                       || !cacheFile.isFile()
                       || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
@@ -270,7 +264,6 @@ public class TransactionLogBloomCacher {
                   cachedSegments.put(currentSegment, true);
                 }
               } finally {
-
                 currentSegment--;
               }
             }

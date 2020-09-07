@@ -8,9 +8,10 @@
 
 ### Bug Fixes
 
+* Fix logs queries missing results against chain head [\#1351](https://github.com/hyperledger/besu/pull/1351)
+
 #### Previously identified known issues
  
-- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)

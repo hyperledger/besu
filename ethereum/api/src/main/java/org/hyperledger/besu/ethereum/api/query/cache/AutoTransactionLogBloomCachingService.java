@@ -51,7 +51,6 @@ public class AutoTransactionLogBloomCachingService {
       }
       final LogBloomCacheMetadata logBloomCacheMetadata =
           LogBloomCacheMetadata.lookUpFrom(cacheDir);
-      System.out.println(cacheDir.getFileName());
       if (logBloomCacheMetadata.getVersion() == 0) {
         try (Stream<Path> walk = Files.walk(cacheDir)) {
           walk.filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
