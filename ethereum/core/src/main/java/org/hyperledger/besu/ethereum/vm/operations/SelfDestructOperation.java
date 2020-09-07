@@ -36,10 +36,6 @@ public class SelfDestructOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.isStatic()) {
-      return ILLEGAL_STATE_CHANGE;
-    }
-
     final Address recipientAddress = Words.toAddress(frame.popStackItem());
 
     // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
@@ -48,7 +44,10 @@ public class SelfDestructOperation extends AbstractOperation {
 
     final Gas cost = gasCalculator().selfDestructOperationGasCost(recipientNullable, inheritance);
     final Optional<Gas> optionalCost = Optional.of(cost);
-    if (frame.getRemainingGas().compareTo(cost) < 0) {
+    if (frame.isStatic()) {
+      return new OperationResult(
+          optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (frame.getRemainingGas().compareTo(cost) < 0) {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 

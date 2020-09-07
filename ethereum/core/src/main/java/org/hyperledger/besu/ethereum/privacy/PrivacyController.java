@@ -83,7 +83,8 @@ public interface PrivacyController {
       final Hash blockHash,
       final String enclavePublicKey);
 
-  Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(Bytes privacyGroupId, String enclavePublicKey);
+  Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+      Bytes privacyGroupId, String enclavePublicKey, final PrivateTransaction privateTransaction);
 
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 
@@ -99,5 +100,6 @@ public interface PrivacyController {
 
   PrivateTransactionSimulator getTransactionSimulator();
 
-  Optional<Hash> getBlockHashByBlockNumber(Optional<Long> blockNumber);
+  Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber);
 }

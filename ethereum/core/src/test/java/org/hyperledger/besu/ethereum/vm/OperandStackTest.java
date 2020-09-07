@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.vm.OperandStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.OperandStack.UnderflowException;
+import org.hyperledger.besu.ethereum.vm.FixedStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;

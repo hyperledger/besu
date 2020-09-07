@@ -27,11 +27,7 @@ public class OriginOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address originAddress = frame.getOriginatorAddress();
     frame.pushStackItem(Words.fromAddress(originAddress));
 

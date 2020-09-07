@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** A Transaction test case specification. */
-@JsonIgnoreProperties("_info")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GeneralStateTestCaseSpec {
 
   private final Map<String, List<GeneralStateTestCaseEipSpec>> finalStateSpecs;

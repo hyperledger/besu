@@ -84,7 +84,8 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries,
                   namedPlugins,
                   natService),
-              new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem),
+              new DebugJsonRpcMethods(
+                  blockchainQueries, protocolSchedule, metricsSystem, transactionPool),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(
@@ -97,7 +98,7 @@ public class JsonRpcMethodsFactory {
                   supportedCapabilities),
               new NetJsonRpcMethods(
                   p2pNetwork,
-                  protocolSchedule,
+                  networkId,
                   jsonRpcConfiguration,
                   webSocketConfiguration,
                   metricsConfiguration),

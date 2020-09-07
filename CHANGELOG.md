@@ -1,22 +1,57 @@
 # Changelog
 
-## 1.5.3 
+## 1.5.4
 
 ### Additions and Improvements
 
-* The EvmTool now processes State Tests from the Ethereum Reference Tests. [\#1311](https://github.com/hyperledger/besu/pull/1311)
+* Added `priv_debugGetStateRoot` JSON-RPC API to retrieve the state root of a specified privacy group. [\#1326](https://github.com/hyperledger/besu/pull/1326)
+* Added reorg logging and `--reorg-logging-threshold` to configure the same. Besu now logs any reorgs where the old or new chain head is more than the threshold away from their common ancestors. The default is 6.
 
 ### Bug Fixes
 
 * Fix logs queries missing results against chain head [\#1351](https://github.com/hyperledger/besu/pull/1351)
+* The metrics HTTP server no longer rejects requests containing `Accept` header that doesn't precisely match the prometheus text format [\#1345](https://github.com/hyperledger/besu/pull/1345)
+* JSON-RPC method `net_version` should return network ID instead of chain ID [\#1355](https://github.com/hyperledger/besu/pull/1355)
 
 #### Previously identified known issues
  
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
-- [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
-- [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
+- [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
+
+## 1.5.3 
+
+### Additions and Improvements
+
+* The EvmTool now processes State Tests from the Ethereum Reference Tests. [\#1311](https://github.com/hyperledger/besu/pull/1311)
+* Early access DNS support added via the `--Xdns-enabled` and `--Xdns-update-enabled` CLI options. [\#1247](https://github.com/hyperledger/besu/pull/1247)
+* Add genesis config option `ecip1017EraRounds` for Ethereum Classic chains. [\#1329](https://github.com/hyperledger/besu/pull/1329)
+
+### Bug Fixes
+
+* K8S Permissioning to use of Service IP's rather than pod IP's which can fail [\#1190](https://github.com/hyperledger/besu/issues/1190)
+
+#### Previously identified known issues
+ 
+- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
+
+### Breaking Change to Onchain Privacy Group Management 
+
+This [early access feature](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) was changed in a way that makes onchain privacy groups created with previous versions no longer usable. 
+
+To enhance control over permissions on the privacy group management contract:
+
+* The enclave key was removed as the first parameter for `addParticipant` and `removeParticipant`. 
+* The owner of the privacy group management contract is the signer of the private transaction that creates
+  the privacy group. In the default onchain privacy group management contract implementation, only the 
+  owner can add and remove participants, and upgrade the management contract.
+  
+The onchain privacy support in the current version of the web3js-eea library (v0.9) will not be compatible with Besu v1.5.3.  We are actively working on an upgrade to webj3-eea that will support these changes.   
 
 ## 1.5.2 
 

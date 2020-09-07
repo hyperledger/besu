@@ -26,7 +26,7 @@ public class RunHelpTest extends AcceptanceTestBase {
 
   @Test
   public void testShowsHelpAndExits() throws IOException {
-    BesuNode node = besu.runCommand("--help");
+    final BesuNode node = besu.runCommand("--help");
     cluster.runNodeStart(node);
     WaitUtils.waitFor(5000, () -> node.verify(exitedSuccessfully));
   }

@@ -46,7 +46,8 @@ public class InMemoryStorageProvider implements StorageProvider {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        0);
   }
 
   public static WorldStateArchive createInMemoryWorldStateArchive() {

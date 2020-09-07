@@ -103,6 +103,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.getPlugins(),
             besuConfig.getExtraCLIOptions(),
             Collections.emptyList(),
+            besuConfig.isDnsEnabled(),
             besuConfig.getPrivacyParameters(),
             List.of());
   }

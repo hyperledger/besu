@@ -49,6 +49,7 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
@@ -94,7 +95,9 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -125,7 +128,6 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
@@ -210,6 +212,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
+  private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
+
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
@@ -307,20 +311,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "Default is a predefined list.",
       split = ",",
       arity = "0..*")
-  void setBootnodes(final List<String> values) {
-    try {
-      bootNodes =
-          values.stream()
-              .filter(value -> !value.isEmpty())
-              .map(EnodeURL::fromString)
-              .collect(Collectors.toList());
-      DiscoveryConfiguration.assertValidBootnodes(bootNodes);
-    } catch (final IllegalArgumentException e) {
-      throw new ParameterException(commandLine, e.getMessage());
-    }
-  }
-
-  private List<EnodeURL> bootNodes = null;
+  private final List<String> bootNodes = null;
 
   @Option(
       names = {"--max-peers"},
@@ -423,12 +414,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
+      hidden = true,
       names = {"--Xnat-kube-service-name"},
       description =
           "Specify the name of the service that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
   private String natManagerServiceName = DEFAULT_BESU_SERVICE_NAME_FILTER;
 
   @Option(
+      hidden = true,
       names = {"--Xnat-method-fallback-enabled"},
       description =
           "Enable fallback to NONE for the nat manager in case of failure. If False BESU will exit on failure. (default: ${DEFAULT-VALUE})",
@@ -721,12 +714,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
   private final Level logLevel = null;
 
-  @SuppressWarnings({"FieldCanBeFinal"})
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--color-enabled"},
       description =
           "Force color output to be enabled/disabled (default: colorized only if printing to console")
   private static Boolean colorEnabled = null;
+
+  @Option(
+      names = {"--reorg-logging-threshold"},
+      description =
+          "How deep a chain reorganization must be in order for it to be logged (default: ${DEFAULT-VALUE})")
+  private final Long reorgLoggingThreshold = 6L;
 
   @Option(
       names = {"--miner-enabled"},
@@ -750,12 +749,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer stratumPort = 8008;
 
   @Option(
+      hidden = true,
       names = {"--Xminer-remote-sealers-limit"},
       description =
           "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
   private final Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
 
   @Option(
+      hidden = true,
       names = {"--Xminer-remote-sealers-hashrate-ttl"},
       description =
           "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
@@ -1040,20 +1041,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  @Option(
-      names = {"--Xethstats"},
-      paramLabel = "<nodename:secret@host:port>",
-      description = "Reporting URL of a ethstats server",
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xdns-enabled"},
+      description = "Enabled DNS support",
       arity = "1")
-  private String ethstatsUrl = "";
+  private final Boolean dnsEnabled = Boolean.FALSE;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  @Option(
-      names = {"--Xethstats-contact"},
-      description = "Contact address to send to ethstats server",
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xdns-update-enabled"},
+      description = "Allow to detect an IP update automatically",
       arity = "1")
-  private String ethstatsContact = "";
+  private final Boolean dnsUpdateEnabled = Boolean.FALSE;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -1067,6 +1067,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
   private Vertx vertx;
+  private EnodeDnsConfiguration enodeDnsConfiguration;
 
   public BesuCommand(
       final Logger logger,
@@ -1112,6 +1113,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.environment = environment;
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
+
+    pluginCommonConfiguration = new BesuCommandConfigurationService();
+    besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
 
   public void parse(
@@ -1150,27 +1154,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void addConfigurationService() {
-    if (pluginCommonConfiguration == null) {
-      final Path dataDir = dataDir();
-      pluginCommonConfiguration =
-          new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
-      besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
-    }
-  }
-
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
-  private BesuCommand enableExperimentalEIPs() {
+  private void enableExperimentalEIPs() {
     // Usage of static command line flags is strictly reserved for experimental EIPs
     commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
-    return this;
   }
 
-  private BesuCommand addSubCommands(
+  private void addSubCommands(
       final AbstractParseResultHandler<List<Object>> resultHandler, final InputStream in) {
     commandLine.addSubcommand(
         BlocksSubCommand.COMMAND_NAME,
@@ -1181,8 +1175,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             resultHandler.out()));
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME,
-        new PublicKeySubCommand(
-            resultHandler.out(), this::addConfigurationService, this::buildNodeKey));
+        new PublicKeySubCommand(resultHandler.out(), this::buildNodeKey));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1190,10 +1183,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
-    return this;
   }
 
-  private BesuCommand registerConverters() {
+  private void registerConverters() {
     commandLine.registerConverter(Address.class, Address::fromHexStringStrict);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Level.class, Level::valueOf);
@@ -1208,10 +1200,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
-    return this;
   }
 
-  private BesuCommand handleUnstableOptions() {
+  private void handleUnstableOptions() {
     // Add unstable options
     final ImmutableMap.Builder<String, Object> unstableOptionsBuild = ImmutableMap.builder();
     final ImmutableMap<String, Object> unstableOptions =
@@ -1221,13 +1212,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("P2P Network", networkingOptions)
             .put("Synchronizer", synchronizerOptions)
             .put("TransactionPool", transactionPoolOptions)
+            .put("Ethstats", ethstatsOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
-    return this;
   }
 
-  private BesuCommand preparePlugins() {
+  private void preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
@@ -1244,9 +1235,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // register default security module
     securityModuleService.register(
-        DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule)::get);
-
-    return this;
+        DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule));
   }
 
   private SecurityModule defaultSecurityModule() {
@@ -1336,6 +1325,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
+    validateDnsOptionsParams();
 
     return this;
   }
@@ -1385,11 +1375,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateNetStatsParams() {
-    if (Strings.isNullOrEmpty(ethstatsUrl) && !ethstatsContact.isEmpty()) {
+    if (Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl())
+        && !ethstatsOptions.getEthstatsContact().isEmpty()) {
       throw new ParameterException(
           this.commandLine,
           "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
               + " or provide an url (via --Xethstats=nodename:secret@host:port)");
+    }
+  }
+
+  private void validateDnsOptionsParams() {
+    if (!dnsEnabled && dnsUpdateEnabled) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
+              + " or specify dns is enabled (--Xdns-enabled)");
     }
   }
 
@@ -1447,26 +1447,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 genesisFile == null && !isPrivacyEnabled && network != NetworkName.DEV
                     ? SyncMode.FAST
                     : SyncMode.FULL);
+
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
+
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
+
     logger.info("Connecting to {} static nodes.", staticNodes.size());
     logger.trace("Static Nodes = {}", staticNodes);
-    final List<URI> enodeURIs =
-        ethNetworkConfig.getBootNodes().stream().map(EnodeURL::toURI).collect(Collectors.toList());
+    final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
 
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(
-            p ->
-                ensureAllNodesAreInAllowlist(
-                    staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
     logger.info("Security Module: {}", securityModuleName);
@@ -1480,7 +1479,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void ensureAllNodesAreInAllowlist(
-      final Collection<URI> enodeAddresses,
+      final Collection<EnodeURL> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
     try {
       PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
@@ -1504,7 +1503,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public BesuControllerBuilder getControllerBuilder() {
-    addConfigurationService();
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
@@ -1536,7 +1534,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
         .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
-        .requiredBlocks(requiredBlocks);
+        .requiredBlocks(requiredBlocks)
+        .reorgLoggingThreshold(reorgLoggingThreshold);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -1787,6 +1786,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final LocalPermissioningConfiguration localPermissioningConfiguration =
           PermissioningConfigurationBuilder.permissioningConfiguration(
               permissionsNodesEnabled,
+              getEnodeDnsConfiguration(),
               nodePermissioningConfigFile.orElse(getDefaultPermissioningFilePath()),
               permissionsAccountsEnabled,
               accountPermissioningConfigFile.orElse(getDefaultPermissioningFilePath()));
@@ -2073,8 +2073,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
-            .ethstatsUrl(ethstatsUrl)
-            .ethstatsContact(ethstatsContact)
+            .ethstatsUrl(ethstatsOptions.getEthstatsUrl())
+            .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .build();
 
     addShutdownHook(runner);
@@ -2195,7 +2195,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (bootNodes != null) {
-      builder.setBootNodes(bootNodes);
+      try {
+
+        final List<EnodeURL> listBootNodes =
+            bootNodes.stream()
+                .filter(value -> !value.isEmpty())
+                .map(url -> EnodeURL.fromString(url, getEnodeDnsConfiguration()))
+                .collect(Collectors.toList());
+        DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
+        builder.setBootNodes(listBootNodes);
+      } catch (final IllegalArgumentException e) {
+        throw new ParameterException(commandLine, e.getMessage());
+      }
     }
 
     return builder.build();
@@ -2273,15 +2284,38 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final String staticNodesFilename = "static-nodes.json";
     final Path staticNodesPath = dataDir().resolve(staticNodesFilename);
 
-    return StaticNodesParser.fromPath(staticNodesPath);
+    return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
   }
 
   public BesuExceptionHandler exceptionHandler() {
     return new BesuExceptionHandler(this::getLogLevel);
   }
 
+  public EnodeDnsConfiguration getEnodeDnsConfiguration() {
+    if (enodeDnsConfiguration == null) {
+      enodeDnsConfiguration =
+          ImmutableEnodeDnsConfiguration.builder()
+              .dnsEnabled(dnsEnabled)
+              .updateEnabled(dnsUpdateEnabled)
+              .build();
+    }
+    return enodeDnsConfiguration;
+  }
+
   @VisibleForTesting
   Level getLogLevel() {
     return logLevel;
+  }
+
+  private class BesuCommandConfigurationService implements BesuConfiguration {
+    @Override
+    public Path getStoragePath() {
+      return dataDir().resolve(DATABASE_PATH);
+    }
+
+    @Override
+    public Path getDataPath() {
+      return dataDir();
+    }
   }
 }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -34,6 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
  * Revision 59dccd. Its implementation will be completed as the VM implementation itself becomes
  * more complete.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnvironmentInformation {
 
   private final Address accountAddress;
