@@ -139,12 +139,13 @@ public class MarkSweepPruner {
             prunerThreads,
             5L,
             TimeUnit.SECONDS,
-            new LinkedBlockingDeque<>(),
+            new LinkedBlockingDeque<>(1 << 8),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
                 .setNameFormat(this.getClass().getSimpleName() + "-%d")
-                .build());
+                .build(),
+            new ThreadPoolExecutor.CallerRunsPolicy());
     // We have one task that iterates through the state trie and submits the storage trie
     // mark tasks. This way we are always performing the storage trie marks and not letting the work
     // queue grow too large.
