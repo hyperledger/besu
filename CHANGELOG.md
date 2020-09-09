@@ -241,6 +241,7 @@ Workaround - Ensure you allocate enough memory for the Java Runtime Environment 
 
 ### Download link
 https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.0.zip
+
 sha256sum: `56929d6a71cc681688351041c919e9630ab6df7de37dd0c4ae9e19a4f44460b2`
 
 **For download links of releases prior to 1.5.0, please visit https://dl.bintray.com/hyperledger-org/besu-repo/**
