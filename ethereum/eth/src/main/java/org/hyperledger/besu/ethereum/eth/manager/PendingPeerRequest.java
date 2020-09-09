@@ -53,7 +53,7 @@ public class PendingPeerRequest {
       return true;
     }
     final Optional<EthPeer> leastBusySuitablePeer = getLeastBusySuitablePeer();
-    if (!leastBusySuitablePeer.isPresent()) {
+    if (leastBusySuitablePeer.isEmpty()) {
       // No peers have the required height.
       result.completeExceptionally(new NoAvailablePeersException());
       return true;
