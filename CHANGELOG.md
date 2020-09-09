@@ -143,6 +143,7 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 
 ### Download link
 https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.1.zip
+
 sha256sum: `c17f49b6b8686822417184952487fc135772f0be03514085926a6984fd955b88`
 
 ## 1.5 Breaking changes
