@@ -51,7 +51,6 @@ public class ExperimentalCliOptionMustBeCorrectlyDisplayed extends BugChecker
         final JCTree.JCCompilationUnit compilation =
             (JCTree.JCCompilationUnit) state.getPath().getCompilationUnit();
         if (compilation.getSourceFile().getName().endsWith("BesuCommand.java")) {
-          System.out.println("alllo");
           return describeMatch(tree);
         }
         final Optional<? extends AnnotationValue> isHidden =
