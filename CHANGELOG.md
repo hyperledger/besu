@@ -61,6 +61,7 @@ The onchain privacy support in the current version of the web3js-eea library (v0
 
 ### Download link
 https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.3.zip
+
 sha256sum: `735cd511e1dae1590f2829d9535cb383aa8c526f059b3451859e5fcfccc48985`
 
 ## 1.5.2
