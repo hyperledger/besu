@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.V
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -103,18 +104,20 @@ public class PrivacyBlockProcessorTest {
         .contains(expected);
     verify(blockProcessor)
         .processBlock(
-            blockchain,
-            mutableWorldState,
-            firstBlock.getHeader(),
-            firstBlock.getBody().getTransactions(),
-            firstBlock.getBody().getOmmers());
+            eq(blockchain),
+            eq(mutableWorldState),
+            eq(firstBlock.getHeader()),
+            eq(firstBlock.getBody().getTransactions()),
+            eq(firstBlock.getBody().getOmmers()),
+            any());
     verify(blockProcessor)
         .processBlock(
-            blockchain,
-            mutableWorldState,
-            secondBlock.getHeader(),
-            secondBlock.getBody().getTransactions(),
-            secondBlock.getBody().getOmmers());
+            eq(blockchain),
+            eq(mutableWorldState),
+            eq(secondBlock.getHeader()),
+            eq(secondBlock.getBody().getTransactions()),
+            eq(secondBlock.getBody().getOmmers()),
+            any());
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -164,11 +167,12 @@ public class PrivacyBlockProcessorTest {
     privacyBlockProcessor.processBlock(blockchain, mutableWorldState, secondBlock);
     verify(blockProcessor)
         .processBlock(
-            blockchain,
-            mutableWorldState,
-            secondBlock.getHeader(),
-            secondBlock.getBody().getTransactions(),
-            secondBlock.getBody().getOmmers());
+            eq(blockchain),
+            eq(mutableWorldState),
+            eq(secondBlock.getHeader()),
+            eq(secondBlock.getBody().getTransactions()),
+            eq(secondBlock.getBody().getOmmers()),
+            any());
   }
 
   private MutableWorldState mockPrivateStateArchive() {

@@ -45,13 +45,17 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -125,7 +129,7 @@ public class PrivateStorageMigrationTest {
 
     // create existing map at block hash 'zero' (pre-genesis)
     final PrivacyGroupHeadBlockMap existingPgHeadMap =
-        createPrivacyGroupHeadBlockInitialMap(PRIVACY_GROUP_BYTES);
+        createPrivacyGroupHeadBlockInitialMapAndMetadata(PRIVACY_GROUP_BYTES, EMPTY_ROOT_HASH);
 
     migration.migratePrivateStorage();
 
@@ -154,7 +158,8 @@ public class PrivateStorageMigrationTest {
   public void failedMigrationThrowsErrorAndDoesNotBumpSchemaVersion() {
     final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
     mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
-    createPrivacyGroupHeadBlockInitialMap(PRIVACY_GROUP_BYTES);
+    final Hash rootHashOtherThanZero = Hash.wrap(Bytes32.fromHexStringLenient("1"));
+    createPrivacyGroupHeadBlockInitialMapAndMetadata(PRIVACY_GROUP_BYTES, rootHashOtherThanZero);
 
     // final state root won't match the legacy state root
     when(legacyPrivateStateStorage.getLatestStateRoot(any())).thenReturn(Optional.of(Hash.ZERO));
@@ -218,14 +223,18 @@ public class PrivateStorageMigrationTest {
     assertThat(processedTxs).hasSize(2);
   }
 
-  private PrivacyGroupHeadBlockMap createPrivacyGroupHeadBlockInitialMap(
-      final Bytes32 privacyGroupBytes) {
+  private PrivacyGroupHeadBlockMap createPrivacyGroupHeadBlockInitialMapAndMetadata(
+      final Bytes32 privacyGroupBytes, final Hash rootHash) {
     final PrivacyGroupHeadBlockMap existingPgHeadMap =
         new PrivacyGroupHeadBlockMap(Map.of(privacyGroupBytes, Hash.ZERO));
-    privateStateStorage
-        .updater()
-        .putPrivacyGroupHeadBlockMap(Hash.ZERO, existingPgHeadMap)
-        .commit();
+    final PrivateStateStorage.Updater updater = privateStateStorage.updater();
+    updater.putPrivacyGroupHeadBlockMap(Hash.ZERO, existingPgHeadMap);
+    updater.putPrivateBlockMetadata(
+        Hash.ZERO,
+        privacyGroupBytes,
+        new PrivateBlockMetadata(
+            Arrays.asList(new PrivateTransactionMetadata(Hash.ZERO, rootHash))));
+    updater.commit();
     return existingPgHeadMap;
   }
 

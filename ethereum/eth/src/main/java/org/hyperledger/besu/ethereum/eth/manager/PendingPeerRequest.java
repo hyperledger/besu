@@ -119,4 +119,8 @@ public class PendingPeerRequest {
       return Optional.empty();
     }
   }
+
+  public Optional<EthPeer> getAssignedPeer() {
+    return peer;
+  }
 }

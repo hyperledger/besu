@@ -76,8 +76,19 @@ public class EthPeers {
     if (peer != null) {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
+      abortPendingRequestsAssignedToDisconnectedPeers();
     }
     reattemptPendingPeerRequests();
+  }
+
+  private void abortPendingRequestsAssignedToDisconnectedPeers() {
+    synchronized (this) {
+      pendingRequests.stream()
+          .filter(
+              pendingPeerRequest ->
+                  pendingPeerRequest.getAssignedPeer().map(EthPeer::isDisconnected).orElse(false))
+          .forEach(PendingPeerRequest::abort);
+    }
   }
 
   public EthPeer peer(final PeerConnection peerConnection) {

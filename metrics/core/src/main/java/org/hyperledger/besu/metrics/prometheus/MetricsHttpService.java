@@ -91,11 +91,7 @@ class MetricsHttpService implements MetricsService {
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
 
     // Endpoint for Prometheus metrics monitoring.
-    router
-        .route("/metrics")
-        .method(HttpMethod.GET)
-        .produces(TextFormat.CONTENT_TYPE_004)
-        .handler(this::metricsRequest);
+    router.route("/metrics").method(HttpMethod.GET).handler(this::metricsRequest);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     httpServer

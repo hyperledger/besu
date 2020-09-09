@@ -61,7 +61,6 @@ public class RequestManager {
 
   public void close() {
     closeOutstandingStreams(responseStreams.values());
-    outstandingRequests.set(0);
   }
 
   private ResponseStream createStream() {

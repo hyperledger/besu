@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 
@@ -31,6 +32,30 @@ public class PrivateStateRootResolver {
 
   public PrivateStateRootResolver(final PrivateStateStorage privateStateStorage) {
     this.privateStateStorage = privateStateStorage;
+  }
+
+  public Hash resolveLastStateRoot(
+      final Bytes32 privacyGroupId, final PrivateMetadataUpdater privateMetadataUpdater) {
+    final PrivateBlockMetadata privateBlockMetadata =
+        privateMetadataUpdater.getPrivateBlockMetadata(privacyGroupId);
+    if (privateBlockMetadata != null) {
+      return privateBlockMetadata.getLatestStateRoot().get();
+    } else {
+      final Hash blockHashForLastBlockWithTx =
+          privateMetadataUpdater.getPrivacyGroupHeadBlockMap().get(privacyGroupId);
+      if (blockHashForLastBlockWithTx != null) {
+        return privateStateStorage
+            .getPrivateBlockMetadata(blockHashForLastBlockWithTx, privacyGroupId)
+            .flatMap(PrivateBlockMetadata::getLatestStateRoot)
+            .orElseThrow(
+                () ->
+                    new RuntimeException(
+                        "Privacy inconsistent state: PrivateBlockMetadata does not exist for Block "
+                            + blockHashForLastBlockWithTx));
+      } else {
+        return EMPTY_ROOT_HASH;
+      }
+    }
   }
 
   public Hash resolveLastStateRoot(final Bytes32 privacyGroupId, final Hash blockHash) {
@@ -60,7 +85,11 @@ public class PrivateStateRootResolver {
           privateStateStorage
               .getPrivateBlockMetadata(blockHashForLastBlockWithTx, privacyGroupId)
               .flatMap(PrivateBlockMetadata::getLatestStateRoot)
-              .orElse(EMPTY_ROOT_HASH);
+              .orElseThrow(
+                  () ->
+                      new RuntimeException(
+                          "Privacy inconsistent state: PrivateBlockMetadata does not exist for Block "
+                              + blockHashForLastBlockWithTx));
     } else {
       // First transaction for this PG
       lastRootHash = EMPTY_ROOT_HASH;
