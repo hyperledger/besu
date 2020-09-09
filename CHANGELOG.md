@@ -103,6 +103,7 @@ The intent is that the major Java VM version or Java VM type shipped with the de
 
 ### Download link
 https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.2.zip
+
 sha256sum: `629f44e230a635b09f8d82f2196d70d31193233718118a46412f11c50772dc85`
 
 ## 1.5.1
