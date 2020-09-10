@@ -21,19 +21,26 @@ import java.util.Objects;
 public class PrivateSubscribeRequest extends SubscribeRequest {
 
   private final String privacyGroupId;
+  private final String enclavePublicKey;
 
   public PrivateSubscribeRequest(
       final SubscriptionType subscriptionType,
       final FilterParameter filterParameter,
       final Boolean includeTransaction,
       final String connectionId,
-      final String privacyGroupId) {
+      final String privacyGroupId,
+      final String enclavePublicKey) {
     super(subscriptionType, filterParameter, includeTransaction, connectionId);
     this.privacyGroupId = privacyGroupId;
+    this.enclavePublicKey = enclavePublicKey;
   }
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
+  }
+
+  public String getEnclavePublicKey() {
+    return enclavePublicKey;
   }
 
   @Override
@@ -47,8 +54,9 @@ public class PrivateSubscribeRequest extends SubscribeRequest {
     if (!super.equals(o)) {
       return false;
     }
-    PrivateSubscribeRequest that = (PrivateSubscribeRequest) o;
-    return privacyGroupId.equals(that.privacyGroupId);
+    final PrivateSubscribeRequest that = (PrivateSubscribeRequest) o;
+    return privacyGroupId.equals(that.privacyGroupId)
+        && enclavePublicKey.equals(that.enclavePublicKey);
   }
 
   @Override
