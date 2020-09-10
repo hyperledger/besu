@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +66,7 @@ public class PendingTransactions {
   private final int maxTransactionRetentionHours;
   private final Clock clock;
 
-  private final Queue<Hash> newPooledHashes;
+  private final EvictingQueue<Hash> newPooledHashes;
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
   private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(

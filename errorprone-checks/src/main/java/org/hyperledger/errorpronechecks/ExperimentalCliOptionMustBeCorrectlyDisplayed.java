@@ -30,14 +30,16 @@ import com.google.errorprone.bugpatterns.BugChecker.AnnotationTreeMatcher;
 import com.google.errorprone.matchers.Description;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.AnnotationTree;
+import com.sun.tools.javac.tree.JCTree;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "ExperimentalCliOptionMustBeHidden",
-    summary = "Experimental options must be hidden.",
+    name = "ExperimentalCliOptionMustBeCorrectlyDisplayed",
+    summary = "Experimental options must be hidden and not present in the BesuCommand class.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)
-public class ExperimentalCliOptionMustBeHidden extends BugChecker implements AnnotationTreeMatcher {
+public class ExperimentalCliOptionMustBeCorrectlyDisplayed extends BugChecker
+    implements AnnotationTreeMatcher {
 
   @Override
   public Description matchAnnotation(AnnotationTree tree, VisitorState state) {
@@ -46,6 +48,11 @@ public class ExperimentalCliOptionMustBeHidden extends BugChecker implements Ann
       final Optional<? extends AnnotationValue> names =
           getAnnotationValue(annotationMirror, "names");
       if (names.isPresent() && names.get().getValue().toString().contains("--X")) {
+        final JCTree.JCCompilationUnit compilation =
+            (JCTree.JCCompilationUnit) state.getPath().getCompilationUnit();
+        if (compilation.getSourceFile().getName().endsWith("BesuCommand.java")) {
+          return describeMatch(tree);
+        }
         final Optional<? extends AnnotationValue> isHidden =
             getAnnotationValue(annotationMirror, "hidden");
         if (isHidden.isEmpty() || !((boolean) isHidden.get().getValue())) {
