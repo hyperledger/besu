@@ -23,7 +23,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,7 @@ public class EthPeers {
   private final Clock clock;
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
-  private final Collection<PendingPeerRequest> pendingRequests = new ArrayList<>();
+  private final ArrayList<PendingPeerRequest> pendingRequests = new ArrayList<>();
 
   public EthPeers(final String protocolName, final Clock clock, final MetricsSystem metricsSystem) {
     this.protocolName = protocolName;

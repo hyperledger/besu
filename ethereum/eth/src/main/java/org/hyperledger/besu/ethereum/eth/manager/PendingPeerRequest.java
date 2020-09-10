@@ -30,17 +30,17 @@ public class PendingPeerRequest {
   private final PeerRequest request;
   private final CompletableFuture<ResponseStream> result = new CompletableFuture<>();
   private final long minimumBlockNumber;
-  private final Optional<EthPeer> peer;
+  private final Optional<EthPeer> maybeAssignedPeer;
 
   PendingPeerRequest(
       final EthPeers ethPeers,
       final PeerRequest request,
       final long minimumBlockNumber,
-      final Optional<EthPeer> peer) {
+      final Optional<EthPeer> maybeAssignedPeer) {
     this.ethPeers = ethPeers;
     this.request = request;
     this.minimumBlockNumber = minimumBlockNumber;
-    this.peer = peer;
+    this.maybeAssignedPeer = maybeAssignedPeer;
   }
 
   /**
@@ -80,12 +80,12 @@ public class PendingPeerRequest {
   }
 
   private Optional<EthPeer> getLeastBusySuitablePeer() {
-    return peer.isPresent()
-        ? peer
-        : ethPeers
-            .streamAvailablePeers()
-            .filter(peer -> peer.chainState().getEstimatedHeight() >= minimumBlockNumber)
-            .min(EthPeers.LEAST_TO_MOST_BUSY);
+    return maybeAssignedPeer.or(
+        () ->
+            ethPeers
+                .streamAvailablePeers()
+                .filter(peer -> peer.chainState().getEstimatedHeight() >= minimumBlockNumber)
+                .min(EthPeers.LEAST_TO_MOST_BUSY));
   }
 
   /**
@@ -121,6 +121,6 @@ public class PendingPeerRequest {
   }
 
   public Optional<EthPeer> getAssignedPeer() {
-    return peer;
+    return maybeAssignedPeer;
   }
 }
