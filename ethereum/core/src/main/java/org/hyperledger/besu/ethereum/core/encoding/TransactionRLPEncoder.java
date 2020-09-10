@@ -21,17 +21,22 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-@FunctionalInterface
-public interface TransactionRLPEncoder {
+public class TransactionRLPEncoder {
 
-  TransactionRLPEncoder FRONTIER = frontierEncoder();
-  TransactionRLPEncoder EIP1559 = eip1559Encoder();
+  private static final Encoder FRONTIER = frontierEncoder();
+  private static final Encoder EIP1559 = eip1559Encoder();
 
-  void encode(Transaction transaction, RLPOutput output);
+  private static final ImmutableMap<TransactionType, Encoder> ENCODERS =
+      ImmutableMap.of(TransactionType.FRONTIER, FRONTIER, TransactionType.EIP1559, EIP1559);
 
-  static TransactionRLPEncoder frontierEncoder() {
+  public static void encode(Transaction transaction, RLPOutput output) {
+    ENCODERS.getOrDefault(transaction.getType(), FRONTIER).encode(transaction, output);
+  }
+
+  static Encoder frontierEncoder() {
     return (transaction, out) -> {
       out.startList();
       out.writeLongScalar(transaction.getNonce());
@@ -45,7 +50,7 @@ public interface TransactionRLPEncoder {
     };
   }
 
-  static TransactionRLPEncoder eip1559Encoder() {
+  static Encoder eip1559Encoder() {
     return (transaction, out) -> {
       if (!ExperimentalEIPs.eip1559Enabled
           || !TransactionType.EIP1559.equals(transaction.getType())) {
@@ -72,5 +77,10 @@ public interface TransactionRLPEncoder {
     out.writeBigIntegerScalar(transaction.getV());
     out.writeBigIntegerScalar(transaction.getSignature().getR());
     out.writeBigIntegerScalar(transaction.getSignature().getS());
+  }
+
+  @FunctionalInterface
+  interface Encoder {
+    void encode(Transaction transaction, RLPOutput output);
   }
 }

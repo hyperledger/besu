@@ -19,7 +19,8 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoderDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -87,7 +88,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   public static Transaction readFrom(final RLPInput input) throws RLPException {
-    return TransactionRLPEncoderDecoder.decode(input);
+    return TransactionRLPDecoder.decodeTransaction(input);
   }
 
   /**
@@ -330,7 +331,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionRLPEncoderDecoder.encode(this, out);
+    TransactionRLPEncoder.encode(this, out);
   }
 
   @Override

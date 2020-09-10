@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -36,6 +37,10 @@ public interface TransactionRLPDecoder {
 
   TransactionRLPDecoder FRONTIER = frontierDecoder();
   TransactionRLPDecoder EIP1559 = eip1559Decoder();
+
+  static Transaction decodeTransaction(final RLPInput input) {
+    return (ExperimentalEIPs.eip1559Enabled ? EIP1559 : FRONTIER).decode(input);
+  }
 
   Transaction decode(RLPInput input);
 
