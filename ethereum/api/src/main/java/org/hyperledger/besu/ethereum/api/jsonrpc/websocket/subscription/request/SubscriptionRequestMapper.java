@@ -89,7 +89,7 @@ public class SubscriptionRequestMapper {
   }
 
   public PrivateSubscribeRequest mapPrivateSubscribeRequest(
-      final JsonRpcRequestContext jsonRpcRequestContext)
+      final JsonRpcRequestContext jsonRpcRequestContext, final String enclavePublicKey)
       throws InvalidSubscriptionRequestException {
     try {
       final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
@@ -108,7 +108,8 @@ public class SubscriptionRequestMapper {
                 filterParameter,
                 null,
                 webSocketRpcRequestBody.getConnectionId(),
-                privacyGroupId);
+                privacyGroupId,
+                enclavePublicKey);
           }
         default:
           throw new InvalidSubscriptionRequestException(
