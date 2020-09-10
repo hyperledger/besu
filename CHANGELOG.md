@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.5.5
+
+### Additions and Improvements
+
+### Bug Fixes
+
+#### Previously identified known issues
+
+- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
+
+### Download link
+
+Will be added upon release. Snapshot builds are available to download at https://dl.bintray.com/hyperledger-org/besu-repo/
+
 ## 1.5.4
 
 ### Additions and Improvements
