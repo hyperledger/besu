@@ -1,4 +1,18 @@
-pragma solidity ^0.5.9;
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+pragma solidity ^0.6.0;
 import "./OnChainPrivacyGroupManagementInterface.sol";
 
 contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupManagementInterface {
@@ -9,27 +23,27 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
     bytes32[] private distributionList;
     mapping(bytes32 => uint256) private distributionIndexOf;
 
-    function getVersion() external view returns (bytes32) {
+    function getVersion() external view override returns (bytes32) {
         return _version;
     }
 
-    function canExecute() external view returns (bool) {
+    function canExecute() external view override returns (bool) {
         return _canExecute;
     }
 
-    function lock() public {
+    function lock() public override {
         require(_canExecute);
         require(tx.origin == _owner, "Origin not the owner.");
         _canExecute = false;
     }
 
-    function unlock() public {
+    function unlock() public override {
         require(!_canExecute);
         require(tx.origin == _owner, "Origin not the owner.");
         _canExecute = true;
     }
 
-    function addParticipants(bytes32[] memory _publicEnclaveKeys) public returns (bool) {
+    function addParticipants(bytes32[] memory _publicEnclaveKeys) public override returns (bool) {
         require(!_canExecute);
         if (_owner == address(0x0)) {
         // The account creating this group is set to be the owner
@@ -42,19 +56,19 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
         return result;
     }
 
-    function removeParticipant(bytes32 _member) public returns (bool) {
+    function removeParticipant(bytes32 _participant) public override returns (bool) {
         require(_canExecute);
         require(tx.origin == _owner, "Origin not the owner.");
-        bool result = removeInternal(_member);
+        bool result = removeInternal(_participant);
         updateVersion();
         return result;
     }
 
-    function getParticipants() public view returns (bytes32[] memory) {
+    function getParticipants() public view override returns (bytes32[] memory) {
         return distributionList;
     }
 
-    function canUpgrade() external returns (bool) {
+    function canUpgrade() external override returns (bool) {
         return tx.origin == _owner;
     }
 
@@ -82,14 +96,15 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
 
     function addParticipant(bytes32 _publicEnclaveKey) internal returns (bool) {
         if (distributionIndexOf[_publicEnclaveKey] == 0) {
-            distributionIndexOf[_publicEnclaveKey] = distributionList.push(_publicEnclaveKey);
+            distributionList.push(_publicEnclaveKey);
+            distributionIndexOf[_publicEnclaveKey] = distributionList.length;
             return true;
         }
         return false;
     }
 
-    function removeInternal(bytes32 _member) internal returns (bool) {
-        uint256 index = distributionIndexOf[_member];
+    function removeInternal(bytes32 _participant) internal returns (bool) {
+        uint256 index = distributionIndexOf[_participant];
         if (index > 0 && index <= distributionList.length) {
             //move last address into index being vacated (unless we are dealing with last index)
             if (index != distributionList.length) {
@@ -97,8 +112,8 @@ contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupMana
                 distributionList[index - 1] = lastPublicKey;
                 distributionIndexOf[lastPublicKey] = index;
             }
-            distributionList.length -= 1;
-            distributionIndexOf[_member] = 0;
+            distributionList.pop();
+            distributionIndexOf[_participant] = 0;
             return true;
         }
         return false;

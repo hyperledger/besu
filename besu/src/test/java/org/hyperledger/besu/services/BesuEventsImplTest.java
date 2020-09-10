@@ -105,7 +105,8 @@ public class BesuEventsImplTest {
             gen.genesisBlock(),
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            0);
 
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);

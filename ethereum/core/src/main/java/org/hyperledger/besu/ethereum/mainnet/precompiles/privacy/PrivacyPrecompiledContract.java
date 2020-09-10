@@ -32,9 +32,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -52,7 +50,6 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   final Enclave enclave;
-  final PrivateStateStorage privateStateStorage;
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
   PrivateTransactionProcessor privateTransactionProcessor;
@@ -67,7 +64,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         gasCalculator,
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
-        privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateStateRootResolver(),
         name);
   }
@@ -77,28 +73,19 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
-      final PrivateStateStorage privateStateStorage,
       final PrivateStateRootResolver privateStateRootResolver) {
-    this(
-        gasCalculator,
-        enclave,
-        worldStateArchive,
-        privateStateStorage,
-        privateStateRootResolver,
-        "Privacy");
+    this(gasCalculator, enclave, worldStateArchive, privateStateRootResolver, "Privacy");
   }
 
   protected PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
-      final PrivateStateStorage privateStateStorage,
       final PrivateStateRootResolver privateStateRootResolver,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
-    this.privateStateStorage = privateStateStorage;
     this.privateStateRootResolver = privateStateRootResolver;
   }
 
@@ -165,10 +152,9 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
-    final Hash currentBlockHash = ((BlockHeader) messageFrame.getBlockHeader()).getHash();
-
+    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
     final Hash lastRootHash =
-        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, currentBlockHash);
+        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -185,81 +171,42 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           pmtHash,
           result.getValidationResult().getErrorMessage());
 
-      final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      storeTransactionReceipt(pmtHash, currentBlockHash, result, privateStateUpdater);
-      privateStateUpdater.commit();
+      privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
 
       return Bytes.EMPTY;
     }
 
     if (messageFrame.isPersistingPrivateState()) {
-      persistPrivateState(
-          pmtHash,
-          currentBlockHash,
-          privacyGroupId,
-          disposablePrivateState,
-          privateWorldStateUpdater,
-          result);
+
+      privateWorldStateUpdater.commit();
+      disposablePrivateState.persist();
+
+      storePrivateMetadata(
+          pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
     return result.getOutput();
   }
 
-  void persistPrivateState(
+  void storePrivateMetadata(
       final Hash commitmentHash,
-      final Hash currentBlockHash,
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater,
+      final PrivateMetadataUpdater privateMetadataUpdater,
       final PrivateTransactionProcessor.Result result) {
 
-    LOG.trace(
-        "Persisting private state {} for privacyGroup {}",
-        disposablePrivateState.rootHash(),
-        privacyGroupId);
+    final int txStatus =
+        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
 
-    privateWorldStateUpdater.commit();
-    disposablePrivateState.persist();
-
-    final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-
-    updatePrivateBlockMetadata(
-        commitmentHash,
-        currentBlockHash,
-        privacyGroupId,
-        disposablePrivateState.rootHash(),
-        privateStateUpdater);
-
-    maybeUpdateGroupHeadBlockMap(privacyGroupId, currentBlockHash, privateStateUpdater);
-
-    storeTransactionReceipt(commitmentHash, currentBlockHash, result, privateStateUpdater);
-
-    privateStateUpdater.commit();
-  }
-
-  void storeTransactionReceipt(
-      final Hash pmtHash,
-      final Hash currentBlockHash,
-      final PrivateTransactionProcessor.Result result,
-      final PrivateStateStorage.Updater privateStateUpdater) {
     final PrivateTransactionReceipt privateTransactionReceipt =
-        new PrivateTransactionReceipt(result);
-    privateStateUpdater.putTransactionReceipt(currentBlockHash, pmtHash, privateTransactionReceipt);
-  }
+        new PrivateTransactionReceipt(
+            txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
 
-  void maybeUpdateGroupHeadBlockMap(
-      final Bytes32 privacyGroupId,
-      final Hash currentBlockHash,
-      final PrivateStateStorage.Updater privateStateUpdater) {
-
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-        privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).orElseThrow();
-
-    if (!privacyGroupHeadBlockMap.contains(Bytes32.wrap(privacyGroupId), currentBlockHash)) {
-      privacyGroupHeadBlockMap.put(Bytes32.wrap(privacyGroupId), currentBlockHash);
-      privateStateUpdater.putPrivacyGroupHeadBlockMap(
-          currentBlockHash, new PrivacyGroupHeadBlockMap(privacyGroupHeadBlockMap));
-    }
+    privateMetadataUpdater.putTransactionReceipt(commitmentHash, privateTransactionReceipt);
+    privateMetadataUpdater.updatePrivacyGroupHeadBlockMap(privacyGroupId);
+    privateMetadataUpdater.addPrivateTransactionMetadata(
+        privacyGroupId,
+        new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
   }
 
   PrivateTransactionProcessor.Result processPrivateTransaction(
@@ -307,21 +254,5 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       }
     }
     return isMining;
-  }
-
-  void updatePrivateBlockMetadata(
-      final Hash markerTransactionHash,
-      final Hash currentBlockHash,
-      final Bytes32 privacyGroupId,
-      final Hash rootHash,
-      final PrivateStateStorage.Updater privateStateUpdater) {
-    final PrivateBlockMetadata privateBlockMetadata =
-        privateStateStorage
-            .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
-            .orElseGet(PrivateBlockMetadata::empty);
-    privateBlockMetadata.addPrivateTransactionMetadata(
-        new PrivateTransactionMetadata(markerTransactionHash, rootHash));
-    privateStateUpdater.putPrivateBlockMetadata(
-        Bytes32.wrap(currentBlockHash), Bytes32.wrap(privacyGroupId), privateBlockMetadata);
   }
 }

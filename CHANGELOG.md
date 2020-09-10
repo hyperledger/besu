@@ -1,15 +1,37 @@
 # Changelog
 
+## 1.5.4
+
 ### Additions and Improvements
 
 * Added `priv_debugGetStateRoot` JSON-RPC API to retrieve the state root of a specified privacy group. [\#1326](https://github.com/hyperledger/besu/pull/1326)
+* Added reorg logging and `--reorg-logging-threshold` to configure the same. Besu now logs any reorgs where the old or new chain head is more than the threshold away from their common ancestors. The default is 6.
+* Added `debug_batchSendRawTransaction` JSON-RPC API to submit multiple signed transactions with a single call. [\#1350](https://github.com/hyperledger/besu/pull/1350)
 
-## 1.5.3 
+### Bug Fixes
+
+* The metrics HTTP server no longer rejects requests containing `Accept` header that doesn't precisely match the prometheus text format [\#1345](https://github.com/hyperledger/besu/pull/1345)
+* JSON-RPC method `net_version` should return network ID instead of chain ID [\#1355](https://github.com/hyperledger/besu/pull/1355)
+
+#### Previously identified known issues
+
+- [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
+
+### Download link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.4.zip
+
+sha256sum: `1f4df8e1c5e3b5b3abf6289ccfe70f302aa7c29a652b2eb713ffbdc507670420`
+
+## 1.5.3
 
 ### Additions and Improvements
 
 * The EvmTool now processes State Tests from the Ethereum Reference Tests. [\#1311](https://github.com/hyperledger/besu/pull/1311)
-* Experimental dns support added via the `Xdns-enabled` and `Xdns-update-enabled` CLI commands. [\#1247](https://github.com/hyperledger/besu/pull/1247)
+* Early access DNS support added via the `--Xdns-enabled` and `--Xdns-update-enabled` CLI options. [\#1247](https://github.com/hyperledger/besu/pull/1247)
 * Add genesis config option `ecip1017EraRounds` for Ethereum Classic chains. [\#1329](https://github.com/hyperledger/besu/pull/1329)
 
 ### Bug Fixes
@@ -17,29 +39,32 @@
 * K8S Permissioning to use of Service IP's rather than pod IP's which can fail [\#1190](https://github.com/hyperledger/besu/issues/1190)
 
 #### Previously identified known issues
- 
+
 - [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
 
-### Breaking Change to Onchain Privacy Group Management 
+### Breaking Change to Onchain Privacy Group Management
 
-This [early access feature](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) was
-changed in a way that makes onchain privacy groups created with previous versions no longer usable. 
+This [early access feature](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) was changed in a way that makes onchain privacy groups created with previous versions no longer usable.
 
 To enhance control over permissions on the privacy group management contract:
 
-* The enclave key was removed as the first parameter for `addParticipant` and `removeParticipant`. 
+* The enclave key was removed as the first parameter for `addParticipant` and `removeParticipant`.
 * The owner of the privacy group management contract is the signer of the private transaction that creates
-  the privacy group. In the default onchain privacy group management contract implementation, only the 
+  the privacy group. In the default onchain privacy group management contract implementation, only the
   owner can add and remove participants, and upgrade the management contract.
-  
-The onchain privacy support in the current version of the web3js-eea library (v0.9) will not be compatible
-with Besu v1.5.3.  We are actively working on an upgrade to webj3-eea that will support these changes.   
 
-## 1.5.2 
+The onchain privacy support in the current version of the web3js-eea library (v0.9) will not be compatible with Besu v1.5.3.  We are actively working on an upgrade to webj3-eea that will support these changes.   
+
+### Download link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.3.zip
+
+sha256sum: `735cd511e1dae1590f2829d9535cb383aa8c526f059b3451859e5fcfccc48985`
+
+## 1.5.2
 
 ### Additions and Improvements
 
@@ -63,7 +88,7 @@ The intent is that the major Java VM version or Java VM type shipped with the de
 - GraphQL queries of `miner` in IBFT networks will no longer return an error.  PR [\#1282](https://github.com/hyperledger/besu/pull/1282) issue [\#1272](https://github.com/hyperledger/besu/issues/1272).
 
 #### Previously identified known issues
- 
+
 - [Logs queries missing results against chain head](KNOWN_ISSUES.md#Logs-queries-missing-results-against-chain-head)
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
@@ -76,10 +101,15 @@ The intent is that the major Java VM version or Java VM type shipped with the de
 - [David Mechler](https://github.com/hyperledger/besu/commits?author=davemec) has been added as a [new maintainer](https://github.com/hyperledger/besu/pull/1267).
 - [Edward Evans](https://github.com/hyperledger/besu/commits?author=EdJoJob) voluntarily moved to [emeritus status](https://github.com/hyperledger/besu/pull/1270).
 
+### Download link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.2.zip
+
+sha256sum: `629f44e230a635b09f8d82f2196d70d31193233718118a46412f11c50772dc85`
+
 ## 1.5.1
 
-### Deprecated 
-- CLI option `--privacy-precompiled-address` option is deprecated. This address is now derived, based 
+### Deprecated
+- CLI option `--privacy-precompiled-address` option is deprecated. This address is now derived, based
 on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
 
 ### Additions and Improvements
@@ -90,21 +120,21 @@ on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/b
 * Color output in consoles. It can be disabled with `--color-enabled=false` [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Add compatibility with ClusterIP services for the Kubernetes Nat Manager  [\#1156](https://github.com/hyperledger/besu/pull/1156)
 * In an IBFT2 network; a fixed block reward value and recipient address can be defined in genesis file [\#1132](https://github.com/hyperledger/besu/pull/1132)
-* Add fee cap for transactions submitted via RPC. [\#1137](https://github.com/hyperledger/besu/pull/1137) 
+* Add fee cap for transactions submitted via RPC. [\#1137](https://github.com/hyperledger/besu/pull/1137)
 
-### Bug fixes 
+### Bug fixes
 
 * When the default sync mode was changed to fast sync for named networks, there was one caveat we didn't address. The `dev` network should've been full sync by default. This has now been fixed. [\#1257](https://github.com/hyperledger/besu/pull/1257)
 * Fix synchronization timeout issue when the blocks were too large [\#1149](https://github.com/hyperledger/besu/pull/1149)
 * Fix missing results from eth_getLogs request. [\#1154](https://github.com/hyperledger/besu/pull/1154)
 * Fix issue allowing Besu to be used for DDoS amplification. [\#1146](https://github.com/hyperledger/besu/pull/1146)
 
-### Known Issues 
+### Known Issues
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
 #### Previously identified known issues
- 
+
 - [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
@@ -112,18 +142,23 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 - [Permissioning issues on Kubernetes](KNOWN_ISSUES.md#Kubernetes-permissioning-uses-Service-IPs-rather-than-pod-IPs-which-can-fail)
 - [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
 
+### Download link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.1.zip
+
+sha256sum: `c17f49b6b8686822417184952487fc135772f0be03514085926a6984fd955b88`
+
 ## 1.5 Breaking changes
 
-When upgrading to 1.5, ensure you've taken into account the following breaking changes. 
+When upgrading to 1.5, ensure you've taken into account the following breaking changes.
 
-### Docker users with volume mounts 
+### Docker users with volume mounts
 
 To maintain best security practices, we're changing the `user:group` on the Docker container to `besu`.
 
 What this means for you:
 
 * If you are running Besu as a binary, there is no impact.
-* If you are running Besu as a Docker container *and* have a volume mount for data,  ensure that the 
+* If you are running Besu as a Docker container *and* have a volume mount for data,  ensure that the
 permissions on the directory allow other users and groups to r/w. Ideally this should be set to
 `besu:besu` as the owner.
 
@@ -136,67 +171,65 @@ is owned by that user.
 
 ### Remove Manual NAT method
 
-The NAT manager `MANUAL` method has been removed. 
-If you have have been using the `MANUAL` method, use the `NONE` method instead. The behavior of the 
+The NAT manager `MANUAL` method has been removed.
+If you have have been using the `MANUAL` method, use the `NONE` method instead. The behavior of the
 `NONE` method is the same as the previously supported `MANUAL` methods.
 
-### Privacy users 
+### Privacy users
 
-Besu minor version upgrades require upgrading Orion to the latest minor version. That is, for 
-Besu <> Orion node pairs, when upgrading Besu to v1.5, it is required that Orion is upgraded to 
-v1.6. Older versions of Orion will no longer work with Besu v1.5.  
+Besu minor version upgrades require upgrading Orion to the latest minor version. That is, for
+Besu <> Orion node pairs, when upgrading Besu to v1.5, it is required that Orion is upgraded to
+v1.6. Older versions of Orion will no longer work with Besu v1.5.
 
-## 1.5 Features 
+## 1.5 Features
 
-Features added between from 1.4 to 1.5 include: 
-* Mining Support 
-  Besu supports `eth_hashrate` and `eth_submitHashrate` to obtain the hashrate when we mine with a GPU mining worker. 
-* Tracing 
-  The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.  
-* Plugin API Block Events 
-  `BlockAdded` and `BlockReorg` are now exposed via the [Plugin API](https://javadoc.io/doc/org.hyperledger.besu/plugin-api/latest/org/hyperledger/besu/plugin/services/BesuEvents.html). 
-* [Filters](https://besu.hyperledger.org/en/stable/HowTo/Interact/Filters/Accessing-Logs-Using-JSON-RPC/) and 
-  [subscriptions](https://besu.hyperledger.org/en/stable/HowTo/Interact/APIs/RPC-PubSub/) for private contracts.  
+Features added between from 1.4 to 1.5 include:
+* Mining Support
+  Besu supports `eth_hashrate` and `eth_submitHashrate` to obtain the hashrate when we mine with a GPU mining worker.
+* Tracing
+  The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.
+* Plugin API Block Events
+  `BlockAdded` and `BlockReorg` are now exposed via the [Plugin API](https://javadoc.io/doc/org.hyperledger.besu/plugin-api/latest/org/hyperledger/besu/plugin/services/BesuEvents.html).
+* [Filters](https://besu.hyperledger.org/en/stable/HowTo/Interact/Filters/Accessing-Logs-Using-JSON-RPC/) and
+  [subscriptions](https://besu.hyperledger.org/en/stable/HowTo/Interact/APIs/RPC-PubSub/) for private contracts.
 * [SecurityModule Plugin API](https://javadoc.io/doc/org.hyperledger.besu/plugin-api/latest/org/hyperledger/besu/plugin/services/SecurityModuleService.html)
-  This allows use of a different [security module](https://besu.hyperledger.org/en/stable/Reference/CLI/CLI-Syntax/#security-module) 
-  as a plugin to provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). 
+  This allows use of a different [security module](https://besu.hyperledger.org/en/stable/Reference/CLI/CLI-Syntax/#security-module)
+  as a plugin to provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.).
 * [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/)
   with add and remove members. This is an early access feature. Early access features are not recommended
   for production networks and may have unstable interfaces.
 
-## 1.5 
-
-### Additions and Improvements 
+## 1.5 Additions and Improvements
 
 * Public Networks Default to Fast Sync: The default sync mode for named permissionless networks, such as the Ethereum mainnet and testnets, is now `FAST`.
-  * The default is unchanged for private networks. That is, the sync mode defaults to `FULL` for private networks. 
+  * The default is unchanged for private networks. That is, the sync mode defaults to `FULL` for private networks.
   * Use the [`--sync-mode` command line option](https://besu.hyperledger.org/Reference/CLI/CLI-Syntax/#sync-mode) to change the sync mode. [\#384](https://github.com/hyperledger/besu/pull/384)
 * Proper Mining Support: Added full support for `eth_hashrate` and `eth_submitHashrate`. It is now possible to have the hashrate when we mine with a GPU mining worker [\#1063](https://github.com/hyperledger/besu/pull/1063)
-* Performance Improvements: The addition of native libraries ([\#775](https://github.com/hyperledger/besu/pull/775)) and changes to data structures in the EVM ([\#1089](https://github.com/hyperledger/besu/pull/1089)) have improved Besu sync and EVM execution times. 
-* Tracing API Improvements: The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.  
-* New Plugin API Block Events: `BlockAdded` and `BlockReorg` are now exposed via the Plugin API [\#637](https://github.com/hyperledger/besu/pull/637). 
+* Performance Improvements: The addition of native libraries ([\#775](https://github.com/hyperledger/besu/pull/775)) and changes to data structures in the EVM ([\#1089](https://github.com/hyperledger/besu/pull/1089)) have improved Besu sync and EVM execution times.
+* Tracing API Improvements: The [Tracing API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) is no longer an Early Access feature and now has full support for `trace_replayBlockTransactions`, `trace_Block` and `trace_transaction`.
+* New Plugin API Block Events: `BlockAdded` and `BlockReorg` are now exposed via the Plugin API [\#637](https://github.com/hyperledger/besu/pull/637).
 * Added experimental CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
-- Local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`). 
-Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release. 
+- Local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`).
+Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release.
 - Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints. [\#1098](https://github.com/hyperledger/besu/pull/1098)
 * Besu now has a strict check on private transactions to ensure the privateFrom in the transaction
-matches the sender Orion key that has distributed the payload. Besu 1.5+ requires Orion 1.6+ to work. 
+matches the sender Orion key that has distributed the payload. Besu 1.5+ requires Orion 1.6+ to work.
 [#357](https://github.com/PegaSysEng/orion/issues/357)
 
-### Bug fixes 
+### Bug fixes
 
-No bug fixes with [user impact in this release](https://wiki.hyperledger.org/display/BESU/Changelog). 
- 
-### Known Issues 
+No bug fixes with [user impact in this release](https://wiki.hyperledger.org/display/BESU/Changelog).
+
+### Known Issues
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
-#### New known issues 
+#### New known issues
 
 - K8S permissioning uses of Service IPs rather than pod IPs which can fail. [\#1190](https://github.com/hyperledger/besu/pull/1190)
-Workaround - Do not use permissioning on K8S. 
+Workaround - Do not use permissioning on K8S.
 
-- Restart caused by insufficient memory can cause inconsistent private state. [\#1110](https://github.com/hyperledger/besu/pull/1110) 
+- Restart caused by insufficient memory can cause inconsistent private state. [\#1110](https://github.com/hyperledger/besu/pull/1110)
 Workaround - Ensure you allocate enough memory for the Java Runtime Environment that the node does not run out of memory.
 
 #### Previously identified known issues
@@ -205,6 +238,13 @@ Workaround - Ensure you allocate enough memory for the Java Runtime Environment 
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+### Download link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.0.zip
+
+sha256sum: `56929d6a71cc681688351041c919e9630ab6df7de37dd0c4ae9e19a4f44460b2`
+
+**For download links of releases prior to 1.5.0, please visit https://dl.bintray.com/hyperledger-org/besu-repo/**
 
 ## 1.4.6
 
@@ -219,12 +259,12 @@ Workaround - Ensure you allocate enough memory for the Java Runtime Environment 
 - Fixed issue where networks using onchain permissioning could stall when the bootnodes were not validators. [\#969](https://github.com/hyperledger/besu/pull/969)
 - Update getForks method to ignore ClassicForkBlock chain parameter to fix issue with ETC syncing. [\#1014](https://github.com/hyperledger/besu/pull/1014)
 
-### Known Issues 
+### Known Issues
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
 #### Previously identified known issues
- 
+
 - [Scope of logs query causing Besu to hang](KNOWN_ISSUES.md#scope-of-logs-query-causing-besu-to-hang)
 - [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
@@ -235,31 +275,31 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 ### Additions and Improvements
 
 - Implemented WebSocket logs subscription for private contracts (`priv_subscribe`/`priv_unsubscribe`) [\#762](https://github.com/hyperledger/besu/pull/762)
-- Introduced SecurityModule plugin API. This allows use of a different security module as a plugin to 
+- Introduced SecurityModule plugin API. This allows use of a different security module as a plugin to
   provide cryptographic function that can be used by NodeKey (such as sign, ECDHKeyAgreement etc.). KeyPairSecurityModule
-  is registered and used by default. The CLI option `--security-module=<name> (defaults to localfile)` can be used 
+  is registered and used by default. The CLI option `--security-module=<name> (defaults to localfile)` can be used
   to identify the security module plugin name to use instead. [\#713](https://github.com/hyperledger/besu/pull/713)
-- Several testing related changes to improve compatibility with [Hive](https://hivetests.ethdevops.io/) and Retesteth. 
+- Several testing related changes to improve compatibility with [Hive](https://hivetests.ethdevops.io/) and Retesteth.
   [\#806](https://github.com/hyperledger/besu/pull/806) and [#845](https://github.com/hyperledger/besu/pull/845)
-- Native libraries for secp256k1 and Altbn128 encryption are enabled by default.  To disable these libraries use 
+- Native libraries for secp256k1 and Altbn128 encryption are enabled by default.  To disable these libraries use
   `--Xsecp256k1-native-enabled=false` and `--Xaltbn128-native-enabled=false`. [\#775](https://github.com/hyperledger/besu/pull/775)
 
 ### Bug Fixes
 
-- Fixed `eth_estimateGas` JSON RPC so it no longer returns gas estimates that are too low. [\#842](https://github.com/hyperledger/besu/pull/842) 
+- Fixed `eth_estimateGas` JSON RPC so it no longer returns gas estimates that are too low. [\#842](https://github.com/hyperledger/besu/pull/842)
 - Full help not displayed unless explicitly requested. [\#437](https://github.com/hyperledger/besu/pull/437)
 - Compatibility with undocumented Geth `eth_subscribe` fields. [\#654](https://github.com/hyperledger/besu/pull/654)
-- Current block number included as part of `eth_getWork` response. [\#849](https://github.com/hyperledger/besu/pull/849) 
+- Current block number included as part of `eth_getWork` response. [\#849](https://github.com/hyperledger/besu/pull/849)
 
-### Known Issues 
+### Known Issues
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
-#### New known issues 
+#### New known issues
 
-* Scope of logs query causing Besu to crash. [\#944](https://github.com/hyperledger/besu/pull/944) 
+* Scope of logs query causing Besu to crash. [\#944](https://github.com/hyperledger/besu/pull/944)
 
-Workaround - Limit the number of blocks queried by each `eth_getLogs` call. 
+Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
 
 #### Previously identified known issues
 
@@ -278,18 +318,18 @@ Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
 - Implemented private contract log filters including JSON-RPC methods to interact with private filters. [\#735](https://github.com/hyperledger/besu/pull/735)
 - Implemented EIP-2315: Simple Subroutines for the EVM [\#717](https://github.com/hyperledger/besu/pull/717)
 - Implemented Splunk logging. [\#725](https://github.com/hyperledger/besu/pull/725)
-- Implemented optional native library encryption. [\#675](https://github.com/hyperledger/besu/pull/675).  To enable add `--Xsecp256k1-native-enabled` (for transaciton signatures) and/or `--Xaltbn128-native-enabled` (for altbn128 precomiled contracts) as command line options. 
+- Implemented optional native library encryption. [\#675](https://github.com/hyperledger/besu/pull/675).  To enable add `--Xsecp256k1-native-enabled` (for transaciton signatures) and/or `--Xaltbn128-native-enabled` (for altbn128 precomiled contracts) as command line options.
 
-### Bug Fixes 
+### Bug Fixes
 
-- Flag added to toggle `eth/65` off by default. `eth/65` will remain toggled off by default until 
+- Flag added to toggle `eth/65` off by default. `eth/65` will remain toggled off by default until
 a fix is completed for the [eth/65 known issue](KNOWN_ISSUES.md). [\#741](https://github.com/hyperledger/besu/pull/741)
-- Resolve crashing NAT detectors on GKE. [\#731](https://github.com/hyperledger/besu/pull/731) fixes [\#507](https://github.com/hyperledger/besu/issues/507). 
-[Besu-Kubernetes Readme](https://github.com/PegaSysEng/besu-kubernetes/blob/master/README.md#network-topology-and-high-availability-requirements) 
+- Resolve crashing NAT detectors on GKE. [\#731](https://github.com/hyperledger/besu/pull/731) fixes [\#507](https://github.com/hyperledger/besu/issues/507).
+[Besu-Kubernetes Readme](https://github.com/PegaSysEng/besu-kubernetes/blob/master/README.md#network-topology-and-high-availability-requirements)
 updated to reflect changes.  
-- Deal with quick service start failures [\#714](https://github.com/hyperledger/besu/pull/714) fixes [\#662](https://github.com/hyperledger/besu/issues/662) 
+- Deal with quick service start failures [\#714](https://github.com/hyperledger/besu/pull/714) fixes [\#662](https://github.com/hyperledger/besu/issues/662)
 
-### Known Issues 
+### Known Issues
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy).
 
@@ -309,41 +349,41 @@ Calling delete and set to 0 Solidity mapping in Solidity fail.
 
 ## 1.4.3
 
-### Issues identified with 1.4.3 release 
+### Issues identified with 1.4.3 release
 
-The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723). 
-This has the following impact: 
+The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723).
+This has the following impact:
 * In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
-clients. 
+clients.
 * On mainnet, synchronizing eventually stalls.   
 
-Workaround -> revert to v1.4.2. 
+Workaround -> revert to v1.4.2.
 
-A [fix](https://github.com/hyperledger/besu/pull/732) is currently [being tested](https://github.com/hyperledger/besu/pull/733). 
+A [fix](https://github.com/hyperledger/besu/pull/732) is currently [being tested](https://github.com/hyperledger/besu/pull/733).
 
-### Critical Issue for Privacy Users 
+### Critical Issue for Privacy Users
 
-A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4 
-or earlier has been identified. If you have a network with private transaction created using v1.3.4 
-or earlier, please read the following and take the appropriate steps: 
-https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
+A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4
+or earlier has been identified. If you have a network with private transaction created using v1.3.4
+or earlier, please read the following and take the appropriate steps:
+https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users
 
 ### Additions and Improvements
 
 - Added `eth/65` support. [\#608](https://github.com/hyperledger/besu/pull/608)
 - Added block added and block reorg events. Added revert reason to block added transactions. [\#637](https://github.com/hyperledger/besu/pull/637)
 
-### Deprecated 
+### Deprecated
 
-- Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed 
+- Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed
 in 1.5.0 release. [\#639](https://github.com/hyperledger/besu/pull/639)
 
-### Known Issues 
+### Known Issues
 
 #### Fast sync when running Besu on cloud providers  
 
-A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail 
-when running Besu on certain cloud providers. The following error is displayed repeatedly: 
+A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail
+when running Besu on certain cloud providers. The following error is displayed repeatedly:
 
 ```
 ...
@@ -352,12 +392,12 @@ java.util.concurrent.CompletionException: org.hyperledger.besu.plugin.services.e
 ....
 ```
 
-This behaviour has been seen on AWS and Digital Ocean. 
+This behaviour has been seen on AWS and Digital Ocean.
 
-Workaround -> On AWS, a full restart of the AWS VM is required to restart the fast sync. 
+Workaround -> On AWS, a full restart of the AWS VM is required to restart the fast sync.
 
-Fast sync is not currently supported on Digital Ocean. We are investigating options to 
-[add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591). 
+Fast sync is not currently supported on Digital Ocean. We are investigating options to
+[add support for fast sync on Digital Ocean](https://github.com/hyperledger/besu/issues/591).
 
 #### Error full syncing with pruning
 
@@ -371,19 +411,19 @@ Workarounds:
 
 A fix for this issue is being actively worked on.
 
-#### Fast sync reverting to full sync 
+#### Fast sync reverting to full sync
 
-In some cases of FastSyncException, fast sync reverts back to a full sync before having reached the 
+In some cases of FastSyncException, fast sync reverts back to a full sync before having reached the
 pivot block. [\#683](https://github.com/hyperledger/besu/issues/683)
 
-Workaround -> To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your 
+Workaround -> To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your
 database, and start again.
 
 #### Bootnodes must be validators when using onchain permissioning
 
 - Onchain permissioning nodes can't peer when using a non-validator bootnode [\#528](https://github.com/hyperledger/besu/issues/528)
 
-Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators.
 
 
 ## 1.4.2
@@ -398,13 +438,13 @@ Workaround -> When using onchain permissioning, ensure bootnodes are also valida
 - Fixed file parsing behaviour for privacy enclave keystore password file [\#554](https://github.com/hyperledger/besu/pull/554) (thanks to [magooster](https://github.com/magooster))
 - Fixed known issue with being unable to re-add members to onchain privacy groups [\#471](https://github.com/hyperledger/besu/pull/471)
 
-### Updated Early Access Features 
+### Updated Early Access Features
 
 * [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. Known issue resolved (see above).
-* [TRACE API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) now includes `trace_block`, `trace_replayBlockTransactions`, and `trace_transaction`. 
-Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522). 
+* [TRACE API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) now includes `trace_block`, `trace_replayBlockTransactions`, and `trace_transaction`.
+Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522).
 
-### Known Issues 
+### Known Issues
 
 #### Fast sync defaulting to full sync
 
@@ -435,11 +475,11 @@ A fix for this issue is being actively worked on.
 
 - Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
 
-Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators.
 
 ## 1.4.1
 
-### Additions and Improvements 
+### Additions and Improvements
 
 - Added priv_getCode [\#250](https://github.com/hyperledger/besu/pull/408). Gets the bytecode associated with a private address.
 - Added `trace_transaction` JSON RPC API [\#441](https://github.com/hyperledger/besu/pull/441)
@@ -451,7 +491,7 @@ Workaround -> When using onchain permissioning, ensure bootnodes are also valida
 - [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
 - Fixed a bug to manage concurrent access to cache files [\#438](https://github.com/hyperledger/besu/pull/438)
 - Fixed configuration file bug: `pruning-blocks-retained` now accepts an integer in the config [\#440](https://github.com/hyperledger/besu/pull/440)
-- Specifying RPC credentials file should not force RPC Authentication to be enabled [\#454](https://github.com/hyperledger/besu/pull/454) 
+- Specifying RPC credentials file should not force RPC Authentication to be enabled [\#454](https://github.com/hyperledger/besu/pull/454)
 - Enhanced estimateGas messages [\#436](https://github.com/hyperledger/besu/pull/436). When a estimateGas request fails a validation check, an improved error message is returned in the response.
 
 ### Early Access Features
@@ -459,11 +499,11 @@ Workaround -> When using onchain permissioning, ensure bootnodes are also valida
 Early access features are available features that are not recommended for production networks and may
 have unstable interfaces.
 
-* [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. 
-  Not being able to to re-add a member to an onchain privacy group is a [known issue](https://github.com/hyperledger/besu/issues/455) 
-  with the add and remove functionality. 
+* [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members.
+  Not being able to to re-add a member to an onchain privacy group is a [known issue](https://github.com/hyperledger/besu/issues/455)
+  with the add and remove functionality.
 
-### Known Issues 
+### Known Issues
 
 #### Fast sync defaulting to full sync
 
@@ -494,7 +534,7 @@ Investigation of this issue is in progress and a fix is targeted for v1.4.1.
 
 - Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
 
-Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators.
 
 ## 1.4.0
 
@@ -567,7 +607,7 @@ Investigation of this issue is in progress and a fix is targeted for v1.4.1.
 
 - Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
 
-Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators.
 
 
 ## 1.4.0 RC-2

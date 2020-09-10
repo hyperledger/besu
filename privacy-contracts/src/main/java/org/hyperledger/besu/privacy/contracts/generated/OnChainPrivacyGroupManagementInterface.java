@@ -102,7 +102,7 @@ public class OnChainPrivacyGroupManagementInterface extends Contract {
     super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> addParticipants(List<byte[]> participants) {
+  public RemoteFunctionCall<TransactionReceipt> addParticipants(List<byte[]> publicEnclaveKeys) {
     final Function function =
         new Function(
             FUNC_ADDPARTICIPANTS,
@@ -110,7 +110,7 @@ public class OnChainPrivacyGroupManagementInterface extends Contract {
                 new org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.generated.Bytes32>(
                     org.web3j.abi.datatypes.generated.Bytes32.class,
                     org.web3j.abi.Utils.typeMap(
-                        participants, org.web3j.abi.datatypes.generated.Bytes32.class))),
+                        publicEnclaveKeys, org.web3j.abi.datatypes.generated.Bytes32.class))),
             Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallTransaction(function);
   }
@@ -164,11 +164,11 @@ public class OnChainPrivacyGroupManagementInterface extends Contract {
     return executeRemoteCallTransaction(function);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> removeParticipant(byte[] account) {
+  public RemoteFunctionCall<TransactionReceipt> removeParticipant(byte[] participant) {
     final Function function =
         new Function(
             FUNC_REMOVEPARTICIPANT,
-            Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(account)),
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(participant)),
             Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallTransaction(function);
   }

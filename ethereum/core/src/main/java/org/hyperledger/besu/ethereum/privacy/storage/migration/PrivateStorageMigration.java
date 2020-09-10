@@ -166,7 +166,7 @@ public class PrivateStorageMigration {
         new PrivacyGroupHeadBlockMap(
             privateStateStorage
                 .getPrivacyGroupHeadBlockMap(blockHeader.getParentHash())
-                .orElse(PrivacyGroupHeadBlockMap.EMPTY));
+                .orElse(PrivacyGroupHeadBlockMap.empty()));
 
     privateStateStorage
         .updater()

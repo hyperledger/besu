@@ -68,7 +68,10 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
 
-    maximumPossibleCommonAncestorNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
+    maximumPossibleCommonAncestorNumber =
+        Math.min(
+            protocolContext.getBlockchain().getChainHeadBlockNumber(),
+            peer.chainState().getEstimatedHeight());
     minimumPossibleCommonAncestorNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
     commonAncestorCandidate =
         protocolContext.getBlockchain().getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();

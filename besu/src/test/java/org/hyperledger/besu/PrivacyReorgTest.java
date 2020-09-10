@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
@@ -53,15 +54,8 @@ import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
-import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
@@ -71,7 +65,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -87,11 +80,6 @@ import org.junit.rules.TemporaryFolder;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
-  private static final int MAX_OPEN_FILES = 1024;
-  private static final long CACHE_CAPACITY = 8388608;
-  private static final int MAX_BACKGROUND_COMPACTIONS = 4;
-  private static final int BACKGROUND_THREAD_COUNT = 4;
-
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   private static final SECP256K1.KeyPair KEY_PAIR =
@@ -149,13 +137,12 @@ public class PrivacyReorgTest {
 
     // Create Storage
     final Path dataDir = folder.newFolder().toPath();
-    final Path dbDir = dataDir.resolve("database");
 
     // Configure Privacy
     privacyParameters =
         new PrivacyParameters.Builder()
             .setEnabled(true)
-            .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
+            .setStorageProvider(createKeyValueStorageProvider())
             .setEnclaveUrl(enclave.clientUrl())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .build();
@@ -396,23 +383,8 @@ public class PrivacyReorgTest {
         .importBlock(protocolContext, block, HeaderValidationMode.NONE);
   }
 
-  private PrivacyStorageProvider createKeyValueStorageProvider(
-      final Path dataLocation, final Path dbLocation) {
-    return new PrivacyKeyValueStorageProviderBuilder()
-        .withStorageFactory(
-            new RocksDBKeyValuePrivacyStorageFactory(
-                new RocksDBKeyValueStorageFactory(
-                    () ->
-                        new RocksDBFactoryConfiguration(
-                            MAX_OPEN_FILES,
-                            MAX_BACKGROUND_COMPACTIONS,
-                            BACKGROUND_THREAD_COUNT,
-                            CACHE_CAPACITY),
-                    Arrays.asList(KeyValueSegmentIdentifier.values()),
-                    RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
-        .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
-        .withMetricsSystem(new NoOpMetricsSystem())
-        .build();
+  private PrivacyStorageProvider createKeyValueStorageProvider() {
+    return new InMemoryPrivacyStorageProvider();
   }
 
   private Bytes getEnclaveKey(final URI enclaveURI) {

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 public class MetricsCLIOptionsTest
