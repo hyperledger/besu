@@ -32,7 +32,7 @@ public class TransactionRLPEncoder {
   private static final ImmutableMap<TransactionType, Encoder> ENCODERS =
       ImmutableMap.of(TransactionType.FRONTIER, FRONTIER, TransactionType.EIP1559, EIP1559);
 
-  public static void encode(Transaction transaction, RLPOutput output) {
+  public static void encode(final Transaction transaction, final RLPOutput output) {
     ENCODERS.getOrDefault(transaction.getType(), FRONTIER).encode(transaction, output);
   }
 
