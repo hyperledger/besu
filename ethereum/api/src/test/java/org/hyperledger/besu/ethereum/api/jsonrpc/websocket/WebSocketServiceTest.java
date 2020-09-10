@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -47,7 +48,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 
 @RunWith(VertxUnitRunner.class)
 public class WebSocketServiceTest {
@@ -77,7 +77,7 @@ public class WebSocketServiceTest {
             new WebSocketRequestHandler(
                 vertx,
                 websocketMethods,
-                Mockito.mock(EthScheduler.class),
+                mock(EthScheduler.class),
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
