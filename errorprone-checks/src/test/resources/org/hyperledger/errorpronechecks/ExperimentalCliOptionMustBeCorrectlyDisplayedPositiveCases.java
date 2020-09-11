@@ -19,19 +19,25 @@ import picocli.CommandLine;
 
 import java.util.Objects;
 
-public class ExperimentalCliOptionNotHiddenNegativeCases {
+public class ExperimentalCliOptionMustBeCorrectlyDisplayedPositiveCases {
 
+  // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the BesuCommand class.
   @CommandLine.Option(
-          hidden = true,
+          hidden = false,
           names = {"--Xexperimental"})
   private String experimental = "";
 
+  // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the BesuCommand class.
   @CommandLine.Option(
-          hidden = false,
-          names = {"--notExperimental"})
-  private String notExperimental = "";
+          names = {"--Xexperimental2"})
+  private String experimental2 = "";
 
-  @CommandLine.Option(
-          names = {"--notExperimental2"})
-  private String notExperimental2 = "";
+  private class BesuCommand {
+
+    // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the BesuCommand class.
+    @CommandLine.Option(
+            names = {"--XexperimentalInBesuCommandClass"})
+    private String experimentalInBesuCommandClass = "";
+  }
+
 }
