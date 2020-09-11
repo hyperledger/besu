@@ -316,7 +316,6 @@ public class BlockPropagationManager {
       final Block block,
       final BlockHeader parent,
       final BadBlockManager badBlockManager) {
-    System.out.println("ici2");
     if (blockHeaderValidator.validateHeader(
         block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
