@@ -3,6 +3,7 @@
 ## 1.5.5
 
 ### Additions and Improvements
+* The new version of the [web3js-eea library (v0.10)](https://github.com/PegaSysEng/web3js-eea) supports the onchain privacy group management changes made in Besu v1.5.3.     
 
 ### Bug Fixes
 * Fix logs queries missing results against chain head [\#1351](https://github.com/hyperledger/besu/pull/1351)
@@ -25,7 +26,6 @@ Will be added upon release. Snapshot builds are available to download at https:/
 * Added `priv_debugGetStateRoot` JSON-RPC API to retrieve the state root of a specified privacy group. [\#1326](https://github.com/hyperledger/besu/pull/1326)
 * Added reorg logging and `--reorg-logging-threshold` to configure the same. Besu now logs any reorgs where the old or new chain head is more than the threshold away from their common ancestors. The default is 6.
 * Added `debug_batchSendRawTransaction` JSON-RPC API to submit multiple signed transactions with a single call. [\#1350](https://github.com/hyperledger/besu/pull/1350)
-* The new version of the [web3js-eea library (v0.10)](https://github.com/PegaSysEng/web3js-eea) supports the onchain privacy group management changes made in Besu v1.5.3.     
 
 ### Bug Fixes
 
