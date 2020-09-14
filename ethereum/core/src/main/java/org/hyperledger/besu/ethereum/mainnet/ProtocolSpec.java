@@ -102,6 +102,7 @@ public class ProtocolSpec {
    * @param transactionPriceCalculator the transaction price calculator to use.
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @param gasBudgetCalculator the gas budget calculator to use.
+   * @param badBlockManager the cache to use to keep invalid blocks
    */
   public ProtocolSpec(
       final String name,
