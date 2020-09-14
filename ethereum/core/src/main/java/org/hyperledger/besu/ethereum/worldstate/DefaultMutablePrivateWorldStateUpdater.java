@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -58,7 +58,7 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
     }
     final EvmAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
-      ((DefaultEvmAccount) publicAccount).setImmutable(true); // FIXME
+      ((WrappedEvmAccount) publicAccount).setImmutable(true); // FIXME
       return publicAccount;
     }
     return privateAccount;
@@ -70,7 +70,7 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public Collection<Account> getTouchedAccounts() {
+  public Collection<? extends Account> getTouchedAccounts() {
     return privateWorldUpdater.getTouchedAccounts();
   }
 

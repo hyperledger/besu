@@ -92,7 +92,7 @@ public interface WorldUpdater extends MutableWorldView {
    *
    * @return the accounts that have been touched within the scope of this updater
    */
-  Collection<Account> getTouchedAccounts();
+  Collection<? extends Account> getTouchedAccounts();
 
   /**
    * Returns the account addresses that have been deleted within the scope of this updater.

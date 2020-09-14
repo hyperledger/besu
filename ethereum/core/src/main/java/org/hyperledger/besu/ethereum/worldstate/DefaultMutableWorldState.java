@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -365,7 +366,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public Collection<Account> getTouchedAccounts() {
+    public Collection<? extends Account> getTouchedAccounts() {
       return new ArrayList<>(updatedAccounts());
     }
 

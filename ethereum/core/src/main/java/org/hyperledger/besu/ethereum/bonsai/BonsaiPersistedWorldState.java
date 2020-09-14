@@ -94,10 +94,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState {
   public Bytes getCode(final Address address, final Hash codeHash) {
     var localCode = updatedCode.get(address);
     if (localCode == null) {
-      return codeStorage
-          .get(address.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .orElse(Bytes.EMPTY);
+      return codeStorage.get(address.toArrayUnsafe()).map(Bytes::wrap).orElse(Bytes.EMPTY);
     } else {
       return localCode.getUpdated();
     }
@@ -380,11 +377,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState {
 
     @Override
     public void deleteAccount(final Address address) {
-//      System.out.printf("%n");
+      //      System.out.printf("%n");
     }
 
     @Override
-    public Collection<Account> getTouchedAccounts() {
+    public Collection<? extends Account> getTouchedAccounts() {
       return updatedAccounts.values().stream()
           .map(BonsaiValue::touched)
           .collect(Collectors.toList());
@@ -397,12 +394,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState {
 
     @Override
     public void revert() {
-//      System.out.printf("%n");
+      //      System.out.printf("%n");
     }
 
     @Override
     public void commit() {
-//      System.out.printf("%n");
+      //      System.out.printf("%n");
     }
 
     @Override
