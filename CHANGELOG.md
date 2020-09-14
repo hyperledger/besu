@@ -5,6 +5,7 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+* Added `debug_getBadBlocks` JSON-RPC API to analyze and detect consensus flaws. Even if a block is rejected it will be returned by this method [\#1378](https://github.com/hyperledger/besu/pull/1378)
 * Fix logs queries missing results against chain head [\#1351](https://github.com/hyperledger/besu/pull/1351)
 
 #### Previously identified known issues
