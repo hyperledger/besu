@@ -279,7 +279,7 @@ public class BlocksSubCommand implements Runnable {
     private void importRlpBlocks(final BesuController controller, final Path path)
         throws IOException {
       try (final RlpBlockImporter rlpBlockImporter = parentCommand.rlpBlockImporter.get()) {
-        rlpBlockImporter.importBlockchain(path, controller, skipPow, startBlock, endBlock);
+        rlpBlockImporter.importBlockchain(path, controller, skipPow);
       }
     }
   }
