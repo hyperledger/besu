@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.apache.tuweni.bytes.Bytes;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.Test;
 
 /*
  * Copyright ConsenSys AG.
