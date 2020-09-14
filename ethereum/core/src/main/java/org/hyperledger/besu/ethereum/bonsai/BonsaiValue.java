@@ -16,29 +16,28 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import javax.annotation.Nullable;
+public class BonsaiValue<T> {
+  private final T original;
+  private T updated;
 
-import org.immutables.value.Value;
-
-@Value.Immutable
-@Value.Style(allParameters = true)
-public interface BonsaiValue<T> {
-  @Nullable
-  T getOriginal();
-
-  @Nullable
-  T getUpdated();
-
-  default T touched() {
-    final T value = getUpdated();
-    return value == null ? getOriginal() : value;
+  public BonsaiValue(final T original, final T updated) {
+    this.original = original;
+    this.updated = updated;
   }
 
-  default BonsaiValue<T> merge(final BonsaiValue<T> original, final BonsaiValue<T> updated) {
-    return ImmutableBonsaiValue.of(original.getOriginal(), updated.getUpdated());
+  public T getOriginal() {
+    return original;
   }
 
-  default BonsaiValue<T> revise(final T updated) {
-    return ImmutableBonsaiValue.of(getOriginal(), updated);
+  public T getUpdated() {
+    return updated;
+  }
+
+  public void setUpdated(final T updated) {
+    this.updated = updated;
+  }
+
+  T effective() {
+    return updated == null ? original : updated;
   }
 }

@@ -68,12 +68,23 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)
-    //        || worldStateRootHash
-    //            .toHexString()
-    //            .equals("0xfe77dd4ad7c2a3fa4c11868a00e4d728adcdfef8d2e3c13b256b06cbdbb02ec9")) {
-    ) {
+    if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
       LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
+      receipts.forEach(
+          receipt ->
+              LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
+      context
+          .getWorldStateArchive()
+          .getMutable(worldStateRootHash)
+          .orElseThrow()
+          .dumpTrie(System.out);
+      return false;
+    }
+    if (block.getHeader().getNumber() >= 10000000) {
+      //        || worldStateRootHash.toHexString()
+      // .equals("0x795a73aaff709bd7c66207562abee6eefd00886d1f174a33ea453113b1e5123b")) {
+      //    ) {
+      LOG.warn("Stopping for Comparison");
       receipts.forEach(
           receipt ->
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
@@ -102,6 +113,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
+    //    if (!receipts.isEmpty()) {
+    //      System.out.println("Receipts for " + header.getNumber());
+    //      System.out.println(receipts);
+    //    }
     final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
     if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
       return false;
@@ -172,6 +187,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       LOG.warn("Invalid block: state root mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
+//    if (expected
+//        .toHexString()
+//        .equals("0x805e016ee27554ac1af7e1acd38088c55b89e8ef79916617dfbfe50e41ed1eaf")) {
+//      LOG.warn("Stopping here for comparison.");
+//      return false;
+//    }
 
     return true;
   }

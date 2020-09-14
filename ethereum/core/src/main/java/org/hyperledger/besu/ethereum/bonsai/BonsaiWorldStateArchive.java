@@ -67,7 +67,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       return Optional.of(persistedState);
     } else {
 
-      System.out.println(persistedState.rootHash());
+      //      System.out.println(persistedState.rootHash());
       return Optional.empty();
     }
   }

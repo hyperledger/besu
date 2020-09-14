@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.trie.DumpVisitor;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
@@ -198,8 +197,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public void dumpTrie(final PrintStream out) {
-    ((StoredMerklePatriciaTrie<Bytes32, Bytes>) accountStateTrie)
-        .acceptAtRoot(new DumpVisitor<>(out));
+    //    System.out.println("World State Trie Dump");
+    //    ((StoredMerklePatriciaTrie<Bytes32, Bytes>) accountStateTrie)
+    //        .acceptAtRoot(new DumpVisitor<>(out));
   }
 
   private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {

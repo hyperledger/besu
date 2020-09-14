@@ -23,12 +23,14 @@ import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
+import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -49,26 +51,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private Bytes code;
   private int version;
 
-  private BonsaiAccount(
-      final BonsaiPersistedWorldState context,
-      final Address address,
-      final Hash addressHash,
-      final long nonce,
-      final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
-      final int version) {
-    this.context = context;
-    this.address = address;
-    this.addressHash = addressHash;
-    this.nonce = nonce;
-    this.balance = balance;
-    this.storageRoot = storageRoot;
-    this.codeHash = codeHash;
-    this.version = version;
-
-    mutable = false;
-  }
+  private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
+  private boolean strorageWasCleared;
 
   BonsaiAccount(
       final BonsaiPersistedWorldState context,
@@ -92,17 +76,37 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  private BonsaiAccount(final BonsaiAccount account, final boolean mutable) {
-    this.context = account.context;
-    this.address = account.address;
-    this.addressHash = account.addressHash;
-    this.nonce = account.nonce;
-    this.balance = account.balance;
-    this.storageRoot = account.storageRoot;
-    this.codeHash = account.codeHash;
-    this.version = account.version;
+  public BonsaiAccount(final BonsaiPersistedWorldState context, final BonsaiAccount toCopy) {
+    this.context = context;
+    this.address = toCopy.getAddress();
+    this.addressHash = toCopy.getAddressHash();
+    this.nonce = toCopy.getNonce();
+    this.balance = toCopy.getBalance();
+    this.storageRoot = Hash.EMPTY_TRIE_HASH;
+    this.codeHash = toCopy.getCodeHash();
+    this.code = toCopy.getCode();
+    this.version = toCopy.getVersion();
+    updatedStorage.putAll(toCopy.getUpdatedStorage());
+    strorageWasCleared = toCopy.strorageWasCleared;
 
-    this.mutable = mutable;
+    this.mutable = false;
+  }
+
+  public BonsaiAccount(
+      final BonsaiPersistedWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+    this.context = context;
+    this.address = tracked.getAddress();
+    this.addressHash = tracked.getAddressHash();
+    this.nonce = tracked.getNonce();
+    this.balance = tracked.getBalance();
+    this.storageRoot = Hash.EMPTY_TRIE_HASH;
+    this.codeHash = tracked.getCodeHash();
+    this.code = tracked.getCode();
+    this.version = tracked.getVersion();
+    updatedStorage.putAll(tracked.getUpdatedStorage());
+    strorageWasCleared = tracked.getStorageWasCleared();
+
+    this.mutable = true;
   }
 
   static BonsaiAccount fromRLP(
@@ -254,17 +258,21 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     if (!mutable) {
       throw new UnsupportedOperationException("Account is immutable");
     }
-    context.setStorageValue(address, key, value);
+    updatedStorage.put(key, value);
   }
 
   @Override
   public void clearStorage() {
-    // FIXME throw new RuntimeException("LOL no");
+    updatedStorage.clear();
+  }
+
+  public boolean getStrorageWasCleared() {
+    return strorageWasCleared;
   }
 
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
-    return null;
+    return updatedStorage;
   }
 
   @Override
@@ -274,10 +282,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     } else {
       throw new ModificationNotAllowedException();
     }
-  }
-
-  public MutableAccount mutableCopy() {
-    return new BonsaiAccount(this, true);
   }
 
   public Hash getStorageRoot() {
