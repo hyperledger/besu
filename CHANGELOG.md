@@ -3,6 +3,7 @@
 ## 1.5.5
 
 ### Additions and Improvements
+* The new version of the [web3js-eea library (v0.10)](https://github.com/PegaSysEng/web3js-eea) supports the onchain privacy group management changes made in Besu v1.5.3.     
 
 ### Bug Fixes
 * Fix logs queries missing results against chain head [\#1351](https://github.com/hyperledger/besu/pull/1351)
