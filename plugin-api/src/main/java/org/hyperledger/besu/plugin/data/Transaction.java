@@ -190,4 +190,18 @@ public interface Transaction {
   default boolean isEIP1559Transaction() {
     return false;
   }
+
+  /**
+   * Returns the type of the transaction.
+   *
+   * @return the type of the transaction
+   */
+  @Unstable
+  default TransactionType getType() {
+    if (isEIP1559Transaction()) {
+      return TransactionType.EIP1559;
+    } else {
+      return TransactionType.FRONTIER;
+    }
+  }
 }
