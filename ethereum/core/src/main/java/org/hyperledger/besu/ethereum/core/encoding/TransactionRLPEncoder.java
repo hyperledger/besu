@@ -42,7 +42,7 @@ public class TransactionRLPEncoder {
       out.writeLongScalar(transaction.getNonce());
       out.writeUInt256Scalar(transaction.getGasPrice());
       out.writeLongScalar(transaction.getGasLimit());
-      out.writeBytes(transaction.getTo().isPresent() ? transaction.getTo().get() : Bytes.EMPTY);
+      out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
       out.writeUInt256Scalar(transaction.getValue());
       out.writeBytes(transaction.getPayload());
       writeSignature(transaction, out);
@@ -61,7 +61,7 @@ public class TransactionRLPEncoder {
       out.writeLongScalar(transaction.getNonce());
       out.writeNull();
       out.writeLongScalar(transaction.getGasLimit());
-      out.writeBytes(transaction.getTo().isPresent() ? transaction.getTo().get() : Bytes.EMPTY);
+      out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
       out.writeUInt256Scalar(transaction.getValue());
       out.writeBytes(transaction.getPayload());
       out.writeUInt256Scalar(
