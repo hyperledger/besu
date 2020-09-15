@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -23,6 +22,7 @@ import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionRLPEncoder {
 
@@ -42,7 +42,7 @@ public class TransactionRLPEncoder {
       out.writeLongScalar(transaction.getNonce());
       out.writeUInt256Scalar(transaction.getGasPrice());
       out.writeLongScalar(transaction.getGasLimit());
-      out.writeBytes(transaction.getTo().orElse(Address.ZERO));
+      out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
       out.writeUInt256Scalar(transaction.getValue());
       out.writeBytes(transaction.getPayload());
       writeSignature(transaction, out);
@@ -61,7 +61,7 @@ public class TransactionRLPEncoder {
       out.writeLongScalar(transaction.getNonce());
       out.writeNull();
       out.writeLongScalar(transaction.getGasLimit());
-      out.writeBytes(transaction.getTo().orElse(Address.ZERO));
+      out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
       out.writeUInt256Scalar(transaction.getValue());
       out.writeBytes(transaction.getPayload());
       out.writeUInt256Scalar(
