@@ -21,11 +21,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BadBlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DebugGetBadBlocks implements JsonRpcMethod {
 
@@ -49,18 +48,11 @@ public class DebugGetBadBlocks implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final List<BadBlockResult> response = new ArrayList<>();
-    final BadBlockManager badBlockManager =
-        protocolSchedule.getByBlockNumber(blockchain.headBlockNumber()).getBadBlocksManager();
-    badBlockManager
-        .getBadBlocks()
-        .forEach(
-            block ->
-                response.add(
-                    new BadBlockResult(
-                        blockResultFactory.transactionComplete(block),
-                        block.getHash(),
-                        block.toRlp())));
+    final List<BadBlockResult> response =
+        protocolSchedule.getByBlockNumber(blockchain.headBlockNumber()).getBadBlocksManager()
+            .getBadBlocks().stream()
+            .map(block -> BadBlockResult.from(blockResultFactory.transactionComplete(block), block))
+            .collect(Collectors.toList());
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 }

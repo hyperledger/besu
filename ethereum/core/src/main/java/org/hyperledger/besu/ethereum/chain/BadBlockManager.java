@@ -17,31 +17,31 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collection;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 public class BadBlockManager {
 
-  private final Map<Hash, Block> badBlocks = new ConcurrentHashMap<>();
+  private final Cache<Hash, Block> badBlocks =
+      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
 
   /**
    * Add a new invalid block.
    *
    * @param badBlock the invalid block
-   * @return true if the block was added (was not previously present)
    */
-  public boolean addBadBlock(final Block badBlock) {
-    return badBlock != null && this.badBlocks.putIfAbsent(badBlock.getHash(), badBlock) == null;
+  public void addBadBlock(final Block badBlock) {
+    this.badBlocks.put(badBlock.getHash(), badBlock);
   }
 
   /**
    * Return all invalid blocks
    *
-   * @return a list of invalid blocks
+   * @return a collection of invalid blocks
    */
-  public List<Block> getBadBlocks() {
-    return new ArrayList<>(badBlocks.values());
+  public Collection<Block> getBadBlocks() {
+    return badBlocks.asMap().values();
   }
 }

@@ -14,37 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Block;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.tuweni.bytes.Bytes;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
+@Value.Immutable
+@Value.Style(allParameters = true)
+@JsonSerialize(as = ImmutableBadBlockResult.class)
+@JsonDeserialize(as = ImmutableBadBlockResult.class)
 @JsonPropertyOrder({"block", "hash", "rlp"})
-public class BadBlockResult {
+public interface BadBlockResult {
 
-  private final BlockResult blockResult;
-  private final String hash;
-  private final String rlp;
+  @JsonProperty("block")
+  BlockResult getBlockResult();
 
-  public BadBlockResult(final BlockResult blockResult, final Hash hash, final Bytes rlp) {
-    this.blockResult = blockResult;
-    this.hash = hash.toString();
-    this.rlp = rlp.toHexString();
-  }
+  @JsonProperty("hash")
+  String getHash();
 
-  @JsonGetter(value = "block")
-  public BlockResult getBlockResult() {
-    return blockResult;
-  }
+  @JsonProperty("rlp")
+  String getRlp();
 
-  @JsonGetter(value = "hash")
-  public String getHash() {
-    return hash;
-  }
-
-  @JsonGetter(value = "rlp")
-  public String getRlp() {
-    return rlp;
+  static BadBlockResult from(final BlockResult blockResult, final Block block) {
+    return ImmutableBadBlockResult.of(
+        blockResult, block.getHash().toHexString(), block.toRlp().toHexString());
   }
 }

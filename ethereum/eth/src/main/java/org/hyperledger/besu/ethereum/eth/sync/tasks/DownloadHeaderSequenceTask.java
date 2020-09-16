@@ -206,6 +206,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               // Invalid headers - disconnect from peer
 
               final BlockHeader invalidBlock = child;
+              // even though the header is known bad we are downloading the block body for the
+              // debug_badBlocks RPC
               final AbstractPeerTask<Block> getBlockTask =
                   GetBlockFromPeerTask.create(
                           protocolSchedule,
