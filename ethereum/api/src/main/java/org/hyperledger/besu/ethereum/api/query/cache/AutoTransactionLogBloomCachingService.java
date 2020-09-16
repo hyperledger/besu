@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.query.cache;
 import static org.hyperledger.besu.ethereum.api.query.cache.LogBloomCacheMetadata.DEFAULT_VERSION;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,10 +66,14 @@ public class AutoTransactionLogBloomCachingService {
               blockchain.observeBlockAdded(
                   event -> {
                     if (event.isNewCanonicalHead()) {
+                      final BlockHeader eventBlockHeader = event.getBlock().getHeader();
+                      final Optional<BlockHeader> commonAncestorBlockHeader =
+                          blockchain.getBlockHeader(event.getCommonAncestorHash());
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          event.getBlock().getHeader(), Optional.empty());
+                          eventBlockHeader, commonAncestorBlockHeader, Optional.empty());
                     }
                   }));
+
       transactionLogBloomCacher
           .getScheduler()
           .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));

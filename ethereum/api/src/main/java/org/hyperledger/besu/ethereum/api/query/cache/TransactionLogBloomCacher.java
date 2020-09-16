@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.io.File;
@@ -110,7 +111,9 @@ public class TransactionLogBloomCacher {
           blockchain
               .getBlockHeader(blockNum)
               .ifPresent(
-                  blockHeader -> cacheLogsBloomForBlockHeader(blockHeader, Optional.of(cacheFile)));
+                  blockHeader ->
+                      cacheLogsBloomForBlockHeader(
+                          blockHeader, Optional.empty(), Optional.of(cacheFile)));
           fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, cacheFile);
         }
       } catch (final Exception e) {
@@ -141,7 +144,9 @@ public class TransactionLogBloomCacher {
   }
 
   void cacheLogsBloomForBlockHeader(
-      final BlockHeader blockHeader, final Optional<File> reusedCacheFile) {
+      final BlockHeader blockHeader,
+      final Optional<BlockHeader> commonAncestorBlockHeader,
+      final Optional<File> reusedCacheFile) {
     try {
       if (cachingStatus.cachingCount.incrementAndGet() != 1) {
         return;
@@ -151,6 +156,22 @@ public class TransactionLogBloomCacher {
       final File cacheFile = reusedCacheFile.orElse(calculateCacheFileName(blockNumber, cacheDir));
       if (cacheFile.exists()) {
         try {
+          final Optional<Long> ancestorBlockNumber =
+              commonAncestorBlockHeader.map(ProcessableBlockHeader::getNumber);
+          if (ancestorBlockNumber.isPresent()) {
+            for (long number = ancestorBlockNumber.get() + 1;
+                number < blockHeader.getNumber();
+                number++) {
+              Optional<BlockHeader> ancestorBlockHeader = blockchain.getBlockHeader(number);
+              if (ancestorBlockHeader.isPresent()) {
+                LOG.info(
+                    "Restore old block {} {}",
+                    ancestorBlockHeader.get().getNumber(),
+                    ancestorBlockHeader.get().getHash());
+                cacheSingleBlock(ancestorBlockHeader.get(), cacheFile);
+              }
+            }
+          }
           cacheSingleBlock(blockHeader, cacheFile);
         } catch (final InvalidCacheException e) {
           populateLatestSegment(blockNumber);
