@@ -159,15 +159,13 @@ public class TransactionLogBloomCacher {
           final Optional<Long> ancestorBlockNumber =
               commonAncestorBlockHeader.map(ProcessableBlockHeader::getNumber);
           if (ancestorBlockNumber.isPresent()) {
+            // walk through the blocks from the common ancestor to the received block in order to
+            // reload the cache in case of reorg
             for (long number = ancestorBlockNumber.get() + 1;
                 number < blockHeader.getNumber();
                 number++) {
               Optional<BlockHeader> ancestorBlockHeader = blockchain.getBlockHeader(number);
               if (ancestorBlockHeader.isPresent()) {
-                LOG.info(
-                    "Restore old block {} {}",
-                    ancestorBlockHeader.get().getNumber(),
-                    ancestorBlockHeader.get().getHash());
                 cacheSingleBlock(ancestorBlockHeader.get(), cacheFile);
               }
             }
