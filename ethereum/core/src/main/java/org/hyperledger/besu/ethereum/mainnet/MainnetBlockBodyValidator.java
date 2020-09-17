@@ -80,7 +80,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
           .dumpTrie(System.out);
       return false;
     }
-    if (block.getHeader().getNumber() >= 12841) {
+    if (block.getHeader().getNumber() >= 7556270) {
       //        || worldStateRootHash.toHexString()
       // .equals("0x795a73aaff709bd7c66207562abee6eefd00886d1f174a33ea453113b1e5123b")) {
       //    ) {
@@ -97,7 +97,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-//    LOG.trace("Validated block #{}", block.getHeader().getNumber());
+    LOG.trace("Validated block #{}", block.getHeader().getNumber());
     return true;
   }
 
@@ -115,13 +115,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!receipts.isEmpty() && header.getNumber() == 755627) {
+    if (!receipts.isEmpty()) {
       LOG.trace("Receipts for " + header.getNumber());
       LOG.trace(receipts);
     }
     final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)
-        || header.getNumber() == 755627) {
+    if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
 

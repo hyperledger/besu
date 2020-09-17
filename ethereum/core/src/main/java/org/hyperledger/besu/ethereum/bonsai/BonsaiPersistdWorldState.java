@@ -119,6 +119,36 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     final KeyValueStorageTransaction trieBranchTx = trieBranchStorage.startTransaction();
     try {
 
+      for (final Address address : storageToClear) {
+        LOG.trace(" clearing - {}", address.toHexString());
+        // because we are clearing persisted values we need the account root as persisted
+        final BonsaiAccount oldAccount = (BonsaiAccount) accountStorage
+            .get(address.toArrayUnsafe())
+            .map(bytes -> fromRLP(BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes), true))
+            .orElse(null);
+        if (oldAccount == null) {
+          // This is when an account is both created and deleted within the scope of the same
+          // transaction.  A not-uncommon DeFi bot pattern.
+          continue;
+        }
+        final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+            new StoredMerklePatriciaTrie<>(
+                key -> getStorageTrieNode(address, key),
+                oldAccount.getStorageRoot(),
+                Function.identity(),
+                Function.identity());
+        var entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+        while (!entriesToDelete.isEmpty()) {
+          entriesToDelete.keySet().forEach(k -> storageTx.remove(Bytes.concatenate(address, k).toArrayUnsafe()));
+          if (entriesToDelete.size() == 256) {
+            entriesToDelete.keySet().forEach(storageTrie::remove);
+            entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+          } else {
+            break;
+          }
+        }
+      }
+
       for (final Map.Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>> storageAccountUpdate :
           storageToUpdate.entrySet()) {
         final Address updatedAddress = storageAccountUpdate.getKey();
@@ -136,15 +166,17 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           for (final Map.Entry<Bytes32, BonsaiValue<UInt256>> storageUpdate :
               storageAccountUpdate.getValue().entrySet()) {
             final Bytes32 storageUpdateKey = storageUpdate.getKey();
-            storageUpdateKey.copyTo(writeAddressBytes, Address.SIZE);
+            Hash.hash(storageUpdateKey).copyTo(writeAddressBytes, Address.SIZE);
             final Hash keyHash = Hash.hash(storageUpdateKey);
             final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
             if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+              LOG.trace(" - write {} -> delete", writeAddressBytes.toHexString());
               storageTx.remove(writeAddressArray);
               storageTrie.remove(keyHash);
             } else {
               // TODO update state hash?
               final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
+              LOG.trace(" - write {} -> {}", writeAddressBytes.toHexString(), updatedStorageBytes.toShortHexString());
               storageTx.put(writeAddressArray, updatedStorageBytes.toArrayUnsafe());
               storageTrie.put(keyHash, rlpEncode(updatedStorageBytes));
             }
@@ -194,6 +226,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         codeTx.commit();
         storageTx.commit();
         trieBranchTx.commit();
+        storageToClear.clear();
         storageToUpdate.clear();
         codeToUpdate.clear();
         accountsToUpdate.clear();
@@ -294,13 +327,15 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     if (value != null) {
       return value.getUpdated();
     }
-    final byte[] key = Bytes.concatenate(address, storageKeyBytes).toArrayUnsafe();
-    final Optional<byte[]> valueBits = storageStorage.get(key);
+    final Bytes compositeKey = Bytes.concatenate(address, Hash.hash(storageKeyBytes));
+    final Optional<byte[]> valueBits = storageStorage.get(compositeKey.toArrayUnsafe());
     if (valueBits.isPresent()) {
       final UInt256 valueUInt = UInt256.fromBytes(Bytes.wrap(valueBits.get()));
       localAccountStorage.put(storageKeyBytes, new BonsaiValue<>(valueUInt, valueUInt));
+      LOG.trace(" - read {} -> {}", compositeKey.toHexString(), valueUInt.toShortHexString());
       return valueUInt;
     } else {
+      LOG.trace(" - read {} -> empty", compositeKey.toHexString());
       return UInt256.ZERO;
     }
   }
@@ -458,7 +493,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           pendingStorageUpdates.clear();
         }
 
-        var entries =
+        final var entries =
             new TreeSet<>(
                 Comparator.comparing((Function<Entry<UInt256, UInt256>, UInt256>) Entry::getKey));
         entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
@@ -472,7 +507,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
             // if it existed before it would have been loaded, so it's a new create
             pendingStorageUpdates.put(key, new BonsaiValue<>(null, value));
           } else {
-            var original = pendingValue.getOriginal();
+            final var original = pendingValue.getOriginal();
             LOG.trace(
                 " {} : {} -> {}",
                 key.toShortHexString(),
