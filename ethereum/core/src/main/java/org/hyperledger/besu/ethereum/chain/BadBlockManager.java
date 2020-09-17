@@ -33,7 +33,9 @@ public class BadBlockManager {
    * @param badBlock the invalid block
    */
   public void addBadBlock(final Block badBlock) {
-    this.badBlocks.put(badBlock.getHash(), badBlock);
+    if (badBlock != null) {
+      this.badBlocks.put(badBlock.getHash(), badBlock);
+    }
   }
 
   /**
