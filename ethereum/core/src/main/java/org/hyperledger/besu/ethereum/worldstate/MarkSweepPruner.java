@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -146,18 +145,12 @@ public class MarkSweepPruner {
                 .setNameFormat(this.getClass().getSimpleName() + "-%d")
                 .build(),
             new ThreadPoolExecutor.CallerRunsPolicy());
-    // We have one task that iterates through the state trie and submits the storage trie
-    // mark tasks. This way we are always performing the storage trie marks and not letting the work
-    // queue grow too large.
-    CompletableFuture.runAsync(
-            () ->
-                createStateTrie(rootHash)
-                    .visitAll(
-                        node -> {
-                          markNode(node.getHash());
-                          node.getValue()
-                              .ifPresent(value -> processAccountState(value, executorService));
-                        }),
+    createStateTrie(rootHash)
+        .visitAll(
+            node -> {
+              markNode(node.getHash());
+              node.getValue().ifPresent(value -> processAccountState(value, executorService));
+            },
             executorService)
         .join();
     executorService.shutdown();
