@@ -96,4 +96,8 @@ public interface KeyValueStorage extends Closeable {
    * @throws StorageException problem encountered when starting a new transaction.
    */
   KeyValueStorageTransaction startTransaction() throws StorageException;
+
+  /**
+   *
+   */
 }

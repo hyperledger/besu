@@ -39,7 +39,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, EvmAccount {
-  private final BonsaiPersistedWorldState context;
+  private final BonsaiPersistdWorldState context;
   private final boolean mutable;
 
   private final Address address;
@@ -52,10 +52,10 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private int version;
 
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
-  private boolean strorageWasCleared;
+  private boolean storageWasCleared;
 
   BonsaiAccount(
-      final BonsaiPersistedWorldState context,
+      final BonsaiPersistdWorldState context,
       final Address address,
       final Hash addressHash,
       final long nonce,
@@ -76,7 +76,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  public BonsaiAccount(final BonsaiPersistedWorldState context, final BonsaiAccount toCopy) {
+  public BonsaiAccount(final BonsaiPersistdWorldState context, final BonsaiAccount toCopy) {
     this.context = context;
     this.address = toCopy.getAddress();
     this.addressHash = toCopy.getAddressHash();
@@ -87,13 +87,13 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.code = toCopy.getCode();
     this.version = toCopy.getVersion();
     updatedStorage.putAll(toCopy.getUpdatedStorage());
-    strorageWasCleared = toCopy.strorageWasCleared;
+    storageWasCleared = toCopy.storageWasCleared;
 
     this.mutable = false;
   }
 
   public BonsaiAccount(
-      final BonsaiPersistedWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+      final BonsaiPersistdWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
     this.addressHash = tracked.getAddressHash();
@@ -104,13 +104,13 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.code = tracked.getCode();
     this.version = tracked.getVersion();
     updatedStorage.putAll(tracked.getUpdatedStorage());
-    strorageWasCleared = tracked.getStorageWasCleared();
+    storageWasCleared = tracked.getStorageWasCleared();
 
     this.mutable = true;
   }
 
   static BonsaiAccount fromRLP(
-      final BonsaiPersistedWorldState context,
+      final BonsaiPersistdWorldState context,
       final Address address,
       final Bytes encoded,
       final boolean mutable)
@@ -264,10 +264,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public void clearStorage() {
     updatedStorage.clear();
+    storageWasCleared = true;
   }
 
-  public boolean getStrorageWasCleared() {
-    return strorageWasCleared;
+  public boolean getStorageWasCleared() {
+    return storageWasCleared;
   }
 
   @Override
@@ -293,5 +294,23 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
       throw new UnsupportedOperationException("Account is immutable");
     }
     this.storageRoot = storageRoot;
+  }
+
+  @Override
+  public String toString() {
+    return "AccountState{"
+        + "address="
+        + address
+        + ", nonce="
+        + nonce
+        + ", balance="
+        + balance
+        + ", storageRoot="
+        + storageRoot
+        + ", codeHash="
+        + codeHash
+        + ", version="
+        + version
+        + '}';
   }
 }

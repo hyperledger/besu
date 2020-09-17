@@ -16,20 +16,19 @@
 
 package org.hyperledger.besu.ethereum.trie;
 
-import java.io.PrintStream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DumpVisitor<V> implements NodeVisitor<V> {
-  private final PrintStream out;
-  String prefix = "";
+  private static final Logger LOG = LogManager.getFormatterLogger();
 
-  public DumpVisitor(final PrintStream out) {
-    this.out = out;
-  }
+  private String prefix = "";
 
   @Override
   public void visit(final ExtensionNode<V> extensionNode) {
-    out.printf(
-        "%s Extension %s%n%1$s \tPath %s%n",
+    //noinspection PlaceholderCountMatchesArgumentCount
+    LOG.trace(
+        "%s Extension %s%n%1$s \tPath %s",
         prefix, extensionNode.getHash().toHexString(), extensionNode.getPath().toHexString());
     final String oldPrefix = prefix;
     prefix += extensionNode.getPath().toHexString().substring(2);
@@ -39,11 +38,13 @@ public class DumpVisitor<V> implements NodeVisitor<V> {
 
   @Override
   public void visit(final BranchNode<V> branchNode) {
-    out.printf(
-        "%s Branch %s%n%1$s \tPath %s%n",
+    //noinspection PlaceholderCountMatchesArgumentCount
+    LOG.trace(
+        "%s Branch %s%n%1$s \tPath %s",
         prefix, branchNode.getHash().toHexString(), branchNode.getPath());
     final String oldPrefix = prefix;
     for (byte i = 0; i < 16; i++) {
+      //noinspection StringConcatenationInLoop
       prefix += Integer.toHexString(i);
       branchNode.child(i).accept(this);
       prefix = oldPrefix;
@@ -52,13 +53,15 @@ public class DumpVisitor<V> implements NodeVisitor<V> {
 
   @Override
   public void visit(final LeafNode<V> leafNode) {
-    out.printf(
-        "%s Leaf %s%n%1$s \tPath %s%n%1$s \tContent %s%n",
+    //noinspection PlaceholderCountMatchesArgumentCount
+    LOG.trace(
+        "%s Leaf %s%n%1$s \tPath %s%n%1$s \tContent %s",
         prefix, leafNode.getHash().toHexString(), leafNode.getPath(), leafNode.getValue().get());
   }
 
   @Override
   public void visit(final NullNode<V> nullNode) {
-    out.printf("%s Null%n", prefix);
+    //noinspection PlaceholderCountMatchesArgumentCount
+    LOG.trace("%s Null", prefix);
   }
 }

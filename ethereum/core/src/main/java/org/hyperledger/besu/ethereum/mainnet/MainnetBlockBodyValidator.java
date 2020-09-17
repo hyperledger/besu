@@ -80,11 +80,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
           .dumpTrie(System.out);
       return false;
     }
-    if (block.getHeader().getNumber() >= 10000000) {
+    if (block.getHeader().getNumber() >= 12841) {
       //        || worldStateRootHash.toHexString()
       // .equals("0x795a73aaff709bd7c66207562abee6eefd00886d1f174a33ea453113b1e5123b")) {
       //    ) {
       LOG.warn("Stopping for Comparison");
+      LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
       receipts.forEach(
           receipt ->
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
@@ -96,6 +97,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
+//    LOG.trace("Validated block #{}", block.getHeader().getNumber());
     return true;
   }
 
@@ -113,12 +115,13 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    //    if (!receipts.isEmpty()) {
-    //      System.out.println("Receipts for " + header.getNumber());
-    //      System.out.println(receipts);
-    //    }
+    if (!receipts.isEmpty() && header.getNumber() == 755627) {
+      LOG.trace("Receipts for " + header.getNumber());
+      LOG.trace(receipts);
+    }
     final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
+    if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)
+        || header.getNumber() == 755627) {
       return false;
     }
 
@@ -187,12 +190,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       LOG.warn("Invalid block: state root mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
-//    if (expected
-//        .toHexString()
-//        .equals("0x805e016ee27554ac1af7e1acd38088c55b89e8ef79916617dfbfe50e41ed1eaf")) {
-//      LOG.warn("Stopping here for comparison.");
-//      return false;
-//    }
+    //    if (expected
+    //        .toHexString()
+    //        .equals("0x805e016ee27554ac1af7e1acd38088c55b89e8ef79916617dfbfe50e41ed1eaf")) {
+    //      LOG.warn("Stopping here for comparison.");
+    //      return false;
+    //    }
 
     return true;
   }

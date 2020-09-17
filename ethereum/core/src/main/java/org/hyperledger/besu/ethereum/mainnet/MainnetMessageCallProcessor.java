@@ -143,7 +143,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
         frame.setOutputData(output);
         LOG.trace(
             "Precompiled contract {}  successfully executed (gas consumed: {})",
-            contract,
+            contract.getName(),
             gasRequirement);
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       } else {

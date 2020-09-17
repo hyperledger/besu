@@ -33,12 +33,12 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldStateArchive implements WorldStateArchive {
 
-  private final BonsaiPersistedWorldState persistedState;
+  private final BonsaiPersistdWorldState persistedState;
 
   public BonsaiWorldStateArchive(final MutableWorldState fallback, final StorageProvider provider) {
     // FIXME not for production
     persistedState =
-        new BonsaiPersistedWorldState(
+        new BonsaiPersistdWorldState(
             fallback,
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),

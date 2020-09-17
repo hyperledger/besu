@@ -22,6 +22,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
  * WorldView} provided in the constructor in memory.
@@ -30,6 +33,8 @@ import java.util.Set;
  */
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
     implements WorldUpdater {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final W world;
 
@@ -67,7 +72,9 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (deletedAccounts.contains(address)) {
       return null;
     }
-    return world.get(address);
+    Account account = world.get(address);
+//    LOG.trace("Get of {} produced {}", address, account);
+    return account;
   }
 
   @Override
@@ -136,7 +143,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    *
    * @return The accounts modified in this updater.
    */
-  protected Collection<UpdateTrackingAccount<A>> updatedAccounts() {
+  protected Collection<UpdateTrackingAccount<A>> getUpdatedAccounts() {
     return updatedAccounts.values();
   }
 
@@ -145,7 +152,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    *
    * @return The accounts deleted as part of this updater.
    */
-  protected Collection<Address> deletedAccounts() {
+  protected Collection<Address> getDeletedAccounts() {
     return deletedAccounts;
   }
 
@@ -176,18 +183,19 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
     @Override
     public Collection<? extends Account> getTouchedAccounts() {
-      return new ArrayList<>(updatedAccounts());
+      return new ArrayList<>(getUpdatedAccounts());
     }
 
     @Override
     public Collection<Address> getDeletedAccountAddresses() {
-      return new ArrayList<>(deletedAccounts());
+      return new ArrayList<>(getDeletedAccounts());
     }
 
     @Override
     public void revert() {
-      deletedAccounts().clear();
-      updatedAccounts().clear();
+      LOG.trace("REVERT!");
+      getDeletedAccounts().clear();
+      getUpdatedAccounts().clear();
     }
 
     @Override
@@ -196,13 +204,13 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       // Our own updates should apply on top of the updates we're stacked on top, so our deletions
       // may kill some of "their" updates, and our updates may review some of the account "they"
       // deleted.
-      deletedAccounts().forEach(wrapped.updatedAccounts::remove);
-      updatedAccounts().forEach(a -> wrapped.deletedAccounts.remove(a.getAddress()));
+      getDeletedAccounts().forEach(wrapped.updatedAccounts::remove);
+      getUpdatedAccounts().forEach(a -> wrapped.deletedAccounts.remove(a.getAddress()));
 
       // Then push our deletes and updates to the stacked ones.
-      wrapped.deletedAccounts.addAll(deletedAccounts());
+      wrapped.deletedAccounts.addAll(getDeletedAccounts());
 
-      for (final UpdateTrackingAccount<UpdateTrackingAccount<A>> update : updatedAccounts()) {
+      for (final UpdateTrackingAccount<UpdateTrackingAccount<A>> update : getUpdatedAccounts()) {
         UpdateTrackingAccount<A> existing = wrapped.updatedAccounts.get(update.getAddress());
         if (existing == null) {
           // If we don't track this account, it's either a new one or getForMutation above had
@@ -228,7 +236,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     public void markTransactionBoundary() {
-      updatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
+      getUpdatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
     }
   }
 }
