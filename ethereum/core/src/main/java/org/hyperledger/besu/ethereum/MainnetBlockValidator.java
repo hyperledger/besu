@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,13 +42,17 @@ public class MainnetBlockValidator implements BlockValidator {
 
   private final BlockProcessor blockProcessor;
 
+  private final BadBlockManager badBlockManager;
+
   public MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
-      final BlockProcessor blockProcessor) {
+      final BlockProcessor blockProcessor,
+      final BadBlockManager badBlockManager) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
     this.blockProcessor = blockProcessor;
+    this.badBlockManager = badBlockManager;
   }
 
   @Override
@@ -66,11 +71,13 @@ public class MainnetBlockValidator implements BlockValidator {
           header.getNumber(),
           header.getHash(),
           header.getParentHash());
+      badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
     final BlockHeader parentHeader = maybeParentHeader.get();
 
     if (!blockHeaderValidator.validateHeader(header, parentHeader, context, headerValidationMode)) {
+      badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
 
@@ -82,17 +89,20 @@ public class MainnetBlockValidator implements BlockValidator {
           "Unable to process block {} because parent world state {} is not available",
           header.getNumber(),
           parentHeader.getStateRoot());
+      badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
     final MutableWorldState worldState = maybeWorldState.get();
     final BlockProcessor.Result result = blockProcessor.processBlock(blockchain, worldState, block);
     if (!result.isSuccessful()) {
+      badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
 
     final List<TransactionReceipt> receipts = result.getReceipts();
     if (!blockBodyValidator.validateBody(
         context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
+      badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
 
@@ -108,10 +118,12 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
     if (!blockHeaderValidator.validateHeader(header, context, headerValidationMode)) {
+      badBlockManager.addBadBlock(block);
       return false;
     }
 
     if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
+      badBlockManager.addBadBlock(block);
       return false;
     }
     return true;
