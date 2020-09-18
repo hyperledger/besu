@@ -97,8 +97,6 @@ public class RlpBlockImporter {
 
         validateBlock(protocolSpec, context, lastHeader, header, skipPowValidation);
 
-        extractSignatures(block);
-
         evaluateBlock(context, block, header, protocolSpec, skipPowValidation);
 
         ++count;
@@ -107,17 +105,6 @@ public class RlpBlockImporter {
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
     }
-  }
-
-  private void extractSignatures(final Block block) {
-    //    final List<CompletableFuture<Void>> futures =
-    //        new ArrayList<>(block.getBody().getTransactions().size());
-    //    for (final Transaction tx : block.getBody().getTransactions()) {
-    //      futures.add(CompletableFuture.runAsync(tx::getSender, validationExecutor));
-    //    }
-    //    for (final CompletableFuture<Void> future : futures) {
-    //      future.join();
-    //    }
   }
 
   private void validateBlock(

@@ -17,7 +17,7 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 public class BonsaiValue<T> {
-  private final T original;
+  private T original;
   private T updated;
 
   public BonsaiValue(final T original, final T updated) {
@@ -31,6 +31,10 @@ public class BonsaiValue<T> {
 
   public T getUpdated() {
     return updated;
+  }
+
+  public void setOriginal(final T original) {
+    this.original = original;
   }
 
   public void setUpdated(final T updated) {

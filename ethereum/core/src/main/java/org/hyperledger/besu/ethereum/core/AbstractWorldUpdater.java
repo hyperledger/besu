@@ -73,7 +73,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       return null;
     }
     Account account = world.get(address);
-//    LOG.trace("Get of {} produced {}", address, account);
     return account;
   }
 

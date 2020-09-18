@@ -38,7 +38,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,15 +46,11 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt256Value;
 
 public class DefaultMutableWorldState implements MutableWorldState {
-  private static final Logger LOG = LogManager.getLogger();
 
   private final WorldStateStorage worldStateStorage;
   private final WorldStatePreimageStorage preimageStorage;
@@ -206,7 +201,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public void dumpTrie(final PrintStream out) {
-    LOG.trace("World State Trie Dump");
     ((StoredMerklePatriciaTrie<Bytes32, Bytes>) accountStateTrie).acceptAtRoot(new DumpVisitor<>());
   }
 
@@ -385,7 +379,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     @Override
     public void revert() {
-      LOG.trace("REVERT!");
       getDeletedAccounts().clear();
       getUpdatedAccounts().clear();
     }
@@ -394,18 +387,14 @@ public class DefaultMutableWorldState implements MutableWorldState {
     public void commit() {
       final DefaultMutableWorldState wrapped = wrappedWorldView();
 
-      LOG.trace("deleted accounts");
       for (final Address address : getDeletedAccounts()) {
         final Hash addressHash = Hash.hash(address);
-        LOG.trace("{} - {}", address, addressHash);
         wrapped.accountStateTrie.remove(addressHash);
         wrapped.updatedStorageTries.remove(address);
         wrapped.updatedAccountCode.remove(address);
       }
 
-      LOG.trace("updated accounts");
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
-        LOG.trace("{} - {}", updated.getAddress(), updated.getAddressHash());
         final WorldStateAccount origin = updated.getWrappedAccount();
 
         // Save the code in key-value storage ...
@@ -418,8 +407,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
         final boolean freshState = origin == null || updated.getStorageWasCleared();
         Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
         if (freshState) {
-          LOG.trace(" - Storage Cleared");
-
           wrapped.updatedStorageTries.remove(updated.getAddress());
         }
         final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
@@ -430,23 +417,15 @@ public class DefaultMutableWorldState implements MutableWorldState {
                   ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
-          var entries =
+          final TreeSet<Map.Entry<UInt256, UInt256>> entries =
               new TreeSet<>(
-                  Comparator.comparing((Function<Entry<UInt256, UInt256>, UInt256>) Entry::getKey));
+                  Comparator.comparing(
+                      (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
           entries.addAll(updatedStorage.entrySet());
 
           for (final Map.Entry<UInt256, UInt256> entry : entries) {
             final UInt256 value = entry.getValue();
             final Hash keyHash = Hash.hash(entry.getKey().toBytes());
-            LOG.trace(
-                " {} : {} -> {}",
-                entry.getKey().toShortHexString(),
-                storageTrie
-                    .get(keyHash)
-                    .map(DefaultMutableWorldState::convertToUInt256)
-                    .map(UInt256Value::toShortHexString)
-                    .orElse(""),
-                value.toShortHexString());
             if (value.isZero()) {
               storageTrie.remove(keyHash);
             } else {

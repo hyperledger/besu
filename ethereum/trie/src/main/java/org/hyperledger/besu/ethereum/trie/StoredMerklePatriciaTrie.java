@@ -123,6 +123,10 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     root.accept(visitor);
   }
 
+  public void acceptAtRoot(final PathNodeVisitor<V> visitor, final Bytes path) {
+    root.accept(visitor, path);
+  }
+
   @Override
   public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final int limit) {
     return StorageEntriesCollector.collectEntries(root, startKeyHash, limit);
