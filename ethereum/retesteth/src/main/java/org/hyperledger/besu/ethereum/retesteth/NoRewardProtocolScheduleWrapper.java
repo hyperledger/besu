@@ -53,7 +53,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         new MainnetBlockValidator(
             original.getBlockHeaderValidator(),
             original.getBlockBodyValidator(),
-            noRewardBlockProcessor);
+            noRewardBlockProcessor,
+            original.getBadBlocksManager());
     final BlockImporter noRewardBlockImporter = new MainnetBlockImporter(noRewardBlockValidator);
     return new ProtocolSpec(
         original.getName(),
@@ -77,7 +78,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getGasCalculator(),
         original.getTransactionPriceCalculator(),
         original.getEip1559(),
-        original.getGasBudgetCalculator());
+        original.getGasBudgetCalculator(),
+        original.getBadBlocksManager());
   }
 
   @Override

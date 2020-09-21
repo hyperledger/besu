@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -69,10 +70,9 @@ public class CheckpointHeaderValidationStep
   }
 
   private boolean isValid(final BlockHeader expectedParent, final BlockHeader firstHeaderToImport) {
-    final BlockHeaderValidator validator =
-        protocolSchedule
-            .getByBlockNumber(firstHeaderToImport.getNumber())
-            .getBlockHeaderValidator();
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockNumber(firstHeaderToImport.getNumber());
+    final BlockHeaderValidator validator = protocolSpec.getBlockHeaderValidator();
     return validator.validateHeader(
         firstHeaderToImport,
         expectedParent,
