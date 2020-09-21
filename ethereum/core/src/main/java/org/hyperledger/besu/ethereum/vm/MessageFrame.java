@@ -840,6 +840,7 @@ public class MessageFrame {
   /**
    * "Warms up" the address as per EIP-2929
    *
+   * @param address the address to warm up
    * @return true if the address was already warmed up
    */
   public boolean warmUpAddress(final Address address) {
@@ -849,6 +850,8 @@ public class MessageFrame {
   /**
    * "Warms up" the storage slot as per EIP-2929
    *
+   * @param address the address whose storage is being warmed up
+   * @param slot the slot being warmed up
    * @return true if the storage slot was already warmed up
    */
   public boolean warmUpStorage(final Address address, final Bytes32 slot) {
