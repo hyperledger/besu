@@ -52,7 +52,7 @@ public class AutoTransactionLogBloomCachingService {
       }
       final LogBloomCacheMetadata logBloomCacheMetadata =
           LogBloomCacheMetadata.lookUpFrom(cacheDir);
-      if (logBloomCacheMetadata.getVersion() == 0) {
+      if (logBloomCacheMetadata.getVersion() < DEFAULT_VERSION) {
         try (Stream<Path> walk = Files.walk(cacheDir)) {
           walk.filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
         } catch (Exception e) {
