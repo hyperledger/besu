@@ -10,7 +10,7 @@
     "constantinopleBlock":0,
     "petersburgBlock":0,
     "istanbulBlock":0,
-    "yoloV1Block":0,
+    "yoloV2Block":0,
     "clique":{
       "period":15,
       "epoch":30000
