@@ -133,7 +133,7 @@ public class TransactionLogBloomCacherTest {
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 3);
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(3).get(), Optional.of(logBloom));
+        blockchain.getBlockHeader(3).get(), Optional.empty(), Optional.of(logBloom));
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 4);
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
@@ -152,7 +152,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.of(logBloom));
+        blockchain.getBlockHeader(4).get(), Optional.empty(), Optional.of(logBloom));
 
     for (int i = 0; i < 5; i++) {
       assertThat(blockHeaders.get(i).getLogsBloom().toArray())
@@ -186,16 +186,37 @@ public class TransactionLogBloomCacherTest {
   public void shouldUpdateCacheWhenChainReorgFired() throws IOException {
     final File logBloom = cacheDir.newFile("logBloom-0.cache");
 
+    final List<BlockHeader> firstBranch = new ArrayList<>();
+
     for (int i = 0; i < 5; i++) {
-      createBlock(i);
+      firstBranch.add(createBlock(i));
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.of(logBloom));
+        blockchain.getBlockHeader(4).get(), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
+    for (int i = 0; i < 5; i++) {
+      assertThat(firstBranch.get(i).getLogsBloom().toArray())
+          .containsExactly(readLogBloomCache(logBloom, i));
+    }
+
+    final List<BlockHeader> forkBranch = new ArrayList<>();
+    forkBranch.add(firstBranch.get(0));
+    forkBranch.add(firstBranch.get(1));
+    for (int i = 2; i < 5; i++) {
+      forkBranch.add(createBlock(i, Optional.of("111111111111111111111111")));
+    }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(1).get(), Optional.of(logBloom));
+        blockchain.getBlockHeader(4).get(), blockchain.getBlockHeader(1), Optional.of(logBloom));
+    assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
+    for (int i = 0; i < 5; i++) {
+      assertThat(forkBranch.get(i).getLogsBloom().toArray())
+          .containsExactly(readLogBloomCache(logBloom, i));
+    }
+
+    transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
+        blockchain.getBlockHeader(1).get(), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 2);
 
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
@@ -217,7 +238,12 @@ public class TransactionLogBloomCacherTest {
   }
 
   private BlockHeader createBlock(final long number) {
-    final Address testAddress = Address.fromHexString(String.format("%02X", number));
+    return createBlock(number, Optional.empty());
+  }
+
+  private BlockHeader createBlock(final long number, final Optional<String> message) {
+    final Address testAddress =
+        Address.fromHexString(message.orElse(String.format("%02X", number)));
     final Bytes testMessage = Bytes.fromHexString(String.format("%02X", number));
     final Log testLog = new Log(testAddress, testMessage, List.of());
     final BlockHeader fakeHeader =
@@ -241,7 +267,6 @@ public class TransactionLogBloomCacherTest {
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(number)).thenReturn(Optional.of(fakeHeader));
-
     return fakeHeader;
   }
 }
