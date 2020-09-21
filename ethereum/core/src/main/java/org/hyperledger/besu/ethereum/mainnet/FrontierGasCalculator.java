@@ -446,7 +446,7 @@ public class FrontierGasCalculator implements GasCalculator {
         "BEGINSUB operation not supported by " + getClass().getSimpleName());
   }
 
-  private Gas copyWordsToMemoryGasCost(
+  protected Gas copyWordsToMemoryGasCost(
       final MessageFrame frame,
       final Gas baseGasCost,
       final Gas wordGasCost,

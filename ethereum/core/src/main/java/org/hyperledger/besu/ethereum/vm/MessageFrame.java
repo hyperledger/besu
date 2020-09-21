@@ -41,6 +41,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -212,6 +214,8 @@ public class MessageFrame {
   private Gas gasRefund;
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
+  private final Set<Address> warmedUpAddresses;
+  private final Multimap<Address, Bytes32> warmedUpStorage;
 
   // Execution Environment fields.
   private final Address recipient;
@@ -315,6 +319,11 @@ public class MessageFrame {
     this.privateMetadataUpdater = privateMetadataUpdater;
     this.transactionHash = transactionHash;
     this.revertReason = revertReason;
+
+    this.warmedUpAddresses = new HashSet<>();
+    warmedUpAddresses.add(recipient);
+    warmedUpAddresses.add(contract);
+    this.warmedUpStorage = HashMultimap.create();
   }
 
   /**
@@ -826,6 +835,24 @@ public class MessageFrame {
    */
   Map<Address, Wei> getRefunds() {
     return refunds;
+  }
+
+  /**
+   * "Warms up" the address as per EIP-2929
+   *
+   * @return true if the address was already warmed up
+   */
+  public boolean warmUpAddress(final Address address) {
+    return !warmedUpAddresses.add(address);
+  }
+
+  /**
+   * "Warms up" the storage slot as per EIP-2929
+   *
+   * @return true if the storage slot was already warmed up
+   */
+  public boolean warmUpStorage(final Address address, final Bytes32 slot) {
+    return !warmedUpStorage.put(address, slot);
   }
 
   /**

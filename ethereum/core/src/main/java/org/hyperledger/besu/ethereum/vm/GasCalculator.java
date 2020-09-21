@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -388,4 +389,43 @@ public interface GasCalculator {
    * @return the cost for executing begin sub operation
    */
   Gas getBeginSubGasCost();
+
+  /**
+   * Returns the cost of a SLOAD to a storage slot not previously loaded in the TX context.
+   *
+   * @return the cost of a SLOAD to a storage slot not previously loaded in the TX context.
+   */
+  default Gas getColdSloadCost() {
+    return Gas.ZERO;
+  }
+
+  /**
+   * Returns the cost to access an account not previously accessed in the TX context.
+   *
+   * @return the cost to access an account not previously accessed in the TX context.
+   */
+  default Gas getColdAccountAccessCost() {
+    return Gas.ZERO;
+  }
+
+  /**
+   * Returns the cost of a SLOAD to a storage slot that has previously been loaded in the TX
+   * context.
+   *
+   * @return the cost of a SLOAD to a storage slot that has previously been loaded in the TX
+   *     context.
+   */
+  default Gas getWarmStorageReadCost() {
+    return Gas.ZERO;
+  }
+
+  /**
+   * For the purposes of this gas calculator, is this address a precompile?
+   *
+   * @param address the address to test for being a precompile
+   * @return true if it is a precompile.
+   */
+  default boolean isPrecompile(final Address address) {
+    return false;
+  }
 }
