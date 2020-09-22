@@ -262,15 +262,28 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       throws MultiTenancyValidationException {
     // TODO: There's potentially a bug here where an onchain privacyGroup
     // that isn't found will default to the offchain privacy group.
-    final PrivacyGroup privacyGroup =
-        onchainPrivacyGroupContract
-            .flatMap(
-                contract -> contract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber))
-            .orElse(enclave.retrievePrivacyGroup(privacyGroupId));
-
-    if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
-      throw new MultiTenancyValidationException(
-          "Privacy group must contain the enclave public key");
+    Optional<PrivacyGroup> maybePrivacyGroup;
+    PrivacyGroup offchainPrivacyGroup;
+    if (onchainPrivacyGroupContract.isPresent()) {
+      maybePrivacyGroup =
+          onchainPrivacyGroupContract
+              .get()
+              .getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber);
+      if (maybePrivacyGroup.isEmpty()) {
+        // group doesn't exist yet - this is normal for onchain privacy groups
+      } else {
+        // group DOES exist - does it contain the user?
+        if (!maybePrivacyGroup.get().getMembers().contains(enclavePublicKey)) {
+          throw new MultiTenancyValidationException(
+              "Privacy group must contain the enclave public key");
+        }
+      }
+    } else {
+      offchainPrivacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
+      if (!offchainPrivacyGroup.getMembers().contains(enclavePublicKey)) {
+        throw new MultiTenancyValidationException(
+            "Privacy group must contain the enclave public key");
+      }
     }
   }
 
