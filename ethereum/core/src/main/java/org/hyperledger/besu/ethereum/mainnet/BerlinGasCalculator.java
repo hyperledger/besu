@@ -64,7 +64,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
         return false;
       }
     }
-    return Byte.toUnsignedInt(addressBytes[19]) <= maxPrecompile;
+    final int lastByte = Byte.toUnsignedInt(addressBytes[19]);
+    return lastByte <= maxPrecompile && lastByte != 0;
   }
 
   // new costs
@@ -119,7 +120,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final UInt256 outputDataOffset,
       final UInt256 outputDataLength,
       final Wei transferValue,
-      final Account recipient) {
+      final Account recipient,
+      final Address to) {
     final Gas baseCost =
         super.callOperationGasCost(
             frame,
@@ -129,9 +131,9 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
             outputDataOffset,
             outputDataLength,
             transferValue,
-            recipient);
-    final Address address = recipient.getAddress();
-    final boolean accountIsWarm = frame.warmUpAddress(address) || isPrecompile(address);
+            recipient,
+            to);
+    final boolean accountIsWarm = frame.warmUpAddress(to) || isPrecompile(to);
     return baseCost.plus(accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 

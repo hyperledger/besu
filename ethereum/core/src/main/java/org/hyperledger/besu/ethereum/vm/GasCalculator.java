@@ -176,7 +176,8 @@ public interface GasCalculator {
       UInt256 outputDataOffset,
       UInt256 outputDataLength,
       Wei transferValue,
-      Account recipient);
+      Account recipient,
+      Address contract);
 
   Gas getAdditionalCallStipend();
 
