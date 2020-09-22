@@ -78,9 +78,10 @@ class EVMToolTracer implements OperationTracer {
     Bytes returnData = messageFrame.getReturnData();
     traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
     traceLine.put("depth", messageFrame.getMessageStackDepth() + 1);
-    traceLine.put("refund", messageFrame.getGasRefund().toLong());
 
     final OperationResult executeResult = executeOperation.execute();
+
+    traceLine.put("refund", messageFrame.getGasRefund().toLong());
     traceLine.put(
         "gasCost", executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
     if (showMemory) {

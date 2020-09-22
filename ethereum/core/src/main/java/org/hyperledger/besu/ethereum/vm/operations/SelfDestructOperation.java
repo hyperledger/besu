@@ -42,12 +42,8 @@ public class SelfDestructOperation extends AbstractOperation {
     final Account recipientNullable = frame.getWorldState().get(recipientAddress);
     final Wei inheritance = frame.getWorldState().get(frame.getRecipientAddress()).getBalance();
 
-    final Address addressNullable =
-        recipientNullable == null ? null : recipientNullable.getAddress();
     final boolean accountIsWarm =
-        (addressNullable == null)
-            || (!frame.warmUpAddress(addressNullable)
-                && !gasCalculator().isPrecompile(addressNullable));
+        frame.warmUpAddress(recipientAddress) || gasCalculator().isPrecompile(recipientAddress);
 
     final Gas cost =
         gasCalculator()
