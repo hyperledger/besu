@@ -858,6 +858,15 @@ public class MessageFrame {
     return !warmedUpStorage.put(address, slot);
   }
 
+  public void mergeWarmedUpFields(final MessageFrame childFrame) {
+    if (childFrame == this) {
+      return;
+    }
+
+    warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
+    warmedUpStorage.putAll(childFrame.warmedUpStorage);
+  }
+
   /**
    * Returns the current blockchain.
    *
