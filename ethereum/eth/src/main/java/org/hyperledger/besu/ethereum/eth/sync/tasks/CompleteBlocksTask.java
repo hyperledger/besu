@@ -140,7 +140,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
         headers.stream()
             .filter(h -> blocks.get(h.getNumber()) == null)
             .collect(Collectors.toList());
-    if (getRetryCount() > 1) {
+    if (!collectedHeaders.isEmpty() && getRetryCount() > 1) {
       final int subSize = (int) Math.ceil((double) collectedHeaders.size() / getRetryCount());
       if (getRetryCount() > getMaxRetries()) {
         return collectedHeaders.subList(0, MIN_SIZE_INCOMPLETE_LIST);

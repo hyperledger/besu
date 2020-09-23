@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocks;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -60,6 +62,8 @@ import java.util.function.Supplier;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class BlockPropagationManagerTest {
 
@@ -640,5 +644,50 @@ public class BlockPropagationManagerTest {
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
     verify(blockBroadcaster, times(1)).propagate(block, totalDifficulty);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void shouldDetectAndCacheInvalidBlocks() {
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
+        .thenAnswer(
+            new Answer<Object>() {
+              @Override
+              public Object answer(final InvocationOnMock invocation) throws Throwable {
+                return invocation.getArgument(0, Supplier.class).get();
+              }
+            });
+    final EthContext ethContext =
+        new EthContext(
+            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            syncState,
+            pendingBlocks,
+            metricsSystem,
+            blockBroadcaster);
+
+    blockchainUtil.importFirstBlocks(2);
+    final Block firstBlock = blockchainUtil.getBlock(1);
+    final BadBlockManager badBlocksManager =
+        protocolSchedule.getByBlockNumber(1).getBadBlocksManager();
+    final Block badBlock =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockNumber(1)
+                    .setParentHash(firstBlock.getHash())
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    assertThat(badBlocksManager.getBadBlocks()).isEmpty();
+    blockPropagationManager.importOrSavePendingBlock(badBlock);
+    assertThat(badBlocksManager.getBadBlocks().size()).isEqualTo(1);
+
+    verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
 }

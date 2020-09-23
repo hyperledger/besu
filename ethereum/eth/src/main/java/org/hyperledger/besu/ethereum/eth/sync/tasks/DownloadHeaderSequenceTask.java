@@ -18,13 +18,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
@@ -195,16 +199,42 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               child =
                   (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
             }
+            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+            final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
 
             if (!validateHeader(child, header)) {
               // Invalid headers - disconnect from peer
-              LOG.debug(
-                  "Received invalid headers from peer, disconnecting from: {}",
-                  headersResult.getPeer());
-              headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-              future.completeExceptionally(
-                  new InvalidBlockException(
-                      "Header failed validation.", child.getNumber(), child.getHash()));
+
+              final BlockHeader invalidBlock = child;
+              // even though the header is known bad we are downloading the block body for the
+              // debug_badBlocks RPC
+              final AbstractPeerTask<Block> getBlockTask =
+                  GetBlockFromPeerTask.create(
+                          protocolSchedule,
+                          ethContext,
+                          child.getHash(),
+                          child.getNumber(),
+                          metricsSystem)
+                      .assignPeer(headersResult.getPeer());
+
+              getBlockTask
+                  .run()
+                  .whenComplete(
+                      (blockPeerTaskResult, error) -> {
+                        if (error == null && blockPeerTaskResult.getResult() != null) {
+                          badBlockManager.addBadBlock(blockPeerTaskResult.getResult());
+                        }
+                        headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+                        LOG.debug(
+                            "Received invalid headers from peer, disconnecting from: {}",
+                            headersResult.getPeer());
+                        future.completeExceptionally(
+                            new InvalidBlockException(
+                                "Header failed validation.",
+                                invalidBlock.getNumber(),
+                                invalidBlock.getHash()));
+                      });
+
               return future;
             }
             headers[headerIndex] = header;

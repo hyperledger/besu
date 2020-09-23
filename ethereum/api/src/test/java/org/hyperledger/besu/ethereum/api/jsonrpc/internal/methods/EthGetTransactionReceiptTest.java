@@ -100,7 +100,8 @@ public class EthGetTransactionReceiptTest {
           null,
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
-          TransactionGasBudgetCalculator.frontier());
+          TransactionGasBudgetCalculator.frontier(),
+          null);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           "status",
@@ -124,7 +125,8 @@ public class EthGetTransactionReceiptTest {
           null,
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
-          TransactionGasBudgetCalculator.frontier());
+          TransactionGasBudgetCalculator.frontier(),
+          null);
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

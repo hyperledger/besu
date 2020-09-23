@@ -39,6 +39,17 @@ public class NetstatsUrlTest {
   }
 
   @Test
+  public void buildWithValidHost() {
+    final String[] validHosts =
+        new String[] {"url-test.test.com", "url.test.com", "test.com", "10.10.10.15"};
+    for (String host : validHosts) {
+      final NetstatsUrl netstatsUrl =
+          NetstatsUrl.fromParams("Dev-Node-1:secret@" + host + ":3001", CONTACT);
+      assertThat(netstatsUrl.getHost()).isEqualTo(host);
+    }
+  }
+
+  @Test
   public void shouldDetectEmptyParams() {
     assertThatThrownBy(() -> NetstatsUrl.fromParams("", CONTACT))
         .isInstanceOf(IllegalArgumentException.class)

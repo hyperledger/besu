@@ -12,16 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.query;
+package org.hyperledger.besu.ethereum.api.query.cache;
+
+import static org.hyperledger.besu.ethereum.api.query.cache.LogBloomCacheMetadata.DEFAULT_VERSION;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,7 +36,6 @@ public class AutoTransactionLogBloomCachingService {
   private final Blockchain blockchain;
   private final TransactionLogBloomCacher transactionLogBloomCacher;
   private OptionalLong blockAddedSubscriptionId = OptionalLong.empty();
-  private OptionalLong chainReorgSubscriptionId = OptionalLong.empty();
 
   public AutoTransactionLogBloomCachingService(
       final Blockchain blockchain, final TransactionLogBloomCacher transactionLogBloomCacher) {
@@ -46,21 +50,29 @@ public class AutoTransactionLogBloomCachingService {
       if (!cacheDir.toFile().exists() || !cacheDir.toFile().isDirectory()) {
         Files.createDirectory(cacheDir);
       }
+      final LogBloomCacheMetadata logBloomCacheMetadata =
+          LogBloomCacheMetadata.lookUpFrom(cacheDir);
+      if (logBloomCacheMetadata.getVersion() < DEFAULT_VERSION) {
+        try (Stream<Path> walk = Files.walk(cacheDir)) {
+          walk.filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
+        } catch (Exception e) {
+          LOG.error("Failed to update cache {}", e.getMessage());
+        }
+        new LogBloomCacheMetadata(DEFAULT_VERSION).writeToDirectory(cacheDir);
+      }
+
       blockAddedSubscriptionId =
           OptionalLong.of(
               blockchain.observeBlockAdded(
                   event -> {
                     if (event.isNewCanonicalHead()) {
+                      final BlockHeader eventBlockHeader = event.getBlock().getHeader();
+                      final Optional<BlockHeader> commonAncestorBlockHeader =
+                          blockchain.getBlockHeader(event.getCommonAncestorHash());
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          event.getBlock().getHeader(), Optional.empty(), true);
+                          eventBlockHeader, commonAncestorBlockHeader, Optional.empty());
                     }
                   }));
-      chainReorgSubscriptionId =
-          OptionalLong.of(
-              blockchain.observeChainReorg(
-                  (blockWithReceipts, __) ->
-                      transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          blockWithReceipts.getHeader(), Optional.empty(), true)));
 
       transactionLogBloomCacher
           .getScheduler()
@@ -73,6 +85,5 @@ public class AutoTransactionLogBloomCachingService {
   public void stop() {
     LOG.info("Shutting down Auto transaction logs caching service.");
     blockAddedSubscriptionId.ifPresent(blockchain::removeObserver);
-    chainReorgSubscriptionId.ifPresent(blockchain::removeChainReorgObserver);
   }
 }
