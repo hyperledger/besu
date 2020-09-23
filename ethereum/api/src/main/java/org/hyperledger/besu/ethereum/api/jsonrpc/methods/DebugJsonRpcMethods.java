@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountRa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugBatchSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetBadBlocks;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugMetrics;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugStandardTraceBlockToFile;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugStorageRangeAt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceBlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceBlockByHash;
@@ -83,6 +84,8 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
         new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay)),
         new DebugBatchSendRawTransaction(transactionPool),
-        new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult));
+        new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
+        new DebugStandardTraceBlockToFile(
+            () -> new TransactionTracer(blockReplay), blockchainQueries));
   }
 }
