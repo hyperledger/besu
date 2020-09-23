@@ -87,7 +87,7 @@ class EVMToolTracer implements OperationTracer {
     if (showMemory) {
       traceLine.put(
           "memory",
-          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize()).toHexString());
+          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32)).toHexString());
     } else {
       traceLine.put("memory", "0x");
     }
