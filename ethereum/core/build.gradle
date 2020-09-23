@@ -52,8 +52,8 @@ dependencies {
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  testImplementation project(path:':ethereum:referencetests')
-  testImplementation project(path:':ethereum:referencetests', configuration: 'testOutput')
+  testImplementation project(path: ':ethereum:referencetests')
+  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
@@ -95,7 +95,7 @@ dependencies {
 }
 
 configurations { testArtifacts }
-task testJar (type: Jar) {
+task testJar(type: Jar) {
   archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
 }
@@ -147,6 +147,17 @@ task blockchainReferenceTestsSetup {
     )
 }
 
+task legacyBlockchainReferenceTestsSetup {
+  generateTestFiles(
+      fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests'),
+      file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
+      "LegacyTests",
+      "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
+      "LegacyBlockchainReferenceTest",
+      ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
+  )
+}
+
 task generalstateReferenceTestsSetup {
   generateTestFiles(
     fileTree("../referencetests/src/test/resources/GeneralStateTests"),
@@ -154,6 +165,16 @@ task generalstateReferenceTestsSetup {
     "GeneralStateTests",
     "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateReferenceTest"
+    )
+}
+
+task legacyGeneralstateReferenceTestsSetup {
+  generateTestFiles(
+    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests'),
+    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
+    "LegacyTests",
+    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
+    "LegacyGeneralStateReferenceTest"
     )
 }
 
@@ -180,6 +201,8 @@ clean.dependsOn(cleanupReferenceTests)
 task referenceTests(type: Test, dependsOn: [
   "blockchainReferenceTestsSetup",
   "generalstateReferenceTestsSetup",
+  "legacyBlockchainReferenceTestsSetup",
+  "legacyGeneralstateReferenceTestsSetup",
   "generalstateRegressionReferenceTestsSetup",
   "compileTestJava"
 ]) {
