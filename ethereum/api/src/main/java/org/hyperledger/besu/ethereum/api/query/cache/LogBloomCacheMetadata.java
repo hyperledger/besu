@@ -29,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 public class LogBloomCacheMetadata {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static final int DEFAULT_VERSION = 1;
+  public static final int DEFAULT_VERSION = 2;
 
   private static final String METADATA_FILENAME = "CACHE_METADATA.json";
   private static final ObjectMapper MAPPER = new ObjectMapper();
