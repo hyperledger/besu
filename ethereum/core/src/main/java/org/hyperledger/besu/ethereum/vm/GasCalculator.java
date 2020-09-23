@@ -165,7 +165,8 @@ public interface GasCalculator {
    * @param outputDataOffset The offset in memory to place the CALL output data
    * @param outputDataLength The CALL output data length
    * @param transferValue The wei being transferred
-   * @param recipient The CALL recipient
+   * @param recipient The CALL recipient (may be null if self destructed or new)
+   * @param contract The address of the recipient (never null)
    * @return The gas cost for the CALL operation
    */
   Gas callOperationGasCost(
