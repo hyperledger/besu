@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -34,7 +32,7 @@ public interface TransactionTraceParams {
 
   @JsonProperty("txHash")
   @Nullable
-  String transactionHash();
+  String getTransactionHash();
 
   @JsonProperty(value = "disableStorage")
   @Value.Default
@@ -56,11 +54,5 @@ public interface TransactionTraceParams {
 
   default TraceOptions traceOptions() {
     return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack());
-  }
-
-  default Optional<Hash> getTransactionHash() {
-    return transactionHash() == null
-        ? Optional.empty()
-        : Optional.of(Hash.fromHexString(transactionHash()));
   }
 }

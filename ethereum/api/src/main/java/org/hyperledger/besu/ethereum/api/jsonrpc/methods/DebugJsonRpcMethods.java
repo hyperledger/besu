@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -47,16 +48,19 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolSchedule protocolSchedule;
   private final ObservableMetricsSystem metricsSystem;
   private final TransactionPool transactionPool;
+  private final Path dataDir;
 
   DebugJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final ObservableMetricsSystem metricsSystem,
-      final TransactionPool transactionPool) {
+      final TransactionPool transactionPool,
+      final Path dataDir) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.metricsSystem = metricsSystem;
     this.transactionPool = transactionPool;
+    this.dataDir = dataDir;
   }
 
   @Override
@@ -86,6 +90,6 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugBatchSendRawTransaction(transactionPool),
         new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
         new DebugStandardTraceBlockToFile(
-            () -> new TransactionTracer(blockReplay), blockchainQueries));
+            () -> new TransactionTracer(blockReplay), blockchainQueries, dataDir));
   }
 }

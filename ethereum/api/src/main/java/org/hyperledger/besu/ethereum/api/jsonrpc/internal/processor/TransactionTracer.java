@@ -19,24 +19,34 @@ import static java.util.function.Predicate.isEqual;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.ethereum.vm.EVMToolTracer;
+import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /** Used to produce debug traces of transactions */
 public class TransactionTracer {
+
+  private static final Logger LOG = LogManager.getLogger();
+
+  public static final String TRACE_PATH = "traces";
 
   private final BlockReplay blockReplay;
 
@@ -68,7 +78,7 @@ public class TransactionTracer {
   }
 
   public Optional<TransactionTrace> traceTransaction(
-      final Hash blockHash, final Hash transactionHash, final EVMToolTracer tracer) {
+      final Hash blockHash, final Hash transactionHash, final StandardJsonTracer tracer) {
     return blockReplay.beforeTransactionInBlock(
         blockHash,
         transactionHash,
@@ -95,36 +105,53 @@ public class TransactionTracer {
   public List<String> traceTransactionToFile(
       final Hash blockHash,
       final List<Transaction> transactions,
-      final Optional<TransactionTraceParams> transactionTraceParams) {
+      final Optional<TransactionTraceParams> transactionTraceParams,
+      final Path traceDir) {
     final List<String> traces = new ArrayList<>();
     try {
       final Optional<Hash> selectedHash =
-          transactionTraceParams.flatMap(TransactionTraceParams::getTransactionHash);
+          transactionTraceParams
+              .map(TransactionTraceParams::getTransactionHash)
+              .map(Hash::fromHexString);
       final boolean showMemory =
-          transactionTraceParams.map(TransactionTraceParams::disableMemory).orElse(true);
+          transactionTraceParams
+              .map(TransactionTraceParams::traceOptions)
+              .map(TraceOptions::isMemoryEnabled)
+              .orElse(true);
+
+      if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
+        throw new IOException(
+            String.format("Trace directory '%s' does not exist and could not be made.", traceDir));
+      }
       for (int i = 0; i < transactions.size(); i++) {
         final Transaction transaction = transactions.get(i);
         if (selectedHash.isEmpty()
             || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
-          final File tmpFile =
-              File.createTempFile(
-                  String.format(
-                      "block_%.10s-%d-%.10s-",
-                      blockHash.toHexString(), i, transaction.getHash().toHexString()),
-                  "");
-          try (PrintStream out = new PrintStream(new FileOutputStream(tmpFile))) {
-            traceTransaction(blockHash, transaction.getHash(), new EVMToolTracer(out, showMemory))
+          final File traceFile =
+              traceDir
+                  .resolve(
+                      String.format(
+                          "block_%.10s-%d-%.10s-%s",
+                          blockHash.toHexString(),
+                          i,
+                          transaction.getHash().toHexString(),
+                          System.currentTimeMillis()))
+                  .toFile();
+          try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
+            traceTransaction(
+                    blockHash, transaction.getHash(), new StandardJsonTracer(out, showMemory))
                 .ifPresent(
                     trace ->
                         out.println(
-                            EVMToolTracer.summaryTrace(
+                            StandardJsonTracer.summaryTrace(
                                 transaction, trace.getTime().orElseThrow(), trace.getResult())));
-            traces.add(tmpFile.getPath());
+            traces.add(traceFile.getPath());
           }
         }
       }
     } catch (Exception e) {
-      throw new RuntimeException(String.format("Unable to trace transaction : %s", e.getMessage()));
+      LOG.error("Unable to create transaction trace : {}", e.getMessage());
+      throw new RuntimeException(e.getMessage(), e);
     }
     return traces;
   }

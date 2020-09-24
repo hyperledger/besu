@@ -34,15 +34,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class DebugStandardTraceBlockToFileTest {
+
+  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final DebugStandardTraceBlockToFile debugStandardTraceBlockToFile =
-      new DebugStandardTraceBlockToFile(() -> transactionTracer, blockchainQueries);
+      new DebugStandardTraceBlockToFile(
+          () -> transactionTracer, blockchainQueries, folder.getRoot().toPath());
 
   @Test
   public void nameShouldBeDebugTraceTransaction() {
@@ -71,7 +76,7 @@ public class DebugStandardTraceBlockToFileTest {
 
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
 
-    when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any()))
+    when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any(), any()))
         .thenReturn(paths);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugStandardTraceBlockToFile.response(request);

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer.TRACE_PATH;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
@@ -26,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -37,12 +40,15 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
 
   private final Supplier<TransactionTracer> transactionTracerSupplier;
   private final Supplier<BlockchainQueries> blockchainQueries;
+  private final Path dataDir;
 
   public DebugStandardTraceBlockToFile(
       final Supplier<TransactionTracer> transactionTracerSupplier,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final Path dataDir) {
     this.transactionTracerSupplier = transactionTracerSupplier;
     this.blockchainQueries = Suppliers.ofInstance(blockchainQueries);
+    this.dataDir = dataDir;
   }
 
   @Override
@@ -76,7 +82,10 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
     return transactionTracerSupplier
         .get()
         .traceTransactionToFile(
-            block.getHash(), block.getBody().getTransactions(), transactionTraceParams);
+            block.getHash(),
+            block.getBody().getTransactions(),
+            transactionTraceParams,
+            dataDir.resolve(TRACE_PATH));
   }
 
   protected Object emptyResult() {

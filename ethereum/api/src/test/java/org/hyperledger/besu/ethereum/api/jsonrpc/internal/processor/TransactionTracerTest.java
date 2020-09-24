@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.ethereum.vm.EVMToolTracer;
+import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.io.IOException;
@@ -49,13 +49,17 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TransactionTracerTest {
+
+  @Rule public TemporaryFolder traceDir = new TemporaryFolder();
 
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
@@ -215,7 +219,8 @@ public class TransactionTracerTest {
         transactionTracer.traceTransactionToFile(
             blockHash,
             transactions,
-            Optional.of(ImmutableTransactionTraceParams.builder().build()));
+            Optional.of(ImmutableTransactionTraceParams.builder().build()),
+            traceDir.getRoot().toPath());
 
     assertThat(transactionTraces).isEmpty();
   }
@@ -242,7 +247,7 @@ public class TransactionTracerTest {
             eq(blockHeader),
             eq(transaction),
             eq(coinbase),
-            any(EVMToolTracer.class),
+            any(StandardJsonTracer.class),
             any(),
             any(),
             any()))
@@ -252,7 +257,8 @@ public class TransactionTracerTest {
         transactionTracer.traceTransactionToFile(
             blockHash,
             transactions,
-            Optional.of(ImmutableTransactionTraceParams.builder().build()));
+            Optional.of(ImmutableTransactionTraceParams.builder().build()),
+            traceDir.getRoot().toPath());
     ;
 
     assertThat(transactionTraces.size()).isEqualTo(1);
