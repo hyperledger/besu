@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer.TRACE_PATH;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
@@ -25,35 +23,33 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Suppliers;
+public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToFile
+    implements JsonRpcMethod {
 
-public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
+  private final ProtocolSchedule protocolSchedule;
 
-  protected final Supplier<BlockchainQueries> blockchainQueries;
-  private final Supplier<TransactionTracer> transactionTracerSupplier;
-  private final Path dataDir;
-
-  public DebugStandardTraceBlockToFile(
+  public DebugStandardTraceBadBlockToFile(
       final Supplier<TransactionTracer> transactionTracerSupplier,
       final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
       final Path dataDir) {
-    this.transactionTracerSupplier = transactionTracerSupplier;
-    this.blockchainQueries = Suppliers.ofInstance(blockchainQueries);
-    this.dataDir = dataDir;
+    super(transactionTracerSupplier, blockchainQueries, dataDir);
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.DEBUG_STANDARD_TRACE_BLOCK_TO_FILE.getMethodName();
+    return RpcMethod.DEBUG_STANDARD_TRACE_BAD_BLOCK_TO_FILE.getMethodName();
   }
 
   @Override
@@ -62,10 +58,13 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
     final Optional<TransactionTraceParams> transactionTraceParams =
         requestContext.getOptionalParameter(1, TransactionTraceParams.class);
 
-    return blockchainQueries
-        .get()
-        .getBlockchain()
-        .getBlockByHash(blockHash)
+    final Blockchain blockchain = blockchainQueries.get().getBlockchain();
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockNumber(blockchain.getChainHeadHeader().getNumber());
+    final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
+
+    return badBlockManager
+        .getBadBlocks(blockHash)
         .map(
             block ->
                 (JsonRpcResponse)
@@ -75,21 +74,5 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
         .orElse(
             new JsonRpcErrorResponse(
                 requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND));
-  }
-
-  protected List<String> traceBlock(
-      final Block block, final Optional<TransactionTraceParams> transactionTraceParams) {
-    return transactionTracerSupplier
-        .get()
-        .traceTransactionToFile(
-            block.getHash(),
-            block.getBody().getTransactions(),
-            transactionTraceParams,
-            dataDir.resolve(TRACE_PATH));
-  }
-
-  protected Object emptyResult() {
-    final ObjectMapper mapper = new ObjectMapper();
-    return mapper.createArrayNode();
   }
 }

@@ -259,7 +259,6 @@ public class TransactionTracerTest {
             transactions,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
             traceDir.getRoot().toPath());
-    ;
 
     assertThat(transactionTraces.size()).isEqualTo(1);
     assertThat(Files.readString(Path.of(transactionTraces.get(0))))
