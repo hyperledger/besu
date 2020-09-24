@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -52,6 +53,18 @@ public class MultiTenancyPrivacyController implements PrivacyController {
             ? Optional.of(
                 new OnchainPrivacyGroupContract(privacyController.getTransactionSimulator()))
             : Optional.empty();
+    privateTransactionValidator = new PrivateTransactionValidator(chainId);
+  }
+
+  @VisibleForTesting
+  MultiTenancyPrivacyController(
+      final PrivacyController privacyController,
+      final Optional<BigInteger> chainId,
+      final Enclave enclave,
+      final Optional<OnchainPrivacyGroupContract> onchainPrivacyGroupContract) {
+    this.privacyController = privacyController;
+    this.enclave = enclave;
+    this.onchainPrivacyGroupContract = onchainPrivacyGroupContract;
     privateTransactionValidator = new PrivateTransactionValidator(chainId);
   }
 

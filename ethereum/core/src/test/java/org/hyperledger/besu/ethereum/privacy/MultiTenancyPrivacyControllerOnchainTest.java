@@ -52,20 +52,27 @@ public class MultiTenancyPrivacyControllerOnchainTest {
   private final Enclave enclave = mock(Enclave.class);
   private final PrivateTransactionSimulator privateTransactionSimulator =
       mock(PrivateTransactionSimulator.class);
+  private final OnchainPrivacyGroupContract onchainPrivacyGroupContract =
+      mock(OnchainPrivacyGroupContract.class);
 
   private MultiTenancyPrivacyController multiTenancyPrivacyController;
 
   @Before
   public void setup() {
-    when(privacyController.getTransactionSimulator()).thenReturn(privateTransactionSimulator);
+    when(onchainPrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(
+            PRIVACY_GROUP_ID, Optional.of(1L)))
+        .thenReturn(Optional.of(ONCHAIN_PRIVACY_GROUP));
+
     multiTenancyPrivacyController =
         new MultiTenancyPrivacyController(
-            privacyController, Optional.of(BigInteger.valueOf(2018)), enclave, true);
+            privacyController,
+            Optional.of(BigInteger.valueOf(2018)),
+            enclave,
+            Optional.of(onchainPrivacyGroupContract));
   }
 
   @Test
   public void simulatePrivateTransactionSucceedsForPresentEnclaveKey() {
-    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID)).thenReturn(ONCHAIN_PRIVACY_GROUP);
     when(privacyController.simulatePrivateTransaction(any(), any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
@@ -84,8 +91,6 @@ public class MultiTenancyPrivacyControllerOnchainTest {
 
   @Test(expected = MultiTenancyValidationException.class)
   public void simulatePrivateTransactionFailsForAbsentEnclaveKey() {
-    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID)).thenReturn(ONCHAIN_PRIVACY_GROUP);
-
     multiTenancyPrivacyController.simulatePrivateTransaction(
         PRIVACY_GROUP_ID,
         ENCLAVE_PUBLIC_KEY2,
