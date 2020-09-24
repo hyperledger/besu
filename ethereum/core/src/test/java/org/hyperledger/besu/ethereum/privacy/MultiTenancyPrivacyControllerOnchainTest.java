@@ -50,8 +50,6 @@ public class MultiTenancyPrivacyControllerOnchainTest {
 
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private final Enclave enclave = mock(Enclave.class);
-  private final PrivateTransactionSimulator privateTransactionSimulator =
-      mock(PrivateTransactionSimulator.class);
   private final OnchainPrivacyGroupContract onchainPrivacyGroupContract =
       mock(OnchainPrivacyGroupContract.class);
 
