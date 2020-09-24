@@ -273,8 +273,6 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   public void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException {
-    // TODO: There's potentially a bug here where an onchain privacyGroup
-    // that isn't found will default to the offchain privacy group.
     Optional<PrivacyGroup> maybePrivacyGroup;
     PrivacyGroup offchainPrivacyGroup;
     if (onchainPrivacyGroupContract.isPresent()) {
