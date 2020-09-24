@@ -53,7 +53,8 @@ public class GeneralStateTestCaseSpec {
       final StateTestVersionedTransaction versionedTransaction) {
 
     initialWorldState.persist();
-    final Map<String, List<GeneralStateTestCaseEipSpec>> res = new LinkedHashMap<>(postSections.size());
+    final Map<String, List<GeneralStateTestCaseEipSpec>> res =
+        new LinkedHashMap<>(postSections.size());
     for (final Map.Entry<String, List<PostSection>> entry : postSections.entrySet()) {
       final String eip = entry.getKey();
       final List<PostSection> post = entry.getValue();

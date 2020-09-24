@@ -149,13 +149,13 @@ task blockchainReferenceTestsSetup {
 
 task legacyBlockchainReferenceTestsSetup {
   generateTestFiles(
-      fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests'),
-      file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
-      "LegacyTests",
-      "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
-      "LegacyBlockchainReferenceTest",
-      ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
-  )
+    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests'),
+    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
+    "LegacyTests",
+    "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
+    "LegacyBlockchainReferenceTest",
+    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
+    )
 }
 
 task generalstateReferenceTestsSetup {

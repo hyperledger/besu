@@ -73,7 +73,7 @@ class EVMToolTracer implements OperationTracer {
     final ArrayNode returnStack = traceLine.putArray("returnStack");
     final ReturnStack rs = messageFrame.getReturnStack();
     for (int i = rs.size() - 1; i >= 0; i--) {
-      returnStack.add(rs.get(i));
+      returnStack.add("0x" + Integer.toHexString(rs.get(i) - 1));
     }
     Bytes returnData = messageFrame.getReturnData();
     traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
@@ -87,7 +87,9 @@ class EVMToolTracer implements OperationTracer {
     if (showMemory) {
       traceLine.put(
           "memory",
-          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32)).toHexString());
+          messageFrame
+              .readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32))
+              .toHexString());
     } else {
       traceLine.put("memory", "0x");
     }
