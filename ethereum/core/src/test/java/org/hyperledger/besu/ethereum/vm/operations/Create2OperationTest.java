@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.MessageFrame.Type;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import java.util.ArrayDeque;
@@ -136,7 +135,7 @@ public class Create2OperationTest {
     when(account.getMutable()).thenReturn(mutableAccount);
     messageFrame =
         MessageFrame.builder()
-            .type(Type.CONTRACT_CREATION)
+            .type(MessageFrame.Type.CONTRACT_CREATION)
             .contract(Address.ZERO)
             .inputData(Bytes.EMPTY)
             .sender(Address.fromHexString(sender))
