@@ -63,17 +63,17 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + "                          [--start-block=<LONG>] [--start-time=<startTime>]\n"
           + "                          [--from[=<FILE>...]]... [<FILE>...]\n"
           + "This command imports blocks from a file into the database.\n"
-          + "      [<FILE>...]          Files containing blocks to import.\n"
+          + "      [<FILE>...]            Files containing blocks to import.\n"
           + "      --end-block=<LONG>     The ending index of the block list to import\n"
           + "                               (exclusive).  If not specified all blocks after\n"
           + "                               the start block will be imported.\n"
-          + "      --format=<format>    The type of data to be imported, possible values\n"
-          + "                             are: RLP, JSON (default: RLP).\n"
-          + "      --from[=<FILE>...]   File containing blocks to import.\n"
-          + "  -h, --help               Show this help message and exit.\n"
-          + "      --run                Start besu after importing.\n"
+          + "      --format=<format>      The type of data to be imported, possible values\n"
+          + "                               are: RLP, JSON (default: RLP).\n"
+          + "      --from[=<FILE>...]     File containing blocks to import.\n"
+          + "  -h, --help                 Show this help message and exit.\n"
+          + "      --run                  Start besu after importing.\n"
           + "      --skip-pow-validation-enabled\n"
-          + "                           Skip proof of work validation when importing.\n"
+          + "                             Skip proof of work validation when importing.\n"
           + "      --start-block=<LONG>   The starting index of the block, or block list to\n"
           + "                               import.  If not specified all blocks before the\n"
           + "                               end block will be imported\n"
@@ -81,7 +81,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + "                             The timestamp in seconds of the first block for\n"
           + "                               JSON imports. Subsequent blocks will be 1 second\n"
           + "                               later. (default: current time)\n"
-          + "  -V, --version            Print version information and exit.\n";
+          + "  -V, --version              Print version information and exit.\n";
 
   private static final String EXPECTED_BLOCK_EXPORT_USAGE =
       "Usage: besu blocks export [-hV] [--end-block=<LONG>] [--start-block=<LONG>]"

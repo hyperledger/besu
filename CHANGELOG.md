@@ -3,7 +3,7 @@
 ## 1.6.0-RC1
 
 ### Additions and Improvements
-* Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#???](https://github.com/hyperledger/besu/pull/???)     
+* Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#1399](https://github.com/hyperledger/besu/pull/1399)     
 
 ### Bug Fixes
 
