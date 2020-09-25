@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -32,12 +33,15 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -202,7 +206,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
     return Optional.ofNullable(newAccountKeyPreimages.get(trieKey))
         .or(() -> preimageStorage.getAccountTrieKeyPreimage(trieKey));
   }
-
   // An immutable class that represents an individual account as stored in
   // in the world state's underlying merkle patricia trie.
   protected class WorldStateAccount implements Account {
@@ -290,7 +293,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     @Override
     public UInt256 getStorageValue(final UInt256 key) {
       final Optional<Bytes> val = storageTrie().get(Hash.hash(key.toBytes()));
-      if (!val.isPresent()) {
+      if (val.isEmpty()) {
         return UInt256.ZERO;
       }
       return convertToUInt256(val.get());
@@ -332,7 +335,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       builder.append("nonce=").append(getNonce()).append(", ");
       builder.append("balance=").append(getBalance()).append(", ");
       builder.append("storageRoot=").append(getStorageRoot()).append(", ");
-      builder.append("codeHash=").append(getCodeHash());
+      builder.append("codeHash=").append(getCodeHash()).append(", ");
       builder.append("version=").append(getVersion());
       return builder.append("}").toString();
     }
@@ -357,33 +360,33 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
-      return new ArrayList<>(updatedAccounts());
+    public Collection<? extends Account> getTouchedAccounts() {
+      return new ArrayList<>(getUpdatedAccounts());
     }
 
     @Override
     public Collection<Address> getDeletedAccountAddresses() {
-      return new ArrayList<>(deletedAccounts());
+      return new ArrayList<>(getDeletedAccounts());
     }
 
     @Override
     public void revert() {
-      deletedAccounts().clear();
-      updatedAccounts().clear();
+      getDeletedAccounts().clear();
+      getUpdatedAccounts().clear();
     }
 
     @Override
     public void commit() {
       final DefaultMutableWorldState wrapped = wrappedWorldView();
 
-      for (final Address address : deletedAccounts()) {
+      for (final Address address : getDeletedAccounts()) {
         final Hash addressHash = Hash.hash(address);
         wrapped.accountStateTrie.remove(addressHash);
         wrapped.updatedStorageTries.remove(address);
         wrapped.updatedAccountCode.remove(address);
       }
 
-      for (final UpdateTrackingAccount<WorldStateAccount> updated : updatedAccounts()) {
+      for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
         final WorldStateAccount origin = updated.getWrappedAccount();
 
         // Save the code in key-value storage ...
@@ -406,7 +409,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
                   ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
-          for (final Map.Entry<UInt256, UInt256> entry : updatedStorage.entrySet()) {
+          final TreeSet<Map.Entry<UInt256, UInt256>> entries =
+              new TreeSet<>(
+                  Comparator.comparing(
+                      (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
+          entries.addAll(updatedStorage.entrySet());
+
+          for (final Map.Entry<UInt256, UInt256> entry : entries) {
             final UInt256 value = entry.getValue();
             final Hash keyHash = Hash.hash(entry.getKey().toBytes());
             if (value.isZero()) {
