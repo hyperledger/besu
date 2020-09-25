@@ -54,7 +54,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -100,7 +100,8 @@ public abstract class BesuControllerBuilder {
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
   private long reorgLoggingThreshold;
-  private DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
+  private DataStorageConfiguration dataStorageConfiguration =
+      DataStorageConfiguration.DEFAULT_CONFIG;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -201,8 +202,9 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
-  public BesuControllerBuilder worldStateStorageFormat(final DataStorageFormat dataStorageFormat) {
-    this.dataStorageFormat = dataStorageFormat;
+  public BesuControllerBuilder dataStorageConfiguration(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    this.dataStorageConfiguration = dataStorageConfiguration;
     return this;
   }
 
@@ -421,7 +423,7 @@ public abstract class BesuControllerBuilder {
   }
 
   public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {
-    switch (dataStorageFormat) {
+    switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateArchive(null, storageProvider);
       case FOREST:
