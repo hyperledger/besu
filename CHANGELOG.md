@@ -18,7 +18,10 @@
 
 ### Download link
 
-Will be added upon release. Snapshot builds are available to download at https://dl.bintray.com/hyperledger-org/besu-repo/
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.5.zip
+
+sha256sum: `e67b0a899dc4421054eaa9a8112cb89e1e5f6a56f0d8aa1b0c5111c53dfad2ad`
+
 
 ## 1.5.4
 
