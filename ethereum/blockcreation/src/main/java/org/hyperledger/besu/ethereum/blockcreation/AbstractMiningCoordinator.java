@@ -210,4 +210,9 @@ public abstract class AbstractMiningCoordinator<
 
   protected abstract boolean newChainHeadInvalidatesMiningOperation(
       final BlockHeader newChainHeadHeader);
+
+  @Override
+  public void changeTargetGasLimit(final Optional<Long> targetGasLimit) {
+    executor.changeTargetGasLimit(targetGasLimit);
+  }
 }

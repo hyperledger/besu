@@ -109,6 +109,7 @@ public enum RpcMethod {
   IBFT_GET_VALIDATORS_BY_BLOCK_NUMBER("ibft_getValidatorsByBlockNumber"),
   IBFT_PROPOSE_VALIDATOR_VOTE("ibft_proposeValidatorVote"),
   IBFT_GET_SIGNER_METRICS("ibft_getSignerMetrics"),
+  MINER_CHANGE_TARGET_GAS_LIMIT("miner_changeTargetGasLimit"),
   MINER_SET_COINBASE("miner_setCoinbase"),
   MINER_SET_ETHERBASE("miner_setEtherbase"),
   MINER_START("miner_start"),

@@ -106,4 +106,6 @@ public interface MiningCoordinator {
       final List<BlockHeader> ommers);
 
   default void addEthHashObserver(final EthHashObserver observer) {}
+
+  default void changeTargetGasLimit(final Optional<Long> targetGasLimit) {};
 }

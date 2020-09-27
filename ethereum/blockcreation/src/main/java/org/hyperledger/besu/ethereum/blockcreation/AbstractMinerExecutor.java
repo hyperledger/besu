@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -115,4 +116,9 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   }
 
   public abstract Optional<Address> getCoinbase();
+
+  public void changeTargetGasLimit(final Optional<Long> targetGasLimit) {
+    if (gasLimitCalculator instanceof GasLimitCalculator)
+      ((GasLimitCalculator) gasLimitCalculator).changeTargetGasLimit(targetGasLimit);
+  }
 }

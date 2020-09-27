@@ -16,6 +16,8 @@ package org.hyperledger.besu.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.GasLimitCalculator;
+
 import java.util.Optional;
 import java.util.function.Function;
 
