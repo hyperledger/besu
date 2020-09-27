@@ -3672,4 +3672,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains("Invalid value for option", "--Xws-timeout-seconds", "abc", "is not a long");
   }
+
+  @Test
+  public void assertThatDuplicatePortSpecifiedFails() {
+    parseCommand("--p2p-port=9", "--rpc-http-port=10", "--rpc-ws-port=10");
+    assertThat(commandErrorOutput.toString())
+        .contains("Port number '10' has been specified multiple times.");
+  }
 }

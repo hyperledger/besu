@@ -152,8 +152,10 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -236,6 +238,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
+
+  private final Set<Integer> allocatedPorts = new HashSet<>();
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -1376,6 +1380,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private BesuCommand configure() throws Exception {
+    checkPortClash();
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -2231,6 +2236,31 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       enodeDnsConfiguration = unstableDnsOptions.toDomainObject();
     }
     return enodeDnsConfiguration;
+  }
+
+  private void checkPortClash() {
+    // List of port parameters
+    final List<Integer> ports =
+        asList(
+            p2pPort,
+            graphQLHttpPort,
+            rpcHttpPort,
+            rpcWsPort,
+            metricsPort,
+            metricsPushPort,
+            stratumPort);
+    ports.stream()
+        .filter(Objects::nonNull)
+        .forEach(
+            port -> {
+              if (!allocatedPorts.add(port)) {
+                throw new ParameterException(
+                    commandLine,
+                    "Port number '"
+                        + port
+                        + "' has been specified multiple times. Please review the supplied configuration.");
+              }
+            });
   }
 
   @VisibleForTesting
