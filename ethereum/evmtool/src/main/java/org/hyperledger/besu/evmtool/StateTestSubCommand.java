@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 
 import java.io.File;
@@ -128,7 +129,7 @@ public class StateTestSubCommand implements Runnable {
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
-            ? new EVMToolTracer(System.out, !parentCommand.noMemory)
+            ? new StandardJsonTracer(System.out, !parentCommand.noMemory)
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
@@ -173,7 +174,7 @@ public class StateTestSubCommand implements Runnable {
       summaryLine.put("output", result.getOutput().toUnprefixedHexString());
       summaryLine.put(
           "gasUsed",
-          EVMToolTracer.shortNumber(
+          StandardJsonTracer.shortNumber(
               UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
       summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
 
