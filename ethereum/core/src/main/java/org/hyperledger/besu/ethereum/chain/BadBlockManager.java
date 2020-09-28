@@ -51,6 +51,7 @@ public class BadBlockManager {
   /**
    * Return an invalid block based on the hash
    *
+   * @param hash of the block
    * @return an invalid block
    */
   public Optional<Block> getBadBlocks(final Hash hash) {
