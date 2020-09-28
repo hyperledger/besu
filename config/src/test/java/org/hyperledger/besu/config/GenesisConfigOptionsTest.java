@@ -173,10 +173,10 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldGetYoloV1BlockNumber() {
+  public void shouldGetYoloV2BlockNumber() {
     try {
       ExperimentalEIPs.berlinEnabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV1Block", 1000));
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV2Block", 1000));
       assertThat(config.getBerlinBlockNumber()).hasValue(1000);
     } finally {
       ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
