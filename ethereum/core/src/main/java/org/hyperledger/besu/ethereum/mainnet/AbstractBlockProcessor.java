@@ -164,15 +164,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       currentGasUsed = transaction.getGasLimit() - result.getGasRemaining() + currentGasUsed;
 
-      final TransactionReceipt transactionReceipt;
       if (ExperimentalEIPs.eip1559Enabled && transaction.isEIP1559Transaction()) {
         eip1556GasUsed = currentGasUsed;
-        transactionReceipt = transactionReceiptFactory.create(result, worldState, eip1556GasUsed);
       } else {
         legacyGasUsed = currentGasUsed;
-        transactionReceipt = transactionReceiptFactory.create(result, worldState, legacyGasUsed);
       }
 
+      final TransactionReceipt transactionReceipt =
+          transactionReceiptFactory.create(result, worldState, legacyGasUsed + eip1556GasUsed);
       receipts.add(transactionReceipt);
     }
 
