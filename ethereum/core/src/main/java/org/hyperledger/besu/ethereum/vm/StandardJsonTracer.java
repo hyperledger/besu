@@ -83,14 +83,15 @@ public class StandardJsonTracer implements OperationTracer {
     final ArrayNode returnStack = traceLine.putArray("returnStack");
     final ReturnStack rs = messageFrame.getReturnStack();
     for (int i = rs.size() - 1; i >= 0; i--) {
-      returnStack.add(rs.get(i));
+      returnStack.add("0x" + Integer.toHexString(rs.get(i) - 1));
     }
     Bytes returnData = messageFrame.getReturnData();
     traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
     traceLine.put("depth", messageFrame.getMessageStackDepth() + 1);
-    traceLine.put("refund", messageFrame.getGasRefund().toLong());
 
     final OperationResult executeResult = executeOperation.execute();
+
+    traceLine.put("refund", messageFrame.getGasRefund().toLong());
     traceLine.put(
         "gasCost", executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
     if (showMemory) {
