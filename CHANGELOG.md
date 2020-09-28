@@ -3,7 +3,7 @@
 ## 1.6.0-RC1
 
 ### Additions and Improvements
-* Added support for the upcoming YOLOv2 ephemeral testnet and removed the flag for the deprecated YOLOv1 ephemeral testnet.
+* Added support for the upcoming YOLOv2 ephemeral testnet and removed the flag for the deprecated YOLOv1 ephemeral testnet. [#1386](https://github.com/hyperledger/besu/pull/1386)
 * Added support for EIP-2929 to YOLOv2. [#1387](https://github.com/hyperledger/besu/pull/1387)     
 
 ### Bug Fixes
