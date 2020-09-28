@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
+import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -121,7 +122,8 @@ public class DebugTraceTransactionTest {
     when(blockchain.headBlockNumber()).thenReturn(12L);
     when(blockchain.transactionByHash(transactionHash))
         .thenReturn(Optional.of(transactionWithMetadata));
-    when(transactionTracer.traceTransaction(eq(blockHash), eq(transactionHash), any()))
+    when(transactionTracer.traceTransaction(
+            eq(blockHash), eq(transactionHash), any(DebugOperationTracer.class)))
         .thenReturn(Optional.of(transactionTrace));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);
@@ -184,7 +186,8 @@ public class DebugTraceTransactionTest {
     when(blockHeader.getNumber()).thenReturn(12L);
     when(blockchain.headBlockNumber()).thenReturn(12L);
     when(blockchain.transactionByHash(transactionHash)).thenReturn(Optional.empty());
-    when(transactionTracer.traceTransaction(eq(blockHash), eq(transactionHash), any()))
+    when(transactionTracer.traceTransaction(
+            eq(blockHash), eq(transactionHash), any(DebugOperationTracer.class)))
         .thenReturn(Optional.of(transactionTrace));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);

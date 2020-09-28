@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 
 import java.io.File;
 import java.io.IOException;
@@ -222,7 +223,7 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new EVMToolTracer(System.out, !noMemory)
+                ? new StandardJsonTracer(System.out, !noMemory)
                 : OperationTracer.NO_TRACING;
 
         final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
