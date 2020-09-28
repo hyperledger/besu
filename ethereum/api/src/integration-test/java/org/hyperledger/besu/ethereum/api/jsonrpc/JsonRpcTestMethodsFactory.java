@@ -47,6 +47,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -113,6 +114,9 @@ public class JsonRpcTestMethodsFactory {
     apis.add(RpcApis.WEB3);
     apis.add(RpcApis.PRIV);
     apis.add(RpcApis.DEBUG);
+
+    final Path dataDir = mock(Path.class);
+
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
@@ -135,6 +139,7 @@ public class JsonRpcTestMethodsFactory {
             webSocketConfiguration,
             metricsConfiguration,
             natService,
-            new HashMap<>());
+            new HashMap<>(),
+            dataDir);
   }
 }

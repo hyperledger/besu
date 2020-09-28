@@ -16,28 +16,43 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 
+@Value.Immutable
+@JsonSerialize(as = ImmutableTransactionTraceParams.class)
+@JsonDeserialize(as = ImmutableTransactionTraceParams.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TransactionTraceParams {
+public interface TransactionTraceParams {
 
-  private final boolean disableStorage;
-  private final boolean disableMemory;
-  private final boolean disableStack;
+  @JsonProperty("txHash")
+  @Nullable
+  String getTransactionHash();
 
-  @JsonCreator()
-  public TransactionTraceParams(
-      @JsonProperty("disableStorage") final boolean disableStorage,
-      @JsonProperty("disableMemory") final boolean disableMemory,
-      @JsonProperty("disableStack") final boolean disableStack) {
-    this.disableStorage = disableStorage;
-    this.disableMemory = disableMemory;
-    this.disableStack = disableStack;
+  @JsonProperty(value = "disableStorage")
+  @Value.Default
+  default boolean disableStorage() {
+    return false;
   }
 
-  public TraceOptions traceOptions() {
-    return new TraceOptions(!disableStorage, !disableMemory, !disableStack);
+  @JsonProperty(value = "disableMemory")
+  @Value.Default
+  default boolean disableMemory() {
+    return false;
+  }
+
+  @JsonProperty(value = "disableStack")
+  @Value.Default
+  default boolean disableStack() {
+    return false;
+  }
+
+  default TraceOptions traceOptions() {
+    return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack());
   }
 }
