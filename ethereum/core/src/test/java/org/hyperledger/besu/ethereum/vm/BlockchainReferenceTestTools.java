@@ -71,6 +71,7 @@ public class BlockchainReferenceTestTools {
 
     // Consumes a huge amount of memory
     params.ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+");
+    params.ignore("ShanghaiLove_.*");
 
     // Absurd amount of gas, doesn't run in parallel
     params.ignore("randomStatetest94_\\w+");
