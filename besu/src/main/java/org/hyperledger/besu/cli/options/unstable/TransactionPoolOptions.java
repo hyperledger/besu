@@ -12,8 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options;
+package org.hyperledger.besu.cli.options.unstable;
 
+import org.hyperledger.besu.cli.options.CLIOptions;
+import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 
 import java.util.Arrays;

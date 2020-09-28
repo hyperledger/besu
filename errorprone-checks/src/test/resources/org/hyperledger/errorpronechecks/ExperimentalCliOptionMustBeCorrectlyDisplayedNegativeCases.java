@@ -19,7 +19,7 @@ import picocli.CommandLine;
 
 import java.util.Objects;
 
-public class ExperimentalCliOptionNotHiddenNegativeCases {
+public class ExperimentalCliOptionMustBeCorrectlyDisplayedNegativeCases {
 
   @CommandLine.Option(
           hidden = true,
@@ -34,4 +34,22 @@ public class ExperimentalCliOptionNotHiddenNegativeCases {
   @CommandLine.Option(
           names = {"--notExperimental2"})
   private String notExperimental2 = "";
+
+  private class AnotherClass {
+    @CommandLine.Option(
+            names = {"--notExperimentalInAnotherClass"})
+    private String notExperimentalInAnotherClass = "";
+
+    @CommandLine.Option(
+            hidden = true,
+            names = {"--XexperimentalInAnotherClass"})
+    private String experimentalInAnotherClass = "";
+  }
+
+  private class BesuCommand {
+
+    @CommandLine.Option(
+            names = {"--notExperimentalInBesuCommandClass"})
+    private String notExperimentalInBesuCommandClass = "";
+  }
 }

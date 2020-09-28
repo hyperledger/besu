@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -74,6 +75,8 @@ public class ProtocolSpec {
 
   private final TransactionGasBudgetCalculator gasBudgetCalculator;
 
+  private final BadBlockManager badBlockManager;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -99,6 +102,7 @@ public class ProtocolSpec {
    * @param transactionPriceCalculator the transaction price calculator to use.
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @param gasBudgetCalculator the gas budget calculator to use.
+   * @param badBlockManager the cache to use to keep invalid blocks
    */
   public ProtocolSpec(
       final String name,
@@ -122,7 +126,8 @@ public class ProtocolSpec {
       final GasCalculator gasCalculator,
       final TransactionPriceCalculator transactionPriceCalculator,
       final Optional<EIP1559> eip1559,
-      final TransactionGasBudgetCalculator gasBudgetCalculator) {
+      final TransactionGasBudgetCalculator gasBudgetCalculator,
+      final BadBlockManager badBlockManager) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -145,6 +150,7 @@ public class ProtocolSpec {
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.eip1559 = eip1559;
     this.gasBudgetCalculator = gasBudgetCalculator;
+    this.badBlockManager = badBlockManager;
   }
 
   /**
@@ -334,5 +340,14 @@ public class ProtocolSpec {
    */
   public TransactionGasBudgetCalculator getGasBudgetCalculator() {
     return gasBudgetCalculator;
+  }
+
+  /**
+   * Returns the bad blocks manager
+   *
+   * @return the bad blocks manager
+   */
+  public BadBlockManager getBadBlocksManager() {
+    return badBlockManager;
   }
 }

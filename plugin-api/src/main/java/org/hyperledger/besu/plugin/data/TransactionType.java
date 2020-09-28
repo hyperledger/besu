@@ -12,23 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.plugin.data;
 
-package org.hyperledger.errorpronechecks;
-
-import picocli.CommandLine;
-
-import java.util.Objects;
-
-public class ExperimentalCliOptionNotHiddenPositiveCases {
-
-  // BUG: Diagnostic contains:  Experimental options must be hidden.
-  @CommandLine.Option(
-          hidden = false,
-          names = {"--Xexperimental"})
-  private String experimental = "";
-
-  // BUG: Diagnostic contains:  Experimental options must be hidden.
-  @CommandLine.Option(
-          names = {"--Xexperimental2"})
-  private String experimental2 = "";
+public enum TransactionType {
+  FRONTIER,
+  EIP1559
 }

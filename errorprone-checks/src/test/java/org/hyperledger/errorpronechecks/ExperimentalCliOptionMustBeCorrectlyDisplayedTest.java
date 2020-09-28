@@ -18,35 +18,28 @@ import com.google.errorprone.CompilationTestHelper;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ExperimentalCliOptionMustBeHiddenTest {
+public class ExperimentalCliOptionMustBeCorrectlyDisplayedTest {
 
   private CompilationTestHelper compilationHelper;
 
   @Before
   public void setup() {
     compilationHelper =
-        CompilationTestHelper.newInstance(ExperimentalCliOptionMustBeHidden.class, getClass());
+        CompilationTestHelper.newInstance(
+            ExperimentalCliOptionMustBeCorrectlyDisplayed.class, getClass());
   }
 
   @Test
   public void experimentalCliOptionMustBeHiddenPositiveCases() {
-    compilationHelper.addSourceFile("ExperimentalCliOptionNotHiddenPositiveCases.java").doTest();
+    compilationHelper
+        .addSourceFile("ExperimentalCliOptionMustBeCorrectlyDisplayedPositiveCases.java")
+        .doTest();
   }
 
   @Test
   public void experimentalCliOptionMustBeHiddenNegativeCases() {
-    compilationHelper.addSourceFile("ExperimentalCliOptionNotHiddenNegativeCases.java").doTest();
-  }
-
-  @Test
-  public void methodInputParametersMustBeFinalNegativeCases() {
-    compilationHelper.addSourceFile("MethodInputParametersMustBeFinalNegativeCases.java").doTest();
-  }
-
-  @Test
-  public void methodInputParametersMustBeFinalInterfaceNegativeCases() {
     compilationHelper
-        .addSourceFile("MethodInputParametersMustBeFinalInterfaceNegativeCases.java")
+        .addSourceFile("ExperimentalCliOptionMustBeCorrectlyDisplayedNegativeCases.java")
         .doTest();
   }
 }

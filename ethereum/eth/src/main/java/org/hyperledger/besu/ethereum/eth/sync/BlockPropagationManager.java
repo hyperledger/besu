@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -298,26 +299,30 @@ public class BlockPropagationManager {
                         "Incapable of retrieving header from non-existent parent of "
                             + block.getHeader().getNumber()
                             + "."));
-
     final ProtocolSpec protocolSpec =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(
-            () -> validateAndProcessPendingBlock(blockHeaderValidator, block, parent));
+            () ->
+                validateAndProcessPendingBlock(
+                    blockHeaderValidator, block, parent, badBlockManager));
   }
 
   private CompletableFuture<Block> validateAndProcessPendingBlock(
       final BlockHeaderValidator blockHeaderValidator,
       final Block block,
-      final BlockHeader parent) {
+      final BlockHeader parent,
+      final BadBlockManager badBlockManager) {
     if (blockHeaderValidator.validateHeader(
         block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
       return runImportTask(block);
     } else {
       importingBlocks.remove(block.getHash());
+      badBlockManager.addBadBlock(block);
       LOG.warn(
           "Failed to import announced block {} ({}).",
           block.getHeader().getNumber(),
