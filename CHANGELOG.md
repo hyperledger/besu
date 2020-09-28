@@ -5,6 +5,7 @@
 ### Additions and Improvements
 * Added support for the upcoming YOLOv2 ephemeral testnet and removed the flag for the deprecated YOLOv1 ephemeral testnet.   
 * Added `debug_standardTraceBlockToFile` JSON-RPC API. This API accepts a block hash and will replay the block. It returns a list of files containing the result of the trace (one file per transaction). [\#1392](https://github.com/hyperledger/besu/pull/1392)
+* Added `debug_standardTraceBadBlockToFile` JSON-RPC API. This API is similar to debug_standardTraceBlockToFile, but can be used to obtain info about a block which has been rejected as invalid.
 
 ### Bug Fixes
 
