@@ -1,10 +1,23 @@
 # Changelog
 
+## 1.6.0-RC1
+
+### Additions and Improvements
+* Added `debug_standardTraceBlockToFile` JSON-RPC API. This API accepts a block hash and will replay the block. It returns a list of files containing the result of the trace (one file per transaction). [\#1392](https://github.com/hyperledger/besu/pull/1392)
+
+### Bug Fixes
+
+#### Previously identified known issues
+
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+- [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
+
 ## 1.5.5
 
 ### Additions and Improvements
 * The new version of the [web3js-eea library (v0.10)](https://github.com/PegaSysEng/web3js-eea) supports the onchain privacy group management changes made in Besu v1.5.3.     
-* Added `debug_standardTraceBlockToFile` JSON-RPC API. This API accepts a block hash and will replay the block. It returns a list of files containing the result of the trace (one file per transaction). [\#1392](https://github.com/hyperledger/besu/pull/1392)
 
 ### Bug Fixes
 * Added `debug_getBadBlocks` JSON-RPC API to analyze and detect consensus flaws. Even if a block is rejected it will be returned by this method [\#1378](https://github.com/hyperledger/besu/pull/1378)
