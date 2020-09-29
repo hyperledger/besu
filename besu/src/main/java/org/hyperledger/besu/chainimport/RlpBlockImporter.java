@@ -67,6 +67,16 @@ public class RlpBlockImporter implements Closeable {
   public RlpBlockImporter.ImportResult importBlockchain(
       final Path blocks, final BesuController besuController, final boolean skipPowValidation)
       throws IOException {
+    return importBlockchain(blocks, besuController, skipPowValidation, 0L, Long.MAX_VALUE);
+  }
+
+  public RlpBlockImporter.ImportResult importBlockchain(
+      final Path blocks,
+      final BesuController besuController,
+      final boolean skipPowValidation,
+      final long startBlock,
+      final long endBlock)
+      throws IOException {
     final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
     final ProtocolContext context = besuController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
@@ -83,11 +93,14 @@ public class RlpBlockImporter implements Closeable {
       while (iterator.hasNext()) {
         final Block block = iterator.next();
         final BlockHeader header = block.getHeader();
-        if (header.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
+        final long blockNumber = header.getNumber();
+        if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
+            || blockNumber < startBlock
+            || blockNumber >= endBlock) {
           continue;
         }
-        if (header.getNumber() % 100 == 0) {
-          LOG.info("Import at block {}", header.getNumber());
+        if (blockNumber % 100 == 0) {
+          LOG.info("Import at block {}", blockNumber);
         }
         if (blockchain.contains(header.getHash())) {
           continue;
@@ -95,7 +108,7 @@ public class RlpBlockImporter implements Closeable {
         if (previousHeader == null) {
           previousHeader = lookupPreviousHeader(blockchain, header);
         }
-        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
         final BlockHeader lastHeader = previousHeader;
 
         final CompletableFuture<Void> validationFuture =
