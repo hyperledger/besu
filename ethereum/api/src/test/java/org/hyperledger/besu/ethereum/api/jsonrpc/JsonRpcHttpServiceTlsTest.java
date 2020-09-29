@@ -127,7 +127,8 @@ public class JsonRpcHttpServiceTlsTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    Collections.emptyMap()));
+                    Collections.emptyMap(),
+                    folder.getRoot().toPath()));
     service = createJsonRpcHttpService(createJsonRpcConfig());
     service.start().join();
     baseUrl = service.url();

@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 
 import java.io.File;
@@ -56,6 +57,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
@@ -68,6 +70,12 @@ public class StateTestSubCommand implements Runnable {
 
   public static final String COMMAND_NAME = "state-test";
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--fork"},
+      description = "Force the state tests to run on a specific fork.")
+  private String fork = null;
+
   @ParentCommand private EvmToolCommand parentCommand;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
@@ -75,15 +83,6 @@ public class StateTestSubCommand implements Runnable {
   private final List<File> stateTestFiles = new ArrayList<>();
 
   private final ObjectMapper objectMapper = new ObjectMapper();
-
-  private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES;
-
-  static {
-    Configurator.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
-    REFERENCE_TEST_PROTOCOL_SCHEDULES = ReferenceTestProtocolSchedules.create();
-    Configurator.setLevel("org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
-  }
 
   @Override
   public void run() {
@@ -126,9 +125,14 @@ public class StateTestSubCommand implements Runnable {
   }
 
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
+    Configurator.setLevel(
+        "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
+    var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
+    Configurator.setLevel("org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
-            ? new EVMToolTracer(System.out, !parentCommand.noMemory)
+            ? new StandardJsonTracer(System.out, !parentCommand.noMemory)
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
@@ -146,7 +150,11 @@ public class StateTestSubCommand implements Runnable {
         return;
       }
 
-      final TransactionProcessor processor = transactionProcessor(spec.getFork());
+      final TransactionProcessor processor =
+          referenceTestProtocolSchedules
+              .getByName(fork == null ? spec.getFork() : fork)
+              .getByBlockNumber(0)
+              .getTransactionProcessor();
       final WorldUpdater worldStateUpdater = worldState.updater();
       final ReferenceTestBlockchain blockchain =
           new ReferenceTestBlockchain(blockHeader.getNumber());
@@ -173,7 +181,7 @@ public class StateTestSubCommand implements Runnable {
       summaryLine.put("output", result.getOutput().toUnprefixedHexString());
       summaryLine.put(
           "gasUsed",
-          EVMToolTracer.shortNumber(
+          StandardJsonTracer.shortNumber(
               UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
       summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
 
@@ -194,12 +202,5 @@ public class StateTestSubCommand implements Runnable {
 
       System.out.println(summaryLine);
     }
-  }
-
-  private static TransactionProcessor transactionProcessor(final String name) {
-    return REFERENCE_TEST_PROTOCOL_SCHEDULES
-        .getByName(name)
-        .getByBlockNumber(0)
-        .getTransactionProcessor();
   }
 }
