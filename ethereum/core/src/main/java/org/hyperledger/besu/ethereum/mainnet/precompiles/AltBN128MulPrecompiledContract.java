@@ -14,23 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
-import static org.hyperledger.besu.nativelib.altbn128.LibAltbn128.altbn128_mul_precompiled;
-
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import com.sun.jna.ptr.IntByReference;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
-public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract {
+public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final BigInteger MAX_N =
       new BigInteger(
@@ -39,7 +36,7 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
   private final Gas gasCost;
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
-    super("AltBN128Mul", gasCalculator);
+    super("AltBN128Mul", gasCalculator, LibEthPairings.EIP196_MUL_OPERATION_RAW_VALUE);
     this.gasCost = gasCost;
   }
 
@@ -58,8 +55,8 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
 
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
-    if (AltBN128PairingPrecompiledContract.useNative) {
-      return computeNative(input);
+    if (useNative) {
+      return computeNative(input, messageFrame);
     } else {
       return computeDefault(input);
     }
@@ -85,13 +82,17 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
     return result;
   }
 
-  private static Bytes computeNative(final Bytes input) {
-    final byte[] output = new byte[64];
-    final IntByReference outputSize = new IntByReference(64);
-    if (altbn128_mul_precompiled(input.toArrayUnsafe(), input.size(), output, outputSize) == 0) {
-      return Bytes.wrap(output, 0, outputSize.getValue());
+  @Override
+  public Bytes computeNative(final Bytes input, final MessageFrame messageFrame) {
+    final int size = input.size();
+    if (size == 96) {
+      return super.computeNative(input, messageFrame);
+    } else if (size < 96) {
+      final MutableBytes padded = MutableBytes.wrap(new byte[96]);
+      input.copyTo(padded, 0);
+      return super.computeNative(padded, messageFrame);
     } else {
-      return null;
+      return super.computeNative(input.slice(0, 96), messageFrame);
     }
   }
 

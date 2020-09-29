@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
-import static org.hyperledger.besu.nativelib.altbn128.LibAltbn128.altbn128_pairing_precompiled;
-
 import org.hyperledger.besu.crypto.altbn128.AltBn128Fq12Pairer;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Fq2Point;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
@@ -23,31 +21,18 @@ import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.crypto.altbn128.Fq12;
 import org.hyperledger.besu.crypto.altbn128.Fq2;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.nativelib.altbn128.LibAltbn128;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.sun.jna.ptr.IntByReference;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
-
-  static boolean useNative = true;
-
-  private static final Logger LOG = LogManager.getLogger();
-
-  public static void enableNative() {
-    useNative = LibAltbn128.ENABLED;
-    LOG.info(useNative ? "Using native alt bn128" : "Native alt bn128 requested but not available");
-  }
+public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
@@ -62,7 +47,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
 
   private AltBN128PairingPrecompiledContract(
       final GasCalculator gasCalculator, final Gas pairingGasCost, final Gas baseGasCost) {
-    super("AltBN128Pairing", gasCalculator);
+    super("AltBN128Pairing", gasCalculator, LibEthPairings.EIP196_PAIR_OPERATION_RAW_VALUE);
     this.pairingGasCost = pairingGasCost;
     this.baseGasCost = baseGasCost;
   }
@@ -89,8 +74,8 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
     if (input.size() % PARAMETER_LENGTH != 0) {
       return null;
     }
-    if (AltBN128PairingPrecompiledContract.useNative) {
-      return computeNative(input);
+    if (useNative) {
+      return computeNative(input, messageFrame);
     } else {
       return computeDefault(input);
     }
@@ -131,17 +116,6 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
       return TRUE;
     } else {
       return FALSE;
-    }
-  }
-
-  private static Bytes computeNative(final Bytes input) {
-    final byte[] output = new byte[32];
-    final IntByReference outputSize = new IntByReference(32);
-    if (altbn128_pairing_precompiled(input.toArrayUnsafe(), input.size(), output, outputSize)
-        == 0) {
-      return Bytes.wrap(output, 0, outputSize.getValue());
-    } else {
-      return null;
     }
   }
 
