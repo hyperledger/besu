@@ -3679,4 +3679,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains("Port number '10' has been specified multiple times.");
   }
+
+  @Test
+  public void assertThatDuplicatePortZeroSucceeds() {
+    parseCommand("--p2p-port=0", "--rpc-http-port=0", "--rpc-ws-port=0");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
 }
