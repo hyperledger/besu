@@ -2253,7 +2253,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .filter(Objects::nonNull)
         .forEach(
             port -> {
-              if (!allocatedPorts.add(port)) {
+              if (port != 0 && !allocatedPorts.add(port)) {
                 throw new ParameterException(
                     commandLine,
                     "Port number '"
