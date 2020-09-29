@@ -253,6 +253,6 @@ public class MainnetBlockValidatorTest {
         badBlock,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
-    assertThat(badBlockManager.getBadBlocks(badBlock.getHash())).containsSame(badBlock);
+    assertThat(badBlockManager.getBadBlock(badBlock.getHash())).containsSame(badBlock);
   }
 }

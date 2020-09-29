@@ -64,7 +64,7 @@ public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToF
     final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
 
     return badBlockManager
-        .getBadBlocks(blockHash)
+        .getBadBlock(blockHash)
         .map(
             block ->
                 (JsonRpcResponse)

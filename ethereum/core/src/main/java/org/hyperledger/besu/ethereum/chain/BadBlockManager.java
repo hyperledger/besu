@@ -54,7 +54,7 @@ public class BadBlockManager {
    * @param hash of the block
    * @return an invalid block
    */
-  public Optional<Block> getBadBlocks(final Hash hash) {
+  public Optional<Block> getBadBlock(final Hash hash) {
     return Optional.ofNullable(badBlocks.getIfPresent(hash));
   }
 }

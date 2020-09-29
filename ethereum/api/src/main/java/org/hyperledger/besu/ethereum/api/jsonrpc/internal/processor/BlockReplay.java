@@ -168,7 +168,7 @@ public class BlockReplay {
   private Optional<Block> getBadBlock(final Hash blockHash) {
     final ProtocolSpec protocolSpec =
         protocolSchedule.getByBlockNumber(blockchain.getChainHeadHeader().getNumber());
-    return protocolSpec.getBadBlocksManager().getBadBlocks(blockHash);
+    return protocolSpec.getBadBlocksManager().getBadBlock(blockHash);
   }
 
   @FunctionalInterface
