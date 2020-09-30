@@ -15,12 +15,12 @@
 package org.hyperledger.besu.controller;
 
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.LongUnaryOperator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class GasLimitCalculator implements Function<Long, Long> {
+public class GasLimitCalculator implements LongUnaryOperator {
   private static final Logger LOG = LogManager.getLogger();
   public static final long ADJUSTMENT_FACTOR = 1024L;
   public static final Optional<Long> DEFAULT = Optional.empty();
@@ -35,7 +35,7 @@ public class GasLimitCalculator implements Function<Long, Long> {
   }
 
   @Override
-  public Long apply(final Long gasLimit) {
+  public long applyAsLong(final long gasLimit) {
     long newGasLimit =
         targetGasLimit
             .map(
