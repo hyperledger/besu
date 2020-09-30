@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -45,5 +46,15 @@ public class BadBlockManager {
    */
   public Collection<Block> getBadBlocks() {
     return badBlocks.asMap().values();
+  }
+
+  /**
+   * Return an invalid block based on the hash
+   *
+   * @param hash of the block
+   * @return an invalid block
+   */
+  public Optional<Block> getBadBlock(final Hash hash) {
+    return Optional.ofNullable(badBlocks.getIfPresent(hash));
   }
 }

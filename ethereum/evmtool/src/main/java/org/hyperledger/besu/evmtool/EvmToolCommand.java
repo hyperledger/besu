@@ -18,6 +18,7 @@ package org.hyperledger.besu.evmtool;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 
 import java.io.File;
 import java.io.IOException;
@@ -156,6 +158,8 @@ public class EvmToolCommand implements Runnable {
     out = resultHandler.out();
     final CommandLine commandLine = new CommandLine(this);
     commandLine.addMixin("Dagger Options", daggerOptions);
+    // Usage of static command line flags is strictly reserved for experimental EIPs
+    commandLine.addMixin("Experimental EIPs", ExperimentalEIPs.class);
 
     // add sub commands here
 
@@ -219,7 +223,7 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new EVMToolTracer(System.out, !noMemory)
+                ? new StandardJsonTracer(System.out, !noMemory)
                 : OperationTracer.NO_TRACING;
 
         final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
