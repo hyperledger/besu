@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Objects;
+
 public class TargetingGasLimitCalculator implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   public static final long ADJUSTMENT_FACTOR = 1024L;
@@ -64,5 +66,18 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
     } catch (final ArithmeticException ex) {
       return 0;
     }
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TargetingGasLimitCalculator that = (TargetingGasLimitCalculator) o;
+    return Objects.equals(targetGasLimit, that.targetGasLimit);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(targetGasLimit);
   }
 }
