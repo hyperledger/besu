@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 import static java.lang.Math.floorDiv;
+import static java.lang.Math.max;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
@@ -38,31 +39,26 @@ public class EIP1559 {
   public long computeBaseFee(
       final long parentBaseFee, final long parentBlockGasUsed, final long targetGasUsed) {
     guardActivation();
-    assert targetGasUsed != 0L;
-    long delta = parentBlockGasUsed - targetGasUsed;
-    long baseFee =
-        parentBaseFee
-            + floorDiv(
-                floorDiv(parentBaseFee * delta, targetGasUsed),
-                feeMarket.getBasefeeMaxChangeDenominator());
-    boolean neg = false;
-    long diff = baseFee - parentBaseFee;
-    if (diff < 0) {
-      neg = true;
-      diff = -diff;
+    long gasDelta, feeDelta, baseFee;
+    if (parentBlockGasUsed == targetGasUsed) {
+      return parentBaseFee;
+    } else if (parentBlockGasUsed > targetGasUsed) {
+      gasDelta = parentBlockGasUsed - targetGasUsed;
+      feeDelta =
+          max(
+              floorDiv(
+                  floorDiv(parentBaseFee * gasDelta, targetGasUsed),
+                  feeMarket.getBasefeeMaxChangeDenominator()),
+              1);
+      baseFee = parentBaseFee + feeDelta;
+    } else {
+      gasDelta = targetGasUsed - parentBlockGasUsed;
+      feeDelta =
+          floorDiv(
+              floorDiv(parentBaseFee * gasDelta, targetGasUsed),
+              feeMarket.getBasefeeMaxChangeDenominator());
+      baseFee = parentBaseFee - feeDelta;
     }
-
-    long max = floorDiv(parentBaseFee, feeMarket.getBasefeeMaxChangeDenominator());
-    if (max < 1) {
-      max = 1;
-    }
-    if (diff > max) {
-      if (neg) {
-        max = -max;
-      }
-      baseFee = parentBaseFee + max;
-    }
-
     return baseFee;
   }
 
@@ -167,5 +163,9 @@ public class EIP1559 {
             ? gasTarget
             : halfGasTarget
                 + floorDiv(halfGasTarget * blocksSinceStartOfMigration, migrationDuration);
+  }
+
+  public FeeMarket getFeeMarket() {
+    return feeMarket;
   }
 }
