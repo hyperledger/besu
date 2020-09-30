@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 import static java.lang.Math.floorDiv;
+import static java.lang.Math.max;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
@@ -23,7 +24,6 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 
 public class EIP1559 {
   private final long initialForkBlknum;
@@ -39,42 +39,26 @@ public class EIP1559 {
   public long computeBaseFee(
       final long parentBaseFee, final long parentBlockGasUsed, final long targetGasUsed) {
     guardActivation();
-    assert targetGasUsed != 0L;
-
+    long gasDelta, feeDelta, baseFee;
     if (parentBlockGasUsed == targetGasUsed) {
-      return parentBaseFee - Wei.ONE.toLong();
+      return parentBaseFee;
+    } else if (parentBlockGasUsed > targetGasUsed) {
+      gasDelta = parentBlockGasUsed - targetGasUsed;
+      feeDelta =
+          max(
+              floorDiv(
+                  floorDiv(parentBaseFee * gasDelta, targetGasUsed),
+                  feeMarket.getBasefeeMaxChangeDenominator()),
+              1);
+      baseFee = parentBaseFee + feeDelta;
+    } else {
+      gasDelta = targetGasUsed - parentBlockGasUsed;
+      feeDelta =
+          floorDiv(
+              floorDiv(parentBaseFee * gasDelta, targetGasUsed),
+              feeMarket.getBasefeeMaxChangeDenominator());
+      baseFee = parentBaseFee - feeDelta;
     }
-
-    long delta = parentBlockGasUsed - targetGasUsed;
-    long baseFee =
-        parentBaseFee
-            + floorDiv(
-                floorDiv(parentBaseFee * delta, targetGasUsed),
-                feeMarket.getBasefeeMaxChangeDenominator());
-    boolean neg = false;
-    long diff = baseFee - parentBaseFee;
-    if (diff < 0) {
-      neg = true;
-      diff = -diff;
-    }
-
-    long max = floorDiv(parentBaseFee, feeMarket.getBasefeeMaxChangeDenominator());
-    long min = Wei.ONE.toLong();
-    if (max < 1) {
-      max = 1;
-    }
-    if (diff > max) {
-      if (neg) {
-        max = -max;
-      }
-      baseFee = parentBaseFee + max;
-    } else if (diff < min) {
-      if (neg) {
-        min = -min;
-      }
-      baseFee = parentBaseFee + min;
-    }
-
     return baseFee;
   }
 
