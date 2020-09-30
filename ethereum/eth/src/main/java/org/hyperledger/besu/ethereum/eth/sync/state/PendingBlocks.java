@@ -27,10 +27,33 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+
 public class PendingBlocks {
 
-  private final Map<Hash, Block> pendingBlocks = new ConcurrentHashMap<>();
+  // If more than 100 behind, Besu switch to full synchronization mode. 150 because it is possible
+  // to have multiple versions of the same block number
+  private static final int CACHE_PENDING_BLOCKS_SIZE = 150;
+
+  private final Cache<Hash, Block> pendingBlocks;
+
   private final Map<Hash, Set<Hash>> pendingBlocksByParentHash = new ConcurrentHashMap<>();
+
+  public PendingBlocks() {
+    this(CACHE_PENDING_BLOCKS_SIZE);
+  }
+
+  public PendingBlocks(final int cacheSize) {
+    pendingBlocks =
+        CacheBuilder.newBuilder()
+            .maximumSize(cacheSize)
+            .removalListener(
+                (RemovalListener<Hash, Block>)
+                    notification -> removePendingBlockByParentHashForBlock(notification.getValue()))
+            .build();
+  }
 
   /**
    * Track the given block.
@@ -39,11 +62,13 @@ public class PendingBlocks {
    * @return true if the block was added (was not previously present)
    */
   public boolean registerPendingBlock(final Block pendingBlock) {
-    final Block previousValue =
-        this.pendingBlocks.putIfAbsent(pendingBlock.getHash(), pendingBlock);
+
+    final Block previousValue = this.pendingBlocks.getIfPresent(pendingBlock.getHash());
     if (previousValue != null) {
       return false;
     }
+
+    this.pendingBlocks.put(pendingBlock.getHash(), pendingBlock);
 
     pendingBlocksByParentHash
         .computeIfAbsent(
@@ -64,27 +89,33 @@ public class PendingBlocks {
    * Stop tracking the given block.
    *
    * @param block the block that is no longer pending
-   * @return true if this block was removed
    */
-  public boolean deregisterPendingBlock(final Block block) {
+  public void deregisterPendingBlock(final Block block) {
+    pendingBlocks.invalidate(block.getHash());
+  }
+
+  /**
+   * Stop keeping this block in the list of pending blocks by parent hash
+   *
+   * @param block the block that is no longer pending
+   */
+  public void removePendingBlockByParentHashForBlock(final Block block) {
     final Hash parentHash = block.getHeader().getParentHash();
-    final Block removed = pendingBlocks.remove(block.getHash());
     final Set<Hash> blocksForParent = pendingBlocksByParentHash.get(parentHash);
     if (blocksForParent != null) {
       blocksForParent.remove(block.getHash());
       pendingBlocksByParentHash.remove(parentHash, Collections.emptySet());
     }
-    return removed != null;
   }
 
   public void purgeBlocksOlderThan(final long blockNumber) {
-    pendingBlocks.values().stream()
+    pendingBlocks.asMap().values().stream()
         .filter(b -> b.getHeader().getNumber() < blockNumber)
         .forEach(this::deregisterPendingBlock);
   }
 
   public boolean contains(final Hash blockHash) {
-    return pendingBlocks.containsKey(blockHash);
+    return pendingBlocks.getIfPresent(blockHash) != null;
   }
 
   public List<Block> childrenOf(final Hash parentBlock) {
@@ -93,7 +124,7 @@ public class PendingBlocks {
       return Collections.emptyList();
     }
     return blocksByParent.stream()
-        .map(pendingBlocks::get)
+        .map(pendingBlocks::getIfPresent)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }
