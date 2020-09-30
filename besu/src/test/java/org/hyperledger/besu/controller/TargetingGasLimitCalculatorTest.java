@@ -22,14 +22,14 @@ public class TargetingGasLimitCalculatorTest {
   @Test
   public void verifyGasLimitIsIncreasedWithinLimits() {
     TargetingGasLimitCalculator gasLimitCalculator = new TargetingGasLimitCalculator(10_000_000L);
-    assertThat(gasLimitCalculator.applyAsLong(8_000_000L))
+    assertThat(gasLimitCalculator.nextGasLimit(8_000_000L))
         .isEqualTo(8_000_000L + TargetingGasLimitCalculator.ADJUSTMENT_FACTOR);
   }
 
   @Test
   public void verifyGasLimitIsDecreasedWithinLimits() {
     TargetingGasLimitCalculator gasLimitCalculator = new TargetingGasLimitCalculator(10_000_000L);
-    assertThat(gasLimitCalculator.applyAsLong(12_000_000L))
+    assertThat(gasLimitCalculator.nextGasLimit(12_000_000L))
         .isEqualTo(12_000_000L - TargetingGasLimitCalculator.ADJUSTMENT_FACTOR);
   }
 
@@ -38,8 +38,8 @@ public class TargetingGasLimitCalculatorTest {
     final long target = 10_000_000L;
     final long offset = TargetingGasLimitCalculator.ADJUSTMENT_FACTOR / 2;
     TargetingGasLimitCalculator gasLimitCalculator = new TargetingGasLimitCalculator(target);
-    assertThat(gasLimitCalculator.applyAsLong(target - offset)).isEqualTo(target);
-    assertThat(gasLimitCalculator.applyAsLong(target + offset)).isEqualTo(target);
+    assertThat(gasLimitCalculator.nextGasLimit(target - offset)).isEqualTo(target);
+    assertThat(gasLimitCalculator.nextGasLimit(target + offset)).isEqualTo(target);
   }
 
   @Test
@@ -47,7 +47,7 @@ public class TargetingGasLimitCalculatorTest {
     final long target = 0L;
     final long offset = TargetingGasLimitCalculator.ADJUSTMENT_FACTOR / 2;
     TargetingGasLimitCalculator gasLimitCalculator = new TargetingGasLimitCalculator(target);
-    assertThat(gasLimitCalculator.applyAsLong(target + offset)).isEqualTo(target);
+    assertThat(gasLimitCalculator.nextGasLimit(target + offset)).isEqualTo(target);
   }
 
   @Test
@@ -55,6 +55,6 @@ public class TargetingGasLimitCalculatorTest {
     final long target = Long.MAX_VALUE;
     final long offset = TargetingGasLimitCalculator.ADJUSTMENT_FACTOR / 2;
     TargetingGasLimitCalculator gasLimitCalculator = new TargetingGasLimitCalculator(target);
-    assertThat(gasLimitCalculator.applyAsLong(target - offset)).isEqualTo(target);
+    assertThat(gasLimitCalculator.nextGasLimit(target - offset)).isEqualTo(target);
   }
 }

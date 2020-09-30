@@ -35,7 +35,7 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
   }
 
   @Override
-  public long applyAsLong(final long previousGasLimit) {
+  public long nextGasLimit(final long previousGasLimit) {
     final long newGasLimit;
     if (targetGasLimit > previousGasLimit) {
       newGasLimit = Math.min(targetGasLimit, safeAdd(previousGasLimit));

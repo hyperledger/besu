@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import java.util.function.LongUnaryOperator;
+@FunctionalInterface
+public interface GasLimitCalculator {
+  long nextGasLimit(long previousGasLimit);
 
-public interface GasLimitCalculator extends LongUnaryOperator {
   static GasLimitCalculator constant() {
     return x -> x;
   }
