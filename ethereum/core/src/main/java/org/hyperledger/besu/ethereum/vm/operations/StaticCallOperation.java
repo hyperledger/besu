@@ -109,6 +109,7 @@ public class StaticCallOperation extends AbstractCallOperation {
             outputDataOffset,
             outputDataLength,
             value(frame),
-            recipient);
+            recipient,
+            to(frame));
   }
 }

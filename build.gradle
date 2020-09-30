@@ -668,7 +668,9 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   excludeRegex = [
     "(.*/generalstate/GeneralStateRegressionReferenceTest.*)",
     "(.*/generalstate/GeneralStateReferenceTest.*)",
+    "(.*/generalstate/LegacyGeneralStateReferenceTest.*)",
     "(.*/blockchain/BlockchainReferenceTest.*)",
+    "(.*/blockchain/LegacyBlockchainReferenceTest.*)",
     "(.*/.gradle/.*)",
     "(.*/.idea/.*)",
     "(.*/out/.*)",

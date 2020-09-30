@@ -124,8 +124,12 @@ public class BlockReplay {
 
   private <T> Optional<T> performActionWithBlock(
       final Hash blockHash, final BlockAction<T> action) {
-    return getBlock(blockHash)
-        .flatMap(block -> performActionWithBlock(block.getHeader(), block.getBody(), action));
+    Optional<Block> maybeBlock = getBlock(blockHash);
+    if (maybeBlock.isEmpty()) {
+      maybeBlock = getBadBlock(blockHash);
+    }
+    return maybeBlock.flatMap(
+        block -> performActionWithBlock(block.getHeader(), block.getBody(), action));
   }
 
   private <T> Optional<T> performActionWithBlock(
@@ -159,6 +163,12 @@ public class BlockReplay {
       }
     }
     return Optional.empty();
+  }
+
+  private Optional<Block> getBadBlock(final Hash blockHash) {
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockNumber(blockchain.getChainHeadHeader().getNumber());
+    return protocolSpec.getBadBlocksManager().getBadBlock(blockHash);
   }
 
   @FunctionalInterface
