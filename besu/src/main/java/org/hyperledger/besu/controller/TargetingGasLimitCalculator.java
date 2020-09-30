@@ -36,20 +36,20 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
 
   @Override
   public long nextGasLimit(final long previousGasLimit) {
-    final long newGasLimit;
+    final long nextGasLimit;
     if (targetGasLimit > previousGasLimit) {
-      newGasLimit = Math.min(targetGasLimit, safeAdd(previousGasLimit));
+      nextGasLimit = Math.min(targetGasLimit, safeAdd(previousGasLimit));
     } else if (targetGasLimit < previousGasLimit) {
-      newGasLimit = Math.max(targetGasLimit, safeSub(previousGasLimit));
+      nextGasLimit = Math.max(targetGasLimit, safeSub(previousGasLimit));
     } else {
-      newGasLimit = previousGasLimit;
+      nextGasLimit = previousGasLimit;
     }
 
-    if (newGasLimit != previousGasLimit) {
-      LOG.debug("Adjusting block gas limit from {} to {}", previousGasLimit, newGasLimit);
+    if (nextGasLimit != previousGasLimit) {
+      LOG.debug("Adjusting block gas limit from {} to {}", previousGasLimit, nextGasLimit);
     }
 
-    return newGasLimit;
+    return nextGasLimit;
   }
 
   private long safeAdd(final long gasLimit) {
