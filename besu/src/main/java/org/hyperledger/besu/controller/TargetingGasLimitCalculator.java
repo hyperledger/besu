@@ -14,41 +14,34 @@
  */
 package org.hyperledger.besu.controller;
 
-import java.util.Optional;
-import java.util.function.LongUnaryOperator;
+import static com.google.common.base.Preconditions.checkArgument;
+
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class GasLimitCalculator implements LongUnaryOperator {
+public class TargetingGasLimitCalculator implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   public static final long ADJUSTMENT_FACTOR = 1024L;
-  public static final Optional<Long> DEFAULT = Optional.empty();
-  private final Optional<Long> targetGasLimit;
+  private final Long targetGasLimit;
 
-  public GasLimitCalculator(final Optional<Long> targetGasLimit) {
-    if (targetGasLimit.orElse(0L) < 0L) {
-      throw new IllegalArgumentException("Invalid target gas limit");
-    }
+  public TargetingGasLimitCalculator(final Long targetGasLimit) {
+    checkArgument(targetGasLimit >= 0, "Invalid target gas limit");
 
     this.targetGasLimit = targetGasLimit;
   }
 
   @Override
   public long applyAsLong(final long previousGasLimit) {
-    long newGasLimit =
-        targetGasLimit
-            .map(
-                target -> {
-                  if (target > previousGasLimit) {
-                    return Math.min(target, safeAdd(previousGasLimit));
-                  } else if (target < previousGasLimit) {
-                    return Math.max(target, safeSub(previousGasLimit));
-                  } else {
-                    return previousGasLimit;
-                  }
-                })
-            .orElse(previousGasLimit);
+    final long newGasLimit;
+    if (targetGasLimit > previousGasLimit) {
+      newGasLimit = Math.min(targetGasLimit, safeAdd(previousGasLimit));
+    } else if (targetGasLimit < previousGasLimit) {
+      newGasLimit = Math.max(targetGasLimit, safeSub(previousGasLimit));
+    } else {
+      newGasLimit = previousGasLimit;
+    }
 
     if (newGasLimit != previousGasLimit) {
       LOG.debug("Adjusting block gas limit from {} to {}", previousGasLimit, newGasLimit);

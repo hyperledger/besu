@@ -190,7 +190,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
-    verify(mockControllerBuilder).targetGasLimit(eq(Optional.empty()));
+    verify(mockControllerBuilder).gasLimitCalculator(eq(Optional.empty()));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -3354,7 +3354,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
         ArgumentCaptor.forClass(Optional.class);
 
-    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).gasLimitCalculator(targetGasLimitArg.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
@@ -3371,7 +3371,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
         ArgumentCaptor.forClass(Optional.class);
 
-    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).gasLimitCalculator(targetGasLimitArg.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
