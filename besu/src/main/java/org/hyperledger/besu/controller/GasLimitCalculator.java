@@ -35,23 +35,23 @@ public class GasLimitCalculator implements LongUnaryOperator {
   }
 
   @Override
-  public long applyAsLong(final long gasLimit) {
+  public long applyAsLong(final long previousGasLimit) {
     long newGasLimit =
         targetGasLimit
             .map(
                 target -> {
-                  if (target > gasLimit) {
-                    return Math.min(target, safeAdd(gasLimit));
-                  } else if (target < gasLimit) {
-                    return Math.max(target, safeSub(gasLimit));
+                  if (target > previousGasLimit) {
+                    return Math.min(target, safeAdd(previousGasLimit));
+                  } else if (target < previousGasLimit) {
+                    return Math.max(target, safeSub(previousGasLimit));
                   } else {
-                    return gasLimit;
+                    return previousGasLimit;
                   }
                 })
-            .orElse(gasLimit);
+            .orElse(previousGasLimit);
 
-    if (newGasLimit != gasLimit) {
-      LOG.debug("Adjusting block gas limit from {} to {}", gasLimit, newGasLimit);
+    if (newGasLimit != previousGasLimit) {
+      LOG.debug("Adjusting block gas limit from {} to {}", previousGasLimit, newGasLimit);
     }
 
     return newGasLimit;
