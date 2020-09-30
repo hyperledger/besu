@@ -34,7 +34,7 @@ public class PendingBlocksTest {
 
   @Before
   public void setup() {
-    pendingBlocks = new PendingBlocks();
+    pendingBlocks = new PendingBlocks(3);
     gen = new BlockDataGenerator();
   }
 
@@ -123,5 +123,27 @@ public class PendingBlocksTest {
       assertThat(pendingBlocks.contains(block.getHash())).isTrue();
       assertThat(pendingBlocks.childrenOf(block.getHeader().getParentHash()).size()).isEqualTo(1);
     }
+  }
+
+  @Test
+  public void purgeBlocksWhenCacheIsFull() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block parentBlock = gen.block();
+    final Block childBlock = gen.nextBlock(parentBlock);
+    final Block childBlock2 = gen.nextBlock(parentBlock);
+    final Block childBlock3 = gen.nextBlock(parentBlock);
+    final Block childBlock4 = gen.nextBlock(parentBlock);
+
+    pendingBlocks.registerPendingBlock(childBlock);
+    pendingBlocks.registerPendingBlock(childBlock2);
+    pendingBlocks.registerPendingBlock(childBlock3);
+    pendingBlocks.registerPendingBlock(childBlock4);
+
+    assertThat(pendingBlocks.contains(childBlock.getHash())).isFalse();
+    assertThat(pendingBlocks.contains(childBlock2.getHash())).isTrue();
+    assertThat(pendingBlocks.contains(childBlock3.getHash())).isTrue();
+    assertThat(pendingBlocks.contains(childBlock4.getHash())).isTrue();
+    final List<Block> pendingBlocksForParent = pendingBlocks.childrenOf(parentBlock.getHash());
+    assertThat(pendingBlocksForParent).contains(childBlock2, childBlock3, childBlock4);
   }
 }
