@@ -34,7 +34,7 @@ public class PendingBlocksTest {
 
   @Before
   public void setup() {
-    pendingBlocks = new PendingBlocks(3);
+    pendingBlocks = new PendingBlocks();
     gen = new BlockDataGenerator();
   }
 
@@ -127,6 +127,7 @@ public class PendingBlocksTest {
 
   @Test
   public void purgeBlocksWhenCacheIsFull() {
+    pendingBlocks = new PendingBlocks(3);
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Block parentBlock = gen.block();
     final Block childBlock = gen.nextBlock(parentBlock);
