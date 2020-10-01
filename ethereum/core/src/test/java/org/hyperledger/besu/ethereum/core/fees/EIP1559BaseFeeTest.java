@@ -93,7 +93,7 @@ public class EIP1559BaseFeeTest {
 
   @Test
   public void assertThatBaseFeeIsCorrect() {
-    assertThat(eip1559.computeBaseFee(parentBaseFee, parentGasUsed, parentTargetGasUsed))
+    assertThat(eip1559.computeBaseFee(0L, parentBaseFee, parentGasUsed, parentTargetGasUsed))
         .isEqualTo(expectedBaseFee);
   }
 
