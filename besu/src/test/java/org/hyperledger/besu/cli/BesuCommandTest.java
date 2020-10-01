@@ -3685,4 +3685,23 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--p2p-port=0", "--rpc-http-port=0", "--rpc-ws-port=0");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
+
+  @Test
+  public void assertThatNoPortsSpecifiedSucceeds() {
+    parseCommand();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatAllPortsSpecifiedSucceeds() {
+    parseCommand(
+        "--p2p-port=9",
+        "--graphql-http-port=10",
+        "--rpc-http-port=11",
+        "--rpc-ws-port=12",
+        "--metrics-port=13",
+        "--metrics-push-port=14",
+        "--miner-stratum-port=15");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
 }
