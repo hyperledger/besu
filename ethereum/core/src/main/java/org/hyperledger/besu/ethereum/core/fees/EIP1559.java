@@ -25,7 +25,12 @@ import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class EIP1559 {
+  private static final Logger LOG = LogManager.getLogger();
+
   private final long initialForkBlknum;
   private final long finalForkBlknum;
 
@@ -37,7 +42,10 @@ public class EIP1559 {
   }
 
   public long computeBaseFee(
-      final long parentBaseFee, final long parentBlockGasUsed, final long targetGasUsed) {
+      final long blockNumber,
+      final long parentBaseFee,
+      final long parentBlockGasUsed,
+      final long targetGasUsed) {
     guardActivation();
     long gasDelta, feeDelta, baseFee;
     if (parentBlockGasUsed == targetGasUsed) {
@@ -59,6 +67,13 @@ public class EIP1559 {
               feeMarket.getBasefeeMaxChangeDenominator());
       baseFee = parentBaseFee - feeDelta;
     }
+    LOG.trace(
+        "block #{} parentBaseFee: {} parentGasUsed: {} parentGasTarget: {} baseFee: {}",
+        blockNumber,
+        parentBaseFee,
+        parentBlockGasUsed,
+        targetGasUsed,
+        baseFee);
     return baseFee;
   }
 
@@ -144,13 +159,14 @@ public class EIP1559 {
 
   public long targetGasUsed(final BlockHeader header) {
     guardActivation();
-    final long blockNumber = header.getNumber();
+    return header.getGasLimit();
+    /*final long blockNumber = header.getNumber();
     final long migrationDuration = feeMarket.getMigrationDurationInBlocks();
     final long gasTarget = header.getGasLimit();
-    return targetGasUsed(blockNumber, migrationDuration, gasTarget, initialForkBlknum);
+    return targetGasUsed(blockNumber, migrationDuration, gasTarget, initialForkBlknum);*/
   }
 
-  public static long targetGasUsed(
+  /*private static long targetGasUsed(
       final long blockNumber,
       final long migrationDuration,
       final long gasTarget,
@@ -163,7 +179,7 @@ public class EIP1559 {
             ? gasTarget
             : halfGasTarget
                 + floorDiv(halfGasTarget * blocksSinceStartOfMigration, migrationDuration);
-  }
+  }*/
 
   public FeeMarket getFeeMarket() {
     return feeMarket;
