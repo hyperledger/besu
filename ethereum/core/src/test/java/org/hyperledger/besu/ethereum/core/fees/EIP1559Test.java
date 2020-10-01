@@ -14,20 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
-import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
-import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
-
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
 
 public class EIP1559Test {
 
@@ -51,7 +50,10 @@ public class EIP1559Test {
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                feeMarket.getInitialBasefee(), TARGET_GAS_USED - 1000000L, TARGET_GAS_USED))
+                FORK_BLOCK,
+                feeMarket.getInitialBasefee(),
+                TARGET_GAS_USED - 1000000L,
+                TARGET_GAS_USED))
         .isLessThan(feeMarket.getInitialBasefee())
         .isEqualTo(987500000L);
   }
@@ -60,7 +62,10 @@ public class EIP1559Test {
   public void assertThatBaseFeeIncreasesWhenAboveTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                feeMarket.getInitialBasefee(), TARGET_GAS_USED + 1000000L, TARGET_GAS_USED))
+                FORK_BLOCK,
+                feeMarket.getInitialBasefee(),
+                TARGET_GAS_USED + 1000000L,
+                TARGET_GAS_USED))
         .isGreaterThan(feeMarket.getInitialBasefee())
         .isEqualTo(1012500000L);
   }
@@ -68,7 +73,8 @@ public class EIP1559Test {
   @Test
   public void assertThatBaseFeeIsDecrementedByOneWhenAtTargetGasUsed() {
     assertThat(
-            eip1559.computeBaseFee(feeMarket.getInitialBasefee(), TARGET_GAS_USED, TARGET_GAS_USED))
+            eip1559.computeBaseFee(
+                FORK_BLOCK, feeMarket.getInitialBasefee(), TARGET_GAS_USED, TARGET_GAS_USED))
         .isEqualTo(feeMarket.getInitialBasefee() - Wei.ONE.toLong());
   }
 
