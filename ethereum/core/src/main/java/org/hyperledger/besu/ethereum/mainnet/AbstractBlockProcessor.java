@@ -132,10 +132,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
       if (!gasBudgetCalculator.hasBudget(
           transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
-        LOG.warn(
-            "Transaction processing error: transaction gas limit {} exceeds available block budget remaining {}",
+        LOG.info(
+            "Block processing error: transaction gas limit {} exceeds available block budget remaining {}. Block {} Transaction {}",
             transaction.getGasLimit(),
-            remainingGasBudget);
+            remainingGasBudget,
+            blockHeader.getHash().toHexString(),
+            transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
       }
 
@@ -157,6 +159,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               TransactionValidationParams.processingBlock(),
               privateMetadataUpdater);
       if (result.isInvalid()) {
+        LOG.info(
+            "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
+            result.getValidationResult().getInvalidReason(),
+            blockHeader.getHash().toHexString(),
+            transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
       }
 
@@ -176,6 +183,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
+      // no need to log, rewardCoinbase logs the error.
       return AbstractBlockProcessor.Result.failed();
     }
 
