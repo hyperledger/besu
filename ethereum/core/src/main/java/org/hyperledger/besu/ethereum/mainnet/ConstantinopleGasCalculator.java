@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class ConstantinopleGasCalculator extends SpuriousDragonGasCalculator {
+public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   private static final Gas SSTORE_NO_OP_COST = Gas.of(200);
   private static final Gas SSTORE_ADDITIONAL_WRITE_COST = Gas.of(200);
