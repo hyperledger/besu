@@ -124,7 +124,8 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    Collections.emptyMap()));
+                    Collections.emptyMap(),
+                    folder.getRoot().toPath()));
   }
 
   @After

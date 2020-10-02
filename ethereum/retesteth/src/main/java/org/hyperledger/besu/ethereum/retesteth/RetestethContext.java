@@ -209,7 +209,7 @@ public class RetestethContext {
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
         new NoOpMetricsSystem(),
-        0);
+        100);
   }
 
   public ProtocolSchedule getProtocolSchedule() {

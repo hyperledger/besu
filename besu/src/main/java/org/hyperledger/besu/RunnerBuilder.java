@@ -496,7 +496,8 @@ public class RunnerBuilder {
               webSocketConfiguration,
               metricsConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins());
+              besuPluginContext.getNamedPlugins(),
+              dataDir);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -560,7 +561,8 @@ public class RunnerBuilder {
               webSocketConfiguration,
               metricsConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins());
+              besuPluginContext.getNamedPlugins(),
+              dataDir);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool, blockchainQueries);
@@ -726,7 +728,8 @@ public class RunnerBuilder {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
-      final Map<String, BesuPlugin> namedPlugins) {
+      final Map<String, BesuPlugin> namedPlugins,
+      final Path dataDir) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -750,7 +753,8 @@ public class RunnerBuilder {
                 webSocketConfiguration,
                 metricsConfiguration,
                 natService,
-                namedPlugins);
+                namedPlugins,
+                dataDir);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
@@ -856,7 +860,6 @@ public class RunnerBuilder {
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }
-
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(
             vertx,

@@ -16,37 +16,56 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.hyperledger.besu.ethereum.vm.FixedStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes32;
 
-public class ExtCodeHashOperation extends AbstractFixedCostOperation {
+public class ExtCodeHashOperation extends AbstractOperation {
+
+  private final Optional<Gas> warmCost;
+  private final Optional<Gas> coldCost;
 
   public ExtCodeHashOperation(final GasCalculator gasCalculator) {
-    super(
-        0x3F,
-        "EXTCODEHASH",
-        1,
-        1,
-        false,
-        1,
-        gasCalculator,
-        gasCalculator.extCodeHashOperationGasCost());
+    super(0x3F, "EXTCODEHASH", 1, 1, false, 1, gasCalculator);
+    final Gas baseCost = gasCalculator.extCodeHashOperationGasCost();
+    warmCost = Optional.of(baseCost.plus(gasCalculator.getWarmStorageReadCost()));
+    coldCost = Optional.of(baseCost.plus(gasCalculator.getColdAccountAccessCost()));
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Address address = Words.toAddress(frame.popStackItem());
-    final Account account = frame.getWorldState().get(address);
-    if (account == null || account.isEmpty()) {
-      frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      frame.pushStackItem(account.getCodeHash());
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    try {
+      final Address address = Words.toAddress(frame.popStackItem());
+      final boolean accountIsWarm =
+          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+      final Optional<Gas> optionalCost = accountIsWarm ? warmCost : coldCost;
+      if (frame.getRemainingGas().compareTo(optionalCost.get()) < 0) {
+        return new OperationResult(
+            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      } else {
+        final Account account = frame.getWorldState().get(address);
+        if (account == null || account.isEmpty()) {
+          frame.pushStackItem(Bytes32.ZERO);
+        } else {
+          frame.pushStackItem(account.getCodeHash());
+        }
+        return new OperationResult(optionalCost, Optional.empty());
+      }
+    } catch (final UnderflowException ufe) {
+      return new OperationResult(
+          warmCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+    } catch (final OverflowException ofe) {
+      return new OperationResult(warmCost, Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
     }
-
-    return successResponse;
   }
 }
