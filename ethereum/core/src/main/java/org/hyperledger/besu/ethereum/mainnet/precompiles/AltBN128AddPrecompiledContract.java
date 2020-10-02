@@ -79,20 +79,6 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
     return result;
   }
 
-  @Override
-  public Bytes computeNative(final Bytes input, final MessageFrame messageFrame) {
-    final int size = input.size();
-    if (size == 128) {
-      return super.computeNative(input, messageFrame);
-    } else if (size < 128) {
-      final MutableBytes padded = MutableBytes.wrap(new byte[128]);
-      input.copyTo(padded, 0);
-      return super.computeNative(padded, messageFrame);
-    } else {
-      return super.computeNative(input.slice(0, 128), messageFrame);
-    }
-  }
-
   private static BigInteger extractParameter(
       final Bytes input, final int offset, final int length) {
     if (offset > input.size() || length == 0) {
