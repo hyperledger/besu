@@ -6,7 +6,9 @@
     "phoenixBlock": 999983,
     "ecip1017EraRounds": 2000000,
     "ecip1099Block": 2520000,
-    "ethash": {}
+    "ethash": {
+      "epochlengthactivation": 252
+    }
   },
   "nonce": "0x0000000000000000",
   "timestamp": "0x5d9676db",

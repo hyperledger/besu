@@ -39,4 +39,19 @@ public interface EthHasher {
       System.arraycopy(hash, 0, buffer, 0, hash.length);
     }
   }
+
+  // todo ed change happened here
+  final class EtcHasher implements EthHasher {
+
+    private static final EtcHashCacheFactory cacheFactory = new EtcHashCacheFactory();
+
+    @Override
+    public void hash(
+            final byte[] buffer, final long nonce, final long number, final byte[] headerHash) {
+      final EtcHashCacheFactory.EtcHashDescriptor cache = cacheFactory.etcHashCacheFor(number);
+      final byte[] hash =
+              EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
+      System.arraycopy(hash, 0, buffer, 0, hash.length);
+    }
+  }
 }

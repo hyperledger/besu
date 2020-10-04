@@ -185,14 +185,14 @@ public class ClassicProtocolSpecs {
         .name("Phoenix");
   }
 
-  // todo ed change config for ecip1099 here
+  // todo ed change config for ecip1099 here.
   public static ProtocolSpecBuilder ecip1099Definition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds) {
-    return aghartaDefinition(
+    return phoenixDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
