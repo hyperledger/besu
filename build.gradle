@@ -138,7 +138,9 @@ allprojects {
         include '**/src/*/java/**/*.java'
         exclude '**/generalstate/GeneralStateReferenceTest*.java'
         exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
+        exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
         exclude '**/blockchain/BlockchainReferenceTest*.java'
+        exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
         exclude '**/.gradle/**'
       }
       removeUnusedImports()

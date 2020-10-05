@@ -22,9 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
  * WorldView} provided in the constructor in memory.
@@ -33,8 +30,6 @@ import org.apache.logging.log4j.Logger;
  */
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
     implements WorldUpdater {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final W world;
 
