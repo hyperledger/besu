@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
@@ -38,6 +39,7 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -288,6 +290,7 @@ public class ProtocolScheduleBuilder {
                 number,
                 protocolSpecAdapter
                     .apply(definition)
+                    .badBlocksManager(badBlockManager)
                     .privacyParameters(privacyParameters)
                     .privateTransactionValidatorBuilder(
                         () -> new PrivateTransactionValidator(protocolSchedule.getChainId()))

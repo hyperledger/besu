@@ -146,7 +146,8 @@ public class JsonRpcHttpServiceTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    new HashMap<>()));
+                    new HashMap<>(),
+                    folder.getRoot().toPath()));
     service = createJsonRpcHttpService();
     service.start().join();
 

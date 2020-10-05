@@ -46,8 +46,10 @@ public class PrivSubscribe extends AbstractPrivateSubscriptionMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
+      final String enclavePublicKey =
+          enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
       final PrivateSubscribeRequest subscribeRequest =
-          getMapper().mapPrivateSubscribeRequest(requestContext);
+          getMapper().mapPrivateSubscribeRequest(requestContext, enclavePublicKey);
 
       checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
           requestContext, subscribeRequest.getPrivacyGroupId());

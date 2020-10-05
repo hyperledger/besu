@@ -16,8 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,6 +53,33 @@ public class BlockResultFactory {
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
         includeCoinbase);
+  }
+
+  public BlockResult transactionComplete(final Block block) {
+
+    final int count = block.getBody().getTransactions().size();
+    final List<TransactionWithMetadata> transactionWithMetadata = new ArrayList<>(count);
+    for (int i = 0; i < count; i++) {
+      transactionWithMetadata.add(
+          new TransactionWithMetadata(
+              block.getBody().getTransactions().get(i),
+              block.getHeader().getNumber(),
+              block.getHash(),
+              i));
+    }
+    final List<TransactionResult> txs =
+        transactionWithMetadata.stream()
+            .map(TransactionCompleteResult::new)
+            .collect(Collectors.toList());
+
+    final List<JsonNode> ommers =
+        block.getBody().getOmmers().stream()
+            .map(BlockHeader::getHash)
+            .map(Hash::toString)
+            .map(TextNode::new)
+            .collect(Collectors.toList());
+    return new BlockResult(
+        block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

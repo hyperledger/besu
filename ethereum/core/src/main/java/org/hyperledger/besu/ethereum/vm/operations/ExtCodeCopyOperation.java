@@ -42,7 +42,16 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
-    final Gas cost = gasCalculator().extCodeCopyOperationGasCost(frame, memOffset, numBytes);
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+    final Gas cost =
+        gasCalculator()
+            .extCodeCopyOperationGasCost(frame, memOffset, numBytes)
+            .plus(
+                accountIsWarm
+                    ? gasCalculator().getWarmStorageReadCost()
+                    : gasCalculator().getColdAccountAccessCost());
+
     final Optional<Gas> optionalCost = Optional.of(cost);
     if (frame.getRemainingGas().compareTo(cost) < 0) {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));

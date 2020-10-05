@@ -31,11 +31,11 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.options.EthProtocolOptions;
-import org.hyperledger.besu.cli.options.MetricsCLIOptions;
-import org.hyperledger.besu.cli.options.NetworkingOptions;
-import org.hyperledger.besu.cli.options.SynchronizerOptions;
-import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
+import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
+import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
+import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
@@ -382,23 +382,23 @@ public abstract class CommandTestAbstract {
     }
 
     public NetworkingOptions getNetworkingOptions() {
-      return networkingOptions;
+      return unstableNetworkingOptions;
     }
 
     public SynchronizerOptions getSynchronizerOptions() {
-      return synchronizerOptions;
+      return unstableSynchronizerOptions;
     }
 
     public EthProtocolOptions getEthProtocolOptions() {
-      return ethProtocolOptions;
+      return unstableEthProtocolOptions;
     }
 
     public TransactionPoolOptions getTransactionPoolOptions() {
-      return transactionPoolOptions;
+      return unstableTransactionPoolOptions;
     }
 
     public MetricsCLIOptions getMetricsCLIOptions() {
-      return metricsCLIOptions;
+      return unstableMetricsCLIOptions;
     }
 
     public void close() {

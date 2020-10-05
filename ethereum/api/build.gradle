@@ -62,6 +62,9 @@ dependencies {
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
 
+  annotationProcessor "org.immutables:value"
+  implementation "org.immutables:value-annotations"
+
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
   testImplementation project(':config')

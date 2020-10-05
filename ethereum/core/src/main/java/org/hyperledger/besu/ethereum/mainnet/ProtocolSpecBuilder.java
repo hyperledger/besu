@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -69,6 +70,7 @@ public class ProtocolSpecBuilder {
   private Optional<EIP1559> eip1559 = Optional.empty();
   private TransactionGasBudgetCalculator gasBudgetCalculator =
       TransactionGasBudgetCalculator.frontier();
+  private BadBlockManager badBlockManager;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -230,6 +232,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder badBlocksManager(final BadBlockManager badBlockManager) {
+    this.badBlockManager = badBlockManager;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -255,6 +262,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(transactionPriceCalculator, "Missing transaction price calculator");
     checkNotNull(eip1559, "Missing eip1559 optional wrapper");
+    checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final EVM evm = evmBuilder.apply(gasCalculator);
@@ -324,7 +332,8 @@ public class ProtocolSpecBuilder {
     }
 
     final BlockValidator blockValidator =
-        blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
+        blockValidatorBuilder.apply(
+            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
         name,
@@ -348,7 +357,8 @@ public class ProtocolSpecBuilder {
         gasCalculator,
         transactionPriceCalculator,
         eip1559,
-        gasBudgetCalculator);
+        gasBudgetCalculator,
+        badBlockManager);
   }
 
   public interface TransactionProcessorBuilder {
@@ -386,7 +396,8 @@ public class ProtocolSpecBuilder {
     BlockValidator apply(
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
-        BlockProcessor blockProcessor);
+        BlockProcessor blockProcessor,
+        BadBlockManager badBlockManager);
   }
 
   public interface BlockImporterBuilder {

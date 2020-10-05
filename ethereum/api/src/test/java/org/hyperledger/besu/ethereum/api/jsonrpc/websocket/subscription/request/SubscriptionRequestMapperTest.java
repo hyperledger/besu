@@ -48,6 +48,7 @@ public class SubscriptionRequestMapperTest {
   private SubscriptionRequestMapper mapper;
   // These tests aren't passing through WebSocketRequestHandler, so connectionId is null.
   private final String CONNECTION_ID = null;
+  private static final String ENCLAVE_PUBLIC_KEY = "enclave_public_key";
 
   @Before
   public void before() {
@@ -391,10 +392,12 @@ public class SubscriptionRequestMapperTest {
                 null),
             null,
             null,
-            "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+            "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
+            ENCLAVE_PUBLIC_KEY);
 
     final PrivateSubscribeRequest subscribeRequest =
-        mapper.mapPrivateSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+        mapper.mapPrivateSubscribeRequest(
+            new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
 
     assertThat(subscribeRequest)
         .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
@@ -409,7 +412,8 @@ public class SubscriptionRequestMapperTest {
     thrown.expect(InvalidSubscriptionRequestException.class);
     thrown.expectMessage("Invalid subscribe request. Invalid private subscription type.");
 
-    mapper.mapPrivateSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    mapper.mapPrivateSubscribeRequest(
+        new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
   }
 
   @Test

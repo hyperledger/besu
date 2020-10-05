@@ -17,15 +17,34 @@ package org.hyperledger.errorpronechecks;
 
 import picocli.CommandLine;
 
-public class ExperimentalCliOptionNotHiddenPositiveCases {
+public class ExperimentalCliOptionMustBeCorrectlyDisplayedNegativeCases {
 
-  // BUG: Diagnostic contains:  Experimental options must be hidden.
   @CommandLine.Option(
-      hidden = false,
+      hidden = true,
       names = {"--Xexperimental"})
   private String experimental = "";
 
-  // BUG: Diagnostic contains:  Experimental options must be hidden.
-  @CommandLine.Option(names = {"--Xexperimental2"})
-  private String experimental2 = "";
+  @CommandLine.Option(
+      hidden = false,
+      names = {"--notExperimental"})
+  private String notExperimental = "";
+
+  @CommandLine.Option(names = {"--notExperimental2"})
+  private String notExperimental2 = "";
+
+  private class AnotherClass {
+    @CommandLine.Option(names = {"--notExperimentalInAnotherClass"})
+    private String notExperimentalInAnotherClass = "";
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--XexperimentalInAnotherClass"})
+    private String experimentalInAnotherClass = "";
+  }
+
+  private class BesuCommand {
+
+    @CommandLine.Option(names = {"--notExperimentalInBesuCommandClass"})
+    private String notExperimentalInBesuCommandClass = "";
+  }
 }

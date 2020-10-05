@@ -12,23 +12,35 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
-package org.hyperledger.errorpronechecks;
+package org.hyperledger.besu.cli.options.unstable;
 
 import picocli.CommandLine;
 
-public class ExperimentalCliOptionNotHiddenNegativeCases {
+public class NativeLibraryOptions {
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xexperimental"})
-  private String experimental = "";
+      names = {"--Xsecp256k1-native-enabled"},
+      description = "Path to PID file (optional)",
+      arity = "1")
+  private final Boolean nativeSecp256k1 = Boolean.TRUE;
 
   @CommandLine.Option(
-      hidden = false,
-      names = {"--notExperimental"})
-  private String notExperimental = "";
+      hidden = true,
+      names = {"--Xaltbn128-native-enabled"},
+      description = "Path to PID file (optional)",
+      arity = "1")
+  private final Boolean nativeAltbn128 = Boolean.TRUE;
 
-  @CommandLine.Option(names = {"--notExperimental2"})
-  private String notExperimental2 = "";
+  public static NativeLibraryOptions create() {
+    return new NativeLibraryOptions();
+  }
+
+  public Boolean getNativeSecp256k1() {
+    return nativeSecp256k1;
+  }
+
+  public Boolean getNativeAltbn128() {
+    return nativeAltbn128;
+  }
 }

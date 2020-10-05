@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 
 import org.junit.Test;
