@@ -3,8 +3,11 @@ package org.hyperledger.besu.ethereum.mainnet;
 public final class EtcHash  {
     public static final int OLD_EPOCH_LENGTH = 30000;
     public static final int NEW_EPOCH_LENGTH = 60000;
-    long activationBlock = 2;
+    private final long activationBlock;
 
+    public EtcHash(long activationBlock) {
+        this.activationBlock = activationBlock;
+    }
     private int calcEpochLength(final long block) {
         if (block < activationBlock) {
             return OLD_EPOCH_LENGTH;
@@ -18,9 +21,10 @@ public final class EtcHash  {
      * @param block Block Number
      * @return EtcHash Epoch
      */
-    public static long epoch(final long block) {
+    public  long epoch(final long block) {
         // todo ed fix
-        return Long.divideUnsigned(block, OLD_EPOCH_LENGTH);
+        long epochLength = calcEpochLength(block);
+        return Long.divideUnsigned(block, epochLength);
     }
 
     /**

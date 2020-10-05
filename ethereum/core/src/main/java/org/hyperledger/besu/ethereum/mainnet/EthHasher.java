@@ -42,8 +42,15 @@ public interface EthHasher {
 
   // todo ed change happened here
   final class EtcHasher implements EthHasher {
+    private final EtcHashCacheFactory cacheFactory;
+    private long activationBlock;
+    public EtcHasher(long actBlock) {
+      this.activationBlock = actBlock;
+      this.cacheFactory = new EtcHashCacheFactory(this.activationBlock);
+    }
 
-    private static final EtcHashCacheFactory cacheFactory = new EtcHashCacheFactory();
+
+
 
     @Override
     public void hash(
