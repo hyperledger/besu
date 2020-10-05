@@ -192,7 +192,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
     @Override
     public void revert() {
-      LOG.trace("REVERT!");
       getDeletedAccounts().clear();
       getUpdatedAccounts().clear();
     }
