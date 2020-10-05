@@ -18,6 +18,9 @@ import static java.util.Collections.newSetFromMap;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.state.cache.ImmutablePendingBlock;
+import org.hyperledger.besu.ethereum.eth.sync.state.cache.PendingBlockCache;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,60 +30,54 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalListener;
+import org.apache.tuweni.bytes.Bytes;
 
-public class PendingBlocks {
+public class PendingBlocksManager {
 
-  // If more than 100 behind, Besu switch to full synchronization mode. 150 because it is possible
-  // to have multiple versions of the same block number
-  private static final int CACHE_PENDING_BLOCKS_SIZE = 150;
+  private static final int REORG_CACHE_SIZE_MULTIPLICATOR = 2;
 
-  private final Cache<Hash, Block> pendingBlocks;
-
+  private final PendingBlockCache pendingBlocks;
   private final Map<Hash, Set<Hash>> pendingBlocksByParentHash = new ConcurrentHashMap<>();
 
-  public PendingBlocks() {
-    this(CACHE_PENDING_BLOCKS_SIZE);
-  }
-
-  public PendingBlocks(final int cacheSize) {
+  public PendingBlocksManager(final SynchronizerConfiguration synchronizerConfiguration) {
     pendingBlocks =
-        CacheBuilder.newBuilder()
-            .maximumSize(cacheSize)
-            .removalListener(
-                (RemovalListener<Hash, Block>)
-                    notification -> removePendingBlockByParentHashForBlock(notification.getValue()))
-            .build();
+        new PendingBlockCache(
+            (Math.abs(synchronizerConfiguration.getBlockPropagationRange().lowerEndpoint())
+                    + Math.abs(
+                        synchronizerConfiguration.getBlockPropagationRange().upperEndpoint()))
+                * REORG_CACHE_SIZE_MULTIPLICATOR);
   }
 
   /**
    * Track the given block.
    *
-   * @param pendingBlock the block to track
+   * @param block the block to track
+   * @param nodeId node that sent the block
    * @return true if the block was added (was not previously present)
    */
-  public boolean registerPendingBlock(final Block pendingBlock) {
-
-    final Block previousValue = this.pendingBlocks.getIfPresent(pendingBlock.getHash());
-    if (previousValue != null) {
+  public boolean registerPendingBlock(final Block block, final Bytes nodeId) {
+    try {
+      final ImmutablePendingBlock previousValue =
+          this.pendingBlocks.putIfAbsent(
+              block.getHash(), ImmutablePendingBlock.builder().block(block).nodeId(nodeId).build());
+      if (previousValue != null) {
+        return false;
+      }
+    } catch (IndexOutOfBoundsException e) {
       return false;
     }
 
-    this.pendingBlocks.put(pendingBlock.getHash(), pendingBlock);
-
     pendingBlocksByParentHash
         .computeIfAbsent(
-            pendingBlock.getHeader().getParentHash(),
+            block.getHeader().getParentHash(),
             h -> {
               final Set<Hash> set = newSetFromMap(new ConcurrentHashMap<>());
               // Go ahead and add our value at construction, so that we don't set an empty set which
               // could be removed in deregisterPendingBlock
-              set.add(pendingBlock.getHash());
+              set.add(block.getHash());
               return set;
             })
-        .add(pendingBlock.getHash());
+        .add(block.getHash());
 
     return true;
   }
@@ -89,33 +86,28 @@ public class PendingBlocks {
    * Stop tracking the given block.
    *
    * @param block the block that is no longer pending
+   * @return true if this block was removed
    */
-  public void deregisterPendingBlock(final Block block) {
-    pendingBlocks.invalidate(block.getHash());
-  }
-
-  /**
-   * Stop keeping this block in the list of pending blocks by parent hash
-   *
-   * @param block the block that is no longer pending
-   */
-  public void removePendingBlockByParentHashForBlock(final Block block) {
+  public boolean deregisterPendingBlock(final Block block) {
     final Hash parentHash = block.getHeader().getParentHash();
+    final ImmutablePendingBlock removed = pendingBlocks.remove(block.getHash());
     final Set<Hash> blocksForParent = pendingBlocksByParentHash.get(parentHash);
     if (blocksForParent != null) {
       blocksForParent.remove(block.getHash());
       pendingBlocksByParentHash.remove(parentHash, Collections.emptySet());
     }
+    return removed != null;
   }
 
   public void purgeBlocksOlderThan(final long blockNumber) {
-    pendingBlocks.asMap().values().stream()
-        .filter(b -> b.getHeader().getNumber() < blockNumber)
+    pendingBlocks.values().stream()
+        .filter(b -> b.block().getHeader().getNumber() < blockNumber)
+        .map(ImmutablePendingBlock::block)
         .forEach(this::deregisterPendingBlock);
   }
 
   public boolean contains(final Hash blockHash) {
-    return pendingBlocks.getIfPresent(blockHash) != null;
+    return pendingBlocks.containsKey(blockHash);
   }
 
   public List<Block> childrenOf(final Hash parentBlock) {
@@ -124,8 +116,9 @@ public class PendingBlocks {
       return Collections.emptyList();
     }
     return blocksByParent.stream()
-        .map(pendingBlocks::getIfPresent)
+        .map(pendingBlocks::get)
         .filter(Objects::nonNull)
+        .map(ImmutablePendingBlock::block)
         .collect(Collectors.toList());
   }
 }
