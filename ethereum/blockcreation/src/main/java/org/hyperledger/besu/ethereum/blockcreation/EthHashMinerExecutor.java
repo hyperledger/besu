@@ -31,9 +31,9 @@ import java.util.function.Function;
 
 public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMiner> {
 
-  private volatile Optional<Address> coinbase;
-  private boolean stratumMiningEnabled;
-  private final Iterable<Long> nonceGenerator;
+  protected volatile Optional<Address> coinbase;
+  protected boolean stratumMiningEnabled;
+  protected final Iterable<Long> nonceGenerator;
 
   public EthHashMinerExecutor(
       final ProtocolContext protocolContext,
