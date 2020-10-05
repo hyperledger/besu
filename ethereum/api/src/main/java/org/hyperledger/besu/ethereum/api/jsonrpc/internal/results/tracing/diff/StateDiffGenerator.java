@@ -19,9 +19,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
@@ -53,14 +53,16 @@ public class StateDiffGenerator {
 
     final StateDiffTrace stateDiffResult = new StateDiffTrace();
 
-    for (final UpdateTrackingAccount<?> updatedAccount : transactionUpdater.getTouchedAccounts()) {
+    for (final Account updatedAccount : transactionUpdater.getTouchedAccounts()) {
       final Address accountAddress = updatedAccount.getAddress();
       final Account rootAccount = previousUpdater.get(accountAddress);
 
       // calculate storage diff
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
       for (final Map.Entry<UInt256, UInt256> entry :
-          updatedAccount.getUpdatedStorage().entrySet()) {
+          ((UpdateTrackingAccount<?>) updatedAccount)
+              .getUpdatedStorage()
+              .entrySet()) { // FIXME cast
         final UInt256 newValue = entry.getValue();
         if (rootAccount == null) {
           if (!UInt256.ZERO.equals(newValue)) {
