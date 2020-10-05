@@ -7,10 +7,10 @@ import java.math.BigInteger;
 
 public class EpochCalculators {
     public static boolean isEpochActivationInConfig(final GenesisConfigOptions config) {
-        return config.getEthashConfigOptions().getEpochLengthActivationBlock().isPresent();
+        return config.getEtchashConfigOptions().getEpochLengthActivationBlock().isPresent();
     }
 
     public static long activationBlock(final GenesisConfigOptions config) {
-        return config.getEthashConfigOptions().getEpochLengthActivationBlock().getAsLong();
+        return config.getEtchashConfigOptions().getEpochLengthActivationBlock().getAsLong();
     }
 }

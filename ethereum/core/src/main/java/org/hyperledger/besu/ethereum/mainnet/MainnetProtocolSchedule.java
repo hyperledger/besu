@@ -53,9 +53,9 @@ public class MainnetProtocolSchedule {
           config, privacyParameters, isRevertReasonEnabled);
     }
     // todo ed make config change here?
-    if(EpochCalculators.isEpochActivationInConfig(config)) {
-      return EpochProtocolSchedule.create(config, privacyParameters, isRevertReasonEnabled);
-    }
+//    if(EpochCalculators.isEpochActivationInConfig(config)) {
+//      return EpochProtocolSchedule.create(config, privacyParameters, isRevertReasonEnabled);
+//    }
 
     return new ProtocolScheduleBuilder(
             config, DEFAULT_CHAIN_ID, Function.identity(), privacyParameters, isRevertReasonEnabled)

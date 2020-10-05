@@ -199,6 +199,8 @@ public class BesuController implements java.io.Closeable {
         builder = new IbftLegacyBesuControllerBuilder();
       } else if (configOptions.isClique()) {
         builder = new CliqueBesuControllerBuilder();
+      } else if (configOptions.isEtcHash()) {
+        builder = new EtcBesuControllerBuilder();
       } else {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }

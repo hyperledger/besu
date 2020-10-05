@@ -30,6 +30,8 @@ public interface GenesisConfigOptions {
 
   boolean isClique();
 
+  boolean isEtcHash();
+
   String getConsensusEngine();
 
   IbftConfigOptions getIbftLegacyConfigOptions();
@@ -39,6 +41,8 @@ public interface GenesisConfigOptions {
   IbftConfigOptions getIbft2ConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
+
+  EtchashConfigOptions getEtchashConfigOptions();
 
   OptionalLong getHomesteadBlockNumber();
 
