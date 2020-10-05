@@ -34,7 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class PendingBlocksManager {
 
-  private static final int REORG_CACHE_SIZE_MULTIPLICATOR = 2;
+  private static final int REORG_CACHE_SIZE_FACTOR = 2;
 
   private final PendingBlockCache pendingBlocks;
   private final Map<Hash, Set<Hash>> pendingBlocksByParentHash = new ConcurrentHashMap<>();
@@ -45,7 +45,7 @@ public class PendingBlocksManager {
             (Math.abs(synchronizerConfiguration.getBlockPropagationRange().lowerEndpoint())
                     + Math.abs(
                         synchronizerConfiguration.getBlockPropagationRange().upperEndpoint()))
-                * REORG_CACHE_SIZE_MULTIPLICATOR);
+                * REORG_CACHE_SIZE_FACTOR);
   }
 
   /**
