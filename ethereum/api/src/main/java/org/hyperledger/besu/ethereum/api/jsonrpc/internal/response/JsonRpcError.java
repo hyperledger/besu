@@ -75,6 +75,7 @@ public enum JsonRpcError {
   WORLD_STATE_UNAVAILABLE(-32000, "World state unavailable"),
 
   // Debug failures
+  BLOCK_NOT_FOUND(-32000, "Block not found"),
   PARENT_BLOCK_NOT_FOUND(-32000, "Parent block not found"),
 
   // Permissioning/Account allowlist errors

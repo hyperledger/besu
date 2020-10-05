@@ -21,14 +21,15 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
@@ -51,9 +52,9 @@ public class Create2OperationTest {
   private final String code;
   private final String expectedAddress;
   private final int expectedGas;
-  private final MessageFrame messageFrame = mock(MessageFrame.class);
+  private MessageFrame messageFrame;
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
-  private final DefaultEvmAccount account = mock(DefaultEvmAccount.class);
+  private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final Create2Operation operation =
       new Create2Operation(new ConstantinopleGasCalculator());
@@ -128,31 +129,41 @@ public class Create2OperationTest {
 
   @Before
   public void setUp() {
-    when(messageFrame.getRecipientAddress()).thenReturn(Address.fromHexString(sender));
     final Bytes32 memoryOffset = Bytes32.fromHexString("0xFF");
     final Bytes codeBytes = Bytes.fromHexString(code);
     final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
     when(account.getMutable()).thenReturn(mutableAccount);
-    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(UInt256.valueOf(500));
-    when(messageFrame.getBlockHashLookup()).thenReturn(mock(BlockHashLookup.class));
-    when(messageFrame.getBlockHeader()).thenReturn(mock(ProcessableBlockHeader.class));
-    when(messageFrame.getBlockchain()).thenReturn(mock(Blockchain.class));
-    when(messageFrame.getBlockchain()).thenReturn(mock(Blockchain.class));
-    when(messageFrame.getGasPrice()).thenReturn(Wei.ZERO);
-    when(messageFrame.getMessageFrameStack()).thenReturn(new ArrayDeque<>());
-    when(messageFrame.getMiningBeneficiary()).thenReturn(Address.ZERO);
-    when(messageFrame.getOriginatorAddress()).thenReturn(Address.ZERO);
-    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100000));
-    when(messageFrame.getReturnStack()).thenReturn(mock(ReturnStack.class));
-    when(messageFrame.getStackItem(0)).thenReturn(Bytes32.ZERO);
-    when(messageFrame.getStackItem(1)).thenReturn(memoryOffset);
-    when(messageFrame.getStackItem(2)).thenReturn(memoryLength.toBytes());
-    when(messageFrame.getStackItem(3)).thenReturn(Bytes32.fromHexString(salt));
-    when(messageFrame.getWorldState()).thenReturn(worldUpdater);
-    when(messageFrame.memoryWordSize()).thenReturn(UInt256.valueOf(500));
-    when(messageFrame.readMemory(UInt256.fromBytes(memoryOffset), memoryLength))
-        .thenReturn(codeBytes);
-    when(messageFrame.stackSize()).thenReturn(4);
+    messageFrame =
+        MessageFrame.builder()
+            .type(MessageFrame.Type.CONTRACT_CREATION)
+            .contract(Address.ZERO)
+            .inputData(Bytes.EMPTY)
+            .sender(Address.fromHexString(sender))
+            .value(Wei.ZERO)
+            .apparentValue(Wei.ZERO)
+            .code(new Code(codeBytes))
+            .depth(1)
+            .completer(__ -> {})
+            .contractAccountVersion(0)
+            .address(Address.fromHexString(sender))
+            .blockHashLookup(mock(BlockHashLookup.class))
+            .blockHeader(mock(ProcessableBlockHeader.class))
+            .blockchain(mock(Blockchain.class))
+            .gasPrice(Wei.ZERO)
+            .messageFrameStack(new ArrayDeque<>())
+            .miningBeneficiary(Address.ZERO)
+            .originator(Address.ZERO)
+            .initialGas(Gas.of(100000))
+            .worldState(worldUpdater)
+            .build();
+    messageFrame.pushStackItem(Bytes32.fromHexString(salt));
+    messageFrame.pushStackItem(memoryLength.toBytes());
+    messageFrame.pushStackItem(memoryOffset);
+    messageFrame.pushStackItem(Bytes32.ZERO);
+    messageFrame.expandMemory(UInt256.ZERO, UInt256.valueOf(500));
+    messageFrame.writeMemory(
+        UInt256.fromBytes(memoryOffset), UInt256.valueOf(code.length()), codeBytes);
+
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
