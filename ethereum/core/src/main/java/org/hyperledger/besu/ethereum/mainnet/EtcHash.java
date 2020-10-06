@@ -19,10 +19,20 @@ public final class EtcHash {
   public static final int NEW_EPOCH_LENGTH = 60000;
   private final long activationBlock;
 
-  public EtcHash(long activationBlock) {
+  /**
+   * Implementation of ETH Hash with ETC ECIP-1099 Calibrate Epoch Duration
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
+   * @param activationBlock Block to activate new epoch length
+   */
+  public EtcHash(final long activationBlock) {
     this.activationBlock = activationBlock;
   }
 
+  /**
+   * calcEpochLength returns the epoch length for a given block number
+   * @param block block number to use for epoch length calculation
+   * @return epoch length
+   */
   private int calcEpochLength(final long block) {
     if (block < activationBlock) {
       return OLD_EPOCH_LENGTH;
@@ -37,7 +47,6 @@ public final class EtcHash {
    * @return EtcHash Epoch
    */
   public long epoch(final long block) {
-    // todo ed fix
     long epochLength = calcEpochLength(block);
     return Long.divideUnsigned(block, epochLength);
   }

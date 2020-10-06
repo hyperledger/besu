@@ -185,27 +185,6 @@ public class ClassicProtocolSpecs {
         .name("Phoenix");
   }
 
-  // todo ed change config for ecip1099 here.
-  public static ProtocolSpecBuilder ecip1099Definition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final OptionalLong ecip1017EraRounds) {
-    return phoenixDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            ecip1017EraRounds)
-        .gasCalculator(IstanbulGasCalculator::new)
-        .evmBuilder(
-            gasCalculator ->
-                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .name("ECIP1099");
-  }
-
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(

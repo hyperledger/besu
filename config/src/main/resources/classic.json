@@ -10,8 +10,8 @@
     "atlantisBlock": 8772000,
     "aghartaBlock": 9573000,
     "phoenixBlock": 10500839,
-    "ethash": {
-
+    "etchash": {
+      "epochLengthActivation": 11700000
     }
   },
   "nonce": "0x42",

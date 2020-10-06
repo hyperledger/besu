@@ -21,9 +21,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.primitives.Ints;
 
 public class EtcHashCacheFactory {
-  private EtcHash etcHash;
+  private final EtcHash etcHash;
 
-  public EtcHashCacheFactory(long activationBlock) {
+  public EtcHashCacheFactory(final long activationBlock) {
     etcHash = new EtcHash(activationBlock);
   }
 
@@ -49,12 +49,11 @@ public class EtcHashCacheFactory {
       CacheBuilder.newBuilder().maximumSize(5).build();
 
   public EtcHashCacheFactory.EtcHashDescriptor etcHashCacheFor(final long blockNumber) {
-    // todo ed, determine how test this
     final long epochIndex = etcHash.epoch(blockNumber);
     try {
       return descriptorCache.get(epochIndex, () -> createHashCache(epochIndex, blockNumber));
     } catch (final ExecutionException ex) {
-      throw new RuntimeException("Failed to create a suitable cache for EthHash calculations.", ex);
+      throw new RuntimeException("Failed to create a suitable cache for EtcHash calculations.", ex);
     }
   }
 
