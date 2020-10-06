@@ -14,22 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
-import javax.annotation.Nullable;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
@@ -59,12 +50,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public DefaultEvmAccount createAccount(
-      final Address address, final long nonce, final Wei balance) {
+  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     final UpdateTrackingAccount<A> account = new UpdateTrackingAccount<>(address);
     account.setNonce(nonce);
     account.setBalance(balance);
-    return new DefaultEvmAccount(track(account));
+    return new WrappedEvmAccount(track(account));
   }
 
   @Override
@@ -81,11 +71,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public DefaultEvmAccount getAccount(final Address address) {
+  public EvmAccount getAccount(final Address address) {
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return new DefaultEvmAccount(existing);
+      return new WrappedEvmAccount(existing);
     }
     if (deletedAccounts.contains(address)) {
       return null;
@@ -96,7 +86,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (origin == null) {
       return null;
     } else {
-      return new DefaultEvmAccount(track(new UpdateTrackingAccount<>(origin)));
+      return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(origin)));
     }
   }
 
@@ -146,7 +136,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    *
    * @return The accounts modified in this updater.
    */
-  protected Collection<UpdateTrackingAccount<A>> updatedAccounts() {
+  protected Collection<UpdateTrackingAccount<A>> getUpdatedAccounts() {
     return updatedAccounts.values();
   }
 
@@ -155,246 +145,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    *
    * @return The accounts deleted as part of this updater.
    */
-  protected Collection<Address> deletedAccounts() {
+  protected Collection<Address> getDeletedAccounts() {
     return deletedAccounts;
-  }
-
-  /**
-   * A implementation of {@link MutableAccount} that tracks updates made to the account since the
-   * creation of the updater this is linked to.
-   *
-   * <p>Note that in practice this only track the modified value of the nonce and balance, but
-   * doesn't remind if those were modified or not (the reason being that any modification of an
-   * account imply the underlying trie node will have to be updated, and so knowing if the nonce and
-   * balance where updated or not doesn't matter, we just need their new value).
-   */
-  public static class UpdateTrackingAccount<A extends Account> implements MutableAccount {
-    private final Address address;
-    private final Hash addressHash;
-
-    @Nullable private final A account; // null if this is a new account.
-
-    private long nonce;
-    private Wei balance;
-    private int version;
-
-    @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
-    @Nullable private Hash updatedCodeHash;
-
-    // Only contains updated storage entries, but may contains entry with a value of 0 to signify
-    // deletion.
-    private final NavigableMap<UInt256, UInt256> updatedStorage;
-    private boolean storageWasCleared = false;
-    private boolean transactionBoundary = false;
-
-    UpdateTrackingAccount(final Address address) {
-      checkNotNull(address);
-      this.address = address;
-      this.addressHash = Hash.hash(this.address);
-      this.account = null;
-
-      this.nonce = 0;
-      this.balance = Wei.ZERO;
-      this.version = Account.DEFAULT_VERSION;
-
-      this.updatedCode = Bytes.EMPTY;
-      this.updatedStorage = new TreeMap<>();
-    }
-
-    UpdateTrackingAccount(final A account) {
-      checkNotNull(account);
-
-      this.address = account.getAddress();
-      this.addressHash =
-          (account instanceof UpdateTrackingAccount)
-              ? ((UpdateTrackingAccount<?>) account).addressHash
-              : Hash.hash(this.address);
-      this.account = account;
-
-      this.nonce = account.getNonce();
-      this.balance = account.getBalance();
-      this.version = account.getVersion();
-
-      this.updatedStorage = new TreeMap<>();
-    }
-
-    /**
-     * The original account over which this tracks updates.
-     *
-     * @return The original account over which this tracks updates, or {@code null} if this is a
-     *     newly created account.
-     */
-    public A getWrappedAccount() {
-      return account;
-    }
-
-    /**
-     * Whether the code of the account was modified.
-     *
-     * @return {@code true} if the code was updated.
-     */
-    public boolean codeWasUpdated() {
-      return updatedCode != null;
-    }
-
-    /**
-     * A map of the storage entries that were modified.
-     *
-     * @return a map containing all entries that have been modified. This <b>may</b> contain entries
-     *     with a value of 0 to signify deletion.
-     */
-    @Override
-    public Map<UInt256, UInt256> getUpdatedStorage() {
-      return updatedStorage;
-    }
-
-    @Override
-    public Address getAddress() {
-      return address;
-    }
-
-    @Override
-    public Hash getAddressHash() {
-      return addressHash;
-    }
-
-    @Override
-    public long getNonce() {
-      return nonce;
-    }
-
-    @Override
-    public void setNonce(final long value) {
-      this.nonce = value;
-    }
-
-    @Override
-    public Wei getBalance() {
-      return balance;
-    }
-
-    @Override
-    public void setBalance(final Wei value) {
-      this.balance = value;
-    }
-
-    @Override
-    public Bytes getCode() {
-      // Note that we set code for new account, so it's only null if account isn't.
-      return updatedCode == null ? account.getCode() : updatedCode;
-    }
-
-    @Override
-    public Hash getCodeHash() {
-      if (updatedCode == null) {
-        // Note that we set code for new account, so it's only null if account isn't.
-        return account.getCodeHash();
-      } else {
-        // Cache the hash of updated code to avoid DOS attacks which repeatedly request hash
-        // of updated code and cause us to regenerate it.
-        if (updatedCodeHash == null) {
-          updatedCodeHash = Hash.hash(updatedCode);
-        }
-        return updatedCodeHash;
-      }
-    }
-
-    @Override
-    public boolean hasCode() {
-      // Note that we set code for new account, so it's only null if account isn't.
-      return updatedCode == null ? account.hasCode() : !updatedCode.isEmpty();
-    }
-
-    @Override
-    public void setCode(final Bytes code) {
-      this.updatedCode = code;
-    }
-
-    @Override
-    public void setVersion(final int version) {
-      this.version = version;
-    }
-
-    @Override
-    public int getVersion() {
-      return version;
-    }
-
-    void markTransactionBoundary() {
-      this.transactionBoundary = true;
-    }
-
-    @Override
-    public UInt256 getStorageValue(final UInt256 key) {
-      final UInt256 value = updatedStorage.get(key);
-      if (value != null) {
-        return value;
-      }
-      if (storageWasCleared) {
-        return UInt256.ZERO;
-      }
-
-      // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
-      // key, or we should query the underlying storage for its existing value (which might be 0).
-      return account == null ? UInt256.ZERO : account.getStorageValue(key);
-    }
-
-    @Override
-    public UInt256 getOriginalStorageValue(final UInt256 key) {
-      if (transactionBoundary) {
-        return getStorageValue(key);
-      } else if (storageWasCleared || account == null) {
-        return UInt256.ZERO;
-      } else {
-        return account.getOriginalStorageValue(key);
-      }
-    }
-
-    @Override
-    public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
-        final Bytes32 startKeyHash, final int limit) {
-      final NavigableMap<Bytes32, AccountStorageEntry> entries;
-      if (account != null) {
-        entries = account.storageEntriesFrom(startKeyHash, limit);
-      } else {
-        entries = new TreeMap<>();
-      }
-      updatedStorage.entrySet().stream()
-          .map(entry -> AccountStorageEntry.forKeyAndValue(entry.getKey(), entry.getValue()))
-          .filter(entry -> entry.getKeyHash().compareTo(startKeyHash) >= 0)
-          .forEach(entry -> entries.put(entry.getKeyHash(), entry));
-
-      while (entries.size() > limit) {
-        entries.remove(entries.lastKey());
-      }
-      return entries;
-    }
-
-    @Override
-    public void setStorageValue(final UInt256 key, final UInt256 value) {
-      updatedStorage.put(key, value);
-    }
-
-    @Override
-    public void clearStorage() {
-      storageWasCleared = true;
-      updatedStorage.clear();
-    }
-
-    public boolean getStorageWasCleared() {
-      return storageWasCleared;
-    }
-
-    @Override
-    public String toString() {
-      String storage = updatedStorage.isEmpty() ? "[not updated]" : updatedStorage.toString();
-      if (updatedStorage.isEmpty() && storageWasCleared) {
-        storage = "[cleared]";
-      }
-      return String.format(
-          "%s -> {nonce: %s, balance:%s, code:%s, storage:%s }",
-          address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage);
-    }
   }
 
   public static class StackedUpdater<W extends WorldView, A extends Account>
@@ -423,19 +175,19 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
-      return new ArrayList<>(updatedAccounts());
+    public Collection<? extends Account> getTouchedAccounts() {
+      return new ArrayList<>(getUpdatedAccounts());
     }
 
     @Override
     public Collection<Address> getDeletedAccountAddresses() {
-      return new ArrayList<>(deletedAccounts());
+      return new ArrayList<>(getDeletedAccounts());
     }
 
     @Override
     public void revert() {
-      deletedAccounts().clear();
-      updatedAccounts().clear();
+      getDeletedAccounts().clear();
+      getUpdatedAccounts().clear();
     }
 
     @Override
@@ -444,13 +196,13 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       // Our own updates should apply on top of the updates we're stacked on top, so our deletions
       // may kill some of "their" updates, and our updates may review some of the account "they"
       // deleted.
-      deletedAccounts().forEach(wrapped.updatedAccounts::remove);
-      updatedAccounts().forEach(a -> wrapped.deletedAccounts.remove(a.getAddress()));
+      getDeletedAccounts().forEach(wrapped.updatedAccounts::remove);
+      getUpdatedAccounts().forEach(a -> wrapped.deletedAccounts.remove(a.getAddress()));
 
       // Then push our deletes and updates to the stacked ones.
-      wrapped.deletedAccounts.addAll(deletedAccounts());
+      wrapped.deletedAccounts.addAll(getDeletedAccounts());
 
-      for (final UpdateTrackingAccount<UpdateTrackingAccount<A>> update : updatedAccounts()) {
+      for (final UpdateTrackingAccount<UpdateTrackingAccount<A>> update : getUpdatedAccounts()) {
         UpdateTrackingAccount<A> existing = wrapped.updatedAccounts.get(update.getAddress());
         if (existing == null) {
           // If we don't track this account, it's either a new one or getForMutation above had
@@ -458,9 +210,9 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
           existing = update.getWrappedAccount();
           if (existing == null) {
             // Brand new account, create our own version
-            existing = new UpdateTrackingAccount<>(update.address);
+            existing = new UpdateTrackingAccount<>(update.getAddress());
           }
-          wrapped.updatedAccounts.put(existing.address, existing);
+          wrapped.updatedAccounts.put(existing.getAddress(), existing);
         }
         existing.setNonce(update.getNonce());
         existing.setBalance(update.getBalance());
@@ -476,7 +228,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     public void markTransactionBoundary() {
-      updatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
+      getUpdatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
     }
   }
 }
