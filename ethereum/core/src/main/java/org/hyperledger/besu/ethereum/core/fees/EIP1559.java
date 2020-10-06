@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static java.lang.Math.floorDiv;
 import static java.lang.Math.max;
-import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
 import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
 
@@ -32,13 +31,11 @@ public class EIP1559 {
   private static final Logger LOG = LogManager.getLogger();
 
   private final long initialForkBlknum;
-  private final long finalForkBlknum;
 
   private final FeeMarket feeMarket = FeeMarket.eip1559();
 
   public EIP1559(final long forkBlockNumber) {
     initialForkBlknum = forkBlockNumber;
-    finalForkBlknum = initialForkBlknum + feeMarket.getMigrationDurationInBlocks();
   }
 
   public long computeBaseFee(
@@ -83,35 +80,9 @@ public class EIP1559 {
         <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
-  public long eip1559GasPool(final long blockNumber, final long gasLimit) {
-
-    guardActivation();
-    final long eip1559GasTarget;
-    if (blockNumber >= finalForkBlknum) {
-      eip1559GasTarget = gasLimit * 2;
-    } else {
-      eip1559GasTarget =
-          (gasLimit / 2)
-              + (gasLimit / 2)
-                  * (blockNumber - initialForkBlknum)
-                  / feeMarket.getMigrationDurationInBlocks();
-    }
-    return eip1559GasTarget * 2;
-  }
-
-  public long legacyGasPool(final long blockNumber, final long gasLimit) {
-    guardActivation();
-    return gasLimit - (eip1559GasPool(blockNumber, gasLimit) / 2);
-  }
-
   public boolean isEIP1559(final long blockNumber) {
     guardActivation();
     return blockNumber >= initialForkBlknum;
-  }
-
-  public boolean isEIP1559Finalized(final long blockNumber) {
-    guardActivation();
-    return blockNumber >= finalForkBlknum;
   }
 
   public boolean isForkBlock(final long blockNumber) {
@@ -144,11 +115,7 @@ public class EIP1559 {
   public boolean isValidTransaction(final long blockNumber, final Transaction transaction) {
     return isValidFormat(
         transaction,
-        isEIP1559Finalized(blockNumber)
-            ? FEE_MARKET_TRANSACTIONS
-            : isEIP1559(blockNumber)
-                ? FEE_MARKET_TRANSITIONAL_TRANSACTIONS
-                : FRONTIER_TRANSACTIONS);
+        isEIP1559(blockNumber) ? FEE_MARKET_TRANSITIONAL_TRANSACTIONS : FRONTIER_TRANSACTIONS);
   }
 
   private void guardActivation() {
@@ -160,26 +127,7 @@ public class EIP1559 {
   public long targetGasUsed(final BlockHeader header) {
     guardActivation();
     return header.getGasLimit();
-    /*final long blockNumber = header.getNumber();
-    final long migrationDuration = feeMarket.getMigrationDurationInBlocks();
-    final long gasTarget = header.getGasLimit();
-    return targetGasUsed(blockNumber, migrationDuration, gasTarget, initialForkBlknum);*/
   }
-
-  /*private static long targetGasUsed(
-      final long blockNumber,
-      final long migrationDuration,
-      final long gasTarget,
-      final long forkBlock) {
-    final long blocksSinceStartOfMigration = blockNumber - forkBlock;
-    final long halfGasTarget = floorDiv(gasTarget, 2L);
-    return (blockNumber < forkBlock)
-        ? 0L
-        : (blockNumber > forkBlock + migrationDuration)
-            ? gasTarget
-            : halfGasTarget
-                + floorDiv(halfGasTarget * blocksSinceStartOfMigration, migrationDuration);
-  }*/
 
   public FeeMarket getFeeMarket() {
     return feeMarket;
