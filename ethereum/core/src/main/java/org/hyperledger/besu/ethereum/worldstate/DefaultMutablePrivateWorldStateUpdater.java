@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -36,30 +36,29 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public DefaultEvmAccount createAccount(
-      final Address address, final long nonce, final Wei balance) {
+  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     return privateWorldUpdater.createAccount(address);
   }
 
   @Override
-  public DefaultEvmAccount createAccount(final Address address) {
+  public EvmAccount createAccount(final Address address) {
     return privateWorldUpdater.createAccount(address);
   }
 
   @Override
-  public DefaultEvmAccount getOrCreate(final Address address) {
+  public EvmAccount getOrCreate(final Address address) {
     return privateWorldUpdater.getOrCreate(address);
   }
 
   @Override
-  public DefaultEvmAccount getAccount(final Address address) {
-    final DefaultEvmAccount privateAccount = privateWorldUpdater.getAccount(address);
+  public EvmAccount getAccount(final Address address) {
+    final EvmAccount privateAccount = privateWorldUpdater.getAccount(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
       return privateAccount;
     }
-    final DefaultEvmAccount publicAccount = publicWorldUpdater.getAccount(address);
+    final EvmAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
-      publicAccount.setImmutable(true);
+      ((WrappedEvmAccount) publicAccount).setImmutable(true); // FIXME
       return publicAccount;
     }
     return privateAccount;
@@ -71,7 +70,7 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
+  public Collection<? extends Account> getTouchedAccounts() {
     return privateWorldUpdater.getTouchedAccounts();
   }
 
