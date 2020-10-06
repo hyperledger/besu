@@ -14,27 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
-import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
-import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
-
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
 
 public class EIP1559Test {
 
   private static final long FORK_BLOCK = 783L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
   private final FeeMarket feeMarket = FeeMarket.eip1559();
-  private static final long MAX_GAS = 20000000L;
   private static final long TARGET_GAS_USED = 10000000L;
 
   @Before
