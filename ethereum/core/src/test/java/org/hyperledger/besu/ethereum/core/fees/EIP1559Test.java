@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTI
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -68,29 +67,6 @@ public class EIP1559Test {
                 TARGET_GAS_USED))
         .isGreaterThan(feeMarket.getInitialBasefee())
         .isEqualTo(1012500000L);
-  }
-
-  @Test
-  public void assertThatBaseFeeIsDecrementedByOneWhenAtTargetGasUsed() {
-    assertThat(
-            eip1559.computeBaseFee(
-                FORK_BLOCK, feeMarket.getInitialBasefee(), TARGET_GAS_USED, TARGET_GAS_USED))
-        .isEqualTo(feeMarket.getInitialBasefee() - Wei.ONE.toLong());
-  }
-
-  @Test
-  public void isValidBaseFee() {
-    assertThat(eip1559.isValidBaseFee(feeMarket.getInitialBasefee(), 1012500000L)).isTrue();
-  }
-
-  @Test
-  public void isNotValidBaseFee() {
-    assertThat(
-            eip1559.isValidBaseFee(
-                feeMarket.getInitialBasefee(), feeMarket.getInitialBasefee() * 15L / 10L))
-        .isFalse();
-    assertThat(eip1559.isValidBaseFee(feeMarket.getInitialBasefee(), 0)).isFalse();
-    assertThat(eip1559.isValidBaseFee(0, 0)).isFalse();
   }
 
   @Test
