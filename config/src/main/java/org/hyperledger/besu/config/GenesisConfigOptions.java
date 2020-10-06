@@ -176,15 +176,6 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getEcip1017EraRounds();
 
-  /**
-   * Block number for ECIP 1099: Calibrate Epoch Duration
-   *
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
-   * @return block number of ECIP 1099 fork
-   */
-  OptionalLong getEcip1099BlockNumber();
-
   Map<String, Object> asMap();
 
   TransitionsConfigOptions getTransitions();

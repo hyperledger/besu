@@ -311,11 +311,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEcip1099BlockNumber() {
-    return getOptionalLong("ecip1099block");
-  }
-
-  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -361,6 +356,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isIbft2()) {
       builder.put("ibft2", getIbft2ConfigOptions().asMap());
+    }
+    if (isEtcHash()) {
+      builder.put("etchash", getEtchashConfigOptions().asMap());
     }
     return builder.build();
   }
