@@ -398,6 +398,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private NatService natService = new NatService(Optional.empty());
+    private boolean randomlyPrioritizeConnections;
 
     private MetricsSystem metricsSystem;
 
@@ -456,6 +457,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .peerPrivileges(peerPrivileges)
           .localNode(localNode)
           .metricsSystem(metricsSystem)
+          .randomlyPrioritizeConnections(randomlyPrioritizeConnections)
           .build();
     }
 
@@ -468,6 +470,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
+      return this;
+    }
+
+    public Builder randomLyPrioritizeConnections(final boolean randomlyPrioritizeConnections) {
+      checkNotNull(rlpxAgent);
+      this.randomlyPrioritizeConnections = randomlyPrioritizeConnections;
       return this;
     }
 
