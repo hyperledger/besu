@@ -16,7 +16,10 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.EtchashConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.*;
+import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
+import org.hyperledger.besu.ethereum.blockcreation.EtcHashMinerExecutor;
+import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -36,12 +39,12 @@ public class EtcBesuControllerBuilder extends MainnetBesuControllerBuilder {
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
-      ProtocolSchedule protocolSchedule,
-      ProtocolContext protocolContext,
-      TransactionPool transactionPool,
-      MiningParameters miningParameters,
-      SyncState syncState,
-      EthProtocolManager ethProtocolManager) {
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final TransactionPool transactionPool,
+      final MiningParameters miningParameters,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager) {
     final EtcHashMinerExecutor executor =
         new EtcHashMinerExecutor(
             protocolContext,

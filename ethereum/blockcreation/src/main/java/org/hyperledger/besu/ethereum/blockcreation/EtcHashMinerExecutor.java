@@ -28,16 +28,16 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.function.Function;
 
 public class EtcHashMinerExecutor extends EthHashMinerExecutor {
-  private long activationBlock;
+  private final long activationBlock;
 
   public EtcHashMinerExecutor(
-      ProtocolContext protocolContext,
-      ProtocolSchedule protocolSchedule,
-      PendingTransactions pendingTransactions,
-      MiningParameters miningParams,
-      AbstractBlockScheduler blockScheduler,
-      Function<Long, Long> gasLimitCalculator,
-      long activationBlock) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final PendingTransactions pendingTransactions,
+      final MiningParameters miningParams,
+      final AbstractBlockScheduler blockScheduler,
+      final Function<Long, Long> gasLimitCalculator,
+      final long activationBlock) {
     super(
         protocolContext,
         protocolSchedule,
@@ -50,9 +50,9 @@ public class EtcHashMinerExecutor extends EthHashMinerExecutor {
 
   @Override
   public EthHashBlockMiner createMiner(
-      Subscribers<MinedBlockObserver> observers,
-      Subscribers<EthHashObserver> ethHashObservers,
-      BlockHeader parentHeader) {
+      final Subscribers<MinedBlockObserver> observers,
+      final Subscribers<EthHashObserver> ethHashObservers,
+      final BlockHeader parentHeader) {
     final EthHasher hasher = new EthHasher.EtcHasher(activationBlock);
     final EthHashSolver solver =
         new EthHashSolver(nonceGenerator, hasher, stratumMiningEnabled, ethHashObservers);
