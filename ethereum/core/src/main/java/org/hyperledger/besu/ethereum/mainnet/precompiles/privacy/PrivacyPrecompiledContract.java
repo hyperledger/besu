@@ -49,7 +49,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
-  final Enclave enclave;
+  private final Enclave enclave;
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
   PrivateTransactionProcessor privateTransactionProcessor;
