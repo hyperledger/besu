@@ -160,8 +160,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public EtchashConfigOptions getEtchashConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, ETCHASH_CONFIG_KEY)
-            .map(EtchashConfigOptions::new)
-            .orElse(EtchashConfigOptions.DEFAULT);
+        .map(EtchashConfigOptions::new)
+        .orElse(EtchashConfigOptions.DEFAULT);
   }
 
   @Override

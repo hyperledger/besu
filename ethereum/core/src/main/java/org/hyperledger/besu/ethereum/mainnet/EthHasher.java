@@ -44,20 +44,18 @@ public interface EthHasher {
   final class EtcHasher implements EthHasher {
     private final EtcHashCacheFactory cacheFactory;
     private long activationBlock;
+
     public EtcHasher(long actBlock) {
       this.activationBlock = actBlock;
       this.cacheFactory = new EtcHashCacheFactory(this.activationBlock);
     }
 
-
-
-
     @Override
     public void hash(
-            final byte[] buffer, final long nonce, final long number, final byte[] headerHash) {
+        final byte[] buffer, final long nonce, final long number, final byte[] headerHash) {
       final EtcHashCacheFactory.EtcHashDescriptor cache = cacheFactory.etcHashCacheFor(number);
       final byte[] hash =
-              EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
+          EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
       System.arraycopy(hash, 0, buffer, 0, hash.length);
     }
   }

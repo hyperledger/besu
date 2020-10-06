@@ -19,8 +19,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
-import org.hyperledger.besu.ethereum.epoch.EpochCalculators;
-import org.hyperledger.besu.ethereum.epoch.EpochProtocolSchedule;
 
 import java.math.BigInteger;
 import java.util.function.Function;
@@ -52,11 +50,6 @@ public class MainnetProtocolSchedule {
       return FixedDifficultyProtocolSchedule.create(
           config, privacyParameters, isRevertReasonEnabled);
     }
-    // todo ed make config change here?
-//    if(EpochCalculators.isEpochActivationInConfig(config)) {
-//      return EpochProtocolSchedule.create(config, privacyParameters, isRevertReasonEnabled);
-//    }
-
     return new ProtocolScheduleBuilder(
             config, DEFAULT_CHAIN_ID, Function.identity(), privacyParameters, isRevertReasonEnabled)
         .createProtocolSchedule();
