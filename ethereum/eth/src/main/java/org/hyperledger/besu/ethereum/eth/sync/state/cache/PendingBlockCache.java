@@ -16,7 +16,10 @@ package org.hyperledger.besu.ethereum.eth.sync.state.cache;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -40,19 +43,35 @@ public class PendingBlockCache extends ConcurrentHashMap<Hash, ImmutablePendingB
   @Override
   public ImmutablePendingBlock putIfAbsent(
       final Hash hash, final ImmutablePendingBlock pendingBlock) throws IndexOutOfBoundsException {
-    if (getPeerWeight(pendingBlock.nodeId()) >= cacheSizePerPeer) {
-      throw new IndexOutOfBoundsException();
+    final ImmutablePendingBlock foundBlock = super.putIfAbsent(hash, pendingBlock);
+    if (foundBlock == null) {
+      removeLowestPriorityBlockWhenCacheFull(pendingBlock.nodeId());
     }
-    return super.putIfAbsent(hash, pendingBlock);
+    return foundBlock;
   }
 
   /**
-   * Returns the number of pending blocks from a node that are stored in the cache
+   * Removes the lowest priority block if a peer has reached the cache limit it is allowed to use
+   * The highest priority blocks are those that are lowest in block height and then higher priority
+   * if they were sent more recently.
    *
-   * @param nodeId the peer ID
-   * @return the number of elements in the cache coming from this node
+   * @param nodeId id of the peer
    */
-  private long getPeerWeight(final Bytes nodeId) {
-    return values().stream().filter(value -> value.nodeId() == nodeId).count();
+  private void removeLowestPriorityBlockWhenCacheFull(final Bytes nodeId) {
+    final List<ImmutablePendingBlock> blockByNodeId =
+        values().stream().filter(value -> value.nodeId() == nodeId).collect(Collectors.toList());
+    if (blockByNodeId.size() > cacheSizePerPeer) {
+      blockByNodeId.stream()
+          .min(getComparatorByBlockNumber().reversed().thenComparing(getComparatorByTimeStamp()))
+          .ifPresent(value -> remove(value.block().getHash()));
+    }
+  }
+
+  private Comparator<ImmutablePendingBlock> getComparatorByBlockNumber() {
+    return Comparator.comparing(s -> s.block().getHeader().getNumber());
+  }
+
+  private Comparator<ImmutablePendingBlock> getComparatorByTimeStamp() {
+    return Comparator.comparing(s -> s.block().getHeader().getTimestamp());
   }
 }

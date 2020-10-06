@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -142,7 +142,7 @@ public class PendingBlocksManagerTest {
 
   @Test
   public void shouldPreventNodeFromFillingCache() {
-    final int nbBlocks = 7;
+    final int nbBlocks = 4;
     pendingBlocksManager =
         new PendingBlocksManager(
             SynchronizerConfiguration.builder().blockPropagationRange(-1, 2).build());
@@ -150,50 +150,82 @@ public class PendingBlocksManagerTest {
     final Block parentBlock = gen.block();
 
     // add new blocks from node 1
-    final List<Block> childBlockFromNodeOne = new ArrayList<>();
+    final ArrayDeque<Block> childBlockFromNodeOne = new ArrayDeque<>();
     for (int i = 0; i < nbBlocks; i++) {
-      childBlockFromNodeOne.add(gen.nextBlock(parentBlock));
-      pendingBlocksManager.registerPendingBlock(childBlockFromNodeOne.get(i), NODE_ID_1);
+      final Block generatedBlock =
+          gen.block(gen.nextBlockOptions(parentBlock).setTimestamp((long) i));
+      childBlockFromNodeOne.add(generatedBlock);
+      pendingBlocksManager.registerPendingBlock(generatedBlock, NODE_ID_1);
     }
 
     // add new block from node 2
     final Block childBlockFromNodeTwo = gen.nextBlock(parentBlock);
     pendingBlocksManager.registerPendingBlock(childBlockFromNodeTwo, NODE_ID_2);
 
-    // check blocks from node 1 in the cache (node 1 could not add all its blocks -> limit 6 blocks)
+    // check blocks from node 1 in the cache (node 1 should replace the lowest priority block)
     List<Block> pendingBlocksForParent = pendingBlocksManager.childrenOf(parentBlock.getHash());
     for (int i = 0; i < nbBlocks; i++) {
-      if (i < nbBlocks - 1) {
-        assertThat(pendingBlocksManager.contains(childBlockFromNodeOne.get(i).getHash())).isTrue();
-        assertThat(pendingBlocksForParent).contains(childBlockFromNodeOne.get(i));
+      final Block foundBlock = childBlockFromNodeOne.poll();
+      if (i != 0) {
+        assertThat(pendingBlocksManager.contains(foundBlock.getHash())).isTrue();
+        assertThat(pendingBlocksForParent).contains(foundBlock);
       } else {
-        assertThat(pendingBlocksManager.contains(childBlockFromNodeOne.get(i).getHash())).isFalse();
-        assertThat(pendingBlocksForParent).doesNotContain(childBlockFromNodeOne.get(i));
+        assertThat(pendingBlocksManager.contains(foundBlock.getHash())).isFalse();
+        assertThat(pendingBlocksForParent).doesNotContain(foundBlock);
       }
     }
     // check blocks from node 2 in the cache (node 1 could not prevent node 2 from adding its
     // blocks)
     assertThat(pendingBlocksManager.contains(childBlockFromNodeTwo.getHash())).isTrue();
     assertThat(pendingBlocksForParent).contains(childBlockFromNodeTwo);
+  }
 
-    // if we remove a block from node 1 it can add a new one
-    pendingBlocksManager.deregisterPendingBlock(childBlockFromNodeOne.get(0));
-    pendingBlocksManager.registerPendingBlock(childBlockFromNodeOne.get(6), NODE_ID_1);
+  @Test
+  public void shouldReplaceLowestPriorityBlockWhenCacheIsFull() {
+    final int nbBlocks = 3;
+    pendingBlocksManager =
+        new PendingBlocksManager(
+            SynchronizerConfiguration.builder().blockPropagationRange(-1, 3).build());
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final List<Block> childBlockFromNodeOne = gen.blockSequence(nbBlocks);
+    Block reorgBlock = null;
 
-    // check blocks from node 1 in the cache
-    pendingBlocksForParent = pendingBlocksManager.childrenOf(parentBlock.getHash());
-    for (int i = 0; i < nbBlocks; i++) {
-      if (i != 0) {
-        assertThat(pendingBlocksManager.contains(childBlockFromNodeOne.get(i).getHash())).isTrue();
-        assertThat(pendingBlocksForParent).contains(childBlockFromNodeOne.get(i));
-      } else {
-        assertThat(pendingBlocksManager.contains(childBlockFromNodeOne.get(i).getHash())).isFalse();
-        assertThat(pendingBlocksForParent).doesNotContain(childBlockFromNodeOne.get(i));
+    // add new blocks from node 1
+    for (Block block : childBlockFromNodeOne) {
+      pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
+      if (block.getHeader().getNumber() == 1) {
+        // add reorg block
+        reorgBlock =
+            gen.block(
+                gen.nextBlockOptions(block).setTimestamp(block.getHeader().getTimestamp() + 1));
+        System.out.println(reorgBlock.getHeader().getNumber());
+        pendingBlocksManager.registerPendingBlock(reorgBlock, NODE_ID_1);
       }
     }
+    // BLOCK 0 , BLOCK 1, BLOCK 2, BLOCK 2-reorg
 
-    // check blocks from node 2 in the cache
-    assertThat(pendingBlocksManager.contains(childBlockFromNodeTwo.getHash())).isTrue();
-    assertThat(pendingBlocksForParent).contains(childBlockFromNodeTwo);
+    // try to add a new block (not added because low priority - block number too high)
+    final Block lowPriorityBlock =
+        gen.block(BlockDataGenerator.BlockOptions.create().setBlockNumber(10));
+    pendingBlocksManager.registerPendingBlock(lowPriorityBlock, NODE_ID_1);
+    assertThat(pendingBlocksManager.contains(lowPriorityBlock.getHash())).isFalse();
+
+    // try to add a new block (added because high priority - low block number and high timestamp)
+    final Block highPriorityBlock =
+        gen.block(gen.nextBlockOptions(childBlockFromNodeOne.get(0)).setTimestamp(Long.MAX_VALUE));
+    pendingBlocksManager.registerPendingBlock(highPriorityBlock, NODE_ID_1);
+    assertThat(pendingBlocksManager.contains(highPriorityBlock.getHash())).isTrue();
+    // BLOCK 0 , BLOCK 1, BLOCK 1-reorg, BLOCK 2-reorg
+
+    // check blocks in the cache
+    // and verify remove the block with the lowest priority (BLOCK-2)
+    for (Block block : childBlockFromNodeOne) {
+      if (block.getHeader().getNumber() == 2) {
+        assertThat(pendingBlocksManager.contains(block.getHash())).isFalse();
+      } else {
+        assertThat(pendingBlocksManager.contains(block.getHash())).isTrue();
+      }
+    }
+    assertThat(pendingBlocksManager.contains(reorgBlock.getHash())).isTrue();
   }
 }
