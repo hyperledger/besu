@@ -84,6 +84,7 @@ public class RlpxAgent {
       final PeerPrivileges peerPrivileges,
       final int maxConnections,
       final int maxRemotelyInitiatedConnections,
+      final boolean randomlyPrioritizeConnections,
       final MetricsSystem metricsSystem) {
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
@@ -463,10 +464,10 @@ public class RlpxAgent {
   private Stream<RlpxConnection> getActivePrioritizedConnections() {
     return connectionsById.values().stream()
         .filter(RlpxConnection::isActive)
-        .sorted(this::prioritizeConnections);
+        .sorted(this::compareConnectionInitiationTimes);
   }
 
-  private int prioritizeConnections(final RlpxConnection a, final RlpxConnection b) {
+  private int compareConnectionInitiationTimes(final RlpxConnection a, final RlpxConnection b) {
     final boolean aIgnoresPeerLimits = peerPrivileges.canExceedConnectionLimits(a.getPeer());
     final boolean bIgnoresPeerLimits = peerPrivileges.canExceedConnectionLimits(b.getPeer());
     if (aIgnoresPeerLimits && !bIgnoresPeerLimits) {
@@ -476,6 +477,10 @@ public class RlpxAgent {
     } else {
       return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
     }
+  }
+
+  private int compareRandomly(final RlpxConnection a, final RlpxConnection b) {
+    return a.getPeer().getId().xor(mask).compareTo(b.getPeer().getId().xor(mask));
   }
 
   /**
