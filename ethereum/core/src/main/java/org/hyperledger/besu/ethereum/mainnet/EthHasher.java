@@ -40,13 +40,13 @@ public interface EthHasher {
     }
   }
 
-  // todo ed change happened here
+  /** Implementation of EthHasher for ETC that uses activation block to determine epoch length */
   final class EtcHasher implements EthHasher {
     private final EtcHashCacheFactory cacheFactory;
     private final long activationBlock;
 
-    public EtcHasher(final long actBlock) {
-      this.activationBlock = actBlock;
+    public EtcHasher(final long activationBlock) {
+      this.activationBlock = activationBlock;
       this.cacheFactory = new EtcHashCacheFactory(this.activationBlock);
     }
 

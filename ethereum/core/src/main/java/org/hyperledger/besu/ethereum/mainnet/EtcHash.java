@@ -21,7 +21,9 @@ public final class EtcHash {
 
   /**
    * Implementation of ETH Hash with ETC ECIP-1099 Calibrate Epoch Duration
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
    * @param activationBlock Block to activate new epoch length
    */
   public EtcHash(final long activationBlock) {
@@ -30,6 +32,7 @@ public final class EtcHash {
 
   /**
    * calcEpochLength returns the epoch length for a given block number
+   *
    * @param block block number to use for epoch length calculation
    * @return epoch length
    */
