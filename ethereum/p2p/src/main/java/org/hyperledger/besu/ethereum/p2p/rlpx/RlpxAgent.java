@@ -67,7 +67,9 @@ public class RlpxAgent {
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
   private final int maxConnections;
+  private final boolean randomlyPrioritizeConnections;
   private final int maxRemotelyInitiatedConnections;
+  private final Bytes nodeIdMask = Bytes.random(64);
 
   @VisibleForTesting final Map<Bytes, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
 
@@ -92,6 +94,7 @@ public class RlpxAgent {
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
     this.maxConnections = maxConnections;
+    this.randomlyPrioritizeConnections = randomlyPrioritizeConnections;
     this.maxRemotelyInitiatedConnections =
         Math.min(maxConnections, maxRemotelyInitiatedConnections);
 
@@ -464,7 +467,10 @@ public class RlpxAgent {
   private Stream<RlpxConnection> getActivePrioritizedConnections() {
     return connectionsById.values().stream()
         .filter(RlpxConnection::isActive)
-        .sorted(this::compareConnectionInitiationTimes);
+        .sorted(
+            randomlyPrioritizeConnections
+                ? this::compareRandomly
+                : this::compareConnectionInitiationTimes);
   }
 
   private int compareConnectionInitiationTimes(final RlpxConnection a, final RlpxConnection b) {
@@ -480,7 +486,7 @@ public class RlpxAgent {
   }
 
   private int compareRandomly(final RlpxConnection a, final RlpxConnection b) {
-    return a.getPeer().getId().xor(mask).compareTo(b.getPeer().getId().xor(mask));
+    return a.getPeer().getId().xor(nodeIdMask).compareTo(b.getPeer().getId().xor(nodeIdMask));
   }
 
   /**
@@ -540,6 +546,7 @@ public class RlpxAgent {
     private PeerPermissions peerPermissions;
     private ConnectionInitializer connectionInitializer;
     private PeerConnectionEvents connectionEvents;
+    private boolean randomlyPrioritizeConnections;
     private MetricsSystem metricsSystem;
 
     private Builder() {}
@@ -566,6 +573,7 @@ public class RlpxAgent {
           peerPrivileges,
           config.getMaxPeers(),
           config.getMaxRemotelyInitiatedConnections(),
+          randomlyPrioritizeConnections,
           metricsSystem);
     }
 
@@ -623,6 +631,11 @@ public class RlpxAgent {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
+      return this;
+    }
+
+    public Builder randomlyPrioritizeConnections(boolean randomlyPrioritizeConnections) {
+      this.randomlyPrioritizeConnections = randomlyPrioritizeConnections;
       return this;
     }
   }
