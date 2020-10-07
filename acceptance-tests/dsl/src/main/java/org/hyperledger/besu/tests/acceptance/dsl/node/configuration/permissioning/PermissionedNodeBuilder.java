@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -71,6 +72,7 @@ public class PermissionedNodeBuilder {
   private String accountPermissioningSmartContractAddress = null;
 
   private List<String> staticNodes = new ArrayList<>();
+  private boolean isDnsEnabled = false;
   private boolean mining = true;
 
   public PermissionedNodeBuilder name(final String name) {
@@ -139,6 +141,11 @@ public class PermissionedNodeBuilder {
     return this;
   }
 
+  public PermissionedNodeBuilder dnsEnabled(final boolean isDnsEnabled) {
+    this.isDnsEnabled = isDnsEnabled;
+    return this;
+  }
+
   public PermissionedNodeBuilder disableMining() {
     this.mining = false;
     return this;
@@ -188,6 +195,8 @@ public class PermissionedNodeBuilder {
       builder.staticNodes(staticNodes);
     }
 
+    builder.dnsEnabled(isDnsEnabled);
+
     if (genesisFile != null) {
       builder.genesisConfigProvider((a) -> Optional.of(genesisFile));
       builder.devMode(false);
@@ -209,12 +218,15 @@ public class PermissionedNodeBuilder {
         localConfigNodesPermissioningFile = createTemporaryPermissionsFile();
       }
 
-      List<String> nodesAsListOfStrings =
-          localConfigPermittedNodes.stream().map(URI::toASCIIString).collect(Collectors.toList());
-      initPermissioningConfigurationFile(
-          ALLOWLIST_TYPE.NODES, nodesAsListOfStrings, localConfigNodesPermissioningFile);
+      final List<EnodeURL> nodeAllowList =
+          localConfigPermittedNodes.stream().map(EnodeURL::fromURI).collect(Collectors.toList());
 
-      localPermissioningConfiguration.setNodeAllowlist(localConfigPermittedNodes);
+      initPermissioningConfigurationFile(
+          ALLOWLIST_TYPE.NODES,
+          nodeAllowList.stream().map(EnodeURL::toString).collect(Collectors.toList()),
+          localConfigNodesPermissioningFile);
+
+      localPermissioningConfiguration.setNodeAllowlist(nodeAllowList);
       localPermissioningConfiguration.setNodePermissioningConfigFilePath(
           localConfigNodesPermissioningFile.toAbsolutePath().toString());
     }

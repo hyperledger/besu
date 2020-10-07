@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
@@ -40,6 +41,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -211,6 +214,8 @@ public class MessageFrame {
   private Gas gasRefund;
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
+  private final Set<Address> warmedUpAddresses;
+  private final Multimap<Address, Bytes32> warmedUpStorage;
 
   // Execution Environment fields.
   private final Address recipient;
@@ -228,6 +233,7 @@ public class MessageFrame {
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
   private final Boolean isPersistingPrivateState;
+  private final PrivateMetadataUpdater privateMetadataUpdater;
   private Optional<Bytes> revertReason;
 
   // as defined on https://eips.ethereum.org/EIPS/eip-2315
@@ -272,6 +278,7 @@ public class MessageFrame {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
+      final PrivateMetadataUpdater privateMetadataUpdater,
       final Hash transactionHash,
       final Optional<Bytes> revertReason,
       final int maxStackSize) {
@@ -309,8 +316,14 @@ public class MessageFrame {
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
     this.isPersistingPrivateState = isPersistingPrivateState;
+    this.privateMetadataUpdater = privateMetadataUpdater;
     this.transactionHash = transactionHash;
     this.revertReason = revertReason;
+
+    this.warmedUpAddresses = new HashSet<>();
+    warmedUpAddresses.add(sender);
+    warmedUpAddresses.add(contract);
+    this.warmedUpStorage = HashMultimap.create();
   }
 
   /**
@@ -550,7 +563,7 @@ public class MessageFrame {
    * @param offset The offset in memory
    * @param length The length of the memory access
    */
-  public void expandMemory(final int offset, final int length) {
+  public void expandMemory(final UInt256 offset, final UInt256 length) {
     memory.ensureCapacityForBytes(offset, length);
   }
 
@@ -825,6 +838,36 @@ public class MessageFrame {
   }
 
   /**
+   * "Warms up" the address as per EIP-2929
+   *
+   * @param address the address to warm up
+   * @return true if the address was already warmed up
+   */
+  public boolean warmUpAddress(final Address address) {
+    return !warmedUpAddresses.add(address);
+  }
+
+  /**
+   * "Warms up" the storage slot as per EIP-2929
+   *
+   * @param address the address whose storage is being warmed up
+   * @param slot the slot being warmed up
+   * @return true if the storage slot was already warmed up
+   */
+  public boolean warmUpStorage(final Address address, final Bytes32 slot) {
+    return !warmedUpStorage.put(address, slot);
+  }
+
+  public void mergeWarmedUpFields(final MessageFrame childFrame) {
+    if (childFrame == this) {
+      return;
+    }
+
+    warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
+    warmedUpStorage.putAll(childFrame.warmedUpStorage);
+  }
+
+  /**
    * Returns the current blockchain.
    *
    * @return the current blockchain
@@ -1024,6 +1067,10 @@ public class MessageFrame {
     return isPersistingPrivateState;
   }
 
+  public PrivateMetadataUpdater getPrivateMetadataUpdater() {
+    return privateMetadataUpdater;
+  }
+
   /**
    * Returns the transaction hash of the transaction being processed
    *
@@ -1083,6 +1130,7 @@ public class MessageFrame {
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
     private Boolean isPersistingPrivateState = false;
+    private PrivateMetadataUpdater privateMetadataUpdater = null;
     private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
     private ReturnStack returnStack = new ReturnStack();
@@ -1208,6 +1256,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder privateMetadataUpdater(final PrivateMetadataUpdater privateMetadataUpdater) {
+      this.privateMetadataUpdater = privateMetadataUpdater;
+      return this;
+    }
+
     public Builder transactionHash(final Hash transactionHash) {
       this.transactionHash = transactionHash;
       return this;
@@ -1270,6 +1323,7 @@ public class MessageFrame {
           miningBeneficiary,
           blockHashLookup,
           isPersistingPrivateState,
+          privateMetadataUpdater,
           transactionHash,
           reason,
           maxStackSize);

@@ -59,12 +59,19 @@ public class SubscriptionBuilderTest {
   @Test
   public void shouldBuildPrivateLogsSubscriptionWhenSubscribeRequestTypeIsPrivateLogs() {
     final String privacyGroupId = "ZDmkMK7CyxA1F1rktItzKFTfRwApg7aWzsTtm2IOZ5Y=";
+    final String enclavePublicKey = "C1bVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
     final FilterParameter filterParameter = filterParameter();
     final PrivateSubscribeRequest subscribeRequest =
         new PrivateSubscribeRequest(
-            SubscriptionType.LOGS, filterParameter, null, CONNECTION_ID, privacyGroupId);
+            SubscriptionType.LOGS,
+            filterParameter,
+            null,
+            CONNECTION_ID,
+            privacyGroupId,
+            enclavePublicKey);
     final PrivateLogsSubscription expectedSubscription =
-        new PrivateLogsSubscription(1L, CONNECTION_ID, filterParameter, privacyGroupId);
+        new PrivateLogsSubscription(
+            1L, CONNECTION_ID, filterParameter, privacyGroupId, enclavePublicKey);
 
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);

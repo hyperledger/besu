@@ -28,6 +28,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -50,6 +51,7 @@ import org.apache.tuweni.bytes.Bytes32;
  *       Transaction.Builder#signAndBuild(KeyPair)}.
  * </ul>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StateTestVersionedTransaction {
 
   private final long nonce;

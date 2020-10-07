@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveConfigurationException;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -45,6 +47,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -53,11 +57,12 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,6 +80,7 @@ public class PrivacyPrecompiledContractTest {
   final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
+  final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
 
@@ -105,19 +111,10 @@ public class PrivacyPrecompiledContractTest {
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
-    final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
-    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
-        .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.EMPTY));
-    when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
-    when(storageUpdater.putPrivateBlockMetadata(
-            nullable(Bytes32.class), nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
-    when(storageUpdater.putPrivacyGroupHeadBlockMap(nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
-    when(storageUpdater.putTransactionReceipt(
-            nullable(Bytes32.class), nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
-    when(privateStateStorage.updater()).thenReturn(storageUpdater);
+    when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
+        .thenReturn(PrivacyGroupHeadBlockMap.empty());
+    when(privateMetadataUpdater.getPrivateBlockMetadata(any()))
+        .thenReturn(new PrivateBlockMetadata(Collections.emptyList()));
 
     messageFrame = mock(MessageFrame.class);
     blockchain = mock(Blockchain.class);
@@ -131,11 +128,23 @@ public class PrivacyPrecompiledContractTest {
     when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
+    final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
+    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
+        .thenReturn(PrivacyGroupHeadBlockMap.empty());
   }
 
   @Test
   public void testPayloadFoundInEnclave() {
     final Enclave enclave = mock(Enclave.class);
+    when(enclave.retrievePrivacyGroup(PAYLOAD_TEST_PRIVACY_GROUP_ID))
+        .thenReturn(
+            new PrivacyGroup(
+                PAYLOAD_TEST_PRIVACY_GROUP_ID,
+                PrivacyGroup.Type.PANTHEON,
+                "",
+                "",
+                Arrays.asList(VALID_BASE64_ENCLAVE_KEY.toBase64String())));
     final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
@@ -144,7 +153,7 @@ public class PrivacyPrecompiledContractTest {
                 logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
-    byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
+    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
     final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
 
     final ReceiveResponse response =
@@ -227,14 +236,51 @@ public class PrivacyPrecompiledContractTest {
   }
 
   @Test
+  public void testPrivateFromNotMemberOfGroup() {
+    final Enclave enclave = mock(Enclave.class);
+    when(enclave.retrievePrivacyGroup(PAYLOAD_TEST_PRIVACY_GROUP_ID))
+        .thenReturn(
+            new PrivacyGroup(
+                PAYLOAD_TEST_PRIVACY_GROUP_ID,
+                PrivacyGroup.Type.PANTHEON,
+                "",
+                "",
+                Arrays.asList(VALID_BASE64_ENCLAVE_KEY.toBase64String())));
+    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    contract.setPrivateTransactionProcessor(
+        mockPrivateTxProcessor(
+            PrivateTransactionProcessor.Result.successful(
+                new ArrayList<>(), 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
+
+    final PrivateTransaction privateTransaction = privateTransactionBesu();
+    final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
+    final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
+
+    final ReceiveResponse response =
+        new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
+    when(enclave.receive(any(String.class))).thenReturn(response);
+
+    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+
+    assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
+  }
+
+  @Test
   public void testInvalidPrivateTransaction() {
     final Enclave enclave = mock(Enclave.class);
+    when(enclave.retrievePrivacyGroup(PAYLOAD_TEST_PRIVACY_GROUP_ID))
+        .thenReturn(
+            new PrivacyGroup(
+                PAYLOAD_TEST_PRIVACY_GROUP_ID,
+                PrivacyGroup.Type.PANTHEON,
+                "",
+                "",
+                Arrays.asList(VALID_BASE64_ENCLAVE_KEY.toBase64String())));
     final PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            privateStateStorage,
             privateStateRootResolver);
 
     contract.setPrivateTransactionProcessor(
@@ -266,10 +312,6 @@ public class PrivacyPrecompiledContractTest {
 
   private PrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
     return new PrivacyPrecompiledContract(
-        new SpuriousDragonGasCalculator(),
-        enclave,
-        worldStateArchive,
-        privateStateStorage,
-        privateStateRootResolver);
+        new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateRootResolver);
   }
 }

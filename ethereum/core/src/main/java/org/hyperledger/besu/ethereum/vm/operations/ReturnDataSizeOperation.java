@@ -29,11 +29,7 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes returnData = frame.getReturnData();
     frame.pushStackItem(UInt256.valueOf(returnData.size()).toBytes());
 

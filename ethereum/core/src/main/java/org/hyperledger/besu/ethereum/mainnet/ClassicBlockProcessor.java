@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.OptionalLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,14 +32,17 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final long ERA_LENGTH = 5_000_000L;
+  private static final long DEFAULT_ERA_LENGTH = 5_000_000L;
+
+  private final long eraLength;
 
   public ClassicBlockProcessor(
       final TransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final OptionalLong eraLen) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
@@ -46,6 +50,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         TransactionGasBudgetCalculator.frontier());
+    eraLength = eraLen.orElse(DEFAULT_ERA_LENGTH);
   }
 
   @Override
@@ -135,7 +140,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
   @Override
   public Wei getOmmerReward(
       final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
-    final int blockEra = getBlockEra(blockNumber, ERA_LENGTH);
+    final int blockEra = getBlockEra(blockNumber, eraLength);
     final long distance = blockNumber - ommerBlockNumber;
     return calculateOmmerReward(blockEra, distance);
   }
@@ -143,7 +148,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
   @Override
   public Wei getCoinbaseReward(
       final Wei blockReward, final long blockNumber, final int ommersSize) {
-    final int blockEra = getBlockEra(blockNumber, ERA_LENGTH);
+    final int blockEra = getBlockEra(blockNumber, eraLength);
     final Wei winnerReward = getBlockWinnerRewardByEra(blockEra);
     return winnerReward.plus(winnerReward.multiply(ommersSize).divide(32));
   }

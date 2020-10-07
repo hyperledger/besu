@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -136,6 +136,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     if (node.hasStaticNodes()) {
       createStaticNodes(node);
+    }
+
+    if (node.isDnsEnabled()) {
+      params.add("--Xdns-enabled");
+      params.add("true");
+      params.add("--Xdns-update-enabled");
+      params.add("true");
     }
 
     if (node.isJsonRpcEnabled()) {

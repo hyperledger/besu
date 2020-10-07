@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -52,6 +53,18 @@ public class MultiTenancyPrivacyController implements PrivacyController {
             ? Optional.of(
                 new OnchainPrivacyGroupContract(privacyController.getTransactionSimulator()))
             : Optional.empty();
+    privateTransactionValidator = new PrivateTransactionValidator(chainId);
+  }
+
+  @VisibleForTesting
+  MultiTenancyPrivacyController(
+      final PrivacyController privacyController,
+      final Optional<BigInteger> chainId,
+      final Enclave enclave,
+      final Optional<OnchainPrivacyGroupContract> onchainPrivacyGroupContract) {
+    this.privacyController = privacyController;
+    this.enclave = enclave;
+    this.onchainPrivacyGroupContract = onchainPrivacyGroupContract;
     privateTransactionValidator = new PrivateTransactionValidator(chainId);
   }
 
@@ -230,15 +243,15 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(
-      final Bytes privacyGroupId, final String enclavePublicKey) {
+  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+      final Bytes privacyGroupId,
+      final String enclavePublicKey,
+      final PrivateTransaction privateTransaction) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.retrieveOnChainPrivacyGroup(privacyGroupId, enclavePublicKey);
-    if (maybePrivacyGroup.isPresent()
-        && !maybePrivacyGroup.get().getMembers().contains(enclavePublicKey)) {
-      throw new MultiTenancyValidationException(
-          "Privacy group must contain the enclave public key");
-    }
+        privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+            privacyGroupId, enclavePublicKey, privateTransaction);
+    // The check that the enclavePublicKey is a member (if the group already exists) is done in the
+    // DefaultPrivacyController.
     return maybePrivacyGroup;
   }
 
@@ -260,20 +273,42 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   public void verifyPrivacyGroupContainsEnclavePublicKey(
       final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException {
-    // TODO: There's potentially a bug here where an onchain privacyGroup
-    // that isn't found will default to the offchain privacy group.
-    final PrivacyGroup privacyGroup =
-        onchainPrivacyGroupContract
-            .flatMap(
-                contract ->
-                    contract.getPrivacyGroup(
-                        privacyGroupId, getBlockHashByBlockNumber(blockNumber)))
-            .orElse(enclave.retrievePrivacyGroup(privacyGroupId));
+    onchainPrivacyGroupContract.ifPresentOrElse(
+        (contract) -> {
+          verifyOnchainPrivacyGroupContainsMember(
+              contract, privacyGroupId, enclavePublicKey, blockNumber);
+        },
+        () -> {
+          verifyOffchainPrivacyGroupContainsMember(privacyGroupId, enclavePublicKey);
+        });
+  }
 
-    if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
+  private void verifyOffchainPrivacyGroupContainsMember(
+      final String privacyGroupId, final String enclavePublicKey) {
+    final PrivacyGroup offchainPrivacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
+    if (!offchainPrivacyGroup.getMembers().contains(enclavePublicKey)) {
       throw new MultiTenancyValidationException(
           "Privacy group must contain the enclave public key");
     }
+  }
+
+  private void verifyOnchainPrivacyGroupContainsMember(
+      final OnchainPrivacyGroupContract contract,
+      final String privacyGroupId,
+      final String enclavePublicKey,
+      final Optional<Long> blockNumber) {
+    final Optional<PrivacyGroup> maybePrivacyGroup =
+        contract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber);
+    // IF the group exists, check member
+    // ELSE member is valid if the group doesn't exist yet - this is normal for onchain privacy
+    // groups
+    maybePrivacyGroup.ifPresent(
+        (group) -> {
+          if (!group.getMembers().contains(enclavePublicKey)) {
+            throw new MultiTenancyValidationException(
+                "Privacy group must contain the enclave public key");
+          }
+        });
   }
 
   @Override
@@ -282,7 +317,11 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<Hash> getBlockHashByBlockNumber(final Optional<Long> blockNumber) {
-    return privacyController.getBlockHashByBlockNumber(blockNumber);
+  public Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber) {
+    verifyPrivacyGroupContainsEnclavePublicKey(
+        privacyGroupId, enclavePublicKey, Optional.of(blockNumber));
+    return privacyController.getStateRootByBlockNumber(
+        privacyGroupId, enclavePublicKey, blockNumber);
   }
 }

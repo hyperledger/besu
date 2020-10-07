@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
@@ -38,6 +39,7 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final FeeMarket feeMarket = FeeMarket.eip1559();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -234,12 +236,18 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         config.getGothamBlockNumber(),
         ClassicProtocolSpecs.gothamDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getDefuseDifficultyBombBlockNumber(),
         ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getAtlantisBlockNumber(),
@@ -247,7 +255,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getAghartaBlockNumber(),
@@ -255,7 +264,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
         config.getPhoenixBlockNumber(),
@@ -263,7 +273,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds()));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
@@ -279,6 +290,7 @@ public class ProtocolScheduleBuilder {
                 number,
                 protocolSpecAdapter
                     .apply(definition)
+                    .badBlocksManager(badBlockManager)
                     .privacyParameters(privacyParameters)
                     .privateTransactionValidatorBuilder(
                         () -> new PrivateTransactionValidator(protocolSchedule.getChainId()))

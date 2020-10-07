@@ -91,7 +91,8 @@ public class PrivGetLogs implements JsonRpcMethod {
     final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
-    checkMembershipForAuthenticatedUser(requestContext, privacyGroupId, toBlockNumber);
+    PrivUtil.checkMembershipForAuthenticatedUser(
+        privacyController, enclavePublicKeyProvider, requestContext, privacyGroupId, toBlockNumber);
     return privacyQueries.matchingLogs(
         privacyGroupId, fromBlockNumber, toBlockNumber, filter.getLogsQuery());
   }
@@ -106,17 +107,8 @@ public class PrivGetLogs implements JsonRpcMethod {
       return Collections.emptyList();
     }
     final long blockNumber = blockHeader.get().getNumber();
-    checkMembershipForAuthenticatedUser(requestContext, privacyGroupId, blockNumber);
+    PrivUtil.checkMembershipForAuthenticatedUser(
+        privacyController, enclavePublicKeyProvider, requestContext, privacyGroupId, blockNumber);
     return privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery());
-  }
-
-  private void checkMembershipForAuthenticatedUser(
-      final JsonRpcRequestContext request, final String privacyGroupId, final long blockNumber) {
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
-    // check group membership at previous block (they could have been removed as of blockNumber but
-    // membership will be correct as at previous block)
-    final long blockNumberToCheck = blockNumber == 0 ? 0 : blockNumber - 1;
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(
-        privacyGroupId, enclavePublicKey, Optional.of(blockNumberToCheck));
   }
 }

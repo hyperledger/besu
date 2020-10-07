@@ -23,18 +23,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.web3j.protocol.exceptions.TransactionException;
+import org.web3j.crypto.Credentials;
 import org.web3j.utils.Base64String;
 
 public class AddToOnChainPrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
   private final PrivacyNode adder;
   private final List<String> addresses;
+  private final Credentials signer;
 
   public AddToOnChainPrivacyGroupTransaction(
-      final String privacyGroupId, final PrivacyNode adder, final PrivacyNode... nodes) {
+      final String privacyGroupId,
+      final PrivacyNode adder,
+      final Credentials signer,
+      final PrivacyNode... nodes) {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
     this.adder = adder;
+    this.signer = signer;
     this.addresses =
         Arrays.stream(nodes)
             .map(n -> n.getOrion().getDefaultPublicKey())
@@ -44,8 +49,8 @@ public class AddToOnChainPrivacyGroupTransaction implements Transaction<String> 
   @Override
   public String execute(final NodeRequests node) {
     try {
-      return node.privacy().privxAddToPrivacyGroup(privacyGroupId, adder, addresses);
-    } catch (final IOException | TransactionException e) {
+      return node.privacy().privxAddToPrivacyGroup(privacyGroupId, adder, signer, addresses);
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }

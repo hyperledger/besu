@@ -215,13 +215,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public OptionalLong getBerlinBlockNumber() {
     if (ExperimentalEIPs.berlinEnabled) {
       final OptionalLong berlinBlock = getOptionalLong("berlinblock");
-      final OptionalLong yolov1Block = getOptionalLong("yolov1block");
-      if (yolov1Block.isPresent()) {
+      final OptionalLong yolov2Block = getOptionalLong("yolov2block");
+      if (yolov2Block.isPresent()) {
         if (berlinBlock.isPresent()) {
           throw new RuntimeException(
-              "Genesis files cannot specify both berlinblock and yoloV1Block.");
+              "Genesis files cannot specify both berlinblock and yoloV2Block.");
         }
-        return yolov1Block;
+        return yolov2Block;
       }
       return berlinBlock;
     }
@@ -290,6 +290,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1017EraRounds() {
+    return getOptionalLong("ecip1017erarounds");
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -322,6 +327,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
+    getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
+
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }

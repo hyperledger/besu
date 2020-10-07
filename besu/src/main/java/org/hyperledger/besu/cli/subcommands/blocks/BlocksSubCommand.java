@@ -133,7 +133,7 @@ public class BlocksSubCommand implements Runnable {
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File containing blocks to import.",
         arity = "0..*")
-    private final List<Path> blockImportFileOption = blockImportFiles;
+    private final List<Path> blockImportFileOption = new ArrayList<>();
 
     @Option(
         names = "--format",
@@ -157,6 +157,22 @@ public class BlocksSubCommand implements Runnable {
     @Option(names = "--run", description = "Start besu after importing.")
     private final Boolean runBesu = false;
 
+    @Option(
+        names = "--start-block",
+        paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
+        description =
+            "The starting index of the block, or block list to import.  If not specified all blocks before the end block will be imported",
+        arity = "1..1")
+    private final Long startBlock = 0L;
+
+    @Option(
+        names = "--end-block",
+        paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
+        description =
+            "The ending index of the block list to import (exclusive).  If not specified all blocks after the start block will be imported.",
+        arity = "1..1")
+    private final Long endBlock = Long.MAX_VALUE;
+
     @SuppressWarnings("unused")
     @Spec
     private CommandSpec spec;
@@ -164,11 +180,12 @@ public class BlocksSubCommand implements Runnable {
     @Override
     public void run() {
       parentCommand.parentCommand.configureLogging(false);
+      blockImportFiles.addAll(blockImportFileOption);
 
       checkCommand(parentCommand);
       checkNotNull(parentCommand.rlpBlockImporter);
       checkNotNull(parentCommand.jsonBlockImporterFactory);
-      if (blockImportFileOption.isEmpty()) {
+      if (blockImportFiles.isEmpty()) {
         throw new ParameterException(spec.commandLine(), "No files specified to import.");
       }
       LOG.info("Import {} block data from {} files", format, blockImportFiles.size());
@@ -262,7 +279,7 @@ public class BlocksSubCommand implements Runnable {
     private void importRlpBlocks(final BesuController controller, final Path path)
         throws IOException {
       try (final RlpBlockImporter rlpBlockImporter = parentCommand.rlpBlockImporter.get()) {
-        rlpBlockImporter.importBlockchain(path, controller, skipPow);
+        rlpBlockImporter.importBlockchain(path, controller, skipPow, startBlock, endBlock);
       }
     }
   }

@@ -25,7 +25,9 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,7 +115,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
-      final List<BlockHeader> ommers) {
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
 
     long legacyGasUsed = 0;
     long eip1556GasUsed = 0;
@@ -129,10 +132,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
       if (!gasBudgetCalculator.hasBudget(
           transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
-        LOG.warn(
-            "Transaction processing error: transaction gas limit {} exceeds available block budget remaining {}",
+        LOG.info(
+            "Block processing error: transaction gas limit {} exceeds available block budget remaining {}. Block {} Transaction {}",
             transaction.getGasLimit(),
-            remainingGasBudget);
+            remainingGasBudget,
+            blockHeader.getHash().toHexString(),
+            transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
       }
 
@@ -148,10 +153,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHeader,
               transaction,
               miningBeneficiary,
+              OperationTracer.NO_TRACING,
               blockHashLookup,
               true,
-              TransactionValidationParams.processingBlock());
+              TransactionValidationParams.processingBlock(),
+              privateMetadataUpdater);
       if (result.isInvalid()) {
+        LOG.info(
+            "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
+            result.getValidationResult().getInvalidReason(),
+            blockHeader.getHash().toHexString(),
+            transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
       }
 
@@ -171,6 +183,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
+      // no need to log, rewardCoinbase logs the error.
       return AbstractBlockProcessor.Result.failed();
     }
 

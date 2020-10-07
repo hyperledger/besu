@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * <p>Note: this class will be auto-generated with the JSON test specification.
  */
-@JsonIgnoreProperties({"_info", "callcreates", "logs"})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VMReferenceTestCaseSpec {
 
   /** The environment information to execute. */

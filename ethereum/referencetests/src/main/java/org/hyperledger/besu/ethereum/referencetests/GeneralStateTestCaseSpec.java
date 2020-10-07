@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** A Transaction test case specification. */
-@JsonIgnoreProperties("_info")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GeneralStateTestCaseSpec {
 
   private final Map<String, List<GeneralStateTestCaseEipSpec>> finalStateSpecs;
@@ -53,7 +53,8 @@ public class GeneralStateTestCaseSpec {
       final StateTestVersionedTransaction versionedTransaction) {
 
     initialWorldState.persist();
-    final Map<String, List<GeneralStateTestCaseEipSpec>> res = new HashMap<>(postSections.size());
+    final Map<String, List<GeneralStateTestCaseEipSpec>> res =
+        new LinkedHashMap<>(postSections.size());
     for (final Map.Entry<String, List<PostSection>> entry : postSections.entrySet()) {
       final String eip = entry.getKey();
       final List<PostSection> post = entry.getValue();

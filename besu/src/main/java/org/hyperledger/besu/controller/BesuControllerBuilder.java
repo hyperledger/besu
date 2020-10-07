@@ -52,10 +52,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.io.Closeable;
@@ -93,6 +96,7 @@ public abstract class BesuControllerBuilder {
   private PrunerConfiguration prunerConfiguration;
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+  private long reorgLoggingThreshold;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -188,6 +192,11 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
+  public BesuControllerBuilder reorgLoggingThreshold(final long reorgLoggingThreshold) {
+    this.reorgLoggingThreshold = reorgLoggingThreshold;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -207,13 +216,17 @@ public abstract class BesuControllerBuilder {
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
+    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
+    final WorldStateArchive worldStateArchive = createWorldStateArchive(worldStateStorage);
     final ProtocolContext protocolContext =
         ProtocolContext.init(
             storageProvider,
+            worldStateArchive,
             genesisState,
             protocolSchedule,
             metricsSystem,
-            this::createConsensusContext);
+            this::createConsensusContext,
+            reorgLoggingThreshold);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -231,7 +244,7 @@ public abstract class BesuControllerBuilder {
             Optional.of(
                 new Pruner(
                     new MarkSweepPruner(
-                        protocolContext.getWorldStateArchive().getWorldStateStorage(),
+                        ((DefaultWorldStateArchive) worldStateArchive).getWorldStateStorage(),
                         blockchain,
                         storageProvider.createPruningStorage(),
                         metricsSystem),
@@ -290,7 +303,7 @@ public abstract class BesuControllerBuilder {
             syncConfig,
             protocolSchedule,
             protocolContext,
-            protocolContext.getWorldStateArchive().getWorldStateStorage(),
+            worldStateStorage,
             ethProtocolManager.getBlockBroadcaster(),
             maybePruner,
             ethProtocolManager.ethContext(),
@@ -395,6 +408,12 @@ public abstract class BesuControllerBuilder {
         fastSyncEnabled,
         scheduler,
         genesisConfig.getForks());
+  }
+
+  public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {
+    final WorldStatePreimageStorage preimageStorage =
+        storageProvider.createWorldStatePreimageStorage();
+    return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
   }
 
   private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {

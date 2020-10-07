@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.V
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -103,18 +104,20 @@ public class PrivacyBlockProcessorTest {
         .contains(expected);
     verify(blockProcessor)
         .processBlock(
-            blockchain,
-            mutableWorldState,
-            firstBlock.getHeader(),
-            firstBlock.getBody().getTransactions(),
-            firstBlock.getBody().getOmmers());
+            eq(blockchain),
+            eq(mutableWorldState),
+            eq(firstBlock.getHeader()),
+            eq(firstBlock.getBody().getTransactions()),
+            eq(firstBlock.getBody().getOmmers()),
+            any());
     verify(blockProcessor)
         .processBlock(
-            blockchain,
-            mutableWorldState,
-            secondBlock.getHeader(),
-            secondBlock.getBody().getTransactions(),
-            secondBlock.getBody().getOmmers());
+            eq(blockchain),
+            eq(mutableWorldState),
+            eq(secondBlock.getHeader()),
+            eq(secondBlock.getBody().getTransactions()),
+            eq(secondBlock.getBody().getOmmers()),
+            any());
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -164,20 +167,21 @@ public class PrivacyBlockProcessorTest {
     privacyBlockProcessor.processBlock(blockchain, mutableWorldState, secondBlock);
     verify(blockProcessor)
         .processBlock(
-            blockchain,
-            mutableWorldState,
-            secondBlock.getHeader(),
-            secondBlock.getBody().getTransactions(),
-            secondBlock.getBody().getOmmers());
+            eq(blockchain),
+            eq(mutableWorldState),
+            eq(secondBlock.getHeader()),
+            eq(secondBlock.getBody().getTransactions()),
+            eq(secondBlock.getBody().getOmmers()),
+            any());
   }
 
   private MutableWorldState mockPrivateStateArchive() {
     final MutableWorldState mockPrivateState = mock(MutableWorldState.class);
     final WorldUpdater mockWorldUpdater = mock(WorldUpdater.class);
-    final DefaultEvmAccount mockDefaultEvmAccount = mock(DefaultEvmAccount.class);
+    final WrappedEvmAccount mockWrappedEvmAccount = mock(WrappedEvmAccount.class);
     final MutableAccount mockMutableAccount = mock(MutableAccount.class);
-    when(mockDefaultEvmAccount.getMutable()).thenReturn(mockMutableAccount);
-    when(mockWorldUpdater.createAccount(any())).thenReturn(mockDefaultEvmAccount);
+    when(mockWrappedEvmAccount.getMutable()).thenReturn(mockMutableAccount);
+    when(mockWorldUpdater.createAccount(any())).thenReturn(mockWrappedEvmAccount);
     when(mockPrivateState.updater()).thenReturn(mockWorldUpdater);
     when(mockPrivateState.rootHash()).thenReturn(Hash.ZERO);
     return mockPrivateState;

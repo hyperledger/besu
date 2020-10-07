@@ -24,28 +24,29 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetPeerCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetServices;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
+import java.math.BigInteger;
 import java.util.Map;
+import java.util.Optional;
 
 public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final P2PNetwork p2pNetwork;
-  private final ProtocolSchedule protocolSchedule;
+  private final BigInteger networkId;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
 
   public NetJsonRpcMethods(
       final P2PNetwork p2pNetwork,
-      final ProtocolSchedule protocolSchedule,
+      final BigInteger networkId,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration) {
     this.p2pNetwork = p2pNetwork;
-    this.protocolSchedule = protocolSchedule;
+    this.networkId = networkId;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
@@ -59,7 +60,7 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     return mapOf(
-        new NetVersion(protocolSchedule.getChainId()),
+        new NetVersion(Optional.of(networkId)),
         new NetListening(p2pNetwork),
         new NetPeerCount(p2pNetwork),
         new NetEnode(p2pNetwork),

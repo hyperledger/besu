@@ -4,6 +4,7 @@
     "atlantisBlock": 0,
     "aghartaBlock": 301243,
     "phoenixBlock": 999983,
+    "ecip1017EraRounds": 2000000,
     "ethash": {}
   },
   "nonce": "0x0000000000000000",

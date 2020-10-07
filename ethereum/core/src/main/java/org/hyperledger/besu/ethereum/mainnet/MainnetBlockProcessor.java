@@ -66,11 +66,11 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
     miningBeneficiaryAccount.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
-        LOG.warn(
-            "Block processing error: ommer block number {} more than {} generations current block number {}",
+        LOG.info(
+            "Block processing error: ommer block number {} more than {} generations. Block {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,
-            header.getNumber());
+            header.getHash().toHexString());
         return false;
       }
 

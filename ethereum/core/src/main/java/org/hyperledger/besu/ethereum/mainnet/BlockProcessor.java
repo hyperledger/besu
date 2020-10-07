@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
 import java.util.List;
 
@@ -62,7 +63,8 @@ public interface BlockProcessor {
         worldState,
         block.getHeader(),
         block.getBody().getTransactions(),
-        block.getBody().getOmmers());
+        block.getBody().getOmmers(),
+        null);
   }
 
   /**
@@ -75,12 +77,33 @@ public interface BlockProcessor {
    * @param ommers the block ommers
    * @return the block processing result
    */
+  default Result processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers) {
+    return processBlock(blockchain, worldState, blockHeader, transactions, ommers, null);
+  }
+
+  /**
+   * Processes the block.
+   *
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply changes to
+   * @param blockHeader the block header for the block
+   * @param transactions the transactions in the block
+   * @param ommers the block ommers
+   * @param privateMetadataUpdater the updater used to update the private metadata for the block
+   * @return the block processing result
+   */
   Result processBlock(
       Blockchain blockchain,
       MutableWorldState worldState,
       BlockHeader blockHeader,
       List<Transaction> transactions,
-      List<BlockHeader> ommers);
+      List<BlockHeader> ommers,
+      PrivateMetadataUpdater privateMetadataUpdater);
 
   /**
    * Get ommer reward in ${@link Wei}

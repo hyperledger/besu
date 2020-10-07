@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
@@ -213,127 +214,135 @@ public class PrivateTransactionProcessor {
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
       final Bytes privacyGroupId) {
-    LOG.trace("Starting private execution of {}", transaction);
+    try {
+      LOG.trace("Starting private execution of {}", transaction);
 
-    final Address senderAddress = transaction.getSender();
-    final DefaultEvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
-    final MutableAccount sender =
-        maybePrivateSender != null
-            ? maybePrivateSender.getMutable()
-            : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
+      final Address senderAddress = transaction.getSender();
+      final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final MutableAccount sender =
+          maybePrivateSender != null
+              ? maybePrivateSender.getMutable()
+              : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
-    final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-        privateTransactionValidator.validate(transaction, sender.getNonce(), false);
-    if (!validationResult.isValid()) {
-      return Result.invalid(validationResult);
-    }
+      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+          privateTransactionValidator.validate(transaction, sender.getNonce(), false);
+      if (!validationResult.isValid()) {
+        return Result.invalid(validationResult);
+      }
 
-    final long previousNonce = sender.incrementNonce();
-    LOG.trace(
-        "Incremented private sender {} nonce ({} -> {})",
-        senderAddress,
-        previousNonce,
-        sender.getNonce());
-
-    final MessageFrame initialFrame;
-    final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-
-    final WorldUpdater mutablePrivateWorldStateUpdater =
-        new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
-
-    final ReturnStack returnStack = new ReturnStack();
-
-    if (transaction.isContractCreation()) {
-      final Address privateContractAddress =
-          Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
-
-      LOG.debug(
-          "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
-          privateContractAddress.toString(),
+      final long previousNonce = sender.incrementNonce();
+      LOG.trace(
+          "Incremented private sender {} nonce ({} -> {})",
           senderAddress,
           previousNonce,
-          privacyGroupId.toString());
+          sender.getNonce());
 
-      initialFrame =
-          MessageFrame.builder()
-              .type(MessageFrame.Type.CONTRACT_CREATION)
-              .messageFrameStack(messageFrameStack)
-              .returnStack(returnStack)
-              .blockchain(blockchain)
-              .worldState(mutablePrivateWorldStateUpdater)
-              .address(privateContractAddress)
-              .originator(senderAddress)
-              .contract(privateContractAddress)
-              .contractAccountVersion(createContractAccountVersion)
-              .initialGas(Gas.MAX_VALUE)
-              .gasPrice(transaction.getGasPrice())
-              .inputData(Bytes.EMPTY)
-              .sender(senderAddress)
-              .value(transaction.getValue())
-              .apparentValue(transaction.getValue())
-              .code(new Code(transaction.getPayload()))
-              .blockHeader(blockHeader)
-              .depth(0)
-              .completer(c -> {})
-              .miningBeneficiary(miningBeneficiary)
-              .blockHashLookup(blockHashLookup)
-              .maxStackSize(maxStackSize)
-              .transactionHash(pmtHash)
-              .build();
+      final MessageFrame initialFrame;
+      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
-    } else {
-      final Address to = transaction.getTo().get();
-      final Account contract = privateWorldState.get(to);
+      final WorldUpdater mutablePrivateWorldStateUpdater =
+          new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
 
-      initialFrame =
-          MessageFrame.builder()
-              .type(MessageFrame.Type.MESSAGE_CALL)
-              .messageFrameStack(messageFrameStack)
-              .returnStack(returnStack)
-              .blockchain(blockchain)
-              .worldState(mutablePrivateWorldStateUpdater)
-              .address(to)
-              .originator(senderAddress)
-              .contract(to)
-              .contractAccountVersion(
-                  contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
-              .initialGas(Gas.MAX_VALUE)
-              .gasPrice(transaction.getGasPrice())
-              .inputData(transaction.getPayload())
-              .sender(senderAddress)
-              .value(transaction.getValue())
-              .apparentValue(transaction.getValue())
-              .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
-              .blockHeader(blockHeader)
-              .depth(0)
-              .completer(c -> {})
-              .miningBeneficiary(miningBeneficiary)
-              .blockHashLookup(blockHashLookup)
-              .maxStackSize(maxStackSize)
-              .transactionHash(pmtHash)
-              .build();
-    }
+      final ReturnStack returnStack = new ReturnStack();
 
-    messageFrameStack.addFirst(initialFrame);
+      if (transaction.isContractCreation()) {
+        final Address privateContractAddress =
+            Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
 
-    while (!messageFrameStack.isEmpty()) {
-      process(messageFrameStack.peekFirst(), operationTracer);
-    }
+        LOG.debug(
+            "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
+            privateContractAddress.toString(),
+            senderAddress,
+            previousNonce,
+            privacyGroupId.toString());
 
-    if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      mutablePrivateWorldStateUpdater.commit();
-    }
+        initialFrame =
+            MessageFrame.builder()
+                .type(MessageFrame.Type.CONTRACT_CREATION)
+                .messageFrameStack(messageFrameStack)
+                .returnStack(returnStack)
+                .blockchain(blockchain)
+                .worldState(mutablePrivateWorldStateUpdater)
+                .address(privateContractAddress)
+                .originator(senderAddress)
+                .contract(privateContractAddress)
+                .contractAccountVersion(createContractAccountVersion)
+                .initialGas(Gas.MAX_VALUE)
+                .gasPrice(transaction.getGasPrice())
+                .inputData(Bytes.EMPTY)
+                .sender(senderAddress)
+                .value(transaction.getValue())
+                .apparentValue(transaction.getValue())
+                .code(new Code(transaction.getPayload()))
+                .blockHeader(blockHeader)
+                .depth(0)
+                .completer(c -> {})
+                .miningBeneficiary(miningBeneficiary)
+                .blockHashLookup(blockHashLookup)
+                .maxStackSize(maxStackSize)
+                .transactionHash(pmtHash)
+                .build();
 
-    if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      return Result.successful(
-          initialFrame.getLogs(), 0, 0, initialFrame.getOutputData(), ValidationResult.valid());
-    } else {
-      return Result.failed(
-          0,
-          0,
+      } else {
+        final Address to = transaction.getTo().get();
+        final Account contract = privateWorldState.get(to);
+
+        initialFrame =
+            MessageFrame.builder()
+                .type(MessageFrame.Type.MESSAGE_CALL)
+                .messageFrameStack(messageFrameStack)
+                .returnStack(returnStack)
+                .blockchain(blockchain)
+                .worldState(mutablePrivateWorldStateUpdater)
+                .address(to)
+                .originator(senderAddress)
+                .contract(to)
+                .contractAccountVersion(
+                    contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
+                .initialGas(Gas.MAX_VALUE)
+                .gasPrice(transaction.getGasPrice())
+                .inputData(transaction.getPayload())
+                .sender(senderAddress)
+                .value(transaction.getValue())
+                .apparentValue(transaction.getValue())
+                .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
+                .blockHeader(blockHeader)
+                .depth(0)
+                .completer(c -> {})
+                .miningBeneficiary(miningBeneficiary)
+                .blockHashLookup(blockHashLookup)
+                .maxStackSize(maxStackSize)
+                .transactionHash(pmtHash)
+                .build();
+      }
+
+      messageFrameStack.addFirst(initialFrame);
+
+      while (!messageFrameStack.isEmpty()) {
+        process(messageFrameStack.peekFirst(), operationTracer);
+      }
+
+      if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        mutablePrivateWorldStateUpdater.commit();
+      }
+
+      if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        return Result.successful(
+            initialFrame.getLogs(), 0, 0, initialFrame.getOutputData(), ValidationResult.valid());
+      } else {
+        return Result.failed(
+            0,
+            0,
+            ValidationResult.invalid(
+                TransactionValidator.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
+            initialFrame.getRevertReason());
+      }
+    } catch (final RuntimeException re) {
+      LOG.error("Critical Exception Processing Transaction", re);
+      return Result.invalid(
           ValidationResult.invalid(
-              TransactionValidator.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
-          initialFrame.getRevertReason());
+              TransactionInvalidReason.INTERNAL_ERROR,
+              "Internal Error in Besu - " + re.toString()));
     }
   }
 

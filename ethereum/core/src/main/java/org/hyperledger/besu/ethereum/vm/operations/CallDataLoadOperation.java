@@ -31,11 +31,7 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getRemainingGas().compareTo(gasCost) < 0) {
-      return outOfGasResponse;
-    }
-
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final UInt256 startWord = UInt256.fromBytes(frame.popStackItem());
 
     // If the start index doesn't fit a int, it comes after anything in data, and so the returned
