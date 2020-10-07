@@ -55,11 +55,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -298,27 +298,6 @@ public class RlpxAgentTest {
   }
 
   @Test
-  public void connect_succeedsEventuallyWithRandomPeerPrioritization() {
-    // Saturate connections but allow peers to new peers to randomly be prioritized
-    startAgentWithMaxPeers(1, builder -> builder.randomlyPrioritizeConnections(true));
-    agent.connect(createPeer());
-
-    boolean failureObserved = false;
-    boolean successObserved = false;
-    // With very high probability we should see connection failures and successes.
-    for (int i = 0; i < 1000; ++i) {
-      try {
-        agent.connect(createPeer()).join();
-        successObserved = true;
-      } catch (CompletionException completionException) {
-        failureObserved = true;
-      }
-    }
-    assertThat(successObserved).isTrue();
-    assertThat(failureObserved).isTrue();
-  }
-
-  @Test
   public void incomingConnection_maxPeersExceeded()
       throws ExecutionException, InterruptedException {
     // Saturate connections
@@ -342,6 +321,41 @@ public class RlpxAgentTest {
       assertThat(incomingConnection.getDisconnectReason())
           .contains(DisconnectReason.TOO_MANY_PEERS);
     }
+  }
+
+  @Test
+  public void incomingConnection_succeedsEventuallyWithRandomPeerPrioritization() {
+    // Saturate connections with one local and one remote
+    startAgentWithMaxPeers(2, builder -> builder.randomlyPrioritizeConnections(true));
+    agent.connect(createPeer());
+    connectionInitializer.simulateIncomingConnection(connection(createPeer()));
+    // Sanity check
+    assertThat(agent.getConnectionCount()).isEqualTo(2);
+
+    boolean newConnectionDisconnected = false;
+    boolean oldConnectionDisconnected = false;
+    // With very high probability we should see the connections churn
+    for (int i = 0; i < 1000; ++i) {
+      final List<PeerConnection> connectionsBefore =
+          agent.streamConnections().collect(Collectors.toUnmodifiableList());
+
+      // Simulate incoming connection
+      final Peer newPeer = createPeer();
+      final MockPeerConnection incomingConnection = connection(newPeer);
+      connectionInitializer.simulateIncomingConnection(incomingConnection);
+
+      final List<PeerConnection> connectionsAfter =
+          agent.streamConnections().collect(Collectors.toUnmodifiableList());
+
+      if (connectionsBefore.equals(connectionsAfter)) {
+        newConnectionDisconnected = true;
+      } else if (!connectionsBefore.equals(connectionsAfter)) {
+        oldConnectionDisconnected = true;
+      }
+    }
+    assertThat(agent.getConnectionCount()).isEqualTo(2);
+    assertThat(newConnectionDisconnected).isTrue();
+    assertThat(oldConnectionDisconnected).isTrue();
   }
 
   @Test

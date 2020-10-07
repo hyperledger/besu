@@ -223,9 +223,7 @@ public class RlpxAgent {
       return peerConnection.get();
     }
     // Check max peers
-    if (!peerPrivileges.canExceedConnectionLimits(peer)
-        && getConnectionCount() >= maxConnections
-        && !randomlyPrioritizeConnections) {
+    if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
       final String errorMsg =
           "Max peer peer connections established ("
               + maxConnections
@@ -345,19 +343,22 @@ public class RlpxAgent {
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
-    // Disconnect if too many peers
-    if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
-      LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
-      peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-      return;
-    }
-    // Disconnect if too many remotely-initiated connections
-    if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
-      LOG.debug(
-          "Too many remotely-initiated connections. Disconnect incoming connection: {}",
-          peerConnection);
-      peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-      return;
+    if (!randomlyPrioritizeConnections) {
+      // Disconnect if too many peers
+      if (!peerPrivileges.canExceedConnectionLimits(peer)
+          && getConnectionCount() >= maxConnections) {
+        LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
+        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
+        return;
+      }
+      // Disconnect if too many remotely-initiated connections
+      if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
+        LOG.debug(
+            "Too many remotely-initiated connections. Disconnect incoming connection: {}",
+            peerConnection);
+        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
+        return;
+      }
     }
     // Disconnect if not permitted
     if (!peerPermissions.allowNewInboundConnectionFrom(peer)) {
