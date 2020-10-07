@@ -354,8 +354,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--peer-randomization-enabled"},
       description =
-          // TODO
-          "(default: ${DEFAULT-VALUE})",
+          "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final boolean randomlyPrioritizeConnections = false;
 
