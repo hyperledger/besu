@@ -51,6 +51,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private Bytes code;
   private int version;
 
+  private final long originalNonce;
+  private final Wei originalBalance;
+  private final Hash originalStorageRoot;
+  private final Hash originalCodeHash;
+
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
   private boolean storageWasCleared;
 
@@ -72,6 +77,10 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
     this.version = version;
+    this.originalNonce = nonce;
+    this.originalBalance = balance;
+    this.originalStorageRoot = storageRoot;
+    this.originalCodeHash = codeHash;
 
     this.mutable = mutable;
   }
@@ -86,6 +95,10 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.codeHash = toCopy.getCodeHash();
     this.code = toCopy.getCode();
     this.version = toCopy.getVersion();
+    this.originalNonce = toCopy.getOriginalNonce();
+    this.originalBalance = toCopy.getOriginalBalance();
+    this.originalStorageRoot = toCopy.getOriginalStorageRoot();
+    this.originalCodeHash = toCopy.getOriginalCodeHash();
     updatedStorage.putAll(toCopy.getUpdatedStorage());
     storageWasCleared = toCopy.storageWasCleared;
 
@@ -103,6 +116,10 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.codeHash = tracked.getCodeHash();
     this.code = tracked.getCode();
     this.version = tracked.getVersion();
+    this.originalNonce = tracked.getNonce();
+    this.originalBalance = tracked.getBalance();
+    this.originalStorageRoot = Hash.EMPTY_TRIE_HASH;
+    this.originalCodeHash = tracked.getCodeHash();
     updatedStorage.putAll(tracked.getUpdatedStorage());
     storageWasCleared = tracked.getStorageWasCleared();
 
@@ -217,6 +234,22 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
       throw new UnsupportedOperationException("Account is immutable");
     }
     this.version = version;
+  }
+
+  public long getOriginalNonce() {
+    return originalNonce;
+  }
+
+  public Wei getOriginalBalance() {
+    return originalBalance;
+  }
+
+  public Hash getOriginalStorageRoot() {
+    return originalStorageRoot;
+  }
+
+  public Hash getOriginalCodeHash() {
+    return originalCodeHash;
   }
 
   @Override

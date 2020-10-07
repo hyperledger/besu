@@ -16,6 +16,11 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
+import java.util.Objects;
+import java.util.function.BiConsumer;
+
 public class BonsaiValue<T> {
   private T original;
   private T updated;
@@ -39,6 +44,29 @@ public class BonsaiValue<T> {
 
   public void setUpdated(final T updated) {
     this.updated = updated;
+  }
+
+  public void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
+    output.startList();
+    writeInnerRlp(output, writer);
+    output.endList();
+  }
+
+  public void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
+    if (original == null) {
+      output.writeNull();
+    } else {
+      writer.accept(output, original);
+    }
+    if (updated == null) {
+      output.writeNull();
+    } else {
+      writer.accept(output, updated);
+    }
+  }
+
+  boolean isChange() {
+    return !Objects.equals(updated, original);
   }
 
   T effective() {
