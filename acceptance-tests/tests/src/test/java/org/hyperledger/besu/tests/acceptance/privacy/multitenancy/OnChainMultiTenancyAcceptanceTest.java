@@ -27,14 +27,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParam
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
-import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTest;
+import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +47,8 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
   private static final String eventEmitterDeployed =
       "0x6080604052600436106100565763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633fa4f245811461005b5780636057361d1461008257806367e404ce146100ae575b600080fd5b34801561006757600080fd5b506100706100ec565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100ac600480360360208110156100a557600080fd5b50356100f2565b005b3480156100ba57600080fd5b506100c3610151565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea165627a7a72305820c7f729cb24e05c221f5aa913700793994656f233fe2ce3b9fd9a505ea17e8d8a0029";
 
-  private static final PermissioningTransactions permissioningTransactions = new PermissioningTransactions();
+  private static final PermissioningTransactions permissioningTransactions =
+      new PermissioningTransactions();
   private static final long VALUE_SET = 10L;
 
   private PrivacyNode alice;
@@ -307,8 +307,11 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
         .getBesu()
         .useAuthenticationTokenInHeaderForJsonRpc(
             multiTenancyPrivacyNode.getTokenForTenant(removedTenant));
-    assertThatThrownBy(() -> privacyNode.execute(privacyTransactions.privGetTransaction(storeTransactionHash)))
-        .hasMessageContaining("Expecting actual not to be null"); // TODO: returning null because the RPC is using the enclave key
+    assertThatThrownBy(
+            () -> privacyNode.execute(privacyTransactions.privGetTransaction(storeTransactionHash)))
+        .hasMessageContaining(
+            "Expecting actual not to be null"); // TODO: returning null because the RPC is using the
+    // enclave key
   }
 
   @SuppressWarnings(value = "unchecked")
