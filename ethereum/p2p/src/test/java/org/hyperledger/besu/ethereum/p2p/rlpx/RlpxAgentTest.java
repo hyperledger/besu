@@ -303,19 +303,19 @@ public class RlpxAgentTest {
     startAgentWithMaxPeers(1, builder -> builder.randomlyPrioritizeConnections(true));
     agent.connect(createPeer());
 
-    // With very high probability, one of these should connect
-    assertThat(
-            Stream.generate(PeerTestHelper::createPeer)
-                .limit(1_000)
-                .flatMap(
-                    peer -> {
-                      try {
-                        return Stream.of(agent.connect(peer).join());
-                      } catch (CompletionException completionException) {
-                        return Stream.empty();
-                      }
-                    }))
-        .isNotEmpty();
+    boolean failureObserved = false;
+    boolean successObserved = false;
+    // With very high probability we should see connection failures and successes.
+    for (int i = 0; i < 1000; ++i) {
+      try {
+        agent.connect(createPeer()).join();
+        successObserved = true;
+      } catch (CompletionException completionException) {
+        failureObserved = true;
+      }
+    }
+    assertThat(successObserved).isTrue();
+    assertThat(failureObserved).isTrue();
   }
 
   @Test
