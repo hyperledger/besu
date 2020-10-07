@@ -102,7 +102,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
 
-    if (isMining(messageFrame)) {
+    if (skipContractExecution(messageFrame)) {
       return Bytes.EMPTY;
     }
 
@@ -240,6 +240,16 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       throw e;
     }
     return receiveResponse;
+  }
+
+  boolean skipContractExecution(final MessageFrame messageFrame) {
+    return isReadOnly(messageFrame) || isMining(messageFrame);
+  }
+
+  boolean isReadOnly(final MessageFrame messageFrame) {
+    // If there's no PrivateMetadataUpdater, the precompile has likely been called as part of a
+    // simulation and private state is not being updated.
+    return messageFrame.getPrivateMetadataUpdater() == null;
   }
 
   boolean isMining(final MessageFrame messageFrame) {

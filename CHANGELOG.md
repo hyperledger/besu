@@ -17,6 +17,7 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 ### Bug Fixes
 
 * Log block import rejection reasons at "INFO" level.  Bug [#1412](https://github.com/hyperledger/besu/issues/1412)
+* Fixed NPE when executing `eth_estimateGas` with privacy enabled.  Bug [#1404](https://github.com/hyperledger/besu/issues/1404)
 
 #### Previously identified known issues
 
