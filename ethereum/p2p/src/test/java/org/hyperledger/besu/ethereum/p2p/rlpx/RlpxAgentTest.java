@@ -55,9 +55,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -293,6 +295,27 @@ public class RlpxAgentTest {
         .hasMessageContaining("Max peer peer connections established (1). Cannot connect to peer");
     assertPeerConnectionNotTracked(peer);
     assertThat(agent.getConnectionCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void connect_succeedsEventuallyWithRandomPeerPrioritization() {
+    // Saturate connections but allow peers to new peers to randomly be prioritized
+    startAgentWithMaxPeers(1, builder -> builder.randomlyPrioritizeConnections(true));
+
+    // With very high probability, one of these should connect
+    assertThat(
+            Stream.generate(PeerTestHelper::createPeer)
+                .limit(1_000)
+                .flatMap(
+                    peer -> {
+                      try {
+                        return Stream.of(agent.connect(peer).join());
+                      } catch (CompletionException __) {
+                        return Stream.empty();
+                      }
+                    })
+                .findFirst())
+        .isPresent();
   }
 
   @Test
@@ -959,8 +982,13 @@ public class RlpxAgentTest {
   }
 
   private void startAgentWithMaxPeers(final int maxPeers) {
+    startAgentWithMaxPeers(maxPeers, Function.identity());
+  }
+
+  private void startAgentWithMaxPeers(
+      final int maxPeers, final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization) {
     config.setMaxPeers(maxPeers);
-    agent = agent();
+    agent = agent(buildCustomization);
     startAgent();
   }
 
@@ -970,16 +998,22 @@ public class RlpxAgentTest {
   }
 
   private RlpxAgent agent() {
+    return agent(Function.identity());
+  }
+
+  private RlpxAgent agent(final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization) {
     config.setLimitRemoteWireConnectionsEnabled(true);
-    return RlpxAgent.builder()
-        .nodeKey(NodeKeyUtils.createFrom(KEY_PAIR))
-        .config(config)
-        .peerPermissions(peerPermissions)
-        .peerPrivileges(peerPrivileges)
-        .localNode(localNode)
-        .metricsSystem(metrics)
-        .connectionInitializer(connectionInitializer)
-        .connectionEvents(peerConnectionEvents)
+    return buildCustomization
+        .apply(
+            RlpxAgent.builder()
+                .nodeKey(NodeKeyUtils.createFrom(KEY_PAIR))
+                .config(config)
+                .peerPermissions(peerPermissions)
+                .peerPrivileges(peerPrivileges)
+                .localNode(localNode)
+                .metricsSystem(metrics)
+                .connectionInitializer(connectionInitializer)
+                .connectionEvents(peerConnectionEvents))
         .build();
   }
 
