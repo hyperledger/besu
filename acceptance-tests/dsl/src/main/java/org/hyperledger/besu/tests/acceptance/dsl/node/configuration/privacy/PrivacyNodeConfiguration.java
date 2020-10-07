@@ -23,23 +23,26 @@ public class PrivacyNodeConfiguration {
   private final boolean isOnchainPrivacyGroupEnabled;
   private final BesuNodeConfiguration besuConfig;
   private final OrionKeyConfiguration orionConfig;
+  private final boolean isMultitenancyEnabled;
 
   PrivacyNodeConfiguration(
       final int privacyAddress,
       final BesuNodeConfiguration besuConfig,
       final OrionKeyConfiguration orionConfig) {
-    this(privacyAddress, false, besuConfig, orionConfig);
+    this(privacyAddress, false, false, besuConfig, orionConfig);
   }
 
   PrivacyNodeConfiguration(
       final int privacyAddress,
       final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isMultitenancyEnabled,
       final BesuNodeConfiguration besuConfig,
       final OrionKeyConfiguration orionConfig) {
     this.privacyAddress = privacyAddress;
     this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
     this.besuConfig = besuConfig;
     this.orionConfig = orionConfig;
+    this.isMultitenancyEnabled = isMultitenancyEnabled;
   }
 
   public int getPrivacyAddress() {
@@ -48,6 +51,10 @@ public class PrivacyNodeConfiguration {
 
   public boolean isOnchainPrivacyGroupEnabled() {
     return isOnchainPrivacyGroupEnabled;
+  }
+
+  public boolean isMultitenancyEnabled() {
+    return isMultitenancyEnabled;
   }
 
   public BesuNodeConfiguration getBesuConfig() {

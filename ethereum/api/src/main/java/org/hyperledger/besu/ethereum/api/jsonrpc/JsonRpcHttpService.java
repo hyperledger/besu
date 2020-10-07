@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
@@ -604,6 +605,8 @@ public class JsonRpcHttpService {
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug("Invalid Params", e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);
+      } catch (final MultiTenancyValidationException e) {
+        return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
       } catch (final RuntimeException e) {
         LOG.error("Error processing JSON-RPC requestBody", e);
         return errorResponse(id, JsonRpcError.INTERNAL_ERROR);

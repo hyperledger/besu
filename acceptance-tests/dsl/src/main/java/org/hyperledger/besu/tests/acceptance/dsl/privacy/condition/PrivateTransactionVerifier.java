@@ -61,6 +61,11 @@ public class PrivateTransactionVerifier {
             .map(PrivacyNode::getEnclaveKey)
             .map(Base64String::wrap)
             .collect(Collectors.toList());
+    return onChainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys);
+  }
+
+  public ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(
+      final String privacyGroupId, final List<Base64String> membersEnclaveKeys) {
 
     final OnChainPrivacyGroup expectedGroup =
         new OnChainPrivacyGroup(privacyGroupId, membersEnclaveKeys);
@@ -72,4 +77,9 @@ public class PrivateTransactionVerifier {
       final String transactionHash) {
     return new ExpectInternalErrorPrivateTransactionReceipt(transactions, transactionHash);
   }
+
+  //  public ExpectUnauthorizedPrivateTransactionReceipt unauthorizedPrivateTransactionReceipt(
+  //          final String transactionHash) {
+  //    return new ExpectUnauthorizedPrivateTransactionReceipt(transactions, transactionHash);
+  //  }
 }

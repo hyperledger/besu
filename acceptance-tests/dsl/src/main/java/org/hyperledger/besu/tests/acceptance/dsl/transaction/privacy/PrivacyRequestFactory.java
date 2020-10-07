@@ -164,7 +164,7 @@ public class PrivacyRequestFactory {
 
   public String privxRemoveFromPrivacyGroup(
       final Base64String privacyGroupId,
-      final PrivacyNode remover,
+      final String removerTenant,
       final Credentials signer,
       final String toRemove)
       throws IOException {
@@ -184,7 +184,7 @@ public class PrivacyRequestFactory {
             BigInteger.valueOf(3000000),
             Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
-            Base64String.wrap(remover.getEnclaveKey()),
+            Base64String.wrap(removerTenant),
             privacyGroupId,
             org.web3j.utils.Restriction.RESTRICTED);
 
@@ -237,7 +237,8 @@ public class PrivacyRequestFactory {
   }
 
   public PrivxCreatePrivacyGroupResponse privxCreatePrivacyGroup(
-      final PrivacyNode creator, final List<String> addresses) throws IOException {
+      final PrivacyNode creator, final String privateFrom, final List<String> addresses)
+      throws IOException {
 
     final byte[] bytes = new byte[32];
     secureRandom.nextBytes(bytes);
@@ -254,7 +255,7 @@ public class PrivacyRequestFactory {
             BigInteger.valueOf(3000000),
             Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
-            Base64String.wrap(creator.getEnclaveKey()),
+            Base64String.wrap(privateFrom),
             Base64String.wrap(privacyGroupId.toArrayUnsafe()),
             org.web3j.utils.Restriction.RESTRICTED);
 

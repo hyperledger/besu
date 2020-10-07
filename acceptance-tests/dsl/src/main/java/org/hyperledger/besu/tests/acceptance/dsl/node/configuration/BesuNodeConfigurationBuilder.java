@@ -211,8 +211,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder keyFilePath(final String keyFilePath) {
-    this.keyFilePath = Optional.of(keyFilePath);
+  public BesuNodeConfigurationBuilder keyFilePath(final Optional<String> keyFilePath) {
+    this.keyFilePath = keyFilePath;
     return this;
   }
 

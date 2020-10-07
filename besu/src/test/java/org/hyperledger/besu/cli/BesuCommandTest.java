@@ -3128,20 +3128,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onchainPrivacyAndMultiTenancyCannotBeUsedTogether() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-onchain-groups-enabled",
-        "--privacy-multi-tenancy-enabled",
-        "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file",
-        "--rpc-http-authentication-enabled");
-
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Privacy multi-tenancy and onchain privacy groups cannot be used together");
-  }
-
-  @Test
   public void privacyMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
     parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
 

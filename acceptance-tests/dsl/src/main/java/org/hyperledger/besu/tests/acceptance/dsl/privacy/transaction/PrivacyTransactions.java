@@ -22,6 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.EeaSendRawT
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivCallTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetCodeTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetLogsTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivGetFilterChangesTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivGetFilterLogsTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivNewFilterTransaction;
@@ -45,8 +46,17 @@ public class PrivacyTransactions {
   }
 
   public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
-      final PrivacyNode creator, final PrivacyNode... nodes) {
-    return new CreateOnChainPrivacyGroupTransaction(creator, nodes);
+      final PrivacyNode creator,
+      final String privateFrom,
+      final List<String> addresses,
+      final String token) {
+    creator.getBesu().useAuthenticationTokenInHeaderForJsonRpc(token);
+    return new CreateOnChainPrivacyGroupTransaction(creator, privateFrom, addresses);
+  }
+
+  public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
+      final PrivacyNode creator, final String privateFrom, final List<String> addresses) {
+    return new CreateOnChainPrivacyGroupTransaction(creator, privateFrom, addresses);
   }
 
   public AddToOnChainPrivacyGroupTransaction addToPrivacyGroup(
@@ -80,6 +90,10 @@ public class PrivacyTransactions {
     return new PrivCallTransaction(privacyGroupId, contract, encoded);
   }
 
+  public PrivGetTransaction privGetTransaction(final String transactionHash) {
+    return new PrivGetTransaction(transactionHash);
+  }
+
   public PrivGetCodeTransaction privGetCode(
       final String privacyGroupId, final Address contractAddress, final String blockParameter) {
     return new PrivGetCodeTransaction(privacyGroupId, contractAddress, blockParameter);
@@ -92,11 +106,11 @@ public class PrivacyTransactions {
 
   public RemoveFromOnChainPrivacyGroupTransaction removeFromPrivacyGroup(
       final String privacyGroupId,
-      final PrivacyNode remover,
+      final String remover,
       final Credentials signer,
-      final PrivacyNode nodeToRemove) {
+      final String memberToRemove) {
     return new RemoveFromOnChainPrivacyGroupTransaction(
-        privacyGroupId, remover, signer, nodeToRemove);
+        privacyGroupId, remover, signer, memberToRemove);
   }
 
   public EeaSendRawTransactionTransaction sendRawTransaction(final String transaction) {
