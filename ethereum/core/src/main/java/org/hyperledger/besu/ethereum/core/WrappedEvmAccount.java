@@ -20,7 +20,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class DefaultEvmAccount implements EvmAccount {
+public class WrappedEvmAccount implements EvmAccount {
   private final MutableAccount mutableAccount;
 
   public boolean isImmutable() {
@@ -33,7 +33,7 @@ public class DefaultEvmAccount implements EvmAccount {
 
   private boolean isImmutable;
 
-  public DefaultEvmAccount(final MutableAccount mutableAccount) {
+  public WrappedEvmAccount(final MutableAccount mutableAccount) {
 
     this.mutableAccount = mutableAccount;
     this.isImmutable = false;
