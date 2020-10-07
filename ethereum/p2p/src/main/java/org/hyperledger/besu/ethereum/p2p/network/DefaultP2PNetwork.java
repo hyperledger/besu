@@ -473,7 +473,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder randomLyPrioritizeConnections(final boolean randomlyPrioritizeConnections) {
+    public Builder randomlyPrioritizeConnections(final boolean randomlyPrioritizeConnections) {
       checkNotNull(rlpxAgent);
       this.randomlyPrioritizeConnections = randomlyPrioritizeConnections;
       return this;

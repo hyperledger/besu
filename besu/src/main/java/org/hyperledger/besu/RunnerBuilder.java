@@ -410,7 +410,7 @@ public class RunnerBuilder {
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
                 .natService(natService)
-                .randomLyPrioritizeConnections(randomlyPrioritizeConnections)
+                .randomlyPrioritizeConnections(randomlyPrioritizeConnections)
                 .build();
 
     final NetworkRunner networkRunner =
