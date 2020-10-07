@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 public class ModificationNotAllowedException extends RuntimeException {
-  ModificationNotAllowedException() {
+  public ModificationNotAllowedException() {
     super("This account may not be modified");
   }
 }

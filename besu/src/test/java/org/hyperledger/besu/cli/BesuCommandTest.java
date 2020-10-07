@@ -3676,4 +3676,36 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains("Invalid value for option", "--Xws-timeout-seconds", "abc", "is not a long");
   }
+
+  @Test
+  public void assertThatDuplicatePortSpecifiedFails() {
+    parseCommand("--p2p-port=9", "--rpc-http-port=10", "--rpc-ws-port=10");
+    assertThat(commandErrorOutput.toString())
+        .contains("Port number '10' has been specified multiple times.");
+  }
+
+  @Test
+  public void assertThatDuplicatePortZeroSucceeds() {
+    parseCommand("--p2p-port=0", "--rpc-http-port=0", "--rpc-ws-port=0");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatNoPortsSpecifiedSucceeds() {
+    parseCommand();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatAllPortsSpecifiedSucceeds() {
+    parseCommand(
+        "--p2p-port=9",
+        "--graphql-http-port=10",
+        "--rpc-http-port=11",
+        "--rpc-ws-port=12",
+        "--metrics-port=13",
+        "--metrics-push-port=14",
+        "--miner-stratum-port=15");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
 }

@@ -57,7 +57,7 @@ public class PrunerIntegrationTest {
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
   private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
-      new WorldStateArchive(
+      new DefaultWorldStateArchive(
           worldStateStorage, new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
   private final Block genesisBlock = gen.genesisBlock();

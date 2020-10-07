@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -320,7 +320,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .getBlockProcessor()
             .getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
-    final DefaultEvmAccount beneficiary = updater.getOrCreate(miningBeneficiary);
+    final EvmAccount beneficiary = updater.getOrCreate(miningBeneficiary);
 
     beneficiary.getMutable().incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
@@ -333,7 +333,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         return false;
       }
 
-      final DefaultEvmAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
+      final EvmAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
       final Wei ommerReward =
           protocolSpec
               .getBlockProcessor()
