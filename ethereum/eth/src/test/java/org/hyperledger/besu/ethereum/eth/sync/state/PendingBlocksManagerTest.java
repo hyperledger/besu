@@ -198,19 +198,18 @@ public class PendingBlocksManagerTest {
         reorgBlock =
             gen.block(
                 gen.nextBlockOptions(block).setTimestamp(block.getHeader().getTimestamp() + 1));
-        System.out.println(reorgBlock.getHeader().getNumber());
         pendingBlocksManager.registerPendingBlock(reorgBlock, NODE_ID_1);
       }
     }
     // BLOCK 0 , BLOCK 1, BLOCK 2, BLOCK 2-reorg
 
-    // try to add a new block (not added because low priority - block number too high)
+    // try to add a new block (not added because low priority : block number too high)
     final Block lowPriorityBlock =
         gen.block(BlockDataGenerator.BlockOptions.create().setBlockNumber(10));
     pendingBlocksManager.registerPendingBlock(lowPriorityBlock, NODE_ID_1);
     assertThat(pendingBlocksManager.contains(lowPriorityBlock.getHash())).isFalse();
 
-    // try to add a new block (added because high priority - low block number and high timestamp)
+    // try to add a new block (added because high priority : low block number and high timestamp)
     final Block highPriorityBlock =
         gen.block(gen.nextBlockOptions(childBlockFromNodeOne.get(0)).setTimestamp(Long.MAX_VALUE));
     pendingBlocksManager.registerPendingBlock(highPriorityBlock, NODE_ID_1);

@@ -54,14 +54,11 @@ public class PendingBlocksManager {
    * @return true if the block was added (was not previously present)
    */
   public boolean registerPendingBlock(final Block block, final Bytes nodeId) {
-    try {
-      final ImmutablePendingBlock previousValue =
-          this.pendingBlocks.putIfAbsent(
-              block.getHash(), ImmutablePendingBlock.builder().block(block).nodeId(nodeId).build());
-      if (previousValue != null) {
-        return false;
-      }
-    } catch (IndexOutOfBoundsException e) {
+
+    final ImmutablePendingBlock previousValue =
+        this.pendingBlocks.putIfAbsent(
+            block.getHash(), ImmutablePendingBlock.builder().block(block).nodeId(nodeId).build());
+    if (previousValue != null) {
       return false;
     }
 

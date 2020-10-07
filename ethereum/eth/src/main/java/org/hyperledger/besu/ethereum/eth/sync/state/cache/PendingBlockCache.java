@@ -37,12 +37,10 @@ public class PendingBlockCache extends ConcurrentHashMap<Hash, ImmutablePendingB
    *
    * @return the previous value associated with the specified key, or {@code null} if there was no
    *     mapping for the hash
-   * @throws IndexOutOfBoundsException if the limit of the number of blocks has been reached for
-   *     this nodeId
    */
   @Override
   public ImmutablePendingBlock putIfAbsent(
-      final Hash hash, final ImmutablePendingBlock pendingBlock) throws IndexOutOfBoundsException {
+      final Hash hash, final ImmutablePendingBlock pendingBlock) {
     final ImmutablePendingBlock foundBlock = super.putIfAbsent(hash, pendingBlock);
     if (foundBlock == null) {
       removeLowestPriorityBlockWhenCacheFull(pendingBlock.nodeId());
