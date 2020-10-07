@@ -311,12 +311,11 @@ public class RlpxAgentTest {
                     peer -> {
                       try {
                         return Stream.of(agent.connect(peer).join());
-                      } catch (CompletionException __) {
+                      } catch (CompletionException completionException) {
                         return Stream.empty();
                       }
-                    })
-                .findFirst())
-        .isPresent();
+                    }))
+        .isNotEmpty();
   }
 
   @Test
