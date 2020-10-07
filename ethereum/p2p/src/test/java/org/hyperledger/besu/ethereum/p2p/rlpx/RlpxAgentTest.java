@@ -301,6 +301,7 @@ public class RlpxAgentTest {
   public void connect_succeedsEventuallyWithRandomPeerPrioritization() {
     // Saturate connections but allow peers to new peers to randomly be prioritized
     startAgentWithMaxPeers(1, builder -> builder.randomlyPrioritizeConnections(true));
+    agent.connect(createPeer());
 
     // With very high probability, one of these should connect
     assertThat(

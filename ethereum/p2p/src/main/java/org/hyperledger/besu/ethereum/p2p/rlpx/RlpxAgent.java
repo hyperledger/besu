@@ -222,7 +222,9 @@ public class RlpxAgent {
       return peerConnection.get();
     }
     // Check max peers
-    if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
+    if (!peerPrivileges.canExceedConnectionLimits(peer)
+        && getConnectionCount() >= maxConnections
+        && !randomlyPrioritizeConnections) {
       final String errorMsg =
           "Max peer peer connections established ("
               + maxConnections
