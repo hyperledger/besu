@@ -77,9 +77,4 @@ public class PrivateTransactionVerifier {
       final String transactionHash) {
     return new ExpectInternalErrorPrivateTransactionReceipt(transactions, transactionHash);
   }
-
-  //  public ExpectUnauthorizedPrivateTransactionReceipt unauthorizedPrivateTransactionReceipt(
-  //          final String transactionHash) {
-  //    return new ExpectUnauthorizedPrivateTransactionReceipt(transactions, transactionHash);
-  //  }
 }

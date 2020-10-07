@@ -26,11 +26,11 @@ public class PrivacyAccount {
 
   private PrivacyAccount(
       final URL privateKeyPath,
-      final URL[] enclavePublicKeyPath,
-      final URL[] enclavePrivateKeyPath) {
+      final URL[] enclavePublicKeyPaths,
+      final URL[] enclavePrivateKeyPaths) {
     this.privateKeyPath = privateKeyPath;
-    this.enclaveKeyPaths = enclavePublicKeyPath;
-    this.enclavePrivateKeyPaths = enclavePrivateKeyPath;
+    this.enclaveKeyPaths = enclavePublicKeyPaths;
+    this.enclavePrivateKeyPaths = enclavePrivateKeyPaths;
   }
 
   public static PrivacyAccount create(
