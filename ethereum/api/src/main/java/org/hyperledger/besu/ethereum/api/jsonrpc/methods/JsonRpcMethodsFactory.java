@@ -37,6 +37,7 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +68,8 @@ public class JsonRpcMethodsFactory {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
-      final Map<String, BesuPlugin> namedPlugins) {
+      final Map<String, BesuPlugin> namedPlugins,
+      final Path dataDir) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -85,7 +87,7 @@ public class JsonRpcMethodsFactory {
                   namedPlugins,
                   natService),
               new DebugJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, metricsSystem, transactionPool),
+                  blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(

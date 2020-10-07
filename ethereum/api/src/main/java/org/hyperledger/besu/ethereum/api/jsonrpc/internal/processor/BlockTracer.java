@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay.TransactionAction;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.StackedUpdater;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -47,7 +46,7 @@ public class BlockTracer {
     return blockReplay.block(block, prepareReplayAction(tracer));
   }
 
-  private TransactionAction<TransactionTrace> prepareReplayAction(
+  private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(
       final DebugOperationTracer tracer) {
     return (transaction, header, blockchain, mutableWorldState, transactionProcessor) -> {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
