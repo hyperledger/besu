@@ -46,6 +46,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private final OptionalLong atlantisBlockNumber = OptionalLong.empty();
   private final OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private final OptionalLong phoenixBlockNumber = OptionalLong.empty();
+  private final OptionalLong ecip1099BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -72,11 +73,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isEtcHash() {
-    return false;
-  }
-
-  @Override
   public boolean isIbft2() {
     return false;
   }
@@ -99,11 +95,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
-  }
-
-  @Override
-  public EtchashConfigOptions getEtchashConfigOptions() {
-    return EtchashConfigOptions.DEFAULT;
   }
 
   @Override
@@ -200,6 +191,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getPhoenixBlockNumber() {
     return phoenixBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getEcip1099BlockNumber() {
+    return ecip1099BlockNumber;
   }
 
   @Override

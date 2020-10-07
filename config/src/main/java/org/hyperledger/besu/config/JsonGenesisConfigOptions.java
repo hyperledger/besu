@@ -37,7 +37,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
-  private static final String ETCHASH_CONFIG_KEY = "etchash";
 
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private final ObjectNode configRoot;
@@ -97,8 +96,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       return IBFT_LEGACY_CONFIG_KEY;
     } else if (isClique()) {
       return CLIQUE_CONFIG_KEY;
-    } else if (isEtcHash()) {
-      return ETCHASH_CONFIG_KEY;
     } else {
       return "unknown";
     }
@@ -122,11 +119,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isIbft2() {
     return configRoot.has(IBFT2_CONFIG_KEY);
-  }
-
-  @Override
-  public boolean isEtcHash() {
-    return configRoot.has(ETCHASH_CONFIG_KEY);
   }
 
   @Override
@@ -155,13 +147,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
         .map(EthashConfigOptions::new)
         .orElse(EthashConfigOptions.DEFAULT);
-  }
-
-  @Override
-  public EtchashConfigOptions getEtchashConfigOptions() {
-    return JsonUtil.getObjectNode(configRoot, ETCHASH_CONFIG_KEY)
-        .map(EtchashConfigOptions::new)
-        .orElse(EtchashConfigOptions.DEFAULT);
   }
 
   @Override
@@ -291,6 +276,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1099BlockNumber() {
+    return getOptionalLong("ecip1099block");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -356,9 +346,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isIbft2()) {
       builder.put("ibft2", getIbft2ConfigOptions().asMap());
-    }
-    if (isEtcHash()) {
-      builder.put("etchash", getEtchashConfigOptions().asMap());
     }
     return builder.build();
   }

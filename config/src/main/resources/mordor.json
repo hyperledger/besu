@@ -5,9 +5,8 @@
     "aghartaBlock": 301243,
     "phoenixBlock": 999983,
     "ecip1017EraRounds": 2000000,
-    "etchash": {
-      "epochLengthActivation": 2520000
-    }
+    "ecip1099Block": 2520000,
+    "ethash": {}
   },
   "nonce": "0x0000000000000000",
   "timestamp": "0x5d9676db",

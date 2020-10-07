@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import java.util.function.Function;
+
 public interface EthHasher {
 
   /**
@@ -24,7 +26,8 @@ public interface EthHasher {
    * @param number Block Number
    * @param headerHash Block Header (without mix digest and nonce) Hash
    */
-  void hash(byte[] buffer, long nonce, long number, byte[] headerHash);
+  void hash(
+      byte[] buffer, long nonce, long number, Function<Long, Long> epochCalc, byte[] headerHash);
 
   final class Light implements EthHasher {
 
@@ -32,28 +35,13 @@ public interface EthHasher {
 
     @Override
     public void hash(
-        final byte[] buffer, final long nonce, final long number, final byte[] headerHash) {
-      final EthHashCacheFactory.EthHashDescriptor cache = cacheFactory.ethHashCacheFor(number);
-      final byte[] hash =
-          EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
-      System.arraycopy(hash, 0, buffer, 0, hash.length);
-    }
-  }
-
-  /** Implementation of EthHasher for ETC that uses activation block to determine epoch length */
-  final class EtcHasher implements EthHasher {
-    private final EtcHashCacheFactory cacheFactory;
-    private final long activationBlock;
-
-    public EtcHasher(final long activationBlock) {
-      this.activationBlock = activationBlock;
-      this.cacheFactory = new EtcHashCacheFactory(this.activationBlock);
-    }
-
-    @Override
-    public void hash(
-        final byte[] buffer, final long nonce, final long number, final byte[] headerHash) {
-      final EtcHashCacheFactory.EtcHashDescriptor cache = cacheFactory.etcHashCacheFor(number);
+        final byte[] buffer,
+        final long nonce,
+        final long number,
+        Function<Long, Long> epochCalc,
+        final byte[] headerHash) {
+      final EthHashCacheFactory.EthHashDescriptor cache =
+          cacheFactory.ethHashCacheFor(number, epochCalc);
       final byte[] hash =
           EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
       System.arraycopy(hash, 0, buffer, 0, hash.length);

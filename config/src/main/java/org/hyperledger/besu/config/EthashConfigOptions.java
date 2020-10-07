@@ -35,9 +35,14 @@ public class EthashConfigOptions {
     return JsonUtil.getLong(ethashConfigRoot, "fixeddifficulty");
   }
 
+  public OptionalLong getEpochLengthActivationBlock() {
+    return JsonUtil.getLong(ethashConfigRoot, "epochlengthactivation");
+  }
+
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getFixedDifficulty().ifPresent(l -> builder.put("fixeddifficulty", l));
+    getEpochLengthActivationBlock().ifPresent(a -> builder.put("epochlengthactivation", a));
     return builder.build();
   }
 }

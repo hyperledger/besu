@@ -34,6 +34,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
   protected volatile Optional<Address> coinbase;
   protected boolean stratumMiningEnabled;
   protected final Iterable<Long> nonceGenerator;
+  protected final Function<Long, Long> epochCalculator;
 
   public EthHashMinerExecutor(
       final ProtocolContext protocolContext,
@@ -41,7 +42,8 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final Function<Long, Long> gasLimitCalculator) {
+      final Function<Long, Long> gasLimitCalculator,
+      final Function<Long, Long> epochCalculator) {
     super(
         protocolContext,
         protocolSchedule,
@@ -51,6 +53,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
         gasLimitCalculator);
     this.coinbase = miningParams.getCoinbase();
     this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
+    this.epochCalculator = epochCalculator;
   }
 
   @Override
@@ -71,7 +74,11 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
       final BlockHeader parentHeader) {
     final EthHashSolver solver =
         new EthHashSolver(
-            nonceGenerator, new EthHasher.Light(), stratumMiningEnabled, ethHashObservers);
+            nonceGenerator,
+            new EthHasher.Light(),
+            stratumMiningEnabled,
+            ethHashObservers,
+            epochCalculator);
     final Function<BlockHeader, EthHashBlockCreator> blockCreator =
         (header) ->
             new EthHashBlockCreator(

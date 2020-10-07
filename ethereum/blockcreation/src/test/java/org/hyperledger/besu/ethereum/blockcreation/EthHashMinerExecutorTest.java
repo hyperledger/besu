@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -56,7 +57,8 @@ public class EthHashMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            Function.identity());
+            Function.identity(),
+            EthHash::epoch);
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
         .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
@@ -85,7 +87,8 @@ public class EthHashMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            Function.identity());
+            Function.identity(),
+            EthHash::epoch);
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))
