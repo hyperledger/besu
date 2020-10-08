@@ -18,6 +18,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
@@ -447,7 +449,7 @@ public class JsonRpcHttpService {
         } else {
           final JsonArray array = new JsonArray(json);
           if (array.size() < 1) {
-            handleJsonRpcError(routingContext, null, JsonRpcError.INVALID_REQUEST);
+            handleJsonRpcError(routingContext, null, INVALID_REQUEST);
             return;
           }
           AuthenticationUtils.getUser(
@@ -493,14 +495,24 @@ public class JsonRpcHttpService {
   }
 
   private HttpResponseStatus status(final JsonRpcResponse response) {
-
     switch (response.getType()) {
       case UNAUTHORIZED:
         return HttpResponseStatus.UNAUTHORIZED;
       case ERROR:
-        return HttpResponseStatus.BAD_REQUEST;
+        return statusCodeFromError(((JsonRpcErrorResponse) response).getError());
       case SUCCESS:
       case NONE:
+      default:
+        return HttpResponseStatus.OK;
+    }
+  }
+
+  private HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
+    switch (error) {
+      case INVALID_REQUEST:
+      case INVALID_PARAMS:
+      case PARSE_ERROR:
+        return HttpResponseStatus.BAD_REQUEST;
       default:
         return HttpResponseStatus.OK;
     }
@@ -524,8 +536,7 @@ public class JsonRpcHttpService {
             .map(
                 obj -> {
                   if (!(obj instanceof JsonObject)) {
-                    return Future.succeededFuture(
-                        errorResponse(null, JsonRpcError.INVALID_REQUEST));
+                    return Future.succeededFuture(errorResponse(null, INVALID_REQUEST));
                   }
 
                   final JsonObject req = (JsonObject) obj;
@@ -552,7 +563,7 @@ public class JsonRpcHttpService {
                 return;
               }
               if (res.failed()) {
-                response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
+                response.setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
                 return;
               }
               final JsonRpcResponse[] completed =
@@ -577,7 +588,7 @@ public class JsonRpcHttpService {
       id = new JsonRpcRequestId(requestJson.getValue("id")).getValue();
       requestBody = requestJson.mapTo(JsonRpcRequest.class);
     } catch (final IllegalArgumentException exception) {
-      return errorResponse(id, JsonRpcError.INVALID_REQUEST);
+      return errorResponse(id, INVALID_REQUEST);
     }
     // Handle notifications
     if (requestBody.isNotification()) {
@@ -639,7 +650,7 @@ public class JsonRpcHttpService {
     final HttpServerResponse response = routingContext.response();
     if (!response.closed()) {
       response
-          .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+          .setStatusCode(statusCodeFromError(error).code())
           .end(Json.encode(new JsonRpcErrorResponse(id, error)));
     }
   }

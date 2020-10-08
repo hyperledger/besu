@@ -1,5 +1,17 @@
 # Changelog
 
+## 20.10 Breaking Changes
+
+When upgrading to 20.10, ensure you've taken into account the following breaking changes.
+
+## JSON-RPC HTTP Error Codes For Valid Calls
+
+Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC requests that completed in an error, regardless of the kind of error.  These responses could include a complete JSON-RPC response with an error field.
+
+In Besu version 20.10, properly formatted requests that have valid parameters (count and content) will return a HTTP Status 200 OK, with an error field if an error occurred. For example, requesting an account that does not exist in the chain, or a block by hash that Besu does not have, will now return HTTP 200 OK responses. Unparsable requests, improperly formatted requests, or requests with invalid parameters will continue to return HTTP 400 Bad Request.
+
+This was done to bring us more in line with the behavior of other Ethereum Clients. Some community projects, such as Web3J, will be providing compatible releases in the near future.  
+
 ## 20.10.0-RC1
 
 ### Release format
