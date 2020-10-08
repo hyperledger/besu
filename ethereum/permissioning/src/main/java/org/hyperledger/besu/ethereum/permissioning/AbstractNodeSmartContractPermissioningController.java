@@ -41,7 +41,7 @@ public abstract class AbstractNodeSmartContractPermissioningController
    * @param transactionSimulator A transaction simulator with attached blockchain and world state
    * @param metricsSystem The metrics provider that is to be reported to
    */
-  public AbstractNodeSmartContractPermissioningController(
+  protected AbstractNodeSmartContractPermissioningController(
       final Address contractAddress,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem) {
