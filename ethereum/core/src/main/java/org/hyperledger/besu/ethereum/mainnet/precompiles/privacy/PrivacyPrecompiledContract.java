@@ -102,7 +102,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
 
-    if (isMining(messageFrame)) {
+    if (skipContractExecution(messageFrame)) {
       return Bytes.EMPTY;
     }
 
@@ -240,6 +240,17 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       throw e;
     }
     return receiveResponse;
+  }
+
+  boolean skipContractExecution(final MessageFrame messageFrame) {
+    return isSimulatingPMT(messageFrame) || isMining(messageFrame);
+  }
+
+  boolean isSimulatingPMT(final MessageFrame messageFrame) {
+    // If there's no PrivateMetadataUpdater, the precompile has not been called through the
+    // PrivacyBlockProcessor. This indicates the PMT is being simulated and execution of the
+    // precompile is not required.
+    return messageFrame.getPrivateMetadataUpdater() == null;
   }
 
   boolean isMining(final MessageFrame messageFrame) {
