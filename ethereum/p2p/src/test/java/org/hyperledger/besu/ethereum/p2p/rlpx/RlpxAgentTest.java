@@ -326,7 +326,7 @@ public class RlpxAgentTest {
   @Test
   public void incomingConnection_succeedsEventuallyWithRandomPeerPrioritization() {
     // Saturate connections with one local and one remote
-    startAgentWithMaxPeers(2, builder -> builder.randomlyPrioritizeConnections(true));
+    startAgentWithMaxPeers(2, builder -> builder.randomPeerPriority(true));
     agent.connect(createPeer());
     connectionInitializer.simulateIncomingConnection(connection(createPeer()));
     // Sanity check

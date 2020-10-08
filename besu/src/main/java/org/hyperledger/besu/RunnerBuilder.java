@@ -164,7 +164,7 @@ public class RunnerBuilder {
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
-  private boolean randomlyPrioritizeConnections;
+  private boolean randomPeerPriority;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -245,8 +245,8 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder randomlyPrioritizeConnections(final boolean randomlyPrioritizeConnections) {
-    this.randomlyPrioritizeConnections = randomlyPrioritizeConnections;
+  public RunnerBuilder randomPeerPriority(final boolean randomPeerPriority) {
+    this.randomPeerPriority = randomPeerPriority;
     return this;
   }
 
@@ -410,7 +410,7 @@ public class RunnerBuilder {
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
                 .natService(natService)
-                .randomlyPrioritizeConnections(randomlyPrioritizeConnections)
+                .randomPeerPriority(randomPeerPriority)
                 .build();
 
     final NetworkRunner networkRunner =
