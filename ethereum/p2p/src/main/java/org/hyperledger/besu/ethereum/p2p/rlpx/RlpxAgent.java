@@ -639,7 +639,7 @@ public class RlpxAgent {
       return this;
     }
 
-    public Builder randomPeerPriority(boolean randomPeerPriority) {
+    public Builder randomPeerPriority(final boolean randomPeerPriority) {
       this.randomPeerPriority = randomPeerPriority;
       return this;
     }
