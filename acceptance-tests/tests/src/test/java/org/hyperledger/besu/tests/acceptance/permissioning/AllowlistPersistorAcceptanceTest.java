@@ -105,7 +105,7 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO, ENODE_ONE, ENODE_THREE));
   }
 
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   @Test
   public void manipulatedNodesWhitelistWithHostnameShouldNotWorkWhenDnsDisabled() {
     Assertions.assertThatThrownBy(() -> node.verify(perm.addNodesToAllowlist(ENODE_FOURTH)))

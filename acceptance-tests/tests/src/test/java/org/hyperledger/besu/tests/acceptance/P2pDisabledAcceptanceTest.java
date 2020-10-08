@@ -54,7 +54,7 @@ public class P2pDisabledAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void shouldFailExecutingAffectedJsonRpcCall() {
     node.verify(net.awaitPeerCountExceptional());
   }

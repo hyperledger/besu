@@ -134,7 +134,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void aliceCanUsePrivDistributeTransaction() {
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";

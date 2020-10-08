@@ -84,7 +84,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void whenEnclaveIsDisconnectedGetReceiptReturnsInternalError() {
     final EventEmitter eventEmitter =
         alice.execute(
@@ -124,7 +124,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void transactionFailsIfPartyIsOffline() {
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
@@ -160,7 +160,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void createPrivacyGroupReturnsCorrectError() {
     final Throwable throwable =
         catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));

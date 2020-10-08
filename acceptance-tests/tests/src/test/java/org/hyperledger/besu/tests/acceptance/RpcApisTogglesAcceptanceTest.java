@@ -74,7 +74,7 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void shouldFailCallingMethodFromDisabledApiGroup() {
     final String expectedMessage = "Invalid response received: 400";
 

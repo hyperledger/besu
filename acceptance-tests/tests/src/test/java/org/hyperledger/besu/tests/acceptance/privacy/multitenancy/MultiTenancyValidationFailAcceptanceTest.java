@@ -92,7 +92,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void sendRawTransactionShouldFailWhenPrivateFromNotMatchEnclaveKey()
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
@@ -107,7 +107,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void sendRawTransactionShouldFailWhenPrivacyGroupDoesNotContainEnclaveKey()
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
@@ -120,7 +120,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void distributeRawTransactionShouldFailWhenPrivateFromNotMatchEnclaveKey() {
     final Address senderAddress =
         Address.wrap(Bytes.fromHexString(accounts.getPrimaryBenefactor().getAddress()));
@@ -136,7 +136,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void distributeRawTransactionShouldFailWhenPrivacyGroupDoesNotContainEnclaveKey()
       throws JsonProcessingException {
     final Address senderAddress =
@@ -153,7 +153,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void deletePrivacyGroupShouldFailWhenEnclaveKeyNotInPrivacyGroup()
       throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
@@ -163,7 +163,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void findPrivacyGroupShouldFailWhenEnclaveKeyNotInPrivacyGroup() {
     final Transaction<PrivacyGroup[]> transaction =
         privacyTransactions.findPrivacyGroup(new String[] {OTHER_ENCLAVE_PUBLIC_KEY});
@@ -171,7 +171,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void determineEeaNonceShouldFailWhenPrivateFromNotMatchEnclaveKey() {
     final String accountAddress = Address.ZERO.toHexString();
     final String senderAddressBase64 = Bytes.fromHexString(accountAddress).toBase64String();
@@ -183,7 +183,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1305")
+  @Ignore("Web3J is broken by PR #1426")
   public void determineBesuNonceShouldFailWhenEnclaveKeyNotInPrivacyGroup()
       throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
