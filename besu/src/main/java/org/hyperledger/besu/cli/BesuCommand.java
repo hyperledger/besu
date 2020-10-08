@@ -1842,12 +1842,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
 
-      if (isPrivacyMultiTenancyEnabled && isOnchainPrivacyGroupEnabled) {
-        throw new ParameterException(
-            commandLine,
-            "Privacy multi-tenancy and onchain privacy groups cannot be used together");
-      }
-
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
