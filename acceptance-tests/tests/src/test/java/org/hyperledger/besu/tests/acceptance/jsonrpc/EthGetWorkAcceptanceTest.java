@@ -40,7 +40,6 @@ public class EthGetWorkAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1426")
   public void shouldReturnErrorResponseWhenNotMining() {
     fullNode.verify(eth.getWorkExceptional("No mining work available yet"));
   }
