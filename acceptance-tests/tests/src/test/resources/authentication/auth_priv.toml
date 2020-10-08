@@ -3,6 +3,16 @@ password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
 permissions = ["fakePermission", "*:*"]
 privacyPublicKey = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="
 
+[Users.user2]
+password = "$2a$10$0ikMUcSYugKmnXilimhc1eGNnfMRvKt2PxQJPo1oCemN16QL2NNo."
+permissions = ["fakePermission", "*:*"]
+privacyPublicKey = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="
+
+[Users.user3]
+password = "$2a$10$Mydyzpul6CtgPRbUd6It2OpZDOfqOocpi6.UYhlyU5aphQHi1iQZq"
+permissions = ["fakePermission", "*:*"]
+privacyPublicKey = "k2zXEin4Ip/qBGlRkJejnGWdP9cjkK+DAvKNW31L2C8="
+
 [Users.failUser]
 password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
 permissions = ["fakePermission", "*:*"]

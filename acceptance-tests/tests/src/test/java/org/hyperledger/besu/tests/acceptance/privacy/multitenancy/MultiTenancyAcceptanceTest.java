@@ -82,7 +82,8 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
             "node1",
             "http://127.0.0.1:" + wireMockRule.port(),
             "authentication/auth_priv.toml",
-            "authentication/auth_priv_key");
+            "authentication/auth_priv_key",
+            false);
     multiTenancyCluster.start(node);
     final String token =
         node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
