@@ -97,8 +97,6 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
         privateContractTransactions.callOnChainPermissioningSmartContract(
             Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE.toString(),
-            //                +
-            // Bytes.fromBase64String(groupCreator.getEnclaveKey()).toUnprefixedHexString(),
             groupCreator.getTransactionSigningKey(),
             POW_CHAIN_ID,
             privateFrom,

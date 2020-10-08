@@ -92,11 +92,11 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
   }
 
   @Test
-  public void createPrivacyWithAllTenants() {
-    final MultiTenancyPrivacyGroup justAlice = new MultiTenancyPrivacyGroup();
-    justAlice.addNodeWithTenants(
+  public void createPrivacyGroupWithAllTenants() {
+    final MultiTenancyPrivacyGroup privacyGroup = new MultiTenancyPrivacyGroup();
+    privacyGroup.addNodeWithTenants(
         aliceMultiTenancyPrivacyNode, aliceMultiTenancyPrivacyNode.getTenants());
-    createOnChainPrivacyGroup(justAlice);
+    createOnChainPrivacyGroup(privacyGroup);
   }
 
   @Test
@@ -147,7 +147,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
         multiTenancyPrivacyNode.getTokenForTenant(removedTenant));
     privacyNode.verify(
         privateTransactionVerifier.noPrivateTransactionReceipt(
-            transactionHash)); // // TODO: returning null because the RPC is using the enclave key
+            transactionHash)); // returning null because the RPC is using the enclave key
 
     // check that getting the code of the event emitter does not work when you are not a member
     assertThatThrownBy(
@@ -173,21 +173,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
     final String filterId =
         privacyNode.execute(privacyTransactions.newFilter(privacyGroupId, filterParameter));
 
-    //        THIS does not work because I cannot find out what the nonce is "Unable to determine
-    // nonce for account in group"
-    //        // check that sending a transaction does not work if you are not a member
-    //
-    // privacyNodeBesu.useAuthenticationTokenInHeaderForJsonRpc(multiTenancyPrivacyNode.getTokenForTenant(removedTenant));
-    //        privacyNode.execute(
-    //                privateContractTransactions.callSmartContractWithPrivacyGroupId(
-    //                        eventEmitter.getContractAddress(),
-    //                        eventEmitter.store(BigInteger.valueOf(10L)).encodeFunctionCall(),
-    //                        privacyNode.getTransactionSigningKey(),
-    //                        POW_CHAIN_ID,
-    //                        tenant,
-    //                        privacyGroupId));
-
-    // check that a member can call the contract
     privacyNodeBesu.useAuthenticationTokenInHeaderForJsonRpc(
         multiTenancyPrivacyNode.getTokenForTenant(tenant));
     final CallPrivateSmartContractFunction storeTransaction =
@@ -314,7 +299,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
     // enclave key
   }
 
-  @SuppressWarnings(value = "unchecked")
   @Test
   public void removedMemberCannotGetFilterChanges() {
     final MultiTenancyPrivacyGroup allTenantsFromAlice = new MultiTenancyPrivacyGroup();
@@ -474,224 +458,4 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
         privacyTransactions.removeFromPrivacyGroup(
             privacyGroupId, nodeRemovingMember, signer, memberBeingRemoved));
   }
-
-  //  @Test
-  //  public void privGetPrivateTransactionSuccessShouldReturnExpectedPrivateTransaction()
-  //      throws JsonProcessingException {
-  //    final PrivateTransaction validSignedPrivateTransaction =
-  //        getValidSignedPrivateTransaction(senderAddress);
-  //
-  //    receiveEnclaveStub(validSignedPrivateTransaction);
-  //    retrievePrivacyGroupEnclaveStub();
-  //    sendEnclaveStub(KEY1);
-  //
-  //    final Hash transactionHash =
-  //        node.execute(
-  //            privacyTransactions.sendRawTransaction(
-  //                getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
-  //    node.verify(priv.getSuccessfulTransactionReceipt(transactionHash));
-  //    node.verify(priv.getPrivateTransaction(transactionHash, validSignedPrivateTransaction));
-  //  }
-  //
-  //  @Test
-  //  public void privCreatePrivacyGroupSuccessShouldReturnNewId() throws JsonProcessingException {
-  //    createPrivacyGroupEnclaveStub();
-  //
-  //    node.verify(
-  //        priv.createPrivacyGroup(
-  //            List.of(KEY1, KEY2, KEY3), "GroupName", "Group description.", PRIVACY_GROUP_ID));
-  //  }
-  //
-  //  @Test
-  //  public void privDeletePrivacyGroupSuccessShouldReturnId() throws JsonProcessingException {
-  //    retrievePrivacyGroupEnclaveStub();
-  //    deletePrivacyGroupEnclaveStub();
-  //
-  //    node.verify(priv.deletePrivacyGroup(PRIVACY_GROUP_ID));
-  //  }
-  //
-  //  @Test
-  //  public void privFindPrivacyGroupSuccessShouldReturnExpectedGroupMembership()
-  //      throws JsonProcessingException {
-  //    final List<PrivacyGroup> groupMembership =
-  //        List.of(
-  //            testPrivacyGroup(singletonList(ENCLAVE_KEY), PrivacyGroup.Type.PANTHEON),
-  //            testPrivacyGroup(singletonList(ENCLAVE_KEY), PrivacyGroup.Type.PANTHEON),
-  //            testPrivacyGroup(singletonList(ENCLAVE_KEY), PrivacyGroup.Type.PANTHEON));
-  //
-  //    findPrivacyGroupEnclaveStub(groupMembership);
-  //
-  //    node.verify(priv.findPrivacyGroup(groupMembership.size(), ENCLAVE_KEY));
-  //  }
-  //
-  //  @Test
-  //  public void eeaSendRawTransactionSuccessShouldReturnPrivateTransactionHash()
-  //      throws JsonProcessingException {
-  //    final PrivateTransaction validSignedPrivateTransaction =
-  //        getValidSignedPrivateTransaction(senderAddress);
-  //
-  //    retrievePrivacyGroupEnclaveStub();
-  //    sendEnclaveStub(KEY1);
-  //    receiveEnclaveStub(validSignedPrivateTransaction);
-  //
-  //    node.verify(
-  //        priv.eeaSendRawTransaction(
-  //            getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
-  //  }
-  //
-  //  @Test
-  //  public void privGetTransactionCountSuccessShouldReturnExpectedTransactionCount()
-  //      throws JsonProcessingException {
-  //    final PrivateTransaction validSignedPrivateTransaction =
-  //        getValidSignedPrivateTransaction(senderAddress);
-  //    final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
-  //    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
-  //
-  //    retrievePrivacyGroupEnclaveStub();
-  //    sendEnclaveStub(KEY1);
-  //    receiveEnclaveStub(validSignedPrivateTransaction);
-  //
-  //    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
-  //    final Hash transactionReceipt =
-  //        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
-  //
-  //    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
-  //    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
-  //  }
-  //
-  //  @Test
-  //  public void privDistributeRawTransactionSuccessShouldReturnEnclaveKey()
-  //      throws JsonProcessingException {
-  //    final String enclaveResponseKeyBytes = Bytes.wrap(Bytes.fromBase64String(KEY1)).toString();
-  //
-  //    retrievePrivacyGroupEnclaveStub();
-  //    sendEnclaveStub(KEY1);
-  //
-  //    node.verify(
-  //        priv.distributeRawTransaction(
-  //
-  // getRLPOutput(getValidSignedPrivateTransaction(senderAddress)).encoded().toHexString(),
-  //            enclaveResponseKeyBytes));
-  //  }
-  //
-  //  @Test
-  //  public void privGetTransactionReceiptSuccessShouldReturnTransactionReceiptAfterMined()
-  //      throws JsonProcessingException {
-  //    final PrivateTransaction validSignedPrivateTransaction =
-  //        getValidSignedPrivateTransaction(senderAddress);
-  //    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
-  //
-  //    retrievePrivacyGroupEnclaveStub();
-  //    sendEnclaveStub(KEY1);
-  //    receiveEnclaveStub(validSignedPrivateTransaction);
-  //
-  //    final Hash transactionReceipt =
-  //        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
-  //
-  //    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
-  //  }
-  //
-  //  @Test
-  //  public void privGetEeaTransactionCountSuccessShouldReturnExpectedTransactionCount()
-  //      throws JsonProcessingException {
-  //    final PrivateTransaction validSignedPrivateTransaction =
-  //        getValidSignedPrivateTransaction(senderAddress);
-  //    final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
-  //    final String senderAddressBase64 =
-  // Base64.encode(Bytes.wrap(accountAddress.getBytes(UTF_8)));
-  //    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
-  //    final List<PrivacyGroup> groupMembership =
-  //        List.of(testPrivacyGroup(emptyList(), PrivacyGroup.Type.LEGACY));
-  //
-  //    retrievePrivacyGroupEnclaveStub();
-  //    sendEnclaveStub(KEY1);
-  //    receiveEnclaveStub(validSignedPrivateTransaction);
-  //    findPrivacyGroupEnclaveStub(groupMembership);
-  //
-  //    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
-  //    final Hash transactionHash =
-  //        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
-  //
-  //    node.verify(priv.getSuccessfulTransactionReceipt(transactionHash));
-  //
-  //    final String privateFrom = ENCLAVE_KEY;
-  //    final String[] privateFor = {senderAddressBase64};
-  //    node.verify(priv.getEeaTransactionCount(accountAddress, privateFrom, privateFor, 1));
-  //  }
-  //
-  //  private void findPrivacyGroupEnclaveStub(final List<PrivacyGroup> groupMembership)
-  //      throws JsonProcessingException {
-  //    final String findGroupResponse = mapper.writeValueAsString(groupMembership);
-  //    stubFor(post("/findPrivacyGroup").willReturn(ok(findGroupResponse)));
-  //  }
-  //
-  //  private void createPrivacyGroupEnclaveStub() throws JsonProcessingException {
-  //    final String createGroupResponse =
-  //        mapper.writeValueAsString(testPrivacyGroup(emptyList(), PrivacyGroup.Type.PANTHEON));
-  //    stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
-  //  }
-  //
-  //  private void deletePrivacyGroupEnclaveStub() throws JsonProcessingException {
-  //    final String deleteGroupResponse = mapper.writeValueAsString(PRIVACY_GROUP_ID);
-  //    stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteGroupResponse)));
-  //  }
-  //
-  //  private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
-  //    final String retrieveGroupResponse =
-  //        mapper.writeValueAsString(
-  //            testPrivacyGroup(List.of(ENCLAVE_KEY), PrivacyGroup.Type.PANTHEON));
-  //    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
-  //  }
-  //
-  //  private void sendEnclaveStub(final String testKey) throws JsonProcessingException {
-  //    final String sendResponse = mapper.writeValueAsString(new SendResponse(testKey));
-  //    stubFor(post("/send").willReturn(ok(sendResponse)));
-  //  }
-  //
-  //  private void receiveEnclaveStub(final PrivateTransaction privTx) throws
-  // JsonProcessingException {
-  //    final BytesValueRLPOutput rlpOutput = getRLPOutputForReceiveResponse(privTx);
-  //    final String senderKey = privTx.getPrivateFrom().toBase64String();
-  //    final String receiveResponse =
-  //        mapper.writeValueAsString(
-  //            new ReceiveResponse(
-  //                rlpOutput.encoded().toBase64String().getBytes(UTF_8), PRIVACY_GROUP_ID,
-  // senderKey));
-  //    stubFor(post("/receive").willReturn(ok(receiveResponse)));
-  //  }
-  //
-  //  private BytesValueRLPOutput getRLPOutputForReceiveResponse(
-  //      final PrivateTransaction privateTransaction) {
-  //    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
-  //    privateTransaction.writeTo(bvrlpo);
-  //    return bvrlpo;
-  //  }
-  //
-  //  private BytesValueRLPOutput getRLPOutput(final PrivateTransaction privateTransaction) {
-  //    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
-  //    privateTransaction.writeTo(bvrlpo);
-  //    return bvrlpo;
-  //  }
-  //
-  //  private PrivacyGroup testPrivacyGroup(
-  //      final List<String> groupMembers, final PrivacyGroup.Type groupType) {
-  //    return new PrivacyGroup(PRIVACY_GROUP_ID, groupType, "test", "testGroup", groupMembers);
-  //  }
-  //
-  //  private static PrivateTransaction getValidSignedPrivateTransaction(final Address
-  // senderAddress) {
-  //    return PrivateTransaction.builder()
-  //        .nonce(0)
-  //        .gasPrice(Wei.ZERO)
-  //        .gasLimit(3000000)
-  //        .to(null)
-  //        .value(Wei.ZERO)
-  //        .payload(Bytes.wrap(new byte[] {}))
-  //        .sender(senderAddress)
-  //        .chainId(BigInteger.valueOf(2018))
-  //        .privateFrom(Bytes.fromBase64String(ENCLAVE_KEY))
-  //        .restriction(Restriction.RESTRICTED)
-  //        .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
-  //        .signAndBuild(TEST_KEY);
-  //  }
 }

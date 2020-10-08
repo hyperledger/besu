@@ -24,7 +24,6 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
@@ -59,7 +58,7 @@ public class PrivacyNodeFactory {
                 .jsonRpcEnabled()
                 .webSocketEnabled()
                 .enablePrivateTransactions()
-                .keyFilePath(Optional.ofNullable(privacyAccount.getPrivateKeyPath()))
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .build(),
             new OrionKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())));
@@ -79,7 +78,7 @@ public class PrivacyNodeFactory {
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()
-                .keyFilePath(Optional.ofNullable(privacyAccount.getPrivateKeyPath()))
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .webSocketEnabled()
                 .build(),
@@ -113,7 +112,7 @@ public class PrivacyNodeFactory {
                 .webSocketConfiguration(node.createWebSocketEnabledConfig())
                 .devMode(false)
                 .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
-                .keyFilePath(Optional.of(privacyAccount.getPrivateKeyPath()))
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .build(),
             new OrionKeyConfiguration(
@@ -143,7 +142,7 @@ public class PrivacyNodeFactory {
                 .jsonRpcEnabled()
                 .webSocketEnabled()
                 .enablePrivateTransactions()
-                .keyFilePath(Optional.of(privacyAccount.getPrivateKeyPath()))
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .build(),
             new OrionKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())));
@@ -163,7 +162,7 @@ public class PrivacyNodeFactory {
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()
-                .keyFilePath(Optional.of(privacyAccount.getPrivateKeyPath()))
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .webSocketEnabled()
                 .build(),

@@ -67,10 +67,10 @@ public class OrionTestHarnessFactory {
   public static OrionTestHarness create(
       final Path tempDir,
       final Path[] key1pubs,
-      final Path[] key1key,
+      final Path[] key1keys,
       final List<String> othernodes) {
 
     return new OrionTestHarness(
-        new OrionConfiguration(key1pubs, key1key, tempDir, othernodes, false));
+        new OrionConfiguration(key1pubs, key1keys, tempDir, othernodes, false));
   }
 }
