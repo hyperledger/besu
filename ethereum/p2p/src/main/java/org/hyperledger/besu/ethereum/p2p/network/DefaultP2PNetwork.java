@@ -474,7 +474,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     public Builder randomPeerPriority(final boolean randomPeerPriority) {
-      checkNotNull(rlpxAgent);
       this.randomPeerPriority = randomPeerPriority;
       return this;
     }
