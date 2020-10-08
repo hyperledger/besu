@@ -27,7 +27,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.junit.Test;
 
@@ -57,7 +56,7 @@ public class EthHashMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            Function.identity(),
+            GasLimitCalculator.constant(),
             EthHash::epoch);
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
@@ -87,7 +86,7 @@ public class EthHashMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            Function.identity(),
+            GasLimitCalculator.constant(),
             EthHash::epoch);
 
     assertThatExceptionOfType(IllegalArgumentException.class)

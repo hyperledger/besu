@@ -14,47 +14,42 @@
  */
 package org.hyperledger.besu.controller;
 
-import java.util.Optional;
-import java.util.function.Function;
+import static com.google.common.base.Preconditions.checkArgument;
+
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class GasLimitCalculator implements Function<Long, Long> {
+public class TargetingGasLimitCalculator implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   public static final long ADJUSTMENT_FACTOR = 1024L;
-  public static final Optional<Long> DEFAULT = Optional.empty();
-  private final Optional<Long> targetGasLimit;
+  private final Long targetGasLimit;
 
-  public GasLimitCalculator(final Optional<Long> targetGasLimit) {
-    if (targetGasLimit.orElse(0L) < 0L) {
-      throw new IllegalArgumentException("Invalid target gas limit");
-    }
+  public TargetingGasLimitCalculator(final Long targetGasLimit) {
+    checkArgument(targetGasLimit >= 0, "Invalid target gas limit");
 
     this.targetGasLimit = targetGasLimit;
   }
 
   @Override
-  public Long apply(final Long gasLimit) {
-    long newGasLimit =
-        targetGasLimit
-            .map(
-                target -> {
-                  if (target > gasLimit) {
-                    return Math.min(target, safeAdd(gasLimit));
-                  } else if (target < gasLimit) {
-                    return Math.max(target, safeSub(gasLimit));
-                  } else {
-                    return gasLimit;
-                  }
-                })
-            .orElse(gasLimit);
-
-    if (newGasLimit != gasLimit) {
-      LOG.debug("Adjusting block gas limit from {} to {}", gasLimit, newGasLimit);
+  public long nextGasLimit(final long previousGasLimit) {
+    final long nextGasLimit;
+    if (targetGasLimit > previousGasLimit) {
+      nextGasLimit = Math.min(targetGasLimit, safeAdd(previousGasLimit));
+    } else if (targetGasLimit < previousGasLimit) {
+      nextGasLimit = Math.max(targetGasLimit, safeSub(previousGasLimit));
+    } else {
+      nextGasLimit = previousGasLimit;
     }
 
-    return newGasLimit;
+    if (nextGasLimit != previousGasLimit) {
+      LOG.debug("Adjusting block gas limit from {} to {}", previousGasLimit, nextGasLimit);
+    }
+
+    return nextGasLimit;
   }
 
   private long safeAdd(final long gasLimit) {
@@ -71,5 +66,18 @@ public class GasLimitCalculator implements Function<Long, Long> {
     } catch (final ArithmeticException ex) {
       return 0;
     }
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TargetingGasLimitCalculator that = (TargetingGasLimitCalculator) o;
+    return Objects.equals(targetGasLimit, that.targetGasLimit);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(targetGasLimit);
   }
 }
