@@ -1,5 +1,18 @@
 # Changelog
 
+## Deprecated and Scheduled for removal in _Next_ Release
+
+### Whitelist
+Deprecated in 1.5. Support for `whitelist` removed from 3 areas:
+- Local permissioning TOML config now requires keys (`nodes-allowlist` and `accounts-allowlist`).
+- CLI option `--host-whitelist` removed. Use `--host-allowlist` instead.
+- JSON-RPC APIs to modify local permissioning allowlists. `perm_*Whitelist` removed. Use `perm_*Allowlist` instead.
+
+### --privacy-precompiled-address
+Deprecated in 1.5.1
+- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
+on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+
 ## 20.10 Breaking Changes
 
 When upgrading to 20.10, ensure you've taken into account the following breaking changes.
