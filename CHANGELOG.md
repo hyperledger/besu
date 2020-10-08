@@ -10,7 +10,7 @@ Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC re
 
 In Besu version 20.10, properly formatted requests that have valid parameters (count and content) will return a HTTP Status 200 OK, with an error field if an error occurred. For example, requesting an account that does not exist in the chain, or a block by hash that Besu does not have, will now return HTTP 200 OK responses. Unparsable requests, improperly formatted requests, or requests with invalid parameters will continue to return HTTP 400 Bad Request.
 
-This was done to bring us more in line with the behavior of other Ethereum Clients. Some community projects, such as Web3J, will be providing compatible releases in the near future.  
+Users of Web3J should note that many calls will now return a result with the error field containing the message whereas before a call would throw an exception with the error message as the exception message.   
 
 ## 20.10.0-RC1
 
