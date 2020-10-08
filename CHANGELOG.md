@@ -4,7 +4,7 @@
 
 When upgrading to 20.10, ensure you've taken into account the following breaking changes.
 
-## JSON-RPC HTTP Error Codes For Valid Calls
+### JSON-RPC HTTP Error Codes For Valid Calls
 
 Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC requests that completed in an error, regardless of the kind of error.  These responses could include a complete JSON-RPC response with an error field.
 
