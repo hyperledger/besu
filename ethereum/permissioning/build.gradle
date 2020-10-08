@@ -39,6 +39,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.web3j:abi:5.0.0'
 
   testImplementation project(':config')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
