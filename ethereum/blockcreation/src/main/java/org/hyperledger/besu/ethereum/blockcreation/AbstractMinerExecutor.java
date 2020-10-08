@@ -31,7 +31,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +45,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   protected final ProtocolSchedule protocolSchedule;
   protected final PendingTransactions pendingTransactions;
   protected final AbstractBlockScheduler blockScheduler;
-  protected final Function<Long, Long> gasLimitCalculator;
+  protected final GasLimitCalculator gasLimitCalculator;
 
   protected volatile Bytes extraData;
   protected volatile Wei minTransactionGasPrice;
@@ -60,7 +59,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final Function<Long, Long> gasLimitCalculator) {
+      final GasLimitCalculator gasLimitCalculator) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.pendingTransactions = pendingTransactions;

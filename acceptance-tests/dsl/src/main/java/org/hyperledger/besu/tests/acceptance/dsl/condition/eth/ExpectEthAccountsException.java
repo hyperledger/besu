@@ -21,8 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthAccountsTransaction;
 
-import org.web3j.protocol.exceptions.ClientConnectionException;
-
 public class ExpectEthAccountsException implements Condition {
 
   private final String expectedMessage;
@@ -37,7 +35,7 @@ public class ExpectEthAccountsException implements Condition {
   @Override
   public void verify(final Node node) {
     final Throwable thrown = catchThrowable(() -> node.execute(transaction));
-    assertThat(thrown).isInstanceOf(ClientConnectionException.class);
+    assertThat(thrown).isInstanceOf(RuntimeException.class);
     assertThat(thrown.getMessage()).contains(expectedMessage);
   }
 }

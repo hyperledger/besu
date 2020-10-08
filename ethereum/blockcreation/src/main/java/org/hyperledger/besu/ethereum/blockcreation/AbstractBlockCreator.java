@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
@@ -66,7 +65,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected final Address coinbase;
 
-  private final Function<Long, Long> gasLimitCalculator;
+  private final GasLimitCalculator gasLimitCalculator;
 
   private final ExtraDataCalculator extraDataCalculator;
   private final PendingTransactions pendingTransactions;
@@ -87,7 +86,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final Function<Long, Long> gasLimitCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
       final Double minBlockOccupancyRatio,
@@ -257,7 +256,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final long gasLimit = gasLimitCalculator.apply(parentHeader.getGasLimit());
+    final long gasLimit = gasLimitCalculator.nextGasLimit(parentHeader.getGasLimit());
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
