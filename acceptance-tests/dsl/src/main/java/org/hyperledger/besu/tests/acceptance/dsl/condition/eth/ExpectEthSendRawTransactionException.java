@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.condition.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -33,8 +34,8 @@ public class ExpectEthSendRawTransactionException implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final String result = node.execute(transaction);
-    assertThat(result).isNotNull();
-    assertThat(result).contains(expectedMessage);
+    final Throwable thrown = catchThrowable(() -> node.execute(transaction));
+    assertThat(thrown).isInstanceOf(RuntimeException.class);
+    assertThat(thrown.getMessage()).contains(expectedMessage);
   }
 }

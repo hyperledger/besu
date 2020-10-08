@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -101,7 +100,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1426")
   public void noAccessWhenNotAMember() {
     final MultiTenancyPrivacyGroup twoTenantsFromAlice = new MultiTenancyPrivacyGroup();
     final List<String> tenants = aliceMultiTenancyPrivacyNode.getTenants();

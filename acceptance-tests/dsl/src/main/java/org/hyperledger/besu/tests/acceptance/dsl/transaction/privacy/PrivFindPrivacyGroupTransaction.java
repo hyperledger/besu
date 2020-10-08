@@ -36,6 +36,9 @@ public class PrivFindPrivacyGroupTransaction implements Transaction<PrivacyGroup
       final PrivacyRequestFactory.FindPrivacyGroupResponse result =
           node.privacy().privFindPrivacyGroup(groupMembers).send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);

@@ -86,7 +86,7 @@ public class PrivacyRequestFactory {
 
     @JsonCreator
     public GetTransactionCountResponse(@JsonProperty("result") final String result) {
-      this.count = Integer.decode(result);
+      this.count = result == null ? null : Integer.decode(result);
     }
 
     public Integer getCount() {
