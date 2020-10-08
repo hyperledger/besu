@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.web3j.protocol.besu.Besu;
+import org.web3j.protocol.besu.response.privacy.PrivCreatePrivacyGroup;
 import org.web3j.utils.Base64String;
 
 public class CreatePrivacyGroupTransaction implements Transaction<String> {
@@ -45,11 +46,14 @@ public class CreatePrivacyGroupTransaction implements Transaction<String> {
   public String execute(final NodeRequests node) {
     final Besu besu = node.privacy().getBesuClient();
     try {
-      return besu.privCreatePrivacyGroup(addresses, name, description)
-          .send()
-          .getPrivacyGroupId()
-          .toString();
-    } catch (IOException e) {
+      final PrivCreatePrivacyGroup result =
+          besu.privCreatePrivacyGroup(addresses, name, description).send();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      } else {
+        return result.getPrivacyGroupId().toString();
+      }
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }
