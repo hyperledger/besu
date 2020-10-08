@@ -24,6 +24,7 @@ public interface EthHasher {
    * @param buffer At least 64 bytes long buffer to store EthHash result in
    * @param nonce Block Nonce
    * @param number Block Number
+   * @param epochCalc Function for calculating epoch
    * @param headerHash Block Header (without mix digest and nonce) Hash
    */
   void hash(
