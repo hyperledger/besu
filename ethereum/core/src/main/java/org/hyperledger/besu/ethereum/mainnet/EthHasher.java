@@ -38,7 +38,7 @@ public interface EthHasher {
         final byte[] buffer,
         final long nonce,
         final long number,
-        Function<Long, Long> epochCalc,
+        final Function<Long, Long> epochCalc,
         final byte[] headerHash) {
       final EthHashCacheFactory.EthHashDescriptor cache =
           cacheFactory.ethHashCacheFor(number, epochCalc);
