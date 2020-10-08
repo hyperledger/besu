@@ -1226,10 +1226,18 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void enableRandomConnectionPrioritization() {
-
-    parseCommand("--randomly-prioritize-connections");
+    parseCommand("--random-peer-priority-enabled");
     verify(mockRunnerBuilder).randomPeerPriority(eq(true));
     assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void randomConnectionPrioritizationDisabledByDefault() {
+    parseCommand();
+    verify(mockRunnerBuilder).randomPeerPriority(eq(false));
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
