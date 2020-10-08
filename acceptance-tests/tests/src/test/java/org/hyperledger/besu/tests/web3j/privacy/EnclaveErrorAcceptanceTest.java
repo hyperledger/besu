@@ -84,7 +84,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1426")
   public void whenEnclaveIsDisconnectedGetReceiptReturnsInternalError() {
     final EventEmitter eventEmitter =
         alice.execute(
@@ -160,7 +159,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Web3J is broken by PR #1426")
   public void createPrivacyGroupReturnsCorrectError() {
     final Throwable throwable =
         catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));
