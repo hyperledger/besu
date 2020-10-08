@@ -860,6 +860,7 @@ public class RunnerBuilder {
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }
+
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(
             vertx,

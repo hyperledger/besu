@@ -12,32 +12,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.net;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.math.BigInteger;
 
-import org.web3j.protocol.core.methods.response.NetPeerCount;
+public class PrivGetTransaction
+    implements Transaction<PrivacyRequestFactory.GetPrivateTransactionResponse> {
 
-public class NetPeerCountTransaction implements Transaction<BigInteger> {
+  private final String transactionHash;
 
-  NetPeerCountTransaction() {}
+  public PrivGetTransaction(final String transactionHash) {
+    this.transactionHash = transactionHash;
+  }
 
   @Override
-  public BigInteger execute(final NodeRequests node) {
+  public PrivacyRequestFactory.GetPrivateTransactionResponse execute(final NodeRequests node) {
     try {
-      final NetPeerCount result = node.net().netPeerCount().send();
-      assertThat(result).isNotNull();
-      if (result.hasError()) {
-        throw new RuntimeException(result.getError().getMessage());
-      }
-      assertThat(result.hasError()).isFalse();
-      return result.getQuantity();
+      final PrivacyRequestFactory.GetPrivateTransactionResponse response =
+          node.privacy().privGetPrivateTransaction(Hash.fromHexString(transactionHash)).send();
+      assertThat(response).as("check response is not null").isNotNull();
+      assertThat(response.getResult()).as("check result in response isn't null").isNotNull();
+      return response;
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

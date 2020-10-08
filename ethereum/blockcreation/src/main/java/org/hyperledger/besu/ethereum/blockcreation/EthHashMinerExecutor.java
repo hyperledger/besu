@@ -41,7 +41,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final Function<Long, Long> gasLimitCalculator) {
+      final GasLimitCalculator gasLimitCalculator) {
     super(
         protocolContext,
         protocolSchedule,

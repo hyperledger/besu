@@ -102,7 +102,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
 
-    if (isMining(messageFrame)) {
+    if (skipContractExecution(messageFrame)) {
       return Bytes.EMPTY;
     }
 
