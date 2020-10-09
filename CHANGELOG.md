@@ -2,12 +2,6 @@
 
 ## Deprecated and Scheduled for removal in _Next_ Release
 
-### Whitelist
-Deprecated in 1.5. Support for `whitelist` removed from 3 areas:
-- Local permissioning TOML config now requires keys (`nodes-allowlist` and `accounts-allowlist`).
-- CLI option `--host-whitelist` removed. Use `--host-allowlist` instead.
-- JSON-RPC APIs to modify local permissioning allowlists. `perm_*Whitelist` removed. Use `perm_*Allowlist` instead.
-
 ### --privacy-precompiled-address
 Deprecated in 1.5.1
 - CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
