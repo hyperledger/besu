@@ -1,10 +1,17 @@
 # Changelog
 
+## Deprecated and Scheduled for removal in _Next_ Release
+
+### --privacy-precompiled-address
+Deprecated in 1.5.1
+- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
+on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+
 ## 20.10 Breaking Changes
 
 When upgrading to 20.10, ensure you've taken into account the following breaking changes.
 
-## JSON-RPC HTTP Error Codes For Valid Calls
+### JSON-RPC HTTP Error Codes For Valid Calls
 
 Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC requests that completed in an error, regardless of the kind of error.  These responses could include a complete JSON-RPC response with an error field.
 
