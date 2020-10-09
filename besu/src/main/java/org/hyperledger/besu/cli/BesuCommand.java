@@ -888,9 +888,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean migratePrivateDatabase = false;
 
   @Option(
-      names = {"--privacy-onchain-groups-enabled"},
-      description = "Enable onchain privacy groups (default: ${DEFAULT-VALUE})")
-  private final Boolean isOnchainPrivacyGroupEnabled = false;
+      names = {"--privacy-flexible-groups-enabled", "--privacy-onchain-groups-enabled"},
+      description = "Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
+  private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
       names = {"--target-gas-limit"},
@@ -1840,7 +1840,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
+      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
