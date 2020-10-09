@@ -203,7 +203,7 @@ public class BesuNodeFactory {
         privacyParametersBuilder
             .setMultiTenancyEnabled(true)
             .setEnabled(true)
-            .setFlexiblePrivacyGroupsEnabled(enableOnChainPrivacy)
+            .setOnchainPrivacyGroupsEnabled(enableOnChainPrivacy)
             .setStorageProvider(new InMemoryPrivacyStorageProvider())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .setEnclaveUrl(URI.create(enclaveUrl))

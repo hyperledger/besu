@@ -177,7 +177,7 @@ public class PrivacyNode implements AutoCloseable {
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))
-              .setFlexiblePrivacyGroupsEnabled(isOnchainPrivacyEnabled)
+              .setOnchainPrivacyGroupsEnabled(isOnchainPrivacyEnabled)
               .setMultiTenancyEnabled(isMultitenancyEnabled)
               .build();
     } catch (final IOException e) {

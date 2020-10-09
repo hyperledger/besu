@@ -1840,7 +1840,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
+      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
