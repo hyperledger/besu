@@ -154,6 +154,16 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getPhoenixBlockNumber();
 
+  /**
+   * Block number to activate ECIP-1099 on Classic networks. Doubles the length of the Ethash epoch,
+   * with the impact being a reduced DAG size.
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
+   * @return block number of ECIP-1099 fork on Classic networks
+   */
+  OptionalLong getEcip1099BlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -50,7 +51,7 @@ public class ProofOfWorkValidationRuleTest {
       throws IOException {
     blockHeader = ValidationTestUtils.readHeader(parentBlockNum);
     parentHeader = ValidationTestUtils.readHeader(blockNum);
-    validationRule = new ProofOfWorkValidationRule();
+    validationRule = new ProofOfWorkValidationRule(EthHash::epoch);
   }
 
   @Parameters(name = "block {1}")
@@ -91,7 +92,11 @@ public class ProofOfWorkValidationRuleTest {
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = validationRule.hashHeader(preHeader);
     ProofOfWorkValidationRule.HASHER.hash(
-        hashBuffer, preHeader.getNonce(), preHeader.getNumber(), headerHash.toArray());
+        hashBuffer,
+        preHeader.getNonce(),
+        preHeader.getNumber(),
+        EthHash::epoch,
+        headerHash.toArray());
 
     final BlockHeader header =
         headerBuilder
