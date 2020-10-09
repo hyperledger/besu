@@ -1,10 +1,17 @@
 # Changelog
 
+## Deprecated and Scheduled for removal in _Next_ Release
+
+### --privacy-precompiled-address
+Deprecated in 1.5.1
+- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
+on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+
 ## 20.10 Breaking Changes
 
 When upgrading to 20.10, ensure you've taken into account the following breaking changes.
 
-## JSON-RPC HTTP Error Codes For Valid Calls
+### JSON-RPC HTTP Error Codes For Valid Calls
 
 Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC requests that completed in an error, regardless of the kind of error.  These responses could include a complete JSON-RPC response with an error field.
 
@@ -26,6 +33,7 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 * Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#1399](https://github.com/hyperledger/besu/pull/1399)
 * Added support for multi-tenancy when using the early access feature of [onchain privacy group management](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) 
 * Fixed memory leak in eth/65 subprotocol behavior. It is now enabled by default. [\#1420](https://github.com/hyperledger/besu/pull/1420), [#1348](https://github.com/hyperledger/besu/pull/1348), [#1321](https://github.com/hyperledger/besu/pull/1321)
+* Added `--privacy-flexible-groups-enabled` as an alternative for `--privacy-onchain-groups-enabled` CLI option
 * Added support for ECIP-1099: Calibrate Epoch Duration. [\#1421](https://github.com/hyperledger/besu/pull/1421)
 
 ### Bug Fixes
