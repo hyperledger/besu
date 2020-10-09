@@ -3153,6 +3153,30 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void flexibleAndOnchainTogetherPrivacyGroupEnabledFlagValueIsSet() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--privacy-flexible-groups-enabled",
+        "--privacy-onchain-groups-enabled",
+        "--min-gas-price",
+        "0");
+
+    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
+        ArgumentCaptor.forClass(PrivacyParameters.class);
+
+    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
+    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
+  }
+
+  @Test
   public void privacyMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
     parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
 
