@@ -334,6 +334,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
+    getEcip1099BlockNumber().ifPresent(l -> builder.put("ecip1099Block", l));
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
