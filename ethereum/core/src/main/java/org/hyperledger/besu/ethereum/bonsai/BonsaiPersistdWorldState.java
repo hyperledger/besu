@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CollectBranchesVisitor;
 import org.hyperledger.besu.ethereum.trie.DumpVisitor;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -47,6 +46,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -70,8 +70,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   private final KeyValueStorage trieBranchStorage;
   private final KeyValueStorage trieLogStorage;
 
-  private final Map<Address, BonsaiAccount> accountsToUpdate = new HashMap<>();
-  private final Set<Address> accountsToDelete = new HashSet<>();
+  private final Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new HashMap<>();
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
   private final Set<Address> storageToClear = new HashSet<>();
   private final Map<Address, Map<Bytes32, BonsaiValue<UInt256>>> storageToUpdate = new HashMap<>();
@@ -125,6 +124,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
     final CollectBranchesVisitor<Bytes> branchCollector = new CollectBranchesVisitor<>();
     try {
+      // first clear storage
       for (final Address address : storageToClear) {
         // because we are clearing persisted values we need the account root as persisted
         final BonsaiAccount oldAccount =
@@ -145,7 +145,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                 oldAccount.getStorageRoot(),
                 Function.identity(),
                 Function.identity());
-        var entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+        Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
         while (!entriesToDelete.isEmpty()) {
           entriesToDelete
               .keySet()
@@ -159,10 +159,13 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         }
       }
 
+      // second update account storage state.  This must be done before updating the accounts so
+      // that we can get the storage state hash
       for (final Map.Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>> storageAccountUpdate :
           storageToUpdate.entrySet()) {
         final Address updatedAddress = storageAccountUpdate.getKey();
-        final BonsaiAccount accountUpdated = accountsToUpdate.get(updatedAddress);
+        final BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(updatedAddress);
+        final BonsaiAccount accountUpdated = accountValue.getUpdated();
         if (accountUpdated != null) {
           final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
               new StoredMerklePatriciaTrie<>(
@@ -202,8 +205,10 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
               (key, value) -> writeStorageTrieNode(trieBranchTx, updatedAddress, key, value));
           accountUpdated.setStorageRoot(Hash.wrap(storageTrie.getRootHash()));
         }
+        // TODO delete account storage in else block
       }
 
+      // Third update the code.  This has the side effect of ensureing a code hash is calculated.
       for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate : codeToUpdate.entrySet()) {
         final Bytes updatedCode = codeUpdate.getValue().getUpdated();
         if (updatedCode == null || updatedCode.size() == 0) {
@@ -213,25 +218,28 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         }
       }
 
-      for (final Address accountKey : accountsToDelete) {
-        final Hash addressHash = Hash.hash(accountKey);
-        accountTx.remove(accountKey.toArrayUnsafe());
-        accountTrie.remove(addressHash);
-        // TODO clear storage
-      }
-
+      // next collect the branches that will be trimmed
       for (final Address updatedAccountAddress : accountsToUpdate.keySet()) {
         checkNotNull(updatedAccountAddress);
         accountTrie.acceptAtRoot(branchCollector, bytesToPath(updatedAccountAddress));
       }
 
-      for (final Map.Entry<Address, BonsaiAccount> accountUpdate : accountsToUpdate.entrySet()) {
-        final BonsaiAccount updatedAccount = accountUpdate.getValue();
+      // now add the accounts
+      for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
+          accountsToUpdate.entrySet()) {
         final Bytes accountKey = accountUpdate.getKey();
-        final Hash addressHash = updatedAccount.getAddressHash();
-        final Bytes accountValue = updatedAccount.serializeAccount();
-        accountTx.put(accountKey.toArrayUnsafe(), accountValue.toArrayUnsafe());
-        accountTrie.put(addressHash, accountValue);
+        final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
+        final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
+        if (updatedAccount == null) {
+          final Hash addressHash = Hash.hash(accountKey);
+          accountTx.remove(accountKey.toArrayUnsafe());
+          accountTrie.remove(addressHash);
+        } else {
+          final Hash addressHash = updatedAccount.getAddressHash();
+          final Bytes accountValue = updatedAccount.serializeAccount();
+          accountTx.put(accountKey.toArrayUnsafe(), accountValue.toArrayUnsafe());
+          accountTrie.put(addressHash, accountValue);
+        }
       }
 
       accountTrie.commit((key, value) -> writeTrieNode(trieBranchTx, key, value));
@@ -243,12 +251,12 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         trieBranchTx.remove(trieHash.toArrayUnsafe());
       }
 
-      //FIXME get BlockHash
+      // FIXME get BlockHash
       final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
       generateTrieLog().writeTo(rlpLog);
-      //FIXME just round trip checking
+      // FIXME just round trip checking
       try {
-      TrieLogLayer.readFrom(new BytesValueRLPInput(rlpLog.encoded(), false, true));
+        TrieLogLayer.readFrom(new BytesValueRLPInput(rlpLog.encoded(), false, true));
       } catch (final Exception re) {
         System.out.println(rlpLog.encoded());
         throw re;
@@ -267,7 +275,6 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         storageToUpdate.clear();
         codeToUpdate.clear();
         accountsToUpdate.clear();
-        accountsToDelete.clear();
       } else {
         accountTx.rollback();
         codeTx.rollback();
@@ -307,16 +314,14 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
   @Override
   public Account get(final Address address) {
-    final BonsaiAccount account = accountsToUpdate.get(address);
-    if (account != null) {
-      return account;
-    } else if (accountsToDelete.contains(address)) {
-      return null;
-    } else {
+    final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+    if (bonsaiValue == null) {
       return accountStorage
           .get(address.toArrayUnsafe())
           .map(bytes -> fromRLP(BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes), true))
           .orElse(null);
+    } else {
+      return bonsaiValue.getUpdated();
     }
   }
 
@@ -428,39 +433,58 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
   public TrieLogLayer generateTrieLog() {
     final TrieLogLayer layer = new TrieLogLayer();
-    //FIXME
+    // FIXME
     layer.setBlockHash(worldStateRootHash);
-    for (final var updatedAccount : accountsToUpdate.entrySet()) {
-      final BonsaiAccount account = updatedAccount.getValue();
+    for (final Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
+        accountsToUpdate.entrySet()) {
+      final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
+      final BonsaiAccount oldValue = bonsaiValue.getOriginal();
       final StateTrieAccountValue oldAccount =
-          new StateTrieAccountValue(
-              account.getOriginalNonce(),
-              account.getOriginalBalance(),
-              account.getOriginalStorageRoot(),
-              account.getOriginalCodeHash(),
-              account.getVersion());
+          oldValue == null
+              ? null
+              : new StateTrieAccountValue(
+                  oldValue.getNonce(),
+                  oldValue.getBalance(),
+                  oldValue.getStorageRoot(),
+                  oldValue.getCodeHash(),
+                  oldValue.getVersion());
+      final BonsaiAccount newValue = bonsaiValue.getUpdated();
       final StateTrieAccountValue newAccount =
-          new StateTrieAccountValue(
-              account.getNonce(),
-              account.getBalance(),
-              account.getStorageRoot(),
-              account.getCodeHash(),
-              account.getVersion());
+          newValue == null
+              ? null
+              : new StateTrieAccountValue(
+                  newValue.getNonce(),
+                  newValue.getBalance(),
+                  newValue.getStorageRoot(),
+                  newValue.getCodeHash(),
+                  newValue.getVersion());
       layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
     }
 
-    for (final var updatedCode : codeToUpdate.entrySet()) {
-      layer.addCodeChange(updatedCode.getKey(), updatedCode.getValue().getOriginal(), updatedCode.getValue().getUpdated());
+    for (final Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
+      layer.addCodeChange(
+          updatedCode.getKey(),
+          updatedCode.getValue().getOriginal(),
+          updatedCode.getValue().getUpdated());
     }
 
-    for (final var updatedCode : codeToUpdate.entrySet()) {
-      layer.addCodeChange(updatedCode.getKey(), updatedCode.getValue().getOriginal(), updatedCode.getValue().getUpdated());
+    for (final Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
+      layer.addCodeChange(
+          updatedCode.getKey(),
+          updatedCode.getValue().getOriginal(),
+          updatedCode.getValue().getUpdated());
     }
 
-    for (final var updatesStorage : storageToUpdate.entrySet()) {
+    for (final Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>> updatesStorage :
+        storageToUpdate.entrySet()) {
       final Address address = updatesStorage.getKey();
-      for (final var slotUpdate : updatesStorage.getValue().entrySet()) {
-        layer.addStorageChange(address, slotUpdate.getKey(), slotUpdate.getValue().getOriginal(), slotUpdate.getValue().getUpdated());
+      for (final Entry<Bytes32, BonsaiValue<UInt256>> slotUpdate :
+          updatesStorage.getValue().entrySet()) {
+        layer.addStorageChange(
+            address,
+            slotUpdate.getKey(),
+            slotUpdate.getValue().getOriginal(),
+            slotUpdate.getValue().getUpdated());
       }
     }
 
@@ -475,6 +499,13 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
     @Override
     public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
+      BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+      if (bonsaiValue == null) {
+        bonsaiValue = new BonsaiValue<>(null, null);
+        accountsToUpdate.put(address, bonsaiValue);
+      } else if (bonsaiValue.getUpdated() != null) {
+        throw new IllegalStateException("Cannot create an account when one already exists");
+      }
       final BonsaiAccount newAccount =
           new BonsaiAccount(
               BonsaiPersistdWorldState.this,
@@ -486,27 +517,28 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
               Hash.EMPTY,
               Account.DEFAULT_VERSION,
               true);
-      accountsToUpdate.put(address, newAccount);
+      bonsaiValue.setUpdated(newAccount);
       return newAccount;
     }
 
     @Override
     protected BonsaiAccount getForMutation(final Address address) {
-      BonsaiAccount acct = accountsToUpdate.get(address);
-      if (acct == null && !accountsToDelete.contains(address)) {
-        acct =
+      final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+      if (bonsaiValue == null) {
+        final BonsaiAccount storedAccount =
             accountStorage
                 .get(address.toArrayUnsafe())
                 .map(
                     bytes ->
                         fromRLP(BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes), true))
                 .orElse(null);
-        if (acct != null) {
-          accountsToUpdate.put(address, acct);
-          //              new BonsaiAccount(BonsaiPersistedWorldState.this, acct));
+        if (storedAccount != null) {
+          accountsToUpdate.put(address, new BonsaiValue<>(storedAccount, storedAccount));
         }
+        return storedAccount;
+      } else {
+        return bonsaiValue.getUpdated();
       }
-      return acct;
     }
 
     @Override
@@ -531,10 +563,15 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     @Override
     public void commit() {
       for (final Address deletedAddress : getDeletedAccounts()) {
-        codeToUpdate.put(deletedAddress, new BonsaiValue<>(null, Bytes.EMPTY));
         storageToClear.add(deletedAddress);
-        accountsToUpdate.remove(deletedAddress);
-        accountsToDelete.add(deletedAddress);
+        final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
+        if (codeValue != null) {
+          codeValue.setUpdated(null);
+        }
+        final BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(deletedAddress);
+        if (accountValue != null) {
+          accountValue.setUpdated(null);
+        }
         // TODO delete storage trie
       }
 
@@ -542,7 +579,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         BonsaiAccount updatedAccount = tracked.getWrappedAccount();
         if (updatedAccount == null) {
           updatedAccount = new BonsaiAccount(BonsaiPersistdWorldState.this, tracked);
-          accountsToUpdate.put(tracked.getAddress(), updatedAccount);
+          accountsToUpdate.put(tracked.getAddress(), new BonsaiValue<>(null, updatedAccount));
         } else {
           updatedAccount.setBalance(tracked.getBalance());
           updatedAccount.setNonce(tracked.getNonce());
@@ -566,7 +603,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           pendingStorageUpdates.clear();
         }
 
-        final var entries =
+        final TreeSet<Entry<UInt256, UInt256>> entries =
             new TreeSet<>(
                 Comparator.comparing(
                     (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
