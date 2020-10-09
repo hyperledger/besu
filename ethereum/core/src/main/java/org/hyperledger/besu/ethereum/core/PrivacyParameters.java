@@ -243,7 +243,7 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setOnchainPrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
+    public Builder setFlexiblePrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
       this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
       return this;
     }
