@@ -23,7 +23,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -32,6 +31,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
@@ -166,7 +166,7 @@ public final class RunnerTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
-            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .gasLimitCalculator(GasLimitCalculator.constant())
             .build()) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
@@ -186,7 +186,7 @@ public final class RunnerTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
-            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -249,7 +249,7 @@ public final class RunnerTest {
               .privacyParameters(PrivacyParameters.DEFAULT)
               .clock(TestClock.fixed())
               .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-              .targetGasLimit(GasLimitCalculator.DEFAULT)
+              .gasLimitCalculator(GasLimitCalculator.constant())
               .build();
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =

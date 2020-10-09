@@ -1,5 +1,24 @@
 # Changelog
 
+## Deprecated and Scheduled for removal in _Next_ Release
+
+### --privacy-precompiled-address
+Deprecated in 1.5.1
+- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
+on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+
+## 20.10 Breaking Changes
+
+When upgrading to 20.10, ensure you've taken into account the following breaking changes.
+
+### JSON-RPC HTTP Error Codes For Valid Calls
+
+Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC requests that completed in an error, regardless of the kind of error.  These responses could include a complete JSON-RPC response with an error field.
+
+In Besu version 20.10, properly formatted requests that have valid parameters (count and content) will return a HTTP Status 200 OK, with an error field if an error occurred. For example, requesting an account that does not exist in the chain, or a block by hash that Besu does not have, will now return HTTP 200 OK responses. Unparsable requests, improperly formatted requests, or requests with invalid parameters will continue to return HTTP 400 Bad Request.
+
+Users of Web3J should note that many calls will now return a result with the error field containing the message whereas before a call would throw an exception with the error message as the exception message.   
+
 ## 20.10.0-RC1
 
 ### Release format
@@ -12,11 +31,14 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 * Added `debug_standardTraceBadBlockToFile` JSON-RPC API. This API is similar to `debug_standardTraceBlockToFile`, but can be used to obtain info about a block which has been rejected as invalid. [\#1403](https://github.com/hyperledger/besu/pull/1403)
 * Added support for EIP-2929 to YOLOv2. [#1387](https://github.com/hyperledger/besu/pull/1387)     
 * Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#1399](https://github.com/hyperledger/besu/pull/1399)
+* Added support for multi-tenancy when using the early access feature of [onchain privacy group management](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) 
 * Fixed memory leak in eth/65 subprotocol behavior. It is now enabled by default. [\#1420](https://github.com/hyperledger/besu/pull/1420), [#1348](https://github.com/hyperledger/besu/pull/1348), [#1321](https://github.com/hyperledger/besu/pull/1321)
+* Added `--privacy-flexible-groups-enabled` as an alternative for `--privacy-onchain-groups-enabled` CLI option
 
 ### Bug Fixes
 
 * Log block import rejection reasons at "INFO" level.  Bug [#1412](https://github.com/hyperledger/besu/issues/1412)
+* Fixed NPE when executing `eth_estimateGas` with privacy enabled.  Bug [#1404](https://github.com/hyperledger/besu/issues/1404)
 
 #### Previously identified known issues
 

@@ -73,6 +73,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -86,6 +87,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -886,9 +888,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean migratePrivateDatabase = false;
 
   @Option(
-      names = {"--privacy-onchain-groups-enabled"},
-      description = "Enable onchain privacy groups (default: ${DEFAULT-VALUE})")
-  private final Boolean isOnchainPrivacyGroupEnabled = false;
+      names = {"--privacy-flexible-groups-enabled", "--privacy-onchain-groups-enabled"},
+      description = "Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
+  private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
       names = {"--target-gas-limit"},
@@ -1473,7 +1475,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pruningConfiguration(
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
-        .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
+        .gasLimitCalculator(
+            Optional.ofNullable(targetGasLimit)
+                .<GasLimitCalculator>map(TargetingGasLimitCalculator::new)
+                .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold);
   }
@@ -1835,13 +1840,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
-
-      if (isPrivacyMultiTenancyEnabled && isOnchainPrivacyGroupEnabled) {
-        throw new ParameterException(
-            commandLine,
-            "Privacy multi-tenancy and onchain privacy groups cannot be used together");
-      }
+      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {

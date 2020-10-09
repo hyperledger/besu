@@ -303,6 +303,19 @@ public class PrivacyPrecompiledContractTest {
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
+  @Test
+  public void testSimulatedPublicTransactionIsSkipped() {
+    final PrivacyPrecompiledContract emptyContract =
+        new PrivacyPrecompiledContract(null, null, null, null);
+
+    // A simulated public transaction doesn't contain a PrivateMetadataUpdater
+    final MessageFrame frame = mock(MessageFrame.class);
+    when(frame.getPrivateMetadataUpdater()).thenReturn(null);
+
+    final Bytes result = emptyContract.compute(null, frame);
+    assertThat(result).isEqualTo(Bytes.EMPTY);
+  }
+
   private byte[] convertPrivateTransactionToBytes(final PrivateTransaction privateTransaction) {
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     privateTransaction.writeTo(bytesValueRLPOutput);

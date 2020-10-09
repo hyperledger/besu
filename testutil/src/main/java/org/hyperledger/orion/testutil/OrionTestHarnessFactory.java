@@ -18,36 +18,59 @@ import static org.apache.tuweni.io.file.Files.copyResource;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class OrionTestHarnessFactory {
 
-  public static OrionTestHarness create(final Path tempDir, final OrionKeyConfiguration orionConfig)
-      throws IOException {
+  public static OrionTestHarness create(
+      final Path tempDir, final OrionKeyConfiguration orionConfig) {
     return create(
         tempDir,
-        orionConfig.getPubKeyPath(),
-        orionConfig.getPrivKeyPath(),
+        orionConfig.getPubKeyPaths(),
+        orionConfig.getPrivKeyPaths(),
         Collections.emptyList());
   }
 
   public static OrionTestHarness create(
       final Path tempDir,
-      final String pubKeyPath,
-      final String privKeyPath,
-      final List<String> othernodes)
-      throws IOException {
-    final Path key1pub = copyResource(pubKeyPath, tempDir.resolve(pubKeyPath));
-    final Path key1key = copyResource(privKeyPath, tempDir.resolve(privKeyPath));
+      final String[] pubKeyPaths,
+      final String[] privKeyPaths,
+      final List<String> othernodes) {
+    final Path[] pubKeys =
+        Arrays.stream(pubKeyPaths)
+            .map(
+                (pk) -> {
+                  try {
+                    return copyResource(pk, tempDir.resolve(pk));
+                  } catch (final IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .toArray(Path[]::new);
+    final Path[] privKeys =
+        Arrays.stream(privKeyPaths)
+            .map(
+                (pk) -> {
+                  try {
+                    return copyResource(pk, tempDir.resolve(pk));
+                  } catch (final IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .toArray(Path[]::new);
 
-    return create(tempDir, key1pub, key1key, othernodes);
+    return create(tempDir, pubKeys, privKeys, othernodes);
   }
 
   public static OrionTestHarness create(
-      final Path tempDir, final Path key1pub, final Path key1key, final List<String> othernodes) {
+      final Path tempDir,
+      final Path[] key1pubs,
+      final Path[] key1keys,
+      final List<String> othernodes) {
 
     return new OrionTestHarness(
-        new OrionConfiguration(key1pub, key1key, tempDir, othernodes, false));
+        new OrionConfiguration(key1pubs, key1keys, tempDir, othernodes, false));
   }
 }

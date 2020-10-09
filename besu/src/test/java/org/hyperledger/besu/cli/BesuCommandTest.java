@@ -44,12 +44,14 @@ import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -190,7 +192,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
-    verify(mockControllerBuilder).targetGasLimit(eq(Optional.empty()));
+    verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -3128,17 +3130,26 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onchainPrivacyAndMultiTenancyCannotBeUsedTogether() {
+  public void flexiblePrivacyGroupEnabledFlagValueIsSet() {
     parseCommand(
         "--privacy-enabled",
-        "--privacy-onchain-groups-enabled",
-        "--privacy-multi-tenancy-enabled",
-        "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file",
-        "--rpc-http-authentication-enabled");
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--privacy-flexible-groups-enabled",
+        "--min-gas-price",
+        "0");
 
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Privacy multi-tenancy and onchain privacy groups cannot be used together");
+    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
+        ArgumentCaptor.forClass(PrivacyParameters.class);
+
+    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
+    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
   }
 
   @Test
@@ -3347,37 +3358,39 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void targetGasLimitIsEnabledWhenSpecified() throws Exception {
+  public void targetGasLimitIsEnabledWhenSpecified() {
     parseCommand("--target-gas-limit=10000000");
 
     @SuppressWarnings("unchecked")
-    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
-        ArgumentCaptor.forClass(Optional.class);
+    final ArgumentCaptor<GasLimitCalculator> gasLimitCalculatorArgumentCaptor =
+        ArgumentCaptor.forClass(GasLimitCalculator.class);
 
-    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).gasLimitCalculator(gasLimitCalculatorArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.of(10_000_000L));
+    assertThat(gasLimitCalculatorArgumentCaptor.getValue())
+        .isEqualTo(new TargetingGasLimitCalculator(10_000_000L));
   }
 
   @Test
-  public void targetGasLimitIsDisabledWhenNotSpecified() throws Exception {
+  public void targetGasLimitIsDisabledWhenNotSpecified() {
     parseCommand();
 
     @SuppressWarnings("unchecked")
-    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
-        ArgumentCaptor.forClass(Optional.class);
+    final ArgumentCaptor<GasLimitCalculator> gasLimitCalculatorArgumentCaptor =
+        ArgumentCaptor.forClass(GasLimitCalculator.class);
 
-    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).gasLimitCalculator(gasLimitCalculatorArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.empty());
+    assertThat(gasLimitCalculatorArgumentCaptor.getValue())
+        .isEqualTo(GasLimitCalculator.constant());
   }
 
   @Test

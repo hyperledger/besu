@@ -28,7 +28,6 @@ import java.util.Collections;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.exceptions.ClientConnectionException;
 
 public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
 
@@ -107,7 +106,7 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void manipulatedNodesWhitelistWithHostnameShouldNotWorkWhenDnsDisabled() {
     Assertions.assertThatThrownBy(() -> node.verify(perm.addNodesToAllowlist(ENODE_FOURTH)))
-        .isInstanceOf(ClientConnectionException.class)
+        .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("Request contains an invalid node");
   }
 }
