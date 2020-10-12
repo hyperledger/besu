@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.CollectBranchesVisitor;
@@ -38,9 +39,12 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.util.io.RollingFileWriter;
 
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -53,6 +57,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.base.Objects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -77,14 +82,15 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   private final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie;
   private Bytes32 worldStateRootHash;
 
+  // FIXME
+  private final RollingFileWriter layerWriter;
+
   public BonsaiPersistdWorldState(
-      @SuppressWarnings("unused") final MutableWorldState fallbackStorage,
       final KeyValueStorage accountStorage,
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
-    //    this.fallbackStorage = fallbackStorage;
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
@@ -96,6 +102,17 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     accountTrie =
         new StoredMerklePatriciaTrie<>(
             this::getTrieNode, worldStateRootHash, Function.identity(), Function.identity());
+    try {
+      layerWriter = new RollingFileWriter(BonsaiPersistdWorldState::bodyFileName, false);
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static Path bodyFileName(final int fileNumber, final boolean compressed) {
+    return Path.of(
+        "/tmp/goerli/bonsai",
+        String.format("besu-layer-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
   }
 
   @Override
@@ -165,12 +182,15 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           storageToUpdate.entrySet()) {
         final Address updatedAddress = storageAccountUpdate.getKey();
         final BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(updatedAddress);
+        final BonsaiAccount accountOriginal = accountValue.getOriginal();
         final BonsaiAccount accountUpdated = accountValue.getUpdated();
         if (accountUpdated != null) {
+          final Hash storageRoot =
+              (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
           final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
               new StoredMerklePatriciaTrie<>(
                   key -> getStorageTrieNode(updatedAddress, key),
-                  accountUpdated.getStorageRoot(),
+                  storageRoot,
                   Function.identity(),
                   Function.identity());
           final byte[] writeAddressArray = new byte[Address.SIZE + Hash.SIZE];
@@ -203,12 +223,13 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           //        DumpVisitor<>(System.out));
           storageTrie.commit(
               (key, value) -> writeStorageTrieNode(trieBranchTx, updatedAddress, key, value));
-          accountUpdated.setStorageRoot(Hash.wrap(storageTrie.getRootHash()));
+          accountValue.getUpdated().setStorageRoot(Hash.wrap(storageTrie.getRootHash()));
+        // } else {
+          // TODO delete account storage in else block
         }
-        // TODO delete account storage in else block
       }
 
-      // Third update the code.  This has the side effect of ensureing a code hash is calculated.
+      // Third update the code.  This has the side effect of ensuring a code hash is calculated.
       for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate : codeToUpdate.entrySet()) {
         final Bytes updatedCode = codeUpdate.getValue().getUpdated();
         if (updatedCode == null || updatedCode.size() == 0) {
@@ -256,10 +277,11 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       generateTrieLog().writeTo(rlpLog);
       // FIXME just round trip checking
       try {
+        layerWriter.writeBytes(rlpLog.encoded().toArrayUnsafe());
         TrieLogLayer.readFrom(new BytesValueRLPInput(rlpLog.encoded(), false, true));
-      } catch (final Exception re) {
+      } catch (final Exception e) {
         System.out.println(rlpLog.encoded());
-        throw re;
+        throw new RuntimeException(e);
       }
       trieLogTx.put(worldStateRootHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
 
@@ -491,6 +513,190 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     return layer;
   }
 
+  public void rollForward(final TrieLogLayer layer) {
+    layer
+        .streamAccountChanges()
+        .forEach(
+            entry ->
+                rollForwardAccountChange(
+                    entry.getKey(), entry.getValue().getOriginal(), entry.getValue().getUpdated()));
+    layer
+        .streamCodeChanges()
+        .forEach(
+            entry ->
+                rollForwardCodeChange(
+                    entry.getKey(), entry.getValue().getOriginal(), entry.getValue().getUpdated()));
+    layer
+        .streamStorageChanges()
+        .forEach(
+            entry ->
+                entry
+                    .getValue()
+                    .forEach(
+                        (key, value) ->
+                            rollForwardStorageChange(
+                                entry.getKey(), key, value.getOriginal(), value.getUpdated())));
+  }
+
+  private void rollForwardAccountChange(
+      final Address address,
+      final StateTrieAccountValue oldValue,
+      final StateTrieAccountValue newValue) {
+    if (Objects.equal(oldValue, newValue)) {
+      // non-change, a cached read.
+      return;
+    }
+    BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(address);
+    if (accountValue == null) {
+      final Optional<byte[]> bytes = accountStorage.get(address.toArrayUnsafe());
+      if (bytes.isPresent()) {
+        final BonsaiAccount account =
+            BonsaiAccount.fromRLP(
+                BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes.get()), true);
+        accountValue = new BonsaiValue<>(new BonsaiAccount(account), account);
+        accountsToUpdate.put(address, accountValue);
+      }
+    }
+    if (accountValue == null) {
+      if (oldValue == null && newValue != null) {
+        accountsToUpdate.put(
+            address,
+            new BonsaiValue<>(
+                null,
+                new BonsaiAccount(
+                    this,
+                    address,
+                    Hash.hash(address),
+                    newValue.getNonce(),
+                    newValue.getBalance(),
+                    newValue.getStorageRoot(),
+                    newValue.getCodeHash(),
+                    newValue.getVersion(),
+                    true)));
+      } else {
+        throw new IllegalStateException(
+            "Expected to update account, but the account does not exist");
+      }
+    } else {
+      if (oldValue == null) {
+        throw new IllegalStateException("Expected to create account, but the account exists");
+      }
+      accountValue
+          .getOriginal()
+          .assertCloseEnoughForDiffing(oldValue, "Prior Value in Roll Forward");
+      if (newValue == null) {
+        if (accountValue.getOriginal() == null) {
+          accountsToUpdate.remove(address);
+        } else {
+          accountValue.setUpdated(null);
+        }
+      } else {
+        final BonsaiAccount existingAccount = accountValue.getUpdated();
+        existingAccount.setNonce(newValue.getNonce());
+        existingAccount.setBalance(newValue.getBalance());
+        existingAccount.setStorageRoot(newValue.getStorageRoot());
+        // depend on correctly structured layers to set code hash
+        // existingAccount.setCodeHash(oldValue.getNonce());
+        existingAccount.setVersion(newValue.getVersion());
+      }
+    }
+  }
+
+  private void rollForwardCodeChange(
+      final Address address, final Bytes oldCode, final Bytes newCode) {
+    if (Objects.equal(oldCode, newCode)) {
+      // non-change, a cached read.
+      return;
+    }
+    BonsaiValue<Bytes> codeValue = codeToUpdate.get(address);
+    if (codeValue == null) {
+      final Optional<byte[]> bytes = codeStorage.get(address.toArrayUnsafe());
+      if (bytes.isPresent()) {
+        final Bytes codeBytes = Bytes.wrap(bytes.get());
+        codeValue = new BonsaiValue<>(codeBytes, codeBytes);
+        codeToUpdate.put(address, codeValue);
+      }
+    }
+
+    if (codeValue == null) {
+      if (oldCode == null && newCode != null) {
+        codeToUpdate.put(address, new BonsaiValue<>(null, newCode));
+      } else {
+        throw new IllegalStateException("Expected to update code, but the code does not exist");
+      }
+    } else {
+      if (oldCode == null) {
+        throw new IllegalStateException("Expected to create code, but the code exists");
+      }
+      if (!codeValue.getOriginal().equals(oldCode)) {
+        throw new IllegalStateException("Old value of code does not match expected value");
+      }
+      if (newCode == null) {
+        if (codeValue.getOriginal() == null) {
+          codeToUpdate.remove(address);
+        } else {
+          codeValue.setUpdated(null);
+        }
+      } else {
+        codeValue.setUpdated(newCode);
+      }
+    }
+  }
+
+  private Map<Bytes32, BonsaiValue<UInt256>> maybeCreateStorageMap(
+      final Map<Bytes32, BonsaiValue<UInt256>> storageMap, final Address address) {
+    if (storageMap == null) {
+      final Map<Bytes32, BonsaiValue<UInt256>> newMap = new HashMap<>();
+      storageToUpdate.put(address, newMap);
+      return newMap;
+    } else {
+      return storageMap;
+    }
+  }
+
+  private void rollForwardStorageChange(
+      final Address address, final Bytes32 slot, final UInt256 original, final UInt256 updated) {
+    if (Objects.equal(original, updated)) {
+      // non-change, a cached read.
+      return;
+    }
+    final Map<Bytes32, BonsaiValue<UInt256>> storageMap = storageToUpdate.get(address);
+    BonsaiValue<UInt256> slotValue = storageMap == null ? null : storageMap.get(slot);
+    if (slotValue == null) {
+      final Bytes compositeKey = Bytes.concatenate(address, Hash.hash(slot));
+      final Optional<byte[]> valueBits = storageStorage.get(compositeKey.toArrayUnsafe());
+      if (valueBits.isPresent()) {
+        final UInt256 storageValue = UInt256.fromBytes(Bytes.wrap(valueBits.get()));
+        slotValue = new BonsaiValue<>(storageValue, storageValue);
+        storageToUpdate.computeIfAbsent(address, k -> new HashMap<>()).put(slot, slotValue);
+      }
+    }
+    if (slotValue == null) {
+      if (original == null && updated != null) {
+        maybeCreateStorageMap(storageMap, address).put(slot, new BonsaiValue<>(null, updated));
+      } else {
+        throw new IllegalStateException(
+            "Expected to update storage value, but the slot does not exist");
+      }
+    } else {
+      if (original == null) {
+        throw new IllegalStateException("Expected to create code, but the code exists");
+      }
+      if (!slotValue.getOriginal().equals(original)) {
+        throw new IllegalStateException("Old value of slot does not match expected value");
+      }
+      if (updated == null) {
+        if (slotValue.getOriginal() == null) {
+          maybeCreateStorageMap(storageMap, address).remove(slot);
+        } else {
+          slotValue.setUpdated(null);
+        }
+      } else {
+        slotValue.setUpdated(updated);
+      }
+    }
+  }
+
   public class BonsaiUpdater extends AbstractWorldUpdater<BonsaiPersistdWorldState, BonsaiAccount> {
 
     protected BonsaiUpdater(final BonsaiPersistdWorldState world) {
@@ -518,7 +724,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
               Account.DEFAULT_VERSION,
               true);
       bonsaiValue.setUpdated(newAccount);
-      return newAccount;
+      return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
     }
 
     @Override
@@ -533,7 +739,8 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                         fromRLP(BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes), true))
                 .orElse(null);
         if (storedAccount != null) {
-          accountsToUpdate.put(address, new BonsaiValue<>(storedAccount, storedAccount));
+          accountsToUpdate.put(
+              address, new BonsaiValue<>(new BonsaiAccount(storedAccount), storedAccount));
         }
         return storedAccount;
       } else {
@@ -610,14 +817,14 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
         for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
-          final Bytes32 key = storageUpdate.getKey().toBytes();
+          final UInt256 keyUInt = storageUpdate.getKey();
+          final Bytes32 key = keyUInt.toBytes();
           final UInt256 value = storageUpdate.getValue();
           final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(key);
           if (pendingValue == null) {
-            // if it existed before it would have been loaded, so it's a new create
-            pendingStorageUpdates.put(key, new BonsaiValue<>(null, value));
+            pendingStorageUpdates.put(
+                key, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
           } else {
-            pendingValue.setOriginal(value);
             pendingValue.setUpdated(value);
           }
         }

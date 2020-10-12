@@ -29,8 +29,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
-import com.google.common.base.Preconditions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -182,6 +182,18 @@ public class TrieLogLayer {
       output.endList(); // this change
     }
     output.endList(); // container
+  }
+
+  Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
+    return accounts.entrySet().stream();
+  }
+
+  Stream<Map.Entry<Address, BonsaiValue<Bytes>>> streamCodeChanges() {
+    return code.entrySet().stream();
+  }
+
+  Stream<Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>>> streamStorageChanges() {
+    return storage.entrySet().stream();
   }
 
   private static <T> T nullOrValue(final RLPInput input, final Function<RLPInput, T> reader) {

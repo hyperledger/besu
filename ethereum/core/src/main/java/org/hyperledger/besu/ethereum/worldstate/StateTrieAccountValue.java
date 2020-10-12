@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
+import java.util.Objects;
 
 /** Represents the raw values associated with an account in the world state trie. */
 public class StateTrieAccountValue {
@@ -29,17 +33,15 @@ public class StateTrieAccountValue {
   private final Hash codeHash;
   private final int version;
 
-  private StateTrieAccountValue(
-      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    this(nonce, balance, storageRoot, codeHash, Account.DEFAULT_VERSION);
-  }
-
   public StateTrieAccountValue(
       final long nonce,
       final Wei balance,
       final Hash storageRoot,
       final Hash codeHash,
       final int version) {
+    checkNotNull(balance, "balance cannot be null");
+    checkNotNull(storageRoot, "storageRoot cannot be null");
+    checkNotNull(codeHash, "codeHash cannot be null");
     this.nonce = nonce;
     this.balance = balance;
     this.storageRoot = storageRoot;
@@ -90,6 +92,23 @@ public class StateTrieAccountValue {
    */
   public int getVersion() {
     return version;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final StateTrieAccountValue that = (StateTrieAccountValue) o;
+    return nonce == that.nonce
+        && version == that.version
+        && balance.equals(that.balance)
+        && storageRoot.equals(that.storageRoot)
+        && codeHash.equals(that.codeHash);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(nonce, balance, storageRoot, codeHash, version);
   }
 
   public void writeTo(final RLPOutput out) {

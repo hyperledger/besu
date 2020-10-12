@@ -29,11 +29,13 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 
+import com.google.common.base.Objects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -76,8 +78,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  public BonsaiAccount(final BonsaiPersistdWorldState context, final BonsaiAccount toCopy) {
-    this.context = context;
+  public BonsaiAccount(final BonsaiAccount toCopy) {
+    this.context = toCopy.context;
     this.address = toCopy.getAddress();
     this.addressHash = toCopy.getAddressHash();
     this.nonce = toCopy.getNonce();
@@ -312,5 +314,29 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         + ", version="
         + version
         + '}';
+  }
+
+  /**
+   * Throws an exception if the two accounts represent different stored states
+   * @param account the account to compare
+   * @param context a description to be added to the thrown exceptions
+   * @throws IllegalStateException if the stored values differ
+   */
+  public void assertCloseEnoughForDiffing(final StateTrieAccountValue account, final String context) {
+    if (nonce != account.getNonce()) {
+      throw new IllegalStateException(context + ": nonces differ");
+    }
+    if (!Objects.equal(balance, account.getBalance())) {
+      throw new IllegalStateException(context + ": balances differ");
+    }
+    if (!Objects.equal(codeHash, account.getCodeHash())) {
+      throw new IllegalStateException(context + ": Code Hashes differ");
+    }
+    if (!Objects.equal(storageRoot, account.getStorageRoot())) {
+      throw new IllegalStateException(context + ": Storage Roots differ");
+    }
+    if (version != account.getVersion()) {
+      throw new IllegalStateException(context + ": versions differ");
+    }
   }
 }

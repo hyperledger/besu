@@ -50,6 +50,8 @@ dependencies {
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
 
+  implementation 'org.xerial.snappy:snappy-java'
+
   annotationProcessor 'org.immutables:value'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'

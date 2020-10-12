@@ -39,7 +39,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     // FIXME not for production
     persistedState =
         new BonsaiPersistdWorldState(
-            fallback,
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
             provider.getStorageBySegmentIdentifier(

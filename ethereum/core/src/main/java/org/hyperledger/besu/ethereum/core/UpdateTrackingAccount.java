@@ -69,7 +69,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.updatedStorage = new TreeMap<>();
   }
 
-  UpdateTrackingAccount(final A account) {
+  public UpdateTrackingAccount(final A account) {
     checkNotNull(account);
 
     this.address = account.getAddress();
