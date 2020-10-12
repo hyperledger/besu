@@ -58,6 +58,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -326,11 +327,17 @@ public class RlpxAgentTest {
   @Test
   public void incomingConnection_succeedsEventuallyWithRandomPeerPrioritization() {
     // Saturate connections with one local and one remote
-    startAgentWithMaxPeers(2, builder -> builder.randomPeerPriority(true));
+    final int maxPeers = 25;
+    startAgentWithMaxPeers(
+        maxPeers,
+        builder -> builder.randomPeerPriority(true),
+        rlpxConfiguration -> rlpxConfiguration.setLimitRemoteWireConnectionsEnabled(false));
     agent.connect(createPeer());
-    connectionInitializer.simulateIncomingConnection(connection(createPeer()));
+    for (int i = 0; i < 24; i++) {
+      connectionInitializer.simulateIncomingConnection(connection(createPeer()));
+    }
     // Sanity check
-    assertThat(agent.getConnectionCount()).isEqualTo(2);
+    assertThat(agent.getConnectionCount()).isEqualTo(maxPeers);
 
     boolean newConnectionDisconnected = false;
     boolean oldConnectionDisconnected = false;
@@ -352,7 +359,8 @@ public class RlpxAgentTest {
       } else if (!connectionsBefore.equals(connectionsAfter)) {
         oldConnectionDisconnected = true;
       }
-      assertThat(agent.getConnectionCount()).isEqualTo(2);
+
+      assertThat(agent.getConnectionCount()).isEqualTo(maxPeers);
     }
     assertThat(newConnectionDisconnected).isTrue();
     assertThat(oldConnectionDisconnected).isTrue();
@@ -996,13 +1004,15 @@ public class RlpxAgentTest {
   }
 
   private void startAgentWithMaxPeers(final int maxPeers) {
-    startAgentWithMaxPeers(maxPeers, Function.identity());
+    startAgentWithMaxPeers(maxPeers, Function.identity(), __ -> {});
   }
 
   private void startAgentWithMaxPeers(
-      final int maxPeers, final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization) {
+      final int maxPeers,
+      final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization,
+      final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
     config.setMaxPeers(maxPeers);
-    agent = agent(buildCustomization);
+    agent = agent(buildCustomization, rlpxConfigurationModifier);
     startAgent();
   }
 
@@ -1012,11 +1022,14 @@ public class RlpxAgentTest {
   }
 
   private RlpxAgent agent() {
-    return agent(Function.identity());
+    return agent(Function.identity(), __ -> {});
   }
 
-  private RlpxAgent agent(final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization) {
+  private RlpxAgent agent(
+      final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization,
+      final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
     config.setLimitRemoteWireConnectionsEnabled(true);
+    rlpxConfigurationModifier.accept(config);
     return buildCustomization
         .apply(
             RlpxAgent.builder()
