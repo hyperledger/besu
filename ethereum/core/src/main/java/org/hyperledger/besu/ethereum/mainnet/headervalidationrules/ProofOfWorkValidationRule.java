@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,13 +38,16 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   static final EthHasher HASHER = new EthHasher.Light();
 
+  private final Function<Long, Long> epochCalculator;
   private final boolean includeBaseFee;
 
-  public ProofOfWorkValidationRule() {
-    this(false);
+  public ProofOfWorkValidationRule(final Function<Long, Long> epochCalculator) {
+    this(epochCalculator, false);
   }
 
-  public ProofOfWorkValidationRule(final boolean includeBaseFee) {
+  public ProofOfWorkValidationRule(
+      final Function<Long, Long> epochCalculator, final boolean includeBaseFee) {
+    this.epochCalculator = epochCalculator;
     this.includeBaseFee = includeBaseFee;
   }
 
@@ -61,7 +65,8 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = hashHeader(header);
-    HASHER.hash(hashBuffer, header.getNonce(), header.getNumber(), headerHash.toArray());
+    HASHER.hash(
+        hashBuffer, header.getNonce(), header.getNumber(), epochCalculator, headerHash.toArray());
 
     if (header.getDifficulty().isZero()) {
       LOG.trace("Rejecting header because difficulty is 0");
