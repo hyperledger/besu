@@ -352,8 +352,8 @@ public class RlpxAgentTest {
       } else if (!connectionsBefore.equals(connectionsAfter)) {
         oldConnectionDisconnected = true;
       }
+      assertThat(agent.getConnectionCount()).isEqualTo(2);
     }
-    assertThat(agent.getConnectionCount()).isEqualTo(2);
     assertThat(newConnectionDisconnected).isTrue();
     assertThat(oldConnectionDisconnected).isTrue();
   }
