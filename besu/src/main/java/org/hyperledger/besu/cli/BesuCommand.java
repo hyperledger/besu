@@ -352,6 +352,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .getValue();
 
   @Option(
+      names = {"--random-peer-priority-enabled"},
+      description =
+          "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
+  private final Boolean randomPeerPriority = false;
+
+  @Option(
       names = {"--banned-node-ids", "--banned-node-id"},
       paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
       description = "A list of node IDs to ban from the P2P network.",
@@ -1999,6 +2005,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .limitRemoteWireConnectionsEnabled(isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
                 Fraction.fromPercentage(maxRemoteConnectionsPercentage).getValue())
+            .randomPeerPriority(randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
