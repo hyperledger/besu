@@ -1225,6 +1225,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void enableRandomConnectionPrioritization() {
+    parseCommand("--random-peer-priority-enabled");
+    verify(mockRunnerBuilder).randomPeerPriority(eq(true));
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void randomConnectionPrioritizationDisabledByDefault() {
+    parseCommand();
+    verify(mockRunnerBuilder).randomPeerPriority(eq(false));
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void syncMode_fast() {
     parseCommand("--sync-mode", "FAST");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
