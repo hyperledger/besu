@@ -484,7 +484,9 @@ public class RlpxAgent {
     } else if (bIgnoresPeerLimits && !aIgnoresPeerLimits) {
       return 1;
     } else {
-      return randomPeerPriority ? compareRandomly(a, b) : compareConnectionInitiationTimes(a, b);
+      return randomPeerPriority
+          ? compareByMaskedNodeId(a, b)
+          : compareConnectionInitiationTimes(a, b);
     }
   }
 
@@ -492,7 +494,7 @@ public class RlpxAgent {
     return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
   }
 
-  private int compareRandomly(final RlpxConnection a, final RlpxConnection b) {
+  private int compareByMaskedNodeId(final RlpxConnection a, final RlpxConnection b) {
     return a.getPeer().getId().xor(nodeIdMask).compareTo(b.getPeer().getId().xor(nodeIdMask));
   }
 
