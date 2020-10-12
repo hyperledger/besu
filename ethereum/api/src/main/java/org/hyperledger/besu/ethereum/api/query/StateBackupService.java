@@ -34,11 +34,8 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.data.Hash;
+import org.hyperledger.besu.util.io.RollingFileWriter;
 
-import java.io.Closeable;
-import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -51,7 +48,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -60,12 +56,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.xerial.snappy.Snappy;
 
 public class StateBackupService {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final long MAX_FILE_SIZE = 1 << 28; // 256 MiB max file size
   private static final Bytes ACCOUNT_END_MARKER;
 
   static {
@@ -349,53 +343,6 @@ public class StateBackupService {
 
     backupStatus.storageCount.incrementAndGet();
     return State.CONTINUE;
-  }
-
-  static class RollingFileWriter implements Closeable {
-    final BiFunction<Integer, Boolean, Path> filenameGenerator;
-    final boolean compressed;
-    int currentSize;
-    int fileNumber;
-    FileOutputStream out;
-    final DataOutputStream index;
-
-    RollingFileWriter(
-        final BiFunction<Integer, Boolean, Path> filenameGenerator, final boolean compressed)
-        throws FileNotFoundException {
-      this.filenameGenerator = filenameGenerator;
-      this.compressed = compressed;
-      currentSize = 0;
-      fileNumber = 0;
-      final Path firstOutputFile = filenameGenerator.apply(fileNumber, compressed);
-      out = new FileOutputStream(firstOutputFile.toFile());
-      index = new DataOutputStream(new FileOutputStream(dataFileToIndex(firstOutputFile).toFile()));
-    }
-
-    void writeBytes(final byte[] bytes) throws IOException {
-      final byte[] finalBytes;
-      if (compressed) {
-        finalBytes = Snappy.compress(bytes);
-      } else {
-        finalBytes = bytes;
-      }
-      int pos = currentSize;
-      currentSize += finalBytes.length;
-      if (currentSize > MAX_FILE_SIZE) {
-        out.close();
-        out = new FileOutputStream(filenameGenerator.apply(++fileNumber, compressed).toFile());
-        currentSize = finalBytes.length;
-        pos = 0;
-      }
-      index.writeShort(fileNumber);
-      index.writeInt(pos);
-      out.write(finalBytes);
-    }
-
-    @Override
-    public void close() throws IOException {
-      out.close();
-      index.close();
-    }
   }
 
   public static final class BackupStatus {
