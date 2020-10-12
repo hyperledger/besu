@@ -335,7 +335,7 @@ public class RlpxAgentTest {
     boolean newConnectionDisconnected = false;
     boolean oldConnectionDisconnected = false;
     // With very high probability we should see the connections churn
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 1000 && !(newConnectionDisconnected && oldConnectionDisconnected); ++i) {
       final List<PeerConnection> connectionsBefore =
           agent.streamConnections().collect(Collectors.toUnmodifiableList());
 
