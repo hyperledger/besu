@@ -70,6 +70,8 @@ public class RlpxAgent {
   private final int maxConnections;
   private final boolean randomPeerPriority;
   private final int maxRemotelyInitiatedConnections;
+  // xor'ing with this mask will allow us to randomly let new peers connect
+  // without allowing the counterparty to play nodeId farming games
   private final Bytes nodeIdMask = Bytes.random(SECP256K1.PublicKey.BYTE_LENGTH);
 
   @VisibleForTesting final Map<Bytes, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
