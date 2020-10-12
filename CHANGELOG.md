@@ -19,6 +19,11 @@ In Besu version 20.10, properly formatted requests that have valid parameters (c
 
 Users of Web3J should note that many calls will now return a result with the error field containing the message whereas before a call would throw an exception with the error message as the exception message.   
 
+## 20.10.0-RC2
+
+### Additions and Improvements
+* Added support for ECIP-1099: Calibrate Epoch Duration. [\#1421](https://github.com/hyperledger/besu/pull/1421)
+
 ## 20.10.0-RC1
 
 ### Release format

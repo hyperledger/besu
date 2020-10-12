@@ -68,7 +68,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EeaSendRawTransactionTest {
 
-  private static final String VALID_LEAGCY_PRIVATE_TRANSACTION_RLP = validPrivateTransactionRlp();
+  private static final String VALID_LEGACY_PRIVATE_TRANSACTION_RLP = validPrivateTransactionRlp();
   private static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
       validPrivateTransactionRlpPrivacyGroup();
 
@@ -177,13 +177,7 @@ public class EeaSendRawTransactionTest {
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "eea_sendRawTransaction",
-                new String[] {VALID_LEAGCY_PRIVATE_TRANSACTION_RLP}),
-            user);
+    final JsonRpcRequestContext request = getJsonRpcRequestContext();
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -300,13 +294,7 @@ public class EeaSendRawTransactionTest {
         new EeaSendRawTransaction(
             transactionPool, privacyController, enclavePublicKeyProvider, true);
 
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "eea_sendRawTransaction",
-                new String[] {VALID_LEAGCY_PRIVATE_TRANSACTION_RLP}),
-            user);
+    final JsonRpcRequestContext request = getJsonRpcRequestContext();
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
@@ -315,6 +303,13 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  private JsonRpcRequestContext getJsonRpcRequestContext() {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest(
+            "2.0", "eea_sendRawTransaction", new String[] {VALID_LEGACY_PRIVATE_TRANSACTION_RLP}),
+        user);
   }
 
   @Test
@@ -391,12 +386,7 @@ public class EeaSendRawTransactionTest {
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_FAILED));
 
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "eea_sendRawTransaction",
-                new String[] {VALID_LEAGCY_PRIVATE_TRANSACTION_RLP}));
+    final JsonRpcRequestContext request = getJsonRpcRequestContext();
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
@@ -415,12 +405,7 @@ public class EeaSendRawTransactionTest {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any(), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "eea_sendRawTransaction",
-                new String[] {VALID_LEAGCY_PRIVATE_TRANSACTION_RLP}));
+    final JsonRpcRequestContext request = getJsonRpcRequestContext();
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
@@ -487,12 +472,7 @@ public class EeaSendRawTransactionTest {
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "eea_sendRawTransaction",
-                new String[] {VALID_LEAGCY_PRIVATE_TRANSACTION_RLP}));
+    final JsonRpcRequestContext request = getJsonRpcRequestContext();
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), expectedError);
