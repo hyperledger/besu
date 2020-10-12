@@ -1267,6 +1267,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString()).contains("--fast-sync-min-peers");
+    // whitelist is now a hidden option
+    assertThat(commandOutput.toString()).doesNotContain("whitelist");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
