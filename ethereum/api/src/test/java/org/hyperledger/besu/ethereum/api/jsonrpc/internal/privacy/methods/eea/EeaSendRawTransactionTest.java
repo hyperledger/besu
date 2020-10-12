@@ -263,7 +263,7 @@ public class EeaSendRawTransactionTest {
         .thenReturn(optionalPrivacyGroup);
     when(privacyController.buildAndSendAddPayload(
             any(PrivateTransaction.class), any(Bytes32.class), any(String.class)))
-        .thenReturn(Optional.of(ENCLAVE_PUBLIC_KEY));
+        .thenReturn(Optional.of(""));
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), any(Address.class)))
         .thenReturn(PUBLIC_TRANSACTION);
