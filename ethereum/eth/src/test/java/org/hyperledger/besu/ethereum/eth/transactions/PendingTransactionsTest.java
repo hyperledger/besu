@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -154,6 +156,29 @@ public class PendingTransactionsTest {
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionPending(localTransaction);
+  }
+
+  @Test
+  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    final List<Transaction> lowGasPriceTransactions =
+        IntStream.range(0, MAX_TRANSACTIONS)
+            .mapToObj(i -> transactionWithNonceSenderAndGasPrice(i + 1, KEYS1, 10))
+            .collect(Collectors.toUnmodifiableList());
+
+    // Fill the pool
+    lowGasPriceTransactions.forEach(transactions::addRemoteTransaction);
+
+    // This should kick the newest tx with the low gas price out, namely the last one we added
+    final Transaction highGasPriceTransaction =
+        transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
+    transactions.addRemoteTransaction(highGasPriceTransaction);
+    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+
+    assertTransactionPending(highGasPriceTransaction);
+    lowGasPriceTransactions.stream()
+        .limit(MAX_TRANSACTIONS - 1)
+        .forEach(this::assertTransactionPending);
+    assertTransactionNotPending(lowGasPriceTransactions.get(lowGasPriceTransactions.size() - 1));
   }
 
   @Test
