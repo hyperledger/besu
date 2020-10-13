@@ -1,5 +1,9 @@
 # Changelog
 
+### Additions and Improvements
+* `--random-peer-priority-enabled` flag added. Allows for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. [#1440](https://github.com/hyperledger/besu/pull/1440)
+* Hide deprecated `--host-whitelist` option. [\#1444](https://github.com/hyperledger/besu/pull/1444)
+
 ## Deprecated and Scheduled for removal in _Next_ Release
 
 ### --privacy-precompiled-address
@@ -50,6 +54,12 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
+
+
+### Download link 
+
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.0-RC1.zip
+sha256sum: `ae8979e43a81a69d3dcf207b556275d94edbb67490747f0454269f87d38ee4fb`
 
 ## 1.5.5
 

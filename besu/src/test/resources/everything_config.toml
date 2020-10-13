@@ -39,7 +39,9 @@ p2p-port=1234
 max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60
+random-peer-priority-enabled=false
 host-whitelist=["all"]
+host-allowlist=["all"]
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 
 # chain

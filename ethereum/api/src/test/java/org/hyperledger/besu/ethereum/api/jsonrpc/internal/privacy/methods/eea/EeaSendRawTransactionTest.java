@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -58,7 +57,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,7 +106,6 @@ public class EeaSendRawTransactionTest {
   @Mock private TransactionPool transactionPool;
   @Mock private EeaSendRawTransaction method;
   @Mock private PrivacyController privacyController;
-  @Mock private PrivacyParameters privacyParameters;
 
   @Before
   public void before() {
@@ -255,9 +252,6 @@ public class EeaSendRawTransactionTest {
                 "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
     when(privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(any(), any(), any()))
         .thenReturn(optionalPrivacyGroup);
-    when(privacyController.buildAndSendAddPayload(
-            any(PrivateTransaction.class), any(Bytes32.class), any(String.class)))
-        .thenReturn(Optional.of(ENCLAVE_PUBLIC_KEY));
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), any(Address.class)))
         .thenReturn(PUBLIC_TRANSACTION);

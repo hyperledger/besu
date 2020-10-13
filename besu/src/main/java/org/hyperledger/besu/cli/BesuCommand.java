@@ -352,6 +352,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .getValue();
 
   @Option(
+      names = {"--random-peer-priority-enabled"},
+      description =
+          "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
+  private final Boolean randomPeerPriority = false;
+
+  @Option(
       names = {"--banned-node-ids", "--banned-node-id"},
       paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
       description = "A list of node IDs to ban from the P2P network.",
@@ -698,12 +704,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String metricsPrometheusJob = "besu-client";
 
   @Option(
-      names = {"--host-allowlist", "--host-whitelist"},
+      names = {"--host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
           "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
+
+  @Option(
+      names = {"--host-whitelist"},
+      hidden = true,
+      paramLabel = "<hostname>[,<hostname>...]... or * or all",
+      description =
+          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
+  private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
       names = {"--logging", "-l"},
@@ -1394,6 +1408,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
+    // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
+    if (!hostsWhitelist.isEmpty()) {
+      // if allowlist == default values, remove the default values
+      if (hostsAllowlist.size() == 2
+          && hostsAllowlist.containsAll(List.of("localhost", "127.0.0.1"))) {
+        hostsAllowlist.removeAll(List.of("localhost", "127.0.0.1"));
+      }
+      hostsAllowlist.addAll(hostsWhitelist);
+    }
 
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
@@ -1999,6 +2022,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .limitRemoteWireConnectionsEnabled(isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
                 Fraction.fromPercentage(maxRemoteConnectionsPercentage).getValue())
+            .randomPeerPriority(randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
