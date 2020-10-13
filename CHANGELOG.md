@@ -55,6 +55,12 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
 
+
+### Download link 
+
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.0-RC1.zip
+sha256sum: `ae8979e43a81a69d3dcf207b556275d94edbb67490747f0454269f87d38ee4fb`
+
 ## 1.5.5
 
 ### Additions and Improvements
