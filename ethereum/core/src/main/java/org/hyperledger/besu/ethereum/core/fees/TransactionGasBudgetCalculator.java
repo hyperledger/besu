@@ -32,9 +32,9 @@ public interface TransactionGasBudgetCalculator {
   static TransactionGasBudgetCalculator eip1559(final EIP1559 eip1559) {
     return gasBudgetCalculator(
         (blockNumber, gasLimit, transaction) ->
-            transaction.isEIP1559Transaction()
-                ? eip1559.eip1559GasPool(blockNumber, gasLimit)
-                : eip1559.legacyGasPool(blockNumber, gasLimit));
+            eip1559.isEIP1559(blockNumber)
+                ? gasLimit * eip1559.getFeeMarket().getSlackCoefficient()
+                : gasLimit);
   }
 
   static TransactionGasBudgetCalculator gasBudgetCalculator(

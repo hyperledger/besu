@@ -55,13 +55,13 @@ public class ExperimentalEIPs {
 
   @Option(
       hidden = true,
-      names = {"--Xeip1559-migration-duration-in-blocks"},
-      arity = "1")
-  public static Long migrationDurationInBlocks = 800000L;
-
-  @Option(
-      hidden = true,
       names = {"--Xeip1559-initial-base-fee"},
       arity = "1")
   public static Long initialBasefee = 1000000000L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-slack-coefficient"},
+      arity = "1")
+  public static Long slackCoefficient = 2L;
 }
