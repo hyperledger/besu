@@ -12,22 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import java.util.function.Function;
 
-public interface FeeMarket {
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
-  long getBasefeeMaxChangeDenominator();
+public class EtcHashTest {
 
-  long getInitialBasefee();
+  @Test
+  public void testEpoch() {
+    Function<Long, Long> epochCalculator = EthHash.ecip1099Epoch(2_000_000);
 
-  long getSlackCoefficient();
+    // check before activation block (1,000,000/30,000 = 33)
+    Assertions.assertThat(epochCalculator.apply(1_000_000L)).isEqualTo(33);
 
-  static FeeMarket eip1559() {
-    return new FeeMarketConfig(
-        ExperimentalEIPs.basefeeMaxChangeDenominator,
-        ExperimentalEIPs.initialBasefee,
-        ExperimentalEIPs.slackCoefficient);
+    // check after activation block (3,000,000/60,000 = 50)
+    Assertions.assertThat(epochCalculator.apply(3_000_000L)).isEqualTo(50);
   }
 }
