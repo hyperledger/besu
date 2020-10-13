@@ -2,7 +2,7 @@
 
 ### Additions and Improvements
 * `--random-peer-priority-enabled` flag added. Allows for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. [#1440](https://github.com/hyperledger/besu/pull/1440)
-* Hide deprecated `--host-whitelist` option.
+* Hide deprecated `--host-whitelist` option. [\#1444](https://github.com/hyperledger/besu/pull/1444)
 
 ## Deprecated and Scheduled for removal in _Next_ Release
 
