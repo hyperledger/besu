@@ -93,7 +93,7 @@
     "parentBaseFee":1000000000,
     "parentGasUsed":7000000,
     "parentTargetGasUsed":7000000,
-    "expectedBaseFee":1000000000
+    "expectedBaseFee":999999999
   },
   {
     "parentBaseFee":1000000000,
@@ -213,7 +213,7 @@
     "parentBaseFee":1100000000,
     "parentGasUsed":9000000,
     "parentTargetGasUsed":9000000,
-    "expectedBaseFee":1100000000
+    "expectedBaseFee":1099999999
   },
   {
     "parentBaseFee":1086250000,
@@ -267,7 +267,7 @@
     "parentBaseFee":1086250000,
     "parentGasUsed":9000000,
     "parentTargetGasUsed":9000000,
-    "expectedBaseFee":1086250000
+    "expectedBaseFee":1086249999
   },
   {
     "parentBaseFee":1072671875,
@@ -321,7 +321,7 @@
     "parentBaseFee":1072671875,
     "parentGasUsed":9000000,
     "parentTargetGasUsed":9000000,
-    "expectedBaseFee":1072671875
+    "expectedBaseFee":1072671874
   },
   {
     "parentBaseFee":1059263476,
@@ -700,5 +700,29 @@
     "parentGasUsed":10000000,
     "parentTargetGasUsed":9000000,
     "expectedBaseFee":1063811730
+  },
+  {
+    "parentBaseFee":1,
+    "parentGasUsed":0,
+    "parentTargetGasUsed":9000000,
+    "expectedBaseFee": 0
+  },
+  {
+    "parentBaseFee":0,
+    "parentGasUsed":10000000,
+    "parentTargetGasUsed":9000000,
+    "expectedBaseFee": 1
+  },
+  {
+    "parentBaseFee":1,
+    "parentGasUsed":10000000,
+    "parentTargetGasUsed":9000000,
+    "expectedBaseFee": 2
+  },
+  {
+    "parentBaseFee":2,
+    "parentGasUsed":10000000,
+    "parentTargetGasUsed":9000000,
+    "expectedBaseFee": 3
   }
 ]
