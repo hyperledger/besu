@@ -65,8 +65,7 @@ public class NodeSmartContractPermissioningController
   @Override
   boolean checkSmartContractRules(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     final Bytes payload = createPayload(sourceEnode, destinationEnode);
-    final CallParameter callParams =
-        new CallParameter(null, contractAddress, -1, null, null, payload);
+    final CallParameter callParams = buildCallParameters(payload);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.processAtHead(callParams);

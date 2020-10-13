@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionSimulatorResult {
@@ -28,7 +29,8 @@ public class TransactionSimulatorResult {
   private final Transaction transaction;
   private final TransactionProcessor.Result result;
 
-  TransactionSimulatorResult(
+  @VisibleForTesting
+  public TransactionSimulatorResult(
       final Transaction transaction, final TransactionProcessor.Result result) {
     this.transaction = transaction;
     this.result = result;

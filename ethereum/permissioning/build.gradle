@@ -43,7 +43,7 @@ dependencies {
 
   testImplementation project(':config')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-
+  testImplementation project(':testutil')
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

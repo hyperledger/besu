@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.net.InetAddress;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeEncoder;
@@ -37,8 +38,8 @@ import org.web3j.abi.datatypes.Function;
 public class NodeSmartContractV2PermissioningController
     extends AbstractNodeSmartContractPermissioningController {
 
-  final Bytes TRUE_RESPONSE = Bytes.fromHexString(TypeEncoder.encode(new Bool(true)));
-  final Bytes FALSE_RESPONSE = Bytes.fromHexString(TypeEncoder.encode(new Bool(false)));
+  public static final Bytes TRUE_RESPONSE = Bytes.fromHexString(TypeEncoder.encode(new Bool(true)));
+  public static Bytes FALSE_RESPONSE = Bytes.fromHexString(TypeEncoder.encode(new Bool(false)));
 
   public NodeSmartContractV2PermissioningController(
       final Address contractAddress,
@@ -54,15 +55,14 @@ public class NodeSmartContractV2PermissioningController
 
   private boolean isPermitted(final EnodeURL enode) {
     final Bytes payload = createPayload(enode);
-    final CallParameter callParams =
-        new CallParameter(null, contractAddress, -1, null, null, payload);
+    final CallParameter callParams = buildCallParameters(payload);
 
     return transactionSimulator.processAtHead(callParams).map(this::parseResult).orElse(false);
   }
 
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
-      final String enodeId = enodeUrl.getNodeId().toHexString();
+      final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
       final byte[] ip = encodeIp(enodeUrl.getIp());
       final int port = enodeUrl.getListeningPortOrZero();
 
@@ -70,7 +70,7 @@ public class NodeSmartContractV2PermissioningController
           FunctionEncoder.makeFunction(
               "connectionAllowed",
               List.of("string", "bytes16", "uint16"),
-              List.of(enodeId, ip, port),
+              List.of(hexNodeIdString, ip, port),
               List.of(Bool.TYPE_NAME));
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (Exception e) {
@@ -84,7 +84,8 @@ public class NodeSmartContractV2PermissioningController
    * bytes, followed by the original 4-bytes IPv4 address (RFC 4291 Section 2.5.5.1 -
    * https://tools.ietf.org/html/rfc4291#section-2.5.5)
    */
-  private static byte[] encodeIp(final InetAddress addr) {
+  @VisibleForTesting
+  public static byte[] encodeIp(final InetAddress addr) {
     // InetAddress deals with giving us the right number of bytes
     final byte[] address = addr.getAddress();
     final byte[] res = new byte[16];

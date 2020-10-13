@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 public class SmartContractPermissioningConfiguration {
   private boolean smartContractNodeAllowlistEnabled;
   private Address nodeSmartContractAddress;
-  // TODO: create CLI option that will set this value to 2 when using the updated EEA interfaces
   private int nodeSmartContractInterfaceVersion = 1;
 
   private boolean smartContractAccountAllowlistEnabled;
