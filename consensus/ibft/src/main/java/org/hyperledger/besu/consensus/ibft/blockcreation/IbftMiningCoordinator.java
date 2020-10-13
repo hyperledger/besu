@@ -145,6 +145,11 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
+  public void changeTargetGasLimit(final Long targetGasLimit) {
+    blockCreatorFactory.changeTargetGasLimit(targetGasLimit);
+  }
+
+  @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()) {
       LOG.trace("New canonical head detected");

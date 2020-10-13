@@ -107,5 +107,5 @@ public interface MiningCoordinator {
 
   default void addEthHashObserver(final EthHashObserver observer) {}
 
-  default void changeTargetGasLimit(final Optional<Long> targetGasLimit) {};
+  void changeTargetGasLimit(final Long targetGasLimit);
 }

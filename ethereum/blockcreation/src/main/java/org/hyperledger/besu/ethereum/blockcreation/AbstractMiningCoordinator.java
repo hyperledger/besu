@@ -212,7 +212,7 @@ public abstract class AbstractMiningCoordinator<
       final BlockHeader newChainHeadHeader);
 
   @Override
-  public void changeTargetGasLimit(final Optional<Long> targetGasLimit) {
+  public void changeTargetGasLimit(final Long targetGasLimit) {
     executor.changeTargetGasLimit(targetGasLimit);
   }
 }

@@ -116,6 +116,11 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
   }
 
   @Override
+  public void changeTargetGasLimit(final Long targetGasLimit) {
+    executor.changeTargetGasLimit(targetGasLimit);
+  }
+
+  @Override
   public Optional<EthHashSolverInputs> getWorkDefinition() {
     return currentRunningMiner.flatMap(EthHashBlockMiner::getWorkDefinition);
   }

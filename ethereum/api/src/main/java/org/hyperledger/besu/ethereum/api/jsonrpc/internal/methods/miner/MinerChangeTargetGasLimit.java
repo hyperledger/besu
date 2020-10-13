@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
-import java.util.Optional;
-
 public class MinerChangeTargetGasLimit implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
@@ -42,8 +40,7 @@ public class MinerChangeTargetGasLimit implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final Long targetGasLimit = requestContext.getRequiredParameter(0, Long.class);
-      miningCoordinator.changeTargetGasLimit(Optional.of(targetGasLimit));
+      miningCoordinator.changeTargetGasLimit(requestContext.getRequiredParameter(0, Long.class));
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
       return new JsonRpcErrorResponse(

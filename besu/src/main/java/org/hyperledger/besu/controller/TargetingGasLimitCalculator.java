@@ -26,12 +26,12 @@ import org.apache.logging.log4j.Logger;
 public class TargetingGasLimitCalculator implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   public static final long ADJUSTMENT_FACTOR = 1024L;
-  private final Long targetGasLimit;
+  private Long targetGasLimit;
 
   public TargetingGasLimitCalculator(final Long targetGasLimit) {
     checkArgument(targetGasLimit >= 0, "Invalid target gas limit");
 
-    this.targetGasLimit = targetGasLimit;
+    changeTargetGasLimit(targetGasLimit);
   }
 
   @Override
@@ -50,6 +50,11 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
     }
 
     return nextGasLimit;
+  }
+
+  @Override
+  public void changeTargetGasLimit(final Long targetGasLimit) {
+    this.targetGasLimit = targetGasLimit;
   }
 
   private long safeAdd(final long gasLimit) {
