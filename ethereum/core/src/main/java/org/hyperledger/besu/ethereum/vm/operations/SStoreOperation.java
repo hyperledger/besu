@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
@@ -57,7 +58,14 @@ public class SStoreOperation extends AbstractOperation {
     if (account == null) {
       return ILLEGAL_STATE_CHANGE;
     }
-    final Gas cost = gasCalculator().calculateStorageCost(account, key, value);
+
+    final Address address = account.getAddress();
+    final boolean slotIsWarm = frame.warmUpStorage(address, key.toBytes());
+    final Gas cost =
+        gasCalculator()
+            .calculateStorageCost(account, key, value)
+            .plus(slotIsWarm ? Gas.ZERO : gasCalculator().getColdSloadCost());
+
     final Optional<Gas> optionalCost = Optional.of(cost);
     final Gas remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {

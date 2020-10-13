@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -60,6 +62,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
@@ -70,7 +73,11 @@ public class RetestethContext {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final EthHasher NO_WORK_HASHER =
-      (final byte[] buffer, final long nonce, final long number, final byte[] headerHash) -> {};
+      (final byte[] buffer,
+          final long nonce,
+          final long number,
+          Function<Long, Long> epochCalc,
+          final byte[] headerHash) -> {};
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
@@ -136,7 +143,7 @@ public class RetestethContext {
     extraData = genesisState.getBlock().getHeader().getExtraData();
 
     final WorldStateArchive worldStateArchive =
-        new WorldStateArchive(
+        new DefaultWorldStateArchive(
             new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
     final MutableWorldState worldState = worldStateArchive.getMutable();
@@ -156,8 +163,10 @@ public class RetestethContext {
     final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
     ethHashSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
-            ? new EthHashSolver(nonceGenerator, NO_WORK_HASHER, false, Subscribers.none())
-            : new EthHashSolver(nonceGenerator, new EthHasher.Light(), false, Subscribers.none());
+            ? new EthHashSolver(
+                nonceGenerator, NO_WORK_HASHER, false, Subscribers.none(), EthHash::epoch)
+            : new EthHashSolver(
+                nonceGenerator, new EthHasher.Light(), false, Subscribers.none(), EthHash::epoch);
 
     blockReplay =
         new BlockReplay(
@@ -208,7 +217,7 @@ public class RetestethContext {
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
         new NoOpMetricsSystem(),
-        0);
+        100);
   }
 
   public ProtocolSchedule getProtocolSchedule() {

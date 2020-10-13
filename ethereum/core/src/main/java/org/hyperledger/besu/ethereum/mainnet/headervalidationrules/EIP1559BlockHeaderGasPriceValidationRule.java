@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559MissingBaseFeeFromBlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
@@ -26,7 +25,6 @@ import org.apache.logging.log4j.Logger;
 public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHeaderValidationRule {
   private static final Logger LOG = LogManager.getLogger();
   private final EIP1559 eip1559;
-  private final FeeMarket feeMarket = FeeMarket.eip1559();
 
   public EIP1559BlockHeaderGasPriceValidationRule(final EIP1559 eip1559) {
     this.eip1559 = eip1559;
@@ -39,7 +37,7 @@ public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHe
         return true;
       }
       if (eip1559.isForkBlock(header.getNumber())) {
-        return feeMarket.getInitialBasefee()
+        return eip1559.getFeeMarket().getInitialBasefee()
             == header.getBaseFee().orElseThrow(EIP1559MissingBaseFeeFromBlockHeader::new);
       }
 
@@ -49,7 +47,8 @@ public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHe
           header.getBaseFee().orElseThrow(EIP1559MissingBaseFeeFromBlockHeader::new);
       final long targetGasUsed = eip1559.targetGasUsed(parent);
       final long baseFee =
-          eip1559.computeBaseFee(parentBaseFee, parent.getGasUsed(), targetGasUsed);
+          eip1559.computeBaseFee(
+              header.getNumber(), parentBaseFee, parent.getGasUsed(), targetGasUsed);
       if (baseFee != header.getBaseFee().orElseThrow()) {
         LOG.trace(
             "Invalid block header: basefee {} does not equal expected basefee {}",

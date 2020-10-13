@@ -348,6 +348,7 @@ public abstract class MainnetProtocolSpecs {
     }
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .gasCalculator(BerlinGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
@@ -399,33 +400,6 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
-  }
-
-  // TODO EIP-1559 change for the actual fork name when known
-  static ProtocolSpecBuilder eip1559FinalizedDefinition(
-      final Optional<BigInteger> chainId,
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions) {
-    return eip1559Definition(
-            chainId,
-            transactionPriceCalculator,
-            contractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions)
-        .transactionValidatorBuilder(
-            gasCalculator ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    transactionPriceCalculator,
-                    true,
-                    chainId,
-                    Optional.of(
-                        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0))),
-                    AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS));
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

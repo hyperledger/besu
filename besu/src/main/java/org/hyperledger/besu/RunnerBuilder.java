@@ -164,6 +164,7 @@ public class RunnerBuilder {
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
+  private boolean randomPeerPriority;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -241,6 +242,11 @@ public class RunnerBuilder {
   public RunnerBuilder fractionRemoteConnectionsAllowed(
       final float fractionRemoteConnectionsAllowed) {
     this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
+    return this;
+  }
+
+  public RunnerBuilder randomPeerPriority(final boolean randomPeerPriority) {
+    this.randomPeerPriority = randomPeerPriority;
     return this;
   }
 
@@ -404,6 +410,7 @@ public class RunnerBuilder {
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
                 .natService(natService)
+                .randomPeerPriority(randomPeerPriority)
                 .build();
 
     final NetworkRunner networkRunner =
@@ -496,7 +503,8 @@ public class RunnerBuilder {
               webSocketConfiguration,
               metricsConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins());
+              besuPluginContext.getNamedPlugins(),
+              dataDir);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -560,7 +568,8 @@ public class RunnerBuilder {
               webSocketConfiguration,
               metricsConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins());
+              besuPluginContext.getNamedPlugins(),
+              dataDir);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool, blockchainQueries);
@@ -726,7 +735,8 @@ public class RunnerBuilder {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
-      final Map<String, BesuPlugin> namedPlugins) {
+      final Map<String, BesuPlugin> namedPlugins,
+      final Path dataDir) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -750,7 +760,8 @@ public class RunnerBuilder {
                 webSocketConfiguration,
                 metricsConfiguration,
                 natService,
-                namedPlugins);
+                namedPlugins,
+                dataDir);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

@@ -14,14 +14,12 @@
  *
  */
 
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.Operation;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.io.PrintStream;
@@ -34,19 +32,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-class EVMToolTracer implements OperationTracer {
+public class StandardJsonTracer implements OperationTracer {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final PrintStream out;
   private final boolean showMemory;
 
-  EVMToolTracer(final PrintStream out, final boolean showMemory) {
+  public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
     this.out = out;
     this.showMemory = showMemory;
   }
 
-  static String shortNumber(final UInt256 number) {
+  public static String shortNumber(final UInt256 number) {
     return number.isZero() ? "0x0" : number.toShortHexString();
   }
 
@@ -54,10 +52,22 @@ class EVMToolTracer implements OperationTracer {
     return bytes.isZero() ? "0x0" : bytes.toShortHexString();
   }
 
+  public static String summaryTrace(
+      final Transaction transaction, final long timer, final TransactionProcessor.Result result) {
+    final ObjectNode summaryLine = OBJECT_MAPPER.createObjectNode();
+    summaryLine.put("output", result.getOutput().toUnprefixedHexString());
+    summaryLine.put(
+        "gasUsed",
+        StandardJsonTracer.shortNumber(
+            UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
+    summaryLine.put("time", timer);
+    return summaryLine.toString();
+  }
+
   @Override
   public void traceExecution(
       final MessageFrame messageFrame, final ExecuteOperation executeOperation) {
-    final ObjectNode traceLine = objectMapper.createObjectNode();
+    final ObjectNode traceLine = OBJECT_MAPPER.createObjectNode();
 
     final Operation currentOp = messageFrame.getCurrentOperation();
     traceLine.put("pc", messageFrame.getPC());
@@ -73,20 +83,23 @@ class EVMToolTracer implements OperationTracer {
     final ArrayNode returnStack = traceLine.putArray("returnStack");
     final ReturnStack rs = messageFrame.getReturnStack();
     for (int i = rs.size() - 1; i >= 0; i--) {
-      returnStack.add(rs.get(i));
+      returnStack.add("0x" + Integer.toHexString(rs.get(i) - 1));
     }
     Bytes returnData = messageFrame.getReturnData();
     traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
     traceLine.put("depth", messageFrame.getMessageStackDepth() + 1);
-    traceLine.put("refund", messageFrame.getGasRefund().toLong());
 
     final OperationResult executeResult = executeOperation.execute();
+
+    traceLine.put("refund", messageFrame.getGasRefund().toLong());
     traceLine.put(
         "gasCost", executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
     if (showMemory) {
       traceLine.put(
           "memory",
-          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize()).toHexString());
+          messageFrame
+              .readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32))
+              .toHexString());
     } else {
       traceLine.put("memory", "0x");
     }

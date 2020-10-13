@@ -37,6 +37,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
+
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -215,13 +216,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public OptionalLong getBerlinBlockNumber() {
     if (ExperimentalEIPs.berlinEnabled) {
       final OptionalLong berlinBlock = getOptionalLong("berlinblock");
-      final OptionalLong yolov1Block = getOptionalLong("yolov1block");
-      if (yolov1Block.isPresent()) {
+      final OptionalLong yolov2Block = getOptionalLong("yolov2block");
+      if (yolov2Block.isPresent()) {
         if (berlinBlock.isPresent()) {
           throw new RuntimeException(
-              "Genesis files cannot specify both berlinblock and yoloV1Block.");
+              "Genesis files cannot specify both berlinblock and yoloV2Block.");
         }
-        return yolov1Block;
+        return yolov2Block;
       }
       return berlinBlock;
     }
@@ -272,6 +273,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getPhoenixBlockNumber() {
     return getOptionalLong("phoenixblock");
+  }
+
+  @Override
+  public OptionalLong getEcip1099BlockNumber() {
+    return getOptionalLong("ecip1099block");
   }
 
   @Override
@@ -328,6 +334,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
+    getEcip1099BlockNumber().ifPresent(l -> builder.put("ecip1099Block", l));
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());

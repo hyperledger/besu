@@ -73,6 +73,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -86,6 +87,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -152,8 +154,10 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -236,6 +240,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
+
+  private final Set<Integer> allocatedPorts = new HashSet<>();
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -344,6 +350,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
           .toPercentage()
           .getValue();
+
+  @Option(
+      names = {"--random-peer-priority-enabled"},
+      description =
+          "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
+  private final Boolean randomPeerPriority = false;
 
   @Option(
       names = {"--banned-node-ids", "--banned-node-id"},
@@ -692,12 +704,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String metricsPrometheusJob = "besu-client";
 
   @Option(
-      names = {"--host-allowlist", "--host-whitelist"},
+      names = {"--host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
           "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
+
+  @Option(
+      names = {"--host-whitelist"},
+      hidden = true,
+      paramLabel = "<hostname>[,<hostname>...]... or * or all",
+      description =
+          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
+  private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
       names = {"--logging", "-l"},
@@ -882,9 +902,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean migratePrivateDatabase = false;
 
   @Option(
-      names = {"--privacy-onchain-groups-enabled"},
-      description = "Enable onchain privacy groups (default: ${DEFAULT-VALUE})")
-  private final Boolean isOnchainPrivacyGroupEnabled = false;
+      names = {"--privacy-flexible-groups-enabled", "--privacy-onchain-groups-enabled"},
+      description = "Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
+  private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
       names = {"--target-gas-limit"},
@@ -1376,6 +1396,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private BesuCommand configure() throws Exception {
+    checkPortClash();
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -1387,6 +1408,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
+    // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
+    if (!hostsWhitelist.isEmpty()) {
+      // if allowlist == default values, remove the default values
+      if (hostsAllowlist.size() == 2
+          && hostsAllowlist.containsAll(List.of("localhost", "127.0.0.1"))) {
+        hostsAllowlist.removeAll(List.of("localhost", "127.0.0.1"));
+      }
+      hostsAllowlist.addAll(hostsWhitelist);
+    }
 
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
@@ -1468,7 +1498,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pruningConfiguration(
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
-        .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
+        .gasLimitCalculator(
+            Optional.ofNullable(targetGasLimit)
+                .<GasLimitCalculator>map(TargetingGasLimitCalculator::new)
+                .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold);
   }
@@ -1830,13 +1863,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
-
-      if (isPrivacyMultiTenancyEnabled && isOnchainPrivacyGroupEnabled) {
-        throw new ParameterException(
-            commandLine,
-            "Privacy multi-tenancy and onchain privacy groups cannot be used together");
-      }
+      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
@@ -1995,6 +2022,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .limitRemoteWireConnectionsEnabled(isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
                 Fraction.fromPercentage(maxRemoteConnectionsPercentage).getValue())
+            .randomPeerPriority(randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
@@ -2231,6 +2259,31 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       enodeDnsConfiguration = unstableDnsOptions.toDomainObject();
     }
     return enodeDnsConfiguration;
+  }
+
+  private void checkPortClash() {
+    // List of port parameters
+    final List<Integer> ports =
+        asList(
+            p2pPort,
+            graphQLHttpPort,
+            rpcHttpPort,
+            rpcWsPort,
+            metricsPort,
+            metricsPushPort,
+            stratumPort);
+    ports.stream()
+        .filter(Objects::nonNull)
+        .forEach(
+            port -> {
+              if (port != 0 && !allocatedPorts.add(port)) {
+                throw new ParameterException(
+                    commandLine,
+                    "Port number '"
+                        + port
+                        + "' has been specified multiple times. Please review the supplied configuration.");
+              }
+            });
   }
 
   @VisibleForTesting

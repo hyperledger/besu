@@ -29,6 +29,7 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -168,7 +169,7 @@ public class PrivacyReorgTest {
             .clock(TestClock.fixed())
             .privacyParameters(privacyParameters)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
   }
 
