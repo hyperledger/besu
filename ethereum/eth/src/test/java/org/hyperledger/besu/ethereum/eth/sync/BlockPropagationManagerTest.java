@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
-import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocks;
+import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -66,6 +67,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class BlockPropagationManagerTest {
+
+  private static final Bytes NODE_ID_1 = Bytes.fromHexString("0x00");
 
   private static Blockchain fullBlockchain;
 
@@ -77,7 +80,9 @@ public class BlockPropagationManagerTest {
   private EthProtocolManager ethProtocolManager;
   private BlockPropagationManager blockPropagationManager;
   private SynchronizerConfiguration syncConfig;
-  private final PendingBlocks pendingBlocks = new PendingBlocks();
+  private final PendingBlocksManager pendingBlocksManager =
+      new PendingBlocksManager(
+          SynchronizerConfiguration.builder().blockPropagationRange(-10, 30).build());
   private SyncState syncState;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
@@ -113,7 +118,7 @@ public class BlockPropagationManagerTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
   }
@@ -324,7 +329,7 @@ public class BlockPropagationManagerTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
 
@@ -376,7 +381,7 @@ public class BlockPropagationManagerTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
     blockchainUtil.importFirstBlocks(2);
@@ -486,7 +491,7 @@ public class BlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
-    verify(propManager, times(0)).importOrSavePendingBlock(any());
+    verify(propManager, times(0)).importOrSavePendingBlock(any(), any(Bytes.class));
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
   }
 
@@ -512,7 +517,7 @@ public class BlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
-    verify(propManager, times(0)).importOrSavePendingBlock(any());
+    verify(propManager, times(0)).importOrSavePendingBlock(any(), any(Bytes.class));
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
   }
 
@@ -528,7 +533,7 @@ public class BlockPropagationManagerTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
 
@@ -551,20 +556,20 @@ public class BlockPropagationManagerTest {
 
     // Check that we pushed our block into the pending collection
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-    assertThat(pendingBlocks.contains(blockToPurge.getHash())).isTrue();
+    assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isTrue();
 
     // Import blocks until we bury the target block far enough to be cleaned up
     for (int i = 0; i < oldBlocksToImport; i++) {
       blockchainUtil.importBlockAtIndex((int) blockchain.getChainHeadBlockNumber() + 1);
 
       assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-      assertThat(pendingBlocks.contains(blockToPurge.getHash())).isTrue();
+      assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isTrue();
     }
 
     // Import again to trigger cleanup
     blockchainUtil.importBlockAtIndex((int) blockchain.getChainHeadBlockNumber() + 1);
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-    assertThat(pendingBlocks.contains(blockToPurge.getHash())).isFalse();
+    assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isFalse();
   }
 
   @Test
@@ -611,15 +616,15 @@ public class BlockPropagationManagerTest {
             protocolContext,
             ethContext,
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
 
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
-    blockPropagationManager.importOrSavePendingBlock(nextBlock);
-    blockPropagationManager.importOrSavePendingBlock(nextBlock);
+    blockPropagationManager.importOrSavePendingBlock(nextBlock, NODE_ID_1);
+    blockPropagationManager.importOrSavePendingBlock(nextBlock, NODE_ID_1);
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
@@ -668,7 +673,7 @@ public class BlockPropagationManagerTest {
             protocolContext,
             ethContext,
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
 
@@ -685,7 +690,7 @@ public class BlockPropagationManagerTest {
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     assertThat(badBlocksManager.getBadBlocks()).isEmpty();
-    blockPropagationManager.importOrSavePendingBlock(badBlock);
+    blockPropagationManager.importOrSavePendingBlock(badBlock, NODE_ID_1);
     assertThat(badBlocksManager.getBadBlocks().size()).isEqualTo(1);
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
