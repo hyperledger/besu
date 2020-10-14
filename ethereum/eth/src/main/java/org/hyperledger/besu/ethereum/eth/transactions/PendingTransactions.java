@@ -39,7 +39,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,7 +73,7 @@ public class PendingTransactions {
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
-              .thenComparing(TransactionInfo::getSequence, Comparator.reverseOrder())
+              .thenComparing(TransactionInfo::getSequence)
               .reversed());
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();

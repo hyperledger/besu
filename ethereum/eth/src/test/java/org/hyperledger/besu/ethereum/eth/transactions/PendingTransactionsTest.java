@@ -168,17 +168,15 @@ public class PendingTransactionsTest {
     // Fill the pool
     lowGasPriceTransactions.forEach(transactions::addRemoteTransaction);
 
-    // This should kick the newest tx with the low gas price out, namely the last one we added
+    // This should kick the oldest tx with the low gas price out, namely the first one we added
     final Transaction highGasPriceTransaction =
         transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
     transactions.addRemoteTransaction(highGasPriceTransaction);
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
     assertTransactionPending(highGasPriceTransaction);
-    lowGasPriceTransactions.stream()
-        .limit(MAX_TRANSACTIONS - 1)
-        .forEach(this::assertTransactionPending);
-    assertTransactionNotPending(lowGasPriceTransactions.get(lowGasPriceTransactions.size() - 1));
+    assertTransactionNotPending(lowGasPriceTransactions.get(0));
+    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
   }
 
   @Test
