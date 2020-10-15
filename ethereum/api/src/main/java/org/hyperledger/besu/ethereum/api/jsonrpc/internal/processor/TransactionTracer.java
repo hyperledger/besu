@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,63 +79,60 @@ public class TransactionTracer {
       final Path traceDir) {
     final List<String> traces = new ArrayList<>();
 
-    try {
-      final Optional<Hash> selectedHash =
-          transactionTraceParams
-              .map(TransactionTraceParams::getTransactionHash)
-              .map(Hash::fromHexString);
-      final boolean showMemory =
-          transactionTraceParams
-              .map(TransactionTraceParams::traceOptions)
-              .map(TraceOptions::isMemoryEnabled)
-              .orElse(true);
+    final Optional<Hash> selectedHash =
+        transactionTraceParams
+            .map(TransactionTraceParams::getTransactionHash)
+            .map(Hash::fromHexString);
+    final boolean showMemory =
+        transactionTraceParams
+            .map(TransactionTraceParams::traceOptions)
+            .map(TraceOptions::isMemoryEnabled)
+            .orElse(true);
 
-      if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
-        throw new IOException(
-            String.format("Trace directory '%s' does not exist and could not be made.", traceDir));
-      }
-
-      blockReplay.performActionWithBlock(
-          blockHash,
-          (body, header, blockchain, worldUpdater, transactionProcessor) -> {
-            for (int i = 0; i < transactions.size(); i++) {
-              final Transaction transaction = transactions.get(i);
-              if (selectedHash.isEmpty()
-                  || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
-                final File traceFile = generateTraceFile(traceDir, blockHash, i, transaction);
-                try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
-                  final Stopwatch timer = Stopwatch.createStarted();
-                  final Result result =
-                      processTransaction(
-                          header,
-                          blockchain,
-                          worldUpdater,
-                          transaction,
-                          transactionProcessor,
-                          new StandardJsonTracer(out, showMemory));
-                  out.println(
-                      StandardJsonTracer.summaryTrace(
-                          transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
-                  traces.add(traceFile.getPath());
-                } catch (FileNotFoundException e) {
-                  throw new RuntimeException(e.getMessage());
-                }
-              } else {
-                processTransaction(
-                    header,
-                    blockchain,
-                    worldUpdater,
-                    transaction,
-                    transactionProcessor,
-                    OperationTracer.NO_TRACING);
-              }
-            }
-            return Optional.empty();
-          });
-    } catch (Exception e) {
-      LOG.error("Unable to create transaction trace : {}", e.getMessage());
-      throw new RuntimeException(e.getMessage(), e);
+    if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
+      throw new RuntimeException(
+          String.format("Trace directory '%s' does not exist and could not be made.", traceDir));
     }
+
+    blockReplay.performActionWithBlock(
+        blockHash,
+        (body, header, blockchain, worldUpdater, transactionProcessor) -> {
+          for (int i = 0; i < transactions.size(); i++) {
+            final Transaction transaction = transactions.get(i);
+            if (selectedHash.isEmpty()
+                || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
+              final File traceFile = generateTraceFile(traceDir, blockHash, i, transaction);
+              try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
+                final Stopwatch timer = Stopwatch.createStarted();
+                final Result result =
+                    processTransaction(
+                        header,
+                        blockchain,
+                        worldUpdater,
+                        transaction,
+                        transactionProcessor,
+                        new StandardJsonTracer(out, showMemory));
+                out.println(
+                    StandardJsonTracer.summaryTrace(
+                        transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
+                traces.add(traceFile.getPath());
+              } catch (FileNotFoundException e) {
+                throw new RuntimeException(
+                    "Unable to create transaction trace : " + e.getMessage());
+              }
+            } else {
+              processTransaction(
+                  header,
+                  blockchain,
+                  worldUpdater,
+                  transaction,
+                  transactionProcessor,
+                  OperationTracer.NO_TRACING);
+            }
+          }
+          return Optional.empty();
+        });
+
     return traces;
   }
 
