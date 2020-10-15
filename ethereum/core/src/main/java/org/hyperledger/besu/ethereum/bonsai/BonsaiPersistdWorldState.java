@@ -430,13 +430,13 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     final Bytes32 storageKeyBytes = storageKey.toBytes();
     final BonsaiValue<UInt256> value = localAccountStorage.get(storageKeyBytes);
     if (value != null) {
-      final UInt256 original = value.getOriginal();
-      if (original != null) {
-        return original;
-      }
       final UInt256 updated = value.getUpdated();
       if (updated != null) {
         return updated;
+      }
+      final UInt256 original = value.getOriginal();
+      if (original != null) {
+        return original;
       }
     }
     final Bytes compositeKey = Bytes.concatenate(address, Hash.hash(storageKeyBytes));
