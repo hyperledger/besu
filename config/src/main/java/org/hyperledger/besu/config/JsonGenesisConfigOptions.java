@@ -276,8 +276,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEcip1099BlockNumber() {
-    return getOptionalLong("ecip1099block");
+  public OptionalLong getThanosBlockNumber() {
+    return getOptionalLong("thanosblock");
   }
 
   @Override
@@ -334,7 +334,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
-    getEcip1099BlockNumber().ifPresent(l -> builder.put("ecip1099Block", l));
+    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
