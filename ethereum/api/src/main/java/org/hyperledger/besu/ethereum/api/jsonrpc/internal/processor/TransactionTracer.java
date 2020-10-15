@@ -59,12 +59,12 @@ public class TransactionTracer {
     return blockReplay.beforeTransactionInBlock(
         blockHash,
         transactionHash,
-        (transaction, header, blockchain, worldState, transactionProcessor) -> {
+        (transaction, header, blockchain, worldUpdater, transactionProcessor) -> {
           final Stopwatch timer = Stopwatch.createStarted();
           final Result result =
               transactionProcessor.processTransaction(
                   blockchain,
-                  worldState,
+                  worldUpdater,
                   header,
                   transaction,
                   header.getCoinbase(),
