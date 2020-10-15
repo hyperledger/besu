@@ -260,8 +260,8 @@ public class ProtocolScheduleBuilder {
             config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
-        config.getEcip1099BlockNumber(),
-        ClassicProtocolSpecs.ecip1099Definition(
+        config.getThanosBlockNumber(),
+        ClassicProtocolSpecs.thanosDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
