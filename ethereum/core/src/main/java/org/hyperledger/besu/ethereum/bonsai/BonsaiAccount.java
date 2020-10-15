@@ -84,7 +84,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.addressHash = toCopy.getAddressHash();
     this.nonce = toCopy.getNonce();
     this.balance = toCopy.getBalance();
-    this.storageRoot = Hash.EMPTY_TRIE_HASH;
+    this.storageRoot = toCopy.getStorageRoot();
     this.codeHash = toCopy.getCodeHash();
     this.code = toCopy.getCode();
     this.version = toCopy.getVersion();

@@ -66,9 +66,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 // FIXME speling
 public class BonsaiPersistdWorldState implements MutableWorldState {
 
+  //  private static final Logger LOG = LogManager.getLogger();
+
   private static final byte[] WORLD_ROOT_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
-  //  private final MutableWorldState fallbackStorage;
   private final KeyValueStorage accountStorage;
   private final KeyValueStorage codeStorage;
   private final KeyValueStorage storageStorage;
@@ -79,7 +80,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
   private final Set<Address> storageToClear = new HashSet<>();
   private final Map<Address, Map<Bytes32, BonsaiValue<UInt256>>> storageToUpdate = new HashMap<>();
-  private final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie;
+  //  private final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie;
   private Bytes32 worldStateRootHash;
 
   // FIXME
@@ -99,9 +100,6 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     worldStateRootHash =
         Bytes32.wrap(
             trieBranchStorage.get(WORLD_ROOT_KEY).map(Bytes::wrap).orElse(Hash.EMPTY_TRIE_HASH));
-    accountTrie =
-        new StoredMerklePatriciaTrie<>(
-            this::getTrieNode, worldStateRootHash, Function.identity(), Function.identity());
     try {
       layerWriter = new RollingFileWriter(BonsaiPersistdWorldState::bodyFileName, false);
     } catch (final FileNotFoundException e) {
@@ -139,7 +137,6 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     final KeyValueStorageTransaction trieBranchTx = trieBranchStorage.startTransaction();
     final KeyValueStorageTransaction trieLogTx = trieLogStorage.startTransaction();
 
-    final CollectBranchesVisitor<Bytes> branchCollector = new CollectBranchesVisitor<>();
     try {
       // first clear storage
       for (final Address address : storageToClear) {
@@ -198,6 +195,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           updatedAddress.copyTo(writeAddressBytes, 0);
 
           // collect account branches
+          final CollectBranchesVisitor<Bytes> branchCollector = new CollectBranchesVisitor<>();
           for (final Bytes32 storageKey : storageAccountUpdate.getValue().keySet()) {
             checkNotNull(storageKey);
             storageTrie.acceptAtRoot(branchCollector, bytesToPath(storageKey));
@@ -223,8 +221,18 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           //        DumpVisitor<>(System.out));
           storageTrie.commit(
               (key, value) -> writeStorageTrieNode(trieBranchTx, updatedAddress, key, value));
-          accountValue.getUpdated().setStorageRoot(Hash.wrap(storageTrie.getRootHash()));
-        // } else {
+          final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
+          accountValue.getUpdated().setStorageRoot(newStorageRoot);
+          if (accountOriginal != null && !accountOriginal.getStorageRoot().equals(newStorageRoot)) {
+            // trim old branches
+            for (final Bytes32 trieHash : branchCollector.getCollectedBranches()) {
+              //              if (!Hash.EMPTY_TRIE_HASH.equals(trieHash)) {
+              //                System.out.printf("Deleting %s %s%n", updatedAddress, trieHash);
+              //              }
+              trieBranchTx.remove(Bytes.concatenate(updatedAddress, trieHash).toArrayUnsafe());
+            }
+          }
+          // } else {
           // TODO delete account storage in else block
         }
       }
@@ -240,6 +248,11 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       }
 
       // next collect the branches that will be trimmed
+      final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+          new StoredMerklePatriciaTrie<>(
+              this::getTrieNode, worldStateRootHash, Function.identity(), Function.identity());
+
+      final CollectBranchesVisitor<Bytes> branchCollector = new CollectBranchesVisitor<>();
       for (final Address updatedAccountAddress : accountsToUpdate.keySet()) {
         checkNotNull(updatedAccountAddress);
         accountTrie.acceptAtRoot(branchCollector, bytesToPath(updatedAccountAddress));
@@ -261,15 +274,23 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           accountTx.put(accountKey.toArrayUnsafe(), accountValue.toArrayUnsafe());
           accountTrie.put(addressHash, accountValue);
         }
+        //        throw new RuntimeException("NOPE");
       }
 
       accountTrie.commit((key, value) -> writeTrieNode(trieBranchTx, key, value));
+      final var oldWorldStateRootHash = worldStateRootHash;
       worldStateRootHash = accountTrie.getRootHash();
+      //      LOG.debug("New account Root {}", worldStateRootHash);
       trieBranchTx.put(WORLD_ROOT_KEY, worldStateRootHash.toArrayUnsafe());
 
       // trim old branches
-      for (final Bytes32 trieHash : branchCollector.getCollectedBranches()) {
-        trieBranchTx.remove(trieHash.toArrayUnsafe());
+      if (!oldWorldStateRootHash.equals(worldStateRootHash)) {
+        for (final Bytes32 trieHash : branchCollector.getCollectedBranches()) {
+          //          if (!Hash.EMPTY_TRIE_HASH.equals(trieHash)) {
+          //            LOG.debug("Deleting {} {}%n", "account", trieHash);
+          //          }
+          trieBranchTx.remove(trieHash.toArrayUnsafe());
+        }
       }
 
       // FIXME get BlockHash
@@ -316,6 +337,9 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   @Override
   public void dumpTrie(final PrintStream out) {
     System.out.println("World State Trie Dump");
+    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+        new StoredMerklePatriciaTrie<>(
+            this::getTrieNode, worldStateRootHash, Function.identity(), Function.identity());
     accountTrie.acceptAtRoot(new DumpVisitor<>());
   }
 
@@ -357,6 +381,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
   private void writeTrieNode(
       final KeyValueStorageTransaction tx, final Bytes32 key, final Bytes value) {
+    //    LOG.debug("Writing node {} {}", "account", key.toHexString());
     tx.put(key.toArrayUnsafe(), value.toArrayUnsafe());
   }
 
