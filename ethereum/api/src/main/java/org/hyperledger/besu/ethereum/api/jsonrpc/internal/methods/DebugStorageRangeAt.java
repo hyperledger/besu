@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
 import java.util.Collections;
 import java.util.NavigableMap;
@@ -98,7 +97,10 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
                         transactionWithMetadata.getTransaction().getHash(),
                         (transaction, blockHeader, blockchain, worldState, transactionProcessor) ->
                             extractStorageAt(
-                                requestContext, accountAddress, startKey, limit, worldState))
+                                requestContext,
+                                startKey,
+                                limit,
+                                worldState.getAccount(accountAddress)))
                     .orElseGet(() -> emptyResponse(requestContext))))
         .orElseGet(
             () ->
@@ -108,7 +110,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
                     .map(
                         worldState ->
                             extractStorageAt(
-                                requestContext, accountAddress, startKey, limit, worldState))
+                                requestContext, startKey, limit, worldState.get(accountAddress)))
                     .orElseGet(() -> emptyResponse(requestContext)));
   }
 
@@ -129,11 +131,9 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
 
   private JsonRpcSuccessResponse extractStorageAt(
       final JsonRpcRequestContext requestContext,
-      final Address accountAddress,
       final Hash startKey,
       final int limit,
-      final MutableWorldState worldState) {
-    final Account account = worldState.get(accountAddress);
+      final Account account) {
     final NavigableMap<Bytes32, AccountStorageEntry> entries =
         account.storageEntriesFrom(startKey, limit + 1);
 

@@ -19,8 +19,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.MutableWorldView;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
@@ -52,17 +53,13 @@ public class BlockReplay {
     return performActionWithBlock(
         block.getHeader(),
         block.getBody(),
-        (body, header, blockchain, mutableWorldState, transactionProcessor) -> {
+        (body, header, blockchain, worldUpdater, transactionProcessor) -> {
           List<TransactionTrace> transactionTraces =
               body.getTransactions().stream()
                   .map(
                       transaction ->
                           action.performAction(
-                              transaction,
-                              header,
-                              blockchain,
-                              mutableWorldState,
-                              transactionProcessor))
+                              transaction, header, blockchain, worldUpdater, transactionProcessor))
                   .collect(Collectors.toList());
           return Optional.of(new BlockTrace(transactionTraces));
         });
@@ -77,18 +74,18 @@ public class BlockReplay {
       final Hash blockHash, final Hash transactionHash, final TransactionAction<T> action) {
     return performActionWithBlock(
         blockHash,
-        (body, header, blockchain, mutableWorldState, transactionProcessor) -> {
+        (body, header, blockchain, worldUpdater, transactionProcessor) -> {
           final BlockHashLookup blockHashLookup = new BlockHashLookup(header, blockchain);
           for (final Transaction transaction : body.getTransactions()) {
             if (transaction.getHash().equals(transactionHash)) {
               return Optional.of(
                   action.performAction(
-                      transaction, header, blockchain, mutableWorldState, transactionProcessor));
+                      transaction, header, blockchain, worldUpdater, transactionProcessor));
             } else {
               final ProtocolSpec spec = protocolSchedule.getByBlockNumber(header.getNumber());
               transactionProcessor.processTransaction(
                   blockchain,
-                  mutableWorldState.updater(),
+                  worldUpdater,
                   header,
                   transaction,
                   spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
@@ -110,7 +107,7 @@ public class BlockReplay {
           final ProtocolSpec spec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
           transactionProcessor.processTransaction(
               blockchain,
-              worldState.updater(),
+              worldState,
               blockHeader,
               transaction,
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
@@ -146,12 +143,15 @@ public class BlockReplay {
     if (previous == null) {
       return Optional.empty();
     }
-    final MutableWorldState mutableWorldState =
-        worldStateArchive.getMutable(previous.getStateRoot()).orElse(null);
-    if (mutableWorldState == null) {
+    final WorldUpdater worldUpdater =
+        worldStateArchive
+            .getMutable(previous.getStateRoot())
+            .map(MutableWorldView::updater)
+            .orElse(null);
+    if (worldUpdater == null) {
       return Optional.empty();
     }
-    return action.perform(body, header, blockchain, mutableWorldState, transactionProcessor);
+    return action.perform(body, header, blockchain, worldUpdater, transactionProcessor);
   }
 
   private Optional<Block> getBlock(final Hash blockHash) {
@@ -177,7 +177,7 @@ public class BlockReplay {
         BlockBody body,
         BlockHeader blockHeader,
         Blockchain blockchain,
-        MutableWorldState worldState,
+        WorldUpdater worldUpdater,
         TransactionProcessor transactionProcessor);
   }
 
@@ -187,7 +187,7 @@ public class BlockReplay {
         Transaction transaction,
         BlockHeader blockHeader,
         Blockchain blockchain,
-        MutableWorldState worldState,
+        WorldUpdater worldUpdater,
         TransactionProcessor transactionProcessor);
   }
 }
