@@ -119,8 +119,7 @@ public class BlockReplay {
         });
   }
 
-  private <T> Optional<T> performActionWithBlock(
-      final Hash blockHash, final BlockAction<T> action) {
+  public <T> Optional<T> performActionWithBlock(final Hash blockHash, final BlockAction<T> action) {
     Optional<Block> maybeBlock = getBlock(blockHash);
     if (maybeBlock.isEmpty()) {
       maybeBlock = getBadBlock(blockHash);
@@ -172,7 +171,7 @@ public class BlockReplay {
   }
 
   @FunctionalInterface
-  private interface BlockAction<T> {
+  public interface BlockAction<T> {
     Optional<T> perform(
         BlockBody body,
         BlockHeader blockHeader,

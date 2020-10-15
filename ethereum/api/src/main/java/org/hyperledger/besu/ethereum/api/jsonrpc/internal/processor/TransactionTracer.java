@@ -17,16 +17,22 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 import static java.util.function.Predicate.isEqual;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -60,45 +66,10 @@ public class TransactionTracer {
         blockHash,
         transactionHash,
         (transaction, header, blockchain, worldUpdater, transactionProcessor) -> {
-          final Stopwatch timer = Stopwatch.createStarted();
           final Result result =
-              transactionProcessor.processTransaction(
-                  blockchain,
-                  worldUpdater,
-                  header,
-                  transaction,
-                  header.getCoinbase(),
-                  tracer,
-                  new BlockHashLookup(header, blockchain),
-                  false);
-          timer.stop();
-          return new TransactionTrace(
-              transaction, result, tracer.getTraceFrames(), timer.elapsed(TimeUnit.NANOSECONDS));
-        });
-  }
-
-  public Optional<TransactionTrace> traceTransaction(
-      final Hash blockHash, final Hash transactionHash, final StandardJsonTracer tracer) {
-    return blockReplay.beforeTransactionInBlock(
-        blockHash,
-        transactionHash,
-        (transaction, header, blockchain, worldState, transactionProcessor) -> {
-          final Stopwatch timer = Stopwatch.createStarted();
-          final Result result =
-              transactionProcessor.processTransaction(
-                  blockchain,
-                  worldState,
-                  header,
-                  transaction,
-                  header.getCoinbase(),
-                  tracer,
-                  new BlockHashLookup(header, blockchain),
-                  false,
-                  new TransactionValidationParams.Builder().allowFutureNonce(true).build());
-
-          timer.stop();
-          return new TransactionTrace(
-              transaction, result, new ArrayList<>(), timer.elapsed(TimeUnit.NANOSECONDS));
+              processTransaction(
+                  header, blockchain, worldUpdater, transaction, transactionProcessor, tracer);
+          return new TransactionTrace(transaction, result, tracer.getTraceFrames());
         });
   }
 
@@ -108,6 +79,7 @@ public class TransactionTracer {
       final Optional<TransactionTraceParams> transactionTraceParams,
       final Path traceDir) {
     final List<String> traces = new ArrayList<>();
+
     try {
       final Optional<Hash> selectedHash =
           transactionTraceParams
@@ -123,36 +95,83 @@ public class TransactionTracer {
         throw new IOException(
             String.format("Trace directory '%s' does not exist and could not be made.", traceDir));
       }
-      for (int i = 0; i < transactions.size(); i++) {
-        final Transaction transaction = transactions.get(i);
-        if (selectedHash.isEmpty()
-            || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
-          final File traceFile =
-              traceDir
-                  .resolve(
-                      String.format(
-                          "block_%.10s-%d-%.10s-%s",
-                          blockHash.toHexString(),
-                          i,
-                          transaction.getHash().toHexString(),
-                          System.currentTimeMillis()))
-                  .toFile();
-          try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
-            traceTransaction(
-                    blockHash, transaction.getHash(), new StandardJsonTracer(out, showMemory))
-                .ifPresent(
-                    trace ->
-                        out.println(
-                            StandardJsonTracer.summaryTrace(
-                                transaction, trace.getTime().orElseThrow(), trace.getResult())));
-            traces.add(traceFile.getPath());
-          }
-        }
-      }
+
+      blockReplay.performActionWithBlock(
+          blockHash,
+          (body, header, blockchain, worldUpdater, transactionProcessor) -> {
+            for (int i = 0; i < transactions.size(); i++) {
+              final Transaction transaction = transactions.get(i);
+              if (selectedHash.isEmpty()
+                  || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
+                final File traceFile = generateTraceFile(traceDir, blockHash, i, transaction);
+                try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
+                  final Stopwatch timer = Stopwatch.createStarted();
+                  final Result result =
+                      processTransaction(
+                          header,
+                          blockchain,
+                          worldUpdater,
+                          transaction,
+                          transactionProcessor,
+                          new StandardJsonTracer(out, showMemory));
+                  out.println(
+                      StandardJsonTracer.summaryTrace(
+                          transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
+                  traces.add(traceFile.getPath());
+                } catch (FileNotFoundException e) {
+                  throw new RuntimeException(e.getMessage());
+                }
+              } else {
+                processTransaction(
+                    header,
+                    blockchain,
+                    worldUpdater,
+                    transaction,
+                    transactionProcessor,
+                    OperationTracer.NO_TRACING);
+              }
+            }
+            return Optional.empty();
+          });
     } catch (Exception e) {
       LOG.error("Unable to create transaction trace : {}", e.getMessage());
       throw new RuntimeException(e.getMessage(), e);
     }
     return traces;
+  }
+
+  private File generateTraceFile(
+      final Path traceDir,
+      final Hash blockHash,
+      final int indexTransaction,
+      final Transaction transaction) {
+    return traceDir
+        .resolve(
+            String.format(
+                "block_%.10s-%d-%.10s-%s",
+                blockHash.toHexString(),
+                indexTransaction,
+                transaction.getHash().toHexString(),
+                System.currentTimeMillis()))
+        .toFile();
+  }
+
+  private Result processTransaction(
+      final BlockHeader header,
+      final Blockchain blockchain,
+      final WorldUpdater worldUpdater,
+      final Transaction transaction,
+      final TransactionProcessor transactionProcessor,
+      final OperationTracer tracer) {
+    return transactionProcessor.processTransaction(
+        blockchain,
+        worldUpdater,
+        header,
+        transaction,
+        header.getCoinbase(),
+        tracer,
+        new BlockHashLookup(header, blockchain),
+        false,
+        new TransactionValidationParams.Builder().allowFutureNonce(true).build());
   }
 }
