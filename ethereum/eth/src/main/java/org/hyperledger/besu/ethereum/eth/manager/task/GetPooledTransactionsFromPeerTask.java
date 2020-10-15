@@ -63,30 +63,12 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
   @Override
   protected Optional<List<Transaction>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
-    if (streamClosed) {
-      // We don't record this as a useless response because it's impossible to know if a peer has
-      // the data we're requesting.
-      return Optional.of(emptyList());
-    }
-    final PooledTransactionsMessage pooledTransactionsMessage =
-        PooledTransactionsMessage.readFrom(message);
-    final List<Transaction> tx = pooledTransactionsMessage.transactions();
-    if (tx.size() > hashes.size()) {
-      // Can't be the response to our request
-      return Optional.empty();
-    }
-    return mapNodeDataByHash(tx);
-  }
-
-  private Optional<List<Transaction>> mapNodeDataByHash(final List<Transaction> transactions) {
-    final List<Transaction> result = new ArrayList<>();
-    for (final Transaction tx : transactions) {
-      final Hash hash = tx.getHash();
-      if (!hashes.contains(hash)) {
-        return Optional.empty();
-      }
-      result.add(tx);
-    }
-    return Optional.of(result);
+    return Optional.of(
+        streamClosed
+            ?
+            // We don't record this as a useless response because it's impossible to know if a peer
+            // has the data we're requesting.
+            emptyList()
+            : PooledTransactionsMessage.readFrom(message).transactions());
   }
 }
