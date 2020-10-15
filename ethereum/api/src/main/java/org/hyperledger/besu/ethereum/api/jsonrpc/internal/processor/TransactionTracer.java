@@ -43,13 +43,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /** Used to produce debug traces of transactions */
 public class TransactionTracer {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   public static final String TRACE_PATH = "traces";
 
@@ -64,17 +60,21 @@ public class TransactionTracer {
     return blockReplay.beforeTransactionInBlock(
         blockHash,
         transactionHash,
-        (transaction, header, blockchain, worldUpdater, transactionProcessor) -> {
+        (transaction, header, blockchain, worldState, transactionProcessor) -> {
           final Result result =
               processTransaction(
-                  header, blockchain, worldUpdater, transaction, transactionProcessor, tracer);
+                  header,
+                  blockchain,
+                  worldState.updater(),
+                  transaction,
+                  transactionProcessor,
+                  tracer);
           return new TransactionTrace(transaction, result, tracer.getTraceFrames());
         });
   }
 
   public List<String> traceTransactionToFile(
       final Hash blockHash,
-      final List<Transaction> transactions,
       final Optional<TransactionTraceParams> transactionTraceParams,
       final Path traceDir) {
     final List<String> traces = new ArrayList<>();
@@ -96,9 +96,10 @@ public class TransactionTracer {
 
     blockReplay.performActionWithBlock(
         blockHash,
-        (body, header, blockchain, worldUpdater, transactionProcessor) -> {
-          for (int i = 0; i < transactions.size(); i++) {
-            final Transaction transaction = transactions.get(i);
+        (body, header, blockchain, worldState, transactionProcessor) -> {
+          final WorldUpdater worldUpdater = worldState.updater();
+          for (int i = 0; i < body.getTransactions().size(); i++) {
+            final Transaction transaction = body.getTransactions().get(i);
             if (selectedHash.isEmpty()
                 || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
               final File traceFile = generateTraceFile(traceDir, blockHash, i, transaction);
