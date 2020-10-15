@@ -86,7 +86,6 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
 
     final Optional<TransactionWithMetadata> optional =
         blockchainQueries.get().transactionByBlockHashAndIndex(blockHash, transactionIndex);
-
     return optional
         .map(
             transactionWithMetadata ->
@@ -97,10 +96,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
                         transactionWithMetadata.getTransaction().getHash(),
                         (transaction, blockHeader, blockchain, worldState, transactionProcessor) ->
                             extractStorageAt(
-                                requestContext,
-                                startKey,
-                                limit,
-                                worldState.getAccount(accountAddress)))
+                                requestContext, startKey, limit, worldState.get(accountAddress)))
                     .orElseGet(() -> emptyResponse(requestContext))))
         .orElseGet(
             () ->
