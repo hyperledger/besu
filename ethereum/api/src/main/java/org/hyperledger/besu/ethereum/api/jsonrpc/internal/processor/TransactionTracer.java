@@ -77,7 +77,6 @@ public class TransactionTracer {
       final Hash blockHash,
       final Optional<TransactionTraceParams> transactionTraceParams,
       final Path traceDir) {
-    final List<String> traces = new ArrayList<>();
 
     final Optional<Hash> selectedHash =
         transactionTraceParams
@@ -94,47 +93,48 @@ public class TransactionTracer {
           String.format("Trace directory '%s' does not exist and could not be made.", traceDir));
     }
 
-    blockReplay.performActionWithBlock(
-        blockHash,
-        (body, header, blockchain, worldState, transactionProcessor) -> {
-          final WorldUpdater worldUpdater = worldState.updater();
-          for (int i = 0; i < body.getTransactions().size(); i++) {
-            final Transaction transaction = body.getTransactions().get(i);
-            if (selectedHash.isEmpty()
-                || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
-              final File traceFile = generateTraceFile(traceDir, blockHash, i, transaction);
-              try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
-                final Stopwatch timer = Stopwatch.createStarted();
-                final Result result =
-                    processTransaction(
-                        header,
-                        blockchain,
-                        worldUpdater,
-                        transaction,
-                        transactionProcessor,
-                        new StandardJsonTracer(out, showMemory));
-                out.println(
-                    StandardJsonTracer.summaryTrace(
-                        transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
-                traces.add(traceFile.getPath());
-              } catch (FileNotFoundException e) {
-                throw new RuntimeException(
-                    "Unable to create transaction trace : " + e.getMessage());
+    return blockReplay
+        .performActionWithBlock(
+            blockHash,
+            (body, header, blockchain, worldState, transactionProcessor) -> {
+              final WorldUpdater worldUpdater = worldState.updater();
+              final List<String> traces = new ArrayList<>();
+              for (int i = 0; i < body.getTransactions().size(); i++) {
+                final Transaction transaction = body.getTransactions().get(i);
+                if (selectedHash.isEmpty()
+                    || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
+                  final File traceFile = generateTraceFile(traceDir, blockHash, i, transaction);
+                  try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
+                    final Stopwatch timer = Stopwatch.createStarted();
+                    final Result result =
+                        processTransaction(
+                            header,
+                            blockchain,
+                            worldUpdater,
+                            transaction,
+                            transactionProcessor,
+                            new StandardJsonTracer(out, showMemory));
+                    out.println(
+                        StandardJsonTracer.summaryTrace(
+                            transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
+                    traces.add(traceFile.getPath());
+                  } catch (FileNotFoundException e) {
+                    throw new RuntimeException(
+                        "Unable to create transaction trace : " + e.getMessage());
+                  }
+                } else {
+                  processTransaction(
+                      header,
+                      blockchain,
+                      worldUpdater,
+                      transaction,
+                      transactionProcessor,
+                      OperationTracer.NO_TRACING);
+                }
               }
-            } else {
-              processTransaction(
-                  header,
-                  blockchain,
-                  worldUpdater,
-                  transaction,
-                  transactionProcessor,
-                  OperationTracer.NO_TRACING);
-            }
-          }
-          return Optional.empty();
-        });
-
-    return traces;
+              return Optional.of(traces);
+            })
+        .orElse(new ArrayList<>());
   }
 
   private File generateTraceFile(
