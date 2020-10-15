@@ -29,6 +29,7 @@ Users of Web3J should note that many calls will now return a result with the err
 ### Additions and Improvements
 * Added support for ECIP-1099: Calibrate Epoch Duration. [\#1421](https://github.com/hyperledger/besu/pull/1421)
 * Added the Open Telemetry Java agent to report traces to a remote backend. Added an example to showcase the trace reporting capabilities.
+* Rename genesis config option ecip1099Block to thanosBlock. [\#1462](https://github.com/hyperledger/besu/pull/1462)
 
 ## 20.10.0-RC1
 
