@@ -516,10 +516,10 @@ exec "$$JAVACMD" $$TRACING_AGENT /$
 
   // Prevent the error originating from the 8191 chars limit on Windows
   createScriptTask.windowsScript.text =
-      createScriptTask.windowsScript
-          .readLines()
-          .collect(shortenWindowsClasspath)
-          .join('\r\n')
+    createScriptTask.windowsScript
+    .readLines()
+    .collect(shortenWindowsClasspath)
+    .join('\r\n')
 }
 
 startScripts {
@@ -533,7 +533,9 @@ task evmToolStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'evm'
-  defaultJvmOpts = ["-Dsecp256k1.randomize=false"]
+  defaultJvmOpts = [
+    "-Dsecp256k1.randomize=false"
+  ]
   doLast {
     tweakStartScript(evmToolStartScripts)
   }
