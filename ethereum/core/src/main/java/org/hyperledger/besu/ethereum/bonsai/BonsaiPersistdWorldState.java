@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.CollectBranchesVisitor;
-import org.hyperledger.besu.ethereum.trie.DumpVisitor;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -42,7 +41,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.io.RollingFileWriter;
 
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -50,14 +48,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import com.google.common.base.Objects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -473,7 +470,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     final TrieLogLayer layer = new TrieLogLayer();
     // FIXME
     layer.setBlockHash(worldStateRootHash);
-    for (final Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
+    for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
         accountsToUpdate.entrySet()) {
       final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
       final BonsaiAccount oldValue = bonsaiValue.getOriginal();
@@ -499,24 +496,24 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
     }
 
-    for (final Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
+    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
       layer.addCodeChange(
           updatedCode.getKey(),
           updatedCode.getValue().getOriginal(),
           updatedCode.getValue().getUpdated());
     }
 
-    for (final Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
+    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
       layer.addCodeChange(
           updatedCode.getKey(),
           updatedCode.getValue().getOriginal(),
           updatedCode.getValue().getUpdated());
     }
 
-    for (final Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>> updatesStorage :
+    for (final Map.Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>> updatesStorage :
         storageToUpdate.entrySet()) {
       final Address address = updatesStorage.getKey();
-      for (final Entry<Bytes32, BonsaiValue<UInt256>> slotUpdate :
+      for (final Map.Entry<Bytes32, BonsaiValue<UInt256>> slotUpdate :
           updatesStorage.getValue().entrySet()) {
         layer.addStorageChange(
             address,
@@ -558,7 +555,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       final Address address,
       final StateTrieAccountValue oldValue,
       final StateTrieAccountValue newValue) {
-    if (Objects.equal(oldValue, newValue)) {
+    if (Objects.equals(oldValue, newValue)) {
       // non-change, a cached read.
       return;
     }
@@ -620,7 +617,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
   private void rollForwardCodeChange(
       final Address address, final Bytes oldCode, final Bytes newCode) {
-    if (Objects.equal(oldCode, newCode)) {
+    if (Objects.equals(oldCode, newCode)) {
       // non-change, a cached read.
       return;
     }
@@ -672,7 +669,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
   private void rollForwardStorageChange(
       final Address address, final Bytes32 slot, final UInt256 original, final UInt256 updated) {
-    if (Objects.equal(original, updated)) {
+    if (Objects.equals(original, updated)) {
       // non-change, a cached read.
       return;
     }
@@ -826,7 +823,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           pendingStorageUpdates.clear();
         }
 
-        final TreeSet<Entry<UInt256, UInt256>> entries =
+        final TreeSet<Map.Entry<UInt256, UInt256>> entries =
             new TreeSet<>(
                 Comparator.comparing(
                     (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));

@@ -44,8 +44,8 @@ public class LogRollingTests {
 
   private static final Address addressOne =
       Address.fromHexString("0x1111111111111111111111111111111111111111");
-  private static final Address addressTwo =
-      Address.fromHexString("0x2222222222222222222222222222222222222222");
+  // private static final Address addressTwo =
+  //     Address.fromHexString("0x2222222222222222222222222222222222222222");
 
   @Before
   public void createStorage() {

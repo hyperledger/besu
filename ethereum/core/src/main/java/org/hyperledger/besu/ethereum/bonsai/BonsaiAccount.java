@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 
-import com.google.common.base.Objects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -318,21 +318,23 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
 
   /**
    * Throws an exception if the two accounts represent different stored states
+   *
    * @param account the account to compare
    * @param context a description to be added to the thrown exceptions
    * @throws IllegalStateException if the stored values differ
    */
-  public void assertCloseEnoughForDiffing(final StateTrieAccountValue account, final String context) {
+  public void assertCloseEnoughForDiffing(
+      final StateTrieAccountValue account, final String context) {
     if (nonce != account.getNonce()) {
       throw new IllegalStateException(context + ": nonces differ");
     }
-    if (!Objects.equal(balance, account.getBalance())) {
+    if (!Objects.equals(balance, account.getBalance())) {
       throw new IllegalStateException(context + ": balances differ");
     }
-    if (!Objects.equal(codeHash, account.getCodeHash())) {
+    if (!Objects.equals(codeHash, account.getCodeHash())) {
       throw new IllegalStateException(context + ": Code Hashes differ");
     }
-    if (!Objects.equal(storageRoot, account.getStorageRoot())) {
+    if (!Objects.equals(storageRoot, account.getStorageRoot())) {
       throw new IllegalStateException(context + ": Storage Roots differ");
     }
     if (version != account.getVersion()) {

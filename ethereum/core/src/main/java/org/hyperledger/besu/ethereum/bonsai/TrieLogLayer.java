@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -70,7 +69,10 @@ public class TrieLogLayer {
 
   public void addCodeChange(final Address address, final Bytes oldValue, final Bytes newValue) {
     checkState(!frozen, "Layer is Frozen");
-    code.put(address, new BonsaiValue<>(oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
+    code.put(
+        address,
+        new BonsaiValue<>(
+            oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
   }
 
   public void addStorageChange(
@@ -144,7 +146,7 @@ public class TrieLogLayer {
     addresses.addAll(code.keySet());
     addresses.addAll(storage.keySet());
 
-    output.startList();  // container
+    output.startList(); // container
     output.writeBytes(blockHash);
 
     for (final Address address : addresses) {
@@ -166,11 +168,11 @@ public class TrieLogLayer {
       }
 
       final Map<Bytes32, BonsaiValue<UInt256>> storageChanges = storage.get(address);
-      if (storageChanges == null)  {
+      if (storageChanges == null) {
         output.writeNull();
       } else {
         output.startList();
-        for (final Entry<Bytes32, BonsaiValue<UInt256>> storageChangeEntry :
+        for (final Map.Entry<Bytes32, BonsaiValue<UInt256>> storageChangeEntry :
             storageChanges.entrySet()) {
           output.startList();
           output.writeBytes(storageChangeEntry.getKey());
@@ -192,7 +194,7 @@ public class TrieLogLayer {
     return code.entrySet().stream();
   }
 
-  Stream<Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>>> streamStorageChanges() {
+  Stream<Map.Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>>> streamStorageChanges() {
     return storage.entrySet().stream();
   }
 
