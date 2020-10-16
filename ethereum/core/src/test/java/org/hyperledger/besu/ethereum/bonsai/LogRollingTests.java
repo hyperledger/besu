@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -47,6 +48,9 @@ public class LogRollingTests {
   // private static final Address addressTwo =
   //     Address.fromHexString("0x2222222222222222222222222222222222222222");
 
+  private static final Hash hashOne = Hash.hash(Bytes.of(1));
+  private static final Hash hashTwo = Hash.hash(Bytes.of(2));
+
   @Before
   public void createStorage() {
     accountStorage = new InMemoryKeyValueStorage();
@@ -68,7 +72,7 @@ public class LogRollingTests {
     mutableAccount.setCode(Bytes.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
-    worldState.persist();
+    worldState.persist(hashOne);
 
     final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
@@ -84,20 +88,20 @@ public class LogRollingTests {
             newTrieBranchStorage,
             newTrieLogStorage);
 
-    final Optional<Optional<byte[]>> value =
-        trieLogStorage.streamKeys().map(trieLogStorage::get).findFirst();
+    final Optional<byte[]> value = trieLogStorage.get(hashOne.toArrayUnsafe());
 
     final TrieLogLayer layer =
-        TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get().get()), false));
+        TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
 
     secondWorldState.rollForward(layer);
-    secondWorldState.persist();
+    secondWorldState.persist(null);
 
     assertKeyValueStorageEqual(accountStorage, newAccountStorage);
     assertKeyValueStorageEqual(codeStorage, newCodeStorage);
     assertKeyValueStorageEqual(storageStorage, newStorageStorage);
     assertKeyValueStorageEqual(trieBranchStorage, newTrieBranchStorage);
-    assertKeyValueStorageEqual(trieLogStorage, newTrieLogStorage);
+    // trie logs won't be the same, we shouldn't generate logs on rolls.
+    assertKeyValueSubset(trieLogStorage, newTrieLogStorage);
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
@@ -114,14 +118,14 @@ public class LogRollingTests {
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
 
-    worldState.persist();
+    worldState.persist(hashOne);
 
     final WorldUpdater updater2 = worldState.updater();
     final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater2.commit();
 
-    worldState.persist();
+    worldState.persist(hashTwo);
 
     final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
@@ -137,23 +141,20 @@ public class LogRollingTests {
             newTrieBranchStorage,
             newTrieLogStorage);
 
-    final TrieLogLayer layerOne =
-        getTrieLogLayer(
-            trieLogStorage, "0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c");
+    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, hashOne);
     secondWorldState.rollForward(layerOne);
-    secondWorldState.persist();
+    secondWorldState.persist(null);
 
-    final TrieLogLayer layerTwo =
-        getTrieLogLayer(
-            trieLogStorage, "0x5b675f79cd11ba67266161d79a8d5be3ac330dfbb76300a4f15d76b610b18193");
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, hashTwo);
     secondWorldState.rollForward(layerTwo);
-    secondWorldState.persist();
+    secondWorldState.persist(null);
 
     assertKeyValueStorageEqual(accountStorage, newAccountStorage);
     assertKeyValueStorageEqual(codeStorage, newCodeStorage);
     assertKeyValueStorageEqual(storageStorage, newStorageStorage);
     assertKeyValueStorageEqual(trieBranchStorage, newTrieBranchStorage);
-    assertKeyValueStorageEqual(trieLogStorage, newTrieLogStorage);
+    // trie logs won't be the same, we shouldn't generate logs on rolls.
+    assertKeyValueSubset(trieLogStorage, newTrieLogStorage);
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
@@ -170,21 +171,19 @@ public class LogRollingTests {
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
 
-    worldState.persist();
+    worldState.persist(hashOne);
 
     final WorldUpdater updater2 = worldState.updater();
     final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater2.commit();
 
-    worldState.persist();
+    worldState.persist(hashTwo);
 
-    final TrieLogLayer layerTwo =
-        getTrieLogLayer(
-            trieLogStorage, "0x5b675f79cd11ba67266161d79a8d5be3ac330dfbb76300a4f15d76b610b18193");
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, hashTwo);
     worldState.rollBack(layerTwo);
 
-      worldState.persist();
+    worldState.persist(hashTwo);
 
     final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
@@ -207,7 +206,7 @@ public class LogRollingTests {
     secondMutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     secondUpdater.commit();
 
-    secondWorldState.persist();
+    secondWorldState.persist(null);
 
     assertKeyValueStorageEqual(accountStorage, newAccountStorage);
     assertKeyValueStorageEqual(codeStorage, newCodeStorage);
@@ -218,9 +217,9 @@ public class LogRollingTests {
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
-  private TrieLogLayer getTrieLogLayer(final InMemoryKeyValueStorage storage, final String key) {
+  private TrieLogLayer getTrieLogLayer(final InMemoryKeyValueStorage storage, final Bytes key) {
     return storage
-        .get(Bytes.fromHexString(key).toArrayUnsafe())
+        .get(key.toArrayUnsafe())
         .map(bytes -> TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
         .get();
   }
@@ -248,8 +247,10 @@ public class LogRollingTests {
 
     assertThat(largerKeys).containsAll(smallerKeys);
     for (final Bytes key : largerKeys) {
-      assertThat(Bytes.wrap(largerSet.get(key.toArrayUnsafe()).get()))
-          .isEqualByComparingTo(Bytes.wrap(smallerSet.get(key.toArrayUnsafe()).get()));
+      if (smallerKeys.contains(key)) {
+        assertThat(Bytes.wrap(largerSet.get(key.toArrayUnsafe()).get()))
+            .isEqualByComparingTo(Bytes.wrap(smallerSet.get(key.toArrayUnsafe()).get()));
+      }
     }
   }
 }

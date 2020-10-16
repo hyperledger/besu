@@ -169,7 +169,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public void persist() {
+  public void persist(final Hash blockhash) {
     final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {

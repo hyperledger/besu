@@ -74,7 +74,7 @@ public class BlockchainReferenceTestCaseSpec {
     }
 
     updater.commit();
-    worldState.persist();
+    worldState.persist(null);
 
     return worldStateArchive;
   }

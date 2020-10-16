@@ -126,7 +126,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   }
 
   @Override
-  public void persist() {
+  public void persist(final Hash blockHash) {
     boolean success = false;
     final KeyValueStorageTransaction accountTx = accountStorage.startTransaction();
     final KeyValueStorageTransaction codeTx = codeStorage.startTransaction();
@@ -291,17 +291,19 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       }
 
       // FIXME get BlockHash
-      final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-      generateTrieLog().writeTo(rlpLog);
-      // FIXME just round trip checking
-      try {
-        layerWriter.writeBytes(rlpLog.encoded().toArrayUnsafe());
-        TrieLogLayer.readFrom(new BytesValueRLPInput(rlpLog.encoded(), false, true));
-      } catch (final Exception e) {
-        System.out.println(rlpLog.encoded());
-        throw new RuntimeException(e);
+      if (blockHash != null) {
+        final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
+        generateTrieLog().writeTo(rlpLog);
+        // FIXME just round trip checking
+        try {
+          layerWriter.writeBytes(rlpLog.encoded().toArrayUnsafe());
+          TrieLogLayer.readFrom(new BytesValueRLPInput(rlpLog.encoded(), false, true));
+        } catch (final Exception e) {
+          System.out.println(rlpLog.encoded());
+          throw new RuntimeException(e);
+        }
+        trieLogTx.put(blockHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
       }
-      trieLogTx.put(worldStateRootHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
 
       success = true;
     } finally {
@@ -576,12 +578,11 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                                 entry.getKey(), key, value.getUpdated(), value.getOriginal())));
   }
 
-
   private void rollAccountChange(
       final Address address,
-      final StateTrieAccountValue oldValue,
-      final StateTrieAccountValue newValue) {
-    if (Objects.equals(oldValue, newValue)) {
+      final StateTrieAccountValue expectedValue,
+      final StateTrieAccountValue replacementValue) {
+    if (Objects.equals(expectedValue, replacementValue)) {
       // non-change, a cached read.
       return;
     }
@@ -597,7 +598,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       }
     }
     if (accountValue == null) {
-      if (oldValue == null && newValue != null) {
+      if (expectedValue == null && replacementValue != null) {
         accountsToUpdate.put(
             address,
             new BonsaiValue<>(
@@ -606,24 +607,24 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                     this,
                     address,
                     Hash.hash(address),
-                    newValue.getNonce(),
-                    newValue.getBalance(),
-                    newValue.getStorageRoot(),
-                    newValue.getCodeHash(),
-                    newValue.getVersion(),
+                    replacementValue.getNonce(),
+                    replacementValue.getBalance(),
+                    replacementValue.getStorageRoot(),
+                    replacementValue.getCodeHash(),
+                    replacementValue.getVersion(),
                     true)));
       } else {
         throw new IllegalStateException(
             "Expected to update account, but the account does not exist");
       }
     } else {
-      if (oldValue == null) {
+      if (expectedValue == null) {
         throw new IllegalStateException("Expected to create account, but the account exists");
       }
       accountValue
           .getOriginal()
-          .assertCloseEnoughForDiffing(oldValue, "Prior Value in Roll Forward");
-      if (newValue == null) {
+          .assertCloseEnoughForDiffing(expectedValue, "Prior Value in Roll Forward");
+      if (replacementValue == null) {
         if (accountValue.getOriginal() == null) {
           accountsToUpdate.remove(address);
         } else {
@@ -631,19 +632,19 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         }
       } else {
         final BonsaiAccount existingAccount = accountValue.getUpdated();
-        existingAccount.setNonce(newValue.getNonce());
-        existingAccount.setBalance(newValue.getBalance());
-        existingAccount.setStorageRoot(newValue.getStorageRoot());
+        existingAccount.setNonce(replacementValue.getNonce());
+        existingAccount.setBalance(replacementValue.getBalance());
+        existingAccount.setStorageRoot(replacementValue.getStorageRoot());
         // depend on correctly structured layers to set code hash
         // existingAccount.setCodeHash(oldValue.getNonce());
-        existingAccount.setVersion(newValue.getVersion());
+        existingAccount.setVersion(replacementValue.getVersion());
       }
     }
   }
 
   private void rollCodeChange(
-      final Address address, final Bytes oldCode, final Bytes newCode) {
-    if (Objects.equals(oldCode, newCode)) {
+      final Address address, final Bytes expectedCode, final Bytes replacementCode) {
+    if (Objects.equals(expectedCode, replacementCode)) {
       // non-change, a cached read.
       return;
     }
@@ -658,26 +659,26 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     }
 
     if (codeValue == null) {
-      if (oldCode == null && newCode != null) {
-        codeToUpdate.put(address, new BonsaiValue<>(null, newCode));
+      if (expectedCode == null && replacementCode != null) {
+        codeToUpdate.put(address, new BonsaiValue<>(null, replacementCode));
       } else {
         throw new IllegalStateException("Expected to update code, but the code does not exist");
       }
     } else {
-      if (oldCode == null) {
+      if (expectedCode == null) {
         throw new IllegalStateException("Expected to create code, but the code exists");
       }
-      if (!codeValue.getOriginal().equals(oldCode)) {
+      if (!codeValue.getOriginal().equals(expectedCode)) {
         throw new IllegalStateException("Old value of code does not match expected value");
       }
-      if (newCode == null) {
+      if (replacementCode == null) {
         if (codeValue.getOriginal() == null) {
           codeToUpdate.remove(address);
         } else {
           codeValue.setUpdated(null);
         }
       } else {
-        codeValue.setUpdated(newCode);
+        codeValue.setUpdated(replacementCode);
       }
     }
   }
@@ -694,8 +695,11 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   }
 
   private void rollStorageChange(
-      final Address address, final Bytes32 slot, final UInt256 original, final UInt256 updated) {
-    if (Objects.equals(original, updated)) {
+      final Address address,
+      final Bytes32 slot,
+      final UInt256 expectedValue,
+      final UInt256 replacementValue) {
+    if (Objects.equals(expectedValue, replacementValue)) {
       // non-change, a cached read.
       return;
     }
@@ -711,27 +715,28 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       }
     }
     if (slotValue == null) {
-      if (original == null && updated != null) {
-        maybeCreateStorageMap(storageMap, address).put(slot, new BonsaiValue<>(null, updated));
+      if (expectedValue == null && replacementValue != null) {
+        maybeCreateStorageMap(storageMap, address)
+            .put(slot, new BonsaiValue<>(null, replacementValue));
       } else {
         throw new IllegalStateException(
             "Expected to update storage value, but the slot does not exist");
       }
     } else {
-      if (original == null) {
+      if (expectedValue == null) {
         throw new IllegalStateException("Expected to create code, but the code exists");
       }
-      if (!slotValue.getOriginal().equals(original)) {
+      if (!slotValue.getOriginal().equals(expectedValue)) {
         throw new IllegalStateException("Old value of slot does not match expected value");
       }
-      if (updated == null) {
+      if (replacementValue == null) {
         if (slotValue.getOriginal() == null) {
           maybeCreateStorageMap(storageMap, address).remove(slot);
         } else {
           slotValue.setUpdated(null);
         }
       } else {
-        slotValue.setUpdated(updated);
+        slotValue.setUpdated(replacementValue);
       }
     }
   }

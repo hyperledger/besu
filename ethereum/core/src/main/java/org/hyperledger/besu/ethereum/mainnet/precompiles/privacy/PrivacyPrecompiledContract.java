@@ -179,7 +179,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     if (messageFrame.isPersistingPrivateState()) {
 
       privateWorldStateUpdater.commit();
-      disposablePrivateState.persist();
+      disposablePrivateState.persist(null);
 
       storePrivateMetadata(
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);

@@ -48,6 +48,7 @@ import java.util.stream.Stream;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
@@ -118,7 +119,7 @@ public final class GenesisState {
           genesisAccount.storage.forEach(account::setStorageValue);
         });
     updater.commit();
-    target.persist();
+    target.persist(Hash.wrap(Bytes32.ZERO));
   }
 
   private static Hash calculateGenesisStateHash(final List<GenesisAccount> genesisAccounts) {

@@ -100,7 +100,7 @@ public class TestCodeExecutor {
         worldState.getOrCreate(TestCodeExecutor.SENDER_ADDRESS).getMutable();
     accountSetup.accept(senderAccount);
     worldState.commit();
-    initialWorldState.persist();
+    initialWorldState.persist(null);
     return stateArchive.getMutable(initialWorldState.rootHash()).get().updater();
   }
 }
