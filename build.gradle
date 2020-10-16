@@ -17,7 +17,6 @@
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 
 plugins {
@@ -494,38 +493,57 @@ run {
   }
 }
 
-startScripts {
-
+def tweakStartScript(createScriptTask) {
   def shortenWindowsClasspath = { line ->
-    line = line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
+    line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
   }
 
-  doLast {
-    unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
-    windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
-    // OpenTelemetry Wiring for unix scripts
-    def agentFileName = configurations.javaAgent.singleFile.toPath().getFileName()
-    def unixRegex = $/exec "$$JAVACMD" /$
-    def forwardSlash = "/"
-    def unixReplacement = $/if [ -n "$$TRACING" ];then
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
+  // OpenTelemetry Wiring for unix scripts
+  def agentFileName = configurations.javaAgent.singleFile.toPath().getFileName()
+  def unixRegex = $/exec "$$JAVACMD" /$
+  def forwardSlash = "/"
+  def unixReplacement = $/if [ -n "$$TRACING" ];then
  TRACING_AGENT="-javaagent:$$APP_HOME/agent${forwardSlash}${agentFileName}"
 fi
 exec "$$JAVACMD" $$TRACING_AGENT /$
-    unixScript.text = unixScript.text.replace(unixRegex, unixReplacement)
-    // OpenTelemetry Wiring for windows scripts
-    def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
-    def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:"%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
-    windowsScript.text = windowsScript.text.replace(windowsRegex, windowsReplacement)
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace(unixRegex, unixReplacement)
+  // OpenTelemetry Wiring for windows scripts
+  def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
+  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:"%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace(windowsRegex, windowsReplacement)
 
-    // Prevent the error originating from the 8191 chars limit on Windows
-    windowsScript.text =
-      windowsScript
-      .readLines()
-      .collect(shortenWindowsClasspath)
-      .join('\r\n')
+  // Prevent the error originating from the 8191 chars limit on Windows
+  createScriptTask.windowsScript.text =
+      createScriptTask.windowsScript
+          .readLines()
+          .collect(shortenWindowsClasspath)
+          .join('\r\n')
+}
+
+startScripts {
+  doLast {
+    tweakStartScript(startScripts)
   }
 }
 
+task evmToolStartScripts(type: CreateStartScripts) {
+  mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
+  classpath = startScripts.classpath
+  outputDir = startScripts.outputDir
+  applicationName = 'evm'
+  defaultJvmOpts = ["-Dsecp256k1.randomize=false"]
+  doLast {
+    tweakStartScript(evmToolStartScripts)
+  }
+}
+
+// Include the additional start scripts in the distribution
+applicationDistribution.into("bin") {
+  from(tasks.withType(CreateStartScripts))
+  fileMode = 0755
+}
 
 installDist { dependsOn checkLicenses }
 
@@ -777,6 +795,7 @@ configurations {
 
 dependencies {
   implementation project(':besu')
+  implementation project(':ethereum:evmtool')
   javaAgent group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', classifier: 'all'
   errorprone 'com.google.errorprone:error_prone_core'
 }
