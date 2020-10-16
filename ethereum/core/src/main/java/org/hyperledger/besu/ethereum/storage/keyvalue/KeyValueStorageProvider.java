@@ -54,7 +54,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage() {
     return new WorldStateKeyValueStorage(
-        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN));
+        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
   }
 
   @Override
