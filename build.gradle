@@ -17,6 +17,7 @@
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 
 plugins {
@@ -126,6 +127,7 @@ allprojects {
     maven { url "https://hyperledger-org.bintray.com/besu-repo" }
     maven { url "https://consensys.bintray.com/pegasys-repo" }
     maven { url "https://repo.spring.io/libs-release" }
+    maven { url "https://dl.bintray.com/open-telemetry/maven" }
   }
 
   dependencies { errorprone "com.google.errorprone:error_prone_core" }
@@ -486,6 +488,8 @@ applicationDefaultJvmArgs = [
 run {
   args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
   doFirst {
+    applicationDefaultJvmArgs.add(0, "-Dotel.resource.attributes=service.name=besu-dev")
+    applicationDefaultJvmArgs.add(0, "-javaagent:"+ configurations.javaAgent.singleFile.toPath() + "")
     applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect {
       it.replace('BESU_HOME', "$buildDir/besu")
     }
@@ -501,6 +505,19 @@ startScripts {
   doLast {
     unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
     windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
+    // OpenTelemetry Wiring for unix scripts
+    def agentFileName = configurations.javaAgent.singleFile.toPath().getFileName()
+    def unixRegex = $/exec "$$JAVACMD" /$
+    def forwardSlash = "/"
+    def unixReplacement = $/if [ -n "$$TRACING" ];then
+ TRACING_AGENT="-javaagent:$$APP_HOME/agent${forwardSlash}${agentFileName}"
+fi
+exec "$$JAVACMD" $$TRACING_AGENT /$
+    unixScript.text = unixScript.text.replace(unixRegex, unixReplacement)
+    // OpenTelemetry Wiring for windows scripts
+    def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
+    def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:"%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
+    windowsScript.text = windowsScript.text.replace(windowsRegex, windowsReplacement)
 
     // Prevent the error originating from the 8191 chars limit on Windows
     windowsScript.text =
@@ -511,22 +528,6 @@ startScripts {
   }
 }
 
-
-dependencies {
-  implementation project(':besu')
-  errorprone 'com.google.errorprone:error_prone_core'
-}
-
-distributions {
-  main {
-    contents {
-      from("./LICENSE") { into "." }
-      from("build/reports/license/license-dependency.html") { into "." }
-      from("./docs/GettingStartedBinaries.md") { into "." }
-      from("./docs/DocsArchive0.8.0.html") { into "." }
-    }
-  }
-}
 
 installDist { dependsOn checkLicenses }
 
@@ -768,6 +769,28 @@ tasks.register("verifyDistributions") {
     }
     if (distZipFile.length() < minDistributionSize) {
       throw new GradleException("Distribution zip is suspiciously small: " + distZipFile.length() + " bytes")
+    }
+  }
+}
+
+configurations {
+  javaAgent
+}
+
+dependencies {
+  implementation project(':besu')
+  javaAgent group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', classifier: 'all'
+  errorprone 'com.google.errorprone:error_prone_core'
+}
+
+distributions {
+  main {
+    contents {
+      from("./LICENSE") { into "." }
+      from("build/reports/license/license-dependency.html") { into "." }
+      from("./docs/GettingStartedBinaries.md") { into "." }
+      from("./docs/DocsArchive0.8.0.html") { into "." }
+      from(configurations.javaAgent.singleFile.toPath()) { into "agent"}
     }
   }
 }

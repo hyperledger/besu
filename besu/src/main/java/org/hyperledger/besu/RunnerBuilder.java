@@ -164,6 +164,7 @@ public class RunnerBuilder {
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
+  private boolean randomPeerPriority;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -241,6 +242,11 @@ public class RunnerBuilder {
   public RunnerBuilder fractionRemoteConnectionsAllowed(
       final float fractionRemoteConnectionsAllowed) {
     this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
+    return this;
+  }
+
+  public RunnerBuilder randomPeerPriority(final boolean randomPeerPriority) {
+    this.randomPeerPriority = randomPeerPriority;
     return this;
   }
 
@@ -404,6 +410,7 @@ public class RunnerBuilder {
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
                 .natService(natService)
+                .randomPeerPriority(randomPeerPriority)
                 .build();
 
     final NetworkRunner networkRunner =
@@ -860,6 +867,7 @@ public class RunnerBuilder {
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }
+
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(
             vertx,

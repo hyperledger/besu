@@ -184,7 +184,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.isPruningEnabled(anyBoolean())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.pruningConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisConfigOverrides(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.targetGasLimit(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.gasLimitCalculator(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.reorgLoggingThreshold(anyLong())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
@@ -214,6 +214,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.fractionRemoteConnectionsAllowed(anyFloat()))
         .thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.randomPeerPriority(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natManagerServiceName(any())).thenReturn(mockRunnerBuilder);

@@ -185,6 +185,27 @@ public class ClassicProtocolSpecs {
         .name("Phoenix");
   }
 
+  public static ProtocolSpecBuilder thanosDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
+    return phoenixDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds)
+        .blockHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createOmmerValidator(
+                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+        .name("Thanos");
+  }
+
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(

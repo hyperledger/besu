@@ -265,6 +265,7 @@ public class BlockDataGenerator {
     final int gasLimit = random.nextInt() & Integer.MAX_VALUE;
     final int gasUsed = Math.max(0, gasLimit - 1);
     final long blockNonce = random.nextLong();
+
     return BlockHeaderBuilder.create()
         .parentHash(options.getParentHash(hash()))
         .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
@@ -277,7 +278,10 @@ public class BlockDataGenerator {
         .number(number)
         .gasLimit(gasLimit)
         .gasUsed(options.getGasUsed(gasUsed))
-        .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+        .timestamp(
+            options
+                .getTimestamp()
+                .orElse(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond()))
         .extraData(options.getExtraData(bytes32()))
         .mixHash(hash())
         .nonce(blockNonce)
@@ -511,6 +515,7 @@ public class BlockDataGenerator {
     private Optional<Hash> receiptsRoot = Optional.empty();
     private Optional<Long> gasUsed = Optional.empty();
     private Optional<LogsBloomFilter> logsBloom = Optional.empty();
+    private Optional<Long> timestamp = Optional.empty();
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
 
@@ -560,6 +565,10 @@ public class BlockDataGenerator {
 
     public LogsBloomFilter getLogsBloom(final LogsBloomFilter defaultValue) {
       return logsBloom.orElse(defaultValue);
+    }
+
+    public Optional<Long> getTimestamp() {
+      return timestamp;
     }
 
     public boolean hasTransactions() {
@@ -636,6 +645,11 @@ public class BlockDataGenerator {
 
     public BlockOptions hasOmmers(final boolean hasOmmers) {
       this.hasOmmers = hasOmmers;
+      return this;
+    }
+
+    public BlockOptions setTimestamp(final Long timestamp) {
+      this.timestamp = Optional.of(timestamp);
       return this;
     }
   }

@@ -18,6 +18,9 @@ import static java.util.Collections.newSetFromMap;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.state.cache.ImmutablePendingBlock;
+import org.hyperledger.besu.ethereum.eth.sync.state.cache.PendingBlockCache;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,35 +30,49 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class PendingBlocks {
+import org.apache.tuweni.bytes.Bytes;
 
-  private final Map<Hash, Block> pendingBlocks = new ConcurrentHashMap<>();
+public class PendingBlocksManager {
+
+  private final PendingBlockCache pendingBlocks;
+
   private final Map<Hash, Set<Hash>> pendingBlocksByParentHash = new ConcurrentHashMap<>();
+
+  public PendingBlocksManager(final SynchronizerConfiguration synchronizerConfiguration) {
+
+    pendingBlocks =
+        new PendingBlockCache(
+            (Math.abs(synchronizerConfiguration.getBlockPropagationRange().lowerEndpoint())
+                + Math.abs(synchronizerConfiguration.getBlockPropagationRange().upperEndpoint())));
+  }
 
   /**
    * Track the given block.
    *
-   * @param pendingBlock the block to track
+   * @param block the block to track
+   * @param nodeId node that sent the block
    * @return true if the block was added (was not previously present)
    */
-  public boolean registerPendingBlock(final Block pendingBlock) {
-    final Block previousValue =
-        this.pendingBlocks.putIfAbsent(pendingBlock.getHash(), pendingBlock);
+  public boolean registerPendingBlock(final Block block, final Bytes nodeId) {
+
+    final ImmutablePendingBlock previousValue =
+        this.pendingBlocks.putIfAbsent(
+            block.getHash(), ImmutablePendingBlock.builder().block(block).nodeId(nodeId).build());
     if (previousValue != null) {
       return false;
     }
 
     pendingBlocksByParentHash
         .computeIfAbsent(
-            pendingBlock.getHeader().getParentHash(),
+            block.getHeader().getParentHash(),
             h -> {
               final Set<Hash> set = newSetFromMap(new ConcurrentHashMap<>());
               // Go ahead and add our value at construction, so that we don't set an empty set which
               // could be removed in deregisterPendingBlock
-              set.add(pendingBlock.getHash());
+              set.add(block.getHash());
               return set;
             })
-        .add(pendingBlock.getHash());
+        .add(block.getHash());
 
     return true;
   }
@@ -68,7 +85,7 @@ public class PendingBlocks {
    */
   public boolean deregisterPendingBlock(final Block block) {
     final Hash parentHash = block.getHeader().getParentHash();
-    final Block removed = pendingBlocks.remove(block.getHash());
+    final ImmutablePendingBlock removed = pendingBlocks.remove(block.getHash());
     final Set<Hash> blocksForParent = pendingBlocksByParentHash.get(parentHash);
     if (blocksForParent != null) {
       blocksForParent.remove(block.getHash());
@@ -79,7 +96,8 @@ public class PendingBlocks {
 
   public void purgeBlocksOlderThan(final long blockNumber) {
     pendingBlocks.values().stream()
-        .filter(b -> b.getHeader().getNumber() < blockNumber)
+        .filter(b -> b.block().getHeader().getNumber() < blockNumber)
+        .map(ImmutablePendingBlock::block)
         .forEach(this::deregisterPendingBlock);
   }
 
@@ -95,6 +113,7 @@ public class PendingBlocks {
     return blocksByParent.stream()
         .map(pendingBlocks::get)
         .filter(Objects::nonNull)
+        .map(ImmutablePendingBlock::block)
         .collect(Collectors.toList());
   }
 }

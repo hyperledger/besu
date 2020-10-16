@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -77,7 +78,11 @@ public class EthHashBlockCreatorTest {
 
     final EthHashSolver solver =
         new EthHashSolver(
-            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
+            Lists.newArrayList(BLOCK_1_NONCE),
+            new EthHasher.Light(),
+            false,
+            Subscribers.none(),
+            EthHash::epoch);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -131,7 +136,11 @@ public class EthHashBlockCreatorTest {
 
     final EthHashSolver solver =
         new EthHashSolver(
-            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
+            Lists.newArrayList(BLOCK_1_NONCE),
+            new EthHasher.Light(),
+            false,
+            Subscribers.none(),
+            EthHash::epoch);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -180,7 +189,11 @@ public class EthHashBlockCreatorTest {
 
     final EthHashSolver solver =
         new EthHashSolver(
-            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
+            Lists.newArrayList(BLOCK_1_NONCE),
+            new EthHasher.Light(),
+            false,
+            Subscribers.none(),
+            EthHash::epoch);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -245,7 +258,11 @@ public class EthHashBlockCreatorTest {
 
     final EthHashSolver solver =
         new EthHashSolver(
-            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
+            Lists.newArrayList(BLOCK_1_NONCE),
+            new EthHasher.Light(),
+            false,
+            Subscribers.none(),
+            EthHash::epoch);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

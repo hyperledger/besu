@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -32,13 +33,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class IbftBlockCreatorFactory {
 
-  private final Function<Long, Long> gasLimitCalculator;
+  private final GasLimitCalculator gasLimitCalculator;
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
@@ -50,7 +50,7 @@ public class IbftBlockCreatorFactory {
   private volatile Double minBlockOccupancyRatio;
 
   public IbftBlockCreatorFactory(
-      final Function<Long, Long> gasLimitCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
