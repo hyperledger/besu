@@ -40,7 +40,7 @@ import org.apache.tuweni.bytes.Bytes;
   "restriction"
 })
 /*
- The original deserialised private transaction sent via eea_sendRawTransaction
+ The original deserialized private transaction sent via eea_sendRawTransaction
  This class is used if the original request was sent with privateFrom and privateFor
 */
 public class PrivateTransactionLegacyResult extends PrivateTransactionResult {
