@@ -96,7 +96,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   protected void prepForBuild() {
     genesisConfig
         .getConfigOptions()
-        .getEcip1099BlockNumber()
+        .getThanosBlockNumber()
         .ifPresent(activationBlock -> epochCalculator = EthHash.ecip1099Epoch(activationBlock));
   }
 }

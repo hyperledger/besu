@@ -27,7 +27,7 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
   public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
   public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
-  public static final boolean DEFAULT_ETH_65_ENABLED = true;
+  public static final boolean DEFAULT_ETH_65_ENABLED = false;
 
   private final int maxGetBlockHeaders;
   private final int maxGetBlockBodies;
