@@ -4,6 +4,7 @@
 * `--random-peer-priority-enabled` flag added. Allows for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. [#1440](https://github.com/hyperledger/besu/pull/1440)
 * Hide deprecated `--host-whitelist` option. [\#1444](https://github.com/hyperledger/besu/pull/1444)
 * Prioritize high gas prices during mining. Previously we ordered only by the order in which the transactions were received. This will increase expected profit when mining. [\#1449](https://github.com/hyperledger/besu/pull/1449)
+* Added support for the updated smart contract-based node permissioning EEA interface. [\#1435](https://github.com/hyperledger/besu/pull/1435)
 
 ## Deprecated and Scheduled for removal in _Next_ Release
 
