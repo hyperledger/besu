@@ -55,25 +55,29 @@ public class PrivacyGroupUtilTest {
                 ENCLAVE_PUBLIC_KEY_1,
                 ENCLAVE_PUBLIC_KEY_3))
         .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
-    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_3))
+    assertThat(
+            privacyGroupId(
+                ENCLAVE_PUBLIC_KEY_2,
+                ENCLAVE_PUBLIC_KEY_1,
+                ENCLAVE_PUBLIC_KEY_3,
+                ENCLAVE_PUBLIC_KEY_3))
         .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
   }
 
   @Test
   public void calculatesSamePrivacyGroupIdForPrivateForInDifferentOrders() {
-    final String expectedPrivacyGroupId = "/xzRjCLioUBkm5LYuzll61GXyrD5x7bvXzQk/ovJA/4=";
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_3))
-        .isEqualTo(expectedPrivacyGroupId);
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_2))
-        .isEqualTo(expectedPrivacyGroupId);
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_3))
-        .isEqualTo(expectedPrivacyGroupId);
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_1))
-        .isEqualTo(expectedPrivacyGroupId);
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_2))
-        .isEqualTo(expectedPrivacyGroupId);
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_1))
-        .isEqualTo(expectedPrivacyGroupId);
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
   }
 
   private String privacyGroupId(final String privateFrom, final String... privateFor) {
