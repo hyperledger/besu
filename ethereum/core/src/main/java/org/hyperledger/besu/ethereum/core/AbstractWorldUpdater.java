@@ -67,8 +67,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (deletedAccounts.contains(address)) {
       return null;
     }
-    Account account = world.get(address);
-    return account;
+    return world.get(address);
   }
 
   @Override

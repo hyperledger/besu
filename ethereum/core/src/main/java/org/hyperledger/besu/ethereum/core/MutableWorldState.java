@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import java.io.PrintStream;
-
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
   /**
@@ -27,6 +25,4 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
 
   /** Persist accumulated changes to underlying storage. */
   void persist();
-
-  void dumpTrie(PrintStream out);
 }

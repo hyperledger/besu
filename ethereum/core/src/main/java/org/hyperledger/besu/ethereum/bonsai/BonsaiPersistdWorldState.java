@@ -335,15 +335,6 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   }
 
   @Override
-  public void dumpTrie(final PrintStream out) {
-    System.out.println("World State Trie Dump");
-    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
-        new StoredMerklePatriciaTrie<>(
-            this::getTrieNode, worldStateRootHash, Function.identity(), Function.identity());
-    accountTrie.acceptAtRoot(new DumpVisitor<>());
-  }
-
-  @Override
   public WorldUpdater updater() {
     return new BonsaiUpdater(this);
   }
