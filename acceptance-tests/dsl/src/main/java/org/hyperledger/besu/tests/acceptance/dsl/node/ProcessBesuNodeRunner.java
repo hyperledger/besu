@@ -274,6 +274,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                 params.add("--permissions-accounts-contract-address");
                 params.add(permissioningConfiguration.getAccountSmartContractAddress().toString());
               }
+              params.add("--permissions-nodes-contract-version");
+              params.add(
+                  String.valueOf(
+                      permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
     params.addAll(node.getExtraCLIOptions());
 
