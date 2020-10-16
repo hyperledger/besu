@@ -68,20 +68,7 @@ public class LogRollingTests {
     mutableAccount.setCode(Bytes.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
-    try {
-      worldState.persist();
-    } finally {
-      System.out.println("account");
-      accountStorage.dump(System.out);
-      System.out.println("code");
-      codeStorage.dump(System.out);
-      System.out.println("storage");
-      storageStorage.dump(System.out);
-      System.out.println("trieBranch");
-      trieBranchStorage.dump(System.out);
-      System.out.println("trieLog");
-      trieLogStorage.dump(System.out);
-    }
+    worldState.persist();
 
     final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
@@ -104,20 +91,7 @@ public class LogRollingTests {
         TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get().get()), false));
 
     secondWorldState.rollForward(layer);
-    try {
-      secondWorldState.persist();
-    } finally {
-      System.out.println("newAccount");
-      newAccountStorage.dump(System.out);
-      System.out.println("newCode");
-      newCodeStorage.dump(System.out);
-      System.out.println("newStorage");
-      newStorageStorage.dump(System.out);
-      System.out.println("newTrieBranch");
-      newTrieBranchStorage.dump(System.out);
-      System.out.println("newTrieLog");
-      newTrieLogStorage.dump(System.out);
-    }
+    secondWorldState.persist();
 
     assertKeyValueStorageEqual(accountStorage, newAccountStorage);
     assertKeyValueStorageEqual(codeStorage, newCodeStorage);
@@ -147,20 +121,7 @@ public class LogRollingTests {
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater2.commit();
 
-    try {
-      worldState.persist();
-    } finally {
-      System.out.println("account");
-      accountStorage.dump(System.out);
-      System.out.println("code");
-      codeStorage.dump(System.out);
-      System.out.println("storage");
-      storageStorage.dump(System.out);
-      System.out.println("trieBranch");
-      trieBranchStorage.dump(System.out);
-      System.out.println("trieLog");
-      trieLogStorage.dump(System.out);
-    }
+    worldState.persist();
 
     final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
@@ -176,36 +137,84 @@ public class LogRollingTests {
             newTrieBranchStorage,
             newTrieLogStorage);
 
-    try {
-      final TrieLogLayer layerOne =
-          getTrieLogLayer(
-              trieLogStorage, "0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c");
-      secondWorldState.rollForward(layerOne);
-      secondWorldState.persist();
+    final TrieLogLayer layerOne =
+        getTrieLogLayer(
+            trieLogStorage, "0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c");
+    secondWorldState.rollForward(layerOne);
+    secondWorldState.persist();
 
-      final TrieLogLayer layerTwo =
-          getTrieLogLayer(
-              trieLogStorage, "0x5b675f79cd11ba67266161d79a8d5be3ac330dfbb76300a4f15d76b610b18193");
-      secondWorldState.rollForward(layerTwo);
-      secondWorldState.persist();
-    } finally {
-      System.out.println("newAccount");
-      newAccountStorage.dump(System.out);
-      System.out.println("newCode");
-      newCodeStorage.dump(System.out);
-      System.out.println("newStorage");
-      newStorageStorage.dump(System.out);
-      System.out.println("newTrieBranch");
-      newTrieBranchStorage.dump(System.out);
-      System.out.println("newTrieLog");
-      newTrieLogStorage.dump(System.out);
-    }
+    final TrieLogLayer layerTwo =
+        getTrieLogLayer(
+            trieLogStorage, "0x5b675f79cd11ba67266161d79a8d5be3ac330dfbb76300a4f15d76b610b18193");
+    secondWorldState.rollForward(layerTwo);
+    secondWorldState.persist();
 
     assertKeyValueStorageEqual(accountStorage, newAccountStorage);
     assertKeyValueStorageEqual(codeStorage, newCodeStorage);
     assertKeyValueStorageEqual(storageStorage, newStorageStorage);
     assertKeyValueStorageEqual(trieBranchStorage, newTrieBranchStorage);
     assertKeyValueStorageEqual(trieLogStorage, newTrieLogStorage);
+    assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
+  }
+
+  @Test
+  public void rollBackOnce() {
+    final BonsaiPersistdWorldState worldState =
+        new BonsaiPersistdWorldState(
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+
+    final WorldUpdater updater = worldState.updater();
+    final MutableAccount mutableAccount =
+        updater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
+    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    updater.commit();
+
+    worldState.persist();
+
+    final WorldUpdater updater2 = worldState.updater();
+    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
+    mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
+    updater2.commit();
+
+    worldState.persist();
+
+    final TrieLogLayer layerTwo =
+        getTrieLogLayer(
+            trieLogStorage, "0x5b675f79cd11ba67266161d79a8d5be3ac330dfbb76300a4f15d76b610b18193");
+    worldState.rollBack(layerTwo);
+
+      worldState.persist();
+
+    final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage newStorageStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage newTrieBranchStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage newTrieLogStorage = new InMemoryKeyValueStorage();
+
+    final BonsaiPersistdWorldState secondWorldState =
+        new BonsaiPersistdWorldState(
+            newAccountStorage,
+            newCodeStorage,
+            newStorageStorage,
+            newTrieBranchStorage,
+            newTrieLogStorage);
+
+    final WorldUpdater secondUpdater = secondWorldState.updater();
+    final MutableAccount secondMutableAccount =
+        secondUpdater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
+    secondMutableAccount.setCode(Bytes.of(0, 1, 2));
+    secondMutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    secondUpdater.commit();
+
+    secondWorldState.persist();
+
+    assertKeyValueStorageEqual(accountStorage, newAccountStorage);
+    assertKeyValueStorageEqual(codeStorage, newCodeStorage);
+    assertKeyValueStorageEqual(storageStorage, newStorageStorage);
+    assertKeyValueStorageEqual(trieBranchStorage, newTrieBranchStorage);
+    // trie logs won't be the same, we don't delete the roll back log
+    assertKeyValueSubset(trieLogStorage, newTrieLogStorage);
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
@@ -227,6 +236,20 @@ public class LogRollingTests {
     for (final Bytes key : firstKeys) {
       assertThat(Bytes.wrap(second.get(key.toArrayUnsafe()).get()))
           .isEqualByComparingTo(Bytes.wrap(first.get(key.toArrayUnsafe()).get()));
+    }
+  }
+
+  private static void assertKeyValueSubset(
+      final KeyValueStorage largerSet, final KeyValueStorage smallerSet) {
+    final var largerKeys =
+        largerSet.getAllKeysThat(k -> true).stream().map(Bytes::wrap).collect(Collectors.toSet());
+    final var smallerKeys =
+        smallerSet.getAllKeysThat(k -> true).stream().map(Bytes::wrap).collect(Collectors.toSet());
+
+    assertThat(largerKeys).containsAll(smallerKeys);
+    for (final Bytes key : largerKeys) {
+      assertThat(Bytes.wrap(largerSet.get(key.toArrayUnsafe()).get()))
+          .isEqualByComparingTo(Bytes.wrap(smallerSet.get(key.toArrayUnsafe()).get()));
     }
   }
 }

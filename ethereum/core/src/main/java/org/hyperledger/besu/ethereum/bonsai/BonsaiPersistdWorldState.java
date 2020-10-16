@@ -531,13 +531,13 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         .streamAccountChanges()
         .forEach(
             entry ->
-                rollForwardAccountChange(
+                rollAccountChange(
                     entry.getKey(), entry.getValue().getOriginal(), entry.getValue().getUpdated()));
     layer
         .streamCodeChanges()
         .forEach(
             entry ->
-                rollForwardCodeChange(
+                rollCodeChange(
                     entry.getKey(), entry.getValue().getOriginal(), entry.getValue().getUpdated()));
     layer
         .streamStorageChanges()
@@ -547,11 +547,37 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                     .getValue()
                     .forEach(
                         (key, value) ->
-                            rollForwardStorageChange(
+                            rollStorageChange(
                                 entry.getKey(), key, value.getOriginal(), value.getUpdated())));
   }
 
-  private void rollForwardAccountChange(
+  public void rollBack(final TrieLogLayer layer) {
+    layer
+        .streamAccountChanges()
+        .forEach(
+            entry ->
+                rollAccountChange(
+                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getOriginal()));
+    layer
+        .streamCodeChanges()
+        .forEach(
+            entry ->
+                rollCodeChange(
+                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getOriginal()));
+    layer
+        .streamStorageChanges()
+        .forEach(
+            entry ->
+                entry
+                    .getValue()
+                    .forEach(
+                        (key, value) ->
+                            rollStorageChange(
+                                entry.getKey(), key, value.getUpdated(), value.getOriginal())));
+  }
+
+
+  private void rollAccountChange(
       final Address address,
       final StateTrieAccountValue oldValue,
       final StateTrieAccountValue newValue) {
@@ -615,7 +641,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     }
   }
 
-  private void rollForwardCodeChange(
+  private void rollCodeChange(
       final Address address, final Bytes oldCode, final Bytes newCode) {
     if (Objects.equals(oldCode, newCode)) {
       // non-change, a cached read.
@@ -667,7 +693,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     }
   }
 
-  private void rollForwardStorageChange(
+  private void rollStorageChange(
       final Address address, final Bytes32 slot, final UInt256 original, final UInt256 updated) {
     if (Objects.equals(original, updated)) {
       // non-change, a cached read.
