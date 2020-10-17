@@ -149,7 +149,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .build();
 
     frame.incrementRemainingGas(cost);
-    childFrame.mergeWarmedUpFields(frame);
+    childFrame.copyWarmedUpFields(frame);
 
     frame.getMessageFrameStack().addFirst(childFrame);
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
@@ -165,6 +165,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.popStackItems(getStackItemsConsumed());
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      frame.mergeWarmedUpFields(childFrame);
       frame.pushStackItem(Words.fromAddress(childFrame.getContractAddress()));
     } else {
       frame.setReturnData(childFrame.getOutputData());
