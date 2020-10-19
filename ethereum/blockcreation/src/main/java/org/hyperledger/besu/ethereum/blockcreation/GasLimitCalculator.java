@@ -20,7 +20,7 @@ public interface GasLimitCalculator {
 
   default void changeTargetGasLimit(final Long __) {
     throw new UnsupportedOperationException(
-        "Can't change target gas limit on a constant gas calculator");
+        "Can only change target gas limit on a Targeting Gas Limit Calculator");
   }
 
   static GasLimitCalculator constant() {
