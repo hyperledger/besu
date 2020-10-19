@@ -19,35 +19,29 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.net.InetAddress;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Controller that can read from a smart contract that exposes the permissioning call
  * connectionAllowed(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)
  */
-public class NodeSmartContractPermissioningController implements NodePermissioningProvider {
-  private final Address contractAddress;
-  private final TransactionSimulator transactionSimulator;
+public class NodeSmartContractPermissioningController
+    extends AbstractNodeSmartContractPermissioningController {
 
   // full function signature for connection allowed call
   private static final String FUNCTION_SIGNATURE =
       "connectionAllowed(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)";
   // hashed function signature for connection allowed call
   private static final Bytes FUNCTION_SIGNATURE_HASH = hashSignature(FUNCTION_SIGNATURE);
-  private final Counter checkCounter;
-  private final Counter checkCounterPermitted;
-  private final Counter checkCounterUnpermitted;
 
   // The first 4 bytes of the hash of the full textual signature of the function is used in
   // contract calls to determine the function being called
@@ -61,57 +55,17 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
   private static final Bytes FALSE_RESPONSE =
       Bytes.fromHexString("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-  /**
-   * Creates a permissioning controller attached to a blockchain
-   *
-   * @param contractAddress The address at which the permissioning smart contract resides
-   * @param transactionSimulator A transaction simulator with attached blockchain and world state
-   * @param metricsSystem The metrics provider that is to be reported to
-   */
   public NodeSmartContractPermissioningController(
       final Address contractAddress,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem) {
-    this.contractAddress = contractAddress;
-    this.transactionSimulator = transactionSimulator;
-
-    this.checkCounter =
-        metricsSystem.createCounter(
-            BesuMetricCategory.PERMISSIONING,
-            "node_smart_contract_check_count",
-            "Number of times the node smart contract permissioning provider has been checked");
-    this.checkCounterPermitted =
-        metricsSystem.createCounter(
-            BesuMetricCategory.PERMISSIONING,
-            "node_smart_contract_check_count_permitted",
-            "Number of times the node smart contract permissioning provider has been checked and returned permitted");
-    this.checkCounterUnpermitted =
-        metricsSystem.createCounter(
-            BesuMetricCategory.PERMISSIONING,
-            "node_smart_contract_check_count_unpermitted",
-            "Number of times the node smart contract permissioning provider has been checked and returned unpermitted");
+    super(contractAddress, transactionSimulator, metricsSystem);
   }
 
-  /**
-   * Check whether a given connection from the source to destination enode should be permitted
-   *
-   * @param sourceEnode The enode url of the node initiating the connection
-   * @param destinationEnode The enode url of the node receiving the connection
-   * @return boolean of whether or not to permit the connection to occur
-   */
   @Override
-  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
-    this.checkCounter.inc();
+  boolean checkSmartContractRules(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     final Bytes payload = createPayload(sourceEnode, destinationEnode);
-    final CallParameter callParams =
-        new CallParameter(null, contractAddress, -1, null, null, payload);
-
-    final Optional<Boolean> contractExists =
-        transactionSimulator.doesAddressExistAtHead(contractAddress);
-
-    if (contractExists.isPresent() && !contractExists.get()) {
-      throw new IllegalStateException("Permissioning contract does not exist");
-    }
+    final CallParameter callParams = buildCallParameters(payload);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.processAtHead(callParams);
@@ -127,13 +81,7 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
       }
     }
 
-    if (result.map(r -> checkTransactionResult(r.getOutput())).orElse(false)) {
-      this.checkCounterPermitted.inc();
-      return true;
-    } else {
-      this.checkCounterUnpermitted.inc();
-      return false;
-    }
+    return result.map(r -> checkTransactionResult(r.getOutput())).orElse(false);
   }
 
   // Checks the returned bytes from the permissioning contract call to see if it's a value we
@@ -157,16 +105,18 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
   }
 
   // Assemble the bytevalue payload to call the contract
-  public static Bytes createPayload(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  private static Bytes createPayload(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     return createPayload(FUNCTION_SIGNATURE_HASH, sourceEnode, destinationEnode);
   }
 
+  @VisibleForTesting
   public static Bytes createPayload(
       final Bytes signature, final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     return Bytes.concatenate(
         signature, encodeEnodeUrl(sourceEnode), encodeEnodeUrl(destinationEnode));
   }
 
+  @VisibleForTesting
   public static Bytes createPayload(final Bytes signature, final EnodeURL enodeURL) {
     return Bytes.concatenate(signature, encodeEnodeUrl(enodeURL));
   }

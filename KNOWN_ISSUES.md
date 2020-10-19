@@ -5,6 +5,14 @@ in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
 
+## Eth/65 loses peers 
+
+From v1.4.4, `eth/65` is [disabled by default](https://github.com/hyperledger/besu/pull/741). 
+
+If enabled, peers will slowly drop off and eventually Besu will fall out of sync or stop syncing.
+
+A fix for this issue is being actively worked on. 
+
 ## Fast sync when running Besu on cloud providers  
 
 A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail 

@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncException;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocks;
+import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -83,7 +83,7 @@ public class DefaultSynchronizer implements Synchronizer {
             protocolContext,
             ethContext,
             syncState,
-            new PendingBlocks(),
+            new PendingBlocksManager(syncConfig),
             metricsSystem,
             blockBroadcaster);
 
