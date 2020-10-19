@@ -60,6 +60,9 @@ mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
 
 startScripts {
   applicationName = 'evm'
+  defaultJvmOpts = [
+    "-Dsecp256k1.randomize=false"
+  ]
   doLast {
     unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
     windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
