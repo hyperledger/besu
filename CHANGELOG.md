@@ -28,10 +28,6 @@ Users of Web3J should note that many calls will now return a result with the err
 
 ## 20.10.0-RC1
 
-### Release format
-
-Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/) starting with the 20.10.0 (f.k.a. 1.6.0) release. More information about the specific version of CalVer Besu is using can be found on the [wiki](https://wiki.hyperledger.org/display/BESU/Proposal+-+CalVer+for+Besu+Releases). 
-
 ### Additions and Improvements
 * Added support for the upcoming YOLOv2 ephemeral testnet and removed the flag for the deprecated YOLOv1 ephemeral testnet. [#1386](https://github.com/hyperledger/besu/pull/1386)
 * Added `debug_standardTraceBlockToFile` JSON-RPC API. This API accepts a block hash and will replay the block. It returns a list of files containing the result of the trace (one file per transaction). [\#1392](https://github.com/hyperledger/besu/pull/1392)
@@ -40,6 +36,10 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 * Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#1399](https://github.com/hyperledger/besu/pull/1399)
 * Added support for multi-tenancy when using the early access feature of [onchain privacy group management](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) 
 * \[Reverted\] Fixed memory leak in eth/65 subprotocol behavior. It is now enabled by default. [\#1420](https://github.com/hyperledger/besu/pull/1420), [#1348](https://github.com/hyperledger/besu/pull/1348), [#1321](https://github.com/hyperledger/besu/pull/1321)
+
+### Release format
+
+Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/) starting with the 20.10.0 (f.k.a. 1.6.0) release. More information about the specific version of CalVer Besu is using can be found on the [wiki](https://wiki.hyperledger.org/display/BESU/Proposal+-+CalVer+for+Besu+Releases). 
 
 ### Bug Fixes
 
