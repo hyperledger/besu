@@ -29,8 +29,6 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
   private Long targetGasLimit;
 
   public TargetingGasLimitCalculator(final Long targetGasLimit) {
-    checkArgument(targetGasLimit >= 0, "Invalid target gas limit");
-
     changeTargetGasLimit(targetGasLimit);
   }
 
@@ -54,6 +52,7 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
 
   @Override
   public void changeTargetGasLimit(final Long targetGasLimit) {
+    checkArgument(targetGasLimit >= 0, "Invalid target gas limit");
     this.targetGasLimit = targetGasLimit;
   }
 
