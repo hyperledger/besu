@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 public interface GasLimitCalculator {
 
-  long nextGasLimit(long previousGasLimit);
+  long nextGasLimit(long currentGasLimit);
 
   default void changeTargetGasLimit(final Long __) {
     throw new UnsupportedOperationException(
@@ -24,6 +24,6 @@ public interface GasLimitCalculator {
   }
 
   static GasLimitCalculator constant() {
-    return previousGasLimit -> previousGasLimit;
+    return currentGasLimit -> currentGasLimit;
   }
 }
