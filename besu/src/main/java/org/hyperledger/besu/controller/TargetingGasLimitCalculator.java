@@ -52,7 +52,7 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
 
   @Override
   public void changeTargetGasLimit(final Long targetGasLimit) {
-    checkArgument(targetGasLimit >= 0, "Invalid target gas limit");
+    checkArgument(targetGasLimit >= 0, "Target gas limit must be non-negative");
     this.targetGasLimit = targetGasLimit;
   }
 
