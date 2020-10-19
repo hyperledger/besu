@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerChangeTargetGasLimit;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetCoinbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetEtherbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStart;
@@ -45,6 +46,7 @@ public class MinerJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new MinerStart(miningCoordinator),
         new MinerStop(miningCoordinator),
         minerSetCoinbase,
-        new MinerSetEtherbase(minerSetCoinbase));
+        new MinerSetEtherbase(minerSetCoinbase),
+        new MinerChangeTargetGasLimit(miningCoordinator));
   }
 }
