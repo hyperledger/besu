@@ -39,7 +39,8 @@ public class NodeSmartContractV2PermissioningController
     extends AbstractNodeSmartContractPermissioningController {
 
   public static final Bytes TRUE_RESPONSE = Bytes.fromHexString(TypeEncoder.encode(new Bool(true)));
-  public static Bytes FALSE_RESPONSE = Bytes.fromHexString(TypeEncoder.encode(new Bool(false)));
+  public static final Bytes FALSE_RESPONSE =
+      Bytes.fromHexString(TypeEncoder.encode(new Bool(false)));
 
   public NodeSmartContractV2PermissioningController(
       final Address contractAddress,

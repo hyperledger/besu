@@ -104,5 +104,6 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedNode.verify(connectionIsAllowed(allowedNode));
     permissionedNode.verify(connectionIsAllowed(bootnode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
+    permissionedNode.verify(connectionIsForbidden(forbiddenNode));
   }
 }

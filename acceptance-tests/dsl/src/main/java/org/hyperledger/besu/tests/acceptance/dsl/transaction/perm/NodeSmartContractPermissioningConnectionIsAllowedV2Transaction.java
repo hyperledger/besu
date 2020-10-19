@@ -69,13 +69,13 @@ public class NodeSmartContractPermissioningConnectionIsAllowedV2Transaction
       final byte[] ip = NodeSmartContractV2PermissioningController.encodeIp(enodeUrl.getIp());
       final int port = enodeUrl.getListeningPortOrZero();
 
-      final Function addNodeFunction =
+      final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
               List.of("string", "bytes16", "uint16"),
               List.of(hexNodeIdString, ip, port),
               Collections.emptyList());
-      return Bytes.fromHexString(FunctionEncoder.encode(addNodeFunction));
+      return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (Exception e) {
       throw new RuntimeException("Error calling connectionAllowed", e);
     }

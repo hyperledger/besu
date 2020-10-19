@@ -84,13 +84,13 @@ public class NodeSmartContractPermissioningForbidNodeV2Transaction implements Tr
       final byte[] ip = NodeSmartContractV2PermissioningController.encodeIp(enodeUrl.getIp());
       final int port = enodeUrl.getListeningPortOrZero();
 
-      final Function addNodeFunction =
+      final Function removeNodeFunction =
           FunctionEncoder.makeFunction(
               "removeEnode",
               List.of("string", "bytes16", "uint16"),
               List.of(hexNodeIdString, ip, port),
               Collections.emptyList());
-      return Bytes.fromHexString(FunctionEncoder.encode(addNodeFunction));
+      return Bytes.fromHexString(FunctionEncoder.encode(removeNodeFunction));
     } catch (Exception e) {
       throw new RuntimeException("Error removing node from allowlist", e);
     }
