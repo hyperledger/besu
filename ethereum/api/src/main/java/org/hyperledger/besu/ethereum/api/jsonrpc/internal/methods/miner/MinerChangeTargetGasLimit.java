@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -42,9 +41,13 @@ public class MinerChangeTargetGasLimit implements JsonRpcMethod {
     try {
       miningCoordinator.changeTargetGasLimit(requestContext.getRequiredParameter(0, Long.class));
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
-    } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
+    } catch (final IllegalArgumentException invalidJsonRpcParameters) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    } catch (final UnsupportedOperationException unsupportedOperationException) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(),
+          JsonRpcError.TARGET_GAS_LIMIT_MODIFICATION_UNSUPPORTED);
     }
   }
 }
