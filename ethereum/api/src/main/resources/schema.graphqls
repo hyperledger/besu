@@ -257,21 +257,12 @@ type SyncState{
     knownStates: Long
 }
 
-input TransactionOrderByNonce {
-    nonce: Sort
-}
-
-enum Sort {
-    asc
-    desc
-}
-
 # Pending represents the current pending state.
 type Pending {
   # TransactionCount is the number of transactions in the pending state.
   transactionCount: Int!
   # Transactions is a list of transactions in the current pending state.
-  transactions(orderBy: TransactionOrderByNonce): [Transaction!]
+  transactions: [Transaction!]
   # Account fetches an Ethereum account for the pending state.
   account(address: Address!): Account!
   # Call executes a local call operation for the pending state.
