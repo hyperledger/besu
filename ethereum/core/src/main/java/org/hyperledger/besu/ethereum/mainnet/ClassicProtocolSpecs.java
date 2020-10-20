@@ -185,7 +185,7 @@ public class ClassicProtocolSpecs {
         .name("Phoenix");
   }
 
-  public static ProtocolSpecBuilder ecip1099Definition(
+  public static ProtocolSpecBuilder thanosDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -203,7 +203,7 @@ public class ClassicProtocolSpecs {
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createOmmerValidator(
                 block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
-        .name("Ecip1099");
+        .name("Thanos");
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(

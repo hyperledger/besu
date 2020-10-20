@@ -1,9 +1,13 @@
 # Changelog
 
+## 20.10.1
+
 ### Additions and Improvements
 * `--random-peer-priority-enabled` flag added. Allows for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. [#1440](https://github.com/hyperledger/besu/pull/1440)
 * Hide deprecated `--host-whitelist` option. [\#1444](https://github.com/hyperledger/besu/pull/1444)
 * Prioritize high gas prices during mining. Previously we ordered only by the order in which the transactions were received. This will increase expected profit when mining. [\#1449](https://github.com/hyperledger/besu/pull/1449)
+* Added support for the updated smart contract-based [node permissioning EEA interface](https://entethalliance.github.io/client-spec/spec.html#dfn-connectionallowed). [\#1435](https://github.com/hyperledger/besu/pull/1435)
+* Added EvmTool binary to the distribution.  EvmTool is a CLI that can execute EVM bytecode and execute ethereum state tests. [\#1465](https://github.com/hyperledger/besu/pull/1465)
 
 ## Deprecated and Scheduled for removal in _Next_ Release
 
@@ -29,6 +33,7 @@ Users of Web3J should note that many calls will now return a result with the err
 ### Additions and Improvements
 * Added support for ECIP-1099: Calibrate Epoch Duration. [\#1421](https://github.com/hyperledger/besu/pull/1421)
 * Added the Open Telemetry Java agent to report traces to a remote backend. Added an example to showcase the trace reporting capabilities.
+* Rename genesis config option ecip1099Block to thanosBlock. [\#1462](https://github.com/hyperledger/besu/pull/1462)
 
 ## 20.10.0-RC1
 
@@ -43,7 +48,6 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 * Added support for EIP-2929 to YOLOv2. [#1387](https://github.com/hyperledger/besu/pull/1387)     
 * Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#1399](https://github.com/hyperledger/besu/pull/1399)
 * Added support for multi-tenancy when using the early access feature of [onchain privacy group management](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) 
-* Fixed memory leak in eth/65 subprotocol behavior. It is now enabled by default. [\#1420](https://github.com/hyperledger/besu/pull/1420), [#1348](https://github.com/hyperledger/besu/pull/1348), [#1321](https://github.com/hyperledger/besu/pull/1321)
 * Added `--privacy-flexible-groups-enabled` as an alternative for `--privacy-onchain-groups-enabled` CLI option
 
 ### Bug Fixes
@@ -53,6 +57,7 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 
 #### Previously identified known issues
 
+- [Eth/65 loses peers](KNOWN_ISSUES.md#eth65-loses-peers)
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)

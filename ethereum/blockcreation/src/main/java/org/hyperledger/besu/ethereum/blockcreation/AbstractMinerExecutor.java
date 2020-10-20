@@ -114,4 +114,8 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   }
 
   public abstract Optional<Address> getCoinbase();
+
+  public void changeTargetGasLimit(final Long targetGasLimit) {
+    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+  }
 }

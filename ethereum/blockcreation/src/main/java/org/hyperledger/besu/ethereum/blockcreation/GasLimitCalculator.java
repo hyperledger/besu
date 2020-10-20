@@ -14,11 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-@FunctionalInterface
 public interface GasLimitCalculator {
-  long nextGasLimit(long previousGasLimit);
+
+  long nextGasLimit(long currentGasLimit);
+
+  default void changeTargetGasLimit(final Long __) {
+    throw new UnsupportedOperationException(
+        "Can only change target gas limit on a Targeting Gas Limit Calculator");
+  }
 
   static GasLimitCalculator constant() {
-    return x -> x;
+    return currentGasLimit -> currentGasLimit;
   }
 }

@@ -273,8 +273,9 @@ public class PendingTransactions {
     final TransactionInfo existingTransaction =
         getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
-      if (!transactionReplacementHandler.shouldReplace(
-          existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
+      if (existingTransaction.transaction.isFrontierTransaction()
+          && !transactionReplacementHandler.shouldReplace(
+              existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
         return REJECTED_UNDERPRICED_REPLACEMENT;
       }
       removeTransaction(existingTransaction.getTransaction());
