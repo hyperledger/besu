@@ -87,4 +87,19 @@ public class EstimateGasOperationTracerTest {
     operationTracer.traceExecution(secondFrame, noExecutionOperation);
     assertThat(operationTracer.getStipendNeeded()).isEqualTo(minimumGasRemaining);
   }
+
+  @Test
+  public void shouldDetectRevert() {
+    final ExecuteOperation noExecutionOperation = mock(ExecuteOperation.class);
+
+    final MessageFrame revertFrameOnExternalCall = messageFrameTestFixture.depth(1).build();
+    revertFrameOnExternalCall.setState(MessageFrame.State.REVERT);
+    operationTracer.traceExecution(revertFrameOnExternalCall, noExecutionOperation);
+    assertThat(operationTracer.isReverted()).isFalse();
+
+    final MessageFrame revertFrame = messageFrameTestFixture.depth(0).build();
+    revertFrame.setState(MessageFrame.State.REVERT);
+    operationTracer.traceExecution(revertFrame, noExecutionOperation);
+    assertThat(operationTracer.isReverted()).isTrue();
+  }
 }

@@ -96,7 +96,7 @@ public class EthEstimateGas implements JsonRpcMethod {
             ? new JsonRpcSuccessResponse(
                 request.getRequest().getId(),
                 Quantity.create(processEstimateGas(result, operationTracer)))
-            : errorResponse(request, result.getValidationResult());
+            : errorResponse(request, result, operationTracer);
   }
 
   /**
@@ -120,20 +120,26 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request,
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-    JsonRpcError jsonRpcError = null;
+      final TransactionSimulatorResult result,
+      final EstimateGasOperationTracer operationTracer) {
+    final JsonRpcError jsonRpcError;
+
+    final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+        result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
       jsonRpcError =
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason());
+    } else if (operationTracer.isReverted()) {
+      jsonRpcError = JsonRpcError.REVERT_ERROR;
+    } else {
+      jsonRpcError = JsonRpcError.INTERNAL_ERROR;
     }
     return errorResponse(request, jsonRpcError);
   }
 
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(
-        request.getRequest().getId(),
-        jsonRpcError == null ? JsonRpcError.INTERNAL_ERROR : jsonRpcError);
+    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 }

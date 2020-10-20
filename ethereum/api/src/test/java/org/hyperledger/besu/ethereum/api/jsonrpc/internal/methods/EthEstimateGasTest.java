@@ -124,6 +124,19 @@ public class EthEstimateGasTest {
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
+  @Test
+  public void shouldReturnErrorWhenTransactionReverted() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+    mockTransientProcessorResultTxInvalidReason(
+        TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
   private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
     final TransactionSimulatorResult mockTxSimResult = getMockTransactionSimulatorResult(false, 0);
     when(mockTxSimResult.getValidationResult()).thenReturn(ValidationResult.invalid(reason));
