@@ -427,6 +427,60 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void nodePermissionsContractVersionDefaultValue() {
+    final SmartContractPermissioningConfiguration expectedConfig =
+        new SmartContractPermissioningConfiguration();
+    expectedConfig.setNodeSmartContractAddress(
+        Address.fromHexString("0x0000000000000000000000000000000000001234"));
+    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
+    expectedConfig.setNodeSmartContractInterfaceVersion(1);
+
+    parseCommand(
+        "--permissions-nodes-contract-enabled",
+        "--permissions-nodes-contract-address",
+        "0x0000000000000000000000000000000000001234");
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    assertThat(config.getSmartContractConfig().get())
+        .isEqualToComparingFieldByField(expectedConfig);
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodePermissionsContractVersionSetsValue() {
+    final SmartContractPermissioningConfiguration expectedConfig =
+        new SmartContractPermissioningConfiguration();
+    expectedConfig.setNodeSmartContractAddress(
+        Address.fromHexString("0x0000000000000000000000000000000000001234"));
+    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
+    expectedConfig.setNodeSmartContractInterfaceVersion(2);
+
+    parseCommand(
+        "--permissions-nodes-contract-enabled",
+        "--permissions-nodes-contract-address",
+        "0x0000000000000000000000000000000000001234",
+        "--permissions-nodes-contract-version",
+        "2");
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    assertThat(config.getSmartContractConfig().get())
+        .isEqualToComparingFieldByField(expectedConfig);
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void accountPermissionsSmartContractWithoutOptionMustError() {
     parseCommand("--permissions-accounts-contract-address");
 
@@ -1225,6 +1279,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void enableRandomConnectionPrioritization() {
+    parseCommand("--random-peer-priority-enabled");
+    verify(mockRunnerBuilder).randomPeerPriority(eq(true));
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void randomConnectionPrioritizationDisabledByDefault() {
+    parseCommand();
+    verify(mockRunnerBuilder).randomPeerPriority(eq(false));
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void syncMode_fast() {
     parseCommand("--sync-mode", "FAST");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
@@ -1267,6 +1337,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString()).contains("--fast-sync-min-peers");
+    // whitelist is now a hidden option
+    assertThat(commandOutput.toString()).doesNotContain("whitelist");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -3113,6 +3185,29 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH,
         "--privacy-onchain-groups-enabled",
+        "--min-gas-price",
+        "0");
+
+    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
+        ArgumentCaptor.forClass(PrivacyParameters.class);
+
+    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
+    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void flexiblePrivacyGroupEnabledFlagValueIsSet() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--privacy-flexible-groups-enabled",
         "--min-gas-price",
         "0");
 

@@ -213,6 +213,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.fractionRemoteConnectionsAllowed(anyFloat()))
         .thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.randomPeerPriority(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natManagerServiceName(any())).thenReturn(mockRunnerBuilder);

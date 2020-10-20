@@ -126,6 +126,7 @@ allprojects {
     maven { url "https://hyperledger-org.bintray.com/besu-repo" }
     maven { url "https://consensys.bintray.com/pegasys-repo" }
     maven { url "https://repo.spring.io/libs-release" }
+    maven { url "https://dl.bintray.com/open-telemetry/maven" }
   }
 
   dependencies { errorprone "com.google.errorprone:error_prone_core" }
@@ -484,46 +485,66 @@ applicationDefaultJvmArgs = [
 run {
   args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
   doFirst {
+    applicationDefaultJvmArgs.add(0, "-Dotel.resource.attributes=service.name=besu-dev")
+    applicationDefaultJvmArgs.add(0, "-javaagent:"+ configurations.javaAgent.singleFile.toPath() + "")
     applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect {
       it.replace('BESU_HOME', "$buildDir/besu")
     }
   }
 }
 
-startScripts {
-
+def tweakStartScript(createScriptTask) {
   def shortenWindowsClasspath = { line ->
-    line = line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
+    line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
   }
 
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
+  // OpenTelemetry Wiring for unix scripts
+  def agentFileName = configurations.javaAgent.singleFile.toPath().getFileName()
+  def unixRegex = $/exec "$$JAVACMD" /$
+  def forwardSlash = "/"
+  def unixReplacement = $/if [ -n "$$TRACING" ];then
+ TRACING_AGENT="-javaagent:$$APP_HOME/agent${forwardSlash}${agentFileName}"
+fi
+exec "$$JAVACMD" $$TRACING_AGENT /$
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace(unixRegex, unixReplacement)
+  // OpenTelemetry Wiring for windows scripts
+  def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
+  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:"%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace(windowsRegex, windowsReplacement)
+
+  // Prevent the error originating from the 8191 chars limit on Windows
+  createScriptTask.windowsScript.text =
+    createScriptTask.windowsScript
+    .readLines()
+    .collect(shortenWindowsClasspath)
+    .join('\r\n')
+}
+
+startScripts {
   doLast {
-    unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
-    windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
-
-    // Prevent the error originating from the 8191 chars limit on Windows
-    windowsScript.text =
-      windowsScript
-      .readLines()
-      .collect(shortenWindowsClasspath)
-      .join('\r\n')
+    tweakStartScript(startScripts)
   }
 }
 
-
-dependencies {
-  implementation project(':besu')
-  errorprone 'com.google.errorprone:error_prone_core'
+task evmToolStartScripts(type: CreateStartScripts) {
+  mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
+  classpath = startScripts.classpath
+  outputDir = startScripts.outputDir
+  applicationName = 'evm'
+  defaultJvmOpts = [
+    "-Dsecp256k1.randomize=false"
+  ]
+  doLast {
+    tweakStartScript(evmToolStartScripts)
+  }
 }
 
-distributions {
-  main {
-    contents {
-      from("./LICENSE") { into "." }
-      from("build/reports/license/license-dependency.html") { into "." }
-      from("./docs/GettingStartedBinaries.md") { into "." }
-      from("./docs/DocsArchive0.8.0.html") { into "." }
-    }
-  }
+// Include the additional start scripts in the distribution
+applicationDistribution.into("bin") {
+  from(tasks.withType(CreateStartScripts))
+  fileMode = 0755
 }
 
 installDist { dependsOn checkLicenses }
@@ -766,6 +787,29 @@ tasks.register("verifyDistributions") {
     }
     if (distZipFile.length() < minDistributionSize) {
       throw new GradleException("Distribution zip is suspiciously small: " + distZipFile.length() + " bytes")
+    }
+  }
+}
+
+configurations {
+  javaAgent
+}
+
+dependencies {
+  implementation project(':besu')
+  implementation project(':ethereum:evmtool')
+  javaAgent group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', classifier: 'all'
+  errorprone 'com.google.errorprone:error_prone_core'
+}
+
+distributions {
+  main {
+    contents {
+      from("./LICENSE") { into "." }
+      from("build/reports/license/license-dependency.html") { into "." }
+      from("./docs/GettingStartedBinaries.md") { into "." }
+      from("./docs/DocsArchive0.8.0.html") { into "." }
+      from(configurations.javaAgent.singleFile.toPath()) { into "agent"}
     }
   }
 }

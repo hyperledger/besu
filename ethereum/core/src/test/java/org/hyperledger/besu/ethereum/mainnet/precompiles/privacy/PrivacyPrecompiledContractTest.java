@@ -73,7 +73,7 @@ public class PrivacyPrecompiledContractTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final String actual = "Test String";
-  private final Bytes txEnclaveKey = Bytes.wrap(actual.getBytes(UTF_8));
+  private final Bytes privateTransactionLookupId = Bytes.wrap(actual.getBytes(UTF_8));
   private MessageFrame messageFrame;
   private Blockchain blockchain;
   private final String DEFAULT_OUTPUT = "0x01";
@@ -160,7 +160,7 @@ public class PrivacyPrecompiledContractTest {
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes actual = contract.compute(privateTransactionLookupId, messageFrame);
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -172,7 +172,7 @@ public class PrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenThrow(EnclaveClientException.class);
 
-    final Bytes expected = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
     assertThat(expected).isEqualTo(Bytes.EMPTY);
   }
 
@@ -183,7 +183,7 @@ public class PrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenThrow(new RuntimeException());
 
-    contract.compute(txEnclaveKey, messageFrame);
+    contract.compute(privateTransactionLookupId, messageFrame);
   }
 
   @Test
@@ -195,9 +195,10 @@ public class PrivacyPrecompiledContractTest {
 
     final ReceiveResponse responseWithoutSenderKey =
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, null);
-    when(enclave.receive(eq(txEnclaveKey.toBase64String()))).thenReturn(responseWithoutSenderKey);
+    when(enclave.receive(eq(privateTransactionLookupId.toBase64String())))
+        .thenReturn(responseWithoutSenderKey);
 
-    assertThatThrownBy(() -> contract.compute(txEnclaveKey, messageFrame))
+    assertThatThrownBy(() -> contract.compute(privateTransactionLookupId, messageFrame))
         .isInstanceOf(EnclaveConfigurationException.class)
         .hasMessage("Incompatible Orion version. Orion version must be 1.6.0 or greater.");
   }
@@ -213,9 +214,9 @@ public class PrivacyPrecompiledContractTest {
     final String senderKey = privateTransaction.getPrivateFrom().toBase64String();
     final ReceiveResponse response =
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, senderKey);
-    when(enclave.receive(eq(txEnclaveKey.toBase64String()))).thenReturn(response);
+    when(enclave.receive(eq(privateTransactionLookupId.toBase64String()))).thenReturn(response);
 
-    final Bytes expected = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
     assertThat(expected).isEqualTo(Bytes.EMPTY);
   }
 
@@ -229,9 +230,10 @@ public class PrivacyPrecompiledContractTest {
     final String wrongSenderKey = Bytes.random(32).toBase64String();
     final ReceiveResponse responseWithWrongSenderKey =
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, wrongSenderKey);
-    when(enclave.receive(eq(txEnclaveKey.toBase64String()))).thenReturn(responseWithWrongSenderKey);
+    when(enclave.receive(eq(privateTransactionLookupId.toBase64String())))
+        .thenReturn(responseWithWrongSenderKey);
 
-    final Bytes expected = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
     assertThat(expected).isEqualTo(Bytes.EMPTY);
   }
 
@@ -260,7 +262,7 @@ public class PrivacyPrecompiledContractTest {
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes actual = contract.compute(privateTransactionLookupId, messageFrame);
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -298,7 +300,7 @@ public class PrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(txEnclaveKey, messageFrame);
+    final Bytes actual = contract.compute(privateTransactionLookupId, messageFrame);
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }

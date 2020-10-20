@@ -402,33 +402,6 @@ public abstract class MainnetProtocolSpecs {
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
   }
 
-  // TODO EIP-1559 change for the actual fork name when known
-  static ProtocolSpecBuilder eip1559FinalizedDefinition(
-      final Optional<BigInteger> chainId,
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions) {
-    return eip1559Definition(
-            chainId,
-            transactionPriceCalculator,
-            contractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions)
-        .transactionValidatorBuilder(
-            gasCalculator ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    transactionPriceCalculator,
-                    true,
-                    chainId,
-                    Optional.of(
-                        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0))),
-                    AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS));
-  }
-
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(

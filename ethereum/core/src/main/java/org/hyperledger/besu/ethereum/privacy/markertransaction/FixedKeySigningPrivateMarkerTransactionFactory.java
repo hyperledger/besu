@@ -40,11 +40,11 @@ public class FixedKeySigningPrivateMarkerTransactionFactory
 
   @Override
   public Transaction create(
-      final String transactionEnclaveKey,
+      final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final Address precompileAddress) {
     return create(
-        transactionEnclaveKey,
+        privateTransactionLookupId,
         privateTransaction,
         nonceProvider.getNonce(sender),
         signingKey,

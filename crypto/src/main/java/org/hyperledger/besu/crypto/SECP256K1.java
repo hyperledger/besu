@@ -493,7 +493,7 @@ public class SECP256K1 {
 
   public static class PublicKey implements java.security.PublicKey {
 
-    private static final int BYTE_LENGTH = 64;
+    public static final int BYTE_LENGTH = 64;
 
     private final Bytes encoded;
 

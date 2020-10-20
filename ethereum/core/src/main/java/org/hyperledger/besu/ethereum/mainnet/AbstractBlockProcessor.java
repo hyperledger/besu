@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -118,17 +117,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<BlockHeader> ommers,
       final PrivateMetadataUpdater privateMetadataUpdater) {
 
-    long legacyGasUsed = 0;
-    long eip1556GasUsed = 0;
     final List<TransactionReceipt> receipts = new ArrayList<>();
-
+    long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
-      long currentGasUsed;
-      if (ExperimentalEIPs.eip1559Enabled && transaction.isEIP1559Transaction()) {
-        currentGasUsed = eip1556GasUsed;
-      } else {
-        currentGasUsed = legacyGasUsed;
-      }
       final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
       if (!gasBudgetCalculator.hasBudget(
           transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
@@ -169,16 +160,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       worldStateUpdater.commit();
 
-      currentGasUsed = transaction.getGasLimit() - result.getGasRemaining() + currentGasUsed;
-
-      if (ExperimentalEIPs.eip1559Enabled && transaction.isEIP1559Transaction()) {
-        eip1556GasUsed = currentGasUsed;
-      } else {
-        legacyGasUsed = currentGasUsed;
-      }
+      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
 
       final TransactionReceipt transactionReceipt =
-          transactionReceiptFactory.create(result, worldState, legacyGasUsed + eip1556GasUsed);
+          transactionReceiptFactory.create(result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
     }
 

@@ -39,7 +39,9 @@ p2p-port=1234
 max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60
+random-peer-priority-enabled=false
 host-whitelist=["all"]
+host-allowlist=["all"]
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 
 # chain
@@ -122,6 +124,7 @@ permissions-accounts-config-file-enabled=false
 permissions-accounts-config-file="./permissions_config.toml"
 permissions-nodes-contract-enabled=false
 permissions-nodes-contract-address="0x0000000000000000000000000000000000001234"
+permissions-nodes-contract-version=1
 permissions-accounts-contract-enabled=false
 permissions-accounts-contract-address="0x0000000000000000000000000000000000006789"
 

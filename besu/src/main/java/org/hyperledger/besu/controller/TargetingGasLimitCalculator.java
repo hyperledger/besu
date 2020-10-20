@@ -26,30 +26,34 @@ import org.apache.logging.log4j.Logger;
 public class TargetingGasLimitCalculator implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   public static final long ADJUSTMENT_FACTOR = 1024L;
-  private final Long targetGasLimit;
+  private Long targetGasLimit;
 
   public TargetingGasLimitCalculator(final Long targetGasLimit) {
-    checkArgument(targetGasLimit >= 0, "Invalid target gas limit");
-
-    this.targetGasLimit = targetGasLimit;
+    changeTargetGasLimit(targetGasLimit);
   }
 
   @Override
-  public long nextGasLimit(final long previousGasLimit) {
+  public long nextGasLimit(final long currentGasLimit) {
     final long nextGasLimit;
-    if (targetGasLimit > previousGasLimit) {
-      nextGasLimit = Math.min(targetGasLimit, safeAdd(previousGasLimit));
-    } else if (targetGasLimit < previousGasLimit) {
-      nextGasLimit = Math.max(targetGasLimit, safeSub(previousGasLimit));
+    if (targetGasLimit > currentGasLimit) {
+      nextGasLimit = Math.min(targetGasLimit, safeAdd(currentGasLimit));
+    } else if (targetGasLimit < currentGasLimit) {
+      nextGasLimit = Math.max(targetGasLimit, safeSub(currentGasLimit));
     } else {
-      nextGasLimit = previousGasLimit;
+      nextGasLimit = currentGasLimit;
     }
 
-    if (nextGasLimit != previousGasLimit) {
-      LOG.debug("Adjusting block gas limit from {} to {}", previousGasLimit, nextGasLimit);
+    if (nextGasLimit != currentGasLimit) {
+      LOG.debug("Adjusting block gas limit from {} to {}", currentGasLimit, nextGasLimit);
     }
 
     return nextGasLimit;
+  }
+
+  @Override
+  public void changeTargetGasLimit(final Long targetGasLimit) {
+    checkArgument(targetGasLimit >= 0, "Target gas limit must be non-negative");
+    this.targetGasLimit = targetGasLimit;
   }
 
   private long safeAdd(final long gasLimit) {
