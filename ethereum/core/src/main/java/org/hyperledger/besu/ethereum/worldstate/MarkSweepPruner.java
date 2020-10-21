@@ -48,9 +48,11 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class MarkSweepPruner {
 
-  private static final int DEFAULT_OPS_PER_TRANSACTION = 50_000;
   private static final Logger LOG = LogManager.getLogger();
   private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
+
+  private static final int DEFAULT_OPS_PER_TRANSACTION = 50_000;
+  private static final int MAX_MARKING_THREAD_POOL_SIZE = 2;
 
   private final int operationsPerTransaction;
   private final WorldStateStorage worldStateStorage;
@@ -64,7 +66,6 @@ public class MarkSweepPruner {
   private volatile long nodeAddedListenerId;
   private final ReadWriteLock markLock = new ReentrantReadWriteLock();
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private static final int MAX_MARKING_THREAD_POOL_SIZE = 2;
 
   public MarkSweepPruner(
       final WorldStateStorage worldStateStorage,
