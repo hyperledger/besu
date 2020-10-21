@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import static java.lang.Integer.parseInt;
-
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -29,7 +27,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -67,7 +64,7 @@ public class MarkSweepPruner {
   private volatile long nodeAddedListenerId;
   private final ReadWriteLock markLock = new ReentrantReadWriteLock();
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final int prunerThreads;
+  private final int MAX_MARKING_THREAD_POOL_SIZE = 2;
 
   public MarkSweepPruner(
       final WorldStateStorage worldStateStorage,
@@ -115,9 +112,7 @@ public class MarkSweepPruner {
         "Cumulative number of seconds spent marking the state trie across all pruning cycles",
         () -> markStopwatch.elapsed(TimeUnit.SECONDS));
 
-    this.prunerThreads =
-        parseInt(Optional.ofNullable(System.getProperty("PRUNER_THREADS")).orElse("2"));
-    LOG.info("Using {} pruner threads", prunerThreads);
+    LOG.debug("Using {} pruner threads", MAX_MARKING_THREAD_POOL_SIZE);
   }
 
   public void prepare() {
@@ -132,13 +127,13 @@ public class MarkSweepPruner {
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
     markStopwatch.start();
-    final ExecutorService executorService =
+    final ExecutorService markingExecutorService =
         new ThreadPoolExecutor(
             0,
-            prunerThreads,
+            MAX_MARKING_THREAD_POOL_SIZE,
             5L,
             TimeUnit.SECONDS,
-            new LinkedBlockingDeque<>(1 << 8),
+            new LinkedBlockingDeque<>(MAX_MARKING_THREAD_POOL_SIZE),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
@@ -149,14 +144,15 @@ public class MarkSweepPruner {
         .visitAll(
             node -> {
               markNode(node.getHash());
-              node.getValue().ifPresent(value -> processAccountState(value, executorService));
+              node.getValue()
+                  .ifPresent(value -> processAccountState(value, markingExecutorService));
             },
-            executorService)
+            markingExecutorService)
         .join();
-    executorService.shutdown();
+    markingExecutorService.shutdown();
     try {
       // Wait for all the marking tasks to complete
-      executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+      markingExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.info("interrupted while marking", e);
     }
