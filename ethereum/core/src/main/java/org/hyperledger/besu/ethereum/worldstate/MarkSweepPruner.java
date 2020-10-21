@@ -124,6 +124,29 @@ public class MarkSweepPruner {
     nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
+  /**
+   * This is a parallel mark implementation.
+   *
+   * <p>The parallel task production is by sub-trie, so calling `visitAll` on a root node will
+   * eventually spawn up to 16 tasks (for a hexary trie).
+   *
+   * <p>If we marked each sub-trie in its own thread, with no common queue of tasks, our mark speed
+   * would be limited by the sub-trie with the maximum number of nodes. In practice for the Ethereum
+   * mainnet, we see a large imbalance in sub-trie size so without a common task pool the time in
+   * which there is only 1 thread left marking its big sub-trie would be substantial.
+   *
+   * <p>If we were to leave all threads to produce mark tasks before starting to mark, we would run
+   * out of memory quickly.
+   *
+   * <p>If we were to have a constant number of threads producing the mark threads with the others
+   * consuming them, we would have to optimize the production/consumption balance.
+   *
+   * <p>To get the best of both worlds, the marking executor has a {@link
+   * ThreadPoolExecutor.CallerRunsPolicy} which causes them to essentially consume their own mark
+   * task immediately when the thread pool is full. The resulting behavior is threads that mark
+   * their own sub-trie until they finish that sub-trie, at which point they switch to marking the
+   * sub-trie tasks produced by another thread.
+   */
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
     markStopwatch.start();
@@ -148,10 +171,10 @@ public class MarkSweepPruner {
                   .ifPresent(value -> processAccountState(value, markingExecutorService));
             },
             markingExecutorService)
-        .join();
+        .join() /* This will block on all the marking tasks to be _produced_ but doesn't guarantee that the marking tasks have been completed. */;
     markingExecutorService.shutdown();
     try {
-      // Wait for all the marking tasks to complete
+      // This ensures that the marking tasks complete.
       markingExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.info("interrupted while marking", e);
