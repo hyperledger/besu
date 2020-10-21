@@ -64,7 +64,7 @@ public class MarkSweepPruner {
   private volatile long nodeAddedListenerId;
   private final ReadWriteLock markLock = new ReentrantReadWriteLock();
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final int MAX_MARKING_THREAD_POOL_SIZE = 2;
+  private static final int MAX_MARKING_THREAD_POOL_SIZE = 2;
 
   public MarkSweepPruner(
       final WorldStateStorage worldStateStorage,
