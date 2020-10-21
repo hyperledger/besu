@@ -157,7 +157,7 @@ public class MarkSweepPruner {
             MAX_MARKING_THREAD_POOL_SIZE,
             5L,
             TimeUnit.SECONDS,
-            new LinkedBlockingDeque<>(MAX_MARKING_THREAD_POOL_SIZE),
+            new LinkedBlockingDeque<>(16),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
