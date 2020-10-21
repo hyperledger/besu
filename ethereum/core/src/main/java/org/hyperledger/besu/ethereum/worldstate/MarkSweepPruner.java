@@ -181,10 +181,10 @@ public class MarkSweepPruner {
       // This ensures that the marking tasks complete.
       markingExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
-      LOG.info("interrupted while marking", e);
+      LOG.info("Interrupted while marking", e);
     }
     markStopwatch.stop();
-    LOG.info("Completed marking used nodes for pruning");
+    LOG.debug("Completed marking used nodes for pruning");
   }
 
   public void sweepBefore(final long markedBlockNumber) {
