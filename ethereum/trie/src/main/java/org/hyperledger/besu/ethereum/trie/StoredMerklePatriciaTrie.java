@@ -141,8 +141,6 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public CompletableFuture<Void> visitAll(
       final Consumer<Node<V>> nodeConsumer, final ExecutorService executorService) {
     nodeConsumer.accept(root);
-    // rootChildFutures.forEach(
-    // rootChildFuture -> rootChildFuture.thenRun(() -> LOG.info("finished a mark work item")));
     return CompletableFuture.allOf(
         root.getChildren().stream()
             .map(
