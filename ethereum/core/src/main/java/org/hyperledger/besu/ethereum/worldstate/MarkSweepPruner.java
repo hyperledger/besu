@@ -64,7 +64,7 @@ public class MarkSweepPruner {
   private final Counter sweptNodesCounter;
   private final Stopwatch markStopwatch;
   private volatile long nodeAddedListenerId;
-  private final ReadWriteLock markLock = new ReentrantReadWriteLock();
+  private final ReadWriteLock pendingMarkLock = new ReentrantReadWriteLock();
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public MarkSweepPruner(
@@ -273,7 +273,7 @@ public class MarkSweepPruner {
   private void markThenMaybeFlush(final Runnable nodeMarker) {
     // We use the read lock here because pendingMarks is threadsafe and we want to allow all the
     // marking threads access simultaneously.
-    final Lock addLock = markLock.readLock();
+    final Lock addLock = pendingMarkLock.readLock();
     addLock.lock();
     try {
       nodeMarker.run();
@@ -286,7 +286,7 @@ public class MarkSweepPruner {
     // adding because we're going to clear the set.
     // Therefore, we need to take out a write lock.
     if (pendingMarks.size() >= operationsPerTransaction) {
-      final Lock flushLock = markLock.writeLock();
+      final Lock flushLock = pendingMarkLock.writeLock();
       flushLock.lock();
       try {
         // Check once again that the condition holds. If it doesn't, that means another thread
