@@ -26,6 +26,10 @@ Users of Web3J should note that many calls will now return a result with the err
 * Added the Open Telemetry Java agent to report traces to a remote backend. Added an example to showcase the trace reporting capabilities.
 * Added EvmTool binary to the distribution.  EvmTool is a CLI that can execute EVM bytecode and execute ethereum state tests. [\#1465](https://github.com/hyperledger/besu/pull/1465)
 
+### Download Link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.0-RC2.zip
+sha256sum: c71a74714c0d6077fa1637ce4d7134ee94737bc8a62aa91959d149180ec9d925
+
 ## 20.10.0-RC1
 
 ### Additions and Improvements
