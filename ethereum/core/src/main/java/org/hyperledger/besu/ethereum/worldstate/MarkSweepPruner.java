@@ -147,6 +147,9 @@ public class MarkSweepPruner {
    * their own mark task immediately when the thread pool is full. The resulting behavior is threads
    * that mark their own sub-trie until they finish that sub-trie, at which point they switch to
    * marking the sub-trie tasks produced by another thread.
+   *
+   * @param rootHash The root hash of the whole state trie. Roots of storage tries will be
+   *     discovered though traversal.
    */
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
