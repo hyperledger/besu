@@ -263,14 +263,14 @@ public class MarkSweepPruner {
 
   @VisibleForTesting
   void markNode(final Bytes32 hash) {
-    markThenMaybeFlush(() -> pendingMarks.add(hash));
+    markThenMaybeFlush(() -> pendingMarks.add(hash), 1);
   }
 
   private void markNodes(final Collection<Bytes32> nodeHashes) {
-    markThenMaybeFlush(() -> pendingMarks.addAll(nodeHashes));
+    markThenMaybeFlush(() -> pendingMarks.addAll(nodeHashes), nodeHashes.size());
   }
 
-  private void markThenMaybeFlush(final Runnable nodeMarker) {
+  private void markThenMaybeFlush(final Runnable nodeMarker, final int numberOfNodes) {
     // We use the read lock here because pendingMarks is threadsafe and we want to allow all the
     // marking threads access simultaneously.
     final Lock addLock = pendingMarkLock.readLock();
@@ -280,7 +280,7 @@ public class MarkSweepPruner {
     } finally {
       addLock.unlock();
     }
-    markedNodesCounter.inc();
+    markedNodesCounter.inc(numberOfNodes);
 
     // However, when the size of pendingMarks grows too large, we want all the threads to stop
     // adding because we're going to clear the set.
