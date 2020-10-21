@@ -61,6 +61,11 @@ public class EthEstimateGas implements JsonRpcMethod {
     if (blockHeader == null) {
       return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
     }
+    if (!blockchainQueries
+        .getWorldStateArchive()
+        .isWorldStateAvailable(blockHeader.getStateRoot())) {
+      return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+    }
 
     final JsonCallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
