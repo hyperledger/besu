@@ -214,8 +214,8 @@ public class MessageFrame {
   private Gas gasRefund;
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
-  private final Set<Address> warmedUpAddresses;
-  private final Multimap<Address, Bytes32> warmedUpStorage;
+  private Set<Address> warmedUpAddresses;
+  private Multimap<Address, Bytes32> warmedUpStorage;
 
   // Execution Environment fields.
   private final Address recipient;
@@ -858,13 +858,22 @@ public class MessageFrame {
     return !warmedUpStorage.put(address, slot);
   }
 
+  public void copyWarmedUpFields(final MessageFrame parentFrame) {
+    if (parentFrame == this) {
+      return;
+    }
+
+    warmedUpAddresses = new HashSet<>(parentFrame.warmedUpAddresses);
+    warmedUpStorage = HashMultimap.create(parentFrame.warmedUpStorage);
+  }
+
   public void mergeWarmedUpFields(final MessageFrame childFrame) {
     if (childFrame == this) {
       return;
     }
 
-    warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
-    warmedUpStorage.putAll(childFrame.warmedUpStorage);
+    warmedUpAddresses = childFrame.warmedUpAddresses;
+    warmedUpStorage = childFrame.warmedUpStorage;
   }
 
   /**
