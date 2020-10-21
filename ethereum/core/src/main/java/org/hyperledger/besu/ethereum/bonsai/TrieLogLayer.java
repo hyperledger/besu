@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -46,7 +47,7 @@ public class TrieLogLayer {
   private Bytes32 blockHash;
   private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts = new TreeMap<>();
   private final Map<Address, BonsaiValue<Bytes>> code = new TreeMap<>();
-  private final Map<Address, Map<Bytes32, BonsaiValue<UInt256>>> storage = new TreeMap<>();
+  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage = new TreeMap<>();
   private boolean frozen = false;
 
   /** Locks the layer so no new changes can be added; */
@@ -76,11 +77,11 @@ public class TrieLogLayer {
   }
 
   public void addStorageChange(
-      final Address address, final Bytes32 slot, final UInt256 oldValue, final UInt256 newValue) {
+      final Address address, final Hash slotHash, final UInt256 oldValue, final UInt256 newValue) {
     checkState(!frozen, "Layer is Frozen");
     storage
         .computeIfAbsent(address, a -> new TreeMap<>())
-        .put(slot, new BonsaiValue<>(oldValue, newValue));
+        .put(slotHash, new BonsaiValue<>(oldValue, newValue));
   }
 
   static TrieLogLayer readFrom(final RLPInput input) {
@@ -116,14 +117,14 @@ public class TrieLogLayer {
       if (input.nextIsNull()) {
         input.skipNext();
       } else {
-        final Map<Bytes32, BonsaiValue<UInt256>> storageChanges = new TreeMap<>();
+        final Map<Hash, BonsaiValue<UInt256>> storageChanges = new TreeMap<>();
         input.enterList();
         while (!input.isEndOfCurrentList()) {
           input.enterList();
-          final Bytes32 key = input.readBytes32();
+          final Hash slotHash = Hash.wrap(input.readBytes32());
           final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
-          storageChanges.put(key, new BonsaiValue<>(oldValue, newValue));
+          storageChanges.put(slotHash, new BonsaiValue<>(oldValue, newValue));
           input.leaveList();
         }
         input.leaveList();
@@ -167,12 +168,12 @@ public class TrieLogLayer {
         codeChange.writeRlp(output, RLPOutput::writeBytes);
       }
 
-      final Map<Bytes32, BonsaiValue<UInt256>> storageChanges = storage.get(address);
+      final Map<Hash, BonsaiValue<UInt256>> storageChanges = storage.get(address);
       if (storageChanges == null) {
         output.writeNull();
       } else {
         output.startList();
-        for (final Map.Entry<Bytes32, BonsaiValue<UInt256>> storageChangeEntry :
+        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageChangeEntry :
             storageChanges.entrySet()) {
           output.startList();
           output.writeBytes(storageChangeEntry.getKey());
@@ -194,7 +195,7 @@ public class TrieLogLayer {
     return code.entrySet().stream();
   }
 
-  Stream<Map.Entry<Address, Map<Bytes32, BonsaiValue<UInt256>>>> streamStorageChanges() {
+  Stream<Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>>> streamStorageChanges() {
     return storage.entrySet().stream();
   }
 

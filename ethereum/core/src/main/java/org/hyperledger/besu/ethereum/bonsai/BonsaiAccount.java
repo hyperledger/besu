@@ -323,22 +323,25 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
    * @param context a description to be added to the thrown exceptions
    * @throws IllegalStateException if the stored values differ
    */
-  public void assertCloseEnoughForDiffing(
-      final StateTrieAccountValue account, final String context) {
-    if (nonce != account.getNonce()) {
-      throw new IllegalStateException(context + ": nonces differ");
-    }
-    if (!Objects.equals(balance, account.getBalance())) {
-      throw new IllegalStateException(context + ": balances differ");
-    }
-    if (!Objects.equals(codeHash, account.getCodeHash())) {
-      throw new IllegalStateException(context + ": Code Hashes differ");
-    }
-    if (!Objects.equals(storageRoot, account.getStorageRoot())) {
-      throw new IllegalStateException(context + ": Storage Roots differ");
-    }
-    if (version != account.getVersion()) {
-      throw new IllegalStateException(context + ": versions differ");
+  public static void assertCloseEnoughForDiffing(
+      final BonsaiAccount source, final StateTrieAccountValue account, final String context) {
+    if (source == null) {
+      if (account != null) {
+        throw new IllegalStateException(context + ": source is null but target isn't");
+      }
+    } else {
+      if (source.nonce != account.getNonce()) {
+        throw new IllegalStateException(context + ": nonces differ");
+      }
+      if (!Objects.equals(source.balance, account.getBalance())) {
+        throw new IllegalStateException(context + ": balances differ");
+      }
+      if (!Objects.equals(source.storageRoot, account.getStorageRoot())) {
+        throw new IllegalStateException(context + ": Storage Roots differ");
+      }
+      if (source.version != account.getVersion()) {
+        throw new IllegalStateException(context + ": versions differ");
+      }
     }
   }
 }
