@@ -33,6 +33,9 @@ public class NetPeerCountTransaction implements Transaction<BigInteger> {
     try {
       final NetPeerCount result = node.net().netPeerCount().send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       assertThat(result.hasError()).isFalse();
       return result.getQuantity();
     } catch (final IOException e) {

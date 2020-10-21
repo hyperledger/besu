@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Logger;
@@ -83,18 +84,21 @@ public class EthHashSolver {
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
   private final Boolean stratumMiningEnabled;
   private final Subscribers<EthHashObserver> ethHashObservers;
+  private final Function<Long, Long> epochCalculator;
   private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
 
   public EthHashSolver(
       final Iterable<Long> nonceGenerator,
       final EthHasher ethHasher,
       final Boolean stratumMiningEnabled,
-      final Subscribers<EthHashObserver> ethHashObservers) {
+      final Subscribers<EthHashObserver> ethHashObservers,
+      final Function<Long, Long> epochCalculator) {
     this.nonceGenerator = nonceGenerator;
     this.ethHasher = ethHasher;
     this.stratumMiningEnabled = stratumMiningEnabled;
     this.ethHashObservers = ethHashObservers;
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
+    this.epochCalculator = epochCalculator;
   }
 
   public EthHashSolution solveFor(final EthHashSolverJob job)
@@ -131,7 +135,8 @@ public class EthHashSolver {
 
   private Optional<EthHashSolution> testNonce(
       final EthHashSolverInputs inputs, final long nonce, final byte[] hashBuffer) {
-    ethHasher.hash(hashBuffer, nonce, inputs.getBlockNumber(), inputs.getPrePowHash());
+    ethHasher.hash(
+        hashBuffer, nonce, inputs.getBlockNumber(), epochCalculator, inputs.getPrePowHash());
     final UInt256 x = UInt256.fromBytes(Bytes32.wrap(hashBuffer, 32));
     if (x.compareTo(inputs.getTarget()) <= 0) {
       final Hash mixedHash =

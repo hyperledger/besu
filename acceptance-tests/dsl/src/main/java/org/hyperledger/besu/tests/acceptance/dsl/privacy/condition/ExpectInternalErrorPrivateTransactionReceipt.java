@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
 
-import org.web3j.protocol.exceptions.ClientConnectionException;
-
 public class ExpectInternalErrorPrivateTransactionReceipt implements PrivateCondition {
   private final PrivacyTransactions transactions;
   private final String transactionHash;
@@ -35,7 +33,7 @@ public class ExpectInternalErrorPrivateTransactionReceipt implements PrivateCond
   public void verify(final PrivacyNode node) {
     try {
       node.execute(transactions.getPrivateTransactionReceipt(transactionHash));
-    } catch (final ClientConnectionException e) {
+    } catch (final RuntimeException e) {
       assertThat(e.getMessage()).contains("Internal error");
     }
   }

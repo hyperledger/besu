@@ -36,6 +36,9 @@ public class PrivGetEeaTransactionCountTransaction implements Transaction<Intege
       final PrivacyRequestFactory.GetTransactionCountResponse result =
           node.privacy().privGetEeaTransactionCount(params).send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getCount();
     } catch (final IOException e) {
       throw new RuntimeException(e);

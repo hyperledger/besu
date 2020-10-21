@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 public class SmartContractPermissioningConfiguration {
   private boolean smartContractNodeAllowlistEnabled;
   private Address nodeSmartContractAddress;
+  private int nodeSmartContractInterfaceVersion = 1;
 
   private boolean smartContractAccountAllowlistEnabled;
   private Address accountSmartContractAddress;
@@ -59,5 +60,13 @@ public class SmartContractPermissioningConfiguration {
 
   public void setAccountSmartContractAddress(final Address accountSmartContractAddress) {
     this.accountSmartContractAddress = accountSmartContractAddress;
+  }
+
+  public void setNodeSmartContractInterfaceVersion(final int nodeSmartContractInterfaceVersion) {
+    this.nodeSmartContractInterfaceVersion = nodeSmartContractInterfaceVersion;
+  }
+
+  public int getNodeSmartContractInterfaceVersion() {
+    return nodeSmartContractInterfaceVersion;
   }
 }

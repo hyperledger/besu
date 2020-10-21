@@ -115,7 +115,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
-      final String enclaveKey =
+      final String privateTransactionLookupId =
           privacyController.sendTransaction(
               privateTransaction, enclavePublicKey, maybePrivacyGroup);
 
@@ -125,7 +125,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
                 () ->
                     new RuntimeException(
                         JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST.getMessage()));
-        final Optional<String> addPayloadEnclaveKey =
+        final Optional<String> addPayloadPrivateTransactionLookupId =
             privacyController.buildAndSendAddPayload(
                 privateTransaction,
                 Bytes32.wrap(privacyGroupId),
@@ -133,10 +133,11 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         return createPMTAndAddToTxPool(
             id,
             privateTransaction,
-            buildCompoundKey(enclaveKey, addPayloadEnclaveKey),
+            buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId),
             Address.ONCHAIN_PRIVACY);
       } else { // legacy or pantheon transaction
-        return createPMTAndAddToTxPool(id, privateTransaction, enclaveKey, Address.DEFAULT_PRIVACY);
+        return createPMTAndAddToTxPool(
+            id, privateTransaction, privateTransactionLookupId, Address.DEFAULT_PRIVACY);
       }
     } catch (final IllegalArgumentException | RLPException e) {
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
@@ -170,13 +171,14 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     return new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason));
   }
 
-  private String buildCompoundKey(
-      final String enclaveKey, final Optional<String> addPayloadEnclaveKey) {
-    return addPayloadEnclaveKey.isPresent()
+  private String buildCompoundLookupId(
+      final String privateTransactionLookupId,
+      final Optional<String> maybePrivateTransactionLookupId) {
+    return maybePrivateTransactionLookupId.isPresent()
         ? Bytes.concatenate(
-                Bytes.fromBase64String(enclaveKey),
-                Bytes.fromBase64String(addPayloadEnclaveKey.get()))
+                Bytes.fromBase64String(privateTransactionLookupId),
+                Bytes.fromBase64String(maybePrivateTransactionLookupId.get()))
             .toBase64String()
-        : enclaveKey;
+        : privateTransactionLookupId;
   }
 }

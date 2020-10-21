@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -54,6 +55,11 @@ public class NodePermissioningControllerFactoryTest {
   LocalPermissioningConfiguration localPermissioningConfig;
   SmartContractPermissioningConfiguration smartContractPermissioningConfiguration;
   PermissioningConfiguration config;
+
+  @Before
+  public void before() {
+    when(transactionSimulator.doesAddressExistAtHead(any())).thenReturn(Optional.of(true));
+  }
 
   @Test
   public void testCreateWithNeitherPermissioningEnabled() {

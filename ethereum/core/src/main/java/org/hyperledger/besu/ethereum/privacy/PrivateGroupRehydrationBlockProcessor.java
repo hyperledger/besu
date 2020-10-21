@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -212,7 +212,7 @@ public class PrivateGroupRehydrationBlockProcessor {
       final WorldUpdater privateWorldStateUpdater) {
     if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
       // inject management
-      final DefaultEvmAccount managementPrecompile =
+      final EvmAccount managementPrecompile =
           privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
       final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
       // this is the code for the simple management contract
@@ -220,7 +220,7 @@ public class PrivateGroupRehydrationBlockProcessor {
           OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
-      final DefaultEvmAccount proxyPrecompile =
+      final EvmAccount proxyPrecompile =
           privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY);
       final MutableAccount mutableProxyPrecompiled = proxyPrecompile.getMutable();
       // this is the code for the proxy contract

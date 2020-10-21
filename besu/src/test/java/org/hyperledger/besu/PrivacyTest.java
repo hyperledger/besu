@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
@@ -114,7 +114,7 @@ public class PrivacyTest {
         .clock(TestClock.fixed())
         .privacyParameters(privacyParameters)
         .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-        .targetGasLimit(GasLimitCalculator.DEFAULT)
+        .gasLimitCalculator(GasLimitCalculator.constant())
         .build();
   }
 

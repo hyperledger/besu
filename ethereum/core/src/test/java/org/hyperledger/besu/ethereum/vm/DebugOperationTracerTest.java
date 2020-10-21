@@ -20,12 +20,12 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
@@ -204,7 +204,7 @@ public class DebugOperationTracerTest {
   }
 
   private Map<UInt256, UInt256> setupStorageForCapture(final MessageFrame frame) {
-    final DefaultEvmAccount account = mock(DefaultEvmAccount.class);
+    final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
     final MutableAccount mutableAccount = mock(MutableAccount.class);
     when(account.getMutable()).thenReturn(mutableAccount);
     when(worldUpdater.getAccount(frame.getRecipientAddress())).thenReturn(account);

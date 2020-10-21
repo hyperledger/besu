@@ -60,7 +60,7 @@ public class MarkSweepPrunerTest {
   private final WorldStateStorage worldStateStorage =
       spy(new WorldStateKeyValueStorage(stateStorage));
   private final WorldStateArchive worldStateArchive =
-      new WorldStateArchive(
+      new DefaultWorldStateArchive(
           worldStateStorage, new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
   private final Block genesisBlock = gen.genesisBlock();

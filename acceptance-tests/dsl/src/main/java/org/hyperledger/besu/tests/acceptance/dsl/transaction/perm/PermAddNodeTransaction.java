@@ -36,6 +36,9 @@ public class PermAddNodeTransaction implements Transaction<String> {
       final PermissioningJsonRpcRequestFactory.AddNodeResponse result =
           node.perm().addNodesToWhitelist(enodeList).send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);

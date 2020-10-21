@@ -20,5 +20,5 @@
       "message" : "Intrinsic gas exceeds gas limit"
     }
   },
-  "statusCode": 400
+  "statusCode": 200
 }

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
@@ -218,7 +218,7 @@ public class PrivateTransactionProcessor {
       LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
-      final DefaultEvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
       final MutableAccount sender =
           maybePrivateSender != null
               ? maybePrivateSender.getMutable()

@@ -32,6 +32,9 @@ public class EthGetWorkTransaction implements Transaction<String[]> {
     try {
       final EthGetWork result = node.eth().ethGetWork().send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return new String[] {
         result.getCurrentBlockHeaderPowHash(),
         result.getSeedHashForDag(),

@@ -243,12 +243,12 @@ public class PrivateTransactionLocatorTest {
       final Transaction pmt,
       final PrivateTransaction privateTransaction,
       final Optional<Bytes32> version) {
-    final String privateTxEnclaveKey = pmt.getData().orElseThrow().toBase64String();
+    final String privateTransactionLookupId = pmt.getData().orElseThrow().toBase64String();
     final byte[] encodePrivateTransaction =
         encodePrivateTransaction(privateTransaction, version)
             .toBase64String()
             .getBytes(StandardCharsets.UTF_8);
-    when(enclave.receive(eq(privateTxEnclaveKey), eq(participantKey)))
+    when(enclave.receive(eq(privateTransactionLookupId), eq(participantKey)))
         .thenReturn(new ReceiveResponse(encodePrivateTransaction, privacyGroupId, participantKey));
   }
 
@@ -263,10 +263,10 @@ public class PrivateTransactionLocatorTest {
   }
 
   private void mockEnclaveForNonExistingPayload(final Transaction pmt) {
-    final String privateTxEnclaveKey = pmt.getData().orElseThrow().toBase64String();
+    final String privateTransactionLookupId = pmt.getData().orElseThrow().toBase64String();
     final EnclaveClientException payloadNotFoundException =
         new EnclaveClientException(404, "Payload not found");
-    when(enclave.receive(eq(privateTxEnclaveKey), eq(participantKey)))
+    when(enclave.receive(eq(privateTransactionLookupId), eq(participantKey)))
         .thenThrow(payloadNotFoundException);
   }
 

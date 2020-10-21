@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,16 +31,29 @@ public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private final Optional<EIP1559> eip1559;
+
+  public GasUsageValidationRule() {
+    this.eip1559 = Optional.empty();
+  }
+
+  public GasUsageValidationRule(final Optional<EIP1559> eip1559) {
+    this.eip1559 = eip1559;
+  }
+
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    if (header.getGasUsed() > header.getGasLimit()) {
+    long slackCoefficient = 1;
+    if (eip1559.isPresent() && eip1559.get().isEIP1559(header.getNumber())) {
+      slackCoefficient = eip1559.get().getFeeMarket().getSlackCoefficient();
+    }
+    if (header.getGasUsed() > (header.getGasLimit() * slackCoefficient)) {
       LOG.trace(
           "Invalid block header: gas used {} exceeds gas limit {}",
           header.getGasUsed(),
           header.getGasLimit());
       return false;
     }
-
     return true;
   }
 }

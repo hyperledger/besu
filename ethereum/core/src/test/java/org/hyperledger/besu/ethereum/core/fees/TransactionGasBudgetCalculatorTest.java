@@ -33,13 +33,8 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class TransactionGasBudgetCalculatorTest {
 
-  private static final long EIP_1559_FORK_BLOCK = 1L;
   private static final TransactionGasBudgetCalculator FRONTIER_CALCULATOR =
       TransactionGasBudgetCalculator.frontier();
-  private static final TransactionGasBudgetCalculator EIP1559_CALCULATOR =
-      TransactionGasBudgetCalculator.eip1559(new EIP1559(EIP_1559_FORK_BLOCK));
-  private static final FeeMarket FEE_MARKET = FeeMarket.eip1559();
-  private static final long MAX_GAS = 20000000L;
 
   private final TransactionGasBudgetCalculator gasBudgetCalculator;
   private final boolean isEIP1559;
@@ -68,61 +63,12 @@ public class TransactionGasBudgetCalculatorTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    // LEGACY_INITIAL_GAS_LIMIT: BLOCK_GAS_TARGET / 2. The maximum amount of gas that legacy
-    // transactions can use in INITIAL_FORK_BLOCK_NUMBER
-    // EIP1559_INITIAL_GAS_TARGET: BLOCK_GAS_TARGET / 2. The maximum amount of gas that EIP-1559
-    // transactions can use in INITIAL_FORK_BLOCK_NUMBER.
-    // EIP1559_GAS_LIMIT: EIP1559_GAS_TARGET * 2. The maximum amount of gas EIP-1559 transactions
-    // can use in a given block.
+
     return Arrays.asList(
         new Object[][] {
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 0L, true},
           {FRONTIER_CALCULATOR, false, 11L, 1L, 10L, 0L, false},
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 6L, false},
-          {EIP1559_CALCULATOR, false, 5L, EIP_1559_FORK_BLOCK, 10L, 0L, true},
-          {EIP1559_CALCULATOR, false, (MAX_GAS / 2), 1L, MAX_GAS, 0L, true},
-          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) + 1, 1L, MAX_GAS, 0L, false},
-          {EIP1559_CALCULATOR, false, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
-          {EIP1559_CALCULATOR, true, (MAX_GAS / 2) + 1, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, true},
-          {EIP1559_CALCULATOR, true, MAX_GAS + 1, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, false},
-          {EIP1559_CALCULATOR, true, MAX_GAS, EIP_1559_FORK_BLOCK, MAX_GAS, 0L, true},
-          {EIP1559_CALCULATOR, true, (MAX_GAS / 2) - 1, EIP_1559_FORK_BLOCK, 10L, 2L, false},
-          {
-            EIP1559_CALCULATOR,
-            true,
-            (MAX_GAS / 2) + MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks(),
-            EIP_1559_FORK_BLOCK + 1,
-            MAX_GAS,
-            0L,
-            true
-          },
-          {
-            EIP1559_CALCULATOR,
-            true,
-            (MAX_GAS / 2) + MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks() + 1,
-            EIP_1559_FORK_BLOCK + 1,
-            MAX_GAS,
-            0L,
-            true
-          },
-          {
-            EIP1559_CALCULATOR,
-            false,
-            (MAX_GAS / 2) - MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks(),
-            EIP_1559_FORK_BLOCK + 1,
-            MAX_GAS,
-            0L,
-            true
-          },
-          {
-            EIP1559_CALCULATOR,
-            false,
-            (MAX_GAS / 2) - MAX_GAS / 2 / FEE_MARKET.getMigrationDurationInBlocks() + 1,
-            EIP_1559_FORK_BLOCK + 1,
-            MAX_GAS,
-            0L,
-            false
-          }
         });
   }
 

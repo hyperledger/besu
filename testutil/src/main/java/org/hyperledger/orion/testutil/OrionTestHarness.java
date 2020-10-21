@@ -96,21 +96,21 @@ public class OrionTestHarness {
   private static String readFile(final Path path) {
     try {
       return readLines(path.toFile(), Charsets.UTF_8).get(0);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
       return "";
     }
   }
 
   public URI clientUrl() {
-    HttpUrl httpUrl =
+    final HttpUrl httpUrl =
         new HttpUrl.Builder().scheme("http").host(HOST).port(orion.clientPort()).build();
 
     return URI.create(httpUrl.toString());
   }
 
   public URI nodeUrl() {
-    HttpUrl httpUrl =
+    final HttpUrl httpUrl =
         new HttpUrl.Builder().scheme("http").host(HOST).port(orion.nodePort()).build();
 
     return URI.create(httpUrl.toString());
@@ -136,10 +136,10 @@ public class OrionTestHarness {
             + "\"\n"
             + "storage = \"leveldb:database/orion_node\"\n"
             + "publickeys = ["
-            + joinPathsAsTomlListEntry(orionConfiguration.getPublicKey())
+            + joinPathsAsTomlListEntry(orionConfiguration.getPublicKeys())
             + "]\n"
             + "privatekeys = ["
-            + joinPathsAsTomlListEntry(orionConfiguration.getPrivateKey())
+            + joinPathsAsTomlListEntry(orionConfiguration.getPrivateKeys())
             + "]\n"
             + "workdir= \""
             + orionConfiguration.getTempDir().toString()
@@ -160,9 +160,9 @@ public class OrionTestHarness {
   }
 
   private static String joinStringsAsTomlListEntry(final List<String> strings) {
-    StringBuilder builder = new StringBuilder();
+    final StringBuilder builder = new StringBuilder();
     boolean first = true;
-    for (String string : strings) {
+    for (final String string : strings) {
       if (!first) {
         builder.append(",");
       }

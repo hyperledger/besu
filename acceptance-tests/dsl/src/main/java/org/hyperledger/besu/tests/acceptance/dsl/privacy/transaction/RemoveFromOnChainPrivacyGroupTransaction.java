@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
@@ -25,19 +24,19 @@ import org.web3j.utils.Base64String;
 
 public class RemoveFromOnChainPrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
-  private final PrivacyNode remover;
+  private final String remover;
   private final String toRemove;
   private final Credentials signer;
 
   public RemoveFromOnChainPrivacyGroupTransaction(
       final String privacyGroupId,
-      final PrivacyNode remover,
+      final String remover,
       final Credentials signer,
-      final PrivacyNode toRemove) {
+      final String toRemove) {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
     this.remover = remover;
     this.signer = signer;
-    this.toRemove = toRemove.getOrion().getDefaultPublicKey();
+    this.toRemove = toRemove;
   }
 
   @Override

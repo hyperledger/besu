@@ -74,7 +74,7 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldFailCallingMethodFromDisabledApiGroup() {
-    final String expectedMessage = "Invalid response received: 400";
+    final String expectedMessage = "Method not enabled";
 
     ethApiDisabledNode.verify(eth.accountsExceptional(expectedMessage));
   }

@@ -15,5 +15,5 @@
       "message" : "Nonce too low"
     }
   },
-  "statusCode": 400
+  "statusCode": 200
 }
