@@ -139,7 +139,7 @@ public class MarkSweepPruner {
    * <p>If we were to leave all threads to produce mark tasks before starting to mark, we would run
    * out of memory quickly.
    *
-   * <p>If we were to have a constant number of threads producing the mark threads with the others
+   * <p>If we were to have a constant number of threads producing the mark tasks with the others
    * consuming them, we would have to optimize the production/consumption balance.
    *
    * <p>To get the best of both worlds, the marking executor has a {@link
