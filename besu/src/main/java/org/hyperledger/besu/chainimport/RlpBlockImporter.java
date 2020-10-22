@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.chainimport;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.apache.logging.log4j.LogManager.getFormatterLogger;
 
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -32,13 +32,15 @@ import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Logger;
 
 /** Tool for importing rlp-encoded block data from files. */
 public class RlpBlockImporter {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = getFormatterLogger();
 
   /**
    * Imports blocks that are stored as concatenated RLP sections in the given file into Besu's block
@@ -75,18 +77,29 @@ public class RlpBlockImporter {
                     rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       BlockHeader previousHeader = null;
       long cumulativeGas = 0;
+      long segmentGas = 0;
+      Stopwatch timer = Stopwatch.createStarted();
+      Stopwatch segmentTimer = Stopwatch.createStarted();
       while (iterator.hasNext()) {
         final Block block = iterator.next();
         final BlockHeader header = block.getHeader();
         cumulativeGas = Math.addExact(cumulativeGas, header.getGasUsed());
+        segmentGas = Math.addExact(segmentGas, header.getGasUsed());
         final long blockNumber = header.getNumber();
         if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
             || blockNumber < startBlock
             || blockNumber >= endBlock) {
           continue;
         }
-        if (blockNumber % 100 == 0) {
-          LOG.info("Import at block {}", blockNumber);
+        if (blockNumber % 1000 == 0) {
+          LOG.info(
+              "Import at block %d mGas/sec %.3f segment / %.3f cumulative",
+              blockNumber,
+              segmentGas / (double) segmentTimer.elapsed(TimeUnit.MICROSECONDS),
+              cumulativeGas / (double) timer.elapsed(TimeUnit.MICROSECONDS));
+          segmentTimer.reset();
+          segmentTimer.start();
+          segmentGas = 0;
         }
         if (blockchain.contains(header.getHash())) {
           continue;
@@ -104,7 +117,12 @@ public class RlpBlockImporter {
         ++count;
         previousHeader = header;
       }
-      System.out.println("cumulativeGas - " + cumulativeGas);
+      timer.stop();
+      System.out.printf(
+          "cumulativeGas - %d import Duration %s mGas/Sec %.3f%n",
+          cumulativeGas,
+          timer.elapsed().toString(),
+          cumulativeGas / (double) timer.elapsed(TimeUnit.MICROSECONDS));
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
     }
@@ -126,7 +144,7 @@ public class RlpBlockImporter {
                 ? HeaderValidationMode.LIGHT_DETACHED_ONLY
                 : HeaderValidationMode.DETACHED_ONLY);
     if (!validHeader) {
-      LOG.error("Invalid block at block number {}.", header.getNumber());
+      LOG.error("Invalid block at block number %d.", header.getNumber());
       throw new IllegalStateException("Invalid header at block number " + header.getNumber() + ".");
     }
   }
@@ -147,7 +165,7 @@ public class RlpBlockImporter {
                 : HeaderValidationMode.SKIP_DETACHED,
             skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
     if (!blockImported) {
-      LOG.error("Invalid block at block number {}.", header.getNumber());
+      LOG.error("Invalid block at block number %d.", header.getNumber());
       throw new IllegalStateException("Invalid block at block number " + header.getNumber() + ".");
     }
   }
