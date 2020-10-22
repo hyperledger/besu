@@ -32,13 +32,19 @@ public class RollingImport {
         new RollingFileReader(
             (i, c) -> Path.of(String.format("/tmp/goerli/fill/besu-layer-%04d.rdat", i)), false);
 
+    InMemoryKeyValueStorage accountStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage codeStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage storageStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage trieBranchStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage trieLogStorage = new InMemoryKeyValueStorage();
     final BonsaiPersistdWorldState bonsaiState =
         new BonsaiPersistdWorldState(
-            new InMemoryKeyValueStorage(),
-            new InMemoryKeyValueStorage(),
-            new InMemoryKeyValueStorage(),
-            new InMemoryKeyValueStorage(),
-            new InMemoryKeyValueStorage());
+            accountStorage,
+            codeStorage,
+            storageStorage,
+            trieBranchStorage,
+            trieLogStorage,
+            Path.of("/tmp/goerli/fill-results"));
 
     int count = 0;
     while (!reader.isDone()) {
@@ -57,11 +63,40 @@ public class RollingImport {
           System.out.flush();
         }
       } catch (final Exception e) {
-//        e.printStackTrace(System.out);
+        //        e.printStackTrace(System.out);
         System.out.println(count);
         throw e;
       }
       count++;
     }
+
+    System.out.printf("%nCount %d - now going backwards!%n", count);
+
+    while (count > 0) {
+      try {
+
+        count--;
+        reader.seek(count);
+        final byte[] bytes = reader.readBytes();
+        final TrieLogLayer layer =
+            TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
+        bonsaiState.rollBack(layer);
+        if (count % 10000 == 0) {
+          System.out.println(". - " + count);
+        } else if (count % 100 == 0) {
+          System.out.print(".");
+          System.out.flush();
+        }
+      } catch (final Exception e) {
+        System.out.println(count);
+        throw e;
+      }
+    }
+    System.out.printf("Back to zero!%n");
+    accountStorage.dump(System.out);
+    codeStorage.dump(System.out);
+    storageStorage.dump(System.out);
+    trieBranchStorage.dump(System.out);
+    trieLogStorage.dump(System.out);
   }
 }

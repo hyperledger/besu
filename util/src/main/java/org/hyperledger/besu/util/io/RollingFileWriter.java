@@ -27,7 +27,7 @@ import java.util.function.BiFunction;
 import org.xerial.snappy.Snappy;
 
 public class RollingFileWriter implements Closeable {
-  private static final long MAX_FILE_SIZE = 1 << 28; // 256 MiB max file size
+  private static final long MAX_FILE_SIZE = 1 << 31; // 2 GiB max file size
 
   private final BiFunction<Integer, Boolean, Path> filenameGenerator;
   private final boolean compressed;

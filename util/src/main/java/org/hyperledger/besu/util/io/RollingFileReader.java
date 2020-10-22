@@ -17,10 +17,9 @@
 package org.hyperledger.besu.util.io;
 
 import java.io.Closeable;
-import java.io.DataInputStream;
 import java.io.EOFException;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 
@@ -31,8 +30,8 @@ public class RollingFileReader implements Closeable {
   private final boolean compressed;
   private int currentPosition;
   private int fileNumber;
-  private FileInputStream in;
-  private final DataInputStream index;
+  private RandomAccessFile in;
+  private final RandomAccessFile index;
   private boolean done = false;
 
   public RollingFileReader(
@@ -41,10 +40,8 @@ public class RollingFileReader implements Closeable {
     this.filenameGenerator = filenameGenerator;
     this.compressed = compressed;
     final Path firstInputFile = filenameGenerator.apply(fileNumber, compressed);
-    in = new FileInputStream(firstInputFile.toFile());
-    index =
-        new DataInputStream(
-            new FileInputStream(RollingFileWriter.dataFileToIndex(firstInputFile).toFile()));
+    in = new RandomAccessFile(firstInputFile.toFile(), "r");
+    index = new RandomAccessFile(RollingFileWriter.dataFileToIndex(firstInputFile).toFile(), "r");
     fileNumber = index.readInt();
     currentPosition = index.readUnsignedShort();
   }
@@ -58,24 +55,35 @@ public class RollingFileReader implements Closeable {
       if (nextFile == fileNumber) {
         final int len = currentPosition - start;
         raw = new byte[len];
-        //noinspection ResultOfMethodCallIgnored
         in.read(raw);
       } else {
-        raw = in.readAllBytes();
+        raw = new byte[(int) (in.length() - in.getFilePointer())];
+        in.read(raw);
         in.close();
         fileNumber = nextFile;
-        in = new FileInputStream(filenameGenerator.apply(fileNumber, compressed).toFile());
+        in = new RandomAccessFile(filenameGenerator.apply(fileNumber, compressed).toFile(), "r");
         if (currentPosition != 0) {
-          //noinspection ResultOfMethodCallIgnored
-          in.skip(currentPosition);
+          in.seek(currentPosition);
         }
       }
     } catch (final EOFException eofe) {
       // this happens when we read the last value, where there is no next index.
-      raw = in.readAllBytes();
+      raw = new byte[(int) (in.length() - in.getFilePointer())];
+      in.read(raw);
       done = true;
     }
     return compressed ? Snappy.uncompress(raw) : raw;
+  }
+
+  public void seek(final long position) throws IOException {
+    index.seek(position * 6);
+    final int oldFile = fileNumber;
+    fileNumber = index.readUnsignedShort();
+    currentPosition = index.readInt();
+    if (oldFile != fileNumber) {
+      in = new RandomAccessFile(filenameGenerator.apply(fileNumber, compressed).toFile(), "r");
+    }
+    in.seek(currentPosition);
   }
 
   @Override

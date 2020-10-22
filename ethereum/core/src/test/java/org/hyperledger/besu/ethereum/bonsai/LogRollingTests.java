@@ -64,7 +64,7 @@ public class LogRollingTests {
   public void simpleRollForwardTest() {
     final BonsaiPersistdWorldState worldState =
         new BonsaiPersistdWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage, null);
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -86,7 +86,8 @@ public class LogRollingTests {
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage);
+            newTrieLogStorage,
+            null);
 
     final Optional<byte[]> value = trieLogStorage.get(hashOne.toArrayUnsafe());
 
@@ -109,7 +110,7 @@ public class LogRollingTests {
   public void rollForwardTwice() {
     final BonsaiPersistdWorldState worldState =
         new BonsaiPersistdWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage, null);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -139,7 +140,8 @@ public class LogRollingTests {
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage);
+            newTrieLogStorage,
+            null);
 
     final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, hashOne);
     secondWorldState.rollForward(layerOne);
@@ -162,7 +164,7 @@ public class LogRollingTests {
   public void rollBackOnce() {
     final BonsaiPersistdWorldState worldState =
         new BonsaiPersistdWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage, null);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -197,7 +199,8 @@ public class LogRollingTests {
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage);
+            newTrieLogStorage,
+            null);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =

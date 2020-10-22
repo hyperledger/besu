@@ -74,9 +74,11 @@ public class RlpBlockImporter {
                 BlockHeader.readFrom(
                     rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       BlockHeader previousHeader = null;
+      long cumulativeGas = 0;
       while (iterator.hasNext()) {
         final Block block = iterator.next();
         final BlockHeader header = block.getHeader();
+        cumulativeGas = Math.addExact(cumulativeGas, header.getGasUsed());
         final long blockNumber = header.getNumber();
         if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
             || blockNumber < startBlock
@@ -102,6 +104,7 @@ public class RlpBlockImporter {
         ++count;
         previousHeader = header;
       }
+      System.out.println("cumulativeGas - " + cumulativeGas);
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
     }

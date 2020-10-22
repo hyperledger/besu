@@ -87,32 +87,35 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
 
   // FIXME
   private final RollingFileWriter layerWriter;
+  private final Path dataPath;
 
   public BonsaiPersistdWorldState(
       final KeyValueStorage accountStorage,
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage) {
+      final KeyValueStorage trieLogStorage,
+      final Path dataPath) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
+    this.dataPath = dataPath;
     worldStateRootHash =
         Bytes32.wrap(
             trieBranchStorage.get(WORLD_ROOT_KEY).map(Bytes::wrap).orElse(Hash.EMPTY_TRIE_HASH));
     try {
-      layerWriter = new RollingFileWriter(BonsaiPersistdWorldState::bodyFileName, false);
+      layerWriter = (dataPath != null) ? null : new RollingFileWriter(this::bodyFileName, false);
     } catch (final FileNotFoundException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static Path bodyFileName(final int fileNumber, final boolean compressed) {
-    return Path.of(
-        "/tmp/goerli/bonsai",
-        String.format("besu-layer-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
+  public Path bodyFileName(final int fileNumber, final boolean compressed) {
+    return dataPath
+        .resolve("layer")
+        .resolve(String.format("besu-layer-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
   }
 
   @Override
@@ -294,7 +297,9 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         generateTrieLog().writeTo(rlpLog);
         // FIXME just round trip checking
         try {
-          layerWriter.writeBytes(rlpLog.encoded().toArrayUnsafe());
+          if (layerWriter != null) {
+            layerWriter.writeBytes(rlpLog.encoded().toArrayUnsafe());
+          }
           TrieLogLayer.readFrom(new BytesValueRLPInput(rlpLog.encoded(), false, true));
         } catch (final Exception e) {
           System.out.println(rlpLog.encoded());
@@ -566,7 +571,10 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                     .forEach(
                         (slotHash, value) ->
                             rollStorageChange(
-                                entry.getKey(), slotHash, value.getUpdated(), value.getOriginal())));
+                                entry.getKey(),
+                                slotHash,
+                                value.getUpdated(),
+                                value.getOriginal())));
   }
 
   private void rollAccountChange(
@@ -835,7 +843,8 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         // mark all updated storage as to be cleared
         final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
             storageToUpdate.computeIfAbsent(deletedAddress, k -> new HashMap<>());
-        final Iterator<Entry<Hash, BonsaiValue<UInt256>>> iter = deletedStorageUpdates.entrySet().iterator();
+        final Iterator<Entry<Hash, BonsaiValue<UInt256>>> iter =
+            deletedStorageUpdates.entrySet().iterator();
         while (iter.hasNext()) {
           final Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
           final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
@@ -859,7 +868,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           while (!entriesToDelete.isEmpty()) {
             entriesToDelete.forEach(
                 (slotBytes, v) -> {
-                  Hash slotHash = Hash.wrap(slotBytes);
+                  final Hash slotHash = Hash.wrap(slotBytes);
                   if (!deletedStorageUpdates.containsKey(slotHash)) {
                     final UInt256 value = UInt256.fromBytes(RLP.decodeOne(v));
                     deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null));
@@ -923,7 +932,8 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
           if (pendingValue == null) {
             pendingStorageUpdates.put(
-                slotHash, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
+                slotHash,
+                new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
           } else {
             pendingValue.setUpdated(value);
           }

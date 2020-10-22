@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,7 +36,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final BonsaiPersistdWorldState persistedState;
 
-  public BonsaiWorldStateArchive(final MutableWorldState fallback, final StorageProvider provider) {
+  public BonsaiWorldStateArchive(final MutableWorldState fallback, final StorageProvider provider, final Path dataDirectory) {
     // FIXME not for production
     persistedState =
         new BonsaiPersistdWorldState(
@@ -44,7 +45,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             provider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+            dataDirectory);
   }
 
   @Override
