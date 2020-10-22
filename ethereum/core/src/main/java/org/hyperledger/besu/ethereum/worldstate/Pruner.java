@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -90,7 +91,7 @@ public class Pruner {
   }
 
   public void start() {
-    execute(
+    executorService.execute(
         () -> {
           if (state.compareAndSet(State.IDLE, State.RUNNING)) {
             LOG.info("Starting Pruner.");
@@ -142,11 +143,9 @@ public class Pruner {
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
         markBlockNumber,
         stateRoot);
-    execute(
-        () -> {
-          pruningStrategy.mark(stateRoot);
-          pruningPhase.compareAndSet(PruningPhase.MARKING, PruningPhase.MARKING_COMPLETE);
-        });
+    handlePruningExceptions(pruningStrategy.mark(stateRoot))
+        .thenRun(
+            () -> pruningPhase.compareAndSet(PruningPhase.MARKING, PruningPhase.MARKING_COMPLETE));
   }
 
   private void sweep() {
@@ -154,29 +153,31 @@ public class Pruner {
         "Begin sweeping unused nodes for pruning. Keeping full state for blocks {} to {}",
         markBlockNumber,
         markBlockNumber + blocksRetained);
-    execute(
-        () -> {
-          pruningStrategy.sweepBefore(markBlockNumber);
-          pruningPhase.compareAndSet(PruningPhase.SWEEPING, PruningPhase.IDLE);
-        });
+    handlePruningExceptions(
+            CompletableFuture.runAsync(
+                () -> pruningStrategy.sweepBefore(markBlockNumber), executorService))
+        .thenRun(() -> pruningPhase.compareAndSet(PruningPhase.SWEEPING, PruningPhase.IDLE));
   }
 
-  private void execute(final Runnable action) {
-    try {
-      executorService.execute(action);
-    } catch (final MerkleTrieException mte) {
-      LOG.fatal(
-          "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
-          mte);
-      System.exit(1);
-    } catch (final Exception e) {
-      LOG.error(
-          "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
-          getPruningPhase(),
-          e.getMessage());
-      pruningStrategy.clearMarks();
-      pruningPhase.set(PruningPhase.IDLE);
-    }
+  private CompletableFuture<Void> handlePruningExceptions(
+      final CompletableFuture<Void> pruningFuture) {
+    return pruningFuture.exceptionally(
+        throwable -> {
+          if (throwable instanceof MerkleTrieException) {
+            LOG.fatal(
+                "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
+                throwable);
+            System.exit(1);
+          } else {
+            LOG.error(
+                "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
+                getPruningPhase(),
+                throwable.getMessage());
+            pruningStrategy.clearMarks();
+            pruningPhase.set(PruningPhase.IDLE);
+          }
+          return null;
+        });
   }
 
   PruningPhase getPruningPhase() {

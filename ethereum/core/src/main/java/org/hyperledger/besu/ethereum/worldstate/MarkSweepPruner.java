@@ -28,6 +28,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -151,7 +152,7 @@ public class MarkSweepPruner {
    * @param rootHash The root hash of the whole state trie. Roots of storage tries will be
    *     discovered though traversal.
    */
-  public void mark(final Hash rootHash) {
+  public CompletableFuture<Void> mark(final Hash rootHash) {
     markOperationCounter.inc();
     markStopwatch.start();
     final ExecutorService markingExecutorService =
@@ -167,7 +168,7 @@ public class MarkSweepPruner {
                 .setNameFormat(this.getClass().getSimpleName() + "-%d")
                 .build(),
             new ThreadPoolExecutor.CallerRunsPolicy());
-    createStateTrie(rootHash)
+    return createStateTrie(rootHash)
         .visitAll(
             node -> {
               markNode(node.getHash());
@@ -175,16 +176,18 @@ public class MarkSweepPruner {
                   .ifPresent(value -> processAccountState(value, markingExecutorService));
             },
             markingExecutorService)
-        .join() /* This will block on all the marking tasks to be _produced_ but doesn't guarantee that the marking tasks have been completed. */;
-    markingExecutorService.shutdown();
-    try {
-      // This ensures that the marking tasks complete.
-      markingExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      LOG.info("Interrupted while marking", e);
-    }
-    markStopwatch.stop();
-    LOG.debug("Completed marking used nodes for pruning");
+        .thenRun(
+            () -> {
+              markingExecutorService.shutdown();
+              try {
+                // This ensures that the marking tasks complete.
+                markingExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+              } catch (InterruptedException e) {
+                LOG.info("Interrupted while marking", e);
+              }
+              markStopwatch.stop();
+              LOG.debug("Completed marking used nodes for pruning");
+            });
   }
 
   public void sweepBefore(final long markedBlockNumber) {
