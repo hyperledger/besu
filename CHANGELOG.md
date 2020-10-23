@@ -1,11 +1,8 @@
 # Changelog
 
-## Deprecated and Scheduled for removal in _Next_ Release
+## Release format
 
-### --privacy-precompiled-address
-Deprecated in 1.5.1
-- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
-on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/) starting with the 20.10.0 (f.k.a. 1.6.0) release. More information about the specific version of CalVer Besu is using can be found on the [wiki](https://wiki.hyperledger.org/display/BESU/Proposal+-+CalVer+for+Besu+Releases). 
 
 ## 20.10 Breaking Changes
 
@@ -19,20 +16,11 @@ In Besu version 20.10, properly formatted requests that have valid parameters (c
 
 Users of Web3J should note that many calls will now return a result with the error field containing the message whereas before a call would throw an exception with the error message as the exception message.   
 
-## 20.10.0-RC2
+## 20.10.0 Additions and Improvements 
 
-### Additions and Improvements
 * Added support for ECIP-1099 / Classic Thanos Fork: Calibrate Epoch Duration. [\#1421](https://github.com/hyperledger/besu/pull/1421) [\#1441](https://github.com/hyperledger/besu/pull/1441) [\#1462](https://github.com/hyperledger/besu/pull/1462)
 * Added the Open Telemetry Java agent to report traces to a remote backend. Added an example to showcase the trace reporting capabilities.
 * Added EvmTool binary to the distribution.  EvmTool is a CLI that can execute EVM bytecode and execute ethereum state tests. [\#1465](https://github.com/hyperledger/besu/pull/1465)
-
-### Download Link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.0-RC2.zip
-sha256sum: c71a74714c0d6077fa1637ce4d7134ee94737bc8a62aa91959d149180ec9d925
-
-## 20.10.0-RC1
-
-### Additions and Improvements
 * Added support for the upcoming YOLOv2 ephemeral testnet and removed the flag for the deprecated YOLOv1 ephemeral testnet. [#1386](https://github.com/hyperledger/besu/pull/1386)
 * Added `debug_standardTraceBlockToFile` JSON-RPC API. This API accepts a block hash and will replay the block. It returns a list of files containing the result of the trace (one file per transaction). [\#1392](https://github.com/hyperledger/besu/pull/1392)
 * Added `debug_standardTraceBadBlockToFile` JSON-RPC API. This API is similar to `debug_standardTraceBlockToFile`, but can be used to obtain info about a block which has been rejected as invalid. [\#1403](https://github.com/hyperledger/besu/pull/1403)
@@ -40,10 +28,6 @@ sha256sum: c71a74714c0d6077fa1637ce4d7134ee94737bc8a62aa91959d149180ec9d925
 * Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#1399](https://github.com/hyperledger/besu/pull/1399)
 * Added support for multi-tenancy when using the early access feature of [onchain privacy group management](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/) 
 * \[Reverted\] Fixed memory leak in eth/65 subprotocol behavior. It is now enabled by default. [\#1420](https://github.com/hyperledger/besu/pull/1420), [#1348](https://github.com/hyperledger/besu/pull/1348), [#1321](https://github.com/hyperledger/besu/pull/1321)
-
-### Release format
-
-Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/) starting with the 20.10.0 (f.k.a. 1.6.0) release. More information about the specific version of CalVer Besu is using can be found on the [wiki](https://wiki.hyperledger.org/display/BESU/Proposal+-+CalVer+for+Besu+Releases). 
 
 ### Bug Fixes
 
@@ -57,11 +41,12 @@ Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
 
+## Deprecated and Scheduled for removal in _Next_ Release
 
-### Download link 
-
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.0-RC1.zip
-sha256sum: `ae8979e43a81a69d3dcf207b556275d94edbb67490747f0454269f87d38ee4fb`
+### --privacy-precompiled-address
+Deprecated in 1.5.1
+- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
+on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
 
 ## 1.5.5
 
