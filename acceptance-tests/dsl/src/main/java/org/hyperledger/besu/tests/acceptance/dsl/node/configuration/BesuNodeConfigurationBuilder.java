@@ -47,7 +47,7 @@ public class BesuNodeConfigurationBuilder {
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
-  private Optional<String> keyFilePath = Optional.empty();
+  private String keyFilePath = null;
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
@@ -212,7 +212,7 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder keyFilePath(final String keyFilePath) {
-    this.keyFilePath = Optional.of(keyFilePath);
+    this.keyFilePath = keyFilePath;
     return this;
   }
 
@@ -293,7 +293,7 @@ public class BesuNodeConfigurationBuilder {
         webSocketConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
-        keyFilePath,
+        Optional.ofNullable(keyFilePath),
         devMode,
         genesisConfigProvider,
         p2pEnabled,

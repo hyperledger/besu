@@ -47,6 +47,9 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:bls12-381'
+  implementation 'org.immutables:value-annotations'
+
+  annotationProcessor 'org.immutables:value'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 

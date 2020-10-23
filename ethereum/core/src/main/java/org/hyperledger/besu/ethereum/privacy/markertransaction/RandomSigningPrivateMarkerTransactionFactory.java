@@ -27,10 +27,10 @@ public class RandomSigningPrivateMarkerTransactionFactory extends PrivateMarkerT
 
   @Override
   public Transaction create(
-      final String transactionEnclaveKey,
+      final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final Address precompileAddress) {
     final KeyPair signingKey = KeyPair.generate();
-    return create(transactionEnclaveKey, privateTransaction, 0, signingKey, precompileAddress);
+    return create(privateTransactionLookupId, privateTransaction, 0, signingKey, precompileAddress);
   }
 }

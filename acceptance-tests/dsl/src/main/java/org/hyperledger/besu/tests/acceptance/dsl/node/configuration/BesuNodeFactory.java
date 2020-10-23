@@ -195,13 +195,15 @@ public class BesuNodeFactory {
       final String name,
       final String enclaveUrl,
       final String authFile,
-      final String privTransactionSigningKey)
+      final String privTransactionSigningKey,
+      final boolean enableOnChainPrivacy)
       throws IOException, URISyntaxException {
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     final PrivacyParameters privacyParameters =
         privacyParametersBuilder
             .setMultiTenancyEnabled(true)
             .setEnabled(true)
+            .setOnchainPrivacyGroupsEnabled(enableOnChainPrivacy)
             .setStorageProvider(new InMemoryPrivacyStorageProvider())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .setEnclaveUrl(URI.create(enclaveUrl))

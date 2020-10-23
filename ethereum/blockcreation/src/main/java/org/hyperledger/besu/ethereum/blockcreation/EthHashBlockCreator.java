@@ -31,7 +31,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -45,7 +44,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator {
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final Function<Long, Long> gasLimitCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final EthHashSolver nonceSolver,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,

@@ -89,7 +89,7 @@ public class DefaultPrivacyControllerTest {
       "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002";
   private static final PrivacyGroup PANTHEON_PRIVACY_GROUP =
       new PrivacyGroup("", PrivacyGroup.Type.PANTHEON, "", "", emptyList());
-  private static final PrivacyGroup ON_CHAIN_PRIVACY_GROUP =
+  private static final PrivacyGroup ONCHAIN_PRIVACY_GROUP =
       new PrivacyGroup("", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY));
 
   private PrivacyController privacyController;
@@ -185,14 +185,14 @@ public class DefaultPrivacyControllerTest {
   public void sendsValidLegacyTransaction() {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
-    final String enclaveKey =
+    final String privateTransactionLookupId =
         privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(privateTransactionLookupId, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -208,7 +208,7 @@ public class DefaultPrivacyControllerTest {
   public void sendValidBesuTransaction() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
-    final String enclaveKey =
+    final String privateTransactionLookupId =
         privacyController.sendTransaction(
             transaction, ENCLAVE_PUBLIC_KEY, Optional.of(PANTHEON_PRIVACY_GROUP));
 
@@ -216,7 +216,7 @@ public class DefaultPrivacyControllerTest {
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(privateTransactionLookupId, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -449,13 +449,13 @@ public class DefaultPrivacyControllerTest {
   public void canCreatePrivacyMarkerTransactionForOnChainPrivacy() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
 
-    final String enclaveKey =
+    final String privateTransactionLookupId =
         privacyController.sendTransaction(
-            transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ON_CHAIN_PRIVACY_GROUP));
+            transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ONCHAIN_PRIVACY_GROUP));
 
     final Transaction onChainPrivacyMarkerTransaction =
         privacyController.createPrivacyMarkerTransaction(
-            enclaveKey, transaction, Address.ONCHAIN_PRIVACY);
+            privateTransactionLookupId, transaction, Address.ONCHAIN_PRIVACY);
 
     assertThat(onChainPrivacyMarkerTransaction.contractAddress())
         .isEqualTo(PUBLIC_TRANSACTION.contractAddress());

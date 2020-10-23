@@ -20,28 +20,25 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.PrivxCreatePrivacyGroupResponse;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CreateOnChainPrivacyGroupTransaction
     implements Transaction<PrivxCreatePrivacyGroupResponse> {
   private final PrivacyNode creator;
   private final List<String> addresses;
+  private final String privateFrom;
 
-  public CreateOnChainPrivacyGroupTransaction(
-      final PrivacyNode creator, final PrivacyNode... nodes) {
+  CreateOnChainPrivacyGroupTransaction(
+      final PrivacyNode creator, final String privateFrom, final List<String> addresses) {
     this.creator = creator;
-    this.addresses =
-        Arrays.stream(nodes)
-            .map(n -> n.getOrion().getDefaultPublicKey())
-            .collect(Collectors.toList());
+    this.addresses = addresses;
+    this.privateFrom = privateFrom;
   }
 
   @Override
   public PrivxCreatePrivacyGroupResponse execute(final NodeRequests node) {
     try {
-      return node.privacy().privxCreatePrivacyGroup(creator, addresses);
+      return node.privacy().privxCreatePrivacyGroup(creator, privateFrom, addresses);
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

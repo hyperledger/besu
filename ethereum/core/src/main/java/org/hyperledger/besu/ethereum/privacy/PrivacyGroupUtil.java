@@ -28,6 +28,10 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyGroupUtil {
 
+  // Both Orion and Besu have code to generate the privacyGroupId for LEGACY AKA EEA groups.
+  // Functionality relies on them both generating the same value.
+  // Orion code is here:
+  // https://github.com/ConsenSys/orion/blob/05759341ec1a216e6837df91e421207c8294ad2a/src/main/java/net/consensys/orion/enclave/sodium/SodiumEnclave.java
   public static Bytes32 calculateEeaPrivacyGroupId(
       final Bytes privateFrom, final List<Bytes> privateFor) {
     final List<Bytes> privacyGroupIds = new ArrayList<>();

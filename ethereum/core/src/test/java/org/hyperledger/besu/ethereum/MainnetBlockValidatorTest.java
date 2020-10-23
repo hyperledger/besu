@@ -237,4 +237,22 @@ public class MainnetBlockValidatorTest {
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
   }
+
+  @Test
+  public void shouldReturnBadBlockBasedOnTheHash() {
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
+    when(blockHeaderValidator.validateHeader(
+            any(BlockHeader.class),
+            any(BlockHeader.class),
+            eq(protocolContext),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
+        .thenReturn(false);
+    mainnetBlockValidator.validateAndProcessBlock(
+        protocolContext,
+        badBlock,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY);
+    assertThat(badBlockManager.getBadBlock(badBlock.getHash())).containsSame(badBlock);
+  }
 }

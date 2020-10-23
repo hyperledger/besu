@@ -33,7 +33,6 @@ public class EIP1559Test {
   private static final long FORK_BLOCK = 783L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
   private final FeeMarket feeMarket = FeeMarket.eip1559();
-  private static final long MAX_GAS = 20000000L;
   private static final long TARGET_GAS_USED = 10000000L;
 
   @Before
@@ -50,7 +49,10 @@ public class EIP1559Test {
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                feeMarket.getInitialBasefee(), TARGET_GAS_USED - 1000000L, TARGET_GAS_USED))
+                FORK_BLOCK,
+                feeMarket.getInitialBasefee(),
+                TARGET_GAS_USED - 1000000L,
+                TARGET_GAS_USED))
         .isLessThan(feeMarket.getInitialBasefee())
         .isEqualTo(987500000L);
   }
@@ -59,53 +61,12 @@ public class EIP1559Test {
   public void assertThatBaseFeeIncreasesWhenAboveTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                feeMarket.getInitialBasefee(), TARGET_GAS_USED + 1000000L, TARGET_GAS_USED))
+                FORK_BLOCK,
+                feeMarket.getInitialBasefee(),
+                TARGET_GAS_USED + 1000000L,
+                TARGET_GAS_USED))
         .isGreaterThan(feeMarket.getInitialBasefee())
         .isEqualTo(1012500000L);
-  }
-
-  @Test
-  public void assertThatBaseFeeDoesNotChangeWhenAtTargetGasUsed() {
-    assertThat(
-            eip1559.computeBaseFee(feeMarket.getInitialBasefee(), TARGET_GAS_USED, TARGET_GAS_USED))
-        .isEqualTo(feeMarket.getInitialBasefee());
-  }
-
-  @Test
-  public void isValidBaseFee() {
-    assertThat(eip1559.isValidBaseFee(feeMarket.getInitialBasefee(), 1012500000L)).isTrue();
-  }
-
-  @Test
-  public void isNotValidBaseFee() {
-    assertThat(
-            eip1559.isValidBaseFee(
-                feeMarket.getInitialBasefee(), feeMarket.getInitialBasefee() * 15L / 10L))
-        .isFalse();
-  }
-
-  @Test
-  public void eip1559GasPool() {
-    // LEGACY_GAS_LIMIT: BLOCK_GAS_TARGET - EIP1559_GAS_TARGET. The maximum amount of gas legacy
-    // transactions can use in a given block.
-    // EIP1559_GAS_LIMIT: EIP1559_GAS_TARGET * 2. The maximum amount of gas EIP-1559 transactions
-    // can use in a given block.
-    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(20000024L);
-    assertThat(
-            eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)
-                + eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo((MAX_GAS - 20000024L / 2) + 20000024L);
-  }
-
-  @Test
-  public void legacyGasPool() {
-    // LEGACY_GAS_LIMIT: BLOCK_GAS_TARGET - EIP1559_GAS_TARGET. The maximum amount of gas legacy
-    // transactions can use in a given block.
-    assertThat(eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS)).isEqualTo(9999988L);
-    assertThat(
-            eip1559.eip1559GasPool(FORK_BLOCK + 1, MAX_GAS)
-                + eip1559.legacyGasPool(FORK_BLOCK + 1, MAX_GAS))
-        .isEqualTo(9999988L + (MAX_GAS - 9999988L) * 2);
   }
 
   @Test
@@ -116,19 +77,6 @@ public class EIP1559Test {
   @Test
   public void givenBlockABeforeFork_whenIsEIP1559_returnsFalse() {
     assertThat(eip1559.isEIP1559(FORK_BLOCK - 1)).isFalse();
-  }
-
-  @Test
-  public void givenBlockAfterEIPFinalized_whenIsEIP1559Finalized_returnsTrue() {
-    assertThat(eip1559.isEIP1559Finalized(FORK_BLOCK + feeMarket.getMigrationDurationInBlocks()))
-        .isTrue();
-  }
-
-  @Test
-  public void givenBlockBeforeEIPFinalized_whenIsEIP1559Finalized_returnsFalse() {
-    assertThat(
-            eip1559.isEIP1559Finalized(FORK_BLOCK + feeMarket.getMigrationDurationInBlocks() - 1))
-        .isFalse();
   }
 
   @Test

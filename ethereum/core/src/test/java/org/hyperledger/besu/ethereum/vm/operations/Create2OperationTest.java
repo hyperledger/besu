@@ -21,12 +21,12 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
@@ -54,7 +54,7 @@ public class Create2OperationTest {
   private final int expectedGas;
   private MessageFrame messageFrame;
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
-  private final DefaultEvmAccount account = mock(DefaultEvmAccount.class);
+  private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final Create2Operation operation =
       new Create2Operation(new ConstantinopleGasCalculator());

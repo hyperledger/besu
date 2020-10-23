@@ -20,14 +20,14 @@ public interface FeeMarket {
 
   long getBasefeeMaxChangeDenominator();
 
-  long getMigrationDurationInBlocks();
-
   long getInitialBasefee();
+
+  long getSlackCoefficient();
 
   static FeeMarket eip1559() {
     return new FeeMarketConfig(
         ExperimentalEIPs.basefeeMaxChangeDenominator,
-        ExperimentalEIPs.migrationDurationInBlocks,
-        ExperimentalEIPs.initialBasefee);
+        ExperimentalEIPs.initialBasefee,
+        ExperimentalEIPs.slackCoefficient);
   }
 }

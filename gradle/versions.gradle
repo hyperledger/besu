@@ -49,6 +49,8 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.7'
 
+    dependency group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', version: '0.8.0', classifier: 'all'
+
     dependency 'io.prometheus:simpleclient:0.9.0'
     dependency 'io.prometheus:simpleclient_common:0.9.0'
     dependency 'io.prometheus:simpleclient_hotspot:0.9.0'

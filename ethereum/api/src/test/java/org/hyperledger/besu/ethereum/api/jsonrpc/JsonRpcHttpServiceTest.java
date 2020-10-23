@@ -1473,7 +1473,7 @@ public class JsonRpcHttpServiceTest {
             JSON, "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"bla\"}");
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_FOUND;
       testHelper.assertValidJsonRpcError(
@@ -1499,7 +1499,7 @@ public class JsonRpcHttpServiceTest {
     when(rpcMethods.containsKey(any(String.class))).thenReturn(false);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_ENABLED;
       testHelper.assertValidJsonRpcError(
@@ -1543,7 +1543,7 @@ public class JsonRpcHttpServiceTest {
                 + "{\"jsonrpc\":\"2.0\",\"id\":\"222\",\"method\":\"net_version\"}]");
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(500);
+      assertThat(resp.code()).isEqualTo(400);
     }
   }
 

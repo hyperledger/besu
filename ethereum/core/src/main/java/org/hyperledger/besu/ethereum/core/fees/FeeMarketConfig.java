@@ -16,14 +16,16 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 public class FeeMarketConfig implements FeeMarket {
   private final long basefeeMaxChangeDenominator;
-  private final long decayRange;
   private final long initialBasefee;
+  private final long slackCoefficient;
 
   public FeeMarketConfig(
-      final long basefeeMaxChangeDenominator, final long decayRange, final long initialBasefee) {
+      final long basefeeMaxChangeDenominator,
+      final long initialBasefee,
+      final long slackCoefficient) {
     this.basefeeMaxChangeDenominator = basefeeMaxChangeDenominator;
-    this.decayRange = decayRange;
     this.initialBasefee = initialBasefee;
+    this.slackCoefficient = slackCoefficient;
   }
 
   @Override
@@ -32,12 +34,12 @@ public class FeeMarketConfig implements FeeMarket {
   }
 
   @Override
-  public long getMigrationDurationInBlocks() {
-    return decayRange;
+  public long getInitialBasefee() {
+    return initialBasefee;
   }
 
   @Override
-  public long getInitialBasefee() {
-    return initialBasefee;
+  public long getSlackCoefficient() {
+    return slackCoefficient;
   }
 }

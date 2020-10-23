@@ -38,8 +38,8 @@ import com.google.common.base.Suppliers;
 
 public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
 
+  protected final Supplier<BlockchainQueries> blockchainQueries;
   private final Supplier<TransactionTracer> transactionTracerSupplier;
-  private final Supplier<BlockchainQueries> blockchainQueries;
   private final Path dataDir;
 
   public DebugStandardTraceBlockToFile(
@@ -77,7 +77,7 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
                 requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND));
   }
 
-  private List<String> traceBlock(
+  protected List<String> traceBlock(
       final Block block, final Optional<TransactionTraceParams> transactionTraceParams) {
     return transactionTracerSupplier
         .get()

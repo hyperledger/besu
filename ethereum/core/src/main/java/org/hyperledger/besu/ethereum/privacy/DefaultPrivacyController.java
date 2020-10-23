@@ -164,17 +164,17 @@ public class DefaultPrivacyController implements PrivacyController {
 
   @Override
   public Transaction createPrivacyMarkerTransaction(
-      final String transactionEnclaveKey, final PrivateTransaction privateTransaction) {
-    return privateMarkerTransactionFactory.create(transactionEnclaveKey, privateTransaction);
+      final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
+    return privateMarkerTransactionFactory.create(privateTransactionLookupId, privateTransaction);
   }
 
   @Override
   public Transaction createPrivacyMarkerTransaction(
-      final String transactionEnclaveKey,
+      final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {
     return privateMarkerTransactionFactory.create(
-        transactionEnclaveKey, privateTransaction, privacyPrecompileAddress);
+        privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
   }
 
   @Override

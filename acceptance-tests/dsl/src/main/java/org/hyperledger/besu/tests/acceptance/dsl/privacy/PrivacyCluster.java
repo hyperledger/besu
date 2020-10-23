@@ -48,6 +48,15 @@ public class PrivacyCluster {
   }
 
   public void start(final List<PrivacyNode> nodes) {
+    startNodes(nodes);
+    awaitPeerCount(nodes);
+  }
+
+  public void startNodes(final PrivacyNode... nodes) {
+    startNodes(Arrays.asList(nodes));
+  }
+
+  public void startNodes(final List<PrivacyNode> nodes) {
     if (nodes.isEmpty()) {
       throw new IllegalArgumentException("Can't start a cluster with no nodes");
     }
@@ -59,7 +68,13 @@ public class PrivacyCluster {
     nodes.stream()
         .filter(node -> bootNode.map(boot -> boot != node).orElse(true))
         .forEach(this::startNode);
+  }
 
+  public void awaitPeerCount(final PrivacyNode... nodes) {
+    awaitPeerCount(Arrays.asList(nodes));
+  }
+
+  public void awaitPeerCount(final List<PrivacyNode> nodes) {
     for (final PrivacyNode node : nodes) {
       LOG.info("Awaiting peer discovery for node {}", node.getName());
       node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));

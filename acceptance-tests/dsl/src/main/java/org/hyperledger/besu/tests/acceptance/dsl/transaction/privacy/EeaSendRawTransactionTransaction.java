@@ -36,6 +36,9 @@ public class EeaSendRawTransactionTransaction implements Transaction<Hash> {
       final PrivacyRequestFactory.SendRawTransactionResponse result =
           node.privacy().eeaSendRawTransaction(transaction).send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);

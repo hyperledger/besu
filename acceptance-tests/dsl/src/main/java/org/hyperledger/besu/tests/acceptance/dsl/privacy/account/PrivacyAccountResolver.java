@@ -37,6 +37,20 @@ public class PrivacyAccountResolver {
           resolveResource("orion_key_2.pub"),
           resolveResource("orion_key_2.key"));
 
+  public static final PrivacyAccount MULTI_TENANCY =
+      PrivacyAccount.create(
+          resolveResource("key"),
+          new URL[] {
+            resolveResource("orion_key_0.pub"),
+            resolveResource("orion_key_1.pub"),
+            resolveResource("orion_key_2.pub")
+          },
+          new URL[] {
+            resolveResource("orion_key_0.key"),
+            resolveResource("orion_key_1.key"),
+            resolveResource("orion_key_2.key")
+          });
+
   private static URL resolveResource(final String resource) {
     return PrivacyAccountResolver.class.getClassLoader().getResource(resource);
   }

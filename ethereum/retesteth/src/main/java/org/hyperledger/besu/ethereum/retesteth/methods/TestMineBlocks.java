@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashBlockCreator;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -28,8 +29,6 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
-
-import com.google.common.base.Functions;
 
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
@@ -68,7 +67,7 @@ public class TestMineBlocks implements JsonRpcMethod {
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
             protocolSchedule,
-            Functions.identity(),
+            GasLimitCalculator.constant(),
             context.getEthHashSolver(),
             Wei.ZERO,
             0.0,

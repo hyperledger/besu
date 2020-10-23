@@ -199,6 +199,9 @@ public class StateTestSubCommand implements Runnable {
           "pass",
           worldState.rootHash().equals(spec.getExpectedRootHash())
               && actualLogsHash.equals(spec.getExpectedLogsHash()));
+      if (result.isInvalid()) {
+        summaryLine.put("validationError", result.getValidationResult().getErrorMessage());
+      }
 
       System.out.println(summaryLine);
     }

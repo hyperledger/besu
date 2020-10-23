@@ -134,7 +134,8 @@ public class JsonRpcHttpServiceRpcApisTest {
   }
 
   @Test
-  public void requestWithNetMethodShouldFailWhenNetApiIsNotEnabled() throws Exception {
+  public void requestWithNetMethodShouldSuccessWithCode200WhenNetApiIsNotEnabled()
+      throws Exception {
     service = createJsonRpcHttpServiceWithRpcApis(RpcApis.WEB3);
     final String id = "123";
     final RequestBody body =
@@ -143,7 +144,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_ENABLED;

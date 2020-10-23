@@ -58,6 +58,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -319,6 +322,48 @@ public class RlpxAgentTest {
       assertThat(incomingConnection.getDisconnectReason())
           .contains(DisconnectReason.TOO_MANY_PEERS);
     }
+  }
+
+  @Test
+  public void incomingConnection_succeedsEventuallyWithRandomPeerPrioritization() {
+    // Saturate connections with one local and one remote
+    final int maxPeers = 25;
+    startAgentWithMaxPeers(
+        maxPeers,
+        builder -> builder.randomPeerPriority(true),
+        rlpxConfiguration -> rlpxConfiguration.setLimitRemoteWireConnectionsEnabled(false));
+    agent.connect(createPeer());
+    for (int i = 0; i < 24; i++) {
+      connectionInitializer.simulateIncomingConnection(connection(createPeer()));
+    }
+    // Sanity check
+    assertThat(agent.getConnectionCount()).isEqualTo(maxPeers);
+
+    boolean newConnectionDisconnected = false;
+    boolean oldConnectionDisconnected = false;
+    // With very high probability we should see the connections churn
+    for (int i = 0; i < 1000 && !(newConnectionDisconnected && oldConnectionDisconnected); ++i) {
+      final List<PeerConnection> connectionsBefore =
+          agent.streamConnections().collect(Collectors.toUnmodifiableList());
+
+      // Simulate incoming connection
+      final Peer newPeer = createPeer();
+      final MockPeerConnection incomingConnection = connection(newPeer);
+      connectionInitializer.simulateIncomingConnection(incomingConnection);
+
+      final List<PeerConnection> connectionsAfter =
+          agent.streamConnections().collect(Collectors.toUnmodifiableList());
+
+      if (connectionsBefore.equals(connectionsAfter)) {
+        newConnectionDisconnected = true;
+      } else if (!connectionsBefore.equals(connectionsAfter)) {
+        oldConnectionDisconnected = true;
+      }
+
+      assertThat(agent.getConnectionCount()).isEqualTo(maxPeers);
+    }
+    assertThat(newConnectionDisconnected).isTrue();
+    assertThat(oldConnectionDisconnected).isTrue();
   }
 
   @Test
@@ -959,8 +1004,15 @@ public class RlpxAgentTest {
   }
 
   private void startAgentWithMaxPeers(final int maxPeers) {
+    startAgentWithMaxPeers(maxPeers, Function.identity(), __ -> {});
+  }
+
+  private void startAgentWithMaxPeers(
+      final int maxPeers,
+      final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization,
+      final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
     config.setMaxPeers(maxPeers);
-    agent = agent();
+    agent = agent(buildCustomization, rlpxConfigurationModifier);
     startAgent();
   }
 
@@ -970,16 +1022,25 @@ public class RlpxAgentTest {
   }
 
   private RlpxAgent agent() {
+    return agent(Function.identity(), __ -> {});
+  }
+
+  private RlpxAgent agent(
+      final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization,
+      final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
     config.setLimitRemoteWireConnectionsEnabled(true);
-    return RlpxAgent.builder()
-        .nodeKey(NodeKeyUtils.createFrom(KEY_PAIR))
-        .config(config)
-        .peerPermissions(peerPermissions)
-        .peerPrivileges(peerPrivileges)
-        .localNode(localNode)
-        .metricsSystem(metrics)
-        .connectionInitializer(connectionInitializer)
-        .connectionEvents(peerConnectionEvents)
+    rlpxConfigurationModifier.accept(config);
+    return buildCustomization
+        .apply(
+            RlpxAgent.builder()
+                .nodeKey(NodeKeyUtils.createFrom(KEY_PAIR))
+                .config(config)
+                .peerPermissions(peerPermissions)
+                .peerPrivileges(peerPrivileges)
+                .localNode(localNode)
+                .metricsSystem(metrics)
+                .connectionInitializer(connectionInitializer)
+                .connectionEvents(peerConnectionEvents))
         .build();
   }
 
