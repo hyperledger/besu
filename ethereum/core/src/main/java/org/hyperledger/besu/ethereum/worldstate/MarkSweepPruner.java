@@ -51,7 +51,7 @@ public class MarkSweepPruner {
   private static final Logger LOG = LogManager.getLogger();
   private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
 
-  private static final int DEFAULT_OPS_PER_TRANSACTION = 50_000;
+  private static final int DEFAULT_OPS_PER_TRANSACTION = 10_000;
   private static final int MAX_MARKING_THREAD_POOL_SIZE = 2;
 
   private final int operationsPerTransaction;
