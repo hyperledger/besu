@@ -144,7 +144,7 @@ public class MarkSweepPruner {
    *
    * <p>To get the best of both worlds, the marking executor has a {@link
    * ThreadPoolExecutor.CallerRunsPolicy} which causes the producing tasks to essentially consume
-   * their own mark task immediately when the thread pool is full. The resulting behavior is threads
+   * their own mark task immediately when the task queue is full. The resulting behavior is threads
    * that mark their own sub-trie until they finish that sub-trie, at which point they switch to
    * marking the sub-trie tasks produced by another thread.
    *
