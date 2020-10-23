@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.chainimport;
 
-import static org.apache.logging.log4j.LogManager.getFormatterLogger;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -30,17 +31,36 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Tool for importing rlp-encoded block data from files. */
-public class RlpBlockImporter {
-  private static final Logger LOG = getFormatterLogger();
+public class RlpBlockImporter implements Closeable {
+  private static final Logger LOG = LogManager.getFormatterLogger();
+
+  private final Semaphore blockBacklog = new Semaphore(2);
+
+  private final ExecutorService validationExecutor = Executors.newCachedThreadPool();
+  private final ExecutorService importExecutor = Executors.newSingleThreadExecutor();
+
+  private long cumulativeGas;
+  private long segmentGas;
+  private final Stopwatch cumulativeTimer = Stopwatch.createUnstarted();
+  private final Stopwatch segmentTimer = Stopwatch.createUnstarted();
+  private static final long SEGMENT_SIZE = 1000;
 
   /**
    * Imports blocks that are stored as concatenated RLP sections in the given file into Besu's block
@@ -69,6 +89,7 @@ public class RlpBlockImporter {
     final ProtocolContext context = besuController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     int count = 0;
+
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
             blocks,
@@ -76,30 +97,15 @@ public class RlpBlockImporter {
                 BlockHeader.readFrom(
                     rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       BlockHeader previousHeader = null;
-      long cumulativeGas = 0;
-      long segmentGas = 0;
-      Stopwatch timer = Stopwatch.createStarted();
-      Stopwatch segmentTimer = Stopwatch.createStarted();
+      CompletableFuture<Void> previousBlockFuture = null;
       while (iterator.hasNext()) {
         final Block block = iterator.next();
         final BlockHeader header = block.getHeader();
-        cumulativeGas = Math.addExact(cumulativeGas, header.getGasUsed());
-        segmentGas = Math.addExact(segmentGas, header.getGasUsed());
         final long blockNumber = header.getNumber();
         if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
             || blockNumber < startBlock
             || blockNumber >= endBlock) {
           continue;
-        }
-        if (blockNumber % 1000 == 0) {
-          LOG.info(
-              "Import at block %d mGas/sec %.3f segment / %.3f cumulative",
-              blockNumber,
-              segmentGas / (double) segmentTimer.elapsed(TimeUnit.MICROSECONDS),
-              cumulativeGas / (double) timer.elapsed(TimeUnit.MICROSECONDS));
-          segmentTimer.reset();
-          segmentTimer.start();
-          segmentGas = 0;
         }
         if (blockchain.contains(header.getHash())) {
           continue;
@@ -107,24 +113,55 @@ public class RlpBlockImporter {
         if (previousHeader == null) {
           previousHeader = lookupPreviousHeader(blockchain, header);
         }
-        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
         final BlockHeader lastHeader = previousHeader;
 
-        validateBlock(protocolSpec, context, lastHeader, header, skipPowValidation);
+        final CompletableFuture<Void> validationFuture =
+            CompletableFuture.runAsync(
+                () -> validateBlock(protocolSpec, context, lastHeader, header, skipPowValidation),
+                validationExecutor);
 
-        evaluateBlock(context, block, header, protocolSpec, skipPowValidation);
+        final CompletableFuture<Void> extractingFuture =
+            CompletableFuture.runAsync(() -> extractSignatures(block));
+
+        final CompletableFuture<Void> calculationFutures;
+        if (previousBlockFuture == null) {
+          calculationFutures = extractingFuture;
+        } else {
+          calculationFutures = CompletableFuture.allOf(extractingFuture, previousBlockFuture);
+        }
+
+        try {
+          blockBacklog.acquire();
+        } catch (final InterruptedException e) {
+          LOG.error("Interrupted adding to backlog.", e);
+          break;
+        }
+        previousBlockFuture =
+            validationFuture.runAfterBothAsync(
+                calculationFutures,
+                () -> evaluateBlock(context, block, header, protocolSpec, skipPowValidation),
+                importExecutor);
 
         ++count;
         previousHeader = header;
       }
-      timer.stop();
-      System.out.printf(
-          "cumulativeGas - %d import Duration %s mGas/Sec %.3f%n",
-          cumulativeGas,
-          timer.elapsed().toString(),
-          cumulativeGas / (double) timer.elapsed(TimeUnit.MICROSECONDS));
+      if (previousBlockFuture != null) {
+        previousBlockFuture.join();
+      }
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
+    }
+  }
+
+  private void extractSignatures(final Block block) {
+    final List<CompletableFuture<Void>> futures =
+        new ArrayList<>(block.getBody().getTransactions().size());
+    for (final Transaction tx : block.getBody().getTransactions()) {
+      futures.add(CompletableFuture.runAsync(tx::getSender, validationExecutor));
+    }
+    for (final CompletableFuture<Void> future : futures) {
+      future.join();
     }
   }
 
@@ -144,7 +181,6 @@ public class RlpBlockImporter {
                 ? HeaderValidationMode.LIGHT_DETACHED_ONLY
                 : HeaderValidationMode.DETACHED_ONLY);
     if (!validHeader) {
-      LOG.error("Invalid block at block number %d.", header.getNumber());
       throw new IllegalStateException("Invalid header at block number " + header.getNumber() + ".");
     }
   }
@@ -155,18 +191,37 @@ public class RlpBlockImporter {
       final BlockHeader header,
       final ProtocolSpec protocolSpec,
       final boolean skipPowValidation) {
-    final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-    final boolean blockImported =
-        blockImporter.importBlock(
-            context,
-            block,
-            skipPowValidation
-                ? HeaderValidationMode.LIGHT_SKIP_DETACHED
-                : HeaderValidationMode.SKIP_DETACHED,
-            skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
-    if (!blockImported) {
-      LOG.error("Invalid block at block number %d.", header.getNumber());
-      throw new IllegalStateException("Invalid block at block number " + header.getNumber() + ".");
+    try {
+      cumulativeTimer.start();
+      segmentTimer.start();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+      final boolean blockImported =
+          blockImporter.importBlock(
+              context,
+              block,
+              HeaderValidationMode.NONE,
+              skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
+      if (!blockImported) {
+        throw new IllegalStateException(
+            "Invalid block at block number " + header.getNumber() + ".");
+      }
+    } finally {
+      blockBacklog.release();
+      cumulativeTimer.stop();
+      segmentTimer.stop();
+      final long thisGas = block.getHeader().getGasUsed();
+      cumulativeGas += thisGas;
+      segmentGas += thisGas;
+      if (header.getNumber() % SEGMENT_SIZE == 0) {
+        //noinspection PlaceholderCountMatchesArgumentCount
+        LOG.info(
+            "Import at block %d Mgas/s %.3f segment %.3f cumulative",
+            header.getNumber(),
+            segmentGas / (double) segmentTimer.elapsed(TimeUnit.MICROSECONDS),
+            cumulativeGas / (double) cumulativeTimer.elapsed(TimeUnit.MICROSECONDS));
+        segmentGas = 0;
+        segmentTimer.reset();
+      }
     }
   }
 
@@ -180,6 +235,23 @@ public class RlpBlockImporter {
                     String.format(
                         "Block %s does not connect to the existing chain. Current chain head %s",
                         header.getNumber(), blockchain.getChainHeadBlockNumber())));
+  }
+
+  @Override
+  public void close() {
+    validationExecutor.shutdownNow();
+    try {
+      validationExecutor.awaitTermination(5, SECONDS);
+    } catch (final Exception e) {
+      LOG.error("Error shutting down validatorExecutor.", e);
+    }
+
+    importExecutor.shutdownNow();
+    try {
+      importExecutor.awaitTermination(5, SECONDS);
+    } catch (final Exception e) {
+      LOG.error("Error shutting down importExecutor", e);
+    }
   }
 
   public static final class ImportResult {

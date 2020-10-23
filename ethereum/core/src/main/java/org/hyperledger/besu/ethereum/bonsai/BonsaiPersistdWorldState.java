@@ -50,7 +50,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -634,16 +633,19 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   }
 
   private BonsaiValue<BonsaiAccount> loadAccountFromStorage(
-      final Address address, BonsaiValue<BonsaiAccount> accountValue) {
+      final Address address, final BonsaiValue<BonsaiAccount> accountValue) {
     final Optional<byte[]> bytes = accountStorage.get(address.toArrayUnsafe());
     if (bytes.isPresent()) {
       final BonsaiAccount account =
           BonsaiAccount.fromRLP(
               BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes.get()), true);
-      accountValue = new BonsaiValue<>(new BonsaiAccount(account), account);
-      accountsToUpdate.put(address, accountValue);
+      final BonsaiValue<BonsaiAccount> loadedAccountValue =
+          new BonsaiValue<>(new BonsaiAccount(account), account);
+      accountsToUpdate.put(address, loadedAccountValue);
+      return loadedAccountValue;
+    } else {
+      return accountValue;
     }
-    return accountValue;
   }
 
   private void rollCodeChange(
@@ -843,10 +845,10 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         // mark all updated storage as to be cleared
         final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
             storageToUpdate.computeIfAbsent(deletedAddress, k -> new HashMap<>());
-        final Iterator<Entry<Hash, BonsaiValue<UInt256>>> iter =
+        final Iterator<Map.Entry<Hash, BonsaiValue<UInt256>>> iter =
             deletedStorageUpdates.entrySet().iterator();
         while (iter.hasNext()) {
-          final Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
+          final Map.Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
           final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
           if (updatedSlot.getOriginal() == null || updatedSlot.getOriginal().isZero()) {
             iter.remove();
