@@ -17,39 +17,34 @@ package org.hyperledger.errorpronechecks;
 
 import picocli.CommandLine;
 
-import java.util.Objects;
-
 public class ExperimentalCliOptionMustBeCorrectlyDisplayedNegativeCases {
 
   @CommandLine.Option(
-          hidden = true,
-          names = {"--Xexperimental"})
+      hidden = true,
+      names = {"--Xexperimental"})
   private String experimental = "";
 
   @CommandLine.Option(
-          hidden = false,
-          names = {"--notExperimental"})
+      hidden = false,
+      names = {"--notExperimental"})
   private String notExperimental = "";
 
-  @CommandLine.Option(
-          names = {"--notExperimental2"})
+  @CommandLine.Option(names = {"--notExperimental2"})
   private String notExperimental2 = "";
 
   private class AnotherClass {
-    @CommandLine.Option(
-            names = {"--notExperimentalInAnotherClass"})
+    @CommandLine.Option(names = {"--notExperimentalInAnotherClass"})
     private String notExperimentalInAnotherClass = "";
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--XexperimentalInAnotherClass"})
+        hidden = true,
+        names = {"--XexperimentalInAnotherClass"})
     private String experimentalInAnotherClass = "";
   }
 
   private class BesuCommand {
 
-    @CommandLine.Option(
-            names = {"--notExperimentalInBesuCommandClass"})
+    @CommandLine.Option(names = {"--notExperimentalInBesuCommandClass"})
     private String notExperimentalInBesuCommandClass = "";
   }
 }
