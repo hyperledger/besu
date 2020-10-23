@@ -150,8 +150,6 @@ public class MarkSweepPruner {
    *
    * @param rootHash The root hash of the whole state trie. Roots of storage tries will be
    *     discovered though traversal.
-   * @return A CompletableFuture that completes when all the nodes reachable from the rootHash node
-   *     have been marked
    */
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
