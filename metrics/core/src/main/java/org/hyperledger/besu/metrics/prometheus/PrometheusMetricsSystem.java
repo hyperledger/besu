@@ -14,13 +14,11 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -51,6 +49,9 @@ import io.prometheus.client.hotspot.ThreadExports;
 
 public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
+  private static final String PROMETHEUS_PROTOCOL = "prometheus";
+  private static final String OPENTELEMETRY_PROTOCOL = "opentelemetry";
+
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
   private final Map<String, LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Counter>>
@@ -71,25 +72,38 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     if (!metricsConfiguration.isEnabled() && !metricsConfiguration.isPushEnabled()) {
       return new NoOpMetricsSystem();
     }
-    final PrometheusMetricsSystem metricsSystem =
-        new PrometheusMetricsSystem(
-            metricsConfiguration.getMetricCategories(), metricsConfiguration.isTimersEnabled());
-    if (metricsSystem.isCategoryEnabled(StandardMetricCategory.PROCESS)) {
-      metricsSystem.collectors.put(
-          StandardMetricCategory.PROCESS,
-          singleton(new StandardExports().register(metricsSystem.registry)));
+    if (PROMETHEUS_PROTOCOL.equals(metricsConfiguration.getProtocol())) {
+      final PrometheusMetricsSystem metricsSystem =
+          new PrometheusMetricsSystem(
+              metricsConfiguration.getMetricCategories(), metricsConfiguration.isTimersEnabled());
+      metricsSystem.initDefaults();
+      return metricsSystem;
+    } else if (OPENTELEMETRY_PROTOCOL.equals(metricsConfiguration.getProtocol())) {
+      final OpenTelemetrySystem metricsSystem =
+          new OpenTelemetrySystem(
+              metricsConfiguration.getMetricCategories(),
+              metricsConfiguration.isTimersEnabled(),
+              metricsConfiguration.getInstrumentationName());
+      metricsSystem.initDefaults();
+      return metricsSystem;
+    } else {
+      throw new IllegalArgumentException(
+          "Invalid metrics protocol " + metricsConfiguration.getProtocol());
     }
-    if (metricsSystem.isCategoryEnabled(StandardMetricCategory.JVM)) {
-      metricsSystem.collectors.put(
-          StandardMetricCategory.JVM,
-          asList(
-              new MemoryPoolsExports().register(metricsSystem.registry),
-              new BufferPoolsExports().register(metricsSystem.registry),
-              new GarbageCollectorExports().register(metricsSystem.registry),
-              new ThreadExports().register(metricsSystem.registry),
-              new ClassLoadingExports().register(metricsSystem.registry)));
-    }
-    return metricsSystem;
+  }
+
+  private void initDefaults() {
+    addCollector(StandardMetricCategory.PROCESS, new StandardExports());
+    addCollector(StandardMetricCategory.JVM, new MemoryPoolsExports());
+    addCollector(StandardMetricCategory.JVM, new BufferPoolsExports());
+    addCollector(StandardMetricCategory.JVM, new GarbageCollectorExports());
+    addCollector(StandardMetricCategory.JVM, new ThreadExports());
+    addCollector(StandardMetricCategory.JVM, new ClassLoadingExports());
+  }
+
+  @Override
+  public Set<MetricCategory> getEnabledCategories() {
+    return enabledCategories;
   }
 
   @Override
@@ -154,11 +168,6 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     }
   }
 
-  private boolean isCategoryEnabled(final MetricCategory category) {
-    return enabledCategories.stream()
-        .anyMatch(metricCategory -> metricCategory.getName().equals(category.getName()));
-  }
-
   public void addCollector(final MetricCategory category, final Collector metric) {
     if (isCategoryEnabled(category)) {
       addCollectorUnchecked(category, metric);
@@ -182,6 +191,11 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   @Override
   public Stream<Observation> streamObservations() {
     return collectors.keySet().stream().flatMap(this::streamObservations);
+  }
+
+  @Override
+  public void close() {
+    // no-op
   }
 
   private Stream<Observation> convertSamplesToObservations(

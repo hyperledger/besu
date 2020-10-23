@@ -30,12 +30,15 @@ import com.google.common.base.MoreObjects;
 public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PORT = 9545;
-
+  private static final String DEFAULT_INSTRUMENTATION_NAME = "besu";
+  private static final String DEFAULT_METRICS_PROTOCOL = "prometheus";
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
   public static final Boolean DEFAULT_TIMERS_ENABLED = true;
 
   private final boolean enabled;
+  private final String instrumentationName;
+  private final String protocol;
   private final int port;
   private int actualPort;
   private final String host;
@@ -54,7 +57,9 @@ public class MetricsConfiguration {
 
   private MetricsConfiguration(
       final boolean enabled,
+      final String instrumentationName,
       final int port,
+      final String protocol,
       final String host,
       final Set<MetricCategory> metricCategories,
       final boolean pushEnabled,
@@ -65,7 +70,9 @@ public class MetricsConfiguration {
       final List<String> hostsAllowlist,
       final boolean timersEnabled) {
     this.enabled = enabled;
+    this.instrumentationName = instrumentationName;
     this.port = port;
+    this.protocol = protocol;
     this.host = host;
     this.metricCategories = metricCategories;
     this.pushEnabled = pushEnabled;
@@ -79,6 +86,14 @@ public class MetricsConfiguration {
 
   public boolean isEnabled() {
     return enabled;
+  }
+
+  public String getInstrumentationName() {
+    return instrumentationName;
+  }
+
+  public String getProtocol() {
+    return protocol;
   }
 
   public String getHost() {
@@ -139,6 +154,7 @@ public class MetricsConfiguration {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("enabled", enabled)
+        .add("protocol", protocol)
         .add("port", port)
         .add("host", host)
         .add("metricCategories", metricCategories)
@@ -161,6 +177,7 @@ public class MetricsConfiguration {
     }
     final MetricsConfiguration that = (MetricsConfiguration) o;
     return enabled == that.enabled
+        && Objects.equals(protocol, that.protocol)
         && port == that.port
         && pushEnabled == that.pushEnabled
         && pushPort == that.pushPort
@@ -176,6 +193,7 @@ public class MetricsConfiguration {
   public int hashCode() {
     return Objects.hash(
         enabled,
+        protocol,
         port,
         host,
         metricCategories,
@@ -189,6 +207,7 @@ public class MetricsConfiguration {
 
   public static class Builder {
     private boolean enabled = false;
+    private String protocol = DEFAULT_METRICS_PROTOCOL;
     private int port = DEFAULT_METRICS_PORT;
     private String host = DEFAULT_METRICS_HOST;
     private Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
@@ -199,11 +218,17 @@ public class MetricsConfiguration {
     private String prometheusJob = "besu-client";
     private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
     private boolean timersEnabled = DEFAULT_TIMERS_ENABLED;
+    private String instrumentationName = DEFAULT_INSTRUMENTATION_NAME;
 
     private Builder() {}
 
     public Builder enabled(final boolean enabled) {
       this.enabled = enabled;
+      return this;
+    }
+
+    public Builder protocol(final String protocol) {
+      this.protocol = protocol;
       return this;
     }
 
@@ -264,10 +289,17 @@ public class MetricsConfiguration {
       return this;
     }
 
+    public Builder instrumentationName(final String instrumentationName) {
+      this.instrumentationName = instrumentationName;
+      return this;
+    }
+
     public MetricsConfiguration build() {
       return new MetricsConfiguration(
           enabled,
+          instrumentationName,
           port,
+          protocol,
           host,
           metricCategories,
           pushEnabled,

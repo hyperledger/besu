@@ -21,6 +21,8 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
@@ -98,6 +100,11 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
     return Stream.empty();
   }
 
+  @Override
+  public Set<MetricCategory> getEnabledCategories() {
+    return Collections.emptySet();
+  }
+
   public static class LabelCountingNoOpMetric<T> implements LabelledMetric<T> {
 
     final int labelCount;
@@ -115,5 +122,10 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
           "The count of labels used must match the count of labels expected.");
       return fakeMetric;
     }
+  }
+
+  @Override
+  public void close() {
+    // no-op
   }
 }
