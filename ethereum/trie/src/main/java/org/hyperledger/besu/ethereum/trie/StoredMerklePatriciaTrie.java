@@ -27,8 +27,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -38,8 +36,6 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <V> The type of values stored by this trie.
  */
 public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
-  @SuppressWarnings("UnusedVariable")
-  private static final Logger LOG = LogManager.getLogger();
 
   private final GetVisitor<V> getVisitor = new GetVisitor<>();
   private final RemoveVisitor<V> removeVisitor = new RemoveVisitor<>();
