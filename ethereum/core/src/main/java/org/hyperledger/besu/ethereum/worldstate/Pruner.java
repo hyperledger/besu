@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -137,7 +138,7 @@ public class Pruner {
 
   private void mark(final BlockHeader header) {
     final Hash stateRoot = header.getStateRoot();
-    LOG.debug(
+    LOG.info(
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
         markBlockNumber,
         stateRoot);
@@ -149,7 +150,7 @@ public class Pruner {
   }
 
   private void sweep() {
-    LOG.debug(
+    LOG.info(
         "Begin sweeping unused nodes for pruning. Keeping full state for blocks {} to {}",
         markBlockNumber,
         markBlockNumber + blocksRetained);
@@ -163,14 +164,21 @@ public class Pruner {
   private void execute(final Runnable action) {
     try {
       executorService.execute(action);
-    } catch (final Throwable t) {
-      LOG.error("Pruner failed", t);
-      pruningStrategy.cleanup();
+    } catch (final MerkleTrieException mte) {
+      LOG.fatal(
+          "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
+          mte);
+      System.exit(1);
+    } catch (final Exception e) {
+      LOG.error(
+          "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
+          getPruningPhase(),
+          e.getMessage());
+      pruningStrategy.clearMarks();
       pruningPhase.set(PruningPhase.IDLE);
     }
   }
 
-  @VisibleForTesting
   PruningPhase getPruningPhase() {
     return pruningPhase.get();
   }
