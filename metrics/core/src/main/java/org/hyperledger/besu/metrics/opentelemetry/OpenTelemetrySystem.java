@@ -70,17 +70,23 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
   private final MeterSdkProvider meterSdkProvider = MeterSdkProvider.builder().build();
-  private final IntervalMetricReader periodicReader =
-      IntervalMetricReader.builder()
-          .setMetricExporter(OtlpGrpcMetricExporter.getDefault())
-          .setMetricProducers(Collections.singleton(meterSdkProvider.getMetricProducer()))
-          .setExportIntervalMillis(500)
-          .build();
+  private IntervalMetricReader periodicReader;
 
   public OpenTelemetrySystem(
-      final Set<MetricCategory> enabledCategories, final boolean timersEnabled, final String name) {
+      final Set<MetricCategory> enabledCategories,
+      final boolean timersEnabled,
+      final boolean pushEnabled) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
+
+    if (pushEnabled) {
+      IntervalMetricReader.Builder builder =
+          IntervalMetricReader.builder()
+              .setMetricProducers(Collections.singleton(meterSdkProvider.getMetricProducer()))
+              .setMetricExporter(OtlpGrpcMetricExporter.getDefault())
+              .setExportIntervalMillis(500);
+      this.periodicReader = builder.build();
+    }
   }
 
   @Override
@@ -199,7 +205,9 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   @Override
   public void close() {
-    periodicReader.shutdown();
+    if (periodicReader != null) {
+      periodicReader.shutdown();
+    }
   }
 
   public void initDefaults() {

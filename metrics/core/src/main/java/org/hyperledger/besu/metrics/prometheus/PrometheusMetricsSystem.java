@@ -83,7 +83,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
           new OpenTelemetrySystem(
               metricsConfiguration.getMetricCategories(),
               metricsConfiguration.isTimersEnabled(),
-              metricsConfiguration.getInstrumentationName());
+              metricsConfiguration.isPushEnabled());
       metricsSystem.initDefaults();
       return metricsSystem;
     } else {

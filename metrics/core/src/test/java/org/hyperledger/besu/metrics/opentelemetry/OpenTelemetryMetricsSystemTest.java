@@ -51,7 +51,7 @@ public class OpenTelemetryMetricsSystemTest {
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
 
   private final ObservableMetricsSystem metricsSystem =
-      new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, true, "defaults");
+      new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, true, false);
 
   @Test
   public void shouldCreateObservationFromCounter() {
@@ -154,7 +154,7 @@ public class OpenTelemetryMetricsSystemTest {
   @Test
   public void shouldNotCreateObservationsFromTimerWhenTimersDisabled() {
     final ObservableMetricsSystem metricsSystem =
-        new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, false, "timer_disabled");
+        new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, false, false);
     final LabelledMetric<OperationTimer> timer =
         metricsSystem.createLabelledTimer(RPC, "request", "Some help", "methodName");
 
