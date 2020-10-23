@@ -431,7 +431,7 @@ public interface GasCalculator {
     return false;
   }
 
-  default Gas modExpGasCost(Bytes input) {
+  default Gas modExpGasCost(final Bytes input) {
     return Gas.ZERO;
   }
 }

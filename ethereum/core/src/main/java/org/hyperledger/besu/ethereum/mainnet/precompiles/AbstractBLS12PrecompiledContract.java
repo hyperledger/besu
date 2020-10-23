@@ -75,10 +75,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     } else {
       String errorMessage = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
-      LOG.trace(
-          "Error executing precompiled contract {}: '{}'",
-          name,
-          errorMessage);
+      LOG.trace("Error executing precompiled contract {}: '{}'", name, errorMessage);
       return null;
     }
   }

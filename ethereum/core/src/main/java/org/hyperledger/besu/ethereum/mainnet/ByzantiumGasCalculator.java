@@ -26,19 +26,28 @@ import org.apache.tuweni.bytes.Bytes;
 public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
 
   @Override
-  public Gas modExpGasCost(Bytes input) {
-    // Typically gas calculations are delegated to a GasCalculator instance,
-    // but the complexity and coupling with other parts of the precompile seem
-    // like reasonable reasons to do the math here instead.
-    final BigInteger baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
-    final BigInteger exponentLength = BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
-    final BigInteger modulusLength = BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
-    final BigInteger exponentOffset = BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
-    final int firstExponentBytesCap = exponentLength.min(BigIntegerModularExponentiationPrecompiledContract.MAX_FIRST_EXPONENT_BYTES).intValue();
-    final BigInteger firstExpBytes = BigIntegerModularExponentiationPrecompiledContract.extractParameter(input, exponentOffset, firstExponentBytesCap);
-    final BigInteger adjustedExponentLength = BigIntegerModularExponentiationPrecompiledContract.adjustedExponentLength(exponentLength, firstExpBytes);
+  public Gas modExpGasCost(final Bytes input) {
+    final BigInteger baseLength =
+        BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final BigInteger exponentLength =
+        BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
+    final BigInteger modulusLength =
+        BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
+    final BigInteger exponentOffset =
+        BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
+    final int firstExponentBytesCap =
+        exponentLength
+            .min(BigIntegerModularExponentiationPrecompiledContract.MAX_FIRST_EXPONENT_BYTES)
+            .intValue();
+    final BigInteger firstExpBytes =
+        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+            input, exponentOffset, firstExponentBytesCap);
+    final BigInteger adjustedExponentLength =
+        BigIntegerModularExponentiationPrecompiledContract.adjustedExponentLength(
+            exponentLength, firstExpBytes);
     final BigInteger multiplicationComplexity =
-        BigIntegerModularExponentiationPrecompiledContract.multiplicationComplexity(baseLength.max(modulusLength));
+        BigIntegerModularExponentiationPrecompiledContract.multiplicationComplexity(
+            baseLength.max(modulusLength));
     final BigInteger gasRequirement =
         multiplicationComplexity
             .multiply(adjustedExponentLength.max(BigInteger.ONE))
@@ -46,7 +55,8 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
 
     // Gas price is so large it will not fit in a Gas type, so an
     // very very very unlikely high gas price is used instead.
-    if (gasRequirement.bitLength() > BigIntegerModularExponentiationPrecompiledContract.MAX_GAS_BITS) {
+    if (gasRequirement.bitLength()
+        > BigIntegerModularExponentiationPrecompiledContract.MAX_GAS_BITS) {
       return Gas.of(Long.MAX_VALUE);
     } else {
       return Gas.of(gasRequirement);

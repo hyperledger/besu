@@ -61,10 +61,7 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
     } else {
       final String errorString = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
-      LOG.trace(
-          "Error executing precompiled contract {}: '{}'",
-          getName(),
-          errorString);
+      LOG.trace("Error executing precompiled contract {}: '{}'", getName(), errorString);
       return null;
     }
   }

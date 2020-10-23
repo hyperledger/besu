@@ -213,15 +213,30 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
     // Typically gas calculations are delegated to a GasCalculator instance,
     // but the complexity and coupling with other parts of the precompile seem
     // like reasonable reasons to do the math here instead.
-    final BigInteger baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
-    final BigInteger exponentLength = BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
-    final BigInteger modulusLength = BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
-    final BigInteger exponentOffset = BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
-    final int firstExponentBytesCap = exponentLength.min(BigIntegerModularExponentiationPrecompiledContract.MAX_FIRST_EXPONENT_BYTES).intValue();
-    final BigInteger firstExpBytes = BigIntegerModularExponentiationPrecompiledContract.extractParameter(input, exponentOffset, firstExponentBytesCap);
-    final BigInteger adjustedExponentLength = BigIntegerModularExponentiationPrecompiledContract.adjustedExponentLength(exponentLength, firstExpBytes);
+    final BigInteger baseLength =
+        BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final BigInteger exponentLength =
+        BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
+    final BigInteger modulusLength =
+        BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
+    final BigInteger exponentOffset =
+        BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
+    final int firstExponentBytesCap =
+        exponentLength
+            .min(BigIntegerModularExponentiationPrecompiledContract.MAX_FIRST_EXPONENT_BYTES)
+            .intValue();
+    final BigInteger firstExpBytes =
+        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+            input, exponentOffset, firstExponentBytesCap);
+    final BigInteger adjustedExponentLength =
+        BigIntegerModularExponentiationPrecompiledContract.adjustedExponentLength(
+            exponentLength, firstExpBytes);
     final BigInteger multiplicationComplexity =
-        modulusLength.max(baseLength).add(BigInteger.valueOf(7)).divide(BigInteger.valueOf(8)).pow(2);
+        modulusLength
+            .max(baseLength)
+            .add(BigInteger.valueOf(7))
+            .divide(BigInteger.valueOf(8))
+            .pow(2);
 
     final BigInteger gasRequirement =
         multiplicationComplexity
@@ -230,11 +245,11 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
     // Gas price is so large it will not fit in a Gas type, so an
     // very very very unlikely high gas price is used instead.
-    if (gasRequirement.bitLength() > BigIntegerModularExponentiationPrecompiledContract.MAX_GAS_BITS) {
+    if (gasRequirement.bitLength()
+        > BigIntegerModularExponentiationPrecompiledContract.MAX_GAS_BITS) {
       return Gas.of(Long.MAX_VALUE);
     } else {
       return Gas.of(gasRequirement.max(BigInteger.valueOf(200)));
     }
   }
-
 }

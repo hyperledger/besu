@@ -264,6 +264,45 @@ public class Benchmarks {
         (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
   }
 
+  private static void benchBNPairing() {
+    final Bytes goerli_3617444 =
+        Bytes.fromHexString(
+            "0x07402fdc3bc28a434909f24695adea3e9418d9857efc8c71f67a470a17f3cf12"
+                + "255dbc3a8b5c2c1a7a3f8c59e2f5b6e04bc4d7b7bb82fcbe18b2294305c8473b"
+                + "19156e854972d656d1020003e5781972d84081309cdf71baacf6c6e29272f5ff"
+                + "2acded377df8902b7a75de6c0f53c161f3a2ff3f374470b78d5b3c4d826d84d5"
+                + "1731ef3b84913296c30a649461b2ca35e3fcc2e3031ea2386d32f885ff096559"
+                + "0919e7685f6ea605db14f311dede6e83f21937f05cfc53ac1dbe45891c47bf2a"
+            //                + "1a3fabea802788c8aa88741c6a68f271b221eb75838bb1079381f3f1ae414f40"
+            //                + "126308d6cdb6b7efceb1ec0016b99cf7a1e5780f5a9a775d43bc7f2b6fd510e2"
+            //                + "11b35cf2c85531eab64b96eb2eef487e0eb60fb9207fe4763e7f6e02dcead646"
+            //                + "2cbea52f3417b398aed9e355ed16934a81b72d2646e3bf90dbc2dcba294b631d"
+            //                + "2c6518cd26310e541a799357d1ae8bc477b162f2040407b965ecd777e26d31f7"
+            //                + "125170b5860fb8f8da2c43e00ea4a83bcc1a974e47e59fcd657851d2b0dd1655"
+            //                + "130a2183533392b5fd031857eb4c199a19382f39fcb666d6133b3a6e5784d6a5"
+            //                + "2cca76f2bc625d2e61a41b5f382eadf1df1756dd392f639c3d9f3513099e63f9"
+            //                + "07ecba8131b3fb354272c86d01577e228c5bd5fb6404bbaf106d7f4858dc2996"
+            //                + "1c5d49a9ae291a2a2213da57a76653391fa1fc0fa7c534afa124ad71b7fdd719"
+            //                + "10f1a73f94a8f077f478d069d7cf1c49444f64cd20ed75d4f6de3d8986147cf8"
+            //                + "0d5816f2f116c5cc0be7dfc4c0b4c592204864acb70ad5f789013389a0092ce4"
+            //                + "2650b89e5540eea1375b27dfd9081a0622e03352e5c6a7593df72e2113328e64"
+            //                + "21991b3e5100845cd9b8f0fa16c7fe5f40152e702e61f4cdf0d98e7f213b1a47"
+            //                + "10520008be7609bdb92145596ac6bf37da0269f7460e04e8e4701c3afbae0e52"
+            //                + "0664e736b2af7bf9125f69fe5c3706cd893cd769b1dae8a6e3d639e2d76e66e2"
+            //                + "1cacce8776f5ada6b35036f9343faab26c91b9aea83d3cb59cf5628ffe18ab1b"
+            //                + "03b48ca7e6d84fca619aaf81745fbf9c30e5a78ed4766cc62b0f12aea5044f56"
+            );
+
+    final AltBN128PairingPrecompiledContract contract =
+        AltBN128PairingPrecompiledContract.istanbul(new IstanbulGasCalculator());
+
+    final double gasSpent = runBenchmark(goerli_3617444, contract);
+
+    System.out.printf(
+        "BNMUL for %,d gas. Charging %,d gas.%n",
+        (int) gasSpent, contract.gasRequirement(goerli_3617444).asUInt256().toLong());
+  }
+
   public static void benchBLS12G1Add() {
     final Bytes arg =
         Bytes.fromHexString(
@@ -526,12 +565,14 @@ public class Benchmarks {
     //    benchKeccak256();
     //    System.out.println("RIPEMD256");
     //    benchRipeMD();
-    //    System.out.println("BNADD");
-    //    benchBNADD();
-    //    System.out.println("BNMUL");
-    //    benchBNMUL();
-    System.out.println("ModEXP");
-    benchModExp();
+    System.out.println("BNADD");
+    benchBNADD();
+    System.out.println("BNMUL");
+    benchBNMUL();
+    System.out.println("BNPairing");
+    benchBNPairing();
+    //    System.out.println("ModEXP");
+    //    benchModExp();
     //    System.out.println("G1Add");
     //    benchBLS12G1Add();
     //    System.out.println("G1Mul");
