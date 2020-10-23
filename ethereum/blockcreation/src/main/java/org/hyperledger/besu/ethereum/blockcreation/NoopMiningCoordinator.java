@@ -79,4 +79,7 @@ public class NoopMiningCoordinator implements MiningCoordinator {
       final List<BlockHeader> ommers) {
     return Optional.empty();
   }
+
+  @Override
+  public void changeTargetGasLimit(final Long targetGasLimit) {}
 }

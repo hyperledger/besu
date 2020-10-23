@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
@@ -65,15 +66,9 @@ public class NodePermissioningControllerFactory {
             .getSmartContractConfig()
             .get()
             .isSmartContractNodeAllowlistEnabled()) {
-      NodeSmartContractPermissioningController smartContractProvider =
-          new NodeSmartContractPermissioningController(
-              permissioningConfiguration
-                  .getSmartContractConfig()
-                  .get()
-                  .getNodeSmartContractAddress(),
-              transactionSimulator,
-              metricsSystem);
-      providers.add(smartContractProvider);
+
+      configureNodePermissioningSmartContractProvider(
+          permissioningConfiguration, transactionSimulator, metricsSystem, providers);
 
       if (fixedNodes.isEmpty()) {
         syncStatusProviderOptional = Optional.empty();
@@ -99,6 +94,39 @@ public class NodePermissioningControllerFactory {
             });
 
     return nodePermissioningController;
+  }
+
+  private void configureNodePermissioningSmartContractProvider(
+      final PermissioningConfiguration permissioningConfiguration,
+      final TransactionSimulator transactionSimulator,
+      final MetricsSystem metricsSystem,
+      final List<NodePermissioningProvider> providers) {
+    final SmartContractPermissioningConfiguration smartContractPermissioningConfig =
+        permissioningConfiguration.getSmartContractConfig().get();
+    final Address nodePermissioningSmartContractAddress =
+        smartContractPermissioningConfig.getNodeSmartContractAddress();
+
+    final NodePermissioningProvider smartContractProvider;
+    switch (smartContractPermissioningConfig.getNodeSmartContractInterfaceVersion()) {
+      case 1:
+        {
+          smartContractProvider =
+              new NodeSmartContractPermissioningController(
+                  nodePermissioningSmartContractAddress, transactionSimulator, metricsSystem);
+          break;
+        }
+      case 2:
+        {
+          smartContractProvider =
+              new NodeSmartContractV2PermissioningController(
+                  nodePermissioningSmartContractAddress, transactionSimulator, metricsSystem);
+          break;
+        }
+      default:
+        throw new IllegalStateException(
+            "Invalid node Smart contract permissioning interface version");
+    }
+    providers.add(smartContractProvider);
   }
 
   private void validatePermissioningContract(

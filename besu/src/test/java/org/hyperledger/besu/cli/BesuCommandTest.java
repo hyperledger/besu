@@ -427,6 +427,60 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void nodePermissionsContractVersionDefaultValue() {
+    final SmartContractPermissioningConfiguration expectedConfig =
+        new SmartContractPermissioningConfiguration();
+    expectedConfig.setNodeSmartContractAddress(
+        Address.fromHexString("0x0000000000000000000000000000000000001234"));
+    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
+    expectedConfig.setNodeSmartContractInterfaceVersion(1);
+
+    parseCommand(
+        "--permissions-nodes-contract-enabled",
+        "--permissions-nodes-contract-address",
+        "0x0000000000000000000000000000000000001234");
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    assertThat(config.getSmartContractConfig().get())
+        .isEqualToComparingFieldByField(expectedConfig);
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodePermissionsContractVersionSetsValue() {
+    final SmartContractPermissioningConfiguration expectedConfig =
+        new SmartContractPermissioningConfiguration();
+    expectedConfig.setNodeSmartContractAddress(
+        Address.fromHexString("0x0000000000000000000000000000000000001234"));
+    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
+    expectedConfig.setNodeSmartContractInterfaceVersion(2);
+
+    parseCommand(
+        "--permissions-nodes-contract-enabled",
+        "--permissions-nodes-contract-address",
+        "0x0000000000000000000000000000000000001234",
+        "--permissions-nodes-contract-version",
+        "2");
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    assertThat(config.getSmartContractConfig().get())
+        .isEqualToComparingFieldByField(expectedConfig);
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void accountPermissionsSmartContractWithoutOptionMustError() {
     parseCommand("--permissions-accounts-contract-address");
 

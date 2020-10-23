@@ -836,6 +836,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Address permissionsNodesContractAddress = null;
 
   @Option(
+      names = {"--permissions-nodes-contract-version"},
+      description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
+  private final Integer permissionsNodesContractVersion = 1;
+
+  @Option(
       names = {"--permissions-nodes-contract-enabled"},
       description = "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesContractEnabled = false;
@@ -1792,6 +1797,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             permissionsNodesContractEnabled);
         smartContractPermissioningConfiguration.setNodeSmartContractAddress(
             permissionsNodesContractAddress);
+        smartContractPermissioningConfiguration.setNodeSmartContractInterfaceVersion(
+            permissionsNodesContractVersion);
       }
     } else if (permissionsNodesContractAddress != null) {
       logger.warn(
@@ -2296,6 +2303,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private class BesuCommandConfigurationService implements BesuConfiguration {
+
     @Override
     public Path getStoragePath() {
       return dataDir().resolve(DATABASE_PATH);

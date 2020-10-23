@@ -120,6 +120,10 @@ public class IbftBlockCreatorFactory {
     return extraData.encode();
   }
 
+  void changeTargetGasLimit(final Long targetGasLimit) {
+    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+  }
+
   public Address getLocalAddress() {
     return localAddress;
   }
