@@ -17,27 +17,25 @@ package org.hyperledger.errorpronechecks;
 
 import picocli.CommandLine;
 
-import java.util.Objects;
-
 public class ExperimentalCliOptionMustBeCorrectlyDisplayedPositiveCases {
 
-  // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the BesuCommand class.
+  // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the
+  // BesuCommand class.
   @CommandLine.Option(
-          hidden = false,
-          names = {"--Xexperimental"})
+      hidden = false,
+      names = {"--Xexperimental"})
   private String experimental = "";
 
-  // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the BesuCommand class.
-  @CommandLine.Option(
-          names = {"--Xexperimental2"})
+  // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the
+  // BesuCommand class.
+  @CommandLine.Option(names = {"--Xexperimental2"})
   private String experimental2 = "";
 
   private class BesuCommand {
 
-    // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the BesuCommand class.
-    @CommandLine.Option(
-            names = {"--XexperimentalInBesuCommandClass"})
+    // BUG: Diagnostic contains:  Experimental options must be hidden and not present in the
+    // BesuCommand class.
+    @CommandLine.Option(names = {"--XexperimentalInBesuCommandClass"})
     private String experimentalInBesuCommandClass = "";
   }
-
 }
