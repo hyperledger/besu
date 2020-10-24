@@ -32,6 +32,9 @@ dependencies {
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.google.code.findbugs:jsr305'
+  implementation 'com.google.guava:guava'
+
 
   testOutput sourceSets.test.output
 }
