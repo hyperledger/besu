@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
@@ -57,14 +58,17 @@ public class EthEstimateGasTest {
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
+  @Mock private WorldStateArchive worldStateArchive;
 
   @Before
   public void setUp() {
     when(blockchainQueries.headBlockNumber()).thenReturn(1L);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.of(blockHeader));
     when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(blockHeader.getNumber()).thenReturn(1L);
+    when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(true);
 
     method = new EthEstimateGas(blockchainQueries, transactionSimulator);
   }
@@ -119,6 +123,19 @@ public class EthEstimateGasTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnWhenWorldStateIsNotAvailable() {
+    when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(false);
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+    mockTransientProcessorResultGasEstimate(1L, false);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
