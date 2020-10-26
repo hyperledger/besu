@@ -134,7 +134,7 @@ public class PendingBlockCacheTest {
 
   private ImmutablePendingBlock generateBlock(final Block parentBlock, final Bytes nodeId) {
     final Block block =
-        gen.block(gen.nextBlockOptions(parentBlock).setTimestamp(System.currentTimeMillis()));
+        gen.block(gen.nextBlockOptions(parentBlock).setTimestamp(System.nanoTime()));
     return ImmutablePendingBlock.builder().block(block).nodeId(nodeId).build();
   }
 }
