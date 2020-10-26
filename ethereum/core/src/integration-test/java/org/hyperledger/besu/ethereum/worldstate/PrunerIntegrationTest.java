@@ -65,7 +65,7 @@ public class PrunerIntegrationTest {
 
   @Test
   public void pruner_smallState_manyOpsPerTx() {
-    testPruner(3, 1, 1, 4, 1000);
+    testPruner(3, 1, 1, 4, 100_000);
   }
 
   @Test
