@@ -82,10 +82,7 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
     return transactionTracerSupplier
         .get()
         .traceTransactionToFile(
-            block.getHash(),
-            block.getBody().getTransactions(),
-            transactionTraceParams,
-            dataDir.resolve(TRACE_PATH));
+            block.getHash(), transactionTraceParams, dataDir.resolve(TRACE_PATH));
   }
 
   protected Object emptyResult() {
