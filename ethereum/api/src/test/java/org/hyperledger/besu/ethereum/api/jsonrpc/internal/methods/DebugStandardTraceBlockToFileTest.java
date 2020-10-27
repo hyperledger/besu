@@ -76,7 +76,7 @@ public class DebugStandardTraceBlockToFileTest {
 
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
 
-    when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any(), any()))
+    when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any()))
         .thenReturn(paths);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugStandardTraceBlockToFile.response(request);
