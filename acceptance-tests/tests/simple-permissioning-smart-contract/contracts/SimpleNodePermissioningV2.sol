@@ -8,7 +8,7 @@ contract SimpleNodePermissioning {
     */
     struct Enode {
         string enodeId;
-        bytes16 enodeHost;
+        bytes16 enodeIp;
     }
     mapping(bytes => Enode) private allowlist;
 
@@ -19,8 +19,8 @@ contract SimpleNodePermissioning {
 
     function enodeAllowed(string memory enodeId, bytes16 sourceEnodeIp) private view returns (bool){
         bytes memory key = computeKey(enodeId, sourceEnodeIp);
-        // if enode was found, host (bytes) is greater than zero
-        return allowlist[key].enodeHost > 0;
+        // if enode was found, IP (bytes) is greater than zero
+        return allowlist[key].enodeIp > 0;
     }
 
     function addEnode(string memory enodeId, bytes16 enodeIp, uint16) public {
