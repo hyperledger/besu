@@ -16,6 +16,7 @@ package org.hyperledger.besu.metrics.prometheus;
 
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
+import org.hyperledger.besu.metrics.MetricsProtocol;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 import java.util.Arrays;
@@ -30,15 +31,13 @@ import com.google.common.base.MoreObjects;
 public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PORT = 9545;
-  private static final String DEFAULT_INSTRUMENTATION_NAME = "besu";
-  private static final String DEFAULT_METRICS_PROTOCOL = "prometheus";
+  private static final MetricsProtocol DEFAULT_METRICS_PROTOCOL = MetricsProtocol.PROMETHEUS;
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
   public static final Boolean DEFAULT_TIMERS_ENABLED = true;
 
   private final boolean enabled;
-  private final String instrumentationName;
-  private final String protocol;
+  private final MetricsProtocol protocol;
   private final int port;
   private int actualPort;
   private final String host;
@@ -57,9 +56,8 @@ public class MetricsConfiguration {
 
   private MetricsConfiguration(
       final boolean enabled,
-      final String instrumentationName,
       final int port,
-      final String protocol,
+      final MetricsProtocol protocol,
       final String host,
       final Set<MetricCategory> metricCategories,
       final boolean pushEnabled,
@@ -70,7 +68,6 @@ public class MetricsConfiguration {
       final List<String> hostsAllowlist,
       final boolean timersEnabled) {
     this.enabled = enabled;
-    this.instrumentationName = instrumentationName;
     this.port = port;
     this.protocol = protocol;
     this.host = host;
@@ -88,11 +85,7 @@ public class MetricsConfiguration {
     return enabled;
   }
 
-  public String getInstrumentationName() {
-    return instrumentationName;
-  }
-
-  public String getProtocol() {
+  public MetricsProtocol getProtocol() {
     return protocol;
   }
 
@@ -207,7 +200,7 @@ public class MetricsConfiguration {
 
   public static class Builder {
     private boolean enabled = false;
-    private String protocol = DEFAULT_METRICS_PROTOCOL;
+    private MetricsProtocol protocol = DEFAULT_METRICS_PROTOCOL;
     private int port = DEFAULT_METRICS_PORT;
     private String host = DEFAULT_METRICS_HOST;
     private Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
@@ -218,7 +211,6 @@ public class MetricsConfiguration {
     private String prometheusJob = "besu-client";
     private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
     private boolean timersEnabled = DEFAULT_TIMERS_ENABLED;
-    private String instrumentationName = DEFAULT_INSTRUMENTATION_NAME;
 
     private Builder() {}
 
@@ -227,7 +219,7 @@ public class MetricsConfiguration {
       return this;
     }
 
-    public Builder protocol(final String protocol) {
+    public Builder protocol(final MetricsProtocol protocol) {
       this.protocol = protocol;
       return this;
     }
@@ -289,15 +281,9 @@ public class MetricsConfiguration {
       return this;
     }
 
-    public Builder instrumentationName(final String instrumentationName) {
-      this.instrumentationName = instrumentationName;
-      return this;
-    }
-
     public MetricsConfiguration build() {
       return new MetricsConfiguration(
           enabled,
-          instrumentationName,
           port,
           protocol,
           host,

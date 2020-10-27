@@ -18,6 +18,8 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.util.NetworkUtility.urlForSocketAddress;
 
+import org.hyperledger.besu.metrics.MetricsSystemFactory;
+
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
@@ -53,13 +55,13 @@ public class MetricsHttpServiceTest {
   }
 
   private static MetricsHttpService createMetricsHttpService(final MetricsConfiguration config) {
-    return new MetricsHttpService(vertx, config, PrometheusMetricsSystem.init(config));
+    return new MetricsHttpService(vertx, config, MetricsSystemFactory.create(config));
   }
 
   private static MetricsHttpService createMetricsHttpService() {
     final MetricsConfiguration metricsConfiguration = createMetricsConfig();
     return new MetricsHttpService(
-        vertx, metricsConfiguration, PrometheusMetricsSystem.init(metricsConfiguration));
+        vertx, metricsConfiguration, MetricsSystemFactory.create(metricsConfiguration));
   }
 
   private static MetricsConfiguration createMetricsConfig() {

@@ -16,14 +16,14 @@
 
 package org.hyperledger.besu.evmtool;
 
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class PrometheusMetricsSystemModule extends MetricsSystemModule {
 
   @Override
   public MetricsSystem getMetricsSystem() {
-    return PrometheusMetricsSystem.init(MetricsConfiguration.builder().build());
+    return ObservableMetricsSystem.init(MetricsConfiguration.builder().build());
   }
 }

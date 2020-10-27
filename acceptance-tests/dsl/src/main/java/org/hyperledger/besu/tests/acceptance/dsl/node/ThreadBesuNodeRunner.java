@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
@@ -128,7 +127,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     node, storageService, securityModuleService, commonPluginConfiguration));
 
     final ObservableMetricsSystem metricsSystem =
-        PrometheusMetricsSystem.init(node.getMetricsConfiguration());
+        ObservableMetricsSystem.init(node.getMetricsConfiguration());
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream()
             .map(EnodeURL::fromURI)

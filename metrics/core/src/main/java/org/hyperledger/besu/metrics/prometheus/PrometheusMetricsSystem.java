@@ -18,7 +18,6 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -31,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
@@ -49,9 +49,6 @@ import io.prometheus.client.hotspot.ThreadExports;
 
 public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
-  private static final String PROMETHEUS_PROTOCOL = "prometheus";
-  private static final String OPENTELEMETRY_PROTOCOL = "opentelemetry";
-
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
   private final Map<String, LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Counter>>
@@ -62,43 +59,19 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
 
-  PrometheusMetricsSystem(
+  public PrometheusMetricsSystem(
       final Set<MetricCategory> enabledCategories, final boolean timersEnabled) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
   }
 
-  public static ObservableMetricsSystem init(final MetricsConfiguration metricsConfiguration) {
-    if (!metricsConfiguration.isEnabled() && !metricsConfiguration.isPushEnabled()) {
-      return new NoOpMetricsSystem();
-    }
-    if (PROMETHEUS_PROTOCOL.equals(metricsConfiguration.getProtocol())) {
-      final PrometheusMetricsSystem metricsSystem =
-          new PrometheusMetricsSystem(
-              metricsConfiguration.getMetricCategories(), metricsConfiguration.isTimersEnabled());
-      metricsSystem.initDefaults();
-      return metricsSystem;
-    } else if (OPENTELEMETRY_PROTOCOL.equals(metricsConfiguration.getProtocol())) {
-      final OpenTelemetrySystem metricsSystem =
-          new OpenTelemetrySystem(
-              metricsConfiguration.getMetricCategories(),
-              metricsConfiguration.isTimersEnabled(),
-              metricsConfiguration.isPushEnabled());
-      metricsSystem.initDefaults();
-      return metricsSystem;
-    } else {
-      throw new IllegalArgumentException(
-          "Invalid metrics protocol " + metricsConfiguration.getProtocol());
-    }
-  }
-
-  private void initDefaults() {
-    addCollector(StandardMetricCategory.PROCESS, new StandardExports());
-    addCollector(StandardMetricCategory.JVM, new MemoryPoolsExports());
-    addCollector(StandardMetricCategory.JVM, new BufferPoolsExports());
-    addCollector(StandardMetricCategory.JVM, new GarbageCollectorExports());
-    addCollector(StandardMetricCategory.JVM, new ThreadExports());
-    addCollector(StandardMetricCategory.JVM, new ClassLoadingExports());
+  public void init() {
+    addCollector(StandardMetricCategory.PROCESS, StandardExports::new);
+    addCollector(StandardMetricCategory.JVM, MemoryPoolsExports::new);
+    addCollector(StandardMetricCategory.JVM, BufferPoolsExports::new);
+    addCollector(StandardMetricCategory.JVM, GarbageCollectorExports::new);
+    addCollector(StandardMetricCategory.JVM, ThreadExports::new);
+    addCollector(StandardMetricCategory.JVM, ClassLoadingExports::new);
   }
 
   @Override
@@ -168,9 +141,10 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     }
   }
 
-  public void addCollector(final MetricCategory category, final Collector metric) {
+  public void addCollector(
+      final MetricCategory category, final Supplier<Collector> metricSupplier) {
     if (isCategoryEnabled(category)) {
-      addCollectorUnchecked(category, metric);
+      addCollectorUnchecked(category, metricSupplier.get());
     }
   }
 

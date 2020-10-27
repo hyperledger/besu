@@ -41,6 +41,7 @@ import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
+import io.opentelemetry.common.Attributes;
 import io.opentelemetry.common.Labels;
 import io.opentelemetry.exporters.otlp.OtlpGrpcMetricExporter;
 import io.opentelemetry.metrics.DoubleValueObserver;
@@ -52,6 +53,8 @@ import io.opentelemetry.metrics.Meter;
 import io.opentelemetry.sdk.metrics.MeterSdkProvider;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.export.IntervalMetricReader;
+import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.resources.ResourceAttributes;
 
 /** Metrics system relying on the native OpenTelemetry format. */
 public class OpenTelemetrySystem implements ObservableMetricsSystem {
@@ -69,22 +72,31 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   private final Map<String, LabelledMetric<Counter>> cachedCounters = new ConcurrentHashMap<>();
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
-  private final MeterSdkProvider meterSdkProvider = MeterSdkProvider.builder().build();
+  private final MeterSdkProvider meterSdkProvider;
   private IntervalMetricReader periodicReader;
 
   public OpenTelemetrySystem(
       final Set<MetricCategory> enabledCategories,
       final boolean timersEnabled,
-      final boolean pushEnabled) {
+      final String jobName,
+      final boolean pushEnabled,
+      final long exportIntervalMillis) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
-
+    Resource resource =
+        Resource.getDefault()
+            .merge(
+                Resource.create(
+                    Attributes.newBuilder()
+                        .setAttribute(ResourceAttributes.SERVICE_NAME, jobName)
+                        .build()));
+    this.meterSdkProvider = MeterSdkProvider.builder().setResource(resource).build();
     if (pushEnabled) {
       IntervalMetricReader.Builder builder =
           IntervalMetricReader.builder()
               .setMetricProducers(Collections.singleton(meterSdkProvider.getMetricProducer()))
               .setMetricExporter(OtlpGrpcMetricExporter.getDefault())
-              .setExportIntervalMillis(500);
+              .setExportIntervalMillis(exportIntervalMillis);
       this.periodicReader = builder.build();
     }
   }
