@@ -66,13 +66,13 @@ public class NodeSmartContractPermissioningConnectionIsAllowedV2Transaction
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-      final byte[] ip = NodeSmartContractV2PermissioningController.encodeIp(enodeUrl.getIp());
+      final String ip = NodeSmartContractV2PermissioningController.encodeIp(enodeUrl.getIp());
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
-              List.of("string", "bytes16", "uint16"),
+              List.of("string", "string", "uint16"),
               List.of(hexNodeIdString, ip, port),
               Collections.emptyList());
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));

@@ -64,11 +64,7 @@ public class NodeSmartContractV2PermissioningController
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-
-      // TODO the function should return the String because that's what we need
-      final byte[] ip = encodeIp(enodeUrl.getIp());
-      final String hexIpString = Bytes.wrap(ip).toHexString();
-
+      final String hexIpString = encodeIp(enodeUrl.getIp());
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
@@ -90,7 +86,7 @@ public class NodeSmartContractV2PermissioningController
    * https://tools.ietf.org/html/rfc4291#section-2.5.5)
    */
   @VisibleForTesting
-  public static byte[] encodeIp(final InetAddress addr) {
+  public static String encodeIp(final InetAddress addr) {
     // InetAddress deals with giving us the right number of bytes
     final byte[] address = addr.getAddress();
     final byte[] res = new byte[16];
@@ -103,7 +99,7 @@ public class NodeSmartContractV2PermissioningController
     } else {
       System.arraycopy(address, 0, res, 0, address.length);
     }
-    return res;
+    return Bytes.wrap(res).toHexString();
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
