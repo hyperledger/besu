@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -164,7 +164,7 @@ public class DefaultBlockchainTest {
     final Blockchain blockchain =
         DefaultBlockchain.create(
             createStorage(kvStore),
-            ObservableMetricsSystem.init(MetricsConfiguration.builder().enabled(true).build()),
+            MetricsSystemFactory.create(MetricsConfiguration.builder().enabled(true).build()),
             0);
 
     for (int i = 0; i < blocks.size(); i++) {

@@ -27,7 +27,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
-import static org.hyperledger.besu.metrics.MetricsProtocol.*;
+import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
@@ -646,6 +646,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsEnabled = false;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-protocol"},
       description =
@@ -1739,6 +1740,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .enabled(isMetricsEnabled)
         .host(metricsHost)
         .port(metricsPort)
+        .protocol(metricsProtocol)
         .metricCategories(metricCategories)
         .pushEnabled(isMetricsPushEnabled)
         .pushHost(metricsPushHost)
