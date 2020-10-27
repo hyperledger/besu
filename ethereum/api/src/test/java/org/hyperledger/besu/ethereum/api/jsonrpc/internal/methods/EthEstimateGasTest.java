@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -95,7 +96,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnGasEstimateWhenTransientTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
-    mockTransientProcessorResultGasEstimate(1L, true);
+    mockTransientProcessorResultGasEstimate(1L, true, false);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
@@ -106,7 +107,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnGasEstimateErrorWhenTransientTransactionProcessorReturnsResultFailure() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
-    mockTransientProcessorResultGasEstimate(1L, false);
+    mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
@@ -129,10 +130,10 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnWhenWorldStateIsNotAvailable() {
+  public void shouldReturnErrorWhenWorldStateIsNotAvailable() {
     when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(false);
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
-    mockTransientProcessorResultGasEstimate(1L, false);
+    mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
@@ -141,24 +142,39 @@ public class EthEstimateGasTest {
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
+  @Test
+  public void shouldReturnErrorWhenTransactioReverted() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+    mockTransientProcessorResultGasEstimate(1L, false, true);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
   private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
-    final TransactionSimulatorResult mockTxSimResult = getMockTransactionSimulatorResult(false, 0);
+    final TransactionSimulatorResult mockTxSimResult =
+        getMockTransactionSimulatorResult(false, false, 0);
     when(mockTxSimResult.getValidationResult()).thenReturn(ValidationResult.invalid(reason));
   }
 
   private void mockTransientProcessorResultGasEstimate(
-      final long estimateGas, final boolean isSuccessful) {
-    getMockTransactionSimulatorResult(isSuccessful, estimateGas);
+      final long estimateGas, final boolean isSuccessful, final boolean isReverted) {
+    getMockTransactionSimulatorResult(isSuccessful, isReverted, estimateGas);
   }
 
   private TransactionSimulatorResult getMockTransactionSimulatorResult(
-      final boolean isSuccessful, final long estimateGas) {
+      final boolean isSuccessful, final boolean isReverted, final long estimateGas) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     when(transactionSimulator.process(
             eq(modifiedCallParameter()), any(OperationTracer.class), eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
     final TransactionProcessor.Result mockResult = mock(TransactionProcessor.Result.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
+    when(mockResult.getRevertReason())
+        .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
     when(mockTxSimResult.getResult()).thenReturn(mockResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
     return mockTxSimResult;

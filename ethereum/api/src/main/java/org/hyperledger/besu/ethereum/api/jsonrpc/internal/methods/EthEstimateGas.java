@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -101,7 +102,7 @@ public class EthEstimateGas implements JsonRpcMethod {
             ? new JsonRpcSuccessResponse(
                 request.getRequest().getId(),
                 Quantity.create(processEstimateGas(result, operationTracer)))
-            : errorResponse(request, result, operationTracer);
+            : errorResponse(request, result);
   }
 
   /**
@@ -124,9 +125,7 @@ public class EthEstimateGas implements JsonRpcMethod {
   }
 
   private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request,
-      final TransactionSimulatorResult result,
-      final EstimateGasOperationTracer operationTracer) {
+      final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
     final JsonRpcError jsonRpcError;
 
     final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
@@ -135,10 +134,13 @@ public class EthEstimateGas implements JsonRpcMethod {
       jsonRpcError =
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason());
-    } else if (operationTracer.isReverted()) {
-      jsonRpcError = JsonRpcError.REVERT_ERROR;
     } else {
-      jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+      final TransactionProcessor.Result resultTrx = result.getResult();
+      if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
+        jsonRpcError = JsonRpcError.REVERT_ERROR;
+      } else {
+        jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+      }
     }
     return errorResponse(request, jsonRpcError);
   }

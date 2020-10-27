@@ -23,8 +23,6 @@ public class EstimateGasOperationTracer implements OperationTracer {
 
   private Gas sStoreStipendNeeded = Gas.ZERO;
 
-  private boolean isReverted = false;
-
   @Override
   public void traceExecution(
       final MessageFrame frame, final OperationTracer.ExecuteOperation executeOperation) {
@@ -39,9 +37,6 @@ public class EstimateGasOperationTracer implements OperationTracer {
       if (maxDepth < frame.getMessageStackDepth()) {
         maxDepth = frame.getMessageStackDepth();
       }
-      if (frame.getState().equals(MessageFrame.State.REVERT) && frame.getMessageStackDepth() == 0) {
-        isReverted = true;
-      }
     }
   }
 
@@ -51,9 +46,5 @@ public class EstimateGasOperationTracer implements OperationTracer {
 
   public Gas getStipendNeeded() {
     return sStoreStipendNeeded;
-  }
-
-  public boolean isReverted() {
-    return isReverted;
   }
 }
