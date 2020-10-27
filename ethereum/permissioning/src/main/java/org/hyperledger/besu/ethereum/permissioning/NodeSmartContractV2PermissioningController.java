@@ -33,7 +33,7 @@ import org.web3j.abi.datatypes.Function;
 
 /**
  * Controller that can read from a smart contract that exposes the EEA node permissioning v2 call
- * connectionAllowed(string,bytes16,uint16)
+ * connectionAllowed(string,string,uint16)
  */
 public class NodeSmartContractV2PermissioningController
     extends AbstractNodeSmartContractPermissioningController {
@@ -64,14 +64,18 @@ public class NodeSmartContractV2PermissioningController
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
+
+      // TODO the function should return the String because that's what we need
       final byte[] ip = encodeIp(enodeUrl.getIp());
+      final String hexIpString = Bytes.wrap(ip).toHexString();
+
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
-              List.of("string", "bytes16", "uint16"),
-              List.of(hexNodeIdString, ip, port),
+              List.of("string", "string", "uint16"),
+              List.of(hexNodeIdString, hexIpString, port),
               List.of(Bool.TYPE_NAME));
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (Exception e) {
