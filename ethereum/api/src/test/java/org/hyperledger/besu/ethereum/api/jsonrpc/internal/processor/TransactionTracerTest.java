@@ -177,6 +177,7 @@ public class TransactionTracerTest {
             eq(coinbase),
             eq(tracer),
             any(),
+            any(),
             any()))
         .thenReturn(result);
 
@@ -218,10 +219,15 @@ public class TransactionTracerTest {
 
     final List<Transaction> transactions = new ArrayList<>();
 
+    when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(previousBlockHash)).thenReturn(Optional.of(previousBlockHeader));
+
+    when(blockBody.getTransactions()).thenReturn(transactions);
+    when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
+
     final List<String> transactionTraces =
         transactionTracer.traceTransactionToFile(
             blockHash,
-            transactions,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
             traceDir.getRoot().toPath());
 
@@ -232,6 +238,8 @@ public class TransactionTracerTest {
   public void traceTransactionToFileShouldReturnResultFromProcessTransaction() throws IOException {
 
     List<Transaction> transactions = Collections.singletonList(transaction);
+    when(blockBody.getTransactions()).thenReturn(transactions);
+    when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
     final Result result = mock(Result.class);
     when(result.getOutput()).thenReturn(Bytes.of(0x01, 0x02));
@@ -259,7 +267,6 @@ public class TransactionTracerTest {
     final List<String> transactionTraces =
         transactionTracer.traceTransactionToFile(
             blockHash,
-            transactions,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
             traceDir.getRoot().toPath());
 
