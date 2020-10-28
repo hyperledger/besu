@@ -28,6 +28,7 @@ plugins {
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
   id 'net.ltgt.errorprone' version '1.2.1'
   id "org.sonarqube" version "3.0"
+  id 'jacoco'
 }
 
 sonarqube {
@@ -37,6 +38,8 @@ sonarqube {
     property "sonar.host.url", "https://sonarcloud.io"
   }
 }
+
+
 
 if (!JavaVersion.current().java11Compatible) {
   throw new GradleException("Java 11 or later is required to build Besu.\n" +
@@ -709,6 +712,13 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   ].join("|")
 
 }
+
+jacocoTestReport {
+  reports {
+    xml.enabled true
+  }
+}
+
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
