@@ -81,25 +81,11 @@ public class NodeSmartContractV2PermissioningController
   }
 
   /*
-   * IPv4-Compatible IPv6 Address That hybrid address consists of 10 "0" bytes, followed by two "1"
-   * bytes, followed by the original 4-bytes IPv4 address (RFC 4291 Section 2.5.5.1 -
-   * https://tools.ietf.org/html/rfc4291#section-2.5.5)
+   * String to bytes to hexString
    */
   @VisibleForTesting
   public static String encodeIp(final InetAddress addr) {
-    // InetAddress deals with giving us the right number of bytes
-    final byte[] address = addr.getAddress();
-    final byte[] res = new byte[16];
-    if (address.length == 4) {
-      // lead with 10 bytes of 0's then 2 bytes of 1's
-      res[10] = (byte) 0xFF;
-      res[11] = (byte) 0xFF;
-      // then the ipv4
-      System.arraycopy(address, 0, res, 12, 4);
-    } else {
-      System.arraycopy(address, 0, res, 0, address.length);
-    }
-    return Bytes.wrap(res).toHexString();
+    return Bytes.wrap(addr.getHostAddress().getBytes()).toHexString();
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
