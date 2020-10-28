@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetAddress;
+import java.nio.charset.Charset;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -85,7 +86,7 @@ public class NodeSmartContractV2PermissioningController
    */
   @VisibleForTesting
   public static String encodeIp(final InetAddress addr) {
-    return Bytes.wrap(addr.getHostAddress().getBytes()).toHexString();
+    return Bytes.wrap(addr.getHostAddress().getBytes(Charset.defaultCharset())).toHexString();
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
