@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
+import javax.annotation.Nonnull;
 
 /**
  * A pre-compiled contract.
@@ -50,5 +51,5 @@ public interface PrecompiledContract {
    * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
-  Bytes compute(Bytes input, MessageFrame messageFrame);
+  Bytes compute(Bytes input, @Nonnull MessageFrame messageFrame);
 }
