@@ -47,9 +47,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -124,33 +122,24 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   void handleConnect(final EthPeer peer) {
-    final List<Transaction> localTransactions = getLocalTransactions();
-    for (final Transaction transaction : localTransactions) {
-      peerTransactionTracker.addToPeerSendQueue(peer, transaction);
-    }
-    maybePeerPendingTransactionTracker.ifPresent(
-        peerPendingTransactionTracker -> {
-          if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)) {
-            Iterator<Hash> hashIterator = getNewPooledHashes().iterator();
-            while (hashIterator.hasNext()) {
-              try {
-                peerPendingTransactionTracker.addToPeerSendQueue(peer, hashIterator.next());
-              } catch (ConcurrentModificationException __) {
-                // The hash got evicted somehow.
-                // For example, it was pushed out by new pooled transaction hashes or we got the
-                // full transaction and evicted it manually.
-                // Either way, we don't care and can continue.
-              }
-            }
-          }
-        });
+    getLocalTransactions()
+        .forEach(transaction -> peerTransactionTracker.addToPeerSendQueue(peer, transaction));
+
+    maybePeerPendingTransactionTracker
+        .filter(
+            peerPendingTransactionTracker ->
+                peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65))
+        .ifPresent(
+            peerPendingTransactionTracker ->
+                getNewPooledHashes()
+                    .forEach(hash -> peerPendingTransactionTracker.addToPeerSendQueue(peer, hash)));
   }
 
   private List<Transaction> getLocalTransactions() {
     return pendingTransactions.getLocalTransactions();
   }
 
-  public Collection<Hash> getNewPooledHashes() {
+  public List<Hash> getNewPooledHashes() {
     return pendingTransactions.getNewPooledHashes();
   }
 
