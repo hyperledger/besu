@@ -48,7 +48,6 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -122,7 +121,8 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   void handleConnect(final EthPeer peer) {
-    getLocalTransactions()
+    pendingTransactions
+        .getLocalTransactions()
         .forEach(transaction -> peerTransactionTracker.addToPeerSendQueue(peer, transaction));
 
     maybePeerPendingTransactionTracker
@@ -131,16 +131,9 @@ public class TransactionPool implements BlockAddedObserver {
                 peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65))
         .ifPresent(
             peerPendingTransactionTracker ->
-                getNewPooledHashes()
+                pendingTransactions
+                    .getNewPooledHashes()
                     .forEach(hash -> peerPendingTransactionTracker.addToPeerSendQueue(peer, hash)));
-  }
-
-  private List<Transaction> getLocalTransactions() {
-    return pendingTransactions.getLocalTransactions();
-  }
-
-  public List<Hash> getNewPooledHashes() {
-    return pendingTransactions.getNewPooledHashes();
   }
 
   public boolean addTransactionHash(final Hash transactionHash) {
