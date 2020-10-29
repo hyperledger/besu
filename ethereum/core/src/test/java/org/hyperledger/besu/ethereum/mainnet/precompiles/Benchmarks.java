@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 
 import java.math.BigInteger;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -237,7 +236,7 @@ public class Benchmarks {
     final BigIntegerModularExponentiationPrecompiledContract contract =
         new BigIntegerModularExponentiationPrecompiledContract(new BerlinGasCalculator());
 
-    for (final Entry<String, Bytes> testCase : testcases.entrySet()) {
+    for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
       final double gasSpent = runBenchmark(testCase.getValue(), contract);
 
       System.out.printf(
