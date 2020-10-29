@@ -34,7 +34,10 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
 
   public static void enableNative() {
     useNative = LibEthPairings.ENABLED;
-    LOG.info(useNative ? "Using LibEthPairings native alt bn128" : "Native alt bn128 requested but not available");
+    LOG.info(
+        useNative
+            ? "Using LibEthPairings native alt bn128"
+            : "Native alt bn128 requested but not available");
   }
 
   private final byte operationId;
