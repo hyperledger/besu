@@ -105,7 +105,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         Bytes32.wrap(
             trieBranchStorage.get(WORLD_ROOT_KEY).map(Bytes::wrap).orElse(Hash.EMPTY_TRIE_HASH));
     try {
-      layerWriter = (dataPath != null) ? null : new RollingFileWriter(this::bodyFileName, false);
+      layerWriter = (dataPath == null) ? null : new RollingFileWriter(this::bodyFileName, false);
     } catch (final FileNotFoundException e) {
       throw new RuntimeException(e);
     }
