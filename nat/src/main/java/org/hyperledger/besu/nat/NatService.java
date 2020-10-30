@@ -192,7 +192,8 @@ public class NatService {
         final NatManager natManager = getNatManager().orElseThrow();
         return Optional.of(natManager.getPortMapping(serviceType, networkProtocol));
       } catch (Exception e) {
-        LOG.warn("Caught exception while trying to query port mapping (ignoring): {}", e);
+        LOG.warn(
+            "Caught exception while trying to query port mapping (ignoring): {}", e.toString());
       }
     }
     return Optional.empty();
