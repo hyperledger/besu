@@ -75,10 +75,10 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnErrorWhenTransientTransactionProcessorReturnsEmpty() {
-    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+  public void shouldReturnErrorWhenTransientLegacyTransactionProcessorReturnsEmpty() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(legacyTransactionCallParameter());
     when(transactionSimulator.process(
-            eq(modifiedCallParameter()), any(OperationTracer.class), eq(1L)))
+            eq(modifiedLegacyTransactionCallParameter()), any(OperationTracer.class), eq(1L)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -89,8 +89,22 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnGasEstimateWhenTransientTransactionProcessorReturnsResultSuccess() {
-    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+  public void shouldReturnErrorWhenTransientEip1559TransactionProcessorReturnsEmpty() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
+    when(transactionSimulator.process(
+            eq(modifiedEip1559TransactionCallParameter()), any(OperationTracer.class), eq(1L)))
+        .thenReturn(Optional.empty());
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnGasEstimateWhenTransientLegacyTransactionProcessorReturnsResultSuccess() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(legacyTransactionCallParameter());
     mockTransientProcessorResultGasEstimate(1L, true);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
@@ -100,8 +114,20 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnGasEstimateErrorWhenTransientTransactionProcessorReturnsResultFailure() {
-    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+  public void
+      shouldReturnGasEstimateWhenTransientEip1559TransactionProcessorReturnsResultSuccess() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
+    mockTransientProcessorResultGasEstimate(1L, true);
+
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void
+      shouldReturnGasEstimateErrorWhenTransientLegacyTransactionProcessorReturnsResultFailure() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(legacyTransactionCallParameter());
     mockTransientProcessorResultGasEstimate(1L, false);
 
     final JsonRpcResponse expectedResponse =
@@ -112,8 +138,34 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnErrorWhenTransactionProcessorReturnsTxInvalidReason() {
-    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+  public void
+      shouldReturnGasEstimateErrorWhenTransientEip1559TransactionProcessorReturnsResultFailure() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
+    mockTransientProcessorResultGasEstimate(1L, false);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWhenLegacyTransactionProcessorReturnsTxInvalidReason() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(legacyTransactionCallParameter());
+    mockTransientProcessorResultTxInvalidReason(
+        TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWhenEip1559TransactionProcessorReturnsTxInvalidReason() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
     mockTransientProcessorResultTxInvalidReason(
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
 
@@ -138,7 +190,10 @@ public class EthEstimateGasTest {
       final boolean isSuccessful, final long estimateGas) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     when(transactionSimulator.process(
-            eq(modifiedCallParameter()), any(OperationTracer.class), eq(1L)))
+            eq(modifiedLegacyTransactionCallParameter()), any(OperationTracer.class), eq(1L)))
+        .thenReturn(Optional.of(mockTxSimResult));
+    when(transactionSimulator.process(
+            eq(modifiedEip1559TransactionCallParameter()), any(OperationTracer.class), eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
     final TransactionProcessor.Result mockResult = mock(TransactionProcessor.Result.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
@@ -147,12 +202,21 @@ public class EthEstimateGasTest {
     return mockTxSimResult;
   }
 
-  private JsonCallParameter callParameter() {
+  private JsonCallParameter legacyTransactionCallParameter() {
     return new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
   }
 
-  private JsonCallParameter modifiedCallParameter() {
+  private JsonCallParameter modifiedLegacyTransactionCallParameter() {
     return new JsonCallParameter("0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x0", "");
+  }
+
+  private JsonCallParameter eip1559TransactionCallParameter() {
+    return new JsonCallParameter("0x0", "0x0", null, "0x0", "0x10", "0x10", "0x0", "");
+  }
+
+  private JsonCallParameter modifiedEip1559TransactionCallParameter() {
+    return new JsonCallParameter(
+        "0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x10", "0x10", "0x0", "");
   }
 
   private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {
