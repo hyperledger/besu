@@ -10,6 +10,10 @@
 * Added support for the updated smart contract-based [node permissioning EEA interface](https://entethalliance.github.io/client-spec/spec.html#dfn-connectionallowed). [\#1435](https://github.com/hyperledger/besu/pull/1435)
 * Added EvmTool binary to the distribution.  EvmTool is a CLI that can execute EVM bytecode and execute ethereum state tests. [\#1465](https://github.com/hyperledger/besu/pull/1465)
 
+### Bug Fixes
+
+* Fix a bug on `eth_estimateGas` which returned `Internal error` instead of `Execution reverted` in case of reverted transaction [\#1478](https://github.com/hyperledger/besu/pull/1478)
+
 ## Deprecated and Scheduled for removal in _Next_ Release
 
 ### --privacy-precompiled-address
