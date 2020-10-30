@@ -18,14 +18,25 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
+import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +57,29 @@ public class Benchmarks {
 
   static final int MATH_WARMUP = 10_000;
   static final int MATH_ITERATIONS = 1_000;
+  static final MessageFrame fakeFrame =
+      MessageFrame.builder()
+          .type(MessageFrame.Type.CONTRACT_CREATION)
+          .contract(Address.ZERO)
+          .inputData(Bytes.EMPTY)
+          .sender(Address.ZERO)
+          .value(Wei.ZERO)
+          .apparentValue(Wei.ZERO)
+          .code(new Code(Bytes.EMPTY))
+          .depth(1)
+          .completer(__ -> {})
+          .contractAccountVersion(0)
+          .address(Address.ZERO)
+          .blockHashLookup(mock(BlockHashLookup.class))
+          .blockHeader(mock(ProcessableBlockHeader.class))
+          .blockchain(mock(Blockchain.class))
+          .gasPrice(Wei.ZERO)
+          .messageFrameStack(new ArrayDeque<>())
+          .miningBeneficiary(Address.ZERO)
+          .originator(Address.ZERO)
+          .initialGas(Gas.of(100000))
+          .worldState(mock(WorldUpdater.class))
+          .build();
 
   public static void benchSecp256k1Recover() {
     final SECP256K1.PrivateKey privateKey =
@@ -78,7 +112,7 @@ public class Benchmarks {
     final byte[] warmupData = new byte[240];
     final Bytes warmupBytes = Bytes.wrap(warmupData);
     for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.compute(warmupBytes, null);
+      contract.compute(warmupBytes, fakeFrame);
     }
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -86,7 +120,7 @@ public class Benchmarks {
       final Bytes bytes = Bytes.wrap(data);
       final Stopwatch timer = Stopwatch.createStarted();
       for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.compute(bytes, null);
+        contract.compute(bytes, fakeFrame);
       }
       timer.stop();
 
@@ -130,7 +164,7 @@ public class Benchmarks {
     final byte[] warmupData = new byte[240];
     final Bytes warmupBytes = Bytes.wrap(warmupData);
     for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.compute(warmupBytes, null);
+      contract.compute(warmupBytes, fakeFrame);
     }
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -138,7 +172,7 @@ public class Benchmarks {
       final Bytes bytes = Bytes.wrap(data);
       final Stopwatch timer = Stopwatch.createStarted();
       for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.compute(bytes, null);
+        contract.compute(bytes, fakeFrame);
       }
       timer.stop();
 
@@ -373,7 +407,7 @@ public class Benchmarks {
                 + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
     final BLS12G1MulPrecompiledContract contract = new BLS12G1MulPrecompiledContract();
-    contract.compute(arg, null);
+    contract.compute(arg, fakeFrame);
 
     final double gasSpent = runBenchmark(arg, contract);
 
@@ -585,16 +619,16 @@ public class Benchmarks {
   }
 
   private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {
-    if (contract.compute(arg, null) == null) {
+    if (contract.compute(arg, fakeFrame) == null) {
       throw new RuntimeException("Input is Invalid");
     }
 
     for (int i = 0; i < MATH_WARMUP; i++) {
-      contract.compute(arg, null);
+      contract.compute(arg, fakeFrame);
     }
     final Stopwatch timer = Stopwatch.createStarted();
     for (int i = 0; i < MATH_ITERATIONS; i++) {
-      contract.compute(arg, null);
+      contract.compute(arg, fakeFrame);
     }
     timer.stop();
 
