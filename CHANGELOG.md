@@ -2,13 +2,13 @@
 
 ## Release format
 
-Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/) starting with the 20.10.0 (f.k.a. 1.6.0) release. More information about the specific version of CalVer Besu is using can be found on the [wiki](https://wiki.hyperledger.org/display/BESU/Using+CalVer+for+Besu+Releases). 
+Hyperledger Besu is moving its versioning scheme to [CalVer](https://calver.org/) starting with the 20.10.0 (formerly 1.6.0) release. More information about the specific version of CalVer Besu is using can be found on the [wiki](https://wiki.hyperledger.org/display/BESU/Using+CalVer+for+Besu+Releases). 
 
 ## 20.10 Breaking Changes
 
 When upgrading to 20.10, ensure you've taken into account the following breaking changes.
 
-### JSON-RPC HTTP Error Codes For Valid Calls
+### JSON-RPC HTTP Error Codes For Valid Calls (\#1426(https://github.com/hyperledger/besu/pull/1426))
 
 Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC requests that completed in an error, regardless of the kind of error.  These responses could include a complete JSON-RPC response with an error field.
 
