@@ -31,11 +31,10 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
+public class EthHashBlockCreator extends AbstractBlockCreator {
 
   private final EthHashSolver nonceSolver;
 
@@ -43,11 +42,12 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<Void> protocolContext,
-      final ProtocolSchedule<Void> protocolSchedule,
-      final Function<Long, Long> gasLimitCalculator,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final GasLimitCalculator gasLimitCalculator,
       final EthHashSolver nonceSolver,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         coinbase,
@@ -58,6 +58,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
         gasLimitCalculator,
         minTransactionGasPrice,
         coinbase,
+        minBlockOccupancyRatio,
         parentHeader);
 
     this.nonceSolver = nonceSolver;

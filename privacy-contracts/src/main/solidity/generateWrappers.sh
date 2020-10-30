@@ -22,4 +22,5 @@ for target in ${targets}; do
         -o ../java \
         -p org.hyperledger.besu.privacy.contracts.generated
 
+    solc --bin-runtime --overwrite -o . ./${target}.sol
 done

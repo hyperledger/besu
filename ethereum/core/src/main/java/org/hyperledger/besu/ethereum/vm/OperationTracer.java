@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import java.util.Optional;
 
@@ -23,21 +23,18 @@ import org.apache.tuweni.bytes.Bytes;
 
 public interface OperationTracer {
 
-  OperationTracer NO_TRACING =
-      ((frame, currentGasCost, executeOperation) -> executeOperation.execute());
+  OperationTracer NO_TRACING = ((frame, executeOperation) -> executeOperation.execute());
 
-  void traceExecution(
-      MessageFrame frame, Optional<Gas> currentGasCost, ExecuteOperation executeOperation)
-      throws ExceptionalHaltException;
+  void traceExecution(MessageFrame frame, ExecuteOperation executeOperation);
 
   default void tracePrecompileCall(
-      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {};
+      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {}
 
   default void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
 
   interface ExecuteOperation {
 
-    void execute() throws ExceptionalHaltException;
+    OperationResult execute();
   }
 }

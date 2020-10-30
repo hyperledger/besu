@@ -35,6 +35,9 @@ public class PrivDeletePrivacyGroupTransaction implements Transaction<String> {
       final PrivacyRequestFactory.DeletePrivacyGroupResponse result =
           node.privacy().privDeletePrivacyGroup(transactionHash).send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);

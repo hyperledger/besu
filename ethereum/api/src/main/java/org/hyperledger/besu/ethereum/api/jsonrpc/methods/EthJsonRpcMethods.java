@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitHashRate;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthUninstallFilter;
@@ -75,7 +76,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final Synchronizer synchronizer;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final FilterManager filterManager;
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
@@ -84,7 +85,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
@@ -154,6 +155,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetWork(miningCoordinator),
         new EthSubmitWork(miningCoordinator),
         new EthHashrate(miningCoordinator),
+        new EthSubmitHashRate(miningCoordinator),
         new EthChainId(protocolSchedule.getChainId()));
   }
 }

@@ -16,6 +16,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,23 +61,8 @@ public class LogWithMetadata extends Log
       final Hash transactionHash,
       final int transactionIndex,
       final boolean removed) {
-
-    final List<LogWithMetadata> logs = new ArrayList<>();
-    for (int logIndex = 0; logIndex < receipt.getLogs().size(); ++logIndex) {
-      logs.add(
-          new LogWithMetadata(
-              logIndex,
-              number,
-              blockHash,
-              transactionHash,
-              transactionIndex,
-              receipt.getLogs().get(logIndex).getLogger(),
-              receipt.getLogs().get(logIndex).getData(),
-              receipt.getLogs().get(logIndex).getTopics(),
-              removed));
-    }
-
-    return logs;
+    return generate(
+        receipt.getLogs(), number, blockHash, transactionHash, transactionIndex, removed);
   }
 
   public static List<LogWithMetadata> generate(
@@ -92,6 +79,43 @@ public class LogWithMetadata extends Log
               removed));
     }
     return logsWithMetadata;
+  }
+
+  public static List<LogWithMetadata> generate(
+      final PrivateTransactionReceipt receipt,
+      final long number,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final int transactionIndex,
+      final boolean removed) {
+    return generate(
+        receipt.getLogs(), number, blockHash, transactionHash, transactionIndex, removed);
+  }
+
+  private static List<LogWithMetadata> generate(
+      final List<Log> receiptLogs,
+      final long number,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final int transactionIndex,
+      final boolean removed) {
+
+    final List<LogWithMetadata> logs = new ArrayList<>();
+    for (int logIndex = 0; logIndex < receiptLogs.size(); ++logIndex) {
+      logs.add(
+          new LogWithMetadata(
+              logIndex,
+              number,
+              blockHash,
+              transactionHash,
+              transactionIndex,
+              receiptLogs.get(logIndex).getLogger(),
+              receiptLogs.get(logIndex).getData(),
+              receiptLogs.get(logIndex).getTopics(),
+              removed));
+    }
+
+    return logs;
   }
 
   // The index of this log within the entire ordered list of logs associated with the block this log

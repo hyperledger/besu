@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -32,7 +33,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.MutableLocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
@@ -264,6 +265,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
     final boolean wasAdded = maintainedPeers.add(peer);
+    peerDiscoveryAgent.bond(peer);
     rlpxAgent.connect(peer);
     return wasAdded;
   }
@@ -378,6 +380,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
             .build();
 
     LOG.info("Enode URL {}", localEnode.toString());
+    LOG.info("Node address {}", Util.publicKeyToAddress(localEnode.getNodeId()));
     localNode.setEnode(localEnode);
   }
 
@@ -395,6 +398,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private NatService natService = new NatService(Optional.empty());
+    private boolean randomPeerPriority;
 
     private MetricsSystem metricsSystem;
 
@@ -406,7 +410,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private P2PNetwork doBuild() {
       // Set up permissions
       // Fold peer reputation into permissions
-      final PeerPermissionsBlacklist misbehavingPeers = PeerPermissionsBlacklist.create(500);
+      final PeerPermissionsDenylist misbehavingPeers = PeerPermissionsDenylist.create(500);
       final PeerReputationManager reputationManager = new PeerReputationManager(misbehavingPeers);
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
 
@@ -453,6 +457,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .peerPrivileges(peerPrivileges)
           .localNode(localNode)
           .metricsSystem(metricsSystem)
+          .randomPeerPriority(randomPeerPriority)
           .build();
     }
 
@@ -465,6 +470,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
+      return this;
+    }
+
+    public Builder randomPeerPriority(final boolean randomPeerPriority) {
+      this.randomPeerPriority = randomPeerPriority;
       return this;
     }
 

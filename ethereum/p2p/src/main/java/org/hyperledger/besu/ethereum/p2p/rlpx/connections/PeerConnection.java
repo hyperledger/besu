@@ -37,7 +37,11 @@ public interface PeerConnection {
    */
   void send(Capability capability, MessageData message) throws PeerNotConnected;
 
-  /** @return a list of shared capabilities between this node and the connected peer */
+  /**
+   * Agreed capabilities between us and the peer.
+   *
+   * @return a list of shared capabilities between this node and the connected peer
+   */
   Set<Capability> getAgreedCapabilities();
 
   /**
@@ -68,7 +72,11 @@ public interface PeerConnection {
     send(capability(protocol), message);
   }
 
-  /** @return A representation of the remote peer this node is connected to. */
+  /**
+   * Data about the peer on the other side of this connection.
+   *
+   * @return A representation of the remote peer this node is connected to.
+   */
   Peer getPeer();
 
   /**
@@ -93,7 +101,11 @@ public interface PeerConnection {
    */
   void disconnect(DisconnectReason reason);
 
-  /** @return True if the peer is disconnected */
+  /**
+   * Has this connection been disconnected.
+   *
+   * @return True if the peer is disconnected
+   */
   boolean isDisconnected();
 
   InetSocketAddress getLocalAddress();

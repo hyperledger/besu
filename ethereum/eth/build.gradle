@@ -29,7 +29,7 @@ jar {
 
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
-
+  implementation project(':config')
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:permissioning')
@@ -45,12 +45,17 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 
+  annotationProcessor "org.immutables:value"
+  implementation "org.immutables:value-annotations"
+
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(':crypto')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:mock-p2p')
+  testImplementation project(':ethereum:referencetests')
   testImplementation project(path: ':metrics:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 

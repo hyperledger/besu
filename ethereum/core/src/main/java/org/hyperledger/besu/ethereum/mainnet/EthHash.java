@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -23,6 +24,7 @@ import java.nio.ByteOrder;
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -178,18 +180,56 @@ public final class EthHash {
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
+    if (header.getBaseFee().isPresent()) {
+      ExperimentalEIPs.eip1559MustBeEnabled();
+      out.writeLongScalar(header.getBaseFee().get());
+    }
     out.endList();
     return DirectAcyclicGraphSeed.KECCAK_256.get().digest(out.encoded().toArray());
   }
 
   /**
-   * Calculates the EthHash Epoch for a given block number.
+   * Calculates the EthHash Epoch for a given block number with the default epoch length.
    *
    * @param block Block Number
    * @return EthHash Epoch
    */
   public static long epoch(final long block) {
-    return Long.divideUnsigned(block, EPOCH_LENGTH);
+    return epoch(block, EPOCH_LENGTH);
+  }
+
+  /**
+   * Calculates the EthHash Epoch for a given block number.
+   *
+   * @param block BLock Number
+   * @param epochLength The epoch length
+   * @return EthHash Epoch
+   */
+  public static long epoch(final long block, final long epochLength) {
+    return Long.divideUnsigned(block, epochLength);
+  }
+
+  /**
+   * Returns a function that returns different epoch lengths on either side of activation block.
+   *
+   * @param activationBlock the block that the length changes
+   * @param oldLength the length prior to the activation block
+   * @param newLength the length on and after the activation block
+   * @return epoch length
+   */
+  public static Function<Long, Long> changingEpoch(
+      final long activationBlock, final long oldLength, final long newLength) {
+    return block -> block < activationBlock ? epoch(block, oldLength) : epoch(block, newLength);
+  }
+
+  /**
+   * Returns a function that returns the ECIP-1099 epoch formula.
+   *
+   * @param activationBlock the block that the length changes
+   * @return epoch length
+   */
+  public static Function<Long, Long> ecip1099Epoch(final long activationBlock) {
+    return changingEpoch(activationBlock, EPOCH_LENGTH, EPOCH_LENGTH * 2);
   }
 
   /**

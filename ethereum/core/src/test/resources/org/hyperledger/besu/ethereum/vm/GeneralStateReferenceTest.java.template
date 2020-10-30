@@ -3,7 +3,7 @@ package org.hyperledger.besu.ethereum.vm.generalstate;
 import static org.hyperledger.besu.ethereum.vm.GeneralStateReferenceTestTools.executeTest;
 import static org.hyperledger.besu.ethereum.vm.GeneralStateReferenceTestTools.generateTestParametersForConfig;
 
-import org.hyperledger.besu.ethereum.vm.GeneralStateTestCaseEipSpec;
+import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
 
 import java.util.Collection;
 
@@ -25,16 +25,14 @@ public class %%TESTS_NAME%% {
     return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH);
   }
 
-  private final String name;
   private final GeneralStateTestCaseEipSpec spec;
 
   public %%TESTS_NAME%%(
       final String name,
       final GeneralStateTestCaseEipSpec spec,
       final boolean runTest) {
-    this.name = name;
     this.spec = spec;
-    assumeTrue("Test was blacklisted", runTest);
+    assumeTrue("Test " + name + " was ignored", runTest);
   }
 
   @Test

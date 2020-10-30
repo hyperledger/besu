@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,13 +34,15 @@ public class GraphQLConfiguration {
   private int port;
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
-  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
+  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   public static GraphQLConfiguration createDefault() {
     final GraphQLConfiguration config = new GraphQLConfiguration();
     config.setEnabled(false);
     config.setPort(DEFAULT_GRAPHQL_HTTP_PORT);
     config.setHost(DEFAULT_GRAPHQL_HTTP_HOST);
+    config.setHttpTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     return config;
   }
 
@@ -77,13 +81,21 @@ public class GraphQLConfiguration {
     this.corsAllowedDomains = corsAllowedDomains;
   }
 
-  Collection<String> getHostsWhitelist() {
-    return Collections.unmodifiableCollection(this.hostsWhitelist);
+  Collection<String> getHostsAllowlist() {
+    return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
-  public void setHostsWhitelist(final List<String> hostsWhitelist) {
-    checkNotNull(hostsWhitelist);
-    this.hostsWhitelist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsAllowlist) {
+    checkNotNull(hostsAllowlist);
+    this.hostsAllowlist = hostsAllowlist;
+  }
+
+  public Long getHttpTimeoutSec() {
+    return httpTimeoutSec;
+  }
+
+  public void setHttpTimeoutSec(final long httpTimeoutSec) {
+    this.httpTimeoutSec = httpTimeoutSec;
   }
 
   @Override
@@ -93,7 +105,8 @@ public class GraphQLConfiguration {
         .add("port", port)
         .add("host", host)
         .add("corsAllowedDomains", corsAllowedDomains)
-        .add("hostsWhitelist", hostsWhitelist)
+        .add("hostsAllowlist", hostsAllowlist)
+        .add("httpTimeoutSec", httpTimeoutSec)
         .toString();
   }
 
@@ -110,11 +123,11 @@ public class GraphQLConfiguration {
         && port == that.port
         && Objects.equals(host, that.host)
         && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
-        && Objects.equals(hostsWhitelist, that.hostsWhitelist);
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsWhitelist);
+    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsAllowlist);
   }
 }

@@ -24,17 +24,22 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
+import java.util.function.Function;
+
+public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
+
+  private Function<Long, Long> epochCalculator = EthHash::epoch;
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
-      final ProtocolSchedule<Void> protocolSchedule,
-      final ProtocolContext<Void> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final SyncState syncState,
@@ -49,10 +54,16 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 clock),
-            gasLimitCalculator);
+            gasLimitCalculator,
+            epochCalculator);
 
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);
+        new EthHashMiningCoordinator(
+            protocolContext.getBlockchain(),
+            executor,
+            syncState,
+            miningParameters.getRemoteSealersLimit(),
+            miningParameters.getRemoteSealersTimeToLive());
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     miningCoordinator.setStratumMiningEnabled(miningParameters.isStratumMiningEnabled());
     if (miningParameters.isMiningEnabled()) {
@@ -74,10 +85,18 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
   }
 
   @Override
-  protected ProtocolSchedule<Void> createProtocolSchedule() {
+  protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled);
+  }
+
+  @Override
+  protected void prepForBuild() {
+    genesisConfig
+        .getConfigOptions()
+        .getThanosBlockNumber()
+        .ifPresent(activationBlock -> epochCalculator = EthHash.ecip1099Epoch(activationBlock));
   }
 }

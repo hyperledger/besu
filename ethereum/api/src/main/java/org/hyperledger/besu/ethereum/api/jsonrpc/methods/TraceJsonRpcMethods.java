@@ -30,10 +30,10 @@ import java.util.Map;
 public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   TraceJsonRpcMethods(
-      final BlockchainQueries blockchainQueries, final ProtocolSchedule<?> protocolSchedule) {
+      final BlockchainQueries blockchainQueries, final ProtocolSchedule protocolSchedule) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
   }

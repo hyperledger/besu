@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibft;
 
 import java.util.LinkedHashMap;
-import java.util.Map.Entry;
+import java.util.Map;
 
 /**
  * Map that is limited to a specified size and will evict oldest entries when the size limit is
@@ -29,7 +29,7 @@ public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
   }
 
   @Override
-  protected boolean removeEldestEntry(final Entry<K, V> ignored) {
+  protected boolean removeEldestEntry(final Map.Entry<K, V> ignored) {
     return size() > maxEntries;
   }
 }

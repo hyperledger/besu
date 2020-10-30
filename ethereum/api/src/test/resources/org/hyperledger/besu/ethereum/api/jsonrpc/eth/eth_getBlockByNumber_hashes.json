@@ -14,6 +14,7 @@
     "result": {
       "number": "0x10",
       "hash": "0x1878c6f27178250f3d55186a2887b076936599f307d96dabcf331b2ff0a38f0c",
+      "mixHash": "0xa358a5b5e5faed469d9603e454ace5764cc6da652f22eed5318b40982973d822",
       "parentHash": "0x9dcd5e20cc30e48e3635ac3a1c398c2f45ee818fcbc232110878ddf0e936e7ea",
       "nonce": "0xdfc50ac1134d764f",
       "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",

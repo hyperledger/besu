@@ -50,7 +50,11 @@ public interface Blockchain {
    */
   Hash getChainHeadHash();
 
-  /** @return the header for the current chain head */
+  /**
+   * Returns the header for the current chain head.
+   *
+   * @return the header for the current chain head
+   */
   default BlockHeader getChainHeadHeader() {
     return getBlockHeader(getChainHeadHash())
         .orElseThrow(() -> new IllegalStateException("Missing chain head header."));
@@ -171,6 +175,8 @@ public interface Blockchain {
   Optional<Transaction> getTransactionByHash(Hash transactionHash);
 
   /**
+   * Returns the transaction location associated with the corresponding hash.
+   *
    * @param transactionHash A transaction hash.
    * @return The transaction location associated with the corresponding hash.
    */
@@ -196,7 +202,7 @@ public interface Blockchain {
    * @return the observer ID that can be used to remove it later.
    */
   default long observeLogs(final Consumer<LogWithMetadata> logObserver) {
-    return observeBlockAdded(((event, __) -> event.getLogsWithMetadata().forEach(logObserver)));
+    return observeBlockAdded((event -> event.getLogsWithMetadata().forEach(logObserver)));
   }
 
   /**

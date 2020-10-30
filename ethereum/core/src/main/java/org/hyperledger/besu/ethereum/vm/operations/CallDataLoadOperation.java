@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
@@ -24,26 +23,22 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class CallDataLoadOperation extends AbstractOperation {
+public class CallDataLoadOperation extends AbstractFixedCostOperation {
 
   public CallDataLoadOperation(final GasCalculator gasCalculator) {
-    super(0x35, "CALLDATALOAD", 1, 1, false, 1, gasCalculator);
+    super(
+        0x35, "CALLDATALOAD", 1, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final UInt256 startWord = UInt256.fromBytes(frame.popStackItem());
 
     // If the start index doesn't fit a int, it comes after anything in data, and so the returned
     // word should be zero.
     if (!startWord.fitsInt()) {
       frame.pushStackItem(Bytes32.ZERO);
-      return;
+      return successResponse;
     }
 
     final int offset = startWord.intValue();
@@ -54,5 +49,7 @@ public class CallDataLoadOperation extends AbstractOperation {
       toCopy.copyTo(res, 0);
     }
     frame.pushStackItem(res);
+
+    return successResponse;
   }
 }

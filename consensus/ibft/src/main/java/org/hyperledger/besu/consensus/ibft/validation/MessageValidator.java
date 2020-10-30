@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -37,15 +36,15 @@ public class MessageValidator {
 
   private final SignedDataValidator signedDataValidator;
   private final ProposalBlockConsistencyValidator proposalConsistencyValidator;
-  private final BlockValidator<IbftContext> blockValidator;
-  private final ProtocolContext<IbftContext> protocolContext;
+  private final BlockValidator blockValidator;
+  private final ProtocolContext protocolContext;
   private final RoundChangeCertificateValidator roundChangeCertificateValidator;
 
   public MessageValidator(
       final SignedDataValidator signedDataValidator,
       final ProposalBlockConsistencyValidator proposalConsistencyValidator,
-      final BlockValidator<IbftContext> blockValidator,
-      final ProtocolContext<IbftContext> protocolContext,
+      final BlockValidator blockValidator,
+      final ProtocolContext protocolContext,
       final RoundChangeCertificateValidator roundChangeCertificateValidator) {
     this.signedDataValidator = signedDataValidator;
     this.proposalConsistencyValidator = proposalConsistencyValidator;

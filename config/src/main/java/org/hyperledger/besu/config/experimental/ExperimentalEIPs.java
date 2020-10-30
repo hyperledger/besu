@@ -21,10 +21,47 @@ import picocli.CommandLine.Option;
  * EIPs.
  */
 public class ExperimentalEIPs {
+  // To make it easier for tests to reset the value to default
+  public static final boolean EIP1559_ENABLED_DEFAULT_VALUE = false;
+
   @Option(
       hidden = true,
       names = {"--Xeip1559-enabled"},
       description = "Enable experimental EIP-1559 fee market change (default: ${DEFAULT-VALUE})",
       arity = "1")
-  public static boolean eip1559Enabled = false;
+  public static boolean eip1559Enabled = EIP1559_ENABLED_DEFAULT_VALUE;
+
+  // To make it easier for tests to reset the value to default
+  public static final boolean BERLIN_ENABLED_DEFAULT_VALUE = false;
+
+  @Option(
+      hidden = true,
+      names = {"--Xberlin-enabled"},
+      description = "Enable non-finalized Berlin features (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  public static boolean berlinEnabled = BERLIN_ENABLED_DEFAULT_VALUE;
+
+  public static void eip1559MustBeEnabled() {
+    if (!eip1559Enabled) {
+      throw new RuntimeException("EIP-1559 feature flag must be enabled --Xeip1559-enabled");
+    }
+  }
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-basefee-max-change-denominator"},
+      arity = "1")
+  public static Long basefeeMaxChangeDenominator = 8L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-initial-base-fee"},
+      arity = "1")
+  public static Long initialBasefee = 1000000000L;
+
+  @Option(
+      hidden = true,
+      names = {"--Xeip1559-slack-coefficient"},
+      arity = "1")
+  public static Long slackCoefficient = 2L;
 }

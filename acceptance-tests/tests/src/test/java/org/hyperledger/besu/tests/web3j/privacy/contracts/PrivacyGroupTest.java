@@ -16,16 +16,18 @@ package org.hyperledger.besu.tests.web3j.privacy.contracts;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.privacy.contracts.generated.PrivacyGroup;
+import org.hyperledger.besu.privacy.contracts.generated.DefaultOnChainPrivacyGroupManagementContract;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.utils.Base64String;
 
@@ -38,14 +40,13 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
       Base64String.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
   private final Base64String thirdParticipant =
       Base64String.wrap("Jo2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
-  private PrivacyGroup privacyGroup;
+  private DefaultOnChainPrivacyGroupManagementContract defaultPrivacyGroupManagementContract;
 
-  private static final String RAW_FIRST_PARTICIPANT =
-      "0x0b0235be035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a";
+  private static final String RAW_FIRST_PARTICIPANT = "0x5aa68ac0";
   private static final String RAW_ADD_PARTICIPANT =
-      "0xf744b089035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000012a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
+      "0xb4926e25000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000012a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
   private static final String RAW_REMOVE_PARTICIPANT =
-      "0x61544c91035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a2a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
+      "0xfd0177972a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
   private static final String RAW_LOCK = "0xf83d08ba";
   private static final String RAW_UNLOCK = "0xa69df4b5";
   private static final String RAW_CAN_EXECUTE = "0x78b90337";
@@ -57,42 +58,52 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("node");
     cluster.start(minerNode);
-    privacyGroup = minerNode.execute(contractTransactions.createSmartContract(PrivacyGroup.class));
+    defaultPrivacyGroupManagementContract =
+        minerNode.execute(
+            contractTransactions.createSmartContract(
+                DefaultOnChainPrivacyGroupManagementContract.class));
   }
 
   @Test
   public void rlp() throws Exception {
     final String contractAddress = "0x42699a7612a82f1d9c36148af9c77354759b210b";
-    assertThat(privacyGroup.isValid()).isEqualTo(true);
-    contractVerifier.validTransactionReceipt(contractAddress).verify(privacyGroup);
+    assertThat(defaultPrivacyGroupManagementContract.isValid()).isEqualTo(true);
+    contractVerifier
+        .validTransactionReceipt(contractAddress)
+        .verify(defaultPrivacyGroupManagementContract);
     // 0x0b0235be
     assertThat(RAW_FIRST_PARTICIPANT)
-        .isEqualTo(privacyGroup.getParticipants(firstParticipant.raw()).encodeFunctionCall());
+        .isEqualTo(defaultPrivacyGroupManagementContract.getParticipants().encodeFunctionCall());
     // 0xf744b089
     assertThat(RAW_ADD_PARTICIPANT)
         .isEqualTo(
-            privacyGroup
-                .addParticipants(
-                    firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
+            defaultPrivacyGroupManagementContract
+                .addParticipants(Collections.singletonList(secondParticipant.raw()))
                 .encodeFunctionCall());
     // 0xf744b089
     assertThat(RAW_REMOVE_PARTICIPANT)
         .isEqualTo(
-            privacyGroup
-                .removeParticipant(firstParticipant.raw(), secondParticipant.raw())
+            defaultPrivacyGroupManagementContract
+                .removeParticipant(secondParticipant.raw())
                 .encodeFunctionCall());
-    assertThat(RAW_LOCK).isEqualTo(privacyGroup.lock().encodeFunctionCall());
-    assertThat(RAW_UNLOCK).isEqualTo(privacyGroup.unlock().encodeFunctionCall());
-    assertThat(RAW_CAN_EXECUTE).isEqualTo(privacyGroup.canExecute().encodeFunctionCall());
-    assertThat(RAW_GET_VERSION).isEqualTo(privacyGroup.getVersion().encodeFunctionCall());
+    assertThat(RAW_LOCK)
+        .isEqualTo(defaultPrivacyGroupManagementContract.lock().encodeFunctionCall());
+    assertThat(RAW_UNLOCK)
+        .isEqualTo(defaultPrivacyGroupManagementContract.unlock().encodeFunctionCall());
+    assertThat(RAW_CAN_EXECUTE)
+        .isEqualTo(defaultPrivacyGroupManagementContract.canExecute().encodeFunctionCall());
+    assertThat(RAW_GET_VERSION)
+        .isEqualTo(defaultPrivacyGroupManagementContract.getVersion().encodeFunctionCall());
   }
 
   @Test
   public void canInitiallyAddParticipants() throws Exception {
-    privacyGroup
-        .addParticipants(firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
-        .send();
-    final List<byte[]> participants = privacyGroup.getParticipants(firstParticipant.raw()).send();
+    final RemoteFunctionCall<TransactionReceipt> transactionReceiptRemoteFunctionCall =
+        defaultPrivacyGroupManagementContract.addParticipants(
+            Arrays.asList(firstParticipant.raw(), secondParticipant.raw()));
+    transactionReceiptRemoteFunctionCall.send();
+    final List<byte[]> participants =
+        defaultPrivacyGroupManagementContract.getParticipants().send();
     assertThat(participants.size()).isEqualTo(2);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
@@ -100,68 +111,80 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
 
   @Test
   public void canRemoveParticipant() throws Exception {
-    privacyGroup
-        .addParticipants(firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Arrays.asList(firstParticipant.raw(), secondParticipant.raw()))
         .send();
-    final List<byte[]> participants = privacyGroup.getParticipants(firstParticipant.raw()).send();
+    final List<byte[]> participants =
+        defaultPrivacyGroupManagementContract.getParticipants().send();
     assertThat(participants.size()).isEqualTo(2);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
-    privacyGroup.removeParticipant(firstParticipant.raw(), secondParticipant.raw()).send();
+    defaultPrivacyGroupManagementContract.removeParticipant(secondParticipant.raw()).send();
     final List<byte[]> participantsAfterRemove =
-        privacyGroup.getParticipants(firstParticipant.raw()).send();
+        defaultPrivacyGroupManagementContract.getParticipants().send();
     assertThat(participantsAfterRemove.size()).isEqualTo(1);
     assertThat(firstParticipant.raw()).isEqualTo(participantsAfterRemove.get(0));
   }
 
   @Test(expected = TransactionException.class)
   public void cannotAddToContractWhenNotLocked() throws Exception {
-    privacyGroup
-        .addParticipants(firstParticipant.raw(), Collections.singletonList(thirdParticipant.raw()))
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Collections.singletonList(thirdParticipant.raw()))
         .send();
 
-    privacyGroup
-        .addParticipants(firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Collections.singletonList(secondParticipant.raw()))
         .send();
   }
 
   @Test
-  public void ensureContractIsNotLockedAfterDeploy() throws Exception {
-    privacyGroup.unlock().send();
-    assertThat(privacyGroup.canExecute().send()).isTrue();
+  public void ensureContractIsLockedAfterDeploy() throws Exception {
+    assertThat(defaultPrivacyGroupManagementContract.canExecute().send()).isFalse();
+  }
+
+  @Test
+  public void ensurePrivacyGroupVersionIsAlwaysDifferent() throws Exception {
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Collections.singletonList(secondParticipant.raw()))
+        .send();
+    final byte[] version1 = defaultPrivacyGroupManagementContract.getVersion().send();
+    defaultPrivacyGroupManagementContract.lock().send();
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Collections.singletonList(thirdParticipant.raw()))
+        .send();
+    final byte[] version2 = defaultPrivacyGroupManagementContract.getVersion().send();
+    defaultPrivacyGroupManagementContract.removeParticipant(secondParticipant.raw()).send();
+    final byte[] version3 = defaultPrivacyGroupManagementContract.getVersion().send();
+
+    assertThat(version1).isNotEqualTo(version2);
+    assertThat(version1).isNotEqualTo(version3);
+    assertThat(version2).isNotEqualTo(version3);
   }
 
   @Test
   public void canAddTwiceToContractWhenCallLock() throws Exception {
-    privacyGroup
-        .addParticipants(firstParticipant.raw(), Collections.singletonList(thirdParticipant.raw()))
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Arrays.asList(firstParticipant.raw(), thirdParticipant.raw()))
         .send();
-    privacyGroup.lock().send();
-    privacyGroup
-        .addParticipants(firstParticipant.raw(), Collections.singletonList(secondParticipant.raw()))
+    defaultPrivacyGroupManagementContract.lock().send();
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Collections.singletonList(secondParticipant.raw()))
         .send();
-    final BigInteger privacyGroupVersion = privacyGroup.getVersion().send();
-    assertThat(privacyGroupVersion).isEqualTo(BigInteger.TWO);
 
-    final List<byte[]> participants = privacyGroup.getParticipants(firstParticipant.raw()).send();
+    final List<byte[]> participants =
+        defaultPrivacyGroupManagementContract.getParticipants().send();
     assertThat(participants.size()).isEqualTo(3);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(thirdParticipant.raw()).isEqualTo(participants.get(1));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(2));
   }
 
-  @Test
-  public void versionStartsAtZero() throws Exception {
-    final BigInteger privacyGroupVersion = privacyGroup.getVersion().send();
-    assertThat(privacyGroupVersion).isEqualTo(BigInteger.ZERO);
-  }
-
   @Test(expected = TransactionException.class)
   public void cannotLockTwice() throws Exception {
-    privacyGroup
-        .addParticipants(firstParticipant.raw(), Collections.singletonList(thirdParticipant.raw()))
+    defaultPrivacyGroupManagementContract
+        .addParticipants(Collections.singletonList(thirdParticipant.raw()))
         .send();
-    privacyGroup.lock().send();
-    privacyGroup.lock().send();
+    defaultPrivacyGroupManagementContract.lock().send();
+    defaultPrivacyGroupManagementContract.lock().send();
   }
 }

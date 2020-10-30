@@ -144,16 +144,16 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
                 bob.getEnclaveKey()));
 
     // alice gets receipt from charlie's interaction
-    final PrivateTransactionReceipt firstExpectedReceipt =
+    final PrivateTransactionReceipt aliceReceipt =
         alice.execute(privacyTransactions.getPrivateTransactionReceipt(firstTransactionHash));
 
     // verify bob and charlie have access to the same receipt
     bob.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
-            firstTransactionHash, firstExpectedReceipt));
+            firstTransactionHash, aliceReceipt));
     charlie.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
-            firstTransactionHash, firstExpectedReceipt));
+            firstTransactionHash, aliceReceipt));
 
     // alice deploys second contract
     final String secondDeployedAddress = "0xebf56429e6500e84442467292183d4d621359838";

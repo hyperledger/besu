@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
@@ -21,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,11 +38,35 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   static final EthHasher HASHER = new EthHasher.Light();
 
+  private final Function<Long, Long> epochCalculator;
+  private final boolean includeBaseFee;
+
+  public ProofOfWorkValidationRule(final Function<Long, Long> epochCalculator) {
+    this(epochCalculator, false);
+  }
+
+  public ProofOfWorkValidationRule(
+      final Function<Long, Long> epochCalculator, final boolean includeBaseFee) {
+    this.epochCalculator = epochCalculator;
+    this.includeBaseFee = includeBaseFee;
+  }
+
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
+    if (includeBaseFee) {
+      if (!ExperimentalEIPs.eip1559Enabled) {
+        LOG.warn("Invalid block header: EIP-1559 feature flag must be enabled --Xeip1559-enabled");
+        return false;
+      } else if (header.getBaseFee().isEmpty()) {
+        LOG.warn("Invalid block header: missing mandatory base fee.");
+        return false;
+      }
+    }
+
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = hashHeader(header);
-    HASHER.hash(hashBuffer, header.getNonce(), header.getNumber(), headerHash.toArray());
+    HASHER.hash(
+        hashBuffer, header.getNonce(), header.getNumber(), epochCalculator, headerHash.toArray());
 
     if (header.getDifficulty().isZero()) {
       LOG.trace("Rejecting header because difficulty is 0");
@@ -95,6 +121,10 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
+    if (includeBaseFee && header.getBaseFee().isPresent()) {
+      ExperimentalEIPs.eip1559MustBeEnabled();
+      out.writeLongScalar(header.getBaseFee().get());
+    }
     out.endList();
 
     return Hash.hash(out.encoded());

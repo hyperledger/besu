@@ -62,7 +62,7 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
   private final Bytes32 nonce;
   private final boolean token;
 
-  protected InitiatorHandshakeMessageV1(
+  InitiatorHandshakeMessageV1(
       final SECP256K1.PublicKey pubKey,
       final SECP256K1.Signature signature,
       final SECP256K1.PublicKey ephPubKey,

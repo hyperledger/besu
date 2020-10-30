@@ -31,11 +31,11 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class ProposerSelectorTest {
@@ -69,9 +69,9 @@ public class ProposerSelectorTest {
    * @param countHigher The number of validators which have a lower address than localAddr
    * @return A sorted list of validators which matches parameters (including the localAddr).
    */
-  private LinkedList<Address> createValidatorList(
+  private List<Address> createValidatorList(
       final Address localAddr, final int countLower, final int countHigher) {
-    final LinkedList<Address> result = Lists.newLinkedList();
+    final List<Address> result = new ArrayList<>();
 
     // Note: Order of this list is irrelevant, is sorted by value later.
     result.add(localAddr);
@@ -93,7 +93,7 @@ public class ProposerSelectorTest {
     final long PREV_BLOCK_NUMBER = 2;
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
 
-    final LinkedList<Address> validatorList = createValidatorList(localAddr, 0, 4);
+    final List<Address> validatorList = createValidatorList(localAddr, 0, 4);
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
@@ -112,7 +112,7 @@ public class ProposerSelectorTest {
     final long PREV_BLOCK_NUMBER = 2;
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
 
-    final LinkedList<Address> validatorList = createValidatorList(localAddr, 4, 0);
+    final List<Address> validatorList = createValidatorList(localAddr, 4, 0);
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
@@ -132,7 +132,7 @@ public class ProposerSelectorTest {
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
-    final LinkedList<Address> validatorList = createValidatorList(localAddr, 4, 0);
+    final List<Address> validatorList = createValidatorList(localAddr, 4, 0);
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
@@ -150,7 +150,7 @@ public class ProposerSelectorTest {
 
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
 
-    final LinkedList<Address> validatorList = createValidatorList(localAddr, 4, 0);
+    final List<Address> validatorList = createValidatorList(localAddr, 4, 0);
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
@@ -174,7 +174,7 @@ public class ProposerSelectorTest {
 
     // LocalAddr will be in index 2 - the next proposer will also be in 2 (as prev proposer is
     // removed)
-    final LinkedList<Address> validatorList = createValidatorList(localAddr, 2, 2);
+    final List<Address> validatorList = createValidatorList(localAddr, 2, 2);
     validatorList.remove(localAddr);
 
     // Note the signer of the Previous block was not included.
@@ -196,7 +196,7 @@ public class ProposerSelectorTest {
 
     // LocalAddr will be in index 2 - the next proposer will also be in 2 (as prev proposer is
     // removed)
-    final LinkedList<Address> validatorList = createValidatorList(localAddr, 2, 2);
+    final List<Address> validatorList = createValidatorList(localAddr, 2, 2);
     validatorList.remove(localAddr);
 
     final Blockchain blockchain =
@@ -217,7 +217,7 @@ public class ProposerSelectorTest {
 
     // LocalAddr will be in index 2 - the next proposer will also be in 2 (as prev proposer is
     // removed)
-    final LinkedList<Address> validatorList = createValidatorList(localAddr, 4, 0);
+    final List<Address> validatorList = createValidatorList(localAddr, 4, 0);
     validatorList.remove(localAddr);
 
     // Note the signer of the Previous block was not included.

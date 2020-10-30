@@ -487,6 +487,44 @@
           "data": "0x0000000000000000000000000150000000000000"
         }
       ]
+    },
+    {
+      "number": "0x1C",
+      "transactions": [
+        {
+          "comment": "Self destruct called in constructor with balance being returned to sender (from field)",
+          "secretKey": "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "data": "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe"
+        }
+      ]
+    },
+    {
+      "number": "0x1D",
+      "transactions" : [
+        {
+          "comment": "Stack underflow during contract creation",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "data" : "0x6000f1",
+          "gasLimit" : "0x011940",
+          "gasPrice" : "0x01"
+        }
+      ]
+    },
+    {
+      "number": "0x1E",
+      "transactions" : [
+        {
+          "comment": "Transaction to test refund_CallToSuicideTwice_d0g0v0_Istanbul",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "data" : "0x00000000000000000000000000000000000000000000000000000000000001f4",
+          "gasLimit" : "0x989680",
+          "gasPrice" : "0x01",
+          "to": "0160000000000000000000000000000000000000",
+          "value": "0x0a"
+        }
+      ]
     }
   ]
 }

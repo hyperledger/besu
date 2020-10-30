@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 
 import java.util.List;
 
@@ -32,22 +33,24 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
   public MainnetBlockProcessor(
       final TransactionProcessor transactionProcessor,
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+      final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final TransactionGasBudgetCalculator gasBudgetCalculator) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
-        skipZeroBlockRewards);
+        skipZeroBlockRewards,
+        gasBudgetCalculator);
   }
 
   @Override
   boolean rewardCoinbase(
       final MutableWorldState worldState,
-      final ProcessableBlockHeader header,
+      final BlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards) {
     if (skipZeroBlockRewards && blockReward.isZero()) {
@@ -56,16 +59,18 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
     final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
+    final Address miningBeneficiary = getMiningBeneficiaryCalculator().calculateBeneficiary(header);
+    final MutableAccount miningBeneficiaryAccount =
+        updater.getOrCreate(miningBeneficiary).getMutable();
 
-    coinbase.incrementBalance(coinbaseReward);
+    miningBeneficiaryAccount.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
-        LOG.warn(
-            "Block processing error: ommer block number {} more than {} generations current block number {}",
+        LOG.info(
+            "Block processing error: ommer block number {} more than {} generations. Block {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,
-            header.getNumber());
+            header.getHash().toHexString());
         return false;
       }
 

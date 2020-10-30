@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
@@ -47,12 +48,19 @@ public class StratumServer implements EthHashObserver {
   private NetServer server;
 
   public StratumServer(
-      final Vertx vertx, final int port, final String networkInterface, final String extraNonce) {
+      final Vertx vertx,
+      final MiningCoordinator miningCoordinator,
+      final int port,
+      final String networkInterface,
+      final String extraNonce) {
     this.vertx = vertx;
     this.port = port;
     this.networkInterface = networkInterface;
     protocols =
-        new StratumProtocol[] {new Stratum1Protocol(extraNonce), new Stratum1EthProxyProtocol()};
+        new StratumProtocol[] {
+          new Stratum1Protocol(extraNonce, miningCoordinator),
+          new Stratum1EthProxyProtocol(miningCoordinator)
+        };
   }
 
   public CompletableFuture<?> start() {

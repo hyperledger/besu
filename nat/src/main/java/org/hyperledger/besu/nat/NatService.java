@@ -31,14 +31,22 @@ import org.apache.logging.log4j.Logger;
 /** Utility class to help interacting with various {@link NatManager}. */
 public class NatService {
 
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
+
+  private static final boolean DEFAULT_FALLBACK_STATUS = true;
 
   private NatMethod currentNatMethod;
   private Optional<NatManager> currentNatManager;
+  private final boolean fallbackEnabled;
 
-  public NatService(final Optional<NatManager> natManager) {
+  public NatService(final Optional<NatManager> natManager, final boolean fallbackEnabled) {
     this.currentNatMethod = retrieveNatMethod(natManager);
     this.currentNatManager = natManager;
+    this.fallbackEnabled = fallbackEnabled;
+  }
+
+  public NatService(final Optional<NatManager> natManager) {
+    this(natManager, DEFAULT_FALLBACK_STATUS);
   }
 
   /**
@@ -87,8 +95,15 @@ public class NatService {
       try {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
-        LOG.debug("Caught exception while trying to start the manager or service.", e);
-        disableNatManager();
+        LOG.debug(
+            "Nat manager failed to configure itself automatically due to the following reason : {}. {}",
+            e.getMessage(),
+            (fallbackEnabled) ? "NONE mode will be used" : "");
+        if (fallbackEnabled) {
+          disableNatManager();
+        } else {
+          throw new IllegalStateException(e.getMessage(), e);
+        }
       }
     } else {
       LOG.info("No NAT environment detected so no service could be started");
@@ -129,10 +144,10 @@ public class NatService {
             .orElseThrow();
 
       } catch (Exception e) {
+        LOG.debug("Caught exception while trying to query NAT external IP address (ignoring)", e);
         LOG.warn(
-            "Caught exception while trying to query NAT external IP address (ignoring). Using the fallback value : {} ",
-            fallbackValue,
-            e);
+            "Unable to query NAT external IP address. Using the fallback value : {} ",
+            fallbackValue);
       }
     }
     return fallbackValue;
@@ -155,10 +170,9 @@ public class NatService {
                 natManager.queryLocalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .orElseThrow();
       } catch (Exception e) {
+        LOG.debug("Caught exception while trying to query NAT local IP address (ignoring)", e);
         LOG.warn(
-            "Caught exception while trying to query local IP address (ignoring). Using the fallback value : {} ",
-            fallbackValue,
-            e);
+            "Unable to query NAT local IP address. Using the fallback value : {} ", fallbackValue);
       }
     }
     return fallbackValue;
@@ -178,7 +192,8 @@ public class NatService {
         final NatManager natManager = getNatManager().orElseThrow();
         return Optional.of(natManager.getPortMapping(serviceType, networkProtocol));
       } catch (Exception e) {
-        LOG.warn("Caught exception while trying to query port mapping (ignoring): {}", e);
+        LOG.warn(
+            "Caught exception while trying to query port mapping (ignoring): {}", e.toString());
       }
     }
     return Optional.empty();
@@ -186,7 +201,6 @@ public class NatService {
 
   /** Disable the natManager */
   private void disableNatManager() {
-    LOG.warn("Unable to use NAT. Disabling NAT manager");
     currentNatMethod = NatMethod.NONE;
     currentNatManager = Optional.empty();
   }

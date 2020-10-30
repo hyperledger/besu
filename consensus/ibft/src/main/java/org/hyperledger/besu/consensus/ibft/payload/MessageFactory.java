@@ -79,7 +79,6 @@ public class MessageFactory {
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
     final Signature signature = nodeKey.sign(hashForSignature(payload));
-
     return new SignedData<>(payload, Util.publicKeyToAddress(nodeKey.getPublicKey()), signature);
   }
 

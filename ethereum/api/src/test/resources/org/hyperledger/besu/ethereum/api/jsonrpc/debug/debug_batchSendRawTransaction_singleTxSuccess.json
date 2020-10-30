@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc":"2.0",
+    "method":"debug_batchSendRawTransaction",
+    "params":[
+      "0xf868808203e882520894627306090abab3a6e1400e9345bc60c78a8bef57872386f26fc10000801ba0ac74ecfa0e9b85785f042c143ead4780931234cc9a032fce99fab1f45e0d90faa02fd17e8eb433d4ca47727653232045d4f81322619c0852d3fe8ddcfcedb66a43"   ],
+    "id":1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "index": 0,
+        "success": true
+      }
+    ]
+  },
+  "statusCode": 200
+}

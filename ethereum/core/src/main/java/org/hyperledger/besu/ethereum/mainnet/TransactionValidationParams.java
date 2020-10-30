@@ -71,7 +71,7 @@ public class TransactionValidationParams {
     return blockReplayParams;
   }
 
-  static class Builder {
+  public static class Builder {
 
     private boolean allowFutureNonce = false;
     private boolean checkOnchainPermissions = false;

@@ -34,13 +34,19 @@ dependencies {
   api 'org.bouncycastle:bcprov-jdk15on'
 
   implementation 'com.google.guava:guava'
+  implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.hyperledger.besu:secp256k1'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+}
+
+artifacts {
+  testSupportArtifacts testSupportJar
 }

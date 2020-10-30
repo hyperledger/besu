@@ -81,7 +81,7 @@ public class PermReloadPermissionsFromFileTest {
   public void whenControllerReloadFailsMethodShouldReturnError() {
     doThrow(new RuntimeException()).when(accountLocalConfigPermissioningController).reload();
     JsonRpcResponse expectedErrorResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.WHITELIST_RELOAD_ERROR);
+        new JsonRpcErrorResponse(null, JsonRpcError.ALLOWLIST_RELOAD_ERROR);
 
     JsonRpcResponse response = method.response(reloadRequest());
 

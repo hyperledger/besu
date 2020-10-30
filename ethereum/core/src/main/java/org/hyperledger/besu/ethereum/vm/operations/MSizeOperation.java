@@ -14,26 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class MSizeOperation extends AbstractOperation {
+public class MSizeOperation extends AbstractFixedCostOperation {
 
   public MSizeOperation(final GasCalculator gasCalculator) {
-    super(0x59, "MSIZE", 0, 1, false, 1, gasCalculator);
+    super(0x59, "MSIZE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     frame.pushStackItem(UInt256.valueOf(frame.memoryByteSize()).toBytes());
+
+    return successResponse;
   }
 }

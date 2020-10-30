@@ -37,7 +37,7 @@ public class TestCodeExecutor {
   private final BlockHeader blockHeader = new BlockHeaderTestFixture().number(13).buildHeader();
   private static final Address SENDER_ADDRESS = AddressHelpers.ofValue(244259721);
 
-  public TestCodeExecutor(final ProtocolSchedule<Void> protocolSchedule) {
+  public TestCodeExecutor(final ProtocolSchedule protocolSchedule) {
     fixture = ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
   }
 
@@ -46,7 +46,7 @@ public class TestCodeExecutor {
       final int accountVersion,
       final long gasLimit,
       final Consumer<MutableAccount> accountSetup) {
-    final ProtocolSpec<Void> protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
+    final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
     final WorldUpdater worldState =
         createInitialWorldState(accountSetup, fixture.getStateArchive());
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();

@@ -32,20 +32,20 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class SyncTargetManager<C> {
+public abstract class SyncTargetManager {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final SynchronizerConfiguration config;
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
-  public SyncTargetManager(
+  protected SyncTargetManager(
       final SynchronizerConfiguration config,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem) {
     this.config = config;

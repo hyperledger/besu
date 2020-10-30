@@ -41,11 +41,11 @@ public class TraceTransaction implements JsonRpcMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
 
   private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   public TraceTransaction(
       final Supplier<BlockTracer> blockTracerSupplier,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries) {
     this.blockTracerSupplier = blockTracerSupplier;
     this.blockchainQueries = blockchainQueries;
@@ -78,7 +78,8 @@ public class TraceTransaction implements JsonRpcMethod {
       return emptyResult();
     }
     final TransactionTrace transactionTrace =
-        blockTracerSupplier.get().trace(block, new DebugOperationTracer(TraceOptions.DEFAULT))
+        blockTracerSupplier.get()
+            .trace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
             .map(BlockTrace::getTransactionTraces).orElse(Collections.emptyList()).stream()
             .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
             .findFirst()
@@ -87,7 +88,7 @@ public class TraceTransaction implements JsonRpcMethod {
   }
 
   private JsonNode generateTracesFromTransactionTraceAndBlock(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block) {
     final ObjectMapper mapper = new ObjectMapper();

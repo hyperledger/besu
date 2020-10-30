@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
 import java.util.Optional;
 
@@ -70,8 +70,9 @@ public class SubscriptionRequestMapper {
   }
 
   private SubscribeRequest parseLogsRequest(final WebSocketRpcRequest request) {
-    final LogsQuery logsQuery = request.getRequiredParameter(1, LogsQuery.class);
-    return new SubscribeRequest(SubscriptionType.LOGS, logsQuery, null, request.getConnectionId());
+    final FilterParameter filterParameter = request.getRequiredParameter(1, FilterParameter.class);
+    return new SubscribeRequest(
+        SubscriptionType.LOGS, filterParameter, null, request.getConnectionId());
   }
 
   public UnsubscribeRequest mapUnsubscribeRequest(final JsonRpcRequestContext jsonRpcRequestContext)
@@ -83,7 +84,57 @@ public class SubscriptionRequestMapper {
           webSocketRpcRequestBody.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
       return new UnsubscribeRequest(subscriptionId, webSocketRpcRequestBody.getConnectionId());
     } catch (final Exception e) {
+      throw new InvalidSubscriptionRequestException("Error parsing unsubscribe request", e);
+    }
+  }
+
+  public PrivateSubscribeRequest mapPrivateSubscribeRequest(
+      final JsonRpcRequestContext jsonRpcRequestContext, final String enclavePublicKey)
+      throws InvalidSubscriptionRequestException {
+    try {
+      final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
+
+      final String privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
+      final SubscriptionType subscriptionType =
+          webSocketRpcRequestBody.getRequiredParameter(1, SubscriptionType.class);
+
+      switch (subscriptionType) {
+        case LOGS:
+          {
+            final FilterParameter filterParameter =
+                jsonRpcRequestContext.getRequiredParameter(2, FilterParameter.class);
+            return new PrivateSubscribeRequest(
+                SubscriptionType.LOGS,
+                filterParameter,
+                null,
+                webSocketRpcRequestBody.getConnectionId(),
+                privacyGroupId,
+                enclavePublicKey);
+          }
+        default:
+          throw new InvalidSubscriptionRequestException(
+              "Invalid subscribe request. Invalid private subscription type.");
+      }
+    } catch (final InvalidSubscriptionRequestException e) {
+      throw e;
+    } catch (final Exception e) {
       throw new InvalidSubscriptionRequestException("Error parsing subscribe request", e);
+    }
+  }
+
+  public PrivateUnsubscribeRequest mapPrivateUnsubscribeRequest(
+      final JsonRpcRequestContext jsonRpcRequestContext)
+      throws InvalidSubscriptionRequestException {
+    try {
+      final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
+
+      final String privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
+      final long subscriptionId =
+          webSocketRpcRequestBody.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
+      return new PrivateUnsubscribeRequest(
+          subscriptionId, webSocketRpcRequestBody.getConnectionId(), privacyGroupId);
+    } catch (final Exception e) {
+      throw new InvalidSubscriptionRequestException("Error parsing unsubscribe request", e);
     }
   }
 

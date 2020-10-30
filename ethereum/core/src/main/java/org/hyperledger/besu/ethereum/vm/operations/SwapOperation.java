@@ -14,31 +14,47 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes32;
 
-public class SwapOperation extends AbstractOperation {
+public class SwapOperation extends AbstractFixedCostOperation {
 
   private final int index;
+  protected final OperationResult underflowResponse;
 
   public SwapOperation(final int index, final GasCalculator gasCalculator) {
-    super(0x90 + index - 1, "SWAP" + index, index + 1, index + 1, false, 1, gasCalculator);
+    super(
+        0x90 + index - 1,
+        "SWAP" + index,
+        index + 1,
+        index + 1,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.getVeryLowTierGasCost());
     this.index = index;
+    this.underflowResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    // getStackItem doesn't under/overflow.  Check explicitly.
+    if (frame.stackSize() < getStackItemsConsumed()) {
+      return underflowResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     final Bytes32 tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index));
     frame.setStackItem(index, tmp);
+
+    return successResponse;
   }
 }

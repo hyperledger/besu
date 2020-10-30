@@ -14,54 +14,65 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import java.net.URI;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class LocalPermissioningConfiguration {
-  private List<URI> nodeWhitelist;
-  private List<String> accountWhitelist;
-  private boolean nodeWhitelistEnabled;
+  private List<EnodeURL> nodeAllowlist;
+  private List<String> accountAllowlist;
+  private boolean nodeAllowlistEnabled;
+  private EnodeDnsConfiguration enodeDnsConfiguration = EnodeDnsConfiguration.dnsDisabled();
   private String nodePermissioningConfigFilePath;
-  private boolean accountWhitelistEnabled;
+  private boolean accountAllowlistEnabled;
   private String accountPermissioningConfigFilePath;
 
-  public List<URI> getNodeWhitelist() {
-    return nodeWhitelist;
+  public List<EnodeURL> getNodeAllowlist() {
+    return nodeAllowlist;
   }
 
   public static LocalPermissioningConfiguration createDefault() {
     final LocalPermissioningConfiguration config = new LocalPermissioningConfiguration();
-    config.nodeWhitelist = new ArrayList<>();
-    config.accountWhitelist = new ArrayList<>();
+    config.nodeAllowlist = new ArrayList<>();
+    config.accountAllowlist = new ArrayList<>();
     return config;
   }
 
-  public void setNodeWhitelist(final Collection<URI> nodeWhitelist) {
-    if (nodeWhitelist != null) {
-      this.nodeWhitelist.addAll(nodeWhitelist);
-      this.nodeWhitelistEnabled = true;
+  public void setEnodeDnsConfiguration(final EnodeDnsConfiguration enodeDnsConfiguration) {
+    this.enodeDnsConfiguration = enodeDnsConfiguration;
+  }
+
+  public void setNodeAllowlist(final Collection<EnodeURL> nodeAllowlist) {
+    if (nodeAllowlist != null) {
+      this.nodeAllowlist.addAll(nodeAllowlist);
+      this.nodeAllowlistEnabled = true;
     }
   }
 
-  public boolean isNodeWhitelistEnabled() {
-    return nodeWhitelistEnabled;
+  public EnodeDnsConfiguration getEnodeDnsConfiguration() {
+    return enodeDnsConfiguration;
   }
 
-  public List<String> getAccountWhitelist() {
-    return accountWhitelist;
+  public boolean isNodeAllowlistEnabled() {
+    return nodeAllowlistEnabled;
   }
 
-  public void setAccountWhitelist(final Collection<String> accountWhitelist) {
-    if (accountWhitelist != null) {
-      this.accountWhitelist.addAll(accountWhitelist);
-      this.accountWhitelistEnabled = true;
+  public List<String> getAccountAllowlist() {
+    return accountAllowlist;
+  }
+
+  public void setAccountAllowlist(final Collection<String> accountAllowlist) {
+    if (accountAllowlist != null) {
+      this.accountAllowlist.addAll(accountAllowlist);
+      this.accountAllowlistEnabled = true;
     }
   }
 
-  public boolean isAccountWhitelistEnabled() {
-    return accountWhitelistEnabled;
+  public boolean isAccountAllowlistEnabled() {
+    return accountAllowlistEnabled;
   }
 
   public String getNodePermissioningConfigFilePath() {

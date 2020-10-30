@@ -21,6 +21,7 @@ import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Service provided by besu to facilitate persistent data storage.
@@ -32,6 +33,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   S getSegmentIdentifierByName(SegmentIdentifier segment);
 
   /**
+   * Get the value from the associated segment and key.
+   *
    * @param segment the segment
    * @param key Index into persistent data repository.
    * @return The value persisted at the key index.
@@ -49,7 +52,25 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   Transaction<S> startTransaction() throws StorageException;
 
-  long removeAllEntriesUnless(S segmentHandle, Predicate<byte[]> inUseCheck);
+  /**
+   * Returns a stream of all keys for the segment.
+   *
+   * @param segmentHandle The segment handle whose keys we want to stream.
+   * @return A stream of all keys in the specified segment.
+   */
+  Stream<byte[]> streamKeys(final S segmentHandle);
+
+  /**
+   * Delete the value corresponding to the given key in the given segment if a write lock can be
+   * instantly acquired on the underlying storage. Do nothing otherwise.
+   *
+   * @param segmentHandle The segment handle whose keys we want to stream.
+   * @param key The key to delete.
+   * @throws StorageException any problem encountered during the deletion attempt.
+   * @return false if the lock on the underlying storage could not be instantly acquired, true
+   *     otherwise
+   */
+  boolean tryDelete(S segmentHandle, byte[] key) throws StorageException;
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 

@@ -17,12 +17,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.LogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
 import java.util.function.Function;
 
@@ -41,11 +44,34 @@ public class SubscriptionBuilderTest {
 
   @Test
   public void shouldBuildLogsSubscriptionWhenSubscribeRequestTypeIsLogs() {
-    final LogsQuery logsQuery = logsQuery();
+    final FilterParameter filterParameter = filterParameter();
     final SubscribeRequest subscribeRequest =
-        new SubscribeRequest(SubscriptionType.LOGS, logsQuery, null, CONNECTION_ID);
+        new SubscribeRequest(SubscriptionType.LOGS, filterParameter, null, CONNECTION_ID);
     final LogsSubscription expectedSubscription =
-        new LogsSubscription(1L, CONNECTION_ID, logsQuery);
+        new LogsSubscription(1L, CONNECTION_ID, filterParameter);
+
+    final Subscription builtSubscription =
+        subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
+
+    assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
+  }
+
+  @Test
+  public void shouldBuildPrivateLogsSubscriptionWhenSubscribeRequestTypeIsPrivateLogs() {
+    final String privacyGroupId = "ZDmkMK7CyxA1F1rktItzKFTfRwApg7aWzsTtm2IOZ5Y=";
+    final String enclavePublicKey = "C1bVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+    final FilterParameter filterParameter = filterParameter();
+    final PrivateSubscribeRequest subscribeRequest =
+        new PrivateSubscribeRequest(
+            SubscriptionType.LOGS,
+            filterParameter,
+            null,
+            CONNECTION_ID,
+            privacyGroupId,
+            enclavePublicKey);
+    final PrivateLogsSubscription expectedSubscription =
+        new PrivateLogsSubscription(
+            1L, CONNECTION_ID, filterParameter, privacyGroupId, enclavePublicKey);
 
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
@@ -96,7 +122,7 @@ public class SubscriptionBuilderTest {
   public void shouldReturnLogsSubscriptionWhenMappingLogsSubscription() {
     final Function<Subscription, LogsSubscription> function =
         subscriptionBuilder.mapToSubscriptionClass(LogsSubscription.class);
-    final Subscription subscription = new LogsSubscription(1L, CONNECTION_ID, logsQuery());
+    final Subscription subscription = new LogsSubscription(1L, CONNECTION_ID, filterParameter());
 
     assertThat(function.apply(subscription)).isInstanceOf(LogsSubscription.class);
   }
@@ -147,7 +173,7 @@ public class SubscriptionBuilderTest {
             "NewBlockHeadersSubscription instance can't be mapped to type LogsSubscription");
   }
 
-  private LogsQuery logsQuery() {
-    return new LogsQuery(null, null);
+  private FilterParameter filterParameter() {
+    return new FilterParameter(BlockParameter.EARLIEST, BlockParameter.LATEST, null, null, null);
   }
 }

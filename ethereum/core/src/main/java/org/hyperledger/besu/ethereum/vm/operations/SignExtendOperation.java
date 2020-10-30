@@ -14,27 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class SignExtendOperation extends AbstractOperation {
+public class SignExtendOperation extends AbstractFixedCostOperation {
 
   public SignExtendOperation(final GasCalculator gasCalculator) {
-    super(0x0B, "SIGNEXTEND", 2, 1, false, 1, gasCalculator);
+    super(0x0B, "SIGNEXTEND", 2, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getLowTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
@@ -42,6 +36,8 @@ public class SignExtendOperation extends AbstractOperation {
     final UInt256 result = signExtend(value1, value0);
 
     frame.pushStackItem(result.toBytes());
+
+    return successResponse;
   }
 
   private static UInt256 signExtend(final UInt256 v1, final UInt256 v2) {

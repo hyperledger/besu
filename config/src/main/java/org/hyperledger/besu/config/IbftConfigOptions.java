@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.config;
 
+import java.math.BigInteger;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
 
 public class IbftConfigOptions {
 
@@ -73,6 +76,23 @@ public class IbftConfigOptions {
   public int getFutureMessagesMaxDistance() {
     return JsonUtil.getInt(
         ibftConfigRoot, "futuremessagesmaxdistance", DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
+  }
+
+  public Optional<String> getMiningBeneficiary() {
+    return JsonUtil.getString(ibftConfigRoot, "miningbeneficiary");
+  }
+
+  public BigInteger getBlockRewardWei() {
+    final Optional<String> configFileContent = JsonUtil.getString(ibftConfigRoot, "blockreward");
+
+    if (configFileContent.isEmpty()) {
+      return BigInteger.ZERO;
+    }
+    final String weiStr = configFileContent.get();
+    if (weiStr.startsWith("0x")) {
+      return new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe());
+    }
+    return new BigInteger(weiStr);
   }
 
   Map<String, Object> asMap() {

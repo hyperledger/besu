@@ -15,48 +15,20 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
-import java.util.List;
 import java.util.Optional;
 
-public class PermGetNodesWhitelist implements JsonRpcMethod {
-
-  private final Optional<NodeLocalConfigPermissioningController>
-      nodeWhitelistPermissioningController;
+@Deprecated
+public class PermGetNodesWhitelist extends PermGetNodesAllowlist {
 
   public PermGetNodesWhitelist(
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
-    this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
+      final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
+    super(nodeAllowlistPermissioningController);
   }
 
   @Override
   public String getName() {
     return RpcMethod.PERM_GET_NODES_WHITELIST.getMethodName();
-  }
-
-  @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    try {
-      if (nodeWhitelistPermissioningController.isPresent()) {
-        final List<String> enodeList =
-            nodeWhitelistPermissioningController.get().getNodesWhitelist();
-
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), enodeList);
-      } else {
-        return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
-      }
-    } catch (P2PDisabledException e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
-    }
   }
 }

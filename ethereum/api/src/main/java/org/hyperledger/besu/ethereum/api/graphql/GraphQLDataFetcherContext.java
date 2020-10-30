@@ -14,50 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-public class GraphQLDataFetcherContext {
+public interface GraphQLDataFetcherContext {
 
-  private final BlockchainQueries blockchainQueries;
-  private final MiningCoordinator miningCoordinator;
-  private final Synchronizer synchronizer;
-  private final ProtocolSchedule<?> protocolSchedule;
-  private final TransactionPool transactionPool;
+  TransactionPool getTransactionPool();
 
-  public GraphQLDataFetcherContext(
-      final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule<?> protocolSchedule,
-      final TransactionPool transactionPool,
-      final MiningCoordinator miningCoordinator,
-      final Synchronizer synchronizer) {
-    this.blockchainQueries = blockchainQueries;
-    this.protocolSchedule = protocolSchedule;
-    this.miningCoordinator = miningCoordinator;
-    this.synchronizer = synchronizer;
-    this.transactionPool = transactionPool;
-  }
+  BlockchainQueries getBlockchainQueries();
 
-  public TransactionPool getTransactionPool() {
-    return transactionPool;
-  }
+  MiningCoordinator getMiningCoordinator();
 
-  public BlockchainQueries getBlockchainQueries() {
-    return blockchainQueries;
-  }
+  Synchronizer getSynchronizer();
 
-  public MiningCoordinator getMiningCoordinator() {
-    return miningCoordinator;
-  }
+  ProtocolSchedule getProtocolSchedule();
 
-  public Synchronizer getSynchronizer() {
-    return synchronizer;
-  }
-
-  public ProtocolSchedule<?> getProtocolSchedule() {
-    return protocolSchedule;
+  default IsAliveHandler getIsAliveHandler() {
+    return new IsAliveHandler(true);
   }
 }

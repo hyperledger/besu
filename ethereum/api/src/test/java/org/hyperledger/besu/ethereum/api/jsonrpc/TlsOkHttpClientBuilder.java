@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.List;
 import java.util.Optional;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -30,10 +31,12 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 
 public final class TlsOkHttpClientBuilder {
   private SelfSignedP12Certificate besuCertificate;
   private SelfSignedP12Certificate okHttpCertificate;
+  private boolean useHttp1 = false;
 
   private TlsOkHttpClientBuilder() {}
 
@@ -53,6 +56,11 @@ public final class TlsOkHttpClientBuilder {
     return this;
   }
 
+  public TlsOkHttpClientBuilder withHttp1(final boolean useHttp1) {
+    this.useHttp1 = useHttp1;
+    return this;
+  }
+
   public OkHttpClient build() {
     return buildHttpClient();
   }
@@ -61,12 +69,16 @@ public final class TlsOkHttpClientBuilder {
     final TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
     final Optional<KeyManagerFactory> keyManagerFactory = getKeyManagerFactory();
     try {
-      return new OkHttpClient.Builder()
-          .sslSocketFactory(
-              getCustomSslContext(trustManagerFactory, keyManagerFactory).getSocketFactory(),
-              (X509TrustManager)
-                  trustManagerFactory.getTrustManagers()[0]) // we only have one trust manager
-          .build();
+      final OkHttpClient.Builder builder =
+          new OkHttpClient.Builder()
+              .sslSocketFactory(
+                  getCustomSslContext(trustManagerFactory, keyManagerFactory).getSocketFactory(),
+                  (X509TrustManager)
+                      trustManagerFactory.getTrustManagers()[0]); // we only have one trust manager
+      if (useHttp1) {
+        builder.protocols(List.of(Protocol.HTTP_1_1));
+      }
+      return builder.build();
     } catch (final GeneralSecurityException e) {
       throw new RuntimeException(e);
     }

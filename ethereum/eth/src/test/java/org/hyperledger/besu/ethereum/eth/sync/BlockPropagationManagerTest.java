@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -45,8 +46,9 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
-import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocks;
+import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -57,23 +59,30 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class BlockPropagationManagerTest {
 
+  private static final Bytes NODE_ID_1 = Bytes.fromHexString("0x00");
+
   private static Blockchain fullBlockchain;
 
-  private BlockchainSetupUtil<Void> blockchainUtil;
-  private ProtocolSchedule<Void> protocolSchedule;
-  private ProtocolContext<Void> protocolContext;
+  private BlockchainSetupUtil blockchainUtil;
+  private ProtocolSchedule protocolSchedule;
+  private ProtocolContext protocolContext;
   private MutableBlockchain blockchain;
   private BlockBroadcaster blockBroadcaster;
   private EthProtocolManager ethProtocolManager;
-  private BlockPropagationManager<Void> blockPropagationManager;
+  private BlockPropagationManager blockPropagationManager;
   private SynchronizerConfiguration syncConfig;
-  private final PendingBlocks pendingBlocks = new PendingBlocks();
+  private final PendingBlocksManager pendingBlocksManager =
+      new PendingBlocksManager(
+          SynchronizerConfiguration.builder().blockPropagationRange(-10, 30).build());
   private SyncState syncState;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
@@ -87,12 +96,12 @@ public class BlockPropagationManagerTest {
     blockchainUtil = BlockchainSetupUtil.forTesting();
     blockchain = blockchainUtil.getBlockchain();
     protocolSchedule = blockchainUtil.getProtocolSchedule();
-    final ProtocolContext<Void> tempProtocolContext = blockchainUtil.getProtocolContext();
+    final ProtocolContext tempProtocolContext = blockchainUtil.getProtocolContext();
     protocolContext =
-        new ProtocolContext<>(
+        new ProtocolContext(
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
-            tempProtocolContext.getConsensusState());
+            tempProtocolContext.getConsensusState(Object.class));
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
@@ -103,13 +112,13 @@ public class BlockPropagationManagerTest {
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockBroadcaster = mock(BlockBroadcaster.class);
     blockPropagationManager =
-        new BlockPropagationManager<>(
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
   }
@@ -308,19 +317,19 @@ public class BlockPropagationManagerTest {
 
   @Test
   public void handlesDuplicateAnnouncements() {
-    final ProtocolSchedule<Void> stubProtocolSchedule = spy(protocolSchedule);
-    final ProtocolSpec<Void> stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
-    final BlockImporter<Void> stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
+    final ProtocolSchedule stubProtocolSchedule = spy(protocolSchedule);
+    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final BlockImporter stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
     doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
     doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             stubProtocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
 
@@ -360,19 +369,19 @@ public class BlockPropagationManagerTest {
 
   @Test
   public void handlesPendingDuplicateAnnouncements() {
-    final ProtocolSchedule<Void> stubProtocolSchedule = spy(protocolSchedule);
-    final ProtocolSpec<Void> stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
-    final BlockImporter<Void> stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
+    final ProtocolSchedule stubProtocolSchedule = spy(protocolSchedule);
+    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final BlockImporter stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
     doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
     doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             stubProtocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
     blockchainUtil.importFirstBlocks(2);
@@ -466,7 +475,7 @@ public class BlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
 
-    final BlockPropagationManager<Void> propManager = spy(blockPropagationManager);
+    final BlockPropagationManager propManager = spy(blockPropagationManager);
     propManager.start();
 
     // Setup peer and messages
@@ -482,7 +491,7 @@ public class BlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
-    verify(propManager, times(0)).importOrSavePendingBlock(any());
+    verify(propManager, times(0)).importOrSavePendingBlock(any(), any(Bytes.class));
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
   }
 
@@ -496,7 +505,7 @@ public class BlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
 
-    final BlockPropagationManager<Void> propManager = spy(blockPropagationManager);
+    final BlockPropagationManager propManager = spy(blockPropagationManager);
     propManager.start();
 
     // Setup peer and messages
@@ -508,7 +517,7 @@ public class BlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
-    verify(propManager, times(0)).importOrSavePendingBlock(any());
+    verify(propManager, times(0)).importOrSavePendingBlock(any(), any(Bytes.class));
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
   }
 
@@ -517,14 +526,14 @@ public class BlockPropagationManagerTest {
     final int oldBlocksToImport = 3;
     syncConfig =
         SynchronizerConfiguration.builder().blockPropagationRange(-oldBlocksToImport, 5).build();
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
 
@@ -547,20 +556,20 @@ public class BlockPropagationManagerTest {
 
     // Check that we pushed our block into the pending collection
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-    assertThat(pendingBlocks.contains(blockToPurge.getHash())).isTrue();
+    assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isTrue();
 
     // Import blocks until we bury the target block far enough to be cleaned up
     for (int i = 0; i < oldBlocksToImport; i++) {
       blockchainUtil.importBlockAtIndex((int) blockchain.getChainHeadBlockNumber() + 1);
 
       assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-      assertThat(pendingBlocks.contains(blockToPurge.getHash())).isTrue();
+      assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isTrue();
     }
 
     // Import again to trigger cleanup
     blockchainUtil.importBlockAtIndex((int) blockchain.getChainHeadBlockNumber() + 1);
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-    assertThat(pendingBlocks.contains(blockToPurge.getHash())).isFalse();
+    assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isFalse();
   }
 
   @Test
@@ -600,22 +609,22 @@ public class BlockPropagationManagerTest {
     final EthContext ethContext =
         new EthContext(
             new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
-    final BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
             ethContext,
             syncState,
-            pendingBlocks,
+            pendingBlocksManager,
             metricsSystem,
             blockBroadcaster);
 
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
-    blockPropagationManager.importOrSavePendingBlock(nextBlock);
-    blockPropagationManager.importOrSavePendingBlock(nextBlock);
+    blockPropagationManager.importOrSavePendingBlock(nextBlock, NODE_ID_1);
+    blockPropagationManager.importOrSavePendingBlock(nextBlock, NODE_ID_1);
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
@@ -640,5 +649,50 @@ public class BlockPropagationManagerTest {
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
     verify(blockBroadcaster, times(1)).propagate(block, totalDifficulty);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void shouldDetectAndCacheInvalidBlocks() {
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
+        .thenAnswer(
+            new Answer<Object>() {
+              @Override
+              public Object answer(final InvocationOnMock invocation) throws Throwable {
+                return invocation.getArgument(0, Supplier.class).get();
+              }
+            });
+    final EthContext ethContext =
+        new EthContext(
+            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+    final BlockPropagationManager blockPropagationManager =
+        new BlockPropagationManager(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            syncState,
+            pendingBlocksManager,
+            metricsSystem,
+            blockBroadcaster);
+
+    blockchainUtil.importFirstBlocks(2);
+    final Block firstBlock = blockchainUtil.getBlock(1);
+    final BadBlockManager badBlocksManager =
+        protocolSchedule.getByBlockNumber(1).getBadBlocksManager();
+    final Block badBlock =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockNumber(1)
+                    .setParentHash(firstBlock.getHash())
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    assertThat(badBlocksManager.getBadBlocks()).isEmpty();
+    blockPropagationManager.importOrSavePendingBlock(badBlock, NODE_ID_1);
+    assertThat(badBlocksManager.getBadBlocks().size()).isEqualTo(1);
+
+    verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
 }

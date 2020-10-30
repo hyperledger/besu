@@ -16,11 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.LogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 public class SubscriptionBuilder {
@@ -36,11 +37,7 @@ public class SubscriptionBuilder {
         }
       case LOGS:
         {
-          return new LogsSubscription(
-              subscriptionId,
-              connectionId,
-              Optional.ofNullable(request.getLogsQuery())
-                  .orElseThrow(IllegalArgumentException::new));
+          return logsSubscription(subscriptionId, connectionId, request);
         }
       case SYNCING:
         {
@@ -50,6 +47,21 @@ public class SubscriptionBuilder {
       default:
         return new Subscription(
             subscriptionId, connectionId, subscriptionType, request.getIncludeTransaction());
+    }
+  }
+
+  private Subscription logsSubscription(
+      final long subscriptionId, final String connectionId, final SubscribeRequest request) {
+    if (request instanceof PrivateSubscribeRequest) {
+      final PrivateSubscribeRequest privateSubscribeRequest = (PrivateSubscribeRequest) request;
+      return new PrivateLogsSubscription(
+          subscriptionId,
+          connectionId,
+          privateSubscribeRequest.getFilterParameter(),
+          privateSubscribeRequest.getPrivacyGroupId(),
+          privateSubscribeRequest.getEnclavePublicKey());
+    } else {
+      return new LogsSubscription(subscriptionId, connectionId, request.getFilterParameter());
     }
   }
 

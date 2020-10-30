@@ -26,8 +26,9 @@ import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
@@ -47,6 +48,7 @@ public class SubscriptionRequestMapperTest {
   private SubscriptionRequestMapper mapper;
   // These tests aren't passing through WebSocketRequestHandler, so connectionId is null.
   private final String CONNECTION_ID = null;
+  private static final String ENCLAVE_PUBLIC_KEY = "enclave_public_key";
 
   @Before
   public void before() {
@@ -171,9 +173,12 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                emptyList()),
+                emptyList(),
+                null),
             null,
             null);
 
@@ -193,7 +198,9 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 Stream.of(
                         "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd",
                         "0xf17f52151EbEF6C7334FAD080c5704D77216b732")
@@ -202,7 +209,8 @@ public class SubscriptionRequestMapperTest {
                 singletonList(
                     singletonList(
                         LogTopic.fromHexString(
-                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")))),
+                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"))),
+                null),
             null,
             null);
 
@@ -222,7 +230,9 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
                 List.of(
                     singletonList(
@@ -230,7 +240,8 @@ public class SubscriptionRequestMapperTest {
                             "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")),
                     singletonList(
                         LogTopic.fromHexString(
-                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901")))),
+                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901"))),
+                null),
             null,
             null);
 
@@ -250,9 +261,12 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(
             SubscriptionType.LOGS,
-            new LogsQuery(
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                emptyList()),
+                emptyList(),
+                null),
             null,
             null);
 
@@ -359,6 +373,62 @@ public class SubscriptionRequestMapperTest {
             .and(instanceOf(InvalidJsonRpcParameters.class)));
 
     mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+  }
+
+  @Test
+  public void mapRequestToPrivateLogsSubscription() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"priv_subscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\"}]}");
+
+    final PrivateSubscribeRequest expectedSubscribeRequest =
+        new PrivateSubscribeRequest(
+            SubscriptionType.LOGS,
+            new FilterParameter(
+                BlockParameter.LATEST,
+                BlockParameter.LATEST,
+                singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
+                emptyList(),
+                null),
+            null,
+            null,
+            "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
+            ENCLAVE_PUBLIC_KEY);
+
+    final PrivateSubscribeRequest subscribeRequest =
+        mapper.mapPrivateSubscribeRequest(
+            new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
+
+    assertThat(subscribeRequest)
+        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToPrivateSubscriptionWithInvalidType() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"priv_subscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"syncing\", {\"includeTransactions\": true}]}");
+
+    thrown.expect(InvalidSubscriptionRequestException.class);
+    thrown.expectMessage("Invalid subscribe request. Invalid private subscription type.");
+
+    mapper.mapPrivateSubscribeRequest(
+        new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
+  }
+
+  @Test
+  public void mapRequestToPrivateUnsubscribeRequest() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"priv_unsubscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"0x1\"]}");
+    final PrivateUnsubscribeRequest expectedUnsubscribeRequest =
+        new PrivateUnsubscribeRequest(
+            1L, CONNECTION_ID, "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+
+    final PrivateUnsubscribeRequest unsubscribeRequest =
+        mapper.mapPrivateUnsubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+
+    assertThat(unsubscribeRequest).isEqualTo(expectedUnsubscribeRequest);
   }
 
   private WebSocketRpcRequest parseWebSocketRpcRequest(final String json) {

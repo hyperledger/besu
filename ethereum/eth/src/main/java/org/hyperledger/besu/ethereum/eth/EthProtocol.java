@@ -78,9 +78,9 @@ public class EthProtocol implements SubProtocol {
         return 8;
       case EthVersion.V63:
       case EthVersion.V64:
-      case EthVersion
-          .V65: // same number of messages in the range, eth65 defines messages in the middle of the
-        // range defined by eth63.
+      case EthVersion.V65:
+        // same number of messages in each range, eth65 defines messages in the middle of the
+        // range defined by eth63 and eth64 defines no new ranges.
         return 17;
       default:
         return 0;

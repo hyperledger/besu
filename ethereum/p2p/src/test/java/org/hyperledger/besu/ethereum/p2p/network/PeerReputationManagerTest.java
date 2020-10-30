@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -33,10 +33,10 @@ import org.junit.Test;
 public class PeerReputationManagerTest {
   private final Peer localNode = generatePeer();
   private final PeerReputationManager peerReputationManager;
-  private final PeerPermissionsBlacklist blacklist;
+  private final PeerPermissionsDenylist blacklist;
 
   public PeerReputationManagerTest() {
-    blacklist = PeerPermissionsBlacklist.create();
+    blacklist = PeerPermissionsDenylist.create();
     peerReputationManager = new PeerReputationManager(blacklist);
   }
 
@@ -90,7 +90,7 @@ public class PeerReputationManagerTest {
   }
 
   private void checkPermissions(
-      final PeerPermissionsBlacklist blacklist,
+      final PeerPermissionsDenylist blacklist,
       final Peer remotePeer,
       final boolean expectedResult) {
     for (PeerPermissions.Action action : PeerPermissions.Action.values()) {

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
@@ -105,6 +106,14 @@ public interface TransactionProcessor {
      * @return the revert reason.
      */
     Optional<Bytes> getRevertReason();
+
+    /**
+     * Returns the estimate gas used by the transaction Difference between the gas limit and the
+     * remaining gas
+     *
+     * @return the estimate gas used
+     */
+    long getEstimateGasUsedByTransaction();
   }
 
   /**
@@ -151,6 +160,45 @@ public interface TransactionProcessor {
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams Validation parameters that will be used by the {@link
+   *     TransactionValidator}
+   * @param operationTracer operation tracer {@link OperationTracer}
+   * @return the transaction result
+   * @see TransactionValidator
+   * @see TransactionValidationParams
+   */
+  default Result processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams);
+  }
+
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
    * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
@@ -178,6 +226,58 @@ public interface TransactionProcessor {
         new TransactionValidationParams.Builder().build());
   }
 
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param operationTracer The tracer to record results of each EVM operation
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams The transaction validation parameters to use
+   * @return the transaction result
+   */
+  default Result processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final OperationTracer operationTracer,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams,
+        null);
+  }
+
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param operationTracer The tracer to record results of each EVM operation
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams The transaction validation parameters to use
+   * @param privateMetadataUpdater The updater to use for the private metadata
+   * @return the transaction result
+   */
   Result processTransaction(
       Blockchain blockchain,
       WorldUpdater worldState,
@@ -187,5 +287,6 @@ public interface TransactionProcessor {
       OperationTracer operationTracer,
       BlockHashLookup blockHashLookup,
       Boolean isPersistingPrivateState,
-      TransactionValidationParams transactionValidationParams);
+      TransactionValidationParams transactionValidationParams,
+      PrivateMetadataUpdater privateMetadataUpdater);
 }

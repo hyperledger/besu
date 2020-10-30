@@ -31,23 +31,34 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final int SIZE = 20;
 
   /** Specific addresses of the "precompiled" contracts. */
-  public static final Address ECREC = Address.precompiled(1);
+  public static final Address ECREC = Address.precompiled(0x01);
 
-  public static final Address SHA256 = Address.precompiled(2);
-  public static final Address RIPEMD160 = Address.precompiled(3);
-  public static final Address ID = Address.precompiled(4);
-  public static final Address MODEXP = Address.precompiled(5);
-  public static final Address ALTBN128_ADD = Address.precompiled(6);
-  public static final Address ALTBN128_MUL = Address.precompiled(7);
-  public static final Address ALTBN128_PAIRING = Address.precompiled(8);
-  public static final Address BLAKE2B_F_COMPRESSION = Address.precompiled(9);
+  public static final Address SHA256 = Address.precompiled(0x02);
+  public static final Address RIPEMD160 = Address.precompiled(0x03);
+  public static final Address ID = Address.precompiled(0x04);
+  public static final Address MODEXP = Address.precompiled(0x05);
+  public static final Address ALTBN128_ADD = Address.precompiled(0x06);
+  public static final Address ALTBN128_MUL = Address.precompiled(0x07);
+  public static final Address ALTBN128_PAIRING = Address.precompiled(0x08);
+  public static final Address BLAKE2B_F_COMPRESSION = Address.precompiled(0x09);
+  public static final Address BLS12_G1ADD = Address.precompiled(0xA);
+  public static final Address BLS12_G1MUL = Address.precompiled(0xB);
+  public static final Address BLS12_G1MULTIEXP = Address.precompiled(0xC);
+  public static final Address BLS12_G2ADD = Address.precompiled(0xD);
+  public static final Address BLS12_G2MUL = Address.precompiled(0xE);
+  public static final Address BLS12_G2MULTIEXP = Address.precompiled(0xF);
+  public static final Address BLS12_PAIRING = Address.precompiled(0x10);
+  public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x11);
+  public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
 
   // Last address that can be generated for a pre-compiled contract
   public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
   public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
   public static final Address ONCHAIN_PRIVACY = Address.precompiled(PRIVACY - 1);
-  public static final Address PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
-  public static final Address DEFAULT_PRIVACY_MANAGEMENT = Address.precompiled(PRIVACY - 3);
+
+  // Onchain privacy management contracts (injected in private state)
+  public static final Address ONCHAIN_PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
+  public static final Address DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT = Address.precompiled(PRIVACY - 3);
 
   public static final Address ZERO = Address.fromHexString("0x0");
 
@@ -80,6 +91,8 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   }
 
   /**
+   * Extracts an address from a ECDSARECOVER result hash.
+   *
    * @param hash A hash that has been obtained through hashing the return of the <code>ECDSARECOVER
    *     </code> function from Appendix F (Signing Transactions) of the Ethereum Yellow Paper.
    * @return The ethereum address from the provided hash.

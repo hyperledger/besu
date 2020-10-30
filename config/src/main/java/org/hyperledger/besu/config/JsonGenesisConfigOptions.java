@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Map;
@@ -35,6 +37,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
+
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -187,7 +190,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getConstantinopleFixBlockNumber() {
-    return getOptionalLong("constantinoplefixblock");
+    final OptionalLong petersburgBlock = getOptionalLong("petersburgblock");
+    final OptionalLong constantinopleFixBlock = getOptionalLong("constantinoplefixblock");
+    if (constantinopleFixBlock.isPresent()) {
+      if (petersburgBlock.isPresent()) {
+        throw new RuntimeException(
+            "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
+      }
+      return constantinopleFixBlock;
+    }
+    return petersburgBlock;
   }
 
   @Override
@@ -201,9 +213,26 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getBerlinBlockNumber() {
+    if (ExperimentalEIPs.berlinEnabled) {
+      final OptionalLong berlinBlock = getOptionalLong("berlinblock");
+      final OptionalLong yolov2Block = getOptionalLong("yolov2block");
+      if (yolov2Block.isPresent()) {
+        if (berlinBlock.isPresent()) {
+          throw new RuntimeException(
+              "Genesis files cannot specify both berlinblock and yoloV2Block.");
+        }
+        return yolov2Block;
+      }
+      return berlinBlock;
+    }
+    return OptionalLong.empty();
+  }
+
+  @Override
   // TODO EIP-1559 change for the actual fork name when known
   public OptionalLong getEIP1559BlockNumber() {
-    return getOptionalLong("eip1559block");
+    return ExperimentalEIPs.eip1559Enabled ? getOptionalLong("eip1559block") : OptionalLong.empty();
   }
 
   @Override
@@ -247,6 +276,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getThanosBlockNumber() {
+    return getOptionalLong("thanosblock");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -259,6 +293,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalInt getEvmStackSize() {
     return getOptionalInt("evmstacksize");
+  }
+
+  @Override
+  public OptionalLong getEcip1017EraRounds() {
+    return getOptionalLong("ecip1017erarounds");
   }
 
   @Override
@@ -287,11 +326,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             });
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
-    getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
+    getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
+    getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
+    getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
+    getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
+    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }

@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 
+import java.util.Optional;
+
 /** Validates transaction based on some criteria. */
 public interface TransactionValidator {
 
@@ -25,11 +27,13 @@ public interface TransactionValidator {
    * Asserts whether a transaction is valid.
    *
    * @param transaction the transaction to validate
+   * @param baseFee optional baseFee
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
-  ValidationResult<TransactionInvalidReason> validate(Transaction transaction);
+  ValidationResult<TransactionInvalidReason> validate(
+      Transaction transaction, Optional<Long> baseFee);
 
   /**
    * Asserts whether a transaction is valid for the sender accounts current state.
@@ -72,13 +76,18 @@ public interface TransactionValidator {
     CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE,
     EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
     INVALID_TRANSACTION_FORMAT,
+    TRANSACTION_PRICE_TOO_LOW,
+    TRANSACTION_ALREADY_KNOWN,
+    TRANSACTION_REPLACEMENT_UNDERPRICED,
     // Private Transaction Invalid Reasons
     PRIVATE_TRANSACTION_FAILED,
     PRIVATE_NONCE_TOO_LOW,
     OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST,
     INCORRECT_PRIVATE_NONCE,
     GAS_PRICE_TOO_LOW,
+    TX_FEECAP_EXCEEDED,
     PRIVATE_VALUE_NOT_ZERO,
-    PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE;
+    PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE,
+    INTERNAL_ERROR;
   }
 }

@@ -14,7 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.EmptyAccountAdapter;
+import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Optional;
@@ -23,7 +31,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -32,24 +39,48 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
   @Test
   public void bothNumberAndHashThrows() throws Exception {
     final Hash fakedHash = Hash.hash(Bytes.of(1));
-    Mockito.when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
-    Mockito.when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(fakedHash);
+    when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
+    when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(fakedHash);
 
-    thrown.expect(GraphQLException.class);
-    fetcher.get(environment);
+    assertThatThrownBy(() -> fetcher.get(environment)).isInstanceOf(GraphQLException.class);
   }
 
   @Test
   public void onlyNumber() throws Exception {
 
-    Mockito.when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
-    Mockito.when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
+    when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
+    when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
 
-    Mockito.when(environment.getContext()).thenReturn(context);
-    Mockito.when(context.getBlockchainQueries()).thenReturn(query);
-    Mockito.when(query.blockByNumber(ArgumentMatchers.anyLong()))
+    when(environment.getContext()).thenReturn(context);
+    when(context.getBlockchainQueries()).thenReturn(query);
+    when(query.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(new BlockWithMetadata<>(null, null, null, null, 0)));
 
     fetcher.get(environment);
+  }
+
+  @Test
+  public void ibftMiner() throws Exception {
+    // IBFT can mine blocks with a coinbase that is an empty account, hence not stored and returned
+    // as null. The compromise is to report zeros and empty on query from a block.
+    final Address testAddress = Address.fromHexString("0xdeadbeef");
+
+    when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
+    when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
+
+    when(environment.getContext()).thenReturn(context);
+    when(context.getBlockchainQueries()).thenReturn(query);
+    when(query.blockByNumber(ArgumentMatchers.anyLong()))
+        .thenReturn(Optional.of(new BlockWithMetadata<>(header, null, null, null, 0)));
+    when(header.getCoinbase()).thenReturn(testAddress);
+    when(query.getWorldState(anyLong())).thenReturn(Optional.of(mutableWorldState));
+
+    final Optional<NormalBlockAdapter> maybeBlock = fetcher.get(environment);
+    assertThat(maybeBlock).isPresent();
+    assertThat(maybeBlock.get().getMiner(environment)).isPresent();
+    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment).get()).getBalance())
+        .isPresent();
+    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment).get()).getAddress())
+        .contains(testAddress);
   }
 }

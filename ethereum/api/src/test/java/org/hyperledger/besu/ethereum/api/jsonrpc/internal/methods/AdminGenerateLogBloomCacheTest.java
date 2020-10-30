@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
-import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.CachingStatus;
+import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
+import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.CachingStatus;
 
 import java.util.List;
 import java.util.Optional;

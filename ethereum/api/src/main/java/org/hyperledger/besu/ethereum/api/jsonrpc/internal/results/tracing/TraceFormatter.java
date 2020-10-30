@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 public interface TraceFormatter {
 
   Stream<Trace> format(
-      ProtocolSchedule<?> protocolSchedule,
+      ProtocolSchedule protocolSchedule,
       TransactionTrace transactionTrace,
       Block block,
       AtomicInteger traceCounter);

@@ -42,8 +42,8 @@ import org.apache.logging.log4j.Logger;
 public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
-  private final ProtocolSchedule<?> protocolSchedule;
-  private final ProtocolContext<?> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthPeer peer;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
@@ -54,8 +54,8 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private boolean initialQuery = true;
 
   private DetermineCommonAncestorTask(
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
@@ -68,15 +68,18 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
 
-    maximumPossibleCommonAncestorNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
+    maximumPossibleCommonAncestorNumber =
+        Math.min(
+            protocolContext.getBlockchain().getChainHeadBlockNumber(),
+            peer.chainState().getEstimatedHeight());
     minimumPossibleCommonAncestorNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
     commonAncestorCandidate =
         protocolContext.getBlockchain().getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
   }
 
   public static DetermineCommonAncestorTask create(
-      final ProtocolSchedule<?> protocolSchedule,
-      final ProtocolContext<?> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
@@ -89,12 +92,12 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   protected void executeTask() {
     if (maximumPossibleCommonAncestorNumber == minimumPossibleCommonAncestorNumber) {
       // Bingo, we found our common ancestor.
-      result.get().complete(commonAncestorCandidate);
+      result.complete(commonAncestorCandidate);
       return;
     }
     if (maximumPossibleCommonAncestorNumber < BlockHeader.GENESIS_BLOCK_NUMBER
-        && !result.get().isDone()) {
-      result.get().completeExceptionally(new IllegalStateException("No common ancestor."));
+        && !result.isDone()) {
+      result.completeExceptionally(new IllegalStateException("No common ancestor."));
       return;
     }
     requestHeaders()
@@ -102,8 +105,8 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
         .whenComplete(
             (peerResult, error) -> {
               if (error != null) {
-                result.get().completeExceptionally(error);
-              } else if (!result.get().isDone()) {
+                result.completeExceptionally(error);
+              } else if (!result.isDone()) {
                 executeTaskTimed();
               }
             });

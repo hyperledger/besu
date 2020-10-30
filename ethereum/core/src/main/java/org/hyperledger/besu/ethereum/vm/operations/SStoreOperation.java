@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -33,6 +32,10 @@ public class SStoreOperation extends AbstractOperation {
   public static final Gas FRONTIER_MINIMUM = Gas.ZERO;
   public static final Gas EIP_1706_MINIMUM = Gas.of(2300);
 
+  protected static final OperationResult ILLEGAL_STATE_CHANGE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+
   private final Gas minumumGasRemaining;
 
   public SStoreOperation(final GasCalculator gasCalculator, final Gas minumumGasRemaining) {
@@ -40,42 +43,46 @@ public class SStoreOperation extends AbstractOperation {
     this.minumumGasRemaining = minumumGasRemaining;
   }
 
-  @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 key = UInt256.fromBytes(frame.getStackItem(0));
-    final UInt256 newValue = UInt256.fromBytes(frame.getStackItem(1));
-
-    final Account account = frame.getWorldState().get(frame.getRecipientAddress());
-    return gasCalculator().calculateStorageCost(account, key, newValue);
+  public Gas getMinumumGasRemaining() {
+    return minumumGasRemaining;
   }
 
   @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value = UInt256.fromBytes(frame.popStackItem());
 
     final MutableAccount account =
         frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
-    assert account != null : "VM account should exists";
+    if (account == null) {
+      return ILLEGAL_STATE_CHANGE;
+    }
+
+    final Address address = account.getAddress();
+    final boolean slotIsWarm = frame.warmUpStorage(address, key.toBytes());
+    final Gas cost =
+        gasCalculator()
+            .calculateStorageCost(account, key, value)
+            .plus(slotIsWarm ? Gas.ZERO : gasCalculator().getColdSloadCost());
+
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    final Gas remainingGas = frame.getRemainingGas();
+    if (frame.isStatic()) {
+      return new OperationResult(
+          optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (remainingGas.compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    } else if (remainingGas.compareTo(minumumGasRemaining) <= 0) {
+      return new OperationResult(
+          Optional.of(minumumGasRemaining), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
 
     // Increment the refund counter.
     frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
     account.setStorageValue(key, value);
     frame.storageWasUpdated(key, value.toBytes());
-  }
-
-  @Override
-  public Optional<ExceptionalHaltReason> exceptionalHaltCondition(
-      final MessageFrame frame,
-      final EnumSet<ExceptionalHaltReason> previousReasons,
-      final EVM evm) {
-    if (frame.isStatic()) {
-      return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) <= 0) {
-      return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
-    } else {
-      return Optional.empty();
-    }
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

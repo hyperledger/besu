@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -219,7 +220,7 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the gas cost to transfer funds in a call operation
    */
-  protected Gas callValueTransferGasCost() {
+  Gas callValueTransferGasCost() {
     return CALL_VALUE_TRANSFER_GAS_COST;
   }
 
@@ -228,7 +229,7 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the gas cost to create a new account
    */
-  protected Gas newAccountGasCost() {
+  Gas newAccountGasCost() {
     return NEW_ACCOUNT_GAS_COST;
   }
 
@@ -241,7 +242,8 @@ public class FrontierGasCalculator implements GasCalculator {
       final UInt256 outputDataOffset,
       final UInt256 outputDataLength,
       final Wei transferValue,
-      final Account recipient) {
+      final Account recipient,
+      final Address to) {
     final Gas inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final Gas outputDataMemoryExpansionCost =
@@ -440,7 +442,13 @@ public class FrontierGasCalculator implements GasCalculator {
     return SELF_DESTRUCT_REFUND_AMOUNT;
   }
 
-  private Gas copyWordsToMemoryGasCost(
+  @Override
+  public Gas getBeginSubGasCost() {
+    throw new UnsupportedOperationException(
+        "BEGINSUB operation not supported by " + getClass().getSimpleName());
+  }
+
+  protected Gas copyWordsToMemoryGasCost(
       final MessageFrame frame,
       final Gas baseGasCost,
       final Gas wordGasCost,

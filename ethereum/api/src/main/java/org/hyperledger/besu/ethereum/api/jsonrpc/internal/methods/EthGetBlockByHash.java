@@ -31,16 +31,20 @@ public class EthGetBlockByHash implements JsonRpcMethod {
 
   private final BlockResultFactory blockResult;
   private final Supplier<BlockchainQueries> blockchain;
+  private final boolean includeCoinbase;
 
   public EthGetBlockByHash(
       final BlockchainQueries blockchain, final BlockResultFactory blockResult) {
-    this(Suppliers.ofInstance(blockchain), blockResult);
+    this(Suppliers.ofInstance(blockchain), blockResult, false);
   }
 
   public EthGetBlockByHash(
-      final Supplier<BlockchainQueries> blockchain, final BlockResultFactory blockResult) {
+      final Supplier<BlockchainQueries> blockchain,
+      final BlockResultFactory blockResult,
+      final boolean includeCoinbase) {
     this.blockchain = blockchain;
     this.blockResult = blockResult;
+    this.includeCoinbase = includeCoinbase;
   }
 
   @Override
@@ -65,7 +69,11 @@ public class EthGetBlockByHash implements JsonRpcMethod {
   }
 
   private BlockResult transactionComplete(final Hash hash) {
-    return blockchain.get().blockByHash(hash).map(blockResult::transactionComplete).orElse(null);
+    return blockchain
+        .get()
+        .blockByHash(hash)
+        .map(tx -> blockResult.transactionComplete(tx, includeCoinbase))
+        .orElse(null);
   }
 
   private BlockResult transactionHash(final Hash hash) {

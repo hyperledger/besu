@@ -33,6 +33,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+@Deprecated
 @RunWith(MockitoJUnitRunner.class)
 public class PermGetAccountsWhitelistTest {
 
@@ -55,7 +56,7 @@ public class PermGetAccountsWhitelistTest {
   @Test
   public void shouldReturnExpectedListOfAccountsWhenWhitelistHasBeenSet() {
     List<String> accountsList = Arrays.asList("0x0", "0x1");
-    when(accountWhitelist.getAccountWhitelist()).thenReturn(accountsList);
+    when(accountWhitelist.getAccountAllowlist()).thenReturn(accountsList);
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, accountsList);
 
     JsonRpcResponse actualResponse = method.response(request);
@@ -66,7 +67,7 @@ public class PermGetAccountsWhitelistTest {
   @Test
   public void shouldReturnEmptyListOfAccountsWhenWhitelistHasBeenSetAndIsEmpty() {
     List<String> emptyAccountsList = new ArrayList<>();
-    when(accountWhitelist.getAccountWhitelist()).thenReturn(emptyAccountsList);
+    when(accountWhitelist.getAccountAllowlist()).thenReturn(emptyAccountsList);
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, emptyAccountsList);
 
     JsonRpcResponse actualResponse = method.response(request);

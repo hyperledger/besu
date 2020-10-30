@@ -17,6 +17,8 @@ package org.hyperledger.besu.cli.subcommands.blocks;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -56,18 +58,30 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_BLOCK_IMPORT_USAGE =
-      "Usage: besu blocks import [-hV] [--format=<format>] --from=<FILE>\n"
-          + "                          [--start-time=<startTime>]\n"
+      "Usage: besu blocks import [-hV] [--run] [--skip-pow-validation-enabled]\n"
+          + "                          [--end-block=<LONG>] [--format=<format>]\n"
+          + "                          [--start-block=<LONG>] [--start-time=<startTime>]\n"
+          + "                          [--from[=<FILE>...]]... [<FILE>...]\n"
           + "This command imports blocks from a file into the database.\n"
-          + "      --format=<format>   The type of data to be imported, possible values are:\n"
-          + "                            RLP, JSON (default: RLP).\n"
-          + "      --from=<FILE>       File containing blocks to import.\n"
-          + "  -h, --help              Show this help message and exit.\n"
+          + "      [<FILE>...]            Files containing blocks to import.\n"
+          + "      --end-block=<LONG>     The ending index of the block list to import\n"
+          + "                               (exclusive).  If not specified all blocks after\n"
+          + "                               the start block will be imported.\n"
+          + "      --format=<format>      The type of data to be imported, possible values\n"
+          + "                               are: RLP, JSON (default: RLP).\n"
+          + "      --from[=<FILE>...]     File containing blocks to import.\n"
+          + "  -h, --help                 Show this help message and exit.\n"
+          + "      --run                  Start besu after importing.\n"
+          + "      --skip-pow-validation-enabled\n"
+          + "                             Skip proof of work validation when importing.\n"
+          + "      --start-block=<LONG>   The starting index of the block, or block list to\n"
+          + "                               import.  If not specified all blocks before the\n"
+          + "                               end block will be imported\n"
           + "      --start-time=<startTime>\n"
-          + "                          The timestamp in seconds of the first block for JSON\n"
-          + "                            imports. Subsequent blocks will be 1 second later.\n"
-          + "                            (default: current time)\n"
-          + "  -V, --version           Print version information and exit.\n";
+          + "                             The timestamp in seconds of the first block for\n"
+          + "                               JSON imports. Subsequent blocks will be 1 second\n"
+          + "                               later. (default: current time)\n"
+          + "  -V, --version              Print version information and exit.\n";
 
   private static final String EXPECTED_BLOCK_EXPORT_USAGE =
       "Usage: besu blocks export [-hV] [--end-block=<LONG>] [--start-block=<LONG>]"
@@ -100,7 +114,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   // Block sub-command
   @Test
   public void blockSubCommandExistsAndHasSubCommands() {
-    CommandSpec spec = parseCommand().getSpec();
+    final CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys(BLOCK_SUBCOMMAND_NAME);
     assertThat(spec.subcommands().get(BLOCK_SUBCOMMAND_NAME).getSubcommands())
         .containsKeys(BLOCK_IMPORT_SUBCOMMAND_NAME);
@@ -126,7 +140,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockImportSubCommandWithoutPathMustDisplayErrorAndUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME);
-    final String expectedErrorOutputStart = "Missing required option '--from=<FILE>'";
+    final String expectedErrorOutputStart = "No files specified to import.";
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
   }
@@ -144,7 +158,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     parseCommand(
         BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
 
-    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
+    verify(rlpBlockImporter)
+        .importBlockchain(pathArgumentCaptor.capture(), any(), anyBoolean(), anyLong(), anyLong());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
 
@@ -163,9 +178,35 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--from",
         fileToImport.getPath());
 
-    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
+    verify(rlpBlockImporter)
+        .importBlockchain(pathArgumentCaptor.capture(), any(), anyBoolean(), anyLong(), anyLong());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void blocksImport_rlpFormatMultiple() throws Exception {
+    final File fileToImport = temp.newFile("blocks.file");
+    final File file2ToImport = temp.newFile("blocks2.file");
+    final File file3ToImport = temp.newFile("blocks3.file");
+    parseCommand(
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_IMPORT_SUBCOMMAND_NAME,
+        "--format",
+        "RLP",
+        fileToImport.getPath(),
+        file2ToImport.getPath(),
+        file3ToImport.getPath());
+
+    verify(rlpBlockImporter, times(3))
+        .importBlockchain(pathArgumentCaptor.capture(), any(), anyBoolean(), anyLong(), anyLong());
+
+    assertThat(pathArgumentCaptor.getAllValues())
+        .containsExactlyInAnyOrder(
+            fileToImport.toPath(), file2ToImport.toPath(), file3ToImport.toPath());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -202,7 +243,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--data-path=" + folder.getRoot().getAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME);
-    final String expectedErrorOutputStart = "Missing required option '--to=<FILE>'";
+    final String expectedErrorOutputStart = "Missing required option: '--to=<FILE>'";
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
 
@@ -400,9 +441,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   private void createDbDirectory(final boolean createDataFiles) throws IOException {
-    File dbDir = folder.newFolder(BesuController.DATABASE_PATH);
+    final File dbDir = folder.newFolder(BesuController.DATABASE_PATH);
     if (createDataFiles) {
-      Path dataFilePath = Paths.get(dbDir.getAbsolutePath(), "0000001.sst");
+      final Path dataFilePath = Paths.get(dbDir.getAbsolutePath(), "0000001.sst");
       final boolean success = new File(dataFilePath.toString()).createNewFile();
       assertThat(success).isTrue();
     }

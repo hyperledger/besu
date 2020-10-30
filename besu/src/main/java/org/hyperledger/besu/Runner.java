@@ -18,18 +18,23 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
-import org.hyperledger.besu.ethereum.api.query.AutoTransactionLogBloomCachingService;
-import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
+import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
+import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
+import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatService;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -53,12 +58,14 @@ public class Runner implements AutoCloseable {
 
   private final NetworkRunner networkRunner;
   private final NatService natService;
+  private final Optional<Path> pidPath;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<WebSocketService> websocketRpc;
   private final Optional<MetricsService> metrics;
+  private final Optional<EthStatsService> ethStatsService;
 
-  private final BesuController<?> besuController;
+  private final BesuController besuController;
   private final Path dataDir;
   private final Optional<StratumServer> stratumServer;
   private final Optional<AutoTransactionLogBloomCachingService>
@@ -73,17 +80,21 @@ public class Runner implements AutoCloseable {
       final Optional<WebSocketService> websocketRpc,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
-      final BesuController<?> besuController,
+      final Optional<EthStatsService> ethStatsService,
+      final BesuController besuController,
       final Path dataDir,
+      final Optional<Path> pidPath,
       final Optional<TransactionLogBloomCacher> transactionLogBloomCacher,
       final Blockchain blockchain) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
     this.natService = natService;
     this.graphQLHttp = graphQLHttp;
+    this.pidPath = pidPath;
     this.jsonRpc = jsonRpc;
     this.websocketRpc = websocketRpc;
     this.metrics = metrics;
+    this.ethStatsService = ethStatsService;
     this.besuController = besuController;
     this.dataDir = dataDir;
     this.stratumServer = stratumServer;
@@ -110,10 +121,13 @@ public class Runner implements AutoCloseable {
       graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
       websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
+      ethStatsService.ifPresent(EthStatsService::start);
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
       autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
+      writePidFile();
+
     } catch (final Exception ex) {
       LOG.error("Startup failed", ex);
       throw new IllegalStateException(ex);
@@ -125,7 +139,7 @@ public class Runner implements AutoCloseable {
     graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
     websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
-
+    ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();
     waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
     stratumServer.ifPresent(server -> waitForServiceToStop("Stratum", server::stop));
@@ -184,7 +198,7 @@ public class Runner implements AutoCloseable {
 
   private void waitForServiceToStart(
       final String serviceName, final CompletableFuture<?> startFuture) {
-    while (!startFuture.isDone()) {
+    do {
       try {
         startFuture.get(60, TimeUnit.SECONDS);
       } catch (final InterruptedException e) {
@@ -196,7 +210,7 @@ public class Runner implements AutoCloseable {
       } catch (final TimeoutException e) {
         LOG.warn("Service {} is taking an unusually long time to start", serviceName);
       }
-    }
+    } while (!startFuture.isDone());
   }
 
   private void writeBesuPortsToFile() {
@@ -207,14 +221,16 @@ public class Runner implements AutoCloseable {
           .getLocalEnode()
           .ifPresent(
               enode -> {
-                if (enode.getDiscoveryPort().isPresent()) {
-                  properties.setProperty(
-                      "discovery", String.valueOf(enode.getDiscoveryPort().getAsInt()));
-                }
-                if (enode.getListeningPort().isPresent()) {
-                  properties.setProperty(
-                      "p2p", String.valueOf(enode.getListeningPort().getAsInt()));
-                }
+                enode
+                    .getDiscoveryPort()
+                    .ifPresent(
+                        discoveryPort ->
+                            properties.setProperty("discovery", String.valueOf(discoveryPort)));
+                enode
+                    .getListeningPort()
+                    .ifPresent(
+                        listeningPort ->
+                            properties.setProperty("p2p", String.valueOf(listeningPort)));
               });
     }
 
@@ -254,6 +270,29 @@ public class Runner implements AutoCloseable {
         properties,
         "networks",
         "This file contains the IP Addresses (global and local) used by the running instance of Besu");
+  }
+
+  private void writePidFile() {
+    pidPath.ifPresent(
+        path -> {
+          String pid = "";
+          try {
+            pid = Long.toString(ProcessHandle.current().pid());
+          } catch (Throwable t) {
+            LOG.error("Error retrieving PID", t);
+          }
+          try {
+            Files.write(
+                path,
+                pid.getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE);
+            path.toFile().deleteOnExit();
+          } catch (IOException e) {
+            LOG.error("Error writing PID file", e);
+          }
+        });
   }
 
   public Optional<Integer> getJsonRpcPort() {

@@ -64,7 +64,7 @@ public class RetryingGetNodeDataFromPeerTask extends AbstractRetryingPeerTask<Ma
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
-              result.get().complete(peerResult.getResult());
+              result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
   }

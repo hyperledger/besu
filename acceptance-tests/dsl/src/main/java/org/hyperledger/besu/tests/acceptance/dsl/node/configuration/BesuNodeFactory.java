@@ -63,10 +63,14 @@ public class BesuNodeFactory {
         config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
         config.isRevertReasonEnabled(),
+        config.isSecp256k1Native(),
+        config.isAltbn128Native(),
         config.getPlugins(),
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
-        config.getPrivacyParameters());
+        config.isDnsEnabled(),
+        config.getPrivacyParameters(),
+        config.getRunCommand());
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
@@ -191,13 +195,15 @@ public class BesuNodeFactory {
       final String name,
       final String enclaveUrl,
       final String authFile,
-      final String privTransactionSigningKey)
+      final String privTransactionSigningKey,
+      final boolean enableOnChainPrivacy)
       throws IOException, URISyntaxException {
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     final PrivacyParameters privacyParameters =
         privacyParametersBuilder
             .setMultiTenancyEnabled(true)
             .setEnabled(true)
+            .setOnchainPrivacyGroupsEnabled(enableOnChainPrivacy)
             .setStorageProvider(new InMemoryPrivacyStorageProvider())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .setEnclaveUrl(URI.create(enclaveUrl))
@@ -265,12 +271,42 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createIbft2NonValidatorBootnode(final String name, final String genesisFile)
+      throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                validators ->
+                    genesis.createIbft2GenesisConfigFilterBootnode(validators, genesisFile))
+            .bootnodeEligible(true)
+            .build());
+  }
+
+  public BesuNode createIbft2Node(final String name, final String genesisFile) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                validators ->
+                    genesis.createIbft2GenesisConfigFilterBootnode(validators, genesisFile))
+            .bootnodeEligible(false)
+            .build());
+  }
+
   public BesuNode createIbft2Node(final String name) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .genesisConfigProvider(genesis::createIbft2GenesisConfig)
@@ -329,7 +365,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .genesisConfigProvider(
@@ -358,5 +394,9 @@ public class BesuNodeFactory {
             .staticNodes(staticNodesUrls)
             .bootnodeEligible(false)
             .build());
+  }
+
+  public BesuNode runCommand(final String command) throws IOException {
+    return create(new BesuNodeConfigurationBuilder().name("run " + command).run(command).build());
   }
 }

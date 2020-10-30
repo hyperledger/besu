@@ -18,7 +18,6 @@ import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidatio
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -35,14 +34,14 @@ public class IbftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
-  public static ProtocolSchedule<IbftContext> create(
+  public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
     final IbftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
-    return new ProtocolScheduleBuilder<>(
+    return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
             builder -> applyIbftChanges(blockPeriod, builder),
@@ -51,21 +50,20 @@ public class IbftProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  public static ProtocolSchedule<IbftContext> create(
+  public static ProtocolSchedule create(
       final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
     return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
-  private static ProtocolSpecBuilder<IbftContext> applyIbftChanges(
-      final long secondsBetweenBlocks, final ProtocolSpecBuilder<Void> builder) {
+  private static ProtocolSpecBuilder applyIbftChanges(
+      final long secondsBetweenBlocks, final ProtocolSpecBuilder builder) {
     return builder
-        .changeConsensusContextType(
-            ibftBlockHeaderValidator(secondsBetweenBlocks),
-            ibftBlockHeaderValidator(secondsBetweenBlocks),
-            MainnetBlockBodyValidator::new,
-            MainnetBlockValidator::new,
-            MainnetBlockImporter::new,
-            (time, parent, protocolContext) -> BigInteger.ONE)
+        .blockHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks))
+        .ommerHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks))
+        .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
+        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockImporterBuilder(MainnetBlockImporter::new)
+        .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(new LegacyIbftBlockHeaderFunctions());

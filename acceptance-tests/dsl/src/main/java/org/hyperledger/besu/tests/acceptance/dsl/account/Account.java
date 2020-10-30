@@ -107,7 +107,8 @@ public class Account {
   }
 
   public Condition balanceAtBlockEquals(final Amount expectedBalance, final BigInteger block) {
-    return new ExpectAccountBalanceAtBlock(eth, this, block, expectedBalance.getValue(), Unit.WEI);
+    return new ExpectAccountBalanceAtBlock(
+        eth, this, block, expectedBalance.getValue(), expectedBalance.getUnit());
   }
 
   public Condition balanceDoesNotChange(final int startingBalance) {

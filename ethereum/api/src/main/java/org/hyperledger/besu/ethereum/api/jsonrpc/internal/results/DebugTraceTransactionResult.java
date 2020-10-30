@@ -48,9 +48,10 @@ public class DebugTraceTransactionResult {
   }
 
   private static StructLog createStructLog(final TraceFrame frame) {
-    return frame.getExceptionalHaltReasons().isEmpty()
-        ? new StructLog(frame)
-        : new StructLogWithError(frame);
+    return frame
+        .getExceptionalHaltReason()
+        .map(__ -> (StructLog) new StructLogWithError(frame))
+        .orElse(new StructLog(frame));
   }
 
   @JsonGetter(value = "structLogs")

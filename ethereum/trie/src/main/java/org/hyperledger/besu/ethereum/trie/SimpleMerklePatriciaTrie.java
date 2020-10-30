@@ -15,14 +15,18 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -99,7 +103,30 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public void visitAll(final Consumer<Node<V>> visitor) {
-    root.accept(new AllNodesVisitor<>(visitor));
+  public void visitAll(final Consumer<Node<V>> nodeConsumer) {
+    root.accept(new AllNodesVisitor<>(nodeConsumer));
+  }
+
+  @Override
+  public CompletableFuture<Void> visitAll(
+      final Consumer<Node<V>> nodeConsumer, final ExecutorService executorService) {
+    return CompletableFuture.allOf(
+        Stream.concat(
+                Stream.of(
+                    CompletableFuture.runAsync(() -> nodeConsumer.accept(root), executorService)),
+                root.getChildren().stream()
+                    .map(
+                        rootChild ->
+                            CompletableFuture.runAsync(
+                                () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer)),
+                                executorService)))
+            .collect(toUnmodifiableSet())
+            .toArray(CompletableFuture[]::new));
+  }
+
+  @Override
+  public void visitLeafs(final TrieIterator.LeafHandler<V> handler) {
+    final TrieIterator<V> visitor = new TrieIterator<>(handler, true);
+    root.accept(visitor, CompactEncoding.bytesToPath(Bytes32.ZERO));
   }
 }

@@ -68,11 +68,9 @@ public final class GenesisState {
    *
    * @param json A JSON string describing the genesis block
    * @param protocolSchedule A protocol Schedule associated with
-   * @param <C> The consensus context type
    * @return A new {@link GenesisState}.
    */
-  public static <C> GenesisState fromJson(
-      final String json, final ProtocolSchedule<C> protocolSchedule) {
+  public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule) {
     return fromConfig(GenesisConfigFile.fromConfig(json), protocolSchedule);
   }
 
@@ -81,11 +79,10 @@ public final class GenesisState {
    *
    * @param config A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
-   * @param <C> The consensus context type
    * @return A new {@link GenesisState}.
    */
-  public static <C> GenesisState fromConfig(
-      final GenesisConfigFile config, final ProtocolSchedule<C> protocolSchedule) {
+  public static GenesisState fromConfig(
+      final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts =
         parseAllocations(config).collect(Collectors.toList());
     final Block block =
@@ -135,10 +132,10 @@ public final class GenesisState {
     return worldState.rootHash();
   }
 
-  private static <C> BlockHeader buildHeader(
+  private static BlockHeader buildHeader(
       final GenesisConfigFile genesis,
       final Hash genesisRootHash,
-      final ProtocolSchedule<C> protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
 
     return BlockHeaderBuilder.create()
         .parentHash(parseParentHash(genesis))

@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Logger;
 
 /** Tool for importing rlp-encoded block data from files. */
-public class RlpBlockImporter {
+public class RlpBlockImporter implements Closeable {
   private static final Logger LOG = getLogger();
 
   private final Semaphore blockBacklog = new Semaphore(2);
@@ -59,14 +60,25 @@ public class RlpBlockImporter {
    *
    * @param blocks Path to the file containing the blocks
    * @param besuController the BesuController that defines blockchain behavior
-   * @param <C> the consensus context type
+   * @param skipPowValidation Skip proof of work validation (correct mix hash and difficulty)
    * @return the import result
    * @throws IOException On Failure
    */
-  public <C> RlpBlockImporter.ImportResult importBlockchain(
-      final Path blocks, final BesuController<C> besuController) throws IOException {
-    final ProtocolSchedule<C> protocolSchedule = besuController.getProtocolSchedule();
-    final ProtocolContext<C> context = besuController.getProtocolContext();
+  public RlpBlockImporter.ImportResult importBlockchain(
+      final Path blocks, final BesuController besuController, final boolean skipPowValidation)
+      throws IOException {
+    return importBlockchain(blocks, besuController, skipPowValidation, 0L, Long.MAX_VALUE);
+  }
+
+  public RlpBlockImporter.ImportResult importBlockchain(
+      final Path blocks,
+      final BesuController besuController,
+      final boolean skipPowValidation,
+      final long startBlock,
+      final long endBlock)
+      throws IOException {
+    final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
+    final ProtocolContext context = besuController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     int count = 0;
 
@@ -81,11 +93,14 @@ public class RlpBlockImporter {
       while (iterator.hasNext()) {
         final Block block = iterator.next();
         final BlockHeader header = block.getHeader();
-        if (header.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
+        final long blockNumber = header.getNumber();
+        if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
+            || blockNumber < startBlock
+            || blockNumber >= endBlock) {
           continue;
         }
-        if (header.getNumber() % 100 == 0) {
-          LOG.info("Import at block {}", header.getNumber());
+        if (blockNumber % 100 == 0) {
+          LOG.info("Import at block {}", blockNumber);
         }
         if (blockchain.contains(header.getHash())) {
           continue;
@@ -93,12 +108,13 @@ public class RlpBlockImporter {
         if (previousHeader == null) {
           previousHeader = lookupPreviousHeader(blockchain, header);
         }
-        final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
         final BlockHeader lastHeader = previousHeader;
 
         final CompletableFuture<Void> validationFuture =
             CompletableFuture.runAsync(
-                () -> validateBlock(protocolSpec, context, lastHeader, header), validationExecutor);
+                () -> validateBlock(protocolSpec, context, lastHeader, header, skipPowValidation),
+                validationExecutor);
 
         final CompletableFuture<Void> extractingFuture =
             CompletableFuture.runAsync(() -> extractSignatures(block));
@@ -119,7 +135,7 @@ public class RlpBlockImporter {
         previousBlockFuture =
             validationFuture.runAfterBothAsync(
                 calculationFutures,
-                () -> evaluateBlock(context, block, header, protocolSpec),
+                () -> evaluateBlock(context, block, header, protocolSpec, skipPowValidation),
                 importExecutor);
 
         ++count;
@@ -130,20 +146,6 @@ public class RlpBlockImporter {
       }
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
-    } finally {
-      validationExecutor.shutdownNow();
-      try {
-        validationExecutor.awaitTermination(5, SECONDS);
-      } catch (final Exception e) {
-        LOG.error("Error shutting down validatorExecutor.", e);
-      }
-      importExecutor.shutdownNow();
-      try {
-        importExecutor.awaitTermination(5, SECONDS);
-      } catch (final Exception e) {
-        LOG.error("Error shutting down importExecutor", e);
-      }
-      besuController.close();
     }
   }
 
@@ -158,29 +160,42 @@ public class RlpBlockImporter {
     }
   }
 
-  private <C> void validateBlock(
-      final ProtocolSpec<C> protocolSpec,
-      final ProtocolContext<C> context,
+  private void validateBlock(
+      final ProtocolSpec protocolSpec,
+      final ProtocolContext context,
       final BlockHeader previousHeader,
-      final BlockHeader header) {
-    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+      final BlockHeader header,
+      final boolean skipPowValidation) {
+    final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     final boolean validHeader =
         blockHeaderValidator.validateHeader(
-            header, previousHeader, context, HeaderValidationMode.DETACHED_ONLY);
+            header,
+            previousHeader,
+            context,
+            skipPowValidation
+                ? HeaderValidationMode.LIGHT_DETACHED_ONLY
+                : HeaderValidationMode.DETACHED_ONLY);
     if (!validHeader) {
       throw new IllegalStateException("Invalid header at block number " + header.getNumber() + ".");
     }
   }
 
-  private <C> void evaluateBlock(
-      final ProtocolContext<C> context,
+  private void evaluateBlock(
+      final ProtocolContext context,
       final Block block,
       final BlockHeader header,
-      final ProtocolSpec<C> protocolSpec) {
+      final ProtocolSpec protocolSpec,
+      final boolean skipPowValidation) {
     try {
-      final BlockImporter<C> blockImporter = protocolSpec.getBlockImporter();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final boolean blockImported =
-          blockImporter.importBlock(context, block, HeaderValidationMode.SKIP_DETACHED);
+          blockImporter.importBlock(
+              context,
+              block,
+              skipPowValidation
+                  ? HeaderValidationMode.LIGHT_SKIP_DETACHED
+                  : HeaderValidationMode.SKIP_DETACHED,
+              skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
       if (!blockImported) {
         throw new IllegalStateException(
             "Invalid block at block number " + header.getNumber() + ".");
@@ -200,6 +215,23 @@ public class RlpBlockImporter {
                     String.format(
                         "Block %s does not connect to the existing chain. Current chain head %s",
                         header.getNumber(), blockchain.getChainHeadBlockNumber())));
+  }
+
+  @Override
+  public void close() {
+    validationExecutor.shutdownNow();
+    try {
+      validationExecutor.awaitTermination(5, SECONDS);
+    } catch (final Exception e) {
+      LOG.error("Error shutting down validatorExecutor.", e);
+    }
+
+    importExecutor.shutdownNow();
+    try {
+      importExecutor.awaitTermination(5, SECONDS);
+    } catch (final Exception e) {
+      LOG.error("Error shutting down importExecutor", e);
+    }
   }
 
   public static final class ImportResult {

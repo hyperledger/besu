@@ -68,7 +68,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
   private final Map<String, String> environment = singletonMap("BESU_LOGGING", "ERROR");
   private final ConfigOptionSearchAndRunHandler configParsingHandler =
       new ConfigOptionSearchAndRunHandler(
-          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, false);
+          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
 
   @Mock ParseResult mockParseResult;
   @Mock CommandLine mockCommandLine;

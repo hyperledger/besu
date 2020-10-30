@@ -205,7 +205,6 @@ public class EthSchedulerTest {
     result.cancel(false);
     assertThat(task.isDone()).isTrue();
     assertThat(task.isFailed()).isTrue();
-    assertThat(task.isSucceeded()).isFalse();
     assertThat(task.isCancelled()).isTrue();
   }
 }

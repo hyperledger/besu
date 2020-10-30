@@ -25,6 +25,7 @@ import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.security.SecureRandom;
 import java.util.Optional;
@@ -47,6 +48,7 @@ import org.bouncycastle.crypto.InvalidCipherTextException;
  *     encrypted handshake</a>
  */
 public class ECIESHandshaker implements Handshaker {
+
   private static final Logger LOG = LogManager.getLogger();
   private static final SecureRandom RANDOM = SecureRandomProvider.publicSecureRandom();
 
@@ -203,6 +205,10 @@ public class ECIESHandshaker implements Handshaker {
     } catch (final InvalidCipherTextException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
       throw new HandshakeException("Decrypting an incoming handshake message failed", e);
+    } catch (final SecurityModuleException e) {
+      status.set(Handshaker.HandshakeStatus.FAILED);
+      throw new HandshakeException(
+          "Unable to create ECDH Key agreement due to Crypto engine failure", e);
     }
 
     Optional<Bytes> nextMsg = Optional.empty();
@@ -242,10 +248,16 @@ public class ECIESHandshaker implements Handshaker {
 
       // Store the message, as we need it to generating our ingress and egress MACs.
       initiatorMsgEnc = encryptedMsg;
-      if (version4) {
-        initiatorMsg = InitiatorHandshakeMessageV4.decode(bytes, nodeKey);
-      } else {
-        initiatorMsg = InitiatorHandshakeMessageV1.decode(bytes, nodeKey);
+      try {
+        if (version4) {
+          initiatorMsg = InitiatorHandshakeMessageV4.decode(bytes, nodeKey);
+        } else {
+          initiatorMsg = InitiatorHandshakeMessageV1.decode(bytes, nodeKey);
+        }
+      } catch (final SecurityModuleException e) {
+        status.set(Handshaker.HandshakeStatus.FAILED);
+        throw new HandshakeException(
+            "Unable to create ECDH Key agreement due to Crypto engine failure", e);
       }
 
       LOG.trace(
@@ -290,7 +302,14 @@ public class ECIESHandshaker implements Handshaker {
 
       // Compute the secrets and declare this handshake as successful.
     }
-    computeSecrets();
+
+    try {
+      computeSecrets();
+    } catch (final SecurityModuleException e) {
+      status.set(Handshaker.HandshakeStatus.FAILED);
+      throw new HandshakeException(
+          "Unable to create ECDH Key agreement due to Crypto engine failure", e);
+    }
 
     status.set(Handshaker.HandshakeStatus.SUCCESS);
     LOG.trace("Handshake status set to {}", status.get());
@@ -337,6 +356,7 @@ public class ECIESHandshaker implements Handshaker {
   void computeSecrets() {
     final Bytes agreedSecret =
         SECP256K1.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
+
     final Bytes sharedSecret =
         keccak256(
             concatenate(agreedSecret, keccak256(concatenate(responderNonce, initiatorNonce))));

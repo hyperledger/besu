@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hyperledger.besu.ethereum.vm.TestBlockchain.generateTestBlockHash;
+import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain.generateTestBlockHash;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -163,11 +163,11 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
             0,
             false,
             metricsSystem);
-    Optional<List<BlockHeader>> optionalBlockHeaders =
+    final Optional<List<BlockHeader>> optionalBlockHeaders =
         task.processResponse(false, BlockHeadersMessage.create(headers), peerMock);
     assertThat(optionalBlockHeaders).isNotNull();
     assertThat(optionalBlockHeaders).isPresent();
-    List<BlockHeader> blockHeaders = optionalBlockHeaders.get();
+    final List<BlockHeader> blockHeaders = optionalBlockHeaders.get();
     MatcherAssert.assertThat(blockHeaders, hasSize(2));
     verify(peerMock, times(0)).disconnect(any());
   }
@@ -191,7 +191,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
             0,
             false,
             metricsSystem);
-    Optional<List<BlockHeader>> optionalBlockHeaders =
+    final Optional<List<BlockHeader>> optionalBlockHeaders =
         task.processResponse(false, BlockHeadersMessage.create(headers), peerMock);
     assertThat(optionalBlockHeaders).isNotNull();
     assertThat(optionalBlockHeaders).isEmpty();

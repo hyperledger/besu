@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -37,6 +38,7 @@ import java.util.Optional;
 public class MainnetTransactionValidator implements TransactionValidator {
 
   private final GasCalculator gasCalculator;
+  private final Optional<TransactionPriceCalculator> transactionPriceCalculator;
 
   private final boolean disallowSignatureMalleability;
 
@@ -52,6 +54,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final Optional<BigInteger> chainId) {
     this(
         gasCalculator,
+        Optional.empty(),
         checkSignatureMalleability,
         chainId,
         Optional.empty(),
@@ -60,11 +63,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Optional<EIP1559> maybeEip1559,
       final AcceptedTransactionTypes acceptedTransactionTypes) {
     this.gasCalculator = gasCalculator;
+    this.transactionPriceCalculator = transactionPriceCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.maybeEip1559 = maybeEip1559;
@@ -72,7 +77,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   @Override
-  public ValidationResult<TransactionInvalidReason> validate(final Transaction transaction) {
+  public ValidationResult<TransactionInvalidReason> validate(
+      final Transaction transaction, final Optional<Long> baseFee) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
@@ -88,12 +94,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
                 "transaction format is invalid, accepted transaction types are %s",
                 acceptedTransactionTypes.toString()));
       }
-      if (!eip1559.isValidGasLimit(transaction)) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
-            String.format(
-                "transaction gas limit %s exceeds per transaction gas limit",
-                transaction.getGasLimit()));
+      if (transaction.isEIP1559Transaction()) {
+        final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
+        if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+          return ValidationResult.invalid(
+              TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+              String.format("gasPrice is less than the current BaseFee"));
+        }
       }
     }
 
@@ -149,7 +156,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     if (!isSenderAllowed(transaction, validationParams)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
-          String.format("Sender %s is not on the Account Whitelist", transaction.getSender()));
+          String.format("Sender %s is not on the Account Allowlist", transaction.getSender()));
     }
 
     return ValidationResult.valid();

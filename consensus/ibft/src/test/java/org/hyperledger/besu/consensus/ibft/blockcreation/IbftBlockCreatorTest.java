@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -73,12 +72,12 @@ public class IbftBlockCreatorTest {
       initialValidatorList.add(AddressHelpers.ofValue(i));
     }
 
-    final ProtocolSchedule<IbftContext> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions());
-    final ProtocolContext<IbftContext> protContext =
-        new ProtocolContext<>(
+    final ProtocolContext protContext =
+        new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithValidators(initialValidatorList));
@@ -89,7 +88,10 @@ public class IbftBlockCreatorTest {
             1,
             5,
             TestClock.fixed(),
-            metricsSystem);
+            metricsSystem,
+            blockchain::getChainHeadHeader,
+            Optional.empty(),
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
@@ -107,12 +109,14 @@ public class IbftBlockCreatorTest {
             protocolSchedule,
             parentGasLimit -> parentGasLimit,
             Wei.ZERO,
-            parentHeader);
+            0.8,
+            parentHeader,
+            initialValidatorList.get(0));
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
 
-    final BlockHeaderValidator<IbftContext> rules =
+    final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(secondsBetweenBlocks)
             .build();
 

@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -47,9 +49,11 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -58,23 +62,31 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RetestethContext {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final EthHasher NO_WORK_HASHER =
-      (final byte[] buffer, final long nonce, final long number, final byte[] headerHash) -> {};
+      (final byte[] buffer,
+          final long nonce,
+          final long number,
+          Function<Long, Long> epochCalc,
+          final byte[] headerHash) -> {};
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
+  private Bytes extraData;
   private MutableBlockchain blockchain;
-  private ProtocolContext<Void> protocolContext;
+  private ProtocolContext protocolContext;
   private BlockchainQueries blockchainQueries;
-  private ProtocolSchedule<Void> protocolSchedule;
+  private ProtocolSchedule protocolSchedule;
+  private BlockHeaderFunctions blockHeaderFunctions;
   private HeaderValidationMode headerValidationMode;
   private BlockReplay blockReplay;
   private RetestethClock retestethClock;
@@ -117,26 +129,28 @@ public class RetestethContext {
     clockTime.ifPresent(retestethClock::resetTime);
     final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-    protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
-            JsonGenesisConfigOptions.fromJsonObject(
-                JsonUtil.getObjectNode(genesisConfig, "config").get()));
+    final JsonGenesisConfigOptions jsonGenesisConfigOptions =
+        JsonGenesisConfigOptions.fromJsonObject(
+            JsonUtil.getObjectNode(genesisConfig, "config").get());
+    protocolSchedule = MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
-      protocolSchedule = new NoRewardProtocolScheduleWrapper<>(protocolSchedule);
+      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
     }
+    blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
     final GenesisState genesisState = GenesisState.fromJson(genesisConfigString, protocolSchedule);
     coinbase = genesisState.getBlock().getHeader().getCoinbase();
+    extraData = genesisState.getBlock().getHeader().getExtraData();
 
     final WorldStateArchive worldStateArchive =
-        new WorldStateArchive(
+        new DefaultWorldStateArchive(
             new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
     final MutableWorldState worldState = worldStateArchive.getMutable();
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext = new ProtocolContext<>(blockchain, worldStateArchive, null);
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null);
 
     blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
 
@@ -149,8 +163,10 @@ public class RetestethContext {
     final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
     ethHashSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
-            ? new EthHashSolver(nonceGenerator, NO_WORK_HASHER, false, Subscribers.none())
-            : new EthHashSolver(nonceGenerator, new EthHasher.Light(), false, Subscribers.none());
+            ? new EthHashSolver(
+                nonceGenerator, NO_WORK_HASHER, false, Subscribers.none(), EthHash::epoch)
+            : new EthHashSolver(
+                nonceGenerator, new EthHasher.Light(), false, Subscribers.none(), EthHash::epoch);
 
     blockReplay =
         new BlockReplay(
@@ -178,7 +194,12 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            true,
+            jsonGenesisConfigOptions.getEIP1559BlockNumber().isPresent()
+                ? Optional.of(
+                    new EIP1559(jsonGenesisConfigOptions.getEIP1559BlockNumber().getAsLong()))
+                : Optional.empty());
 
     LOG.trace("Genesis Block {} ", genesisState::getBlock);
 
@@ -195,14 +216,19 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        100);
   }
 
-  public ProtocolSchedule<Void> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
-  public ProtocolContext<Void> getProtocolContext() {
+  public BlockHeaderFunctions getBlockHeaderFunctions() {
+    return blockHeaderFunctions;
+  }
+
+  public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
@@ -210,7 +236,7 @@ public class RetestethContext {
     return blockchain.getChainHeadBlockNumber();
   }
 
-  public ProtocolSpec<Void> getProtocolSpec(final long blockNumber) {
+  public ProtocolSpec getProtocolSpec(final long blockNumber) {
     return getProtocolSchedule().getByBlockNumber(blockNumber);
   }
 
@@ -240,6 +266,10 @@ public class RetestethContext {
 
   public Address getCoinbase() {
     return coinbase;
+  }
+
+  public Bytes getExtraData() {
+    return extraData;
   }
 
   public MutableBlockchain getBlockchain() {

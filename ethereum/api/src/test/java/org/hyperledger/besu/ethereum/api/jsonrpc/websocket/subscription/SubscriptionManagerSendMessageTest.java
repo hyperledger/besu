@@ -57,7 +57,10 @@ public class SubscriptionManagerSendMessageTest {
         new SubscribeRequest(SubscriptionType.SYNCING, null, null, connectionId);
 
     final JsonRpcResult expectedResult = mock(JsonRpcResult.class);
-    final SubscriptionResponse expectedResponse = new SubscriptionResponse(1L, expectedResult);
+    final Subscription subscription =
+        new Subscription(1L, connectionId, SubscriptionType.SYNCING, false);
+    final SubscriptionResponse expectedResponse =
+        new SubscriptionResponse(subscription, expectedResult);
 
     final Long subscriptionId = subscriptionManager.subscribe(subscribeRequest);
 

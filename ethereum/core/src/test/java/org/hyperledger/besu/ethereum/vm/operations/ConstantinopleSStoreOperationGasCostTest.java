@@ -36,7 +36,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class ConstantinopleSStoreOperationGasCostTest {
 
-  private static final ProtocolSchedule<Void> protocolSchedule =
+  private static final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0));
 
   @Parameters(name = "Code: {0}, Original: {1}")

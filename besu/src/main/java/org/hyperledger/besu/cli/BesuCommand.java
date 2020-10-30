@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
@@ -28,10 +29,13 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfi
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -39,23 +43,26 @@ import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.RpcApisConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
-import org.hyperledger.besu.cli.custom.JsonRPCWhitelistHostsProperty;
+import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
-import org.hyperledger.besu.cli.options.EthProtocolOptions;
-import org.hyperledger.besu.cli.options.MetricsCLIOptions;
-import org.hyperledger.besu.cli.options.NetworkingOptions;
-import org.hyperledger.besu.cli.options.SynchronizerOptions;
-import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.unstable.DnsOptions;
+import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.unstable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
+import org.hyperledger.besu.cli.options.unstable.MiningOptions;
+import org.hyperledger.besu.cli.options.unstable.NatOptions;
+import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
+import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
+import org.hyperledger.besu.cli.options.unstable.RPCOptions;
+import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
+import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
-import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.KeyLoader;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImporterFactory;
-import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.RlpBlockExporterFactory;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
@@ -66,7 +73,11 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -76,6 +87,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -84,7 +97,9 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -108,16 +123,18 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
@@ -133,20 +150,23 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -182,43 +202,83 @@ import picocli.CommandLine.ParameterException;
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
 
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  // non-static for testing
   private final Logger logger;
 
   private CommandLine commandLine;
 
-  private final RlpBlockImporter rlpBlockImporter;
-  private final JsonBlockImporterFactory jsonBlockImporterFactory;
-  private final RlpBlockExporterFactory rlpBlockExporterFactory;
+  private final Supplier<RlpBlockImporter> rlpBlockImporter;
+  private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
+  private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
-  final NetworkingOptions networkingOptions = NetworkingOptions.create();
-  final SynchronizerOptions synchronizerOptions = SynchronizerOptions.create();
-  final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
-  final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
-  final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
+  // Unstable CLI options
+  final NetworkingOptions unstableNetworkingOptions = NetworkingOptions.create();
+  final SynchronizerOptions unstableSynchronizerOptions = SynchronizerOptions.create();
+  final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
+  final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
+  final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
+  private final EthstatsOptions unstableEthstatsOptions = EthstatsOptions.create();
+  private final DnsOptions unstableDnsOptions = DnsOptions.create();
+  private final MiningOptions unstableMiningOptions = MiningOptions.create();
+  private final NatOptions unstableNatOptions = NatOptions.create();
+  private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
+  private final RPCOptions unstableRPCOptions = RPCOptions.create();
+
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
+  private final SecurityModuleServiceImpl securityModuleService;
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
   private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
 
-  protected KeyLoader getKeyLoader() {
-    return KeyPairUtil::loadKeyPair;
-  }
-
   // Public IP stored to prevent having to research it each time we need it.
   private InetAddress autoDiscoveredDefaultIP = null;
-
-  // Property to indicate whether Besu has been launched via docker
-  private final boolean isDocker = Boolean.getBoolean("besu.docker");
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
 
+  private final Set<Integer> allocatedPorts = new HashSet<>();
+
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
+
+  // While this variable is never read it is needed for the PicoCLI to create
+  // the config file option that is read elsewhere.
+  @SuppressWarnings("UnusedVariable")
+  @CommandLine.Option(
+      names = {CONFIG_FILE_OPTION_NAME},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "TOML config file (default: none)")
+  private final File configFile = null;
+
+  @CommandLine.Option(
+      names = {"--data-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
+  final Path dataPath = getDefaultBesuDataPath(this);
+
+  // Genesis file path with null default option if the option
+  // is not defined on command line as this default is handled by Runner
+  // to use mainnet json file from resources as indicated in the
+  // default network option
+  // Then we have no control over genesis default value here.
+  @CommandLine.Option(
+      names = {"--genesis-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Genesis file. Setting this option makes --network option ignored and requires --network-id to be set.")
+  private final File genesisFile = null;
+
+  @CommandLine.Option(
+      names = {"--node-private-key-file"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description =
+          "The node's private key file (default: a file named \"key\" in the Besu data folder)")
+  private final File nodePrivateKeyFile = null;
 
   @Option(
       names = "--identity",
@@ -264,20 +324,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "Default is a predefined list.",
       split = ",",
       arity = "0..*")
-  void setBootnodes(final List<String> values) {
-    try {
-      bootNodes =
-          values.stream()
-              .filter(value -> !value.isEmpty())
-              .map(EnodeURL::fromString)
-              .collect(Collectors.toList());
-      DiscoveryConfiguration.assertValidBootnodes(bootNodes);
-    } catch (final IllegalArgumentException e) {
-      throw new ParameterException(commandLine, e.getMessage());
-    }
-  }
-
-  private List<EnodeURL> bootNodes = null;
+  private final List<String> bootNodes = null;
 
   @Option(
       names = {"--max-peers"},
@@ -305,6 +352,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .getValue();
 
   @Option(
+      names = {"--random-peer-priority-enabled"},
+      description =
+          "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
+  private final Boolean randomPeerPriority = false;
+
+  @Option(
       names = {"--banned-node-ids", "--banned-node-id"},
       paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
       description = "A list of node IDs to ban from the P2P network.",
@@ -329,8 +382,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
-          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE})")
-  private final SyncMode syncMode = DEFAULT_SYNC_MODE;
+          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: FAST if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
+  private SyncMode syncMode = null;
 
   @Option(
       names = {"--fast-sync-min-peers"},
@@ -360,14 +413,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--p2p-interface"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
       description =
-          "The network interface address on which this node listens for p2p communication (default: ${DEFAULT-VALUE})",
+          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String p2pInterface = NetworkUtility.INADDR_ANY;
 
   @Option(
       names = {"--p2p-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port on which to listen for p2p communication (default: ${DEFAULT-VALUE})",
+      description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer p2pPort = EnodeURL.DEFAULT_LISTENING_PORT;
 
@@ -455,6 +508,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Require authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpAuthenticationEnabled = false;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--rpc-http-authentication-credentials-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Storage file for JSON-RPC HTTP authentication credentials (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String rpcHttpAuthenticationCredentialsFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-http-authentication-jwt-public-key-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "JWT public key file for JSON-RPC HTTP authentication",
+      arity = "1")
+  private final File rpcHttpAuthenticationPublicKeyFile = null;
+
   @Option(
       names = {"--rpc-http-tls-enabled"},
       description = "Enable TLS for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
@@ -528,6 +597,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Require authentication for the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcWsAuthenticationEnabled = false;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--rpc-ws-authentication-credentials-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String rpcWsAuthenticationCredentialsFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-authentication-jwt-public-key-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "JWT public key file for JSON-RPC WebSocket authentication",
+      arity = "1")
+  private final File rpcWsAuthenticationPublicKeyFile = null;
 
   @Option(
       names = {"--privacy-tls-enabled"},
@@ -619,18 +704,39 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String metricsPrometheusJob = "besu-client";
 
   @Option(
-      names = {"--host-whitelist"},
+      names = {"--host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to whitelist for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
-  private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
+  private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
+
+  @Option(
+      names = {"--host-whitelist"},
+      hidden = true,
+      paramLabel = "<hostname>[,<hostname>...]... or * or all",
+      description =
+          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
+  private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
   private final Level logLevel = null;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--color-enabled"},
+      description =
+          "Force color output to be enabled/disabled (default: colorized only if printing to console")
+  private static Boolean colorEnabled = null;
+
+  @Option(
+      names = {"--reorg-logging-threshold"},
+      description =
+          "How deep a chain reorganization must be in order for it to be logged (default: ${DEFAULT-VALUE})")
+  private final Long reorgLoggingThreshold = 6L;
 
   @Option(
       names = {"--miner-enabled"},
@@ -653,13 +759,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Stratum port binding (default: ${DEFAULT-VALUE})")
   private final Integer stratumPort = 8008;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      hidden = true,
-      names = {"--Xminer-stratum-extranonce"},
-      description = "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
-  private String stratumExtranonce = "080c";
-
   @Option(
       names = {"--miner-coinbase"},
       description =
@@ -677,6 +776,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
+      names = {"--rpc-tx-feecap"},
+      description =
+          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
+
+  @Option(
+      names = {"--min-block-occupancy-ratio"},
+      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+
+  @Option(
       names = {"--miner-extra-data"},
       description =
           "A hex string representing the (32) bytes to be included in the extra data "
@@ -687,24 +799,43 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
-  private Boolean pruningOverride;
+          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
+  private final Boolean pruningEnabled = false;
 
   @Option(
       names = {"--permissions-nodes-config-file-enabled"},
       description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesEnabled = false;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--permissions-nodes-config-file"},
+      description =
+          "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+  private String nodePermissionsConfigFile = null;
+
   @Option(
       names = {"--permissions-accounts-config-file-enabled"},
       description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsAccountsEnabled = false;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--permissions-accounts-config-file"},
+      description =
+          "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+  private String accountPermissionsConfigFile = null;
 
   @Option(
       names = {"--permissions-nodes-contract-address"},
       description = "Address of the node permissioning smart contract",
       arity = "1")
   private final Address permissionsNodesContractAddress = null;
+
+  @Option(
+      names = {"--permissions-nodes-contract-version"},
+      description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
+  private final Integer permissionsNodesContractVersion = 1;
 
   @Option(
       names = {"--permissions-nodes-contract-enabled"},
@@ -752,10 +883,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "The URL on which the enclave is running")
   private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
 
+  @CommandLine.Option(
+      names = {"--privacy-public-key-file"},
+      description = "The enclave's public key file")
+  private final File privacyPublicKeyFile = null;
+
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})")
+          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})",
+      hidden = true)
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
@@ -770,14 +907,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean migratePrivateDatabase = false;
 
   @Option(
-      names = {"--privacy-onchain-groups-enabled"},
-      description = "Enable onchain privacy groups (default: ${DEFAULT-VALUE})")
-  private final Boolean isOnchainPrivacyGroupEnabled = false;
+      names = {"--privacy-flexible-groups-enabled", "--privacy-onchain-groups-enabled"},
+      description = "Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
+  private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
       names = {"--target-gas-limit"},
       description =
-          "Sets target gas limit per block. If set each blocks gas limit will approach this setting over time if the current gas limit is different.")
+          "Sets target gas limit per block. If set each block's gas limit will approach this setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
 
   @Option(
@@ -806,12 +943,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
+  @Option(
+      names = {"--tx-pool-price-bump"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      converter = PercentageConverter.class,
+      description =
+          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
       description = "Identity for the key-value storage to be used.",
       arity = "1")
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--security-module"},
+      paramLabel = "<NAME>",
+      description = "Identity for the Security Module to be used.",
+      arity = "1")
+  private String securityModuleName = DEFAULT_SECURITY_MODULE;
 
   @Option(
       names = {"--auto-log-bloom-caching-enabled"},
@@ -848,6 +1002,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
+  @CommandLine.Option(
+      names = {"--pid-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "Path to PID file (optional)")
+  private final Path pidPath = null;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -855,18 +1015,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
-  private BesuController<?> besuController;
-  private StandaloneCommand standaloneCommands;
+  private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
   private Vertx vertx;
+  private EnodeDnsConfiguration enodeDnsConfiguration;
 
   public BesuCommand(
       final Logger logger,
-      final RlpBlockImporter rlpBlockImporter,
-      final JsonBlockImporterFactory jsonBlockImporterFactory,
-      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final Supplier<RlpBlockImporter> rlpBlockImporter,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+      final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
@@ -880,20 +1040,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         controllerBuilderFactory,
         besuPluginContext,
         environment,
-        new StorageServiceImpl());
+        new StorageServiceImpl(),
+        new SecurityModuleServiceImpl());
   }
 
   @VisibleForTesting
   protected BesuCommand(
       final Logger logger,
-      final RlpBlockImporter rlpBlockImporter,
-      final JsonBlockImporterFactory jsonBlockImporterFactory,
-      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final Supplier<RlpBlockImporter> rlpBlockImporter,
+      final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+      final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilderFactory,
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
-      final StorageServiceImpl storageService) {
+      final StorageServiceImpl storageService,
+      final SecurityModuleServiceImpl securityModuleService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -903,6 +1065,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.besuPluginContext = besuPluginContext;
     this.environment = environment;
     this.storageService = storageService;
+    this.securityModuleService = securityModuleService;
+
+    pluginCommonConfiguration = new BesuCommandConfigurationService();
+    besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
 
   public void parse(
@@ -913,21 +1079,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine =
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
-    handleStandaloneCommand()
-        .enableExperimentalEIPs()
-        .addSubCommands(resultHandler, in)
-        .registerConverters()
-        .handleUnstableOptions()
-        .preparePlugins()
-        .parse(resultHandler, exceptionHandler, args);
+
+    enableExperimentalEIPs();
+    addSubCommands(resultHandler, in);
+    registerConverters();
+    handleUnstableOptions();
+    preparePlugins();
+    parse(resultHandler, exceptionHandler, args);
   }
 
   @Override
   public void run() {
     try {
       configureLogging(true);
+      configureNativeLibs();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
-      // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
+      // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
       final BesuCommand controller = validateOptions().configure().controller();
@@ -940,35 +1107,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void addConfigurationService() {
-    if (pluginCommonConfiguration == null) {
-      final Path dataDir = dataDir();
-      pluginCommonConfiguration =
-          new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
-      besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
-    }
-  }
-
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
-  private BesuCommand handleStandaloneCommand() {
-    standaloneCommands = new StandaloneCommand();
-    if (isFullInstantiation()) {
-      commandLine.addMixin("standaloneCommands", standaloneCommands);
-    }
-    return this;
-  }
-
-  private BesuCommand enableExperimentalEIPs() {
+  private void enableExperimentalEIPs() {
     // Usage of static command line flags is strictly reserved for experimental EIPs
     commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
-    return this;
   }
 
-  private BesuCommand addSubCommands(
+  private void addSubCommands(
       final AbstractParseResultHandler<List<Object>> resultHandler, final InputStream in) {
     commandLine.addSubcommand(
         BlocksSubCommand.COMMAND_NAME,
@@ -979,7 +1128,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             resultHandler.out()));
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME,
-        new PublicKeySubCommand(resultHandler.out(), getKeyLoader()));
+        new PublicKeySubCommand(resultHandler.out(), this::buildNodeKey));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -987,10 +1136,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
-    return this;
   }
 
-  private BesuCommand registerConverters() {
+  private void registerConverters() {
     commandLine.registerConverter(Address.class, Address::fromHexStringStrict);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Level.class, Level::valueOf);
@@ -1000,31 +1148,37 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
     commandLine.registerConverter(Optional.class, Optional::of);
+    commandLine.registerConverter(Double.class, Double::parseDouble);
 
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
-    return this;
   }
 
-  private BesuCommand handleUnstableOptions() {
+  private void handleUnstableOptions() {
     // Add unstable options
     final ImmutableMap.Builder<String, Object> unstableOptionsBuild = ImmutableMap.builder();
     final ImmutableMap<String, Object> unstableOptions =
         unstableOptionsBuild
-            .put("Ethereum Wire Protocol", ethProtocolOptions)
-            .put("Metrics", metricsCLIOptions)
-            .put("P2P Network", networkingOptions)
-            .put("Synchronizer", synchronizerOptions)
-            .put("TransactionPool", transactionPoolOptions)
+            .put("Ethereum Wire Protocol", unstableEthProtocolOptions)
+            .put("Metrics", unstableMetricsCLIOptions)
+            .put("P2P Network", unstableNetworkingOptions)
+            .put("RPC", unstableRPCOptions)
+            .put("DNS Configuration", unstableDnsOptions)
+            .put("NAT Configuration", unstableNatOptions)
+            .put("Synchronizer", unstableSynchronizerOptions)
+            .put("TransactionPool", unstableTransactionPoolOptions)
+            .put("Ethstats", unstableEthstatsOptions)
+            .put("Mining", unstableMiningOptions)
+            .put("Native Library", unstableNativeLibraryOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
-    return this;
   }
 
-  private BesuCommand preparePlugins() {
+  private void preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
@@ -1037,7 +1191,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .getMetricCategories()
         .forEach(metricCategoryConverter::addRegistryCategory);
 
-    return this;
+    // register default security module
+    securityModuleService.register(
+        DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule));
+  }
+
+  private SecurityModule defaultSecurityModule() {
+    return new KeyPairSecurityModule(loadKeyPair());
+  }
+
+  @VisibleForTesting
+  SECP256K1.KeyPair loadKeyPair() {
+    return KeyPairUtil.loadKeyPair(nodePrivateKeyFile());
   }
 
   private void parse(
@@ -1049,7 +1214,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // and eventually it will run regular parsing of the remaining options.
     final ConfigOptionSearchAndRunHandler configParsingHandler =
         new ConfigOptionSearchAndRunHandler(
-            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, isDocker);
+            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
     commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
   }
 
@@ -1068,7 +1233,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
-        staticNodes);
+        staticNodes,
+        pidPath);
   }
 
   private BesuCommand startPlugins() {
@@ -1086,6 +1252,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public void configureLogging(final boolean announce) {
+    // To change the configuration if color was enabled/disabled
+    Configurator.reconfigure();
     // set log level per CLI flags
     if (logLevel != null) {
       if (announce) {
@@ -1095,11 +1263,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  public static Optional<Boolean> getColorEnabled() {
+    return Optional.ofNullable(colorEnabled);
+  }
+
+  private void configureNativeLibs() {
+    if (unstableNativeLibraryOptions.getNativeAltbn128()) {
+      AbstractAltBnPrecompiledContract.enableNative();
+    }
+    if (unstableNativeLibraryOptions.getNativeSecp256k1()) {
+      SECP256K1.enableNative();
+    }
+  }
+
   private BesuCommand validateOptions() {
     issueOptionWarnings();
 
     validateP2PInterface(p2pInterface);
     validateMiningParams();
+    validateNatParams();
+    validateNetStatsParams();
+    validateDnsOptionsParams();
 
     return this;
   }
@@ -1109,13 +1293,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isMiningEnabled && coinbase == null) {
       throw new ParameterException(
           this.commandLine,
-          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
+          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
     if (!isMiningEnabled && iStratumMiningEnabled) {
       throw new ParameterException(
           this.commandLine,
-          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)"
+          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
               + "or specify mining is enabled (--miner-enabled)");
     }
   }
@@ -1128,6 +1312,44 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } catch (final UnknownHostException | SocketException e) {
       throw new ParameterException(commandLine, failMessage, e);
+    }
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  private void validateNatParams() {
+    if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
+        && !unstableNatOptions
+            .getNatManagerServiceName()
+            .equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
+              + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+    }
+    if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.getNatMethodFallbackEnabled()) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled"
+              + " or select another mode (via --nat--method=XXXX)");
+    }
+  }
+
+  private void validateNetStatsParams() {
+    if (Strings.isNullOrEmpty(unstableEthstatsOptions.getEthstatsUrl())
+        && !unstableEthstatsOptions.getEthstatsContact().isEmpty()) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
+              + " or provide an url (via --Xethstats=nodename:secret@host:port)");
+    }
+  }
+
+  private void validateDnsOptionsParams() {
+    if (!unstableDnsOptions.getDnsEnabled() && unstableDnsOptions.getDnsUpdateEnabled()) {
+      throw new ParameterException(
+          this.commandLine,
+          "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
+              + " or specify dns is enabled (--Xdns-enabled)");
     }
   }
 
@@ -1157,8 +1379,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--miner-coinbase",
             "--min-gas-price",
+            "--min-block-occupancy-ratio",
             "--miner-extra-data",
-            "--miner-stratum-enabled"));
+            "--miner-stratum-enabled",
+            "--Xminer-remote-sealers-limit",
+            "--Xminer-remote-sealers-hashrate-ttl"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1166,30 +1391,54 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--sync-mode",
         !SyncMode.FAST.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
+
+    if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE) && nodePrivateKeyFile != null) {
+      logger.warn(
+          DEPENDENCY_WARNING_MSG,
+          "--node-private-key-file",
+          "--security-module=" + DEFAULT_SECURITY_MODULE);
+    }
   }
 
   private BesuCommand configure() throws Exception {
+    checkPortClash();
+    syncMode =
+        Optional.ofNullable(syncMode)
+            .orElse(
+                genesisFile == null && !isPrivacyEnabled && network != NetworkName.DEV
+                    ? SyncMode.FAST
+                    : SyncMode.FULL);
+
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
+    // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
+    if (!hostsWhitelist.isEmpty()) {
+      // if allowlist == default values, remove the default values
+      if (hostsAllowlist.size() == 2
+          && hostsAllowlist.containsAll(List.of("localhost", "127.0.0.1"))) {
+        hostsAllowlist.removeAll(List.of("localhost", "127.0.0.1"));
+      }
+      hostsAllowlist.addAll(hostsWhitelist);
+    }
+
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
+
     logger.info("Connecting to {} static nodes.", staticNodes.size());
     logger.trace("Static Nodes = {}", staticNodes);
-    final List<URI> enodeURIs =
-        ethNetworkConfig.getBootNodes().stream().map(EnodeURL::toURI).collect(Collectors.toList());
+    final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(p -> ensureAllNodesAreInWhitelist(enodeURIs, p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
 
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(
-            p ->
-                ensureAllNodesAreInWhitelist(
-                    staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
+
+    logger.info("Security Module: {}", securityModuleName);
     return this;
   }
 
@@ -1199,11 +1448,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return network == null ? MAINNET : network;
   }
 
-  private void ensureAllNodesAreInWhitelist(
-      final Collection<URI> enodeAddresses,
+  private void ensureAllNodesAreInAllowlist(
+      final Collection<EnodeURL> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
     try {
-      PermissioningConfigurationValidator.areAllNodesAreInWhitelist(
+      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           enodeAddresses, permissioningConfiguration);
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage());
@@ -1215,7 +1464,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
-  public BesuController<?> buildController() {
+  public BesuController buildController() {
     try {
       return getControllerBuilder().build();
     } catch (final Exception e) {
@@ -1223,12 +1472,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public BesuControllerBuilder<?> getControllerBuilder() {
-    addConfigurationService();
+  public BesuControllerBuilder getControllerBuilder() {
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
-        .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
+        .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
         .miningParameters(
             new MiningParameters(
@@ -1239,10 +1487,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 iStratumMiningEnabled,
                 stratumNetworkInterface,
                 stratumPort,
-                stratumExtranonce,
-                Optional.empty()))
+                unstableMiningOptions.getStratumExtranonce(),
+                Optional.empty(),
+                minBlockOccupancyRatio,
+                unstableMiningOptions.getRemoteSealersLimit(),
+                unstableMiningOptions.getRemoteSealersTimeToLive()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodePrivateKeyFile(nodePrivateKeyFile())
+        .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
@@ -1252,8 +1503,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pruningConfiguration(
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
-        .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
-        .requiredBlocks(requiredBlocks);
+        .gasLimitCalculator(
+            Optional.ofNullable(targetGasLimit)
+                .<GasLimitCalculator>map(TargetingGasLimitCalculator::new)
+                .orElse(GasLimitCalculator.constant()))
+        .requiredBlocks(requiredBlocks)
+        .reorgLoggingThreshold(reorgLoggingThreshold);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -1262,15 +1517,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--graphql-http-enabled",
-        !isRpcHttpEnabled,
+        !isGraphQLHttpEnabled,
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
 
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
     graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
     graphQLConfiguration.setHost(graphQLHttpHost);
     graphQLConfiguration.setPort(graphQLHttpPort);
-    graphQLConfiguration.setHostsWhitelist(hostsWhitelist);
+    graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+    graphQLConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
 
     return graphQLConfiguration;
   }
@@ -1302,7 +1558,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
-        && rpcHttpAuthenticationPublicKeyFile() == null) {
+        && rpcHttpAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
@@ -1314,11 +1570,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setPort(rpcHttpPort);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
+    jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
-    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
+    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+    jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     return jsonRpcConfiguration;
   }
 
@@ -1423,7 +1680,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (isRpcWsAuthenticationEnabled
         && rpcWsAuthenticationCredentialsFile() == null
-        && rpcWsAuthenticationPublicKeyFile() == null) {
+        && rpcWsAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
           "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
@@ -1436,8 +1693,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
-    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
-    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile());
+    webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setTimeoutSec(unstableRPCOptions.getWsTimeoutSec());
     return webSocketConfiguration;
   }
 
@@ -1467,7 +1725,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--metrics-push-interval",
             "--metrics-push-prometheus-job"));
 
-    return metricsCLIOptions
+    return unstableMetricsCLIOptions
         .toDomainObject()
         .enabled(isMetricsEnabled)
         .host(metricsHost)
@@ -1477,7 +1735,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pushHost(metricsPushHost)
         .pushPort(metricsPushPort)
         .pushInterval(metricsPushInterval)
-        .hostsWhitelist(hostsWhitelist)
+        .hostsAllowlist(hostsAllowlist)
         .prometheusJob(metricsPrometheusJob)
         .build();
   }
@@ -1494,29 +1752,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
     if (localPermissionsEnabled()) {
       final Optional<String> nodePermissioningConfigFile =
-          Optional.ofNullable(nodePermissionsConfigFile());
+          Optional.ofNullable(nodePermissionsConfigFile);
       final Optional<String> accountPermissioningConfigFile =
-          Optional.ofNullable(accountsPermissionsConfigFile());
+          Optional.ofNullable(accountPermissionsConfigFile);
 
       final LocalPermissioningConfiguration localPermissioningConfiguration =
           PermissioningConfigurationBuilder.permissioningConfiguration(
               permissionsNodesEnabled,
+              getEnodeDnsConfiguration(),
               nodePermissioningConfigFile.orElse(getDefaultPermissioningFilePath()),
               permissionsAccountsEnabled,
               accountPermissioningConfigFile.orElse(getDefaultPermissioningFilePath()));
 
       localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
     } else {
-      if (nodePermissionsConfigFile() != null && !permissionsNodesEnabled) {
+      if (nodePermissionsConfigFile != null && !permissionsNodesEnabled) {
         logger.warn(
             "Node permissioning config file set {} but no permissions enabled",
-            nodePermissionsConfigFile());
+            nodePermissionsConfigFile);
       }
 
-      if (accountsPermissionsConfigFile() != null && !permissionsAccountsEnabled) {
+      if (accountPermissionsConfigFile != null && !permissionsAccountsEnabled) {
         logger.warn(
             "Account permissioning config file set {} but no permissions enabled",
-            accountsPermissionsConfigFile());
+            accountPermissionsConfigFile);
       }
       localPermissioningConfigurationOptional = Optional.empty();
     }
@@ -1529,10 +1788,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
       } else {
-        smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(
+        smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
             permissionsNodesContractEnabled);
         smartContractPermissioningConfiguration.setNodeSmartContractAddress(
             permissionsNodesContractAddress);
+        smartContractPermissioningConfiguration.setNodeSmartContractInterfaceVersion(
+            permissionsNodesContractVersion);
       }
     } else if (permissionsNodesContractAddress != null) {
       logger.warn(
@@ -1546,7 +1807,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
       } else {
-        smartContractPermissioningConfiguration.setSmartContractAccountWhitelistEnabled(
+        smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
             permissionsAccountsContractEnabled);
         smartContractPermissioningConfiguration.setAccountSmartContractAddress(
             permissionsAccountsContractAddress);
@@ -1583,7 +1844,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--privacy-url",
             "--privacy-public-key-file",
-            "--privacy-precompiled-address",
             "--privacy-multi-tenancy-enabled",
             "--privacy-tls-enabled"));
 
@@ -1610,12 +1870,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isOnchainPrivacyGroupEnabled);
+      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
 
-      final boolean hasPrivacyPublicKey = privacyPublicKeyFile() != null;
+      final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
-          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
+          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile);
         } catch (final IOException e) {
           throw new ParameterException(
               commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);
@@ -1630,7 +1890,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
-      privacyParametersBuilder.setPrivacyAddress(privacyPrecompiledAddress);
+
+      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
+        // if gas is required, cannot use random keys to sign private tx
+        // ie --privacy-marker-transaction-signing-key-file must be set
+        if (privacyMarkerTransactionSigningKeyPath == null) {
+          throw new ParameterException(
+              commandLine,
+              "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
+        }
+      }
+
+      if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
+        logger.warn(
+            "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
+      }
+
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
@@ -1692,7 +1967,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
-    return synchronizerOptions
+    return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
         .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
@@ -1700,21 +1975,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    return transactionPoolOptions
+    return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
+        .priceBump(priceBump)
+        .txFeeCap(txFeeCap)
         .build();
   }
 
   private boolean isPruningEnabled() {
-    return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
+    return pruningEnabled;
   }
 
   // Blockchain synchronisation from peers.
   private void synchronize(
-      final BesuController<?> controller,
+      final BesuController controller,
       final boolean p2pEnabled,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
@@ -1727,7 +2004,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final Collection<EnodeURL> staticNodes) {
+      final Collection<EnodeURL> staticNodes,
+      final Path pidPath) {
 
     checkNotNull(runnerBuilder);
 
@@ -1740,6 +2018,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
+            .natManagerServiceName(unstableNatOptions.getNatManagerServiceName())
+            .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)
@@ -1749,10 +2029,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .limitRemoteWireConnectionsEnabled(isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
                 Fraction.fromPercentage(maxRemoteConnectionsPercentage).getValue())
-            .networkingConfiguration(networkingOptions.toDomainObject())
+            .randomPeerPriority(randomPeerPriority)
+            .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
+            .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)
@@ -1761,6 +2043,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
+            .ethstatsUrl(unstableEthstatsOptions.getEthstatsUrl())
+            .ethstatsContact(unstableEthstatsOptions.getEthstatsContact())
             .build();
 
     addShutdownHook(runner);
@@ -1816,7 +2100,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // custom genesis file use comes with specific default values for the genesis
     // file itself
     // but also for the network id and the bootnodes list.
-    final File genesisFile = genesisFile();
     if (genesisFile != null) {
 
       // noinspection ConstantConditions network is not always null but injected by
@@ -1882,7 +2165,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (bootNodes != null) {
-      builder.setBootNodes(bootNodes);
+      try {
+
+        final List<EnodeURL> listBootNodes =
+            bootNodes.stream()
+                .filter(value -> !value.isEmpty())
+                .map(url -> EnodeURL.fromString(url, getEnodeDnsConfiguration()))
+                .collect(Collectors.toList());
+        DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
+        builder.setBootNodes(listBootNodes);
+      } catch (final IllegalArgumentException e) {
+        throw new ParameterException(commandLine, e.getMessage());
+      }
     }
 
     return builder.build();
@@ -1890,87 +2184,46 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private String genesisConfig() {
     try {
-      return Resources.toString(genesisFile().toURI().toURL(), UTF_8);
+      return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
     } catch (final IOException e) {
       throw new ParameterException(
-          this.commandLine, String.format("Unable to load genesis file %s.", genesisFile()), e);
+          this.commandLine, String.format("Unable to load genesis file %s.", genesisFile), e);
     }
   }
 
-  private File genesisFile() {
-    if (isFullInstantiation()) {
-      return standaloneCommands.genesisFile;
-    } else if (isDocker) {
-      final File genesisFile = new File(DOCKER_GENESIS_LOCATION);
-      if (genesisFile.exists()) {
-        return genesisFile;
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
-  }
-
+  // dataDir() is public because it is accessed by subcommands
   public Path dataDir() {
-    if (isFullInstantiation()) {
-      return standaloneCommands.dataPath.toAbsolutePath();
-    } else if (isDocker) {
-      return Paths.get(DOCKER_DATADIR_LOCATION);
-    } else {
-      return getDefaultBesuDataPath(this);
-    }
+    return dataPath.toAbsolutePath();
   }
 
   private Path pluginsDir() {
-    if (isFullInstantiation()) {
-      final String pluginsDir = System.getProperty("besu.plugins.dir");
-      if (pluginsDir == null) {
-        return new File(System.getProperty("besu.home", "."), "plugins").toPath();
-      } else {
-        return new File(pluginsDir).toPath();
-      }
-    } else if (isDocker) {
-      return Paths.get(DOCKER_PLUGINSDIR_LOCATION);
+    final String pluginsDir = System.getProperty("besu.plugins.dir");
+    if (pluginsDir == null) {
+      return new File(System.getProperty("besu.home", "."), "plugins").toPath();
     } else {
-      return null; // null means no plugins
+      return new File(pluginsDir).toPath();
     }
   }
 
-  public File nodePrivateKeyFile() {
-    File nodePrivateKeyFile = null;
-    if (isFullInstantiation()) {
-      nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile;
-    }
-
-    return nodePrivateKeyFile != null
-        ? nodePrivateKeyFile
-        : KeyPairUtil.getDefaultKeyFile(dataDir());
+  @VisibleForTesting
+  NodeKey buildNodeKey() {
+    return new NodeKey(securityModule());
   }
 
-  private File privacyPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_PRIVACY_PUBLIC_KEY_FILE);
-      if (keyFile.exists()) {
-        return keyFile;
-      } else {
-        return null;
-      }
-    } else {
-      return standaloneCommands.privacyPublicKeyFile;
-    }
+  private SecurityModule securityModule() {
+    return securityModuleService
+        .getByName(securityModuleName)
+        .orElseThrow(() -> new RuntimeException("Security Module not found: " + securityModuleName))
+        .get();
+  }
+
+  private File nodePrivateKeyFile() {
+    return Optional.ofNullable(nodePrivateKeyFile)
+        .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
 
   private String rpcHttpAuthenticationCredentialsFile() {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = standaloneCommands.rpcHttpAuthenticationCredentialsFile;
-    } else if (isDocker) {
-      final File authFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
-      if (authFile.exists()) {
-        filename = authFile.getAbsolutePath();
-      }
-    }
+    final String filename = rpcHttpAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "HTTP");
@@ -1979,15 +2232,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private String rpcWsAuthenticationCredentialsFile() {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = standaloneCommands.rpcWsAuthenticationCredentialsFile;
-    } else if (isDocker) {
-      final File authFile = new File(DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
-      if (authFile.exists()) {
-        filename = authFile.getAbsolutePath();
-      }
-    }
+    final String filename = rpcWsAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "WS");
@@ -1995,53 +2240,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return filename;
   }
 
-  private File rpcHttpAuthenticationPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
-      return keyFile.exists() ? keyFile : null;
-    } else {
-      return standaloneCommands.rpcHttpAuthenticationPublicKeyFile;
-    }
-  }
-
-  private File rpcWsAuthenticationPublicKeyFile() {
-    if (isDocker) {
-      final File keyFile = new File(DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
-      return keyFile.exists() ? keyFile : null;
-    } else {
-      return standaloneCommands.rpcWsAuthenticationPublicKeyFile;
-    }
-  }
-
-  private String nodePermissionsConfigFile() {
-    return permissionsConfigFile(standaloneCommands.nodePermissionsConfigFile);
-  }
-
-  private String accountsPermissionsConfigFile() {
-    return permissionsConfigFile(standaloneCommands.accountPermissionsConfigFile);
-  }
-
-  private String permissionsConfigFile(final String permissioningFilename) {
-    String filename = null;
-    if (isFullInstantiation()) {
-      filename = permissioningFilename;
-    } else if (isDocker) {
-      final File file = new File(DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION);
-      if (file.exists()) {
-        filename = file.getAbsolutePath();
-      }
-    }
-    return filename;
-  }
-
   private String getDefaultPermissioningFilePath() {
-    return dataDir().toAbsolutePath()
+    return dataDir()
         + System.getProperty("file.separator")
         + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
-  }
-
-  private boolean isFullInstantiation() {
-    return !isDocker;
   }
 
   public MetricsSystem getMetricsSystem() {
@@ -2052,15 +2254,60 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final String staticNodesFilename = "static-nodes.json";
     final Path staticNodesPath = dataDir().resolve(staticNodesFilename);
 
-    return StaticNodesParser.fromPath(staticNodesPath);
+    return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
   }
 
   public BesuExceptionHandler exceptionHandler() {
     return new BesuExceptionHandler(this::getLogLevel);
   }
 
+  public EnodeDnsConfiguration getEnodeDnsConfiguration() {
+    if (enodeDnsConfiguration == null) {
+      enodeDnsConfiguration = unstableDnsOptions.toDomainObject();
+    }
+    return enodeDnsConfiguration;
+  }
+
+  private void checkPortClash() {
+    // List of port parameters
+    final List<Integer> ports =
+        asList(
+            p2pPort,
+            graphQLHttpPort,
+            rpcHttpPort,
+            rpcWsPort,
+            metricsPort,
+            metricsPushPort,
+            stratumPort);
+    ports.stream()
+        .filter(Objects::nonNull)
+        .forEach(
+            port -> {
+              if (port != 0 && !allocatedPorts.add(port)) {
+                throw new ParameterException(
+                    commandLine,
+                    "Port number '"
+                        + port
+                        + "' has been specified multiple times. Please review the supplied configuration.");
+              }
+            });
+  }
+
   @VisibleForTesting
   Level getLogLevel() {
     return logLevel;
+  }
+
+  private class BesuCommandConfigurationService implements BesuConfiguration {
+
+    @Override
+    public Path getStoragePath() {
+      return dataDir().resolve(DATABASE_PATH);
+    }
+
+    @Override
+    public Path getDataPath() {
+      return dataDir();
+    }
   }
 }

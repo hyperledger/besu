@@ -29,25 +29,20 @@ import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParseResult;
 
 public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Object>> {
-  private static final String DOCKER_CONFIG_LOCATION = "/etc/besu/besu.conf";
-
   private final AbstractParseResultHandler<List<Object>> resultHandler;
   private final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler;
   private final String configFileOptionName;
   private final Map<String, String> environment;
-  private final boolean isDocker;
 
   public ConfigOptionSearchAndRunHandler(
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler,
       final String configFileOptionName,
-      final Map<String, String> environment,
-      final boolean isDocker) {
+      final Map<String, String> environment) {
     this.resultHandler = resultHandler;
     this.exceptionHandler = exceptionHandler;
     this.configFileOptionName = configFileOptionName;
     this.environment = environment;
-    this.isDocker = isDocker;
     // use the same output as the regular options handler to ensure that outputs are all going
     // in the same place. No need to do this for the exception handler as we reuse it directly.
     this.useOut(resultHandler.out());
@@ -72,10 +67,8 @@ public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<
       } catch (final Exception e) {
         throw new ExecutionException(commandLine, e.getMessage(), e);
       }
-    } else if (isDocker) {
-      final File dockerConfigFile = new File(DOCKER_CONFIG_LOCATION);
-      return dockerConfigFile.exists() ? Optional.of(dockerConfigFile) : Optional.empty();
     }
+
     return Optional.empty();
   }
 

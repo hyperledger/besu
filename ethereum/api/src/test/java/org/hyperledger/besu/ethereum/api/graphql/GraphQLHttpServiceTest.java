@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -67,10 +68,8 @@ public class GraphQLHttpServiceTest {
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
   private static BlockchainQueries blockchainQueries;
-  private static Synchronizer synchronizer;
   private static GraphQL graphQL;
-  private static GraphQLDataFetchers dataFetchers;
-  private static GraphQLDataFetcherContext dataFetcherContext;
+  private static GraphQLDataFetcherContextImpl dataFetcherContext;
   private static EthHashMiningCoordinator miningCoordinatorMock;
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
@@ -78,12 +77,12 @@ public class GraphQLHttpServiceTest {
   @BeforeClass
   public static void initServerAndClient() throws Exception {
     blockchainQueries = Mockito.mock(BlockchainQueries.class);
-    synchronizer = Mockito.mock(Synchronizer.class);
+    final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
     graphQL = Mockito.mock(GraphQL.class);
 
     miningCoordinatorMock = Mockito.mock(EthHashMiningCoordinator.class);
 
-    dataFetcherContext = Mockito.mock(GraphQLDataFetcherContext.class);
+    dataFetcherContext = Mockito.mock(GraphQLDataFetcherContextImpl.class);
     Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
     Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
 
@@ -94,24 +93,35 @@ public class GraphQLHttpServiceTest {
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
-    dataFetchers = new GraphQLDataFetchers(supportedCapabilities);
+    final GraphQLDataFetchers dataFetchers = new GraphQLDataFetchers(supportedCapabilities);
     graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
     service = createGraphQLHttpService();
     service.start().join();
     // Build an OkHttp client.
-    client = new OkHttpClient();
+    client = new OkHttpClient.Builder().followRedirects(false).build();
+
     baseUrl = service.url() + "/graphql/";
   }
 
   private static GraphQLHttpService createGraphQLHttpService(final GraphQLConfiguration config)
       throws Exception {
     return new GraphQLHttpService(
-        vertx, folder.newFolder().toPath(), config, graphQL, dataFetcherContext);
+        vertx,
+        folder.newFolder().toPath(),
+        config,
+        graphQL,
+        dataFetcherContext,
+        Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLHttpService createGraphQLHttpService() throws Exception {
     return new GraphQLHttpService(
-        vertx, folder.newFolder().toPath(), createGraphQLConfig(), graphQL, dataFetcherContext);
+        vertx,
+        folder.newFolder().toPath(),
+        createGraphQLConfig(),
+        graphQL,
+        dataFetcherContext,
+        Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLConfiguration createGraphQLConfig() {
@@ -155,20 +165,16 @@ public class GraphQLHttpServiceTest {
   }
 
   @Test
-  public void handleEmptyRequestAndRedirect() throws Exception {
-    try (final Response resp =
-        client.newCall(new Request.Builder().get().url(service.url()).build()).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(HttpResponseStatus.BAD_REQUEST.code());
-    }
-    final RequestBody body = RequestBody.create(null, "");
+  public void handleEmptyRequestAndRedirect_post() throws Exception {
+    final RequestBody body = RequestBody.create("", null);
     try (final Response resp =
         client.newCall(new Request.Builder().post(body).url(service.url()).build()).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(HttpResponseStatus.PERMANENT_REDIRECT.code());
-      String location = resp.header("Location");
+      final String location = resp.header("Location");
       Assertions.assertThat(location).isNotEmpty().isNotNull();
-      HttpUrl redirectUrl = resp.request().url().resolve(location);
+      final HttpUrl redirectUrl = resp.request().url().resolve(location);
       Assertions.assertThat(redirectUrl).isNotNull();
-      Request.Builder redirectBuilder = resp.request().newBuilder();
+      final Request.Builder redirectBuilder = resp.request().newBuilder();
       redirectBuilder.post(resp.request().body());
       resp.body().close();
       try (final Response redirectResp =
@@ -179,8 +185,27 @@ public class GraphQLHttpServiceTest {
   }
 
   @Test
+  public void handleEmptyRequestAndRedirect_get() throws Exception {
+    try (final Response resp =
+        client.newCall(new Request.Builder().get().url(service.url()).build()).execute()) {
+      Assertions.assertThat(resp.code()).isEqualTo(HttpResponseStatus.PERMANENT_REDIRECT.code());
+      final String location = resp.header("Location");
+      Assertions.assertThat(location).isNotEmpty().isNotNull();
+      final HttpUrl redirectUrl = resp.request().url().resolve(location);
+      Assertions.assertThat(redirectUrl).isNotNull();
+      final Request.Builder redirectBuilder = resp.request().newBuilder();
+      redirectBuilder.get();
+      // resp.body().close();
+      try (final Response redirectResp =
+          client.newCall(redirectBuilder.url(redirectUrl).build()).execute()) {
+        Assertions.assertThat(redirectResp.code()).isEqualTo(HttpResponseStatus.BAD_REQUEST.code());
+      }
+    }
+  }
+
+  @Test
   public void handleInvalidQuerySchema() throws Exception {
-    final RequestBody body = RequestBody.create(GRAPHQL, "{gasPrice1}");
+    final RequestBody body = RequestBody.create("{gasPrice1}", GRAPHQL);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       final JsonObject json = new JsonObject(resp.body().string());
@@ -205,7 +230,7 @@ public class GraphQLHttpServiceTest {
 
   @Test
   public void query_jsonPost() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "{\"query\":\"{gasPrice}\"}");
+    final RequestBody body = RequestBody.create("{\"query\":\"{gasPrice}\"}", JSON);
     final Wei price = Wei.of(16);
     Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
@@ -220,7 +245,7 @@ public class GraphQLHttpServiceTest {
 
   @Test
   public void query_graphqlPost() throws Exception {
-    final RequestBody body = RequestBody.create(GRAPHQL, "{gasPrice}");
+    final RequestBody body = RequestBody.create("{gasPrice}", GRAPHQL);
     final Wei price = Wei.of(16);
     Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
@@ -235,7 +260,7 @@ public class GraphQLHttpServiceTest {
 
   @Test
   public void query_untypedPost() throws Exception {
-    final RequestBody body = RequestBody.create(null, "{gasPrice}");
+    final RequestBody body = RequestBody.create("{gasPrice}", null);
     final Wei price = Wei.of(16);
     Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
@@ -285,7 +310,7 @@ public class GraphQLHttpServiceTest {
   @Test
   public void responseContainsJsonContentTypeHeader() throws Exception {
 
-    final RequestBody body = RequestBody.create(GRAPHQL, "{gasPrice}");
+    final RequestBody body = RequestBody.create("{gasPrice}", GRAPHQL);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.header("Content-Type")).isEqualTo(JSON.toString());
@@ -309,7 +334,7 @@ public class GraphQLHttpServiceTest {
 
     final String query = "{block(hash:\"" + blockHash.toString() + "\") {ommerCount}}";
 
-    final RequestBody body = RequestBody.create(GRAPHQL, query);
+    final RequestBody body = RequestBody.create(query, GRAPHQL);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200);
       final String jsonStr = resp.body().string();
@@ -335,7 +360,7 @@ public class GraphQLHttpServiceTest {
 
     final String query = "{block(number:\"3\") {ommerCount}}";
 
-    final RequestBody body = RequestBody.create(GRAPHQL, query);
+    final RequestBody body = RequestBody.create(query, GRAPHQL);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200);
       final String jsonStr = resp.body().string();
@@ -360,7 +385,7 @@ public class GraphQLHttpServiceTest {
 
     final String query = "{block {ommerCount}}";
 
-    final RequestBody body = RequestBody.create(GRAPHQL, query);
+    final RequestBody body = RequestBody.create(query, GRAPHQL);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200);
       final String jsonStr = resp.body().string();

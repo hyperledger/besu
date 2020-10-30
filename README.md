@@ -17,6 +17,7 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 * [Besu Issues]
 * [Besu Wiki](https://wiki.hyperledger.org/display/BESU/Hyperledger+Besu)
 * [How to Contribute to Besu](https://wiki.hyperledger.org/display/BESU/How+to+Contribute)
+* [Besu Roadmap](https://wiki.hyperledger.org/display/BESU/Roadmap)
 
 
 ## Issues 
@@ -43,7 +44,6 @@ Users want to install Besu should install the Besu binary by following [these in
 
 Instructions for how to get started with developing on the Besu codebase. Please also read the
 [wiki](https://wiki.hyperledger.org/display/BESU/Pull+Requests) for more details on how to submit a pull request (PR).  
-Also feel free to [contact our Developer Advocate](https://chat.hyperledger.org/direct/faraggi) with any questions about contributing to the project.
 
 * [Checking Out and Building](https://wiki.hyperledger.org/display/BESU/Building+from+source)
 * [Running Developer Builds](https://wiki.hyperledger.org/display/BESU/Building+from+source#running-developer-builds)

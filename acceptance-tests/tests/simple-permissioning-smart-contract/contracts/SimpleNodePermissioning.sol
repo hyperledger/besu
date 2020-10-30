@@ -24,7 +24,7 @@ contract SimpleNodePermissioning {
     }
     function enodeAllowed(bytes32 sourceEnodeHigh, bytes32 sourceEnodeLow, bytes16 sourceEnodeIp, uint16 sourceEnodePort)
     public view returns (bool){
-        bytes memory key = computeKey(sourceEnodeHigh, sourceEnodeLow, sourceEnodeIp, sourceEnodePort);
+        bytes memory key = computeKey(sourceEnodeHigh, sourceEnodeLow, sourceEnodeIp);
         Enode storage whitelistSource = whitelist[key];
         if (whitelistSource.enodeHost > 0) {
             return true;
@@ -32,15 +32,17 @@ contract SimpleNodePermissioning {
     }
     function addEnode(bytes32 enodeHigh, bytes32 enodeLow, bytes16 enodeIp, uint16 enodePort) public {
         Enode memory newEnode = Enode(enodeHigh, enodeLow, enodeIp, enodePort);
-        bytes memory key = computeKey(enodeHigh, enodeLow, enodeIp, enodePort);
+        bytes memory key = computeKey(enodeHigh, enodeLow, enodeIp);
         whitelist[key] = newEnode;
     }
     function removeEnode(bytes32 enodeHigh, bytes32 enodeLow, bytes16 enodeIp, uint16 enodePort) public {
-        bytes memory key = computeKey(enodeHigh, enodeLow, enodeIp, enodePort);
+        bytes memory key = computeKey(enodeHigh, enodeLow, enodeIp);
         Enode memory zeros = Enode(bytes32(0), bytes32(0), bytes16(0), 0);
         whitelist[key] = zeros;
     }
-    function computeKey(bytes32 enodeHigh, bytes32 enodeLow, bytes16 enodeIp, uint16 enodePort) public pure returns (bytes memory) {
-        return abi.encode(enodeHigh, enodeLow, enodeIp, enodePort);
+    function computeKey(bytes32 enodeHigh, bytes32 enodeLow, bytes16 enodeIp) public pure returns (bytes memory) {
+        // enodePort has been removed to aid acceptance tests with random node ports
+        // This method is not used in production code
+        return abi.encode(enodeHigh, enodeLow, enodeIp);
     }
 }

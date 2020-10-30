@@ -73,10 +73,69 @@ public class StaticNodesParserTest {
   public void validFileLoadsWithExpectedEnodes() throws IOException, URISyntaxException {
     final URL resource = StaticNodesParserTest.class.getResource("valid_static_nodes.json");
     final File validFile = new File(resource.getFile());
-    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(validFile.toPath());
+    final Set<EnodeURL> enodes =
+        StaticNodesParser.fromPath(validFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG);
 
     assertThat(enodes)
         .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
+  }
+
+  @Test
+  public void validFileLoadsWithExpectedEnodesWhenDnsEnabled()
+      throws IOException, URISyntaxException {
+    final URL resource =
+        StaticNodesParserTest.class.getResource("valid_hostname_static_nodes.json");
+    final File validFile = new File(resource.getFile());
+    final EnodeDnsConfiguration enodeDnsConfiguration =
+        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build();
+    final Set<EnodeURL> enodes =
+        StaticNodesParser.fromPath(validFile.toPath(), enodeDnsConfiguration);
+
+    assertThat(enodes)
+        .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
+  }
+
+  @Test
+  public void fileWithHostnameThrowsAnExceptionWhenDnsDisabled()
+      throws IOException, URISyntaxException {
+    final URL resource =
+        StaticNodesParserTest.class.getResource("valid_hostname_static_nodes.json");
+    final File invalidFile = new File(resource.getFile());
+
+    assertThatThrownBy(
+            () ->
+                StaticNodesParser.fromPath(
+                    invalidFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void fileWithUnknownHostnameNotThrowsAnExceptionWhenDnsAndUpdateEnabled()
+      throws IOException, URISyntaxException {
+    final URL resource =
+        StaticNodesParserTest.class.getResource("unknown_hostname_static_nodes.json");
+    final File validFile = new File(resource.getFile());
+    final EnodeDnsConfiguration enodeDnsConfiguration =
+        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build();
+    final Set<EnodeURL> enodes =
+        StaticNodesParser.fromPath(validFile.toPath(), enodeDnsConfiguration);
+
+    assertThat(enodes)
+        .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
+  }
+
+  @Test
+  public void fileWithUnknownHostnameThrowsAnExceptionWhenOnlyDnsEnabled()
+      throws IOException, URISyntaxException {
+    final URL resource =
+        StaticNodesParserTest.class.getResource("unknown_hostname_static_nodes.json");
+    final File invalidFile = new File(resource.getFile());
+    final EnodeDnsConfiguration enodeDnsConfiguration =
+        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build();
+
+    assertThatThrownBy(
+            () -> StaticNodesParser.fromPath(invalidFile.toPath(), enodeDnsConfiguration))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -84,7 +143,10 @@ public class StaticNodesParserTest {
     final URL resource = StaticNodesParserTest.class.getResource("invalid_static_nodes.json");
     final File invalidFile = new File(resource.getFile());
 
-    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath()))
+    assertThatThrownBy(
+            () ->
+                StaticNodesParser.fromPath(
+                    invalidFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -94,7 +156,10 @@ public class StaticNodesParserTest {
         StaticNodesParserTest.class.getResource("invalid_static_nodes_no_listening_port.json");
     final File invalidFile = new File(resource.getFile());
 
-    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath()))
+    assertThatThrownBy(
+            () ->
+                StaticNodesParser.fromPath(
+                    invalidFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Static node must be configured with a valid listening port");
   }
@@ -105,7 +170,9 @@ public class StaticNodesParserTest {
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), "This Is Not Json".getBytes(Charset.forName("UTF-8")));
 
-    assertThatThrownBy(() -> StaticNodesParser.fromPath(tempFile.toPath()))
+    assertThatThrownBy(
+            () ->
+                StaticNodesParser.fromPath(tempFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG))
         .isInstanceOf(DecodeException.class);
   }
 
@@ -113,7 +180,8 @@ public class StaticNodesParserTest {
   public void anEmptyCacheIsCreatedIfTheFileDoesNotExist() throws IOException {
     final Path path = Paths.get("./arbirtraryFilename.txt");
 
-    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(path);
+    final Set<EnodeURL> enodes =
+        StaticNodesParser.fromPath(path, EnodeDnsConfiguration.DEFAULT_CONFIG);
     assertThat(enodes.size()).isZero();
   }
 
@@ -122,7 +190,8 @@ public class StaticNodesParserTest {
     final File tempFile = testFolder.newFile("file.txt");
     tempFile.deleteOnExit();
 
-    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(tempFile.toPath());
+    final Set<EnodeURL> enodes =
+        StaticNodesParser.fromPath(tempFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG);
     assertThat(enodes.size()).isZero();
   }
 }

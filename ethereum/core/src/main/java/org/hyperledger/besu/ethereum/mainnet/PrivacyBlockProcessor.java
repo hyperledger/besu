@@ -24,15 +24,15 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -48,23 +48,26 @@ public class PrivacyBlockProcessor implements BlockProcessor {
   private static final Logger LOG = LogManager.getLogger();
 
   private final BlockProcessor blockProcessor;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final Enclave enclave;
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
+  private final PrivateStateRootResolver privateStateRootResolver;
   private WorldStateArchive publicWorldStateArchive;
 
-  public <C> PrivacyBlockProcessor(
+  public PrivacyBlockProcessor(
       final BlockProcessor blockProcessor,
-      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final Enclave enclave,
       final PrivateStateStorage privateStateStorage,
-      final WorldStateArchive privateWorldStateArchive) {
+      final WorldStateArchive privateWorldStateArchive,
+      final PrivateStateRootResolver privateStateRootResolver) {
     this.blockProcessor = blockProcessor;
     this.protocolSchedule = protocolSchedule;
     this.enclave = enclave;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
+    this.privateStateRootResolver = privateStateRootResolver;
   }
 
   public void setPublicWorldStateArchive(final WorldStateArchive publicWorldStateArchive) {
@@ -77,20 +80,23 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
-      final List<BlockHeader> ommers) {
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+
+    if (privateMetadataUpdater != null) {
+      throw new IllegalArgumentException("PrivateMetadataUpdater passed in is not null.");
+    }
 
     maybeRehydrate(blockchain, blockHeader, transactions);
 
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-        new PrivacyGroupHeadBlockMap(
-            privateStateStorage
-                .getPrivacyGroupHeadBlockMap(blockHeader.getParentHash())
-                .orElse(PrivacyGroupHeadBlockMap.EMPTY));
-    privateStateStorage
-        .updater()
-        .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockMap)
-        .commit();
-    return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
+    final PrivateMetadataUpdater metadataUpdater =
+        new PrivateMetadataUpdater(blockHeader, privateStateStorage);
+
+    final Result result =
+        blockProcessor.processBlock(
+            blockchain, worldState, blockHeader, transactions, ommers, metadataUpdater);
+    metadataUpdater.commit();
+    return result;
   }
 
   void maybeRehydrate(
@@ -109,7 +115,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
               try {
                 final ReceiveResponse receiveResponse = enclave.receive(addKey.toBase64String());
                 final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
-                    deserializeAddToGroupPayload(
+                    PrivateTransactionWithMetadata.readListFromPayload(
                         Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())));
                 final Bytes32 privacyGroupId =
                     Bytes32.wrap(
@@ -135,7 +141,8 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                           blockchain,
                           protocolSchedule,
                           publicWorldStateArchive,
-                          privateWorldStateArchive);
+                          privateWorldStateArchive,
+                          privateStateRootResolver);
                   privateStateRehydration.rehydrate(actualList);
                   privateStateStorage.updater().putAddDataKey(privacyGroupId, addKey).commit();
                 }
@@ -209,18 +216,5 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       }
     }
     return actualList;
-  }
-
-  private List<PrivateTransactionWithMetadata> deserializeAddToGroupPayload(
-      final Bytes encodedAddToGroupPayload) {
-    final ArrayList<PrivateTransactionWithMetadata> deserializedResponse = new ArrayList<>();
-    final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(encodedAddToGroupPayload, false);
-    final int noOfEntries = bytesValueRLPInput.enterList();
-    for (int i = 0; i < noOfEntries; i++) {
-      deserializedResponse.add(PrivateTransactionWithMetadata.readFrom(bytesValueRLPInput));
-    }
-    bytesValueRLPInput.leaveList();
-    return deserializedResponse;
   }
 }

@@ -37,7 +37,7 @@ public abstract class PrivateTransactionResult {
   private final String privateFrom;
   private final String restriction;
 
-  public PrivateTransactionResult(final PrivateTransaction tx) {
+  protected PrivateTransactionResult(final PrivateTransaction tx) {
     this.from = tx.getSender().toString();
     this.gas = Quantity.create(tx.getGasLimit());
     this.gasPrice = Quantity.create(tx.getGasPrice());

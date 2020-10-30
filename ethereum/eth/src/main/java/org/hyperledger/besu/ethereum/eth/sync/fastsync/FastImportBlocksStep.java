@@ -28,17 +28,17 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>> {
+public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private static final Logger LOG = LogManager.getLogger();
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final ValidationPolicy headerValidationPolicy;
   private final ValidationPolicy ommerValidationPolicy;
   private final EthContext ethContext;
 
   public FastImportBlocksStep(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final ValidationPolicy headerValidationPolicy,
       final ValidationPolicy ommerValidationPolicy,
       final EthContext ethContext) {
@@ -70,7 +70,7 @@ public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>
   }
 
   private boolean importBlock(final BlockWithReceipts blockWithReceipts) {
-    final BlockImporter<C> importer =
+    final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockWithReceipts.getNumber()).getBlockImporter();
     return importer.fastImportBlock(
         protocolContext,

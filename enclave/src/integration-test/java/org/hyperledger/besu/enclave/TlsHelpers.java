@@ -67,6 +67,7 @@ public class TlsHelpers {
     Files.writeString(knownClientsPath, fingerprintsToAdd.toString());
   }
 
+  @SuppressWarnings("JdkObsolete") // java.util.Enumeration is baked into the Keystore API
   public static List<X509Certificate> getCertsFromPkcs12(final TlsCertificateDefinition certDef)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
     final List<X509Certificate> results = Lists.newArrayList();

@@ -16,9 +16,12 @@ package org.hyperledger.besu.util;
 
 import java.util.function.Function;
 
+import com.google.errorprone.annotations.FormatMethod;
+
 public class Preconditions {
   private Preconditions() {}
 
+  @FormatMethod
   public static void checkGuard(
       final boolean condition,
       final Function<String, ? extends RuntimeException> exceptionGenerator,

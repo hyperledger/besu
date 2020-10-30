@@ -18,13 +18,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
@@ -47,16 +51,14 @@ import org.apache.logging.log4j.Logger;
 /**
  * Retrieves a sequence of headers, sending out requests repeatedly until all headers are fulfilled.
  * Validates headers as they are received.
- *
- * @param <C> the consensus algorithm context
  */
-public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List<BlockHeader>> {
+public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<BlockHeader>> {
   private static final Logger LOG = LogManager.getLogger();
   private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;
-  private final ProtocolContext<C> protocolContext;
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
 
   private final BlockHeader[] headers;
   private final BlockHeader referenceHeader;
@@ -68,8 +70,8 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   private int lastFilledHeaderIndex;
 
   private DownloadHeaderSequenceTask(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
@@ -91,16 +93,16 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
     lastFilledHeaderIndex = segmentLength;
   }
 
-  public static <C> DownloadHeaderSequenceTask<C> endingAtHeader(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static DownloadHeaderSequenceTask endingAtHeader(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
       final int maxRetries,
       final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
-    return new DownloadHeaderSequenceTask<>(
+    return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
         ethContext,
@@ -111,15 +113,15 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
         metricsSystem);
   }
 
-  public static <C> DownloadHeaderSequenceTask<C> endingAtHeader(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static DownloadHeaderSequenceTask endingAtHeader(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
       final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
-    return new DownloadHeaderSequenceTask<>(
+    return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
         ethContext,
@@ -145,7 +147,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
                 "Finished downloading headers from {} to {}.",
                 headers[0].getNumber(),
                 headers[segmentLength - 1].getNumber());
-            result.get().complete(Arrays.asList(headers));
+            result.complete(Arrays.asList(headers));
           }
         });
   }
@@ -197,16 +199,42 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
               child =
                   (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
             }
+            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+            final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
 
             if (!validateHeader(child, header)) {
               // Invalid headers - disconnect from peer
-              LOG.debug(
-                  "Received invalid headers from peer, disconnecting from: {}",
-                  headersResult.getPeer());
-              headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-              future.completeExceptionally(
-                  new InvalidBlockException(
-                      "Header failed validation.", child.getNumber(), child.getHash()));
+
+              final BlockHeader invalidBlock = child;
+              // even though the header is known bad we are downloading the block body for the
+              // debug_badBlocks RPC
+              final AbstractPeerTask<Block> getBlockTask =
+                  GetBlockFromPeerTask.create(
+                          protocolSchedule,
+                          ethContext,
+                          child.getHash(),
+                          child.getNumber(),
+                          metricsSystem)
+                      .assignPeer(headersResult.getPeer());
+
+              getBlockTask
+                  .run()
+                  .whenComplete(
+                      (blockPeerTaskResult, error) -> {
+                        if (error == null && blockPeerTaskResult.getResult() != null) {
+                          badBlockManager.addBadBlock(blockPeerTaskResult.getResult());
+                        }
+                        headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+                        LOG.debug(
+                            "Received invalid headers from peer, disconnecting from: {}",
+                            headersResult.getPeer());
+                        future.completeExceptionally(
+                            new InvalidBlockException(
+                                "Header failed validation.",
+                                invalidBlock.getNumber(),
+                                invalidBlock.getHash()));
+                      });
+
               return future;
             }
             headers[headerIndex] = header;
@@ -229,8 +257,8 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       return false;
     }
 
-    final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
-    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+    final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return blockHeaderValidator.validateHeader(
         child, header, protocolContext, validationPolicy.getValidationModeForNextBlock());
   }

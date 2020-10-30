@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOG = LogManager.getLogger(ExtraDataMaxLengthValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final long maxExtraDataBytes;
 
   public ExtraDataMaxLengthValidationRule(final long maxExtraDataBytes) {

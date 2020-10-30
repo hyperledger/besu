@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptLogResult;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,22 +42,30 @@ import org.apache.tuweni.bytes.Bytes;
   "status",
   "revertReason",
   "logs",
+  "logsBloom",
+  "blockHash",
+  "blockNumber",
+  "transactionIndex"
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PrivateTransactionReceiptResult {
 
+  private final String blockHash;
+  private final String blockNumber;
   private final String contractAddress;
   private final String from;
+  private final List<TransactionReceiptLogResult> logs;
   private final String to;
+  private final String transactionHash;
+  private final String transactionIndex;
+  private final String revertReason;
   private final String output;
   private final String commitmentHash;
-  private final String transactionHash;
+  private final String status;
   private final String privateFrom;
   private final List<String> privateFor;
   private final String privacyGroupId;
-  private final String revertReason;
-  private final String status;
-  private final List<TransactionReceiptLogResult> logs;
+  private final String logsBloom;
 
   public PrivateTransactionReceiptResult(
       final String contractAddress,
@@ -88,6 +98,10 @@ public class PrivateTransactionReceiptResult {
     this.revertReason = revertReason != null ? revertReason.toString() : null;
     this.status = status;
     this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex);
+    this.logsBloom = LogsBloomFilter.builder().insertLogs(logs).build().toHexString();
+    this.blockHash = blockHash.toHexString();
+    this.blockNumber = Quantity.create(blockNumber);
+    this.transactionIndex = Quantity.create(txIndex);
   }
 
   @JsonGetter(value = "contractAddress")
@@ -113,6 +127,11 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter(value = "logs")
   public List<TransactionReceiptLogResult> getLogs() {
     return logs;
+  }
+
+  @JsonGetter(value = "logsBloom")
+  public String getLogsBloom() {
+    return logsBloom;
   }
 
   @JsonGetter("commitmentHash")
@@ -148,6 +167,21 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter("status")
   public String getStatus() {
     return status;
+  }
+
+  @JsonGetter(value = "transactionIndex")
+  public String getTransactionIndex() {
+    return transactionIndex;
+  }
+
+  @JsonGetter(value = "blockHash")
+  public String getBlockHash() {
+    return blockHash;
+  }
+
+  @JsonGetter(value = "blockNumber")
+  public String getBlockNumber() {
+    return blockNumber;
   }
 
   private List<TransactionReceiptLogResult> logReceipts(

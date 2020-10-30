@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -31,7 +32,7 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
-import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocks;
+import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.PersistBlockTask;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -57,13 +58,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
-public class BlockPropagationManager<C> {
+public class BlockPropagationManager {
   private static final Logger LOG = LogManager.getLogger();
 
   private final SynchronizerConfiguration config;
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
@@ -73,15 +75,15 @@ public class BlockPropagationManager<C> {
 
   private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<Hash> importingBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final PendingBlocks pendingBlocks;
+  private final PendingBlocksManager pendingBlocksManager;
 
   BlockPropagationManager(
       final SynchronizerConfiguration config,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final PendingBlocks pendingBlocks,
+      final PendingBlocksManager pendingBlocksManager,
       final MetricsSystem metricsSystem,
       final BlockBroadcaster blockBroadcaster) {
     this.config = config;
@@ -91,7 +93,7 @@ public class BlockPropagationManager<C> {
     this.metricsSystem = metricsSystem;
     this.blockBroadcaster = blockBroadcaster;
     this.syncState = syncState;
-    this.pendingBlocks = pendingBlocks;
+    this.pendingBlocksManager = pendingBlocksManager;
   }
 
   public void start() {
@@ -111,17 +113,17 @@ public class BlockPropagationManager<C> {
         .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
   }
 
-  private void onBlockAdded(final BlockAddedEvent blockAddedEvent, final Blockchain blockchain) {
+  private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
 
     final List<Block> readyForImport;
-    synchronized (pendingBlocks) {
+    synchronized (pendingBlocksManager) {
       // Remove block from pendingBlocks list
-      pendingBlocks.deregisterPendingBlock(newBlock);
+      pendingBlocksManager.deregisterPendingBlock(newBlock);
 
       // Import any pending blocks that are children of the newly added block
-      readyForImport = pendingBlocks.childrenOf(newBlock.getHash());
+      readyForImport = pendingBlocksManager.childrenOf(newBlock.getHash());
     }
 
     if (!readyForImport.isEmpty()) {
@@ -129,6 +131,7 @@ public class BlockPropagationManager<C> {
           PersistBlockTask.forUnorderedBlocks(
               protocolSchedule,
               protocolContext,
+              ethContext,
               readyForImport,
               HeaderValidationMode.FULL,
               metricsSystem);
@@ -144,9 +147,9 @@ public class BlockPropagationManager<C> {
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
-      final long head = blockchain.getChainHeadBlockNumber();
+      final long head = protocolContext.getBlockchain().getChainHeadBlockNumber();
       final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
-      pendingBlocks.purgeBlocksOlderThan(cutoff);
+      pendingBlocksManager.purgeBlocksOlderThan(cutoff);
     }
   }
 
@@ -166,14 +169,14 @@ public class BlockPropagationManager<C> {
           block.getHeader().getNumber(), localChainHeight, bestChainHeight)) {
         return;
       }
-      if (pendingBlocks.contains(block.getHash())) {
+      if (pendingBlocksManager.contains(block.getHash())) {
         return;
       }
       if (blockchain.contains(block.getHash())) {
         return;
       }
 
-      importOrSavePendingBlock(block);
+      importOrSavePendingBlock(block, message.getPeer().nodeId());
     } catch (final RLPException e) {
       LOG.debug(
           "Malformed NEW_BLOCK message received from peer, disconnecting: {}",
@@ -210,7 +213,7 @@ public class BlockPropagationManager<C> {
         if (requestedBlocks.contains(announcedBlock.hash())) {
           continue;
         }
-        if (pendingBlocks.contains(announcedBlock.hash())) {
+        if (pendingBlocksManager.contains(announcedBlock.hash())) {
           continue;
         }
         if (importingBlocks.contains(announcedBlock.hash())) {
@@ -245,7 +248,9 @@ public class BlockPropagationManager<C> {
                 protocolSchedule, ethContext, newBlock.hash(), newBlock.number(), metricsSystem)
             .assignPeer(peer);
 
-    return getBlockTask.run().thenCompose((r) -> importOrSavePendingBlock(r.getResult()));
+    return getBlockTask
+        .run()
+        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), peer.nodeId()));
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
@@ -259,14 +264,14 @@ public class BlockPropagationManager<C> {
   }
 
   @VisibleForTesting
-  CompletableFuture<Block> importOrSavePendingBlock(final Block block) {
+  CompletableFuture<Block> importOrSavePendingBlock(final Block block, final Bytes nodeId) {
     // Synchronize to avoid race condition where block import event fires after the
     // blockchain.contains() check and before the block is registered, causing onBlockAdded() to be
     // invoked for the parent of this block before we are able to register it.
-    synchronized (pendingBlocks) {
+    synchronized (pendingBlocksManager) {
       if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
         // Block isn't connected to local chain, save it to pending blocks collection
-        if (pendingBlocks.registerPendingBlock(block)) {
+        if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
           LOG.info(
               "Saving announced block {} ({}) for future import",
               block.getHeader().getNumber(),
@@ -297,26 +302,30 @@ public class BlockPropagationManager<C> {
                         "Incapable of retrieving header from non-existent parent of "
                             + block.getHeader().getNumber()
                             + "."));
-
-    final ProtocolSpec<C> protocolSpec =
+    final ProtocolSpec protocolSpec =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(
-            () -> validateAndProcessPendingBlock(blockHeaderValidator, block, parent));
+            () ->
+                validateAndProcessPendingBlock(
+                    blockHeaderValidator, block, parent, badBlockManager));
   }
 
   private CompletableFuture<Block> validateAndProcessPendingBlock(
-      final BlockHeaderValidator<C> blockHeaderValidator,
+      final BlockHeaderValidator blockHeaderValidator,
       final Block block,
-      final BlockHeader parent) {
+      final BlockHeader parent,
+      final BadBlockManager badBlockManager) {
     if (blockHeaderValidator.validateHeader(
         block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
       return runImportTask(block);
     } else {
       importingBlocks.remove(block.getHash());
+      badBlockManager.addBadBlock(block);
       LOG.warn(
           "Failed to import announced block {} ({}).",
           block.getHeader().getNumber(),
@@ -326,9 +335,14 @@ public class BlockPropagationManager<C> {
   }
 
   private CompletableFuture<Block> runImportTask(final Block block) {
-    final PersistBlockTask<C> importTask =
+    final PersistBlockTask importTask =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            block,
+            HeaderValidationMode.NONE,
+            metricsSystem);
     return importTask
         .run()
         .whenComplete(
@@ -339,19 +353,6 @@ public class BlockPropagationManager<C> {
                     "Failed to import announced block {} ({}).",
                     block.getHeader().getNumber(),
                     block.getHash());
-              } else {
-                final double timeInS = importTask.getTaskTimeInSec();
-                LOG.info(
-                    String.format(
-                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
-                        block.getHeader().getNumber(),
-                        block.getBody().getTransactions().size(),
-                        block.getBody().getOmmers().size(),
-                        block.getHeader().getGasUsed(),
-                        (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                        block.getHash().toHexString(),
-                        timeInS,
-                        ethContext.getEthPeers().peerCount()));
               }
             });
   }

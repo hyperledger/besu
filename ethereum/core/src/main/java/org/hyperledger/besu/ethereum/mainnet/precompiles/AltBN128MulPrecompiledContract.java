@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
-public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract {
+public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final BigInteger MAX_N =
       new BigInteger(
@@ -36,7 +36,7 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
   private final Gas gasCost;
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
-    super("AltBN128Mul", gasCalculator);
+    super("AltBN128Mul", gasCalculator, LibEthPairings.EIP196_MUL_OPERATION_RAW_VALUE);
     this.gasCost = gasCost;
   }
 
@@ -55,6 +55,14 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
 
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+    if (useNative) {
+      return computeNative(input, messageFrame);
+    } else {
+      return computeDefault(input);
+    }
+  }
+
+  private static Bytes computeDefault(final Bytes input) {
     final BigInteger x = extractParameter(input, 0, 32);
     final BigInteger y = extractParameter(input, 32, 32);
     final BigInteger n = extractParameter(input, 64, 32);

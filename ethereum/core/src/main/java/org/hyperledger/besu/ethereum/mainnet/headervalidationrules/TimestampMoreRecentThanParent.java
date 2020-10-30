@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
 /** Responsible for ensuring the timestamp of a block is newer than its parent. */
 public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
   private final long minimumSecondsSinceParent;
 
   public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent) {

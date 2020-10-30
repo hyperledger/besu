@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -45,7 +48,7 @@ public class BlockchainReferenceTestTools {
         System.getProperty(
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
-                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul");
+                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
 
@@ -59,18 +62,27 @@ public class BlockchainReferenceTestTools {
 
   static {
     if (NETWORKS_TO_RUN.isEmpty()) {
-      params.blacklistAll();
+      params.ignoreAll();
     }
 
     // Known bad test.
-    params.blacklist(
+    params.ignore(
         "RevertPrecompiledTouch(_storage)?_d(0|3)g0v0_(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
 
     // Consumes a huge amount of memory
-    params.blacklist("static_Call1MB1024Calldepth_d1g0v0_\\w+");
+    params.ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+");
+    params.ignore("ShanghaiLove_.*");
 
     // Absurd amount of gas, doesn't run in parallel
-    params.blacklist("randomStatetest94_\\w+");
+    params.ignore("randomStatetest94_\\w+");
+
+    // Don't do time consuming tests
+    params.ignore("CALLBlake2f_MaxRounds.*");
+
+    // Berlin isn't finalized
+    if (!ExperimentalEIPs.berlinEnabled) {
+      params.ignore(".*[_-]Berlin");
+    }
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
@@ -83,11 +95,11 @@ public class BlockchainReferenceTestTools {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
-    final ProtocolSchedule<Void> schedule =
+    final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
-    final ProtocolContext<Void> context = spec.getProtocolContext();
+    final ProtocolContext context = spec.getProtocolContext();
 
     for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
         spec.getCandidateBlocks()) {
@@ -98,9 +110,8 @@ public class BlockchainReferenceTestTools {
       try {
         final Block block = candidateBlock.getBlock();
 
-        final ProtocolSpec<Void> protocolSpec =
-            schedule.getByBlockNumber(block.getHeader().getNumber());
-        final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
+        final ProtocolSpec protocolSpec = schedule.getByBlockNumber(block.getHeader().getNumber());
+        final BlockImporter blockImporter = protocolSpec.getBlockImporter();
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT

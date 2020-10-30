@@ -16,8 +16,12 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -28,21 +32,21 @@ public class ExpOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 power = UInt256.fromBytes(frame.getStackItem(1));
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    final UInt256 number = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 power = UInt256.fromBytes(frame.popStackItem());
 
     final int numBytes = (power.bitLength() + 7) / 8;
-    return gasCalculator().expOperationGasCost(numBytes);
-    //    return FrontierGasCosts.EXP.plus(FrontierGasCosts.EXP_BYTE.times(numBytes));
-  }
 
-  @Override
-  public void execute(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+    final Gas cost = gasCalculator().expOperationGasCost(numBytes);
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
 
-    final UInt256 result = value0.pow(value1);
+    final UInt256 result = number.pow(power);
 
     frame.pushStackItem(result.toBytes());
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

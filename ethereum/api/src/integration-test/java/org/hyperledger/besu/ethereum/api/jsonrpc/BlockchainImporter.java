@@ -33,7 +33,7 @@ public class BlockchainImporter {
 
   private final GenesisState genesisState;
 
-  private final ProtocolSchedule<Void> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
   private final List<Block> blocks;
 
@@ -64,7 +64,7 @@ public class BlockchainImporter {
     return genesisState;
   }
 
-  public ProtocolSchedule<Void> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 

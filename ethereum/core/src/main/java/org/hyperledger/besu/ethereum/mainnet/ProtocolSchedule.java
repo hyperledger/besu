@@ -20,9 +20,9 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.math.BigInteger;
 import java.util.Optional;
 
-public interface ProtocolSchedule<C> {
+public interface ProtocolSchedule {
 
-  ProtocolSpec<C> getByBlockNumber(long number);
+  ProtocolSpec getByBlockNumber(long number);
 
   Optional<BigInteger> getChainId();
 

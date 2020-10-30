@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.kvstore;
 
+import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -26,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Ignore;
@@ -71,19 +74,17 @@ public abstract class AbstractKeyValueStorageTest {
   }
 
   @Test
-  public void removeUnless() throws Exception {
+  public void streamKeys() throws Exception {
     final KeyValueStorage store = createStore();
     final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.put(bytesFromHexString("0F"), bytesFromHexString("0ABC"));
-    tx.put(bytesFromHexString("10"), bytesFromHexString("0ABC"));
-    tx.put(bytesFromHexString("11"), bytesFromHexString("0ABC"));
-    tx.put(bytesFromHexString("12"), bytesFromHexString("0ABC"));
+    final List<byte[]> keys =
+        Stream.of("0F", "10", "11", "12")
+            .map(this::bytesFromHexString)
+            .collect(toUnmodifiableList());
+    keys.forEach(key -> tx.put(key, bytesFromHexString("0ABC")));
     tx.commit();
-    store.removeAllKeysUnless(bv -> Bytes.wrap(bv).toString().contains("1"));
-    assertThat(store.containsKey(bytesFromHexString("0F"))).isFalse();
-    assertThat(store.containsKey(bytesFromHexString("10"))).isTrue();
-    assertThat(store.containsKey(bytesFromHexString("11"))).isTrue();
-    assertThat(store.containsKey(bytesFromHexString("12"))).isTrue();
+    assertThat(store.streamKeys().collect(toUnmodifiableSet()))
+        .containsExactlyInAnyOrder(keys.toArray(new byte[][] {}));
   }
 
   @Test

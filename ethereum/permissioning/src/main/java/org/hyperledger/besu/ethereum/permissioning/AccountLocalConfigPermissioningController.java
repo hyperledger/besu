@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.permissioning;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -40,8 +41,8 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
 
   private static final int ACCOUNT_BYTES_SIZE = 20;
   private LocalPermissioningConfiguration configuration;
-  private List<String> accountWhitelist = new ArrayList<>();
-  private final WhitelistPersistor whitelistPersistor;
+  private List<String> accountAllowlist = new ArrayList<>();
+  private final AllowlistPersistor allowlistPersistor;
 
   private final Counter checkCounter;
   private final Counter checkCounterPermitted;
@@ -51,16 +52,16 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       final LocalPermissioningConfiguration configuration, final MetricsSystem metricsSystem) {
     this(
         configuration,
-        new WhitelistPersistor(configuration.getAccountPermissioningConfigFilePath()),
+        new AllowlistPersistor(configuration.getAccountPermissioningConfigFilePath()),
         metricsSystem);
   }
 
   public AccountLocalConfigPermissioningController(
       final LocalPermissioningConfiguration configuration,
-      final WhitelistPersistor whitelistPersistor,
+      final AllowlistPersistor allowlistPersistor,
       final MetricsSystem metricsSystem) {
     this.configuration = configuration;
-    this.whitelistPersistor = whitelistPersistor;
+    this.allowlistPersistor = allowlistPersistor;
     readAccountsFromConfig(configuration);
     this.checkCounter =
         metricsSystem.createCounter(
@@ -80,96 +81,95 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
   }
 
   private void readAccountsFromConfig(final LocalPermissioningConfiguration configuration) {
-    if (configuration != null && configuration.isAccountWhitelistEnabled()) {
-      if (!configuration.getAccountWhitelist().isEmpty()) {
-        addAccounts(configuration.getAccountWhitelist());
+    if (configuration != null && configuration.isAccountAllowlistEnabled()) {
+      if (!configuration.getAccountAllowlist().isEmpty()) {
+        addAccounts(configuration.getAccountAllowlist());
       }
     }
   }
 
-  public WhitelistOperationResult addAccounts(final List<String> accounts) {
+  public AllowlistOperationResult addAccounts(final List<String> accounts) {
     final List<String> normalizedAccounts = normalizeAccounts(accounts);
-    final WhitelistOperationResult inputValidationResult = inputValidation(normalizedAccounts);
-    if (inputValidationResult != WhitelistOperationResult.SUCCESS) {
+    final AllowlistOperationResult inputValidationResult = inputValidation(normalizedAccounts);
+    if (inputValidationResult != AllowlistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
 
     boolean inputHasExistingAccount =
-        normalizedAccounts.stream().anyMatch(accountWhitelist::contains);
+        normalizedAccounts.stream().anyMatch(accountAllowlist::contains);
     if (inputHasExistingAccount) {
-      return WhitelistOperationResult.ERROR_EXISTING_ENTRY;
+      return AllowlistOperationResult.ERROR_EXISTING_ENTRY;
     }
 
-    final List<String> oldWhitelist = new ArrayList<>(this.accountWhitelist);
-    this.accountWhitelist.addAll(normalizedAccounts);
+    final List<String> oldAllowlist = new ArrayList<>(this.accountAllowlist);
+    this.accountAllowlist.addAll(normalizedAccounts);
     try {
-      verifyConfigurationFileState(oldWhitelist);
-      updateConfigurationFile(accountWhitelist);
-      verifyConfigurationFileState(accountWhitelist);
+      verifyConfigurationFileState(oldAllowlist);
+      updateConfigurationFile(accountAllowlist);
+      verifyConfigurationFileState(accountAllowlist);
     } catch (IOException e) {
-      revertState(oldWhitelist);
-      return WhitelistOperationResult.ERROR_WHITELIST_PERSIST_FAIL;
-    } catch (WhitelistFileSyncException e) {
-      return WhitelistOperationResult.ERROR_WHITELIST_FILE_SYNC;
+      revertState(oldAllowlist);
+      return AllowlistOperationResult.ERROR_ALLOWLIST_PERSIST_FAIL;
+    } catch (AllowlistFileSyncException e) {
+      return AllowlistOperationResult.ERROR_ALLOWLIST_FILE_SYNC;
     }
-    return WhitelistOperationResult.SUCCESS;
+    return AllowlistOperationResult.SUCCESS;
   }
 
-  public WhitelistOperationResult removeAccounts(final List<String> accounts) {
+  public AllowlistOperationResult removeAccounts(final List<String> accounts) {
     final List<String> normalizedAccounts = normalizeAccounts(accounts);
-    final WhitelistOperationResult inputValidationResult = inputValidation(normalizedAccounts);
-    if (inputValidationResult != WhitelistOperationResult.SUCCESS) {
+    final AllowlistOperationResult inputValidationResult = inputValidation(normalizedAccounts);
+    if (inputValidationResult != AllowlistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
 
-    if (!accountWhitelist.containsAll(normalizedAccounts)) {
-      return WhitelistOperationResult.ERROR_ABSENT_ENTRY;
+    if (!accountAllowlist.containsAll(normalizedAccounts)) {
+      return AllowlistOperationResult.ERROR_ABSENT_ENTRY;
     }
 
-    final List<String> oldWhitelist = new ArrayList<>(this.accountWhitelist);
+    final List<String> oldAllowlist = new ArrayList<>(this.accountAllowlist);
 
-    this.accountWhitelist.removeAll(normalizedAccounts);
+    this.accountAllowlist.removeAll(normalizedAccounts);
     try {
-      verifyConfigurationFileState(oldWhitelist);
-      updateConfigurationFile(accountWhitelist);
-      verifyConfigurationFileState(accountWhitelist);
+      verifyConfigurationFileState(oldAllowlist);
+      updateConfigurationFile(accountAllowlist);
+      verifyConfigurationFileState(accountAllowlist);
     } catch (IOException e) {
-      revertState(oldWhitelist);
-      return WhitelistOperationResult.ERROR_WHITELIST_PERSIST_FAIL;
-    } catch (WhitelistFileSyncException e) {
-      return WhitelistOperationResult.ERROR_WHITELIST_FILE_SYNC;
+      revertState(oldAllowlist);
+      return AllowlistOperationResult.ERROR_ALLOWLIST_PERSIST_FAIL;
+    } catch (AllowlistFileSyncException e) {
+      return AllowlistOperationResult.ERROR_ALLOWLIST_FILE_SYNC;
     }
-    return WhitelistOperationResult.SUCCESS;
+    return AllowlistOperationResult.SUCCESS;
   }
 
-  private WhitelistOperationResult inputValidation(final List<String> accounts) {
+  private AllowlistOperationResult inputValidation(final List<String> accounts) {
     if (accounts == null || accounts.isEmpty()) {
-      return WhitelistOperationResult.ERROR_EMPTY_ENTRY;
+      return AllowlistOperationResult.ERROR_EMPTY_ENTRY;
     }
 
     if (containsInvalidAccount(accounts)) {
-      return WhitelistOperationResult.ERROR_INVALID_ENTRY;
+      return AllowlistOperationResult.ERROR_INVALID_ENTRY;
     }
 
     if (inputHasDuplicates(accounts)) {
-      return WhitelistOperationResult.ERROR_DUPLICATED_ENTRY;
+      return AllowlistOperationResult.ERROR_DUPLICATED_ENTRY;
     }
 
-    return WhitelistOperationResult.SUCCESS;
+    return AllowlistOperationResult.SUCCESS;
   }
 
   private void verifyConfigurationFileState(final Collection<String> oldAccounts)
-      throws IOException, WhitelistFileSyncException {
-    whitelistPersistor.verifyConfigFileMatchesState(
-        WhitelistPersistor.WHITELIST_TYPE.ACCOUNTS, oldAccounts);
+      throws IOException, AllowlistFileSyncException {
+    allowlistPersistor.verifyConfigFileMatchesState(ALLOWLIST_TYPE.ACCOUNTS, oldAccounts);
   }
 
   private void updateConfigurationFile(final Collection<String> accounts) throws IOException {
-    whitelistPersistor.updateConfig(WhitelistPersistor.WHITELIST_TYPE.ACCOUNTS, accounts);
+    allowlistPersistor.updateConfig(ALLOWLIST_TYPE.ACCOUNTS, accounts);
   }
 
-  private void revertState(final List<String> accountWhitelist) {
-    this.accountWhitelist = accountWhitelist;
+  private void revertState(final List<String> accountAllowlist) {
+    this.accountAllowlist = accountAllowlist;
   }
 
   private boolean inputHasDuplicates(final List<String> accounts) {
@@ -177,11 +177,11 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
   }
 
   public boolean contains(final String account) {
-    return accountWhitelist.stream().anyMatch(a -> a.equalsIgnoreCase(account));
+    return accountAllowlist.stream().anyMatch(a -> a.equalsIgnoreCase(account));
   }
 
-  public List<String> getAccountWhitelist() {
-    return new ArrayList<>(accountWhitelist);
+  public List<String> getAccountAllowlist() {
+    return new ArrayList<>(accountAllowlist);
   }
 
   private boolean containsInvalidAccount(final List<String> accounts) {
@@ -202,25 +202,26 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
   }
 
   public synchronized void reload() throws RuntimeException {
-    final ArrayList<String> currentAccountsList = new ArrayList<>(accountWhitelist);
-    accountWhitelist.clear();
+    final ArrayList<String> currentAccountsList = new ArrayList<>(accountAllowlist);
+    accountAllowlist.clear();
 
     try {
       final LocalPermissioningConfiguration updatedConfig =
           PermissioningConfigurationBuilder.permissioningConfiguration(
-              configuration.isNodeWhitelistEnabled(),
+              configuration.isNodeAllowlistEnabled(),
+              configuration.getEnodeDnsConfiguration(),
               configuration.getNodePermissioningConfigFilePath(),
-              configuration.isAccountWhitelistEnabled(),
+              configuration.isAccountAllowlistEnabled(),
               configuration.getAccountPermissioningConfigFilePath());
       readAccountsFromConfig(updatedConfig);
       configuration = updatedConfig;
     } catch (Exception e) {
       LOG.warn(
-          "Error reloading permissions file. In-memory whitelisted accounts will be reverted to previous valid configuration. "
+          "Error reloading permissions file. In-memory accounts allowlist will be reverted to previous valid configuration. "
               + "Details: {}",
           e.getMessage());
-      accountWhitelist.clear();
-      accountWhitelist.addAll(currentAccountsList);
+      accountAllowlist.clear();
+      accountAllowlist.addAll(currentAccountsList);
       throw new RuntimeException(e);
     }
   }

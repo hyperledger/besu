@@ -44,10 +44,14 @@ public class BesuNodeConfiguration {
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
   private final boolean revertReasonEnabled;
+  private final boolean secp256k1Native;
+  private final boolean altbn128Native;
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private final boolean isDnsEnabled;
   private final Optional<PrivacyParameters> privacyParameters;
+  private final List<String> runCommand;
 
   BesuNodeConfiguration(
       final String name,
@@ -65,10 +69,14 @@ public class BesuNodeConfiguration {
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
+      final boolean secp256k1Native,
+      final boolean altbn128Native,
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
-      final Optional<PrivacyParameters> privacyParameters) {
+      final boolean isDnsEnabled,
+      final Optional<PrivacyParameters> privacyParameters,
+      final List<String> runCommand) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -84,10 +92,14 @@ public class BesuNodeConfiguration {
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
+    this.secp256k1Native = secp256k1Native;
+    this.altbn128Native = altbn128Native;
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    this.isDnsEnabled = isDnsEnabled;
     this.privacyParameters = privacyParameters;
+    this.runCommand = runCommand;
   }
 
   public String getName() {
@@ -158,11 +170,27 @@ public class BesuNodeConfiguration {
     return revertReasonEnabled;
   }
 
+  public boolean isSecp256k1Native() {
+    return secp256k1Native;
+  }
+
+  public boolean isAltbn128Native() {
+    return altbn128Native;
+  }
+
   public List<String> getStaticNodes() {
     return staticNodes;
   }
 
+  public boolean isDnsEnabled() {
+    return isDnsEnabled;
+  }
+
   public Optional<PrivacyParameters> getPrivacyParameters() {
     return privacyParameters;
+  }
+
+  public List<String> getRunCommand() {
+    return runCommand;
   }
 }

@@ -65,7 +65,7 @@ public class TransactionSimulatorTest {
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private MutableWorldState worldState;
-  @Mock private ProtocolSchedule<?> protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private TransactionProcessor transactionProcessor;
 
@@ -347,14 +347,14 @@ public class TransactionSimulatorTest {
     }
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any()))
+            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(result);
   }
 
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(), any(), any(), eq(expectedTransaction), any(), any(), anyBoolean(), any());
+            any(), any(), any(), eq(expectedTransaction), any(), any(), anyBoolean(), any(), any());
   }
 
   private CallParameter callParameter() {

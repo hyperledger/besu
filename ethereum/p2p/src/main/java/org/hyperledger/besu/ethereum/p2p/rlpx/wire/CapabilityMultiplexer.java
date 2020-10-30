@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
@@ -74,10 +73,10 @@ public class CapabilityMultiplexer {
    * message code to the appropriate value.
    *
    * @param receivedMessage The message received from a peer.
-   * @return The intepreted message.
+   * @return The interpreted message.
    */
   public ProtocolMessage demultiplex(final MessageData receivedMessage) {
-    final Entry<Range<Integer>, Capability> agreedCap =
+    final Map.Entry<Range<Integer>, Capability> agreedCap =
         agreedCaps.getEntry(receivedMessage.getCode());
 
     if (agreedCap == null) {
@@ -143,7 +142,8 @@ public class CapabilityMultiplexer {
   private static ImmutableMap<Capability, Integer> calculateCapabilityOffsets(
       final ImmutableRangeMap<Integer, Capability> agreedCaps) {
     final ImmutableMap.Builder<Capability, Integer> capToOffset = ImmutableMap.builder();
-    for (final Entry<Range<Integer>, Capability> entry : agreedCaps.asMapOfRanges().entrySet()) {
+    for (final Map.Entry<Range<Integer>, Capability> entry :
+        agreedCaps.asMapOfRanges().entrySet()) {
       capToOffset.put(entry.getValue(), entry.getKey().lowerEndpoint());
     }
     return capToOffset.build();

@@ -22,9 +22,11 @@ import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
-import org.hyperledger.besu.controller.GasLimitCalculator;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -37,12 +39,14 @@ import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
 import java.io.File;
@@ -52,6 +56,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -66,15 +71,17 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private static final Logger LOG = LogManager.getLogger();
   private final Map<String, Runner> besuRunners = new HashMap<>();
 
-  private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new HashMap<>();
+  private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new ConcurrentHashMap<>();
 
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
       final StorageServiceImpl storageService,
+      final SecurityModuleServiceImpl securityModuleService,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
     besuPluginContext.addService(StorageService.class, storageService);
+    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
 
     final Path pluginsPath = node.homeDirectory().resolve("plugins");
@@ -104,13 +111,21 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
     ThreadContext.put("node", node.getName());
 
+    if (!node.getRunCommand().isEmpty()) {
+      throw new UnsupportedOperationException("commands are not supported with thread runner");
+    }
+
     final StorageServiceImpl storageService = new StorageServiceImpl();
+    final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfiguration commonPluginConfiguration =
         new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
-            node, n -> buildPluginContext(node, storageService, commonPluginConfiguration));
+            node,
+            n ->
+                buildPluginContext(
+                    node, storageService, securityModuleService, commonPluginConfiguration));
 
     final ObservableMetricsSystem metricsSystem =
         PrometheusMetricsSystem.init(node.getMetricsConfiguration());
@@ -123,7 +138,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .setBootNodes(bootnodes);
     node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
-    final BesuControllerBuilder<?> builder =
+    final BesuControllerBuilder builder =
         new BesuController.Builder().fromEthNetworkConfig(ethNetworkConfig);
 
     final KeyValueStorageProvider storageProvider =
@@ -133,20 +148,20 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
-    final BesuController<?> besuController =
+    final BesuController besuController =
         builder
             .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
             .dataDirectory(node.homeDirectory())
             .miningParameters(node.getMiningParameters())
             .privacyParameters(node.getPrivacyParameters())
-            .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
+            .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
             .metricsSystem(metricsSystem)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .clock(Clock.systemUTC())
             .isRevertReasonEnabled(node.isRevertReasonEnabled())
             .storageProvider(storageProvider)
-            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();

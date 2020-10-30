@@ -14,27 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class StopOperation extends AbstractOperation {
+public class StopOperation extends AbstractFixedCostOperation {
 
   public StopOperation(final GasCalculator gasCalculator) {
-    super(0x00, "STOP", 0, 0, false, 1, gasCalculator);
+    super(0x00, "STOP", 0, 0, false, 1, gasCalculator, gasCalculator.getZeroTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getZeroTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     frame.setOutputData(Bytes.EMPTY);
+    return successResponse;
   }
 }

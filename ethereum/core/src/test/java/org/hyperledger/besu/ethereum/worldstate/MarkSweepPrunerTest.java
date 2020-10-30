@@ -56,10 +56,11 @@ public class MarkSweepPrunerTest {
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Map<Bytes, byte[]> hashValueStore = spy(new HashMap<>());
-  private final InMemoryKeyValueStorage stateStorage = spy(new TestInMemoryStorage(hashValueStore));
-  private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
+  private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
+  private final WorldStateStorage worldStateStorage =
+      spy(new WorldStateKeyValueStorage(stateStorage));
   private final WorldStateArchive worldStateArchive =
-      new WorldStateArchive(
+      new DefaultWorldStateArchive(
           worldStateStorage, new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
   private final Block genesisBlock = gen.genesisBlock();
@@ -116,7 +117,7 @@ public class MarkSweepPrunerTest {
   @Test
   public void sweepBefore_shouldSweepStateRootFirst() {
     final MarkSweepPruner pruner =
-        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem, 1);
+        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
 
     // Generate accounts and save corresponding state root
     final int numBlocks = 15;
@@ -136,18 +137,20 @@ public class MarkSweepPrunerTest {
     pruner.mark(markBlock.getStateRoot());
     pruner.sweepBefore(markBlock.getNumber());
 
-    // Check stateRoots are marked first
-    InOrder inOrder = inOrder(hashValueStore, stateStorage);
-    for (Bytes32 stateRoot : stateRoots) {
-      inOrder.verify(hashValueStore).remove(stateRoot);
-    }
-    inOrder.verify(stateStorage).removeAllKeysUnless(any());
+    // we use individual inOrders because we only want to make sure we remove a state root before
+    // the full prune but without enforcing an ordering between the state root removals
+    stateRoots.forEach(
+        stateRoot -> {
+          final InOrder thisRootsOrdering = inOrder(hashValueStore, worldStateStorage);
+          thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+          thisRootsOrdering.verify(worldStateStorage).prune(any());
+        });
   }
 
   @Test
   public void sweepBefore_shouldNotRemoveMarkedStateRoots() {
     final MarkSweepPruner pruner =
-        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem, 1);
+        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
 
     // Generate accounts and save corresponding state root
     final int numBlocks = 15;
@@ -171,12 +174,14 @@ public class MarkSweepPrunerTest {
     // Sweep
     pruner.sweepBefore(markBlock.getNumber());
 
-    // Check stateRoots are marked first
-    InOrder inOrder = inOrder(hashValueStore, stateStorage);
-    for (Bytes32 stateRoot : stateRoots) {
-      inOrder.verify(hashValueStore).remove(stateRoot);
-    }
-    inOrder.verify(stateStorage).removeAllKeysUnless(any());
+    // we use individual inOrders because we only want to make sure we remove a state root before
+    // the full prune but without enforcing an ordering between the state root removals
+    stateRoots.forEach(
+        stateRoot -> {
+          final InOrder thisRootsOrdering = inOrder(hashValueStore, worldStateStorage);
+          thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+          thisRootsOrdering.verify(worldStateStorage).prune(any());
+        });
 
     assertThat(stateStorage.containsKey(markedRoot.toArray())).isTrue();
   }

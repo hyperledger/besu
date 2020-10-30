@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
@@ -22,13 +23,17 @@ import org.hyperledger.besu.consensus.clique.headervalidationrules.VoteValidatio
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
+
+import java.util.Optional;
 
 public class BlockHeaderValidationRulesetFactory {
 
@@ -40,25 +45,37 @@ public class BlockHeaderValidationRulesetFactory {
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @param epochManager an object which determines if a given block is an epoch block.
+   * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @return the header validator.
    */
-  public static BlockHeaderValidator.Builder<CliqueContext> cliqueBlockHeaderValidator(
-      final long secondsBetweenBlocks, final EpochManager epochManager) {
+  public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
+      final long secondsBetweenBlocks,
+      final EpochManager epochManager,
+      final Optional<EIP1559> eip1559) {
 
-    return new BlockHeaderValidator.Builder<CliqueContext>()
-        .addRule(new AncestryValidationRule())
-        .addRule(new GasUsageValidationRule())
-        .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
-        .addRule(new TimestampBoundedByFutureParameter(10))
-        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
-        .addRule(new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
-        .addRule(new CliqueExtraDataValidationRule(epochManager))
-        .addRule(new VoteValidationRule())
-        .addRule(new CliqueDifficultyValidationRule())
-        .addRule(new SignerRateLimitValidationRule())
-        .addRule(new CoinbaseHeaderValidationRule(epochManager));
+    final BlockHeaderValidator.Builder builder =
+        new BlockHeaderValidator.Builder()
+            .addRule(new AncestryValidationRule())
+            .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
+            .addRule(new TimestampBoundedByFutureParameter(10))
+            .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+            .addRule(
+                new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
+            .addRule(
+                new ConstantFieldValidationRule<>(
+                    "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
+            .addRule(new CliqueExtraDataValidationRule(epochManager))
+            .addRule(new VoteValidationRule())
+            .addRule(new CliqueDifficultyValidationRule())
+            .addRule(new SignerRateLimitValidationRule())
+            .addRule(new CoinbaseHeaderValidationRule(epochManager));
+    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
+      builder
+          .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
+          .addRule(new GasUsageValidationRule(eip1559));
+    } else {
+      builder.addRule(new GasUsageValidationRule());
+    }
+    return builder;
   }
 }

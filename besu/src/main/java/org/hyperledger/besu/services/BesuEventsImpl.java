@@ -71,7 +71,7 @@ public class BesuEventsImpl implements BesuEvents {
   @Override
   public long addBlockAddedListener(final BlockAddedListener listener) {
     return blockchain.observeBlockAdded(
-        (event, chain) ->
+        event ->
             listener.onBlockAdded(
                 blockAddedContext(
                     event.getBlock()::getHeader,

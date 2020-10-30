@@ -137,6 +137,16 @@
       "code": "0x600035FF",
       "balance": "0x300"
     },
+    "0160000000000000000000000000000000000000" : {
+      "comment": "Contract retrieved from this reference test refund_CallToSuicideTwice_d0g0v0_Istanbul",
+      "balance" : "0x0de0b6b3a7640000",
+      "code" : "0x60006000600060006000730170000000000000000000000000000000000000600035f160005560006000600060006000730170000000000000000000000000000000000000600035f100"
+    },
+    "0170000000000000000000000000000000000000" : {
+      "comment": "Contract retrieved from this reference test refund_CallToSuicideTwice_d0g0v0_Istanbul",
+      "balance" : "0x0de0b6b3a7640000",
+      "code" : "0x73095e7baea6a6c7c4c2dfeb977efac326af552d87ff00"
+    },
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {
       "secretKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
       "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",

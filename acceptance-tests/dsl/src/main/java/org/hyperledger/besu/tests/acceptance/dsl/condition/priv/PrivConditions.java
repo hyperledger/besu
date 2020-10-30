@@ -43,6 +43,11 @@ public class PrivConditions {
         transactions.getPrivateTransaction(transactionHash), privateTransaction);
   }
 
+  public Condition getPrivateTransactionReturnsNull(final Hash transactionHash) {
+    return new PrivGetPrivateTransactionReturnsNull(
+        transactions.getPrivateTransaction(transactionHash));
+  }
+
   public Condition createPrivacyGroup(
       final List<String> addresses,
       final String groupName,
@@ -88,8 +93,18 @@ public class PrivConditions {
         expectedTransactionCount);
   }
 
-  public Condition getTransactionReceipt(final Hash transactionHash) {
-    return new PrivGetTransactionReceiptSuccess(
+  public Condition getSuccessfulTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetExpectedSuccessfulTransactionReceipt(
+        transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition getFailedTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetExpectedFailedTransactionReceipt(
+        transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition getInvalidTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetExpectedInvalidTransactionReceipt(
         transactions.getTransactionReceipt(transactionHash));
   }
 

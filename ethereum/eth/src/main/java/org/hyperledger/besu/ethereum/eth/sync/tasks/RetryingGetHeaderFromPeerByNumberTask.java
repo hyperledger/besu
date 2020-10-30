@@ -30,13 +30,13 @@ import java.util.concurrent.CompletableFuture;
 
 public class RetryingGetHeaderFromPeerByNumberTask
     extends AbstractRetryingPeerTask<List<BlockHeader>> {
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final long pivotBlockNumber;
   private final MetricsSystem metricsSystem;
 
   private RetryingGetHeaderFromPeerByNumberTask(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,
@@ -49,7 +49,7 @@ public class RetryingGetHeaderFromPeerByNumberTask
   }
 
   public static RetryingGetHeaderFromPeerByNumberTask forSingleNumber(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,
@@ -69,7 +69,7 @@ public class RetryingGetHeaderFromPeerByNumberTask
         .thenApply(
             peerResult -> {
               if (!peerResult.getResult().isEmpty()) {
-                result.get().complete(peerResult.getResult());
+                result.complete(peerResult.getResult());
               }
               return peerResult.getResult();
             });

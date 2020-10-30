@@ -8,7 +8,7 @@
     "eip158Block": 3,
     "byzantiumBlock": 1035301,
     "constantinopleBlock": 3660663,
-    "constantinopleFixBlock": 4321234,
+    "petersburgBlock": 4321234,
     "istanbulBlock":  5435345,
     "clique": {
       "blockperiodseconds": 15,

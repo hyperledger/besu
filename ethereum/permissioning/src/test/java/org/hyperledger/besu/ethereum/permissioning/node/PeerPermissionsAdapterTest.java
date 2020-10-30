@@ -106,6 +106,8 @@ public class PeerPermissionsAdapterTest {
   }
 
   @Test
+  // This test smart-contract backed permissioning where while we’re syncing,
+  // we can only trust bootnodes
   public void allowOutboundBonding_outOfSyncRemoteIsNotABootnode() {
     mockSyncStatusNodePermissioning(true, false);
 
@@ -359,10 +361,7 @@ public class PeerPermissionsAdapterTest {
   @Test
   public void subscribeUpdate_firesWhenBlockAdded() {
     final AtomicBoolean updateDispatched = new AtomicBoolean(false);
-    adapter.subscribeUpdate(
-        (restricted, peers) -> {
-          updateDispatched.set(true);
-        });
+    adapter.subscribeUpdate((restricted, peers) -> updateDispatched.set(true));
 
     final Block newBlock = gen.nextBlock(blockchain.getGenesisBlock());
     blockchain.appendBlock(newBlock, gen.receipts(newBlock));

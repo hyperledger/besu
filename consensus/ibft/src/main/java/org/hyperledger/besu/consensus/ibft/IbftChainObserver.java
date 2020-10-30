@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.ibft;
 import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 /**
  * Blockchain observer that adds {@link NewChainHead} events to the event queue when a new block is
@@ -31,7 +30,7 @@ public class IbftChainObserver implements BlockAddedObserver {
   }
 
   @Override
-  public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
+  public void onBlockAdded(final BlockAddedEvent event) {
     switch (event.getEventType()) {
       case HEAD_ADVANCED:
         queue.add(new NewChainHead(event.getBlock().getHeader()));

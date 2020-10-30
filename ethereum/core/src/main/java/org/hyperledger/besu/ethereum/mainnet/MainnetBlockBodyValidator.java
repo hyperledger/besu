@@ -23,7 +23,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 
 import java.util.HashSet;
 import java.util.List;
@@ -34,29 +36,29 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
+public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private static final int MAX_OMMERS = 2;
 
   private static final int MAX_GENERATION = 6;
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final Optional<EIP1559> maybeEip1559;
 
-  public MainnetBlockBodyValidator(final ProtocolSchedule<C> protocolSchedule) {
+  public MainnetBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
     this(protocolSchedule, Optional.empty());
   }
 
   public MainnetBlockBodyValidator(
-      final ProtocolSchedule<C> protocolSchedule, final Optional<EIP1559> maybeEip1559) {
+      final ProtocolSchedule protocolSchedule, final Optional<EIP1559> maybeEip1559) {
     this.protocolSchedule = protocolSchedule;
     this.maybeEip1559 = maybeEip1559;
   }
 
   @Override
   public boolean validateBody(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
       final Hash worldStateRootHash,
@@ -67,6 +69,10 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     }
 
     if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
+      LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
+      receipts.forEach(
+          receipt ->
+              LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
       return false;
     }
 
@@ -75,7 +81,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 
   @Override
   public boolean validateBodyLight(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
       final HeaderValidationMode ommerValidationMode) {
@@ -106,7 +112,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
       return false;
     }
 
-    if (!validatePerTransactionGasLimit(block)) {
+    if (!validateTransactionGasPrice(block)) {
       return false;
     }
 
@@ -162,7 +168,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   }
 
   private boolean validateEthHash(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
@@ -190,7 +196,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   }
 
   private boolean validateOmmers(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final BlockHeader header,
       final List<BlockHeader> ommers,
       final HeaderValidationMode ommerValidationMode) {
@@ -230,11 +236,11 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   }
 
   private boolean isOmmerValid(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final BlockHeader current,
       final BlockHeader ommer,
       final HeaderValidationMode ommerValidationMode) {
-    final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(ommer.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(ommer.getNumber());
     if (!protocolSpec
         .getOmmerHeaderValidator()
         .validateHeader(ommer, context, ommerValidationMode)) {
@@ -249,7 +255,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   }
 
   private boolean isOmmerSiblingOfAncestor(
-      final ProtocolContext<C> context, final BlockHeader current, final BlockHeader ommer) {
+      final ProtocolContext context, final BlockHeader current, final BlockHeader ommer) {
     // The current block is guaranteed to have a parent because it's a valid header.
     final long lastAncestorBlockNumber = Math.max(current.getNumber() - MAX_GENERATION, 0);
 
@@ -265,7 +271,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     return false;
   }
 
-  private boolean validatePerTransactionGasLimit(final Block block) {
+  private boolean validateTransactionGasPrice(final Block block) {
     if (!ExperimentalEIPs.eip1559Enabled || maybeEip1559.isEmpty()) {
       return true;
     }
@@ -275,11 +281,16 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     }
     final BlockBody body = block.getBody();
     final List<Transaction> transactions = body.getTransactions();
+    final TransactionPriceCalculator transactionPriceCalculator =
+        TransactionPriceCalculator.eip1559();
     for (final Transaction transaction : transactions) {
-      if (!eip1559.isValidGasLimit(transaction)) {
+      final Optional<Long> baseFee = block.getHeader().getBaseFee();
+      final Wei price = transactionPriceCalculator.price(transaction, baseFee);
+      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         LOG.warn(
-            "Invalid block: transaction gas limit {} exceeds per transaction gas limit",
-            transaction.getGasLimit());
+            "Invalid block: transaction gas price {} must be greater than base fee {}",
+            price.toString(),
+            baseFee.orElseThrow());
         return false;
       }
     }

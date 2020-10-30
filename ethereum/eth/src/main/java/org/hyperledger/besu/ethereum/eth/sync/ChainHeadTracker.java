@@ -36,13 +36,13 @@ public class ChainHeadTracker implements ConnectCallback {
   private static final Logger LOG = getLogger();
 
   private final EthContext ethContext;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final TrailingPeerLimiter trailingPeerLimiter;
   private final MetricsSystem metricsSystem;
 
   public ChainHeadTracker(
       final EthContext ethContext,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TrailingPeerLimiter trailingPeerLimiter,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
@@ -53,7 +53,7 @@ public class ChainHeadTracker implements ConnectCallback {
 
   public static void trackChainHeadForPeers(
       final EthContext ethContext,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final Supplier<TrailingPeerRequirements> trailingPeerRequirementsCalculator,
       final MetricsSystem metricsSystem) {

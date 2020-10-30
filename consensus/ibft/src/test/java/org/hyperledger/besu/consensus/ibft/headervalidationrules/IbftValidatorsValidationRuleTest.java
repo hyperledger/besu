@@ -18,7 +18,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -40,8 +39,8 @@ public class IbftValidatorsValidationRuleTest {
         Lists.newArrayList(
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
-    final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
+    final ProtocolContext context =
+        new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final BlockHeader header =
         HeaderValidationTestHelpers.createProposedBlockHeader(validators, emptyList(), false);
@@ -56,8 +55,8 @@ public class IbftValidatorsValidationRuleTest {
         Lists.newArrayList(
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
-    final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
+    final ProtocolContext context =
+        new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final BlockHeader header =
         HeaderValidationTestHelpers.createProposedBlockHeader(
@@ -76,8 +75,8 @@ public class IbftValidatorsValidationRuleTest {
         Lists.newArrayList(
             AddressHelpers.ofValue(2), AddressHelpers.ofValue(3), AddressHelpers.ofValue(4));
 
-    final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, setupContextWithValidators(storedValidators));
+    final ProtocolContext context =
+        new ProtocolContext(null, null, setupContextWithValidators(storedValidators));
 
     final BlockHeader header =
         HeaderValidationTestHelpers.createProposedBlockHeader(

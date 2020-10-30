@@ -56,7 +56,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
 
   @Test
   public void getFilterChanges_oneBlock() throws Exception {
-    BlockchainSetupUtil<Void> blockchainSetupUtil = startServiceWithEmptyChain();
+    BlockchainSetupUtil blockchainSetupUtil = startServiceWithEmptyChain();
     final String expectedRespBody =
         String.format(
             "{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ \"0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9\" ]%n}");

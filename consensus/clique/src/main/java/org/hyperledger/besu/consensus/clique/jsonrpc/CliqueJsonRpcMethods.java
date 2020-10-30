@@ -37,9 +37,9 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Map;
 
 public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
-  private final ProtocolContext<CliqueContext> context;
+  private final ProtocolContext context;
 
-  public CliqueJsonRpcMethods(final ProtocolContext<CliqueContext> context) {
+  public CliqueJsonRpcMethods(final ProtocolContext context) {
     this.context = context;
   }
 
@@ -54,7 +54,8 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final WorldStateArchive worldStateArchive = context.getWorldStateArchive();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
-    final VoteProposer voteProposer = context.getConsensusState().getVoteProposer();
+    final VoteProposer voteProposer =
+        context.getConsensusState(CliqueContext.class).getVoteProposer();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final VoteTallyCache voteTallyCache = createVoteTallyCache(context, blockchain);
@@ -69,8 +70,9 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   private VoteTallyCache createVoteTallyCache(
-      final ProtocolContext<CliqueContext> context, final MutableBlockchain blockchain) {
-    final EpochManager epochManager = context.getConsensusState().getEpochManager();
+      final ProtocolContext context, final MutableBlockchain blockchain) {
+    final EpochManager epochManager =
+        context.getConsensusState(CliqueContext.class).getEpochManager();
     final CliqueBlockInterface cliqueBlockInterface = new CliqueBlockInterface();
     final VoteTallyUpdater voteTallyUpdater =
         new VoteTallyUpdater(epochManager, cliqueBlockInterface);

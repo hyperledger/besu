@@ -37,7 +37,7 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodeCannotConnectWhenWhiteListedOnChainButNotLocal() {
+  public void testNodeCannotConnectWhenAllowedOnChainButNotLocally() {
 
     // add permissioned node after cluster start because we need enode URI for local config
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode);
@@ -60,9 +60,9 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodeCannotConnectWhenWhitelistedLocalButNotOnChain() {
-    // onchain whitelist: A, B
-    // local whitelist: A, B, C
+  public void testNodeCannotConnectWhenAllowedLocallyButNotOnChain() {
+    // onchain allowlist: A, B
+    // local allowlist: A, B, C
 
     // add permissioned node after cluster start because we need enode URI for local config
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode, forbiddenNode);
@@ -82,7 +82,7 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodesCanConnectWhenWhitelistedBothOnChainAndLocal() {
+  public void testNodesCanConnectWhenAllowedBothOnChainAndLocally() {
     // add permissioned node after cluster start because we need enode URI for local config
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode, forbiddenNode);
     permissionedCluster.addNode(permissionedNode);

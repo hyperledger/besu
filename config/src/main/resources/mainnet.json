@@ -10,7 +10,7 @@
     "eip158Block": 2675000,
     "byzantiumBlock": 4370000,
     "constantinopleBlock": 7280000,
-    "constantinopleFixBlock": 7280000,
+    "petersburgBlock": 7280000,
     "istanbulBlock": 9069000,
     "muirGlacierBlock": 9200000,
     "ethash": {

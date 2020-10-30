@@ -24,6 +24,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
@@ -67,7 +68,7 @@ import org.junit.rules.TemporaryFolder;
 public abstract class AbstractJsonRpcHttpServiceTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
-  protected BlockchainSetupUtil<Void> blockchainSetupUtil;
+  protected BlockchainSetupUtil blockchainSetupUtil;
 
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
@@ -86,11 +87,11 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     blockchainSetupUtil.importAllBlocks();
   }
 
-  protected BlockchainSetupUtil<Void> getBlockchainSetupUtil() {
+  protected BlockchainSetupUtil getBlockchainSetupUtil() {
     return BlockchainSetupUtil.forTesting();
   }
 
-  protected BlockchainSetupUtil<Void> createBlockchainSetupUtil(
+  protected BlockchainSetupUtil createBlockchainSetupUtil(
       final String genesisPath, final String blocksPath) {
     final URL genesisURL = AbstractJsonRpcHttpServiceTest.class.getResource(genesisPath);
     final URL blocksURL = AbstractJsonRpcHttpServiceTest.class.getResource(blocksPath);
@@ -104,14 +105,14 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     setupBlockchain();
   }
 
-  protected BlockchainSetupUtil<Void> startServiceWithEmptyChain() throws Exception {
-    final BlockchainSetupUtil<Void> emptySetupUtil = getBlockchainSetupUtil();
+  protected BlockchainSetupUtil startServiceWithEmptyChain() throws Exception {
+    final BlockchainSetupUtil emptySetupUtil = getBlockchainSetupUtil();
     startService(emptySetupUtil);
     return emptySetupUtil;
   }
 
   protected Map<String, JsonRpcMethod> getRpcMethods(
-      final JsonRpcConfiguration config, final BlockchainSetupUtil<Void> blockchainSetupUtil) {
+      final JsonRpcConfiguration config, final BlockchainSetupUtil blockchainSetupUtil) {
     final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
@@ -132,8 +133,12 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final FilterRepository filterRepository = new FilterRepository();
     when(filterIdGenerator.nextId()).thenReturn("0x1");
     filterManager =
-        new FilterManager(
-            blockchainQueries, transactionPoolMock, filterIdGenerator, filterRepository);
+        new FilterManagerBuilder()
+            .blockchainQueries(blockchainQueries)
+            .transactionPool(transactionPoolMock)
+            .filterIdGenerator(filterIdGenerator)
+            .filterRepository(filterRepository)
+            .build();
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -163,14 +168,15 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(WebSocketConfiguration.class),
             mock(MetricsConfiguration.class),
             natService,
-            new HashMap<>());
+            new HashMap<>(),
+            folder.getRoot().toPath());
   }
 
   protected void startService() throws Exception {
     startService(blockchainSetupUtil);
   }
 
-  private void startService(final BlockchainSetupUtil<Void> blockchainSetupUtil) throws Exception {
+  private void startService(final BlockchainSetupUtil blockchainSetupUtil) throws Exception {
 
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods = getRpcMethods(config, blockchainSetupUtil);

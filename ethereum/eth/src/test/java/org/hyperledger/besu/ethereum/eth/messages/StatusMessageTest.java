@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
+import org.hyperledger.besu.ethereum.eth.manager.ForkId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.math.BigInteger;
@@ -75,8 +75,7 @@ public class StatusMessageTest {
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
-    final ForkIdManager.ForkId forkId =
-        new ForkIdManager.ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
+    final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
 
     final MessageData msg =
         StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);

@@ -33,6 +33,7 @@ dependencies {
 
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:blockcreation')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
@@ -44,4 +45,5 @@ dependencies {
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 }

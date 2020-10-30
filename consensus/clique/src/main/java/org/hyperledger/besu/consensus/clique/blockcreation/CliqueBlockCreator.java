@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -37,9 +38,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.util.Optional;
-import java.util.function.Function;
 
-public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
+public class CliqueBlockCreator extends AbstractBlockCreator {
 
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
@@ -48,11 +48,12 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<CliqueContext> protocolContext,
-      final ProtocolSchedule<CliqueContext> protocolSchedule,
-      final Function<Long, Long> gasLimitCalculator,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final GasLimitCalculator gasLimitCalculator,
       final NodeKey nodeKey,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final EpochManager epochManager) {
     super(
@@ -64,6 +65,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
         gasLimitCalculator,
         minTransactionGasPrice,
         Util.publicKeyToAddress(nodeKey.getPublicKey()),
+        minBlockOccupancyRatio,
         parentHeader);
     this.nodeKey = nodeKey;
     this.epochManager = epochManager;
@@ -103,7 +105,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
     if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
       return Optional.empty();
     } else {
-      final CliqueContext cliqueContext = protocolContext.getConsensusState();
+      final CliqueContext cliqueContext = protocolContext.getConsensusState(CliqueContext.class);
       final VoteTally voteTally =
           cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
       return cliqueContext

@@ -23,7 +23,7 @@ import java.util.List;
 public interface JsonRpcMethod {
 
   /**
-   * Standardised JSON-RPC method name.
+   * Standardized JSON-RPC method name.
    *
    * @return identification of the JSON-RPC method.
    */
@@ -38,15 +38,17 @@ public interface JsonRpcMethod {
   JsonRpcResponse response(JsonRpcRequestContext request);
 
   /**
-   * The list of Permissions that correspond to this JSON-RPC method. e.g. [net/*, net/listening]
+   * The list of Permissions that correspond to this JSON-RPC method.
+   *
+   * <p>e.g. [*:*, net:*, net:listening]
    *
    * @return list of permissions that match this method.
    */
   default List<String> getPermissions() {
     List<String> permissions = new ArrayList<>();
     permissions.add("*:*");
-    permissions.add(this.getName().replace('_', ':'));
     permissions.add(this.getName().substring(0, this.getName().indexOf('_')) + ":*");
+    permissions.add(this.getName().replace('_', ':'));
     return permissions;
   };
 }

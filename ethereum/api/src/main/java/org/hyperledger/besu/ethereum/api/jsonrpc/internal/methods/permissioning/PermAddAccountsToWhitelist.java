@@ -15,69 +15,20 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.WhitelistOperationResult;
 
-import java.util.List;
 import java.util.Optional;
 
-public class PermAddAccountsToWhitelist implements JsonRpcMethod {
-
-  private final Optional<AccountLocalConfigPermissioningController> whitelistController;
+@Deprecated
+public class PermAddAccountsToWhitelist extends PermAddAccountsToAllowlist {
 
   public PermAddAccountsToWhitelist(
-      final Optional<AccountLocalConfigPermissioningController> whitelistController) {
-    this.whitelistController = whitelistController;
+      final Optional<AccountLocalConfigPermissioningController> allowlistController) {
+    super(allowlistController);
   }
 
   @Override
   public String getName() {
     return RpcMethod.PERM_ADD_ACCOUNTS_TO_WHITELIST.getMethodName();
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final List<String> accountsList = requestContext.getRequiredParameter(0, List.class);
-
-    if (whitelistController.isPresent()) {
-      final WhitelistOperationResult addResult =
-          whitelistController.get().addAccounts(accountsList);
-
-      switch (addResult) {
-        case ERROR_EMPTY_ENTRY:
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
-        case ERROR_INVALID_ENTRY:
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
-        case ERROR_EXISTING_ENTRY:
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
-        case ERROR_DUPLICATED_ENTRY:
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
-        case ERROR_WHITELIST_PERSIST_FAIL:
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.WHITELIST_PERSIST_FAILURE);
-        case ERROR_WHITELIST_FILE_SYNC:
-          return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.WHITELIST_FILE_SYNC);
-        case SUCCESS:
-          return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
-        default:
-          throw new IllegalStateException(
-              "Unmapped result from AccountLocalConfigPermissioningController");
-      }
-    } else {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);
-    }
   }
 }

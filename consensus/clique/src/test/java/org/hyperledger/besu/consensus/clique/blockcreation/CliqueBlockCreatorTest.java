@@ -32,8 +32,8 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -54,6 +54,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -63,18 +64,18 @@ import org.junit.Test;
 
 public class CliqueBlockCreatorTest {
 
-  private final NodeKey proposerNodeKey = BouncyCastleNodeKey.generate();
+  private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
   private final KeyPair otherKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
-  private ProtocolSchedule<CliqueContext> protocolSchedule;
+  private ProtocolSchedule protocolSchedule;
   private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
   private MutableBlockchain blockchain;
-  private ProtocolContext<CliqueContext> protocolContext;
+  private ProtocolContext protocolContext;
   private VoteProposer voteProposer;
   private EpochManager epochManager;
 
@@ -96,7 +97,7 @@ public class CliqueBlockCreatorTest {
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
-    protocolContext = new ProtocolContext<>(blockchain, stateArchive, cliqueContext);
+    protocolContext = new ProtocolContext(blockchain, stateArchive, cliqueContext);
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis
@@ -126,12 +127,16 @@ public class CliqueBlockCreatorTest {
                 5,
                 5,
                 TestClock.fixed(),
-                metricsSystem),
+                metricsSystem,
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -158,12 +163,16 @@ public class CliqueBlockCreatorTest {
                 5,
                 5,
                 TestClock.fixed(),
-                metricsSystem),
+                metricsSystem,
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -189,12 +198,16 @@ public class CliqueBlockCreatorTest {
                 5,
                 5,
                 TestClock.fixed(),
-                metricsSystem),
+                metricsSystem,
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -223,12 +236,16 @@ public class CliqueBlockCreatorTest {
                 5,
                 5,
                 TestClock.fixed(),
-                metricsSystem),
+                metricsSystem,
+                blockchain::getChainHeadHeader,
+                Optional.empty(),
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
+            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 

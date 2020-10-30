@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -41,21 +42,21 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
-public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, CliqueBlockMiner> {
+public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner> {
 
   private final Address localAddress;
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
 
   public CliqueMinerExecutor(
-      final ProtocolContext<CliqueContext> protocolContext,
-      final ProtocolSchedule<CliqueContext> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final PendingTransactions pendingTransactions,
       final NodeKey nodeKey,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager,
-      final Function<Long, Long> gasLimitCalculator) {
+      final GasLimitCalculator gasLimitCalculator) {
     super(
         protocolContext,
         protocolSchedule,
@@ -84,6 +85,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
                 gasLimitCalculator,
                 nodeKey,
                 minTransactionGasPrice,
+                minBlockOccupancyRatio,
                 header,
                 epochManager);
 
@@ -112,7 +114,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
       final VoteTally voteTally =
           protocolContext
-              .getConsensusState()
+              .getConsensusState(CliqueContext.class)
               .getVoteTallyCache()
               .getVoteTallyAfterBlock(parentHeader);
       validators.addAll(voteTally.getValidators());

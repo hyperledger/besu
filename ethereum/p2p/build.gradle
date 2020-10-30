@@ -42,11 +42,15 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.xerial.snappy:snappy-java'
 
+  annotationProcessor "org.immutables:value"
+  implementation "org.immutables:value-annotations"
+
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
   testImplementation('io.pkts:pkts-core') {

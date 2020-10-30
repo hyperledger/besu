@@ -16,63 +16,67 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URI;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+
 import java.util.Arrays;
 
 import org.junit.Test;
 
 public class LocalPermissioningConfigurationTest {
 
-  final URI[] nodes = {
-    URI.create("enode://001@123:4567"),
-    URI.create("enode://002@123:4567"),
-    URI.create("enode://003@123:4567")
+  final EnodeURL[] nodes = {
+    EnodeURL.fromString(
+        "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:4567"),
+    EnodeURL.fromString(
+        "enode://7f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:4568"),
+    EnodeURL.fromString(
+        "enode://8f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:4569")
   };
 
   @Test
   public void defaultConfiguration() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    assertThat(configuration.getNodeWhitelist()).isEmpty();
-    assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
-    assertThat(configuration.getAccountWhitelist()).isEmpty();
-    assertThat(configuration.isAccountWhitelistEnabled()).isFalse();
+    assertThat(configuration.getNodeAllowlist()).isEmpty();
+    assertThat(configuration.isNodeAllowlistEnabled()).isFalse();
+    assertThat(configuration.getAccountAllowlist()).isEmpty();
+    assertThat(configuration.isAccountAllowlistEnabled()).isFalse();
   }
 
   @Test
-  public void setNodeWhitelist() {
+  public void setNodeAllowlist() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setNodeWhitelist(Arrays.asList(nodes));
-    assertThat(configuration.getNodeWhitelist()).containsExactlyInAnyOrder(nodes);
-    assertThat(configuration.isNodeWhitelistEnabled()).isTrue();
+    configuration.setNodeAllowlist(Arrays.asList(nodes));
+    assertThat(configuration.getNodeAllowlist()).containsExactlyInAnyOrder(nodes);
+    assertThat(configuration.isNodeAllowlistEnabled()).isTrue();
   }
 
   @Test
-  public void setNodeWhiteListPassingNull() {
+  public void setNodeAllowListPassingNull() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setNodeWhitelist(null);
-    assertThat(configuration.getNodeWhitelist()).isEmpty();
-    assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
+    configuration.setNodeAllowlist(null);
+    assertThat(configuration.getNodeAllowlist()).isEmpty();
+    assertThat(configuration.isNodeAllowlistEnabled()).isFalse();
   }
 
   @Test
-  public void setAccountWhitelist() {
+  public void setAccountAllowlist() {
     final String[] accounts = {"1111111111111111", "2222222222222222", "ffffffffffffffff"};
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setAccountWhitelist(Arrays.asList(accounts));
-    assertThat(configuration.getAccountWhitelist()).containsExactlyInAnyOrder(accounts);
-    assertThat(configuration.isAccountWhitelistEnabled()).isTrue();
+    configuration.setAccountAllowlist(Arrays.asList(accounts));
+    assertThat(configuration.getAccountAllowlist()).containsExactlyInAnyOrder(accounts);
+    assertThat(configuration.isAccountAllowlistEnabled()).isTrue();
   }
 
   @Test
-  public void setAccountWhiteListPassingNull() {
+  public void setAccountAllowListPassingNull() {
     final LocalPermissioningConfiguration configuration =
         LocalPermissioningConfiguration.createDefault();
-    configuration.setAccountWhitelist(null);
-    assertThat(configuration.getAccountWhitelist()).isEmpty();
-    assertThat(configuration.isAccountWhitelistEnabled()).isFalse();
+    configuration.setAccountAllowlist(null);
+    assertThat(configuration.getAccountAllowlist()).isEmpty();
+    assertThat(configuration.isAccountAllowlistEnabled()).isFalse();
   }
 }

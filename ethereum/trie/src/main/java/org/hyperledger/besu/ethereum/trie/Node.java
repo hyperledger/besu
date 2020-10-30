@@ -54,7 +54,11 @@ public interface Node<V> {
   /** Marks the node as needing to be persisted */
   void markDirty();
 
-  /** @return True if the node needs to be persisted. */
+  /**
+   * Is this node not persisted and needs to be?
+   *
+   * @return True if the node needs to be persisted.
+   */
   boolean isDirty();
 
   String print();

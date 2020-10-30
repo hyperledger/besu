@@ -44,15 +44,17 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 
-  integrationTestImplementation project(path: ':config:', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
-  testImplementation project(path: ':config:', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')
 
+  integrationTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
 

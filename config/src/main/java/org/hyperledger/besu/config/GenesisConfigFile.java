@@ -28,12 +28,8 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class GenesisConfigFile {
-
-  static final Logger LOG = LogManager.getLogger();
 
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
@@ -142,6 +138,7 @@ public class GenesisConfigFile {
                     .filter(name -> !name.equals("chainid"))
                     .filter(name -> node.get(name).canConvertToLong())
                     .filter(name -> name.contains("block"))
+                    .filter(name -> !name.equals("classicforkblock"))
                     .map(name -> node.get(name).asLong()))
         .sorted()
         .collect(toUnmodifiableList());

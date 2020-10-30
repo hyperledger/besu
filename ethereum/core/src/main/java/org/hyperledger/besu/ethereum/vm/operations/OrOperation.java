@@ -14,31 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class OrOperation extends AbstractOperation {
+public class OrOperation extends AbstractFixedCostOperation {
 
   public OrOperation(final GasCalculator gasCalculator) {
-    super(0x17, "OR", 2, 1, false, 1, gasCalculator);
+    super(0x17, "OR", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
     final UInt256 result = value0.or(value1);
 
     frame.pushStackItem(result.toBytes());
+
+    return successResponse;
   }
 }

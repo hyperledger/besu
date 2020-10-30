@@ -74,6 +74,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -96,21 +97,21 @@ public final class EthProtocolManagerTest {
 
   private static Blockchain blockchain;
   private static TransactionPool transactionPool;
-  private static ProtocolSchedule<Void> protocolSchedule;
+  private static ProtocolSchedule protocolSchedule;
   private static BlockDataGenerator gen;
-  private static ProtocolContext<Void> protocolContext;
+  private static ProtocolContext protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @BeforeClass
   public static void setup() {
     gen = new BlockDataGenerator(0);
-    final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
-    assert (blockchainSetupUtil.getMaxBlockNumber() >= 20L);
+    assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
   @Test
@@ -272,7 +273,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -564,7 +565,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -702,7 +703,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -879,7 +880,7 @@ public final class EthProtocolManagerTest {
           .isEqualTo(Collections.singletonList(EthProtocol.ETH63));
 
       // assert that all messages transmitted contain the expected block & total difficulty.
-      final ProtocolSchedule<Void> protocolSchdeule = MainnetProtocolSchedule.create();
+      final ProtocolSchedule protocolSchdeule = MainnetProtocolSchedule.create();
       for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
         assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
         assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);
@@ -986,7 +987,9 @@ public final class EthProtocolManagerTest {
           metricsSystem,
           mock(SyncState.class),
           Wei.ZERO,
-          TransactionPoolConfiguration.builder().build());
+          TransactionPoolConfiguration.builder().build(),
+          true,
+          Optional.empty());
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});

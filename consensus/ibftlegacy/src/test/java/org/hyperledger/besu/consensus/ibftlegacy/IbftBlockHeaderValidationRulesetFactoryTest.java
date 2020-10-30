@@ -45,8 +45,7 @@ import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
 
-  private ProtocolContext<IbftContext> setupContextWithValidators(
-      final Collection<Address> validators) {
+  private ProtocolContext setupContextWithValidators(final Collection<Address> validators) {
     final IbftContext ibftContext = mock(IbftContext.class);
     final VoteTallyCache mockCache = mock(VoteTallyCache.class);
     final VoteTally mockVoteTally = mock(VoteTally.class);
@@ -54,7 +53,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
     when(mockVoteTally.getValidators()).thenReturn(validators);
 
-    return new ProtocolContext<>(null, null, ibftContext);
+    return new ProtocolContext(null, null, ibftContext);
   }
 
   @Test
@@ -68,7 +67,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader parentHeader = buildBlockHeader(1, proposerKeyPair, validators, null);
     final BlockHeader blockHeader = buildBlockHeader(2, proposerKeyPair, validators, parentHeader);
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(
@@ -91,7 +90,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader parentHeader = buildBlockHeader(1, proposerKeyPair, validators, null);
     final BlockHeader blockHeader = buildBlockHeader(2, proposerKeyPair, validators, null);
 
-    final BlockHeaderValidator<IbftContext> validator =
+    final BlockHeaderValidator validator =
         IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
 
     assertThat(

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy.blockcreation;
 
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftHelpers;
@@ -22,6 +21,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -34,14 +34,12 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
-import java.util.function.Function;
-
 /**
  * Responsible for producing a Block which conforms to IBFT validation rules (other than missing
  * commit seals). Transactions and associated Hashes (stateroot, receipts etc.) are loaded into the
  * Block in the base class as part of the transaction selection process.
  */
-public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
+public class IbftBlockCreator extends AbstractBlockCreator {
 
   private final KeyPair nodeKeys;
 
@@ -49,11 +47,12 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<IbftContext> protocolContext,
-      final ProtocolSchedule<IbftContext> protocolSchedule,
-      final Function<Long, Long> gasLimitCalculator,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final GasLimitCalculator gasLimitCalculator,
       final KeyPair nodeKeys,
       final Wei minTransactionGasPrice,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         coinbase,
@@ -64,6 +63,7 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
         gasLimitCalculator,
         minTransactionGasPrice,
         Util.publicKeyToAddress(nodeKeys.getPublicKey()),
+        minBlockOccupancyRatio,
         parentHeader);
     this.nodeKeys = nodeKeys;
   }

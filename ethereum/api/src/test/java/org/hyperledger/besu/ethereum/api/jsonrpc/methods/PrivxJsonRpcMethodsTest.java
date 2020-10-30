@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PrivxJsonRpcMethodsTest {
 
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private ProtocolSchedule<?> protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private TransactionPool transactionPool;
   @Mock private PrivacyParameters privacyParameters;
 

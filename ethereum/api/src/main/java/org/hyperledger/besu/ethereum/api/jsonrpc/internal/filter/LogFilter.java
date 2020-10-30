@@ -52,7 +52,7 @@ class LogFilter extends Filter {
     return logsQuery;
   }
 
-  void addLog(final List<LogWithMetadata> logs) {
+  void addLogs(final List<LogWithMetadata> logs) {
     this.logs.addAll(logs);
   }
 

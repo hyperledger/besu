@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
 
-public class CliqueDifficultyCalculator implements DifficultyCalculator<CliqueContext> {
+public class CliqueDifficultyCalculator implements DifficultyCalculator {
 
   private final Address localAddress;
 
@@ -34,11 +34,11 @@ public class CliqueDifficultyCalculator implements DifficultyCalculator<CliqueCo
 
   @Override
   public BigInteger nextDifficulty(
-      final long time, final BlockHeader parent, final ProtocolContext<CliqueContext> context) {
+      final long time, final BlockHeader parent, final ProtocolContext context) {
 
     final Address nextProposer =
         CliqueHelpers.getProposerForBlockAfter(
-            parent, context.getConsensusState().getVoteTallyCache());
+            parent, context.getConsensusState(CliqueContext.class).getVoteTallyCache());
     return nextProposer.equals(localAddress) ? IN_TURN_DIFFICULTY : OUT_OF_TURN_DIFFICULTY;
   }
 }

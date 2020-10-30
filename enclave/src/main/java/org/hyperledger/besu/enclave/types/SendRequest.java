@@ -20,7 +20,7 @@ public abstract class SendRequest {
   private final byte[] payload;
   private final String from;
 
-  public SendRequest(final String payload, final String from) {
+  protected SendRequest(final String payload, final String from) {
     this.payload = payload.getBytes(UTF_8);
     this.from = from;
   }

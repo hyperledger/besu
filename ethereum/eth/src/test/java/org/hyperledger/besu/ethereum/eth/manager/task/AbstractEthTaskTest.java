@@ -23,11 +23,13 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.testutil.MockExecutorService;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -95,6 +97,25 @@ public class AbstractEthTaskTest {
   }
 
   @Test
+  public void shouldIgnoreMultipleRuns() {
+    final AtomicInteger calls = new AtomicInteger(0);
+    final AbstractEthTask<Void> incrementingTask =
+        new AbstractEthTask<>(new NoOpMetricsSystem()) {
+
+          @Override
+          protected void executeTask() {
+            calls.incrementAndGet();
+            result.complete(null);
+          }
+        };
+
+    incrementingTask.run();
+    incrementingTask.run();
+    incrementingTask.runAsync(new MockExecutorService());
+    assertThat(calls).hasValue(1);
+  }
+
+  @Test
   public void shouldInvokeTimingMethods() {
     final AbstractEthTask<Void> task =
         new AbstractEthTask<Void>(mockOperationTimer) {
@@ -156,7 +177,7 @@ public class AbstractEthTaskTest {
               completedSubTasks.toArray(new CompletableFuture<?>[completedSubTasks.size()]));
       executedAllSubtasks.whenComplete(
           (r, t) -> {
-            result.get().complete(null);
+            result.complete(null);
           });
     }
   }

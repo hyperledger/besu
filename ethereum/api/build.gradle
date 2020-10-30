@@ -41,6 +41,7 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
+  implementation project(':ethereum:trie')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
@@ -59,11 +60,16 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'org.xerial.snappy:snappy-java'
+
+  annotationProcessor "org.immutables:value"
+  implementation "org.immutables:value-annotations"
 
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':services:kvstore')

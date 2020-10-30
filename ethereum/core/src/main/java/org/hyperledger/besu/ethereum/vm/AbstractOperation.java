@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.vm;
  * members for free.
  */
 public abstract class AbstractOperation implements Operation {
+
   private final int opcode;
   private final String name;
   private final int stackItemsConsumed;
@@ -27,7 +28,7 @@ public abstract class AbstractOperation implements Operation {
   private final int opSize;
   private final GasCalculator gasCalculator;
 
-  public AbstractOperation(
+  protected AbstractOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
@@ -66,11 +67,6 @@ public abstract class AbstractOperation implements Operation {
   @Override
   public int getStackItemsProduced() {
     return stackItemsProduced;
-  }
-
-  @Override
-  public int getStackSizeChange() {
-    return stackItemsProduced - stackItemsConsumed;
   }
 
   @Override

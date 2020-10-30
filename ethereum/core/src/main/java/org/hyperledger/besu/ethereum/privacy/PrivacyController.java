@@ -31,6 +31,9 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivacyController {
 
+  Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
+      final Hash pmtHash, final String enclaveKey);
+
   String sendTransaction(
       PrivateTransaction privateTransaction,
       String enclavePublicKey,
@@ -46,10 +49,10 @@ public interface PrivacyController {
   PrivacyGroup[] findPrivacyGroup(List<String> addresses, String enclavePublicKey);
 
   Transaction createPrivacyMarkerTransaction(
-      String transactionEnclaveKey, PrivateTransaction privateTransaction);
+      String privateTransactionLookupId, PrivateTransaction privateTransaction);
 
   Transaction createPrivacyMarkerTransaction(
-      String transactionEnclaveKey,
+      String privateTransactionLookupId,
       PrivateTransaction privateTransaction,
       Address privacyPrecompileAddress);
 
@@ -80,9 +83,23 @@ public interface PrivacyController {
       final Hash blockHash,
       final String enclavePublicKey);
 
-  Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(Bytes privacyGroupId, String enclavePublicKey);
+  Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+      Bytes privacyGroupId, String enclavePublicKey, final PrivateTransaction privateTransaction);
 
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
 
   boolean isGroupAdditionTransaction(PrivateTransaction privateTransaction);
+
+  void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey)
+      throws MultiTenancyValidationException;
+
+  void verifyPrivacyGroupContainsEnclavePublicKey(
+      final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
+      throws MultiTenancyValidationException;
+
+  PrivateTransactionSimulator getTransactionSimulator();
+
+  Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String enclavePublicKey, final long blockNumber);
 }

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.Besu;
+import org.web3j.tx.BesuPrivateTransactionManager;
 import org.web3j.tx.LegacyPrivateTransactionManager;
 import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
@@ -38,6 +39,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
   private final long chainId;
   private final Base64String privateFrom;
   private final List<Base64String> privateFor;
+  private final Base64String privacyGroupId;
 
   public CallPrivateSmartContractFunction(
       final String contractAddress,
@@ -46,22 +48,65 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
       final long chainId,
       final String privateFrom,
       final List<String> privateFor) {
+    this(
+        contractAddress,
+        encodedFunction,
+        transactionSigningKey,
+        chainId,
+        privateFrom,
+        privateFor,
+        null);
+  }
+
+  public CallPrivateSmartContractFunction(
+      final String contractAddress,
+      final String encodedFunction,
+      final String transactionSigningKey,
+      final long chainId,
+      final String privateFrom,
+      final String privacyGroupId) {
+    this(
+        contractAddress,
+        encodedFunction,
+        transactionSigningKey,
+        chainId,
+        privateFrom,
+        null,
+        privacyGroupId);
+  }
+
+  private CallPrivateSmartContractFunction(
+      final String contractAddress,
+      final String encodedFunction,
+      final String transactionSigningKey,
+      final long chainId,
+      final String privateFrom,
+      final List<String> privateFor,
+      final String privacyGroupId) {
 
     this.contractAddress = contractAddress;
     this.encodedFunction = encodedFunction;
     this.senderCredentials = Credentials.create(transactionSigningKey);
     this.chainId = chainId;
     this.privateFrom = Base64String.wrap(privateFrom);
-    this.privateFor = Base64String.wrapList(privateFor);
+    this.privateFor = privateFor != null ? Base64String.wrapList(privateFor) : null;
+    this.privacyGroupId = privacyGroupId != null ? Base64String.wrap(privacyGroupId) : null;
   }
 
   @Override
   public String execute(final NodeRequests node) {
     final Besu besu = node.privacy().getBesuClient();
 
-    final PrivateTransactionManager privateTransactionManager =
-        new LegacyPrivateTransactionManager(
-            besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privateFor);
+    final PrivateTransactionManager privateTransactionManager;
+    if (privacyGroupId != null) {
+      privateTransactionManager =
+          new BesuPrivateTransactionManager(
+              besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privacyGroupId);
+    } else {
+      privateTransactionManager =
+          new LegacyPrivateTransactionManager(
+              besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privateFor);
+    }
 
     try {
       return privateTransactionManager

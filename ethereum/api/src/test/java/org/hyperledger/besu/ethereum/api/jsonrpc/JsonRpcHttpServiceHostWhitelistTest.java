@@ -118,7 +118,8 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    new HashMap<>()));
+                    new HashMap<>(),
+                    folder.getRoot().toPath()));
     service = createJsonRpcHttpService();
     service.start().join();
 
@@ -161,14 +162,14 @@ public class JsonRpcHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithAnyHostnameAndWildcardConfigIsAccepted() throws IOException {
-    jsonRpcConfig.setHostsWhitelist(Collections.singletonList("*"));
+    jsonRpcConfig.setHostsAllowlist(Collections.singletonList("*"));
     assertThat(doRequest("ally")).isEqualTo(200);
     assertThat(doRequest("foe")).isEqualTo(200);
   }
 
   @Test
   public void requestWithWhitelistedHostIsAccepted() throws IOException {
-    jsonRpcConfig.setHostsWhitelist(hostsWhitelist);
+    jsonRpcConfig.setHostsAllowlist(hostsWhitelist);
     assertThat(doRequest("ally")).isEqualTo(200);
     assertThat(doRequest("ally:12345")).isEqualTo(200);
     assertThat(doRequest("friend")).isEqualTo(200);
@@ -176,7 +177,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithUnknownHostIsRejected() throws IOException {
-    jsonRpcConfig.setHostsWhitelist(hostsWhitelist);
+    jsonRpcConfig.setHostsAllowlist(hostsWhitelist);
     assertThat(doRequest("foe")).isEqualTo(403);
   }
 
@@ -193,7 +194,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithMalformedHostIsRejected() throws IOException {
-    jsonRpcConfig.setHostsWhitelist(hostsWhitelist);
+    jsonRpcConfig.setHostsAllowlist(hostsWhitelist);
     assertThat(doRequest("ally:friend")).isEqualTo(403);
     assertThat(doRequest("ally:123456")).isEqualTo(403);
     assertThat(doRequest("ally:friend:1234")).isEqualTo(403);

@@ -49,8 +49,8 @@ public class CheckpointHeaderFetcherTest {
 
   private static final int SEGMENT_SIZE = 5;
   private static Blockchain blockchain;
-  private static ProtocolSchedule<Void> protocolSchedule;
-  private static ProtocolContext<Void> protocolContext;
+  private static ProtocolSchedule protocolSchedule;
+  private static ProtocolContext protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private static TransactionPool transactionPool;
   private EthProtocolManager ethProtocolManager;
@@ -59,7 +59,7 @@ public class CheckpointHeaderFetcherTest {
 
   @BeforeClass
   public static void setUpClass() {
-    final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     transactionPool = blockchainSetupUtil.getTransactionPool();

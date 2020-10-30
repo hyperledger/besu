@@ -85,17 +85,13 @@ class MetricsHttpService implements MetricsService {
     final Router router = Router.router(vertx);
 
     // Verify Host header.
-    router.route().handler(checkWhitelistHostHeader());
+    router.route().handler(checkAllowlistHostHeader());
 
     // Endpoint for AWS health check.
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
 
     // Endpoint for Prometheus metrics monitoring.
-    router
-        .route("/metrics")
-        .method(HttpMethod.GET)
-        .produces(TextFormat.CONTENT_TYPE_004)
-        .handler(this::metricsRequest);
+    router.route("/metrics").method(HttpMethod.GET).handler(this::metricsRequest);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     httpServer
@@ -130,11 +126,11 @@ class MetricsHttpService implements MetricsService {
     return resultFuture;
   }
 
-  private Handler<RoutingContext> checkWhitelistHostHeader() {
+  private Handler<RoutingContext> checkAllowlistHostHeader() {
     return event -> {
       final Optional<String> hostHeader = getAndValidateHostHeader(event);
-      if (config.getHostsWhitelist().contains("*")
-          || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader.get()))) {
+      if (config.getHostsAllowlist().contains("*")
+          || (hostHeader.isPresent() && hostIsInAllowlist(hostHeader.get()))) {
         event.next();
       } else {
         final HttpServerResponse response = event.response();
@@ -149,7 +145,11 @@ class MetricsHttpService implements MetricsService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    final String hostHeader = event.request().host();
+    if (hostHeader == null) {
+      return Optional.empty();
+    }
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostHeader);
     final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
@@ -160,13 +160,13 @@ class MetricsHttpService implements MetricsService {
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 
-  private boolean hostIsInWhitelist(final String hostHeader) {
-    if (config.getHostsWhitelist().stream()
+  private boolean hostIsInAllowlist(final String hostHeader) {
+    if (config.getHostsAllowlist().stream()
         .anyMatch(
-            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
       return true;
     } else {
-      LOG.trace("Host not in whitelist: '{}'", hostHeader);
+      LOG.trace("Host not in allowlist: '{}'", hostHeader);
       return false;
     }
   }

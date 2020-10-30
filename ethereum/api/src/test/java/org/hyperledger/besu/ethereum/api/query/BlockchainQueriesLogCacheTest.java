@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.api.query;
 
-import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
@@ -135,7 +135,7 @@ public class BlockchainQueriesLogCacheTest {
   @Test
   public void cachedCachedSeamTest() {
     for (long i = BLOCKS_PER_BLOOM_CACHE - 3; i <= BLOCKS_PER_BLOOM_CACHE; i++) {
-      blockchainQueries.matchingLogs(i, i + 2, logsQuery);
+      blockchainQueries.matchingLogs(i, i + 2, logsQuery, () -> true);
     }
 
     // 4 ranges of 3 hits a piece = 12 calls - 97-99, 98-00, 99-01, 00-02
@@ -157,7 +157,7 @@ public class BlockchainQueriesLogCacheTest {
   @Test
   public void cachedUncachedSeamTest() {
     for (long i = (2 * BLOCKS_PER_BLOOM_CACHE) - 3; i <= 2 * BLOCKS_PER_BLOOM_CACHE; i++) {
-      blockchainQueries.matchingLogs(i, i + 2, logsQuery);
+      blockchainQueries.matchingLogs(i, i + 2, logsQuery, () -> true);
     }
 
     // 6 sets of calls on cache side of seam: 97-99, 98-99, 99, {}
@@ -184,7 +184,7 @@ public class BlockchainQueriesLogCacheTest {
   @Test
   public void uncachedUncachedSeamTest() {
     for (long i = (3 * BLOCKS_PER_BLOOM_CACHE) - 3; i <= 3 * BLOCKS_PER_BLOOM_CACHE; i++) {
-      blockchainQueries.matchingLogs(i, i + 2, logsQuery);
+      blockchainQueries.matchingLogs(i, i + 2, logsQuery, () -> true);
     }
 
     // 4 ranges of 3 hits a piece = 12 calls - 97-99, 98-00, 99-01, 00-02

@@ -61,7 +61,7 @@ public abstract class TransactionReceiptResult {
 
   protected final TransactionReceipt receipt;
 
-  public TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
+  protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
 
     receipt = receiptWithMetadata.getReceipt();
 

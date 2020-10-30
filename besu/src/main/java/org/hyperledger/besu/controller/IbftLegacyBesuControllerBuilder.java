@@ -49,7 +49,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftContext> {
+public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private final BlockInterface blockInterface = new IbftLegacyBlockInterface();
@@ -63,8 +63,8 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
-      final ProtocolSchedule<IbftContext> protocolSchedule,
-      final ProtocolContext<IbftContext> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final SyncState syncState,
@@ -73,7 +73,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
   }
 
   @Override
-  protected ProtocolSchedule<IbftContext> createProtocolSchedule() {
+  protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
@@ -103,7 +103,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
   }
 
   @Override
-  protected void validateContext(final ProtocolContext<IbftContext> context) {
+  protected void validateContext(final ProtocolContext context) {
     final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
 
     if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
@@ -118,7 +118,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
 
   @Override
   protected EthProtocolManager createEthProtocolManager(
-      final ProtocolContext<IbftContext> protocolContext,
+      final ProtocolContext protocolContext,
       final boolean fastSyncEnabled,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,

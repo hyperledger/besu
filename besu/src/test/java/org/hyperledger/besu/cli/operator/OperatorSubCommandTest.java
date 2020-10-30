@@ -229,7 +229,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
     final File keysDirectory = new File(expectedKeysPath.toUri());
     assertThat(keysDirectory).exists();
     final File[] nodesKeysFolders = keysDirectory.listFiles();
-    assert nodesKeysFolders != null;
+    assertThat(nodesKeysFolders).isNotNull();
     if (generate) {
       final JsonFactory jsonFactory = new JsonFactory();
       final JsonParser jp = jsonFactory.createParser(configFilePath);

@@ -1,0 +1,58 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x1C",
+      [
+        "trace"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": null,
+        "trace": [
+          {
+            "action": {
+              "creationMethod": "create",
+              "from": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+              "gas": "0xff2f0a",
+              "init": "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe",
+              "value": "0x0"
+            },
+            "result": {
+              "address": "0xa4392264a2d8c998901d10c154c91725b1bf0158",
+              "code": "0x",
+              "gasUsed": "0x13a2"
+            },
+            "subtraces": 1,
+            "traceAddress": [],
+            "type": "create"
+          },
+          {
+            "action": {
+              "address": "0xa4392264a2d8c998901d10c154c91725b1bf0158",
+              "balance": "0x0",
+              "refundAddress": "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+            },
+            "result": null,
+            "subtraces": 0,
+            "traceAddress": [
+              0
+            ],
+            "type": "suicide"
+          }
+        ],
+        "transactionHash": "0xbe1b55619f540ea8a7d7e9330ea642a195afe0d6d60ced6f463da67b46d3f503",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

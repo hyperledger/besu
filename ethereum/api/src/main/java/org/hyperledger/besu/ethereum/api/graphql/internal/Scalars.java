@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -55,8 +56,9 @@ public class Scalars {
           if (!(input instanceof StringValue)) {
             throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
           }
+          String inputValue = ((StringValue) input).getValue();
           try {
-            return Address.fromHexStringStrict(((StringValue) input).getValue());
+            return Address.fromHexStringStrict(inputValue);
           } catch (final IllegalArgumentException e) {
             throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
           }
@@ -121,8 +123,13 @@ public class Scalars {
           if (!(input instanceof StringValue)) {
             throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
           }
+          String inputValue = ((StringValue) input).getValue();
+          if (!Quantity.isValid(inputValue)) {
+            throw new CoercingParseLiteralException(
+                "Bytes value '" + inputValue + "' is not prefixed with 0x");
+          }
           try {
-            return Bytes.fromHexStringLenient(((StringValue) input).getValue());
+            return Bytes.fromHexStringLenient(inputValue);
           } catch (final IllegalArgumentException e) {
             throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
           }
@@ -156,8 +163,13 @@ public class Scalars {
           if (!(input instanceof StringValue)) {
             throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
           }
+          String inputValue = ((StringValue) input).getValue();
+          if (!Quantity.isValid(inputValue)) {
+            throw new CoercingParseLiteralException(
+                "Bytes32 value '" + inputValue + "' is not prefixed with 0x");
+          }
           try {
-            return Bytes32.fromHexStringLenient(((StringValue) input).getValue());
+            return Bytes32.fromHexStringLenient(inputValue);
           } catch (final IllegalArgumentException e) {
             throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
           }

@@ -15,15 +15,18 @@
 
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+
 import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.OptionalLong;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.LongStream;
 
 class TransactionsForSenderInfo {
-  private final SortedMap<Long, PendingTransactions.TransactionInfo> transactionsInfos;
+  private final NavigableMap<Long, PendingTransactions.TransactionInfo> transactionsInfos;
   private final Queue<Long> gaps = new PriorityQueue<>();
 
   TransactionsForSenderInfo() {
@@ -32,16 +35,14 @@ class TransactionsForSenderInfo {
 
   void addTransactionToTrack(
       final long nonce, final PendingTransactions.TransactionInfo transactionInfo) {
-    if (!transactionsInfos.isEmpty()) {
-      updateGapsOnNewTransaction(nonce);
-    }
-    transactionsInfos.put(nonce, transactionInfo);
-  }
-
-  private void updateGapsOnNewTransaction(final long nonce) {
-    final long highestNonce = transactionsInfos.lastKey();
-    if (nonce > (highestNonce + 1)) {
-      LongStream.range(highestNonce + 1, nonce).forEach(gaps::add);
+    synchronized (transactionsInfos) {
+      if (!transactionsInfos.isEmpty()) {
+        final long highestNonce = transactionsInfos.lastKey();
+        if (nonce > (highestNonce + 1)) {
+          LongStream.range(highestNonce + 1, nonce).forEach(gaps::add);
+        }
+      }
+      transactionsInfos.put(nonce, transactionInfo);
     }
   }
 
@@ -57,11 +58,13 @@ class TransactionsForSenderInfo {
     }
   }
 
-  SortedMap<Long, PendingTransactions.TransactionInfo> getTransactionsInfos() {
+  NavigableMap<Long, TransactionInfo> getTransactionsInfos() {
     return transactionsInfos;
   }
 
-  Queue<Long> getGaps() {
-    return gaps;
+  OptionalLong maybeNextGap() {
+    synchronized (transactionsInfos) {
+      return gaps.isEmpty() ? OptionalLong.empty() : OptionalLong.of(gaps.poll());
+    }
   }
 }

@@ -33,6 +33,9 @@ public class EthAccountsTransaction implements Transaction<List<String>> {
     try {
       final EthAccounts result = node.eth().ethAccounts().send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getAccounts();
     } catch (final IOException e) {
       throw new RuntimeException(e);

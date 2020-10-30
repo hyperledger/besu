@@ -23,31 +23,28 @@ import java.util.Map;
 
 public class WebSocketMethodsFactory {
 
-  private final SubscriptionManager subscriptionManager;
-  private final Map<String, JsonRpcMethod> jsonRpcMethods;
+  private final Map<String, JsonRpcMethod> methods = new HashMap<>();
 
   public WebSocketMethodsFactory(
       final SubscriptionManager subscriptionManager,
       final Map<String, JsonRpcMethod> jsonRpcMethods) {
-    this.subscriptionManager = subscriptionManager;
-    this.jsonRpcMethods = jsonRpcMethods;
+    this.methods.putAll(jsonRpcMethods);
+    buildWebsocketMethods(subscriptionManager);
+  }
+
+  private void buildWebsocketMethods(final SubscriptionManager subscriptionManager) {
+    addMethods(
+        new EthSubscribe(subscriptionManager, new SubscriptionRequestMapper()),
+        new EthUnsubscribe(subscriptionManager, new SubscriptionRequestMapper()));
   }
 
   public Map<String, JsonRpcMethod> methods() {
-    final Map<String, JsonRpcMethod> websocketMethods = new HashMap<>();
-    websocketMethods.putAll(jsonRpcMethods);
-    addMethods(
-        websocketMethods,
-        new EthSubscribe(subscriptionManager, new SubscriptionRequestMapper()),
-        new EthUnsubscribe(subscriptionManager, new SubscriptionRequestMapper()));
-    return websocketMethods;
+    return methods;
   }
 
-  public Map<String, JsonRpcMethod> addMethods(
-      final Map<String, JsonRpcMethod> methods, final JsonRpcMethod... rpcMethods) {
+  public void addMethods(final JsonRpcMethod... rpcMethods) {
     for (final JsonRpcMethod rpcMethod : rpcMethods) {
       methods.put(rpcMethod.getName(), rpcMethod);
     }
-    return methods;
   }
 }

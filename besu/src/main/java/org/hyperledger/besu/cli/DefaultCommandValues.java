@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 
@@ -45,31 +45,22 @@ public interface DefaultCommandValues {
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
   Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+  Wei DEFAULT_RPC_TX_FEE_CAP = TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP;
+
+  Double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
   Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
   long DEFAULT_MAX_REFRESH_DELAY = 3600000;
   long DEFAULT_MIN_REFRESH_DELAY = 1;
-  String DOCKER_GENESIS_LOCATION = "/etc/besu/genesis.json";
-  String DOCKER_DATADIR_LOCATION = "/var/lib/besu";
-  String DOCKER_PLUGINSDIR_LOCATION = "/etc/besu/plugins";
-  String DOCKER_RPC_HTTP_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
-      "/etc/besu/rpc_http_auth_config.toml";
-  String DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
-      "/etc/besu/rpc_ws_auth_config.toml";
-  String DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION =
-      "/etc/besu/rpc_http_auth_public_key";
-  String DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION = "/etc/besu/rpc_ws_auth_public_key";
-  String DOCKER_PRIVACY_PUBLIC_KEY_FILE = "/etc/besu/privacy_public_key";
-  String DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION = "/etc/besu/permissions_config.toml";
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
-  SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;
   float DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
+  String DEFAULT_SECURITY_MODULE = "localfile";
 
   static Path getDefaultBesuDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Besu running shell script.

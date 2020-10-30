@@ -16,5 +16,5 @@ package org.hyperledger.besu.ethereum.chain;
 
 @FunctionalInterface
 public interface BlockAddedObserver {
-  void onBlockAdded(BlockAddedEvent event, Blockchain blockchain);
+  void onBlockAdded(BlockAddedEvent event);
 }

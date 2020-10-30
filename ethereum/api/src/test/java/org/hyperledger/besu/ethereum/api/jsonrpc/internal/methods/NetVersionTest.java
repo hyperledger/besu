@@ -30,11 +30,11 @@ import org.junit.Test;
 public class NetVersionTest {
 
   private NetVersion method;
-  private final BigInteger CHAIN_ID = BigInteger.ONE;
+  private final BigInteger NETWORK_ID = BigInteger.ONE;
 
   @Before
   public void setUp() {
-    method = new NetVersion(Optional.of(CHAIN_ID));
+    method = new NetVersion(Optional.of(NETWORK_ID));
   }
 
   @Test
@@ -43,8 +43,9 @@ public class NetVersionTest {
   }
 
   @Test
-  public void shouldReturnChainId() {
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, CHAIN_ID.toString());
+  public void shouldReturnNetworkId() {
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, NETWORK_ID.toString());
 
     final JsonRpcResponse response = method.response(request());
 
@@ -52,7 +53,7 @@ public class NetVersionTest {
   }
 
   @Test
-  public void shouldReturnNullWhenNoChainId() {
+  public void shouldReturnNullWhenNoNetworkId() {
     method = new NetVersion(Optional.empty());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "null");
 

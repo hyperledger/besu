@@ -49,7 +49,7 @@ public class WaitForPeerTask extends AbstractEthTask<Void> {
             (peer) -> {
               LOG.debug("Finished waiting for peer connection.");
               // We hit our target
-              result.get().complete(null);
+              result.complete(null);
             });
   }
 

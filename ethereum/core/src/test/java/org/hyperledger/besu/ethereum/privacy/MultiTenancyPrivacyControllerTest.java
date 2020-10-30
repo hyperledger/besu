@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -54,7 +54,10 @@ public class MultiTenancyPrivacyControllerTest {
   private static final String ENCLAVE_KEY = "Ko2bVqD";
   private static final ArrayList<Log> LOGS = new ArrayList<>();
   private static final PrivacyGroup PANTHEON_PRIVACY_GROUP =
-      new PrivacyGroup("", Type.PANTHEON, "", "", Collections.emptyList());
+      new PrivacyGroup("", PrivacyGroup.Type.PANTHEON, "", "", Collections.emptyList());
+  private static final PrivacyGroup PANTHEON_GROUP_WITH_ENCLAVE_KEY_1 =
+      new PrivacyGroup(
+          PRIVACY_GROUP_ID, PrivacyGroup.Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
 
   @Mock private PrivacyController privacyController;
   @Mock private Enclave enclave;
@@ -65,7 +68,7 @@ public class MultiTenancyPrivacyControllerTest {
   public void setup() {
     multiTenancyPrivacyController =
         new MultiTenancyPrivacyController(
-            privacyController, Optional.of(BigInteger.valueOf(2018)), enclave);
+            privacyController, Optional.of(BigInteger.valueOf(2018)), enclave, false);
   }
 
   @Test
@@ -100,7 +103,7 @@ public class MultiTenancyPrivacyControllerTest {
     final PrivacyGroup privacyGroupWithEnclavePublicKey =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
@@ -130,11 +133,12 @@ public class MultiTenancyPrivacyControllerTest {
     assertThatThrownBy(
             () ->
                 multiTenancyPrivacyController.sendTransaction(
-                    transaction, ENCLAVE_PUBLIC_KEY1, null))
+                    transaction, ENCLAVE_PUBLIC_KEY1, Optional.empty()))
         .isInstanceOf(MultiTenancyValidationException.class)
         .hasMessage("Transaction privateFrom must match enclave public key");
 
-    verify(privacyController, never()).sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1, null);
+    verify(privacyController, never())
+        .sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1, Optional.empty());
   }
 
   @Test
@@ -166,7 +170,8 @@ public class MultiTenancyPrivacyControllerTest {
             .build();
 
     final PrivacyGroup privacyGroupWithoutEnclavePublicKey =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY2));
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID, PrivacyGroup.Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY2));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithoutEnclavePublicKey);
 
@@ -202,7 +207,8 @@ public class MultiTenancyPrivacyControllerTest {
   public void createPrivacyGroupDelegatesToPrivacyController() {
     final List<String> addresses = List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2);
     final PrivacyGroup delegatePrivacyGroup =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "name", "description", addresses);
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID, PrivacyGroup.Type.PANTHEON, "name", "description", addresses);
 
     when(privacyController.createPrivacyGroup(
             addresses, "name", "description", ENCLAVE_PUBLIC_KEY1))
@@ -221,7 +227,7 @@ public class MultiTenancyPrivacyControllerTest {
     final PrivacyGroup privacyGroupWithEnclavePublicKey =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
@@ -240,7 +246,8 @@ public class MultiTenancyPrivacyControllerTest {
   public void
       deletePrivacyGroupFailsWithValidationExceptionWhenPrivacyGroupDoesNotContainEnclavePublicKey() {
     final PrivacyGroup privacyGroupWithoutEnclavePublicKey =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY2));
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID, PrivacyGroup.Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY2));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithoutEnclavePublicKey);
 
@@ -258,7 +265,7 @@ public class MultiTenancyPrivacyControllerTest {
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
@@ -314,7 +321,7 @@ public class MultiTenancyPrivacyControllerTest {
     final PrivacyGroup privacyGroupWithEnclavePublicKey =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
@@ -335,7 +342,8 @@ public class MultiTenancyPrivacyControllerTest {
   public void
       determineBesuNonceFailsWithValidationExceptionWhenEnclavePublicKeyNotInPrivacyGroup() {
     final PrivacyGroup privacyGroupWithoutEnclavePublicKey =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY2));
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID, PrivacyGroup.Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY2));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithoutEnclavePublicKey);
 
@@ -349,15 +357,13 @@ public class MultiTenancyPrivacyControllerTest {
 
   @Test
   public void simulatePrivateTransactionWorksForValidEnclaveKey() {
-    final PrivacyGroup privacyGroupWithEnclavePublicKey =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
-        .thenReturn(privacyGroupWithEnclavePublicKey);
+        .thenReturn(PANTHEON_GROUP_WITH_ENCLAVE_KEY_1);
     when(privacyController.simulatePrivateTransaction(any(), any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
                 PrivateTransactionProcessor.Result.successful(
-                    LOGS, 0, Bytes.EMPTY, ValidationResult.valid())));
+                    LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
     final Optional<PrivateTransactionProcessor.Result> result =
         multiTenancyPrivacyController.simulatePrivateTransaction(
             PRIVACY_GROUP_ID,
@@ -371,10 +377,8 @@ public class MultiTenancyPrivacyControllerTest {
 
   @Test
   public void simulatePrivateTransactionFailsForInvalidEnclaveKey() {
-    final PrivacyGroup privacyGroupWithEnclavePublicKey =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
-        .thenReturn(privacyGroupWithEnclavePublicKey);
+        .thenReturn(PANTHEON_GROUP_WITH_ENCLAVE_KEY_1);
 
     assertThatThrownBy(
             () ->
@@ -390,11 +394,9 @@ public class MultiTenancyPrivacyControllerTest {
   @Test
   public void getContractCodeWorksForValidEnclaveKey() {
     final Bytes contractCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
-    final PrivacyGroup privacyGroupWithEnclavePublicKey =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
 
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
-        .thenReturn(privacyGroupWithEnclavePublicKey);
+        .thenReturn(PANTHEON_GROUP_WITH_ENCLAVE_KEY_1);
     when(privacyController.getContractCode(any(), any(), any(), any()))
         .thenReturn(Optional.of(contractCode));
 
@@ -407,15 +409,33 @@ public class MultiTenancyPrivacyControllerTest {
 
   @Test
   public void getContractCodeFailsForInvalidEnclaveKey() {
-    final PrivacyGroup privacyGroupWithEnclavePublicKey =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
-        .thenReturn(privacyGroupWithEnclavePublicKey);
+        .thenReturn(PANTHEON_GROUP_WITH_ENCLAVE_KEY_1);
 
     assertThatThrownBy(
             () ->
                 multiTenancyPrivacyController.getContractCode(
                     PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO, ENCLAVE_PUBLIC_KEY2))
         .hasMessage("Privacy group must contain the enclave public key");
+  }
+
+  @Test
+  public void verifyPrivacyGroupMatchesEnclaveKeySucceeds() {
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
+        .thenReturn(PANTHEON_GROUP_WITH_ENCLAVE_KEY_1);
+
+    multiTenancyPrivacyController.verifyPrivacyGroupContainsEnclavePublicKey(
+        PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
+
+    verify(enclave).retrievePrivacyGroup(eq(PRIVACY_GROUP_ID));
+  }
+
+  @Test(expected = MultiTenancyValidationException.class)
+  public void verifyPrivacyGroupDoesNotMatchEnclaveKeyThrowsException() {
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
+        .thenReturn(PANTHEON_GROUP_WITH_ENCLAVE_KEY_1);
+
+    multiTenancyPrivacyController.verifyPrivacyGroupContainsEnclavePublicKey(
+        PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2);
   }
 }

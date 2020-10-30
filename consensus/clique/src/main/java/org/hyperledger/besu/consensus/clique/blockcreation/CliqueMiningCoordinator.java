@@ -14,15 +14,19 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
-import org.hyperledger.besu.consensus.clique.CliqueContext;
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
-public class CliqueMiningCoordinator
-    extends AbstractMiningCoordinator<CliqueContext, CliqueBlockMiner> {
+import org.apache.logging.log4j.Logger;
+
+public class CliqueMiningCoordinator extends AbstractMiningCoordinator<CliqueBlockMiner> {
+
+  private static final Logger LOG = getLogger();
 
   private final CliqueMiningTracker miningTracker;
 
@@ -33,6 +37,24 @@ public class CliqueMiningCoordinator
       final CliqueMiningTracker miningTracker) {
     super(blockchain, executor, syncState);
     this.miningTracker = miningTracker;
+  }
+
+  @Override
+  public void onResumeMining() {
+    if (isSigner()) {
+      LOG.info("Resuming block production operations");
+    }
+  }
+
+  @Override
+  public void onPauseMining() {
+    if (isSigner()) {
+      LOG.info("Pausing block production while behind chain head");
+    }
+  }
+
+  public boolean isSigner() {
+    return miningTracker.isSigner(blockchain.getChainHeadHeader());
   }
 
   @Override

@@ -113,8 +113,6 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
 
-    System.out.println("Address: " + eventEmitter.getContractAddress());
-
     privateContractVerifier
         .validPrivateContractDeployed(
             eventEmitter.getContractAddress(), minerNode.getAddress().toString())

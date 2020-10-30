@@ -35,6 +35,9 @@ public class CreateOperation extends AbstractCreateOperation {
   protected Address targetContractAddress(final MessageFrame frame) {
     final Account sender = frame.getWorldState().get(frame.getRecipientAddress());
     // Decrement nonce by 1 to normalize the effect of transaction execution
-    return Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
+    final Address address =
+        Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
+    frame.warmUpAddress(address);
+    return address;
   }
 }

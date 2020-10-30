@@ -21,8 +21,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
@@ -66,7 +66,7 @@ public class P2PNetworkTest {
 
   @Test
   public void handshaking() throws Exception {
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder().nodeKey(nodeKey).build();
         final P2PNetwork connector = builder().build()) {
 
@@ -74,7 +74,7 @@ public class P2PNetworkTest {
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       Assertions.assertThat(
               connector
@@ -88,15 +88,15 @@ public class P2PNetworkTest {
 
   @Test
   public void preventMultipleConnections() throws Exception {
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
-    try (final P2PNetwork listener = builder().nodeKey(nodeKey).build();
+    final NodeKey listenNodeKey = NodeKeyUtils.generate();
+    try (final P2PNetwork listener = builder().nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder().build()) {
 
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       final CompletableFuture<PeerConnection> firstFuture =
           connector.connect(createPeer(listenId, listenPort));
@@ -121,7 +121,7 @@ public class P2PNetworkTest {
    */
   @Test
   public void limitMaxPeers() throws Exception {
-    final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+    final NodeKey nodeKey = NodeKeyUtils.generate();
     final int maxPeers = 1;
     final NetworkingConfiguration listenerConfig =
         NetworkingConfiguration.create()
@@ -140,7 +140,7 @@ public class P2PNetworkTest {
       connector1.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       final Peer listeningPeer = createPeer(listenId, listenPort);
       Assertions.assertThat(
@@ -176,22 +176,22 @@ public class P2PNetworkTest {
 
   @Test
   public void rejectPeerWithNoSharedCaps() throws Exception {
-    final NodeKey listenerCryptoOps = BouncyCastleNodeKey.generate();
-    final NodeKey connectorCryptoOps = BouncyCastleNodeKey.generate();
+    final NodeKey listenerNodeKey = NodeKeyUtils.generate();
+    final NodeKey connectorNodeKey = NodeKeyUtils.generate();
 
     final SubProtocol subprotocol1 = subProtocol("eth");
     final Capability cap1 = Capability.create(subprotocol1.getName(), 63);
     final SubProtocol subprotocol2 = subProtocol("oth");
     final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
     try (final P2PNetwork listener =
-            builder().nodeKey(listenerCryptoOps).supportedCapabilities(cap1).build();
+            builder().nodeKey(listenerNodeKey).supportedCapabilities(cap1).build();
         final P2PNetwork connector =
-            builder().nodeKey(connectorCryptoOps).supportedCapabilities(cap2).build()) {
+            builder().nodeKey(connectorNodeKey).supportedCapabilities(cap2).build()) {
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().getAsInt();
+      final int listenPort = listenerEnode.getListeningPort().get();
 
       final Peer listenerPeer = createPeer(listenId, listenPort);
       final CompletableFuture<PeerConnection> connectFuture = connector.connect(listenerPeer);
@@ -201,7 +201,7 @@ public class P2PNetworkTest {
 
   @Test
   public void rejectIncomingConnectionFromBlacklistedPeer() throws Exception {
-    final PeerPermissionsBlacklist localBlacklist = PeerPermissionsBlacklist.create();
+    final PeerPermissionsDenylist localBlacklist = PeerPermissionsDenylist.create();
 
     try (final P2PNetwork localNetwork = builder().peerPermissions(localBlacklist).build();
         final P2PNetwork remoteNetwork = builder().build()) {
@@ -211,11 +211,11 @@ public class P2PNetworkTest {
 
       final EnodeURL localEnode = localNetwork.getLocalEnode().get();
       final Bytes localId = localEnode.getNodeId();
-      final int localPort = localEnode.getListeningPort().getAsInt();
+      final int localPort = localEnode.getListeningPort().get();
 
       final EnodeURL remoteEnode = remoteNetwork.getLocalEnode().get();
       final Bytes remoteId = remoteEnode.getNodeId();
-      final int remotePort = remoteEnode.getListeningPort().getAsInt();
+      final int remotePort = remoteEnode.getListeningPort().get();
 
       final Peer localPeer = createPeer(localId, localPort);
       final Peer remotePeer = createPeer(remoteId, remotePort);
@@ -331,7 +331,7 @@ public class P2PNetworkTest {
     return DefaultP2PNetwork.builder()
         .vertx(vertx)
         .config(config)
-        .nodeKey(BouncyCastleNodeKey.generate())
+        .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }

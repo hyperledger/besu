@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -34,7 +34,7 @@ public class EVMTest {
 
   private static final int CONTRACT_ACCOUNT_VERSION = 1;
   @Mock private OperationRegistry operationRegistry;
-  @Mock private GasCalculator gasCalculator;
+  private final GasCalculator gasCalculator = new FrontierGasCalculator();
   private EVM evm;
 
   @Before
@@ -54,8 +54,7 @@ public class EVMTest {
   @Test
   public void assertThatEndOfScriptExplicitlySetInCodeDoesNotReturnAVirtualOperation() {
     final Code code = new Code(Bytes.fromHexString("0x6020356000355560603560403555600000"));
-    when(operationRegistry.getOrDefault(
-            anyByte(), eq(CONTRACT_ACCOUNT_VERSION), any(Operation.class)))
+    when(operationRegistry.get(anyByte(), eq(CONTRACT_ACCOUNT_VERSION)))
         .thenReturn(new StopOperation(gasCalculator));
     final Operation operation =
         evm.operationAtOffset(code, CONTRACT_ACCOUNT_VERSION, code.getSize() - 1);

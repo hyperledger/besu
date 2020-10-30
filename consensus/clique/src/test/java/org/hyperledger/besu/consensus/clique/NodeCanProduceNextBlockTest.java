@@ -50,7 +50,7 @@ public class NodeCanProduceNextBlockTest {
   private final KeyPair otherNodeKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-  private ProtocolContext<CliqueContext> cliqueProtocolContext;
+  private ProtocolContext cliqueProtocolContext;
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   MutableBlockchain blockChain;
@@ -81,7 +81,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteProposer voteProposer = new VoteProposer();
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -107,7 +107,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteProposer voteProposer = new VoteProposer();
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -142,7 +142,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteProposer voteProposer = new VoteProposer();
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -173,7 +173,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteProposer voteProposer = new VoteProposer();
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -219,7 +219,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteProposer voteProposer = new VoteProposer();
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(otherNodeKeyPair);
@@ -249,7 +249,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteProposer voteProposer = new VoteProposer();
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader =
@@ -274,7 +274,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteProposer voteProposer = new VoteProposer();
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader = headerBuilder.buildHeader();

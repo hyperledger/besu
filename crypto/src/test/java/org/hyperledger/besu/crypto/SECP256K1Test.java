@@ -22,8 +22,9 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -37,8 +38,9 @@ public class SECP256K1Test {
 
   @BeforeClass
   public static void setTestSuiteStartTime() {
-    final SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd-HHmmss");
-    suiteStartTime = fmt.format(new Date());
+    suiteStartTime =
+        LocalDateTime.now(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
     suiteName(SECP256K1Test.class);
   }
 

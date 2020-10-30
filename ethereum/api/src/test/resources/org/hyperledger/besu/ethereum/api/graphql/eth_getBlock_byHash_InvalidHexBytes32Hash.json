@@ -1,0 +1,20 @@
+{
+  "request": "{block (hash : \"c8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6\") {number } }",
+  "response": {
+    "errors": [
+      {
+        "message": "Validation error of type WrongType: argument 'hash' with value 'StringValue{value='c8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6'}' is not a valid 'Bytes32' - Bytes32 value 'c8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6' is not prefixed with 0x @ 'block'",
+        "locations": [
+          {
+            "line": 1,
+            "column": 9
+          }
+        ],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ]
+  },
+  "statusCode": 400
+}

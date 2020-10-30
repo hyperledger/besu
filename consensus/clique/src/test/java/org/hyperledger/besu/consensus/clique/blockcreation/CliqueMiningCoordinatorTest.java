@@ -69,7 +69,7 @@ public class CliqueMiningCoordinatorTest {
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   @Mock private MutableBlockchain blockChain;
-  @Mock private ProtocolContext<CliqueContext> protocolContext;
+  @Mock private ProtocolContext protocolContext;
   @Mock private CliqueMinerExecutor minerExecutor;
   @Mock private CliqueBlockMiner blockMiner;
   @Mock private SyncState syncState;
@@ -88,7 +88,7 @@ public class CliqueMiningCoordinatorTest {
     final CliqueContext cliqueContext =
         new CliqueContext(voteTallyCache, null, null, blockInterface);
 
-    when(protocolContext.getConsensusState()).thenReturn(cliqueContext);
+    when(protocolContext.getConsensusState(CliqueContext.class)).thenReturn(cliqueContext);
     when(protocolContext.getBlockchain()).thenReturn(blockChain);
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
     when(syncState.isInSync()).thenReturn(true);

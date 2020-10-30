@@ -11,12 +11,20 @@
 # Node Information
 data-path="~/besudata"
 logging="INFO"
+color-enabled=false
 node-private-key-file="./path/to/privateKey"
+pid-path="~/.pid"
+reorg-logging-threshold=0
+
+# Security Module plugin to use
+security-module="localfile"
 
 # P2P network
 identity="PegaSysEng"
 p2p-enabled=true
 nat-method="NONE"
+Xnat-kube-service-name="besu"
+Xnat-method-fallback-enabled=true
 discovery-enabled=false
 bootnodes=[
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
@@ -31,7 +39,9 @@ p2p-port=1234
 max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60
+random-peer-priority-enabled=false
 host-whitelist=["all"]
+host-allowlist=["all"]
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 
 # chain
@@ -97,9 +107,11 @@ miner-stratum-enabled=false
 miner-coinbase="0x0000000000000000000000000000000000000002"
 miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
 min-gas-price=1
+min-block-occupancy-ratio=0.7
 miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
-
+Xminer-remote-sealers-limit=1000
+Xminer-remote-sealers-hashrate-ttl=10
 # Pruning
 pruning-enabled=true
 pruning-blocks-retained=1024
@@ -112,6 +124,7 @@ permissions-accounts-config-file-enabled=false
 permissions-accounts-config-file="./permissions_config.toml"
 permissions-nodes-contract-enabled=false
 permissions-nodes-contract-address="0x0000000000000000000000000000000000001234"
+permissions-nodes-contract-version=1
 permissions-accounts-contract-enabled=false
 permissions-accounts-contract-address="0x0000000000000000000000000000000000006789"
 
@@ -127,10 +140,11 @@ privacy-onchain-groups-enabled=false
 
 # Transaction Pool
 tx-pool-retention-hours=999
-
+tx-pool-price-bump=13
 tx-pool-max-size=1234
 tx-pool-hashes-max-size=10000
 Xincoming-tx-messages-keep-alive-seconds=60
+rpc-tx-feecap=2000000000000000000
 
 # Revert Reason
 revert-reason-enabled=false
@@ -143,3 +157,11 @@ target-gas-limit=8000000
 
 # transaction log bloom filter caching
 auto-log-bloom-caching-enabled=true
+
+# ethstats
+Xethstats="nodename:secret@host:1234"
+Xethstats-contact="contact@mail.n"
+
+# feature flags
+Xsecp256k1-native-enabled=false
+Xaltbn128-native-enabled=false

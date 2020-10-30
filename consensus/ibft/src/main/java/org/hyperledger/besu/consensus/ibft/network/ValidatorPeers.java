@@ -75,10 +75,10 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
   }
 
   @Override
-  public void send(final MessageData message, final Collection<Address> blackList) {
+  public void send(final MessageData message, final Collection<Address> denylist) {
     final Collection<Address> includedValidators =
         getLatestValidators().stream()
-            .filter(a -> !blackList.contains(a))
+            .filter(a -> !denylist.contains(a))
             .collect(Collectors.toSet());
     sendMessageToSpecificAddresses(includedValidators, message);
   }

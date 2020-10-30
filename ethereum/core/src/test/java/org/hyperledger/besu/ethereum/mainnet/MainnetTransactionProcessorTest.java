@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -62,7 +64,9 @@ public class MainnetTransactionProcessorTest {
             messageCallProcessor,
             false,
             MAX_STACK_SIZE,
-            Account.DEFAULT_VERSION);
+            Account.DEFAULT_VERSION,
+            TransactionPriceCalculator.frontier(),
+            CoinbaseFeePriceCalculator.frontier());
   }
 
   @Test
@@ -90,7 +94,7 @@ public class MainnetTransactionProcessorTest {
   private ArgumentCaptor<TransactionValidationParams> transactionValidationParamCaptor() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidator.validate(any())).thenReturn(ValidationResult.valid());
+    when(transactionValidator.validate(any(), any())).thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(

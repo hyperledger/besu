@@ -47,6 +47,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_blockNumber");
 
     specs.add("eth_call_Block8");
+    specs.add("eth_call_Block8_invalidHexBytesData");
     specs.add("eth_call_BlockLatest");
 
     specs.add("eth_estimateGas_transfer");
@@ -63,6 +64,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_getBalance_without_addr");
 
     specs.add("eth_getBlock_byHash");
+    specs.add("eth_getBlock_byHash_InvalidHexBytes32Hash");
     specs.add("eth_getBlock_byHashInvalid");
     specs.add("eth_getBlock_byNumber");
     specs.add("eth_getBlock_byNumberInvalid");
@@ -122,7 +124,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
             EthGraphQLHttpBySpecTest.class.getResource(testSpecFile), Charsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
     final String rawRequestBody = spec.getString("request");
-    final RequestBody requestBody = RequestBody.create(GRAPHQL, rawRequestBody);
+    final RequestBody requestBody = RequestBody.create(rawRequestBody, GRAPHQL);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
     importBlocks(1, BLOCKS.size());

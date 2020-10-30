@@ -32,7 +32,7 @@ public class FixedDifficultyCalculators {
     return config.getEthashConfigOptions().getFixedDifficulty().isPresent();
   }
 
-  public static DifficultyCalculator<Void> calculator(final GenesisConfigOptions config) {
+  public static DifficultyCalculator calculator(final GenesisConfigOptions config) {
     long difficulty = config.getEthashConfigOptions().getFixedDifficulty().getAsLong();
     return (time, parent, context) -> BigInteger.valueOf(difficulty);
   }

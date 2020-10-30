@@ -54,7 +54,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
-  public AbstractPeerConnection(
+  protected AbstractPeerConnection(
       final Peer peer,
       final PeerInfo peerInfo,
       final InetSocketAddress localAddress,

@@ -17,23 +17,24 @@ package org.hyperledger.besu.ethereum.permissioning;
 import org.hyperledger.besu.ethereum.core.Address;
 
 public class SmartContractPermissioningConfiguration {
-  private boolean smartContractNodeWhitelistEnabled;
+  private boolean smartContractNodeAllowlistEnabled;
   private Address nodeSmartContractAddress;
+  private int nodeSmartContractInterfaceVersion = 1;
 
-  private boolean smartContractAccountWhitelistEnabled;
+  private boolean smartContractAccountAllowlistEnabled;
   private Address accountSmartContractAddress;
 
   public static SmartContractPermissioningConfiguration createDefault() {
     return new SmartContractPermissioningConfiguration();
   }
 
-  public boolean isSmartContractNodeWhitelistEnabled() {
-    return smartContractNodeWhitelistEnabled;
+  public boolean isSmartContractNodeAllowlistEnabled() {
+    return smartContractNodeAllowlistEnabled;
   }
 
-  public void setSmartContractNodeWhitelistEnabled(
-      final boolean smartContractNodeWhitelistEnabled) {
-    this.smartContractNodeWhitelistEnabled = smartContractNodeWhitelistEnabled;
+  public void setSmartContractNodeAllowlistEnabled(
+      final boolean smartContractNodeAllowlistEnabled) {
+    this.smartContractNodeAllowlistEnabled = smartContractNodeAllowlistEnabled;
   }
 
   public Address getNodeSmartContractAddress() {
@@ -44,13 +45,13 @@ public class SmartContractPermissioningConfiguration {
     this.nodeSmartContractAddress = nodeSmartContractAddress;
   }
 
-  public boolean isSmartContractAccountWhitelistEnabled() {
-    return smartContractAccountWhitelistEnabled;
+  public boolean isSmartContractAccountAllowlistEnabled() {
+    return smartContractAccountAllowlistEnabled;
   }
 
-  public void setSmartContractAccountWhitelistEnabled(
-      final boolean smartContractAccountWhitelistEnabled) {
-    this.smartContractAccountWhitelistEnabled = smartContractAccountWhitelistEnabled;
+  public void setSmartContractAccountAllowlistEnabled(
+      final boolean smartContractAccountAllowlistEnabled) {
+    this.smartContractAccountAllowlistEnabled = smartContractAccountAllowlistEnabled;
   }
 
   public Address getAccountSmartContractAddress() {
@@ -59,5 +60,13 @@ public class SmartContractPermissioningConfiguration {
 
   public void setAccountSmartContractAddress(final Address accountSmartContractAddress) {
     this.accountSmartContractAddress = accountSmartContractAddress;
+  }
+
+  public void setNodeSmartContractInterfaceVersion(final int nodeSmartContractInterfaceVersion) {
+    this.nodeSmartContractInterfaceVersion = nodeSmartContractInterfaceVersion;
+  }
+
+  public int getNodeSmartContractInterfaceVersion() {
+    return nodeSmartContractInterfaceVersion;
   }
 }

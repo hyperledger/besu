@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -32,35 +33,39 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class IbftBlockCreatorFactory {
 
-  private final Function<Long, Long> gasLimitCalculator;
+  private final GasLimitCalculator gasLimitCalculator;
   private final PendingTransactions pendingTransactions;
-  protected final ProtocolContext<IbftContext> protocolContext;
-  protected final ProtocolSchedule<IbftContext> protocolSchedule;
+  protected final ProtocolContext protocolContext;
+  protected final ProtocolSchedule protocolSchedule;
   private final Address localAddress;
+  final Address miningBeneficiary;
 
   private volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
+  private volatile Double minBlockOccupancyRatio;
 
   public IbftBlockCreatorFactory(
-      final Function<Long, Long> gasLimitCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<IbftContext> protocolContext,
-      final ProtocolSchedule<IbftContext> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final MiningParameters miningParams,
-      final Address localAddress) {
+      final Address localAddress,
+      final Address miningBeneficiary) {
     this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.localAddress = localAddress;
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
+    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
+    this.miningBeneficiary = miningBeneficiary;
   }
 
   public IbftBlockCreator create(final BlockHeader parentHeader, final int round) {
@@ -72,7 +77,9 @@ public class IbftBlockCreatorFactory {
         protocolSchedule,
         gasLimitCalculator,
         minTransactionGasPrice,
-        parentHeader);
+        minBlockOccupancyRatio,
+        parentHeader,
+        miningBeneficiary);
   }
 
   public void setExtraData(final Bytes extraData) {
@@ -90,12 +97,15 @@ public class IbftBlockCreatorFactory {
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final VoteTally voteTally =
         protocolContext
-            .getConsensusState()
+            .getConsensusState(IbftContext.class)
             .getVoteTallyCache()
             .getVoteTallyAfterBlock(parentHeader);
 
     final Optional<ValidatorVote> proposal =
-        protocolContext.getConsensusState().getVoteProposer().getVote(localAddress, voteTally);
+        protocolContext
+            .getConsensusState(IbftContext.class)
+            .getVoteProposer()
+            .getVote(localAddress, voteTally);
 
     final List<Address> validators = new ArrayList<>(voteTally.getValidators());
 
@@ -108,6 +118,10 @@ public class IbftBlockCreatorFactory {
             validators);
 
     return extraData.encode();
+  }
+
+  void changeTargetGasLimit(final Long targetGasLimit) {
+    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
   }
 
   public Address getLocalAddress() {

@@ -56,21 +56,30 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     return new Cluster(clusterConfiguration, net);
   }
 
-  protected Node permissionedNode(final String name, final Node... localConfigWhiteListedNodes) {
+  protected Node permissionedNode(final String name, final Node... localConfigAllowedNodes) {
+    return permissionedNode(name, GENESIS_FILE, localConfigAllowedNodes);
+  }
+
+  protected Node permissionedNode(
+      final String name, final String genesisFile, final Node... localConfigAllowedNodes) {
     PermissionedNodeBuilder permissionedNodeBuilder =
         this.permissionedNodeBuilder
             .name(name)
-            .genesisFile(GENESIS_FILE)
+            .genesisFile(genesisFile)
             .nodesContractEnabled(CONTRACT_ADDRESS);
-    if (localConfigWhiteListedNodes != null && localConfigWhiteListedNodes.length > 0) {
-      permissionedNodeBuilder.nodesPermittedInConfig(localConfigWhiteListedNodes);
+    if (localConfigAllowedNodes != null && localConfigAllowedNodes.length > 0) {
+      permissionedNodeBuilder.nodesPermittedInConfig(localConfigAllowedNodes);
     }
     return permissionedNodeBuilder.build();
   }
 
   protected Node bootnode(final String name) {
+    return bootnode(name, GENESIS_FILE);
+  }
+
+  protected Node bootnode(final String name, final String genesisFile) {
     try {
-      return besu.createCustomGenesisNode(name, GENESIS_FILE, true);
+      return besu.createCustomGenesisNode(name, genesisFile, true);
     } catch (IOException e) {
       throw new RuntimeException("Error creating node", e);
     }

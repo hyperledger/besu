@@ -29,10 +29,16 @@ import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IbftMessageTransmitter {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final MessageFactory messageFactory;
   private final ValidatorMulticaster multicaster;
@@ -47,42 +53,57 @@ public class IbftMessageTransmitter {
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
       final Optional<RoundChangeCertificate> roundChangeCertificate) {
-    final Proposal data =
-        messageFactory.createProposal(roundIdentifier, block, roundChangeCertificate);
+    try {
+      final Proposal data =
+          messageFactory.createProposal(roundIdentifier, block, roundChangeCertificate);
 
-    final ProposalMessageData message = ProposalMessageData.create(data);
+      final ProposalMessageData message = ProposalMessageData.create(data);
 
-    multicaster.send(message);
+      multicaster.send(message);
+    } catch (final SecurityModuleException e) {
+      LOG.warn("Failed to generate signature for Proposal (not sent): {} ", e.getMessage());
+    }
   }
 
   public void multicastPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
-    final Prepare data = messageFactory.createPrepare(roundIdentifier, digest);
+    try {
+      final Prepare data = messageFactory.createPrepare(roundIdentifier, digest);
 
-    final PrepareMessageData message = PrepareMessageData.create(data);
+      final PrepareMessageData message = PrepareMessageData.create(data);
 
-    multicaster.send(message);
+      multicaster.send(message);
+    } catch (final SecurityModuleException e) {
+      LOG.warn("Failed to generate signature for Prepare (not sent): {} ", e.getMessage());
+    }
   }
 
   public void multicastCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final Signature commitSeal) {
-    final Commit data = messageFactory.createCommit(roundIdentifier, digest, commitSeal);
+    try {
+      final Commit data = messageFactory.createCommit(roundIdentifier, digest, commitSeal);
 
-    final CommitMessageData message = CommitMessageData.create(data);
+      final CommitMessageData message = CommitMessageData.create(data);
 
-    multicaster.send(message);
+      multicaster.send(message);
+    } catch (final SecurityModuleException e) {
+      LOG.warn("Failed to generate signature for Commit (not sent): {} ", e.getMessage());
+    }
   }
 
   public void multicastRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {
+    try {
+      final RoundChange data =
+          messageFactory.createRoundChange(roundIdentifier, preparedRoundArtifacts);
 
-    final RoundChange data =
-        messageFactory.createRoundChange(roundIdentifier, preparedRoundArtifacts);
+      final RoundChangeMessageData message = RoundChangeMessageData.create(data);
 
-    final RoundChangeMessageData message = RoundChangeMessageData.create(data);
-
-    multicaster.send(message);
+      multicaster.send(message);
+    } catch (final SecurityModuleException e) {
+      LOG.warn("Failed to generate signature for RoundChange (not sent): {} ", e.getMessage());
+    }
   }
 }

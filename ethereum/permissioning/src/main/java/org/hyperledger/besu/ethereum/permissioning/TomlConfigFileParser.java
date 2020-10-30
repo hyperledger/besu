@@ -29,7 +29,7 @@ import org.apache.tuweni.toml.TomlParseResult;
 
 public class TomlConfigFileParser {
 
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private static TomlParseResult checkConfigurationValidity(
       final TomlParseResult result, final String toml) throws Exception {
@@ -68,7 +68,7 @@ public class TomlConfigFileParser {
       }
       if (!tomlConfigFile.canWrite()) {
         LOG.warn(
-            "Write access denied for file at: %s. Configuration modification operations will not be permitted.",
+            "Write access denied for file at: {}. Configuration modification operations will not be permitted.",
             filename);
       }
       return tomlConfigFile;

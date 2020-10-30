@@ -48,20 +48,20 @@ public class FastSyncChainDownloaderTest {
 
   private final FastSyncValidationPolicy validationPolicy = mock(FastSyncValidationPolicy.class);
 
-  protected ProtocolSchedule<Void> protocolSchedule;
+  protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
-  protected ProtocolContext<Void> protocolContext;
+  protected ProtocolContext protocolContext;
   private SyncState syncState;
 
   protected MutableBlockchain localBlockchain;
-  private BlockchainSetupUtil<Void> otherBlockchainSetup;
+  private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
 
   @Before
   public void setup() {
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT_SKIP_DETACHED);
-    final BlockchainSetupUtil<Void> localBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forTesting();
     otherBlockchain = otherBlockchainSetup.getBlockchain();
@@ -143,7 +143,7 @@ public class FastSyncChainDownloaderTest {
 
   @Test
   public void recoversFromSyncTargetDisconnect() {
-    final BlockchainSetupUtil<Void> shorterChainUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil shorterChainUtil = BlockchainSetupUtil.forTesting();
     final MutableBlockchain shorterChain = shorterChainUtil.getBlockchain();
 
     otherBlockchainSetup.importFirstBlocks(30);

@@ -17,8 +17,12 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -128,6 +132,24 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetPetersburgBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("petersburgBlock", 1000));
+    assertThat(config.getConstantinopleFixBlockNumber()).hasValue(1000);
+  }
+
+  @Test
+  public void shouldFailWithBothPetersburgAndConstantinopleFixBlockNumber() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("constantinopleFixBlock", 1000);
+    configMap.put("petersburgBlock", 1000);
+    final GenesisConfigOptions config = fromConfigOptions(configMap);
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(config::getConstantinopleFixBlockNumber)
+        .withMessage(
+            "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
+  }
+
+  @Test
   public void shouldGetIstanbulBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("istanbulBlock", 1000));
     assertThat(config.getIstanbulBlockNumber()).hasValue(1000);
@@ -140,10 +162,37 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetBerlinBlockNumber() {
+    try {
+      ExperimentalEIPs.berlinEnabled = true;
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("berlinBlock", 1000));
+      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
+    } finally {
+      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
+    }
+  }
+
+  @Test
+  public void shouldGetYoloV2BlockNumber() {
+    try {
+      ExperimentalEIPs.berlinEnabled = true;
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV2Block", 1000));
+      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
+    } finally {
+      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
+    }
+  }
+
+  @Test
   // TODO EIP-1559 change for the actual fork name when known
   public void shouldGetEIP1559BlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip1559block", 1000));
-    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    try {
+      ExperimentalEIPs.eip1559Enabled = true;
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip1559block", 1000));
+      assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    } finally {
+      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+    }
   }
 
   @Test
@@ -158,6 +207,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
+    assertThat(config.getBerlinBlockNumber()).isEmpty();
   }
 
   @Test

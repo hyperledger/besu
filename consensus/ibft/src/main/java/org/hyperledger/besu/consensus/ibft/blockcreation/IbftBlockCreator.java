@@ -15,10 +15,10 @@
 package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -27,21 +27,21 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.function.Function;
-
 // This class is responsible for creating a block without committer seals (basically it was just
 // too hard to coordinate with the state machine).
-public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
+public class IbftBlockCreator extends AbstractBlockCreator {
 
   public IbftBlockCreator(
       final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
-      final ProtocolContext<IbftContext> protocolContext,
-      final ProtocolSchedule<IbftContext> protocolSchedule,
-      final Function<Long, Long> gasLimitCalculator,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final GasLimitCalculator gasLimitCalculator,
       final Wei minTransactionGasPrice,
-      final BlockHeader parentHeader) {
+      final Double minBlockOccupancyRatio,
+      final BlockHeader parentHeader,
+      final Address miningBeneficiary) {
     super(
         localAddress,
         extraDataCalculator,
@@ -50,7 +50,8 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
         protocolSchedule,
         gasLimitCalculator,
         minTransactionGasPrice,
-        localAddress,
+        miningBeneficiary,
+        minBlockOccupancyRatio,
         parentHeader);
   }
 

@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
@@ -44,14 +46,17 @@ public class RevertOperationTest {
     when(messageFrame.popStackItem())
         .thenReturn(Bytes32.fromHexString("0x00"))
         .thenReturn(Bytes32.fromHexString("0x0e"));
-    when(messageFrame.readMemory(UInt256.ZERO, UInt256.valueOf(0x0e)))
-        .thenReturn(revertReasonBytes);
+    final UInt256 uint256_14 = UInt256.valueOf(0x0e);
+    when(messageFrame.readMemory(UInt256.ZERO, uint256_14)).thenReturn(revertReasonBytes);
+    when(messageFrame.memoryWordSize()).thenReturn(UInt256.ZERO);
+    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(uint256_14);
+    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(10_000));
   }
 
   @Test
   public void shouldReturnReason() {
-    ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
-    operation.execute(messageFrame);
+    final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
+    operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).setRevertReason(arg.capture());
     assertThat(arg.getValue()).isEqualTo(revertReasonBytes);
   }

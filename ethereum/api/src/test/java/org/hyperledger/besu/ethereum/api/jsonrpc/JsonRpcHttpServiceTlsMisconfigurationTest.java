@@ -124,7 +124,8 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    Collections.emptyMap()));
+                    Collections.emptyMap(),
+                    folder.getRoot().toPath()));
   }
 
   @After
@@ -273,7 +274,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private JsonRpcConfiguration createJsonRpcConfig(final TlsConfiguration tlsConfiguration) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singletonList("*"));
+    config.setHostsAllowlist(Collections.singletonList("*"));
     config.setTlsConfiguration(Optional.of(tlsConfiguration));
     return config;
   }

@@ -68,17 +68,16 @@ class RLPDecodingHelpers {
   }
 
   /** Read from the provided offset a size of the provided length, assuming this is enough bytes. */
-  static int extractSizeFromLongItem(
+  private static int extractSizeFromLongItem(
       final LongUnaryOperator getter, final long offset, final int sizeLength) {
-    String oversizedErrorMessage =
-        "RLP item at offset "
-            + offset
-            + " with size value consuming "
-            + sizeLength
-            + " bytes exceeds max supported size of "
-            + Integer.MAX_VALUE;
     if (sizeLength > 4) {
-      throw new RLPException(oversizedErrorMessage);
+      throw new RLPException(
+          "RLP item at offset "
+              + offset
+              + " with size value consuming "
+              + sizeLength
+              + " bytes exceeds max supported size of "
+              + Integer.MAX_VALUE);
     }
 
     long res = 0;
@@ -90,7 +89,14 @@ class RLPDecodingHelpers {
     try {
       return Math.toIntExact(res);
     } catch (final ArithmeticException e) {
-      throw new RLPException(oversizedErrorMessage, e);
+      throw new RLPException(
+          "RLP item at offset "
+              + offset
+              + " with size value consuming "
+              + sizeLength
+              + " bytes exceeds max supported size of "
+              + Integer.MAX_VALUE,
+          e);
     }
   }
 
@@ -177,21 +183,21 @@ class RLPDecodingHelpers {
 
     /** @return the size of the byte string holding the rlp-encoded value and metadata */
     int getEncodedSize() {
-      long encodedSize = elementEnd() - elementStart + 1;
+      final long encodedSize = elementEnd() - elementStart + 1;
       try {
         return Math.toIntExact(encodedSize);
-      } catch (ArithmeticException e) {
-        String errorMessage =
+      } catch (final ArithmeticException e) {
+        throw new RLPException(
             String.format(
-                "RLP item exceeds max supported size of %d: %d", Integer.MAX_VALUE, encodedSize);
-        throw new RLPException(errorMessage, e);
+                "RLP item exceeds max supported size of %d: %d", Integer.MAX_VALUE, encodedSize),
+            e);
       }
     }
 
     /**
      * The index of the last byte of the rlp encoded element at startIndex
      *
-     * @return
+     * @return the index of the last byte of the rlp encoded element at startIndex
      */
     long elementEnd() {
       return payloadStart + payloadSize - 1;

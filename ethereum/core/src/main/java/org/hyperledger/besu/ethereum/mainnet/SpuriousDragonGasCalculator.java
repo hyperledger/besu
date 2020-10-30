@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -34,7 +35,8 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
       final UInt256 outputDataOffset,
       final UInt256 outputDataLength,
       final Wei transferValue,
-      final Account recipient) {
+      final Account recipient,
+      final Address to) {
     final Gas inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final Gas outputDataMemoryExpansionCost =

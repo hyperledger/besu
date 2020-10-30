@@ -32,15 +32,27 @@ public interface TaskCollection<T> extends Closeable {
    */
   Task<T> remove();
 
-  /** @return The number of tasks in the queue. */
+  /**
+   * Returns the number of tasks in the queue.
+   *
+   * @return The number of tasks in the queue.
+   */
   long size();
 
-  /** @return True if all tasks have been dequeued. */
+  /**
+   * Returns True if all tasks have been dequeued.
+   *
+   * @return True if all tasks have been dequeued.
+   */
   boolean isEmpty();
 
   /** Clear all data from the queue. */
   void clear();
 
-  /** @return True if all tasks have been dequeued and processed. */
+  /**
+   * Returns True if all tasks have been dequeued and processed.
+   *
+   * @return True if all tasks have been dequeued and processed.
+   */
   boolean allTasksCompleted();
 }

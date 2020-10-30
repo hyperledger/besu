@@ -61,8 +61,11 @@ public class FilterManagerTest {
     this.blockGenerator = new BlockDataGenerator();
     this.currentBlock = blockGenerator.genesisBlock();
     this.filterManager =
-        new FilterManager(
-            blockchainQueries, transactionPool, new FilterIdGenerator(), filterRepository);
+        new FilterManagerBuilder()
+            .blockchainQueries(blockchainQueries)
+            .transactionPool(transactionPool)
+            .filterRepository(filterRepository)
+            .build();
   }
 
   @Test
@@ -234,8 +237,7 @@ public class FilterManagerTest {
     currentBlock = blockGenerator.block(options);
     filterManager.recordBlockEvent(
         BlockAddedEvent.createForHeadAdvancement(
-            currentBlock, Collections.emptyList(), Collections.emptyList()),
-        blockchainQueries.getBlockchain());
+            currentBlock, Collections.emptyList(), Collections.emptyList()));
     return currentBlock.getHash();
   }
 

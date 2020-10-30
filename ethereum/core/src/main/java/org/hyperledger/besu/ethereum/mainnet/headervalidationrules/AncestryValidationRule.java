@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
  * header.
  */
 public class AncestryValidationRule implements DetachedBlockHeaderValidationRule {
-  private final Logger LOG = LogManager.getLogger(AncestryValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {

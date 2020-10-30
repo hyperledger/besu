@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -24,17 +23,17 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import java.util.List;
 import java.util.Optional;
 
-public class MainnetBlockImporter<C> implements BlockImporter<C> {
+public class MainnetBlockImporter implements BlockImporter {
 
-  final BlockValidator<C> blockValidator;
+  final BlockValidator blockValidator;
 
-  public MainnetBlockImporter(final BlockValidator<C> blockValidator) {
+  public MainnetBlockImporter(final BlockValidator blockValidator) {
     this.blockValidator = blockValidator;
   }
 
   @Override
   public synchronized boolean importBlock(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
@@ -46,23 +45,16 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
         blockValidator.validateAndProcessBlock(
             context, block, headerValidationMode, ommerValidationMode);
 
-    outputs.ifPresent(processingOutputs -> persistState(processingOutputs, block, context));
+    outputs.ifPresent(
+        processingOutputs ->
+            context.getBlockchain().appendBlock(block, processingOutputs.receipts));
 
     return outputs.isPresent();
   }
 
-  private void persistState(
-      final BlockValidator.BlockProcessingOutputs processingOutputs,
-      final Block block,
-      final ProtocolContext<C> context) {
-    processingOutputs.worldState.persist();
-    final MutableBlockchain blockchain = context.getBlockchain();
-    blockchain.appendBlock(block, processingOutputs.receipts);
-  }
-
   @Override
   public boolean fastImportBlock(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
       final HeaderValidationMode headerValidationMode,

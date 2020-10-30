@@ -34,7 +34,7 @@ public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
       final Node<V> root, final Bytes32 startKeyHash, final int limit) {
     final StorageEntriesCollector<V> entriesCollector =
         new StorageEntriesCollector<>(startKeyHash, limit);
-    final TrieIterator<V> visitor = new TrieIterator<>(entriesCollector);
+    final TrieIterator<V> visitor = new TrieIterator<>(entriesCollector, false);
     root.accept(visitor, CompactEncoding.bytesToPath(startKeyHash));
     return entriesCollector.getValues();
   }

@@ -14,29 +14,64 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
+import static java.lang.Math.floorDiv;
+import static java.lang.Math.max;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTIER_TRANSACTIONS;
+
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class EIP1559 {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final long initialForkBlknum;
-  private final long finalForkBlknum;
 
   private final FeeMarket feeMarket = FeeMarket.eip1559();
 
   public EIP1559(final long forkBlockNumber) {
     initialForkBlknum = forkBlockNumber;
-    finalForkBlknum = initialForkBlknum + feeMarket.getDecayRange();
   }
 
-  public long computeBaseFee(final long parentBaseFee, final long parentBlockGasUsed) {
+  public long computeBaseFee(
+      final long blockNumber,
+      final long parentBaseFee,
+      final long parentBlockGasUsed,
+      final long targetGasUsed) {
     guardActivation();
-    long delta = parentBlockGasUsed - feeMarket.getTargetGasUsed();
-    return parentBaseFee
-        + ((parentBaseFee * delta)
-            / feeMarket.getTargetGasUsed()
-            / feeMarket.getBasefeeMaxChangeDenominator());
+    long gasDelta, feeDelta, baseFee;
+    if (parentBlockGasUsed == targetGasUsed) {
+      return parentBaseFee;
+    } else if (parentBlockGasUsed > targetGasUsed) {
+      gasDelta = parentBlockGasUsed - targetGasUsed;
+      feeDelta =
+          max(
+              floorDiv(
+                  floorDiv(parentBaseFee * gasDelta, targetGasUsed),
+                  feeMarket.getBasefeeMaxChangeDenominator()),
+              1);
+      baseFee = parentBaseFee + feeDelta;
+    } else {
+      gasDelta = targetGasUsed - parentBlockGasUsed;
+      feeDelta =
+          floorDiv(
+              floorDiv(parentBaseFee * gasDelta, targetGasUsed),
+              feeMarket.getBasefeeMaxChangeDenominator());
+      baseFee = parentBaseFee - feeDelta;
+    }
+    LOG.trace(
+        "block #{} parentBaseFee: {} parentGasUsed: {} parentGasTarget: {} baseFee: {}",
+        blockNumber,
+        parentBaseFee,
+        parentBlockGasUsed,
+        targetGasUsed,
+        baseFee);
+    return baseFee;
   }
 
   public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {
@@ -45,28 +80,9 @@ public class EIP1559 {
         <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
-  public long eip1559GasPool(final long blockNumber) {
-    guardActivation();
-    if (blockNumber >= finalForkBlknum) {
-      return feeMarket.getMaxGas();
-    }
-    return (feeMarket.getMaxGas() / 2)
-        + ((blockNumber - initialForkBlknum) * feeMarket.getGasIncrementAmount());
-  }
-
-  public long legacyGasPool(final long blockNumber) {
-    guardActivation();
-    return feeMarket.getMaxGas() - eip1559GasPool(blockNumber);
-  }
-
   public boolean isEIP1559(final long blockNumber) {
     guardActivation();
     return blockNumber >= initialForkBlknum;
-  }
-
-  public boolean isEIP1559Finalized(final long blockNumber) {
-    guardActivation();
-    return blockNumber >= finalForkBlknum;
   }
 
   public boolean isForkBlock(final long blockNumber) {
@@ -96,16 +112,24 @@ public class EIP1559 {
     }
   }
 
-  public boolean isValidGasLimit(final Transaction transaction) {
-    if (transaction == null) {
-      return false;
-    }
-    return transaction.getGasLimit() <= feeMarket.getPerTxGaslimit();
+  public boolean isValidTransaction(final long blockNumber, final Transaction transaction) {
+    return isValidFormat(
+        transaction,
+        isEIP1559(blockNumber) ? FEE_MARKET_TRANSITIONAL_TRANSACTIONS : FRONTIER_TRANSACTIONS);
   }
 
   private void guardActivation() {
     if (!ExperimentalEIPs.eip1559Enabled) {
       throw new RuntimeException("EIP-1559 is not enabled");
     }
+  }
+
+  public long targetGasUsed(final BlockHeader header) {
+    guardActivation();
+    return header.getGasLimit();
+  }
+
+  public FeeMarket getFeeMarket() {
+    return feeMarket;
   }
 }

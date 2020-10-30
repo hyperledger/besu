@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -101,17 +102,19 @@ public class Subscribers<T> {
    * @param action the action to perform for each subscriber
    */
   public void forEach(final Consumer<T> action) {
-    subscribers
-        .values()
+    ImmutableSet.copyOf(
+            // we copy here to ensure that our callback, which may add another subscriber on this
+            // event, won't trigger that new additional subscriber
+            subscribers.values())
         .forEach(
             subscriber -> {
               try {
                 action.accept(subscriber);
-              } catch (Throwable throwable) {
+              } catch (Exception e) {
                 if (suppressCallbackExceptions) {
-                  LOG.error("Error in callback: ", throwable);
+                  LOG.error("Error in callback: ", e);
                 } else {
-                  throw throwable;
+                  throw e;
                 }
               }
             });

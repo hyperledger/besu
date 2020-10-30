@@ -27,15 +27,15 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FullImportBlockStep<C> implements Consumer<Block> {
+public class FullImportBlockStep implements Consumer<Block> {
   private static final Logger LOG = LogManager.getLogger();
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
 
   public FullImportBlockStep(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -51,7 +51,7 @@ public class FullImportBlockStep<C> implements Consumer<Block> {
             "%s..%s",
             blockHash.substring(0, 6),
             blockHash.substring(blockHash.length() - 4, blockHash.length()));
-    final BlockImporter<C> importer =
+    final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockNumber).getBlockImporter();
     if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());

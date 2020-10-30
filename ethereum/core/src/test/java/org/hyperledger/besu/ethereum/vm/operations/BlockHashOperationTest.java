@@ -101,7 +101,7 @@ public class BlockHashOperationTest {
             .blockHeader(new BlockHeaderTestFixture().number(currentBlockNumber).buildHeader())
             .pushStackItem(input)
             .build();
-    blockHashOperation.execute(frame);
+    blockHashOperation.execute(frame, null);
     final Bytes32 result = frame.popStackItem();
     assertThat(result).isEqualTo(expectedOutput);
     assertThat(frame.stackSize()).isZero();

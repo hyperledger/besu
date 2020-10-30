@@ -29,10 +29,10 @@ import java.util.Optional;
  * <p>This method can be deprecated in the future, @see https://github.com/ethereum/EIPs/issues/611
  */
 public class NetVersion implements JsonRpcMethod {
-  private final String chainId;
+  private final String networkId;
 
-  public NetVersion(final Optional<BigInteger> chainId) {
-    this.chainId = String.valueOf(chainId.orElse(null));
+  public NetVersion(final Optional<BigInteger> netId) {
+    this.networkId = String.valueOf(netId.orElse(null));
   }
 
   @Override
@@ -42,6 +42,6 @@ public class NetVersion implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), chainId);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), networkId);
   }
 }

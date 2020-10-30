@@ -15,26 +15,22 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
 
-public class CallerOperation extends AbstractOperation {
+public class CallerOperation extends AbstractFixedCostOperation {
 
   public CallerOperation(final GasCalculator gasCalculator) {
-    super(0x33, "CALLER", 0, 1, false, 1, gasCalculator);
+    super(0x33, "CALLER", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address callerAddress = frame.getSenderAddress();
     frame.pushStackItem(Words.fromAddress(callerAddress));
+
+    return successResponse;
   }
 }

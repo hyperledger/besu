@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -339,7 +341,11 @@ public class EthPeer {
     return statusHasBeenReceivedFromPeer.get();
   }
 
-  /** @return true if we have sent a status message to this peer. */
+  /**
+   * Return true if we have sent a status message to this peer.
+   *
+   * @return true if we have sent a status message to this peer.
+   */
   public boolean statusHasBeenSentToPeer() {
     return statusHasBeenSentToPeer.get();
   }
@@ -348,12 +354,20 @@ public class EthPeer {
     return knownBlocks.contains(hash);
   }
 
-  /** @return This peer's current chain state. */
+  /**
+   * Return This peer's current chain state.
+   *
+   * @return This peer's current chain state.
+   */
   public ChainState chainState() {
     return chainHeadState;
   }
 
-  /** @return A read-only snapshot of this peer's current {@code chainState} } */
+  /**
+   * Return A read-only snapshot of this peer's current {@code chainState} }
+   *
+   * @return A read-only snapshot of this peer's current {@code chainState} }
+   */
   public ChainHeadEstimate chainStateSnapshot() {
     return chainHeadState.getSnapshot();
   }
@@ -376,6 +390,15 @@ public class EthPeer {
 
   public boolean hasAvailableRequestCapacity() {
     return outstandingRequests() < MAX_OUTSTANDING_REQUESTS;
+  }
+
+  public Set<Capability> getAgreedCapabilities() {
+    return connection.getAgreedCapabilities();
+  }
+
+  @VisibleForTesting
+  PeerConnection getConnection() {
+    return connection;
   }
 
   public Bytes nodeId() {

@@ -45,7 +45,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueContext> {
+public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -67,14 +67,14 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext<CliqueContext> protocolContext) {
+      final ProtocolContext protocolContext) {
     return new CliqueJsonRpcMethods(protocolContext);
   }
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
-      final ProtocolSchedule<CliqueContext> protocolSchedule,
-      final ProtocolContext<CliqueContext> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final SyncState syncState,
@@ -88,7 +88,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
-                protocolContext.getConsensusState().getVoteTallyCache(),
+                protocolContext.getConsensusState(CliqueContext.class).getVoteTallyCache(),
                 localAddress,
                 secondsBetweenBlocks),
             epochManager,
@@ -107,7 +107,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   }
 
   @Override
-  protected ProtocolSchedule<CliqueContext> createProtocolSchedule() {
+  protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         nodeKey,
@@ -116,7 +116,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   }
 
   @Override
-  protected void validateContext(final ProtocolContext<CliqueContext> context) {
+  protected void validateContext(final ProtocolContext context) {
     final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
 
     if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {

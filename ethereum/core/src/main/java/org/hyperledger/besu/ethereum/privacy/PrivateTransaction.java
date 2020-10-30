@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -149,6 +150,14 @@ public class PrivateTransaction {
     }
   }
 
+  public boolean isGroupRemovalTransaction() {
+    return this.getTo().isPresent()
+        && this.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY)
+        && this.getPayload()
+            .toHexString()
+            .startsWith(REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
+  }
+
   private static Object resolvePrivateForOrPrivacyGroupId(final RLPInput item) {
     return item.nextIsList() ? item.readList(RLPInput::readBytes) : item.readBytes();
   }
@@ -211,6 +220,23 @@ public class PrivateTransaction {
     this.privateFor = privateFor;
     this.privacyGroupId = privacyGroupId;
     this.restriction = restriction;
+  }
+
+  protected PrivateTransaction(final PrivateTransaction privateTransaction) {
+    this(
+        privateTransaction.getNonce(),
+        privateTransaction.getGasPrice(),
+        privateTransaction.getGasLimit(),
+        privateTransaction.getTo(),
+        privateTransaction.getValue(),
+        privateTransaction.getSignature(),
+        privateTransaction.getPayload(),
+        privateTransaction.getSender(),
+        privateTransaction.getChainId(),
+        privateTransaction.getPrivateFrom(),
+        privateTransaction.getPrivateFor(),
+        privateTransaction.getPrivacyGroupId(),
+        privateTransaction.getRestriction());
   }
 
   /**
@@ -339,7 +365,7 @@ public class PrivateTransaction {
               .orElseThrow(
                   () ->
                       new IllegalStateException(
-                          "Cannot recover public key from " + "signature for " + this));
+                          "Cannot recover public key from signature for " + this));
       sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     }
     return sender;

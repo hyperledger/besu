@@ -24,9 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -54,7 +53,6 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -113,7 +111,8 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
 
     assertThat(maintainedPeers.contains(peer)).isTrue();
-    verify(rlpxAgent, times(1)).connect(peer);
+    verify(rlpxAgent).connect(peer);
+    verify(discoveryAgent).bond(peer);
   }
 
   @Test
@@ -125,6 +124,7 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
     assertThat(network.addMaintainConnectionPeer(peer)).isFalse();
     verify(rlpxAgent, times(2)).connect(peer);
+    verify(discoveryAgent, times(2)).bond(peer);
     assertThat(maintainedPeers.contains(peer)).isTrue();
   }
 
@@ -138,9 +138,10 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.removeMaintainedConnectionPeer(peer)).isTrue();
 
     assertThat(maintainedPeers.contains(peer)).isFalse();
-    verify(rlpxAgent, times(1)).connect(peer);
-    verify(rlpxAgent, times(1)).disconnect(peer.getId(), DisconnectReason.REQUESTED);
-    verify(discoveryAgent, times(1)).dropPeer(peer);
+    verify(rlpxAgent).connect(peer);
+    verify(discoveryAgent).bond(peer);
+    verify(rlpxAgent).disconnect(peer.getId(), DisconnectReason.REQUESTED);
+    verify(discoveryAgent).dropPeer(peer);
   }
 
   @Test
@@ -258,7 +259,7 @@ public final class DefaultP2PNetworkTest {
     network.start();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(
-            Peer.randomId(), new Endpoint("127.0.0.1", 999, OptionalInt.empty()));
+            Peer.randomId(), new Endpoint("127.0.0.1", 999, Optional.empty()));
     final PeerDiscoveryEvent.PeerBondedEvent peerBondedEvent =
         new PeerDiscoveryEvent.PeerBondedEvent(peer, System.currentTimeMillis());
 
@@ -326,7 +327,7 @@ public final class DefaultP2PNetworkTest {
 
   private DefaultP2PNetwork.Builder builder() {
 
-    final NodeKey nodeKey = new BouncyCastleNodeKey(KeyPair.generate());
+    final NodeKey nodeKey = NodeKeyUtils.generate();
 
     return DefaultP2PNetwork.builder()
         .config(config)

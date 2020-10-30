@@ -43,7 +43,7 @@ public interface BesuNodeRunner {
 
   default void waitForFile(final Path dataDir, final String fileName) {
     final File file = new File(dataDir.toFile(), fileName);
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
+    Awaitility.waitAtMost(60, TimeUnit.SECONDS)
         .until(
             () -> {
               try (final Stream<String> s = Files.lines(file.toPath())) {

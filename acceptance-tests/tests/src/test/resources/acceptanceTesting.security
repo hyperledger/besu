@@ -1,0 +1,6 @@
+##### NOT FOR PRODUCTION USE ######
+### FOR ACCEPTANCE TESTING ONLY ###
+# Disable OS provided entropy
+securerandom.source=
+### FOR ACCEPTANCE TESTING ONLY ###
+##### NOT FOR PRODUCTION USE ######

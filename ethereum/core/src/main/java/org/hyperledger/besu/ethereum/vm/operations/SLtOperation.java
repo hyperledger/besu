@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
@@ -24,27 +23,24 @@ import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class SLtOperation extends AbstractOperation {
+public class SLtOperation extends AbstractFixedCostOperation {
 
   public SLtOperation(final GasCalculator gasCalculator) {
-    super(0x12, "SLT", 2, 1, false, 1, gasCalculator);
+    super(0x12, "SLT", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes32 value0 = frame.popStackItem();
     final Bytes32 value1 = frame.popStackItem();
 
-    BigInteger b0 = value0.toBigInteger();
-    BigInteger b1 = value1.toBigInteger();
+    final BigInteger b0 = value0.toBigInteger();
+    final BigInteger b1 = value1.toBigInteger();
 
     final Bytes32 result = b0.compareTo(b1) < 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
 
     frame.pushStackItem(result);
+
+    return successResponse;
   }
 }

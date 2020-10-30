@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -48,7 +49,8 @@ public class GetPooledTransactionsFromPeerTaskTest extends PeerMessageTaskTest<L
               .gasLimit(100000)
               .chainId(Optional.empty())
               .createTransaction(keyPair);
-      assertThat(transactionPool.getPendingTransactions().addLocalTransaction(tx)).isTrue();
+      assertThat(transactionPool.getPendingTransactions().addLocalTransaction(tx))
+          .isEqualTo(TransactionAddedStatus.ADDED);
       requestedData.add(tx);
     }
     return requestedData;

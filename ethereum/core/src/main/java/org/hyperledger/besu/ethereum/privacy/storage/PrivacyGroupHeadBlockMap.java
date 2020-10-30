@@ -31,8 +31,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class PrivacyGroupHeadBlockMap implements Map<Bytes32, Hash> {
   private final HashMap<Bytes32, Hash> map;
 
-  public static final PrivacyGroupHeadBlockMap EMPTY =
-      new PrivacyGroupHeadBlockMap(Collections.emptyMap());
+  public static final PrivacyGroupHeadBlockMap empty() {
+    return new PrivacyGroupHeadBlockMap(Collections.emptyMap());
+  }
 
   public PrivacyGroupHeadBlockMap(final Map<Bytes32, Hash> map) {
     this.map = new HashMap<>(map);

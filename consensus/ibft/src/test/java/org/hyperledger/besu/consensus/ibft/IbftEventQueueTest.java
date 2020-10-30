@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvents.Type;
+import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public class IbftEventQueueTest {
 
   private static class DummyIbftEvent implements IbftEvent {
     @Override
-    public Type getType() {
+    public IbftEvents.Type getType() {
       return null;
     }
   }

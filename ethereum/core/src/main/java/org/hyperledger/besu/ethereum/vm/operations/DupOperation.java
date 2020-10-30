@@ -14,27 +14,44 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-public class DupOperation extends AbstractOperation {
+import java.util.Optional;
+
+public class DupOperation extends AbstractFixedCostOperation {
+
+  protected final OperationResult underflowResponse;
 
   private final int index;
 
   public DupOperation(final int index, final GasCalculator gasCalculator) {
-    super(0x80 + index - 1, "DUP" + index, index, index + 1, false, 1, gasCalculator);
+    super(
+        0x80 + index - 1,
+        "DUP" + index,
+        index,
+        index + 1,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.getVeryLowTierGasCost());
     this.index = index;
+    this.underflowResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getVeryLowTierGasCost();
-  }
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    // getStackItem won't throw under/overflows.  Check explicitly.
+    if (frame.stackSize() < getStackItemsConsumed()) {
+      return underflowResponse;
+    }
 
-  @Override
-  public void execute(final MessageFrame frame) {
     frame.pushStackItem(frame.getStackItem(index - 1));
+
+    return successResponse;
   }
 }

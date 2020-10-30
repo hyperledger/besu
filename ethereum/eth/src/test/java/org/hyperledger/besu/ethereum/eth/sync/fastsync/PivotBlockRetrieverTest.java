@@ -50,19 +50,19 @@ public class PivotBlockRetrieverTest {
 
   private static final long PIVOT_BLOCK_NUMBER = 10;
 
-  private ProtocolContext<Void> protocolContext;
+  private ProtocolContext protocolContext;
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final AtomicBoolean timeout = new AtomicBoolean(false);
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
   private TransactionPool transactionPool;
-  private PivotBlockRetriever<Void> pivotBlockRetriever;
-  private ProtocolSchedule<Void> protocolSchedule;
+  private PivotBlockRetriever pivotBlockRetriever;
+  private ProtocolSchedule protocolSchedule;
 
   @Before
   public void setUp() {
-    final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
@@ -79,11 +79,11 @@ public class PivotBlockRetrieverTest {
     pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
   }
 
-  private PivotBlockRetriever<Void> createPivotBlockRetriever(
+  private PivotBlockRetriever createPivotBlockRetriever(
       final int peersToQuery, final long pivotBlockDelta, final int maxRetries) {
     return pivotBlockRetriever =
         spy(
-            new PivotBlockRetriever<>(
+            new PivotBlockRetriever(
                 protocolSchedule,
                 ethProtocolManager.ethContext(),
                 metricsSystem,

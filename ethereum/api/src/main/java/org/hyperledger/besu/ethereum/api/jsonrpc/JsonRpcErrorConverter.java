@@ -36,6 +36,10 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case EXCEEDS_BLOCK_GAS_LIMIT:
         return JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT;
+      case WRONG_CHAIN_ID:
+        return JsonRpcError.WRONG_CHAIN_ID;
+      case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:
+        return JsonRpcError.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
       case TX_SENDER_NOT_AUTHORIZED:
         return JsonRpcError.TX_SENDER_NOT_AUTHORIZED;
         // Private Transaction Invalid Reasons
@@ -43,9 +47,14 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
       case GAS_PRICE_TOO_LOW:
         return JsonRpcError.GAS_PRICE_TOO_LOW;
+      case TX_FEECAP_EXCEEDED:
+        return JsonRpcError.TX_FEECAP_EXCEEDED;
       case OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST:
         return JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
-
+      case TRANSACTION_ALREADY_KNOWN:
+        return JsonRpcError.ETH_SEND_TX_ALREADY_KNOWN;
+      case TRANSACTION_REPLACEMENT_UNDERPRICED:
+        return JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
       default:
         return JsonRpcError.INVALID_PARAMS;
     }

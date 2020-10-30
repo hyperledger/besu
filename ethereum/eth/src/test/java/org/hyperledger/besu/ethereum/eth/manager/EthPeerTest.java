@@ -378,7 +378,7 @@ public class EthPeerTest {
     assertThat(messageCount.get()).isEqualTo(2);
     assertThat(closedCount.get()).isEqualTo(0);
 
-    // Dispatch last oustanding message and check that streams are closed
+    // Dispatch last outstanding message and check that streams are closed
     peer.dispatch(targetEthMessage);
     assertThat(messageCount.get()).isEqualTo(4);
     assertThat(closedCount.get()).isEqualTo(2);

@@ -28,12 +28,12 @@ public class BannedMethodTest {
   }
 
   @Test
-  public void doNotReturnNullPositiveCases() {
+  public void bannedMethodsPositiveCases() {
     compilationHelper.addSourceFile("BannedMethodPositiveCases.java").doTest();
   }
 
   @Test
-  public void doNotReturnNullNegativeCases() {
+  public void bannedMethodsNegativeCases() {
     compilationHelper.addSourceFile("BannedMethodNegativeCases.java").doTest();
   }
 }

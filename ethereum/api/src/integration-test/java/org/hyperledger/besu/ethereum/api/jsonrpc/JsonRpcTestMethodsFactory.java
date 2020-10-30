@@ -20,9 +20,8 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -48,6 +47,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,13 +73,13 @@ public class JsonRpcTestMethodsFactory {
     importer.getGenesisState().writeStateTo(stateArchive.getMutable());
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
-    final ProtocolContext<Void> context = new ProtocolContext<>(blockchain, stateArchive, null);
+    final ProtocolContext context = new ProtocolContext(blockchain, stateArchive, null);
 
     for (final Block block : importer.getBlocks()) {
-      final ProtocolSchedule<Void> protocolSchedule = importer.getProtocolSchedule();
-      final ProtocolSpec<Void> protocolSpec =
+      final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-      final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
 
@@ -88,9 +88,6 @@ public class JsonRpcTestMethodsFactory {
     final Synchronizer synchronizer = mock(Synchronizer.class);
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
-    final FilterManager filterManager =
-        new FilterManager(
-            blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
     final EthHashMiningCoordinator miningCoordinator = mock(EthHashMiningCoordinator.class);
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
@@ -98,6 +95,14 @@ public class JsonRpcTestMethodsFactory {
     final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController =
         Optional.of(mock(NodeLocalConfigPermissioningController.class));
     final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
+
+    final FilterManager filterManager =
+        new FilterManagerBuilder()
+            .blockchainQueries(blockchainQueries)
+            .transactionPool(transactionPool)
+            .privacyParameters(privacyParameters)
+            .build();
+
     final JsonRpcConfiguration jsonRpcConfiguration = mock(JsonRpcConfiguration.class);
     final WebSocketConfiguration webSocketConfiguration = mock(WebSocketConfiguration.class);
     final MetricsConfiguration metricsConfiguration = mock(MetricsConfiguration.class);
@@ -108,6 +113,10 @@ public class JsonRpcTestMethodsFactory {
     apis.add(RpcApis.NET);
     apis.add(RpcApis.WEB3);
     apis.add(RpcApis.PRIV);
+    apis.add(RpcApis.DEBUG);
+
+    final Path dataDir = mock(Path.class);
+
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
@@ -130,6 +139,7 @@ public class JsonRpcTestMethodsFactory {
             webSocketConfiguration,
             metricsConfiguration,
             natService,
-            new HashMap<>());
+            new HashMap<>(),
+            dataDir);
   }
 }

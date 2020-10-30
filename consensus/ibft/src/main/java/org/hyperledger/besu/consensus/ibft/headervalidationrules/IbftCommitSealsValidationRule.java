@@ -39,18 +39,18 @@ import org.apache.logging.log4j.Logger;
  *
  * <p>This also ensures sufficient commit seals exist in the block to make it valid.
  */
-public class IbftCommitSealsValidationRule
-    implements AttachedBlockHeaderValidationRule<IbftContext> {
+public class IbftCommitSealsValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger();
 
   @Override
   public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<IbftContext> protocolContext) {
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+        protocolContext
+            .getConsensusState(IbftContext.class)
+            .getVoteTallyCache()
+            .getVoteTallyAfterBlock(parent);
     final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
     final List<Address> committers =

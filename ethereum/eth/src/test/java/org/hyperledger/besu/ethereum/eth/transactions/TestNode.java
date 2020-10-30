@@ -23,8 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -64,6 +64,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
@@ -91,7 +92,7 @@ public class TestNode implements Closeable {
     checkNotNull(discoveryCfg);
 
     final int listenPort = port != null ? port : 0;
-    this.nodeKey = kp != null ? new BouncyCastleNodeKey(kp) : BouncyCastleNodeKey.generate();
+    this.nodeKey = kp != null ? NodeKeyUtils.createFrom(kp) : NodeKeyUtils.generate();
 
     final NetworkingConfiguration networkingConfiguration =
         NetworkingConfiguration.create()
@@ -102,7 +103,7 @@ public class TestNode implements Closeable {
                     .setSupportedProtocols(EthProtocol.get()));
 
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
-    final ProtocolSchedule<Void> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
             GenesisConfigFile.development().getConfigOptions(), false);
 
@@ -113,8 +114,8 @@ public class TestNode implements Closeable {
         createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
-    final ProtocolContext<Void> protocolContext =
-        new ProtocolContext<>(blockchain, worldStateArchive, null);
+    final ProtocolContext protocolContext =
+        new ProtocolContext(blockchain, worldStateArchive, null);
 
     final SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
@@ -135,7 +136,9 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.builder().build());
+            TransactionPoolConfiguration.builder().build(),
+            true,
+            Optional.empty());
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

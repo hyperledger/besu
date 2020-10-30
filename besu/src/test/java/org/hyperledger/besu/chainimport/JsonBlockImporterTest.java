@@ -21,8 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -66,7 +66,7 @@ public abstract class JsonBlockImporterTest {
   protected final GenesisConfigFile genesisConfigFile;
   protected final boolean isEthash;
 
-  public JsonBlockImporterTest(final String consensusEngine) throws IOException {
+  protected JsonBlockImporterTest(final String consensusEngine) throws IOException {
     this.consensusEngine = consensusEngine;
     final String genesisData = getFileContents("genesis.json");
     this.genesisConfigFile = GenesisConfigFile.fromConfig(genesisData);
@@ -80,8 +80,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_unsupportedConsensusAlgorithm() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("clique", "blocks-import-valid.json");
 
@@ -108,8 +108,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_validJson_withBlockNumbers() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-valid.json");
       importer.importChain(jsonData);
@@ -199,8 +199,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_validJson_noBlockIdentifiers() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-valid-no-block-identifiers.json");
       importer.importChain(jsonData);
@@ -290,8 +290,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_validJson_withParentHashes() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       String jsonData = getFileContents("blocks-import-valid.json");
 
@@ -341,8 +341,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_invalidParent() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-invalid-bad-parent.json");
 
@@ -353,8 +353,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_invalidTransaction() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-invalid-bad-tx.json");
 
@@ -366,8 +366,8 @@ public abstract class JsonBlockImporterTest {
 
     @Test
     public void importChain_specialFields() throws IOException {
-      final BesuController<?> controller = createController();
-      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
+      final BesuController controller = createController();
+      final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
       final String jsonData = getFileContents("blocks-import-special-fields.json");
 
@@ -404,11 +404,11 @@ public abstract class JsonBlockImporterTest {
     return Resources.toString(fileURL, UTF_8);
   }
 
-  protected BesuController<?> createController() throws IOException {
+  protected BesuController createController() throws IOException {
     return createController(genesisConfigFile);
   }
 
-  protected BesuController<?> createController(final GenesisConfigFile genesisConfigFile)
+  protected BesuController createController(final GenesisConfigFile genesisConfigFile)
       throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
@@ -422,13 +422,13 @@ public abstract class JsonBlockImporterTest {
                 .minTransactionGasPrice(Wei.ZERO)
                 .enabled(true)
                 .build())
-        .nodeKey(BouncyCastleNodeKey.generate())
+        .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
         .dataDirectory(dataDir)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-        .targetGasLimit(GasLimitCalculator.DEFAULT)
+        .gasLimitCalculator(GasLimitCalculator.constant())
         .build();
   }
 }

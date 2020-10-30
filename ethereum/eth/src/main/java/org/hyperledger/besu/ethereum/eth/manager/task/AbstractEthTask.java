@@ -27,16 +27,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 
 public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   private double taskTimeInSec = -1.0D;
   private final OperationTimer taskTimer;
-  protected final AtomicReference<CompletableFuture<T>> result = new AtomicReference<>();
+  protected final CompletableFuture<T> result = new CompletableFuture<>();
+  private final AtomicBoolean started = new AtomicBoolean(false);
   private final Collection<CompletableFuture<?>> subTaskFutures = new ConcurrentLinkedDeque<>();
 
   protected AbstractEthTask(final MetricsSystem metricsSystem) {
@@ -69,44 +71,39 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   @Override
   public final CompletableFuture<T> run() {
-    if (result.compareAndSet(null, new CompletableFuture<>())) {
+    if (!result.isDone() && started.compareAndSet(false, true)) {
       executeTaskTimed();
-      result.get().whenComplete((r, t) -> cleanup());
+      result.whenComplete((r, t) -> cleanup());
     }
-    return result.get();
+    return result;
   }
 
   @Override
   public final CompletableFuture<T> runAsync(final ExecutorService executor) {
-    if (result.compareAndSet(null, new CompletableFuture<>())) {
+    if (!result.isDone() && started.compareAndSet(false, true)) {
       executor.execute(this::executeTaskTimed);
-      result.get().whenComplete((r, t) -> cleanup());
+      result.whenComplete((r, t) -> cleanup());
     }
-    return result.get();
+    return result;
   }
 
   @Override
   public final void cancel() {
-    synchronized (result) {
-      result.compareAndSet(null, new CompletableFuture<>());
-      result.get().cancel(false);
-    }
+    result.cancel(false);
   }
 
+  @VisibleForTesting
   public final boolean isDone() {
-    return result.get() != null && result.get().isDone();
-  }
-
-  public final boolean isSucceeded() {
-    return isDone() && !result.get().isCompletedExceptionally();
+    return result.isDone();
   }
 
   public final boolean isFailed() {
-    return isDone() && result.get().isCompletedExceptionally();
+    return result.isCompletedExceptionally();
   }
 
+  @VisibleForTesting
   public final boolean isCancelled() {
-    return isDone() && result.get().isCancelled();
+    return result.isCancelled();
   }
 
   /**

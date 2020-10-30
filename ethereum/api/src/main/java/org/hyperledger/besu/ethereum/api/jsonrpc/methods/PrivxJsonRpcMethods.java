@@ -31,7 +31,7 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   public PrivxJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);

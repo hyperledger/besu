@@ -14,26 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class PCOperation extends AbstractOperation {
+public class PCOperation extends AbstractFixedCostOperation {
 
   public PCOperation(final GasCalculator gasCalculator) {
-    super(0x58, "PC", 0, 1, false, 1, gasCalculator);
+    super(0x58, "PC", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getBaseTierGasCost();
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     frame.pushStackItem(UInt256.valueOf(frame.getPC()).toBytes());
+
+    return successResponse;
   }
 }

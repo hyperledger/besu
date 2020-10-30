@@ -21,14 +21,15 @@ import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContex
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
@@ -36,8 +37,8 @@ import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -49,6 +50,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
@@ -67,15 +69,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftRoundTest {
 
-  private final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+  private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
-  private ProtocolContext<IbftContext> protocolContext;
+  private ProtocolContext protocolContext;
 
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
-  @Mock private BlockImporter<IbftContext> blockImporter;
+  @Mock private BlockImporter blockImporter;
   @Mock private IbftMessageTransmitter transmitter;
   @Mock private MinedBlockObserver minedBlockObserver;
   @Mock private IbftBlockCreator blockCreator;
@@ -93,8 +95,7 @@ public class IbftRoundTest {
   @Before
   public void setup() {
     protocolContext =
-        new ProtocolContext<>(
-            blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
+        new ProtocolContext(blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
@@ -445,5 +446,40 @@ public class IbftRoundTest {
         messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
 
     verify(blockImporter, times(1)).importBlock(any(), any(), any());
+  }
+
+  @Test
+  public void exceptionDuringNodeKeySigningDoesNotEscape() {
+    final int QUORUM_SIZE = 1;
+    final RoundState roundState = new RoundState(roundIdentifier, QUORUM_SIZE, messageValidator);
+    final NodeKey throwingNodeKey = mock(NodeKey.class);
+    final MessageFactory throwingMessageFactory = new MessageFactory(throwingNodeKey);
+    when(throwingNodeKey.sign(any())).thenThrow(new SecurityModuleException("Hsm is Offline"));
+
+    final IbftRound round =
+        new IbftRound(
+            roundState,
+            blockCreator,
+            protocolContext,
+            blockImporter,
+            subscribers,
+            throwingNodeKey,
+            throwingMessageFactory,
+            transmitter,
+            roundTimer);
+
+    round.handleProposalMessage(
+        messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
+
+    // Verify that no prepare message was constructed by the IbftRound
+    assertThat(
+            roundState
+                .constructPreparedRoundArtifacts()
+                .get()
+                .getPreparedCertificate()
+                .getPreparePayloads())
+        .isEmpty();
+
+    verifyNoInteractions(transmitter);
   }
 }

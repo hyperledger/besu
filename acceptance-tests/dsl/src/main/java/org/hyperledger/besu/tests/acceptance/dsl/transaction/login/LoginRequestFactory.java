@@ -29,7 +29,6 @@ import okhttp3.ResponseBody;
 public class LoginRequestFactory {
 
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-  private static final String AUTHENTICATION_REQUEST = "{\"username\":\"%s\",\"password\":\"%s\"}";
   private static final String LOGIN_PATH = "/login";
 
   private final String contextRootUrl;
@@ -74,7 +73,8 @@ public class LoginRequestFactory {
 
   private Request loginRequest(final String username, final String password) {
     final RequestBody requestBody =
-        RequestBody.create(JSON, String.format(AUTHENTICATION_REQUEST, username, password));
+        RequestBody.create(
+            JSON, String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password));
     return new Request.Builder().post(requestBody).url(loginUri()).build();
   }
 

@@ -26,7 +26,7 @@ import java.util.List;
  * given blockchain given the block history and its corresponding state. If the block is able to be
  * successfully added, the corresponding blockchain and world state will be updated as well.
  */
-public interface BlockImporter<C> {
+public interface BlockImporter {
 
   /**
    * Attempts to import the given block to the specified blockchain and world state.
@@ -38,7 +38,7 @@ public interface BlockImporter<C> {
    *     false}
    */
   default boolean importBlock(
-      final ProtocolContext<C> context,
+      final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode) {
     return importBlock(context, block, headerValidationMode, HeaderValidationMode.FULL);
@@ -55,7 +55,7 @@ public interface BlockImporter<C> {
    *     false}
    */
   boolean importBlock(
-      ProtocolContext<C> context,
+      ProtocolContext context,
       Block block,
       HeaderValidationMode headerValidationMode,
       HeaderValidationMode ommerValidationMode);
@@ -73,7 +73,7 @@ public interface BlockImporter<C> {
    *     false}
    */
   boolean fastImportBlock(
-      ProtocolContext<C> context,
+      ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
       HeaderValidationMode headerValidationMode,

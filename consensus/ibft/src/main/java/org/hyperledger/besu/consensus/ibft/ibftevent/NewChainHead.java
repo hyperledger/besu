@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.ibft.ibftevent;
 
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvents.Type;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
@@ -35,8 +34,8 @@ public final class NewChainHead implements IbftEvent {
   }
 
   @Override
-  public Type getType() {
-    return Type.NEW_CHAIN_HEAD;
+  public IbftEvents.Type getType() {
+    return IbftEvents.Type.NEW_CHAIN_HEAD;
   }
 
   @Override

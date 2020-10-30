@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,17 +33,26 @@ public class EIP1559Test {
   private static final long FORK_BLOCK = 783L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
   private final FeeMarket feeMarket = FeeMarket.eip1559();
+  private static final long TARGET_GAS_USED = 10000000L;
 
   @Before
   public void setUp() {
     ExperimentalEIPs.eip1559Enabled = true;
   }
 
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+  }
+
   @Test
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                feeMarket.getInitialBasefee(), feeMarket.getTargetGasUsed() - 1000000L))
+                FORK_BLOCK,
+                feeMarket.getInitialBasefee(),
+                TARGET_GAS_USED - 1000000L,
+                TARGET_GAS_USED))
         .isLessThan(feeMarket.getInitialBasefee())
         .isEqualTo(987500000L);
   }
@@ -51,44 +61,12 @@ public class EIP1559Test {
   public void assertThatBaseFeeIncreasesWhenAboveTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                feeMarket.getInitialBasefee(), feeMarket.getTargetGasUsed() + 1000000L))
+                FORK_BLOCK,
+                feeMarket.getInitialBasefee(),
+                TARGET_GAS_USED + 1000000L,
+                TARGET_GAS_USED))
         .isGreaterThan(feeMarket.getInitialBasefee())
         .isEqualTo(1012500000L);
-  }
-
-  @Test
-  public void assertThatBaseFeeDoesNotChangeWhenAtTargetGasUsed() {
-    assertThat(eip1559.computeBaseFee(feeMarket.getInitialBasefee(), feeMarket.getTargetGasUsed()))
-        .isEqualTo(feeMarket.getInitialBasefee());
-  }
-
-  @Test
-  public void isValidBaseFee() {
-    assertThat(eip1559.isValidBaseFee(feeMarket.getInitialBasefee(), 1012500000L)).isTrue();
-  }
-
-  @Test
-  public void isNotValidBaseFee() {
-    assertThat(
-            eip1559.isValidBaseFee(
-                feeMarket.getInitialBasefee(), feeMarket.getInitialBasefee() * 15L / 10L))
-        .isFalse();
-  }
-
-  @Test
-  public void eip1559GasPool() {
-    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1))
-        .isEqualTo((feeMarket.getMaxGas() / 2) + feeMarket.getGasIncrementAmount());
-    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1) + eip1559.legacyGasPool(FORK_BLOCK + 1))
-        .isEqualTo(feeMarket.getMaxGas());
-  }
-
-  @Test
-  public void legacyGasPool() {
-    assertThat(eip1559.legacyGasPool(FORK_BLOCK + 1))
-        .isEqualTo((feeMarket.getMaxGas() / 2) - feeMarket.getGasIncrementAmount());
-    assertThat(eip1559.eip1559GasPool(FORK_BLOCK + 1) + eip1559.legacyGasPool(FORK_BLOCK + 1))
-        .isEqualTo(feeMarket.getMaxGas());
   }
 
   @Test
@@ -99,16 +77,6 @@ public class EIP1559Test {
   @Test
   public void givenBlockABeforeFork_whenIsEIP1559_returnsFalse() {
     assertThat(eip1559.isEIP1559(FORK_BLOCK - 1)).isFalse();
-  }
-
-  @Test
-  public void givenBlockAfterEIPFinalized_whenIsEIP1559Finalized_returnsTrue() {
-    assertThat(eip1559.isEIP1559Finalized(FORK_BLOCK + feeMarket.getDecayRange())).isTrue();
-  }
-
-  @Test
-  public void givenBlockBeforeEIPFinalized_whenIsEIP1559Finalized_returnsFalse() {
-    assertThat(eip1559.isEIP1559Finalized(FORK_BLOCK + feeMarket.getDecayRange() - 1)).isFalse();
   }
 
   @Test

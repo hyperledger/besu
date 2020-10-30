@@ -29,19 +29,21 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlockMiner> {
+public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMiner> {
 
-  private volatile Optional<Address> coinbase;
-  private boolean stratumMiningEnabled;
-  private final Iterable<Long> nonceGenerator;
+  protected volatile Optional<Address> coinbase;
+  protected boolean stratumMiningEnabled;
+  protected final Iterable<Long> nonceGenerator;
+  protected final Function<Long, Long> epochCalculator;
 
   public EthHashMinerExecutor(
-      final ProtocolContext<Void> protocolContext,
-      final ProtocolSchedule<Void> protocolSchedule,
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final Function<Long, Long> gasLimitCalculator) {
+      final GasLimitCalculator gasLimitCalculator,
+      final Function<Long, Long> epochCalculator) {
     super(
         protocolContext,
         protocolSchedule,
@@ -51,6 +53,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
         gasLimitCalculator);
     this.coinbase = miningParams.getCoinbase();
     this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
+    this.epochCalculator = epochCalculator;
   }
 
   @Override
@@ -71,7 +74,11 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final BlockHeader parentHeader) {
     final EthHashSolver solver =
         new EthHashSolver(
-            nonceGenerator, new EthHasher.Light(), stratumMiningEnabled, ethHashObservers);
+            nonceGenerator,
+            new EthHasher.Light(),
+            stratumMiningEnabled,
+            ethHashObservers,
+            epochCalculator);
     final Function<BlockHeader, EthHashBlockCreator> blockCreator =
         (header) ->
             new EthHashBlockCreator(
@@ -83,6 +90,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
                 gasLimitCalculator,
                 solver,
                 minTransactionGasPrice,
+                minBlockOccupancyRatio,
                 parentHeader);
 
     return new EthHashBlockMiner(

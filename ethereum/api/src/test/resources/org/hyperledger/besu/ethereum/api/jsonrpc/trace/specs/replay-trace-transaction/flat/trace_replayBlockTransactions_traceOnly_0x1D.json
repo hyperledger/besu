@@ -1,0 +1,41 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x1D",
+      [
+        "trace"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": null,
+        "trace": [
+          {
+            "action": {
+              "creationMethod": "create",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0x4a14",
+              "init": "0x6000f1",
+              "value": "0x0"
+            },
+            "error": "Stack underflow",
+            "subtraces": 0,
+            "traceAddress": [],
+            "type": "create"
+          }
+        ],
+        "transactionHash": "0xf2f9f56aab631d441ff7bd85a195cea43c7285a4e0bd03823f6c37b379eb0cbe",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

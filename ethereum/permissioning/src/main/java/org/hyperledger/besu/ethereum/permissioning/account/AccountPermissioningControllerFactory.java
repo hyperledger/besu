@@ -77,7 +77,7 @@ public class AccountPermissioningControllerFactory {
       final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
           permissioningConfiguration.getSmartContractConfig().get();
 
-      if (smartContractPermissioningConfiguration.isSmartContractAccountWhitelistEnabled()) {
+      if (smartContractPermissioningConfiguration.isSmartContractAccountAllowlistEnabled()) {
         final Address accountSmartContractAddress =
             smartContractPermissioningConfiguration.getAccountSmartContractAddress();
 
@@ -104,7 +104,7 @@ public class AccountPermissioningControllerFactory {
       final LocalPermissioningConfiguration localPermissioningConfiguration =
           permissioningConfiguration.getLocalConfig().get();
 
-      if (localPermissioningConfiguration.isAccountWhitelistEnabled()) {
+      if (localPermissioningConfiguration.isAccountAllowlistEnabled()) {
         return Optional.of(
             new AccountLocalConfigPermissioningController(
                 localPermissioningConfiguration, metricsSystem));

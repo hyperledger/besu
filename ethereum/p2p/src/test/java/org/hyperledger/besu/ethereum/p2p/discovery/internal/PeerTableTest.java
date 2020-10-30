@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
 import java.util.List;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -84,14 +84,12 @@ public class PeerTableTest {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
     final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
-        DiscoveryPeer.fromIdAndEndpoint(
-            peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
+        DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 
     assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
 
     final DiscoveryPeer duplicatePeer =
-        DiscoveryPeer.fromIdAndEndpoint(
-            peerId, new Endpoint("1.1.1.2", 30303, OptionalInt.empty()));
+        DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.2", 30303, Optional.empty()));
     assertThat(table.tryAdd(duplicatePeer))
         .satisfies(
             result -> {
@@ -105,14 +103,12 @@ public class PeerTableTest {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
     final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
-        DiscoveryPeer.fromIdAndEndpoint(
-            peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
+        DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 
     assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
 
     final DiscoveryPeer duplicatePeer =
-        DiscoveryPeer.fromIdAndEndpoint(
-            peerId, new Endpoint("1.1.1.1", 30301, OptionalInt.empty()));
+        DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30301, Optional.empty()));
     assertThat(table.tryAdd(duplicatePeer))
         .satisfies(
             result -> {
@@ -126,14 +122,12 @@ public class PeerTableTest {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
     final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
-        DiscoveryPeer.fromIdAndEndpoint(
-            peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
+        DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 
     assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
 
     final DiscoveryPeer duplicatePeer =
-        DiscoveryPeer.fromIdAndEndpoint(
-            peerId, new Endpoint("1.1.1.2", 30301, OptionalInt.empty()));
+        DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.2", 30301, Optional.empty()));
     assertThat(table.tryAdd(duplicatePeer))
         .satisfies(
             result -> {

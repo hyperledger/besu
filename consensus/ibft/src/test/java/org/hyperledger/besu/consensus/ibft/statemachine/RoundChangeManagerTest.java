@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -31,8 +30,8 @@ import org.hyperledger.besu.consensus.ibft.validation.ProposalBlockConsistencyVa
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangeMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator;
 import org.hyperledger.besu.consensus.ibft.validation.SignedDataValidator;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -53,10 +52,10 @@ public class RoundChangeManagerTest {
 
   private RoundChangeManager manager;
 
-  private final NodeKey proposerKey = BouncyCastleNodeKey.generate();
-  private final NodeKey validator1Key = BouncyCastleNodeKey.generate();
-  private final NodeKey validator2Key = BouncyCastleNodeKey.generate();
-  private final NodeKey nonValidatorKey = BouncyCastleNodeKey.generate();
+  private final NodeKey proposerKey = NodeKeyUtils.generate();
+  private final NodeKey validator1Key = NodeKeyUtils.generate();
+  private final NodeKey validator2Key = NodeKeyUtils.generate();
+  private final NodeKey nonValidatorKey = NodeKeyUtils.generate();
 
   private final ConsensusRoundIdentifier ri1 = new ConsensusRoundIdentifier(2, 1);
   private final ConsensusRoundIdentifier ri2 = new ConsensusRoundIdentifier(2, 2);
@@ -72,9 +71,7 @@ public class RoundChangeManagerTest {
     validators.add(Util.publicKeyToAddress(validator1Key.getPublicKey()));
     validators.add(Util.publicKeyToAddress(validator2Key.getPublicKey()));
 
-    @SuppressWarnings("unchecked")
-    final BlockValidator<IbftContext> blockValidator =
-        (BlockValidator<IbftContext>) mock(BlockValidator.class);
+    final BlockValidator blockValidator = mock(BlockValidator.class);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 

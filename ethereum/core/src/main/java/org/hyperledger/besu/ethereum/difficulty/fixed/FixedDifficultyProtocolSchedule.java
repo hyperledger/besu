@@ -22,11 +22,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 /** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
 public class FixedDifficultyProtocolSchedule {
 
-  public static ProtocolSchedule<Void> create(
+  public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
-    return new ProtocolScheduleBuilder<>(
+    return new ProtocolScheduleBuilder(
             config,
             builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
             privacyParameters,
@@ -34,12 +34,12 @@ public class FixedDifficultyProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  public static ProtocolSchedule<Void> create(
+  public static ProtocolSchedule create(
       final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
     return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
-  public static ProtocolSchedule<Void> create(final GenesisConfigOptions config) {
+  public static ProtocolSchedule create(final GenesisConfigOptions config) {
     return create(config, PrivacyParameters.DEFAULT, false);
   }
 }

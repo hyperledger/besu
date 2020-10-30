@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules.IbftExtraDataValidationRule;
 import org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules.VoteValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -38,7 +37,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
-  public static BlockHeaderValidator.Builder<IbftContext> ibftBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
       final long secondsBetweenBlocks) {
     return createValidator(secondsBetweenBlocks, true);
   }
@@ -50,14 +49,14 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
-  public static BlockHeaderValidator.Builder<IbftContext> ibftProposedBlockValidator(
+  public static BlockHeaderValidator.Builder ibftProposedBlockValidator(
       final long secondsBetweenBlocks) {
     return createValidator(secondsBetweenBlocks, false);
   }
 
-  private static BlockHeaderValidator.Builder<IbftContext> createValidator(
+  private static BlockHeaderValidator.Builder createValidator(
       final long secondsBetweenBlocks, final boolean validateCommitSeals) {
-    return new BlockHeaderValidator.Builder<IbftContext>()
+    return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))

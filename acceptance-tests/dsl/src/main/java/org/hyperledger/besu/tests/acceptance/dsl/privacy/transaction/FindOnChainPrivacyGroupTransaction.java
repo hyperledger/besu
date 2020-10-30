@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.PrivxFindPrivacyGroupResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,8 +38,14 @@ public class FindOnChainPrivacyGroupTransaction
   @Override
   public List<PrivacyRequestFactory.OnChainPrivacyGroup> execute(final NodeRequests node) {
     try {
-      return node.privacy().privxFindOnChainPrivacyGroup(nodes).send().getGroups();
-    } catch (IOException e) {
+      PrivxFindPrivacyGroupResponse result =
+          node.privacy().privxFindOnChainPrivacyGroup(nodes).send();
+      assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
+      return result.getGroups();
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }

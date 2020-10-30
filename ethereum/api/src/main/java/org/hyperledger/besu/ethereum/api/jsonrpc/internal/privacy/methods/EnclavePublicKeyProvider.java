@@ -14,11 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
+
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 
 @FunctionalInterface
 public interface EnclavePublicKeyProvider {
+
   String getEnclaveKey(Optional<User> user);
+
+  static EnclavePublicKeyProvider build(final PrivacyParameters privacyParameters) {
+    return privacyParameters.isMultiTenancyEnabled()
+        ? multiTenancyEnclavePublicKeyProvider()
+        : defaultEnclavePublicKeyProvider(privacyParameters);
+  }
+
+  private static EnclavePublicKeyProvider multiTenancyEnclavePublicKeyProvider() {
+    return user ->
+        enclavePublicKey(user)
+            .orElseThrow(
+                () -> new IllegalStateException("Request does not contain an authorization token"));
+  }
+
+  private static EnclavePublicKeyProvider defaultEnclavePublicKeyProvider(
+      final PrivacyParameters privacyParameters) {
+    return user -> privacyParameters.getEnclavePublicKey();
+  }
 }

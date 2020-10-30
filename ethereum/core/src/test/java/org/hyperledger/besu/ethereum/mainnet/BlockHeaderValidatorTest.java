@@ -38,7 +38,7 @@ import org.mockito.InOrder;
 public class BlockHeaderValidatorTest {
 
   @SuppressWarnings("unchecked")
-  private final ProtocolContext<Void> protocolContext = mock(ProtocolContext.class);
+  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
 
   private final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final BlockDataGenerator generator = new BlockDataGenerator();
@@ -49,30 +49,28 @@ public class BlockHeaderValidatorTest {
   }
 
   @SuppressWarnings("unchecked")
-  private AttachedBlockHeaderValidationRule<Void> createFailingAttachedRule() {
-    final AttachedBlockHeaderValidationRule<Void> rule =
-        mock(AttachedBlockHeaderValidationRule.class);
+  private AttachedBlockHeaderValidationRule createFailingAttachedRule() {
+    final AttachedBlockHeaderValidationRule rule = mock(AttachedBlockHeaderValidationRule.class);
     when(rule.validate(notNull(), notNull(), eq(protocolContext))).thenReturn(false);
     return rule;
   }
 
   @SuppressWarnings("unchecked")
-  private AttachedBlockHeaderValidationRule<Void> createPassingAttachedRule() {
-    final AttachedBlockHeaderValidationRule<Void> rule =
-        mock(AttachedBlockHeaderValidationRule.class);
+  private AttachedBlockHeaderValidationRule createPassingAttachedRule() {
+    final AttachedBlockHeaderValidationRule rule = mock(AttachedBlockHeaderValidationRule.class);
     when(rule.validate(notNull(), notNull(), eq(protocolContext))).thenReturn(true);
     return rule;
   }
 
   @Test
   public void validateHeader() {
-    final AttachedBlockHeaderValidationRule<Void> passing1 = createPassingAttachedRule();
-    final AttachedBlockHeaderValidationRule<Void> passing2 = createPassingAttachedRule();
+    final AttachedBlockHeaderValidationRule passing1 = createPassingAttachedRule();
+    final AttachedBlockHeaderValidationRule passing2 = createPassingAttachedRule();
 
     final BlockHeader blockHeader = generator.header();
 
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>().addRule(passing1).addRule(passing2).build();
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder().addRule(passing1).addRule(passing2).build();
 
     assertThat(
             validator.validateHeader(
@@ -84,14 +82,14 @@ public class BlockHeaderValidatorTest {
 
   @Test
   public void validateHeaderFailingAttachedRule() {
-    final AttachedBlockHeaderValidationRule<Void> passing1 = createPassingAttachedRule();
-    final AttachedBlockHeaderValidationRule<Void> failing1 = createFailingAttachedRule();
-    final AttachedBlockHeaderValidationRule<Void> passing2 = createPassingAttachedRule();
+    final AttachedBlockHeaderValidationRule passing1 = createPassingAttachedRule();
+    final AttachedBlockHeaderValidationRule failing1 = createFailingAttachedRule();
+    final AttachedBlockHeaderValidationRule passing2 = createPassingAttachedRule();
 
     final BlockHeader blockHeader = generator.header();
 
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>()
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder()
             .addRule(passing1)
             .addRule(failing1)
             .addRule(passing2)
@@ -110,12 +108,12 @@ public class BlockHeaderValidatorTest {
   public void validateHeaderFailingDettachedRule() {
     final DetachedBlockHeaderValidationRule passing1 = createPassingDetachedRule(true);
     final DetachedBlockHeaderValidationRule failing1 = createFailingDetachedRule(true);
-    final AttachedBlockHeaderValidationRule<Void> passing2 = createPassingAttachedRule();
+    final AttachedBlockHeaderValidationRule passing2 = createPassingAttachedRule();
 
     final BlockHeader blockHeader = generator.header();
 
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>()
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder()
             .addRule(passing1)
             .addRule(failing1)
             .addRule(passing2)
@@ -137,8 +135,8 @@ public class BlockHeaderValidatorTest {
     when(blockchain.getBlockHeader(blockHeader.getParentHash()))
         .thenReturn(Optional.of(blockHeader));
 
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>().addRule(createPassingAttachedRule()).build();
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder().addRule(createPassingAttachedRule()).build();
 
     assertThat(validator.validateHeader(blockHeader, protocolContext, HeaderValidationMode.FULL))
         .isTrue();
@@ -150,8 +148,8 @@ public class BlockHeaderValidatorTest {
 
     when(blockchain.getBlockHeader(blockHeader.getNumber() - 1)).thenReturn(Optional.empty());
 
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>().addRule(createPassingAttachedRule()).build();
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder().addRule(createPassingAttachedRule()).build();
 
     assertThat(validator.validateHeader(blockHeader, protocolContext, HeaderValidationMode.FULL))
         .isFalse();
@@ -163,8 +161,8 @@ public class BlockHeaderValidatorTest {
 
     when(blockchain.getBlockHeader(blockHeader.getParentHash())).thenReturn(Optional.empty());
 
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>().addRule(createPassingAttachedRule()).build();
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder().addRule(createPassingAttachedRule()).build();
 
     assertThat(validator.validateHeader(blockHeader, protocolContext, HeaderValidationMode.LIGHT))
         .isFalse();
@@ -172,8 +170,8 @@ public class BlockHeaderValidatorTest {
 
   @Test
   public void shouldSkipAdditionalValidationRulesWhenDoingLightValidation() {
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>()
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder()
             .addRule(createPassingDetachedRule(true))
             .addRule(createFailingDetachedRule(false))
             .build();
@@ -188,8 +186,8 @@ public class BlockHeaderValidatorTest {
 
   @Test
   public void shouldPerformAdditionalValidationRulesWhenDoingFullValidation() {
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>()
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder()
             .addRule(createPassingDetachedRule(true))
             .addRule(createFailingDetachedRule(false))
             .build();
@@ -202,8 +200,8 @@ public class BlockHeaderValidatorTest {
 
   @Test
   public void shouldStillPerformLightValidationRulesWhenDoingFullValidation() {
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>()
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder()
             .addRule(createPassingDetachedRule(true))
             .addRule(createFailingDetachedRule(false))
             .build();
@@ -216,8 +214,8 @@ public class BlockHeaderValidatorTest {
 
   @Test
   public void shouldPerformAttachedValidationRulesWhenDoingLightValidation() {
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>()
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder()
             .addRule(createFailingAttachedRule())
             .addRule(createPassingDetachedRule(true))
             .build();
@@ -230,13 +228,13 @@ public class BlockHeaderValidatorTest {
 
   @Test
   public void shouldRunRulesInOrderOfAdditionDuringFullValidation() {
-    final AttachedBlockHeaderValidationRule<Void> rule1 = createPassingAttachedRule();
+    final AttachedBlockHeaderValidationRule rule1 = createPassingAttachedRule();
     final DetachedBlockHeaderValidationRule rule2 = createPassingDetachedRule(true);
     final DetachedBlockHeaderValidationRule rule3 = createPassingDetachedRule(false);
-    final AttachedBlockHeaderValidationRule<Void> rule4 = createPassingAttachedRule();
+    final AttachedBlockHeaderValidationRule rule4 = createPassingAttachedRule();
 
-    final BlockHeaderValidator<Void> validator =
-        new BlockHeaderValidator.Builder<Void>()
+    final BlockHeaderValidator validator =
+        new BlockHeaderValidator.Builder()
             .addRule(rule1)
             .addRule(rule2)
             .addRule(rule3)

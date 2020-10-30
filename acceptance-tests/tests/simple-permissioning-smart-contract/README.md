@@ -123,3 +123,15 @@ Compiling ./contracts/SimplePermissioning.sol...
 
   10 passing (1s)
 ```
+
+##Permissioning Contract Updating Steps
+Should these contracts require updating, please ensure that the compiled bytecode in the Permissioning acceptance tests genesis file has been updated with the new bytecode.
+
+One simple update procedure is as follows:
+1. Load existing contract in [Remix IDE](https://remix.ethereum.org/).
+2. Enable the _"SOLIDITY COMPILER"_ plugin.
+3. Make required changes.
+4. Compile contract (_"Enable optimization"_ disabled.)
+5. Click the _"Compilation Details"_ button.
+6. Navigate to the _"RUNTIME BYTECODE"_ section and copy the value for the _"object"_ key.
+7. Paste this text as the value for the _"code"_ key in the relevant genesis file.

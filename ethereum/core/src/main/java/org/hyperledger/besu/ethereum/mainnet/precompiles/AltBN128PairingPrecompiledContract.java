@@ -21,9 +21,9 @@ import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.crypto.altbn128.Fq12;
 import org.hyperledger.besu.crypto.altbn128.Fq2;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
+public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
@@ -47,7 +47,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
 
   private AltBN128PairingPrecompiledContract(
       final GasCalculator gasCalculator, final Gas pairingGasCost, final Gas baseGasCost) {
-    super("AltBN128Pairing", gasCalculator);
+    super("AltBN128Pairing", gasCalculator, LibEthPairings.EIP196_PAIR_OPERATION_RAW_VALUE);
     this.pairingGasCost = pairingGasCost;
     this.baseGasCost = baseGasCost;
   }
@@ -74,7 +74,14 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
     if (input.size() % PARAMETER_LENGTH != 0) {
       return null;
     }
+    if (useNative) {
+      return computeNative(input, messageFrame);
+    } else {
+      return computeDefault(input);
+    }
+  }
 
+  private static Bytes computeDefault(final Bytes input) {
     final int parameters = input.size() / PARAMETER_LENGTH;
     final List<AltBn128Point> a = new ArrayList<>();
     final List<AltBn128Fq2Point> b = new ArrayList<>();

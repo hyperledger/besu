@@ -42,14 +42,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CheckpointHeaderValidationStepTest {
-  @Mock private ProtocolSchedule<Void> protocolSchedule;
-  @Mock private ProtocolSpec<Void> protocolSpec;
-  @Mock private ProtocolContext<Void> protocolContext;
-  @Mock private BlockHeaderValidator<Void> headerValidator;
+  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private ProtocolContext protocolContext;
+  @Mock private BlockHeaderValidator headerValidator;
   @Mock private ValidationPolicy validationPolicy;
   @Mock private EthPeer syncTarget;
   private final BlockDataGenerator gen = new BlockDataGenerator();
-  private CheckpointHeaderValidationStep<Void> validationStep;
+  private CheckpointHeaderValidationStep validationStep;
 
   private final BlockHeader checkpointStart = gen.header(10);
   private final BlockHeader checkpointEnd = gen.header(13);
@@ -66,7 +66,7 @@ public class CheckpointHeaderValidationStepTest {
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(DETACHED_ONLY);
 
     validationStep =
-        new CheckpointHeaderValidationStep<>(protocolSchedule, protocolContext, validationPolicy);
+        new CheckpointHeaderValidationStep(protocolSchedule, protocolContext, validationPolicy);
   }
 
   @Test

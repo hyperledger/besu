@@ -20,12 +20,13 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -47,18 +48,17 @@ public class Pruner {
   private final long blockConfirmations;
 
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
-  private final Supplier<ExecutorService> executorServiceSupplier;
-  private ExecutorService executorService;
+  private final ExecutorService executorService;
 
   @VisibleForTesting
   Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration,
-      final Supplier<ExecutorService> executorServiceSupplier) {
+      final ExecutorService executorService) {
     this.pruningStrategy = pruningStrategy;
     this.blockchain = blockchain;
-    this.executorServiceSupplier = executorServiceSupplier;
+    this.executorService = executorService;
     this.blocksRetained = prunerConfiguration.getBlocksRetained();
     this.blockConfirmations = prunerConfiguration.getBlockConfirmations();
     checkArgument(
@@ -70,28 +70,34 @@ public class Pruner {
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration) {
-    this(pruningStrategy, blockchain, prunerConfiguration, getDefaultExecutorSupplier());
-  }
-
-  private static Supplier<ExecutorService> getDefaultExecutorSupplier() {
-    return () ->
-        Executors.newSingleThreadExecutor(
+    this(
+        pruningStrategy,
+        blockchain,
+        prunerConfiguration,
+        // This is basically the out-of-the-box `Executors.newSingleThreadExecutor` except we want
+        // the `corePoolSize` to be 0
+        new ThreadPoolExecutor(
+            0,
+            1,
+            0L,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setPriority(Thread.MIN_PRIORITY)
                 .setNameFormat("StatePruning-%d")
-                .build());
+                .build()));
   }
 
   public void start() {
-
-    if (state.compareAndSet(State.IDLE, State.RUNNING)) {
-      LOG.info("Starting Pruner.");
-      executorService = executorServiceSupplier.get();
-      pruningStrategy.prepare();
-      blockAddedObserverId =
-          blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
-    }
+    execute(
+        () -> {
+          if (state.compareAndSet(State.IDLE, State.RUNNING)) {
+            LOG.info("Starting Pruner.");
+            pruningStrategy.prepare();
+            blockAddedObserverId = blockchain.observeBlockAdded(this::handleNewBlock);
+          }
+        });
   }
 
   public void stop() {
@@ -132,7 +138,7 @@ public class Pruner {
 
   private void mark(final BlockHeader header) {
     final Hash stateRoot = header.getStateRoot();
-    LOG.debug(
+    LOG.info(
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
         markBlockNumber,
         stateRoot);
@@ -144,7 +150,7 @@ public class Pruner {
   }
 
   private void sweep() {
-    LOG.debug(
+    LOG.info(
         "Begin sweeping unused nodes for pruning. Keeping full state for blocks {} to {}",
         markBlockNumber,
         markBlockNumber + blocksRetained);
@@ -158,14 +164,21 @@ public class Pruner {
   private void execute(final Runnable action) {
     try {
       executorService.execute(action);
-    } catch (final Throwable t) {
-      LOG.error("Pruning failed", t);
-      pruningStrategy.cleanup();
+    } catch (final MerkleTrieException mte) {
+      LOG.fatal(
+          "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
+          mte);
+      System.exit(1);
+    } catch (final Exception e) {
+      LOG.error(
+          "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
+          getPruningPhase(),
+          e.getMessage());
+      pruningStrategy.clearMarks();
       pruningPhase.set(PruningPhase.IDLE);
     }
   }
 
-  @VisibleForTesting
   PruningPhase getPruningPhase() {
     return pruningPhase.get();
   }

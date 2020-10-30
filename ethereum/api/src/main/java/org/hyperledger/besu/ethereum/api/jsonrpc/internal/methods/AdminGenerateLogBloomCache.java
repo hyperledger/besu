@@ -46,7 +46,7 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
     if (startBlockParam.isEmpty() || startBlockParam.get().isEarliest()) {
       startBlock = 0;
     } else if (startBlockParam.get().getNumber().isPresent()) {
-      startBlock = startBlockParam.get().getNumber().getAsLong();
+      startBlock = startBlockParam.get().getNumber().get();
     } else {
       // latest, pending
       startBlock = Long.MAX_VALUE;
@@ -64,7 +64,7 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
     } else if (stopBlockParam.get().isEarliest()) {
       stopBlock = 0;
     } else if (stopBlockParam.get().getNumber().isPresent()) {
-      stopBlock = stopBlockParam.get().getNumber().getAsLong();
+      stopBlock = stopBlockParam.get().getNumber().get();
     } else {
       // latest, pending
       stopBlock = Long.MAX_VALUE;

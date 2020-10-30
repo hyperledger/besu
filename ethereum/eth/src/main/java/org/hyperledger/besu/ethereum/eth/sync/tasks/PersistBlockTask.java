@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractEthTask;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -32,39 +33,51 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class PersistBlockTask<C> extends AbstractEthTask<Block> {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+public class PersistBlockTask extends AbstractEthTask<Block> {
+
+  private static final Logger LOG = LogManager.getLogger();
+
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
+  private final EthContext ethContext;
   private final Block block;
   private final HeaderValidationMode validateHeaders;
+  private boolean blockImported;
 
   private PersistBlockTask(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
     super(metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.ethContext = ethContext;
     this.block = block;
     this.validateHeaders = headerValidationMode;
+    blockImported = false;
   }
 
-  public static <C> PersistBlockTask<C> create(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static PersistBlockTask create(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
-    return new PersistBlockTask<>(
-        protocolSchedule, protocolContext, block, headerValidationMode, metricsSystem);
+    return new PersistBlockTask(
+        protocolSchedule, protocolContext, ethContext, block, headerValidationMode, metricsSystem);
   }
 
-  public static <C> Supplier<CompletableFuture<List<Block>>> forSequentialBlocks(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static Supplier<CompletableFuture<List<Block>>> forSequentialBlocks(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
@@ -76,6 +89,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
           importBlockAndAddToList(
               protocolSchedule,
               protocolContext,
+              ethContext,
               blockIterator.next(),
               successfulImports,
               headerValidationMode,
@@ -88,6 +102,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
                     importBlockAndAddToList(
                         protocolSchedule,
                         protocolContext,
+                        ethContext,
                         block,
                         successfulImports,
                         headerValidationMode,
@@ -97,15 +112,21 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
     };
   }
 
-  private static <C> CompletableFuture<Block> importBlockAndAddToList(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  private static CompletableFuture<Block> importBlockAndAddToList(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
       final Block block,
       final List<Block> list,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
     return PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, headerValidationMode, metricsSystem)
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            block,
+            headerValidationMode,
+            metricsSystem)
         .run()
         .whenComplete(
             (r, t) -> {
@@ -115,9 +136,10 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
             });
   }
 
-  public static <C> Supplier<CompletableFuture<List<Block>>> forUnorderedBlocks(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static Supplier<CompletableFuture<List<Block>>> forUnorderedBlocks(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
@@ -125,13 +147,14 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
     return () -> {
       final CompletableFuture<List<Block>> finalResult = new CompletableFuture<>();
       final List<Block> successfulImports = new ArrayList<>();
-      final Iterator<PersistBlockTask<C>> tasks =
+      final Iterator<PersistBlockTask> tasks =
           blocks.stream()
               .map(
                   block ->
                       PersistBlockTask.create(
                           protocolSchedule,
                           protocolContext,
+                          ethContext,
                           block,
                           headerValidationMode,
                           metricsSystem))
@@ -139,7 +162,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
 
       CompletableFuture<Block> future = tasks.next().run();
       while (tasks.hasNext()) {
-        final PersistBlockTask<C> task = tasks.next();
+        final PersistBlockTask task = tasks.next();
         future =
             future
                 .handle((r, t) -> r)
@@ -170,22 +193,37 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
   @Override
   protected void executeTask() {
     try {
-      final ProtocolSpec<C> protocolSpec =
+      final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-      final BlockImporter<C> blockImporter = protocolSpec.getBlockImporter();
-      final boolean blockImported =
-          blockImporter.importBlock(protocolContext, block, validateHeaders);
+      final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+      blockImported = blockImporter.importBlock(protocolContext, block, validateHeaders);
       if (!blockImported) {
-        result
-            .get()
-            .completeExceptionally(
-                new InvalidBlockException(
-                    "Failed to import block", block.getHeader().getNumber(), block.getHash()));
+        result.completeExceptionally(
+            new InvalidBlockException(
+                "Failed to import block", block.getHeader().getNumber(), block.getHash()));
         return;
       }
-      result.get().complete(block);
+      result.complete(block);
     } catch (final Exception e) {
-      result.get().completeExceptionally(e);
+      result.completeExceptionally(e);
+    }
+  }
+
+  @Override
+  protected void cleanup() {
+    if (blockImported) {
+      final double timeInS = getTaskTimeInSec();
+      LOG.info(
+          String.format(
+              "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
+              block.getHeader().getNumber(),
+              block.getBody().getTransactions().size(),
+              block.getBody().getOmmers().size(),
+              block.getHeader().getGasUsed(),
+              (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+              block.getHash().toHexString(),
+              timeInS,
+              ethContext.getEthPeers().peerCount()));
     }
   }
 }

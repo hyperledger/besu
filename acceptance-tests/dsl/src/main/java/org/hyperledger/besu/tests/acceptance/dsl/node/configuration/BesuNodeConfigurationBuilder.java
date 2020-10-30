@@ -47,7 +47,7 @@ public class BesuNodeConfigurationBuilder {
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
-  private Optional<String> keyFilePath = Optional.empty();
+  private String keyFilePath = null;
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
@@ -55,10 +55,14 @@ public class BesuNodeConfigurationBuilder {
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
+  private boolean secp256K1Native = false;
+  private boolean altbn128Native = false;
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
+  private boolean isDnsEnabled = false;
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
+  private List<String> runCommand = new ArrayList<>();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -98,7 +102,7 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder jsonRpcEnabled() {
     this.jsonRpcConfiguration.setEnabled(true);
     this.jsonRpcConfiguration.setPort(0);
-    this.jsonRpcConfiguration.setHostsWhitelist(singletonList("*"));
+    this.jsonRpcConfiguration.setHostsAllowlist(singletonList("*"));
 
     return this;
   }
@@ -108,7 +112,7 @@ public class BesuNodeConfigurationBuilder {
         MetricsConfiguration.builder()
             .enabled(true)
             .port(0)
-            .hostsWhitelist(singletonList("*"))
+            .hostsAllowlist(singletonList("*"))
             .build();
 
     return this;
@@ -165,7 +169,7 @@ public class BesuNodeConfigurationBuilder {
     final WebSocketConfiguration config = WebSocketConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singletonList("*"));
+    config.setHostsAllowlist(Collections.singletonList("*"));
 
     this.webSocketConfiguration = config;
     return this;
@@ -208,7 +212,7 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder keyFilePath(final String keyFilePath) {
-    this.keyFilePath = Optional.of(keyFilePath);
+    this.keyFilePath = keyFilePath;
     return this;
   }
 
@@ -250,13 +254,33 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder secp256k1Native() {
+    this.secp256K1Native = true;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder altbn128() {
+    this.altbn128Native = true;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder staticNodes(final List<String> staticNodes) {
     this.staticNodes = staticNodes;
     return this;
   }
 
+  public BesuNodeConfigurationBuilder dnsEnabled(final boolean isDnsEnabled) {
+    this.isDnsEnabled = isDnsEnabled;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = Optional.ofNullable(privacyParameters);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder run(final String... commands) {
+    this.runCommand = List.of(commands);
     return this;
   }
 
@@ -269,7 +293,7 @@ public class BesuNodeConfigurationBuilder {
         webSocketConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
-        keyFilePath,
+        Optional.ofNullable(keyFilePath),
         devMode,
         genesisConfigProvider,
         p2pEnabled,
@@ -277,9 +301,13 @@ public class BesuNodeConfigurationBuilder {
         discoveryEnabled,
         bootnodeEligible,
         revertReasonEnabled,
+        secp256K1Native,
+        altbn128Native,
         plugins,
         extraCLIOptions,
         staticNodes,
-        privacyParameters);
+        isDnsEnabled,
+        privacyParameters,
+        runCommand);
   }
 }

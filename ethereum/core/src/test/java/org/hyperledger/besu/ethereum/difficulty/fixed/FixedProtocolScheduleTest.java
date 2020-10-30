@@ -28,7 +28,7 @@ public class FixedProtocolScheduleTest {
   @Test
   public void reportedDifficultyForAllBlocksIsAFixedValue() {
 
-    final ProtocolSchedule<Void> schedule =
+    final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(GenesisConfigFile.development().getConfigOptions());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();

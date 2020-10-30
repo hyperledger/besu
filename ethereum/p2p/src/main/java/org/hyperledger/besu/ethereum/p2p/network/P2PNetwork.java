@@ -133,7 +133,11 @@ public interface P2PNetwork extends Closeable {
    */
   boolean isP2pEnabled();
 
-  /** @return Return true if peer discovery is enabled. */
+  /**
+   * Is discovery enabled?
+   *
+   * @return Return true if peer discovery is enabled.
+   */
   boolean isDiscoveryEnabled();
 
   /**

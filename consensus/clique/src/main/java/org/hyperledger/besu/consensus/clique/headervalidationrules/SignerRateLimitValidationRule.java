@@ -14,21 +14,17 @@
  */
 package org.hyperledger.besu.consensus.clique.headervalidationrules;
 
-import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
-public class SignerRateLimitValidationRule
-    implements AttachedBlockHeaderValidationRule<CliqueContext> {
+public class SignerRateLimitValidationRule implements AttachedBlockHeaderValidationRule {
 
   @Override
   public boolean validate(
-      final BlockHeader header,
-      final BlockHeader parent,
-      final ProtocolContext<CliqueContext> protocolContext) {
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final Address blockSigner = CliqueHelpers.getProposerOfBlock(header);
 
     return CliqueHelpers.addressIsAllowedToProduceNextBlock(blockSigner, protocolContext, parent);

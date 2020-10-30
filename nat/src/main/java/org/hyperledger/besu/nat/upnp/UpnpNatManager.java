@@ -57,7 +57,7 @@ import org.jupnp.support.model.PortMapping;
  * with the NAT environment through UPnP.
  */
 public class UpnpNatManager extends AbstractNatManager {
-  protected static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   static final String SERVICE_TYPE_WAN_IP_CONNECTION = "WANIPConnection";
 

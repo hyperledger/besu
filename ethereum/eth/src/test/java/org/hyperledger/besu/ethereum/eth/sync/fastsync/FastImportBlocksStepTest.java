@@ -45,15 +45,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class FastImportBlocksStepTest {
 
-  @Mock private ProtocolSchedule<Void> protocolSchedule;
-  @Mock private ProtocolSpec<Void> protocolSpec;
-  @Mock private ProtocolContext<Void> protocolContext;
-  @Mock private BlockImporter<Void> blockImporter;
+  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private ProtocolContext protocolContext;
+  @Mock private BlockImporter blockImporter;
   @Mock private ValidationPolicy validationPolicy;
   @Mock private ValidationPolicy ommerValidationPolicy;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-  private FastImportBlocksStep<Void> importBlocksStep;
+  private FastImportBlocksStep importBlocksStep;
 
   @Before
   public void setUp() {
@@ -63,7 +63,7 @@ public class FastImportBlocksStepTest {
     when(ommerValidationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT);
 
     importBlocksStep =
-        new FastImportBlocksStep<>(
+        new FastImportBlocksStep(
             protocolSchedule, protocolContext, validationPolicy, ommerValidationPolicy, null);
   }
 

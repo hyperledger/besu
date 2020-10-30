@@ -1,0 +1,77 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x1E",
+      [
+        "trace"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": null,
+        "trace": [
+          {
+            "action": {
+              "callType": "call",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0x9843e0",
+              "input": "0x00000000000000000000000000000000000000000000000000000000000001f4",
+              "to": "0x0160000000000000000000000000000000000000",
+              "value": "0xa"
+            },
+            "result": {
+              "gasUsed": "0xcb3",
+              "output": "0x"
+            },
+            "subtraces": 2,
+            "traceAddress": [],
+            "type": "call"
+          },
+          {
+            "action": {
+              "callType": "call",
+              "from": "0x0160000000000000000000000000000000000000",
+              "gas": "0x1f4",
+              "input": "0x",
+              "to": "0x0170000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "error": "Out of gas",
+            "subtraces": 0,
+            "traceAddress": [
+              0
+            ],
+            "type": "call"
+          },
+          {
+            "action": {
+              "callType": "call",
+              "from": "0x0160000000000000000000000000000000000000",
+              "gas": "0x1f4",
+              "input": "0x",
+              "to": "0x0170000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "error": "Out of gas",
+            "subtraces": 0,
+            "traceAddress": [
+              1
+            ],
+            "type": "call"
+          }
+        ],
+        "transactionHash": "0xbc7cedf9a139bc6a16959e1463a56ef5bdc07731e384d2a1c27e7828b563d594",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

@@ -83,7 +83,7 @@ public class BlockAdapterBase extends AdapterBase {
     return Optional.of(header.getReceiptsRoot());
   }
 
-  public Optional<AccountAdapter> getMiner(final DataFetchingEnvironment environment) {
+  public Optional<AdapterBase> getMiner(final DataFetchingEnvironment environment) {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = header.getNumber();
@@ -91,8 +91,10 @@ public class BlockAdapterBase extends AdapterBase {
     if (bn != null) {
       blockNumber = bn;
     }
-    return Optional.of(
-        new AccountAdapter(query.getWorldState(blockNumber).get().get(header.getCoinbase())));
+
+    return Optional.ofNullable(query.getWorldState(blockNumber).get().get(header.getCoinbase()))
+        .map(account -> (AdapterBase) new AccountAdapter(account))
+        .or(() -> Optional.of(new EmptyAccountAdapter(header.getCoinbase())));
   }
 
   public Optional<Bytes> getExtraData() {
@@ -164,7 +166,7 @@ public class BlockAdapterBase extends AdapterBase {
     final BlockchainQueries blockchain = getBlockchainQueries(environment);
 
     final Hash hash = header.getHash();
-    final List<LogWithMetadata> logs = blockchain.matchingLogs(hash, query);
+    final List<LogWithMetadata> logs = blockchain.matchingLogs(hash, query, () -> true);
     final List<LogAdapter> results = new ArrayList<>();
     for (final LogWithMetadata log : logs) {
       results.add(new LogAdapter(log));
@@ -191,7 +193,7 @@ public class BlockAdapterBase extends AdapterBase {
     final Bytes data = (Bytes) callData.get("data");
 
     final BlockchainQueries query = getBlockchainQueries(environment);
-    final ProtocolSchedule<?> protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
     final long bn = header.getNumber();
 

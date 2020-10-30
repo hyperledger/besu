@@ -56,7 +56,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   @Override
   public Gas gasRequirement(final Bytes input) {
     // Typically gas calculations are delegated to a GasCalculator instance,
-    // but the complexity and coupling wih other parts of the precompile seem
+    // but the complexity and coupling with other parts of the precompile seem
     // like reasonable reasons to do the math here instead.
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);

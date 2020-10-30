@@ -19,13 +19,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -60,7 +63,12 @@ public class WebSocketRequestHandlerTest {
     jsonRpcMethodMock = mock(JsonRpcMethod.class);
 
     methods.put("eth_x", jsonRpcMethodMock);
-    handler = new WebSocketRequestHandler(vertx, methods);
+    handler =
+        new WebSocketRequestHandler(
+            vertx,
+            methods,
+            mock(EthScheduler.class),
+            TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 
   @After
@@ -151,6 +159,34 @@ public class WebSocketRequestHandlerTest {
         new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+
+    final String websocketId = UUID.randomUUID().toString();
+
+    vertx
+        .eventBus()
+        .consumer(websocketId)
+        .handler(
+            msg -> {
+              context.assertEquals(Json.encode(expectedResponse), msg.body());
+              async.complete();
+            })
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
+
+    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void onInvalidJsonRpcParametersExceptionProcessingRequestShouldRespondInvalidParams(
+      final TestContext context) {
+    final Async async = context.async();
+
+    final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
+    final JsonRpcRequestContext expectedRequest =
+        new JsonRpcRequestContext(requestJson.mapTo(WebSocketRpcRequest.class));
+    when(jsonRpcMethodMock.response(eq(expectedRequest)))
+        .thenThrow(new InvalidJsonRpcParameters(""));
+    final JsonRpcErrorResponse expectedResponse =
+        new JsonRpcErrorResponse(1, JsonRpcError.INVALID_PARAMS);
 
     final String websocketId = UUID.randomUUID().toString();
 

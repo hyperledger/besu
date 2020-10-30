@@ -27,7 +27,7 @@ public class ClassicForkPeerValidator extends AbstractPeerBlockValidator {
   private static final Logger LOG = LogManager.getLogger();
 
   ClassicForkPeerValidator(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long daoBlockNumber,
       final long chainHeightEstimationBuffer) {
@@ -35,7 +35,7 @@ public class ClassicForkPeerValidator extends AbstractPeerBlockValidator {
   }
 
   public ClassicForkPeerValidator(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long daoBlockNumber) {
     this(protocolSchedule, metricsSystem, daoBlockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);

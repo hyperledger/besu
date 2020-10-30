@@ -21,10 +21,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -32,9 +34,11 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
@@ -42,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -68,10 +73,14 @@ public class LogsSubscriptionServiceTest {
 
   @Mock private SubscriptionManager subscriptionManager;
 
+  @Mock private PrivacyQueries privacyQueries;
+
   @Before
   public void before() {
-    logsSubscriptionService = new LogsSubscriptionService(subscriptionManager);
+    logsSubscriptionService =
+        new LogsSubscriptionService(subscriptionManager, Optional.of(privacyQueries));
     blockchain.observeLogs(logsSubscriptionService);
+    blockchain.observeBlockAdded(logsSubscriptionService::checkPrivateLogs);
   }
 
   @Test
@@ -282,6 +291,42 @@ public class LogsSubscriptionServiceTest {
         .sendMessage(eq(subscription.getSubscriptionId()), captor.capture());
   }
 
+  @Test
+  public void whenExistsPrivateLogsSubscriptionPrivacyQueriesIsCalled() {
+    final String privacyGroupId = "privacy_group_id";
+    final Address address = Address.fromHexString("0x0");
+    final String enclavePublicKey = "public_key";
+    final PrivateLogsSubscription subscription =
+        createPrivateSubscription(privacyGroupId, address, enclavePublicKey);
+    registerSubscriptions(subscription);
+
+    final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
+
+    verify(privacyQueries)
+        .matchingLogs(
+            eq(subscription.getPrivacyGroupId()),
+            eq(blockWithReceipts.getHash()),
+            eq(subscription.getFilterParameter().getLogsQuery()));
+  }
+
+  @Test
+  public void whenPrivateLogsSubscriptionMatchesLogNotificationIsSent() {
+    final String privacyGroupId = "privacy_group_id";
+    final Address address = Address.fromHexString("0x0");
+    final String enclavePublicKey = "public_key";
+    final PrivateLogsSubscription subscription =
+        createPrivateSubscription(privacyGroupId, address, enclavePublicKey);
+    registerSubscriptions(subscription);
+
+    when(privacyQueries.matchingLogs(any(), any(), any())).thenReturn(List.of(logWithMetadata()));
+
+    final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
+
+    verify(subscriptionManager, times(1)).sendMessage(eq(subscription.getSubscriptionId()), any());
+  }
+
   private void assertLogResultMatches(
       final LogResult result,
       final Block block,
@@ -346,6 +391,21 @@ public class LogsSubscriptionServiceTest {
     return new BlockWithReceipts(block, receipts);
   }
 
+  private PrivateLogsSubscription createPrivateSubscription(
+      final String privacyGroupId, final Address address, final String enclavePublicKey) {
+    return new PrivateLogsSubscription(
+        nextSubscriptionId.incrementAndGet(),
+        "conn",
+        new FilterParameter(
+            BlockParameter.LATEST,
+            BlockParameter.LATEST,
+            Arrays.asList(address),
+            Collections.emptyList(),
+            null),
+        privacyGroupId,
+        enclavePublicKey);
+  }
+
   private LogsSubscription createSubscription(final Address address) {
     return createSubscription(Arrays.asList(address), Collections.emptyList());
   }
@@ -354,7 +414,10 @@ public class LogsSubscriptionServiceTest {
       final List<Address> addresses, final List<List<LogTopic>> logTopics) {
 
     return new LogsSubscription(
-        nextSubscriptionId.incrementAndGet(), "conn", new LogsQuery(addresses, logTopics));
+        nextSubscriptionId.incrementAndGet(),
+        "conn",
+        new FilterParameter(
+            BlockParameter.LATEST, BlockParameter.LATEST, addresses, logTopics, null));
   }
 
   private void registerSubscriptions(final LogsSubscription... subscriptions) {
@@ -364,5 +427,18 @@ public class LogsSubscriptionServiceTest {
   private void registerSubscriptions(final List<LogsSubscription> subscriptions) {
     when(subscriptionManager.subscriptionsOfType(any(), any()))
         .thenReturn(Lists.newArrayList(subscriptions));
+  }
+
+  private LogWithMetadata logWithMetadata() {
+    return new LogWithMetadata(
+        0,
+        100L,
+        Hash.ZERO,
+        Hash.ZERO,
+        0,
+        Address.fromHexString("0x0"),
+        Bytes.EMPTY,
+        Lists.newArrayList(),
+        false);
   }
 }

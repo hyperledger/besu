@@ -23,6 +23,7 @@ import java.util.TreeMap;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -87,8 +88,14 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
 
     public StorageEntry(final AccountStorageEntry entry, final boolean shortValues) {
       if (shortValues) {
-        this.value = entry.getValue().toShortHexString();
-        this.key = entry.getKey().map(UInt256::toShortHexString).orElse(null);
+        this.value = entry.getValue().toMinimalBytes().toHexString();
+        this.key =
+            entry
+                .getKey()
+                .map(UInt256::toMinimalBytes)
+                .map(Bytes::toHexString)
+                .map(s -> "0x".equals(s) ? "0x00" : s)
+                .orElse(null);
       } else {
         this.value = entry.getValue().toHexString();
         this.key = entry.getKey().map(UInt256::toHexString).orElse(null);

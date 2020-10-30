@@ -85,7 +85,8 @@ public class Cluster implements AutoCloseable {
 
     final Optional<? extends RunnableNode> bootnode = selectAndStartBootnode(nodes);
 
-    nodes.stream()
+    nodes
+        .parallelStream()
         .filter(node -> bootnode.map(boot -> boot != node).orElse(true))
         .forEach(this::startNode);
 
@@ -95,6 +96,7 @@ public class Cluster implements AutoCloseable {
         node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
       }
     }
+    LOG.info("Cluster startup complete.");
   }
 
   private Optional<? extends RunnableNode> selectAndStartBootnode(
@@ -128,8 +130,17 @@ public class Cluster implements AutoCloseable {
     }
   }
 
-  private void startNode(final RunnableNode node) {
+  public void startNode(final RunnableNode node) {
     this.startNode(node, false);
+  }
+
+  public void runNodeStart(final RunnableNode node) {
+    LOG.info(
+        "Starting node {} (id = {}...{})",
+        node.getName(),
+        node.getNodeId().substring(0, 4),
+        node.getNodeId().substring(124));
+    node.start(besuNodeRunner);
   }
 
   private void startNode(final RunnableNode node, final boolean isBootNode) {
@@ -139,12 +150,7 @@ public class Cluster implements AutoCloseable {
         .getGenesisConfigProvider()
         .create(originalNodes)
         .ifPresent(node.getConfiguration()::setGenesisConfig);
-    LOG.info(
-        "Starting node {} (id = {}...{})",
-        node.getName(),
-        node.getNodeId().substring(0, 4),
-        node.getNodeId().substring(124));
-    node.start(besuNodeRunner);
+    runNodeStart(node);
   }
 
   public void stop() {

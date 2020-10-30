@@ -31,13 +31,13 @@ import org.junit.Test;
 /**
  * Tests ethTasks that request data from the network, and retry until all of the data is received.
  *
- * @param <T>
+ * @param <T> The type of data being requested from the network
  */
 public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest<T, T> {
 
   protected final int maxRetries;
 
-  public RetryingMessageTaskTest() {
+  protected RetryingMessageTaskTest() {
     this.maxRetries = 3;
   }
 

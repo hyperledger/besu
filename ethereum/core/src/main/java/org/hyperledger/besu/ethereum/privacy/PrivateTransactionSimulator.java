@@ -48,26 +48,24 @@ public class PrivateTransactionSimulator {
   private static final SECP256K1.Signature FAKE_SIGNATURE =
       SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
 
-  private static final Address DEFAULT_FROM =
-      Address.fromHexString("0x0000000000000000000000000000000000000000");
+  private static final Address DEFAULT_FROM = Address.ZERO;
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final PrivacyParameters privacyParameters;
   private final PrivateStateRootResolver privateStateRootResolver;
 
   public PrivateTransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final PrivacyParameters privacyParameters) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.privacyParameters = privacyParameters;
-    this.privateStateRootResolver =
-        new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
+    this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
   }
 
   public Optional<PrivateTransactionProcessor.Result> process(
@@ -111,7 +109,7 @@ public class PrivateTransactionSimulator {
     final PrivateTransaction transaction =
         getPrivateTransaction(callParams, header, privacyGroupId, disposablePrivateState);
 
-    final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final PrivateTransactionProcessor privateTransactionProcessor =
         protocolSpec.getPrivateTransactionProcessor();

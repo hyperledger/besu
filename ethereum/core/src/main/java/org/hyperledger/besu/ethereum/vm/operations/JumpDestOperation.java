@@ -14,24 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-public class JumpDestOperation extends AbstractOperation {
+public class JumpDestOperation extends AbstractFixedCostOperation {
 
   public static final int OPCODE = 0x5B;
 
   public JumpDestOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "JUMPDEST", 0, 0, false, 1, gasCalculator);
+    super(
+        OPCODE,
+        "JUMPDEST",
+        0,
+        0,
+        false,
+        1,
+        gasCalculator,
+        gasCalculator.getJumpDestOperationGasCost());
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    return gasCalculator().getJumpDestOperationGasCost();
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    return successResponse;
   }
-
-  @Override
-  public void execute(final MessageFrame frame) {}
 }

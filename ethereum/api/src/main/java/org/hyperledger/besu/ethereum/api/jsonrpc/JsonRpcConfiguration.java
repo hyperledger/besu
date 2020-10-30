@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 
 import java.io.File;
@@ -36,11 +37,12 @@ public class JsonRpcConfiguration {
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<RpcApi> rpcApis;
-  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private File authenticationPublicKeyFile;
   private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
+  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -48,6 +50,7 @@ public class JsonRpcConfiguration {
     config.setPort(DEFAULT_JSON_RPC_PORT);
     config.setHost(DEFAULT_JSON_RPC_HOST);
     config.rpcApis = RpcApis.DEFAULT_JSON_RPC_APIS;
+    config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
     return config;
   }
 
@@ -100,12 +103,12 @@ public class JsonRpcConfiguration {
     rpcApis.add(rpcApi);
   }
 
-  public Collection<String> getHostsWhitelist() {
-    return Collections.unmodifiableCollection(this.hostsWhitelist);
+  public Collection<String> getHostsAllowlist() {
+    return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
-  public void setHostsWhitelist(final List<String> hostsWhitelist) {
-    this.hostsWhitelist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsWhitelist) {
+    this.hostsAllowlist = hostsWhitelist;
   }
 
   public boolean isAuthenticationEnabled() {
@@ -140,6 +143,14 @@ public class JsonRpcConfiguration {
     this.tlsConfiguration = tlsConfiguration;
   }
 
+  public long getHttpTimeoutSec() {
+    return httpTimeoutSec;
+  }
+
+  public void setHttpTimeoutSec(final long httpTimeoutSec) {
+    this.httpTimeoutSec = httpTimeoutSec;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -147,12 +158,13 @@ public class JsonRpcConfiguration {
         .add("port", port)
         .add("host", host)
         .add("corsAllowedDomains", corsAllowedDomains)
-        .add("hostsWhitelist", hostsWhitelist)
+        .add("hostsAllowlist", hostsAllowlist)
         .add("rpcApis", rpcApis)
         .add("authenticationEnabled", authenticationEnabled)
         .add("authenticationCredentialsFile", authenticationCredentialsFile)
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
         .add("tlsConfiguration", tlsConfiguration)
+        .add("httpTimeoutSec", httpTimeoutSec)
         .toString();
   }
 
@@ -171,7 +183,7 @@ public class JsonRpcConfiguration {
         && Objects.equals(host, that.host)
         && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
         && Objects.equals(rpcApis, that.rpcApis)
-        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist)
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
         && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile);
   }
@@ -184,7 +196,7 @@ public class JsonRpcConfiguration {
         host,
         corsAllowedDomains,
         rpcApis,
-        hostsWhitelist,
+        hostsAllowlist,
         authenticationEnabled,
         authenticationCredentialsFile,
         authenticationPublicKeyFile);

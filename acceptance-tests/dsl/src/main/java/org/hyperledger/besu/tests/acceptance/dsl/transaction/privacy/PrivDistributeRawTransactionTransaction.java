@@ -35,6 +35,9 @@ public class PrivDistributeRawTransactionTransaction implements Transaction<Stri
       final PrivacyRequestFactory.PrivDistributeTransactionResponse result =
           node.privacy().privDistributeTransaction(transaction).send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getTransactionKey();
     } catch (final IOException e) {
       throw new RuntimeException(e);

@@ -36,7 +36,7 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   }
 
   @Override
-  protected BlockchainSetupUtil<Void> getBlockchainSetupUtil() {
+  protected BlockchainSetupUtil getBlockchainSetupUtil() {
     return createBlockchainSetupUtil(
         "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin");
   }

@@ -42,13 +42,13 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BesuController<C> implements java.io.Closeable {
+public class BesuController implements java.io.Closeable {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final String DATABASE_PATH = "database";
   public static final String CACHE_PATH = "caches";
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthProtocolManager ethProtocolManager;
   private final GenesisConfigOptions genesisConfigOptions;
   private final SubProtocolConfiguration subProtocolConfiguration;
@@ -65,8 +65,8 @@ public class BesuController<C> implements java.io.Closeable {
   private final SyncState syncState;
 
   BesuController(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthProtocolManager ethProtocolManager,
       final GenesisConfigOptions genesisConfigOptions,
       final SubProtocolConfiguration subProtocolConfiguration,
@@ -97,11 +97,11 @@ public class BesuController<C> implements java.io.Closeable {
     this.additionalPluginServices = additionalPluginServices;
   }
 
-  public ProtocolContext<C> getProtocolContext() {
+  public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
-  public ProtocolSchedule<C> getProtocolSchedule() {
+  public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
@@ -169,11 +169,11 @@ public class BesuController<C> implements java.io.Closeable {
 
   public static class Builder {
 
-    public BesuControllerBuilder<?> fromEthNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
+    public BesuControllerBuilder fromEthNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
       return fromEthNetworkConfig(ethNetworkConfig, Collections.emptyMap());
     }
 
-    public BesuControllerBuilder<?> fromEthNetworkConfig(
+    public BesuControllerBuilder fromEthNetworkConfig(
         final EthNetworkConfig ethNetworkConfig, final Map<String, String> genesisConfigOverrides) {
       return fromGenesisConfig(
               GenesisConfigFile.fromConfig(ethNetworkConfig.getGenesisConfig()),
@@ -181,15 +181,15 @@ public class BesuController<C> implements java.io.Closeable {
           .networkId(ethNetworkConfig.getNetworkId());
     }
 
-    public BesuControllerBuilder<?> fromGenesisConfig(final GenesisConfigFile genesisConfig) {
+    public BesuControllerBuilder fromGenesisConfig(final GenesisConfigFile genesisConfig) {
       return fromGenesisConfig(genesisConfig, Collections.emptyMap());
     }
 
-    public BesuControllerBuilder<?> fromGenesisConfig(
+    BesuControllerBuilder fromGenesisConfig(
         final GenesisConfigFile genesisConfig, final Map<String, String> genesisConfigOverrides) {
       final GenesisConfigOptions configOptions =
           genesisConfig.getConfigOptions(genesisConfigOverrides);
-      final BesuControllerBuilder<?> builder;
+      final BesuControllerBuilder builder;
 
       if (configOptions.isEthHash()) {
         builder = new MainnetBesuControllerBuilder();

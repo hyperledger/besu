@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
@@ -51,12 +53,16 @@ public class ChainIdOperationTest {
     chainId = Bytes32.fromHexString(chainIdString);
     this.expectedGas = expectedGas;
     operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
+    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100));
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Test
   public void shouldReturnChainId() {
     final ArgumentCaptor<Bytes32> arg = ArgumentCaptor.forClass(Bytes32.class);
-    operation.execute(messageFrame);
+    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100));
+    operation.execute(messageFrame, null);
+    Mockito.verify(messageFrame).getRemainingGas();
     Mockito.verify(messageFrame).pushStackItem(arg.capture());
     Mockito.verifyNoMoreInteractions(messageFrame);
     assertThat(arg.getValue()).isEqualTo(chainId);
@@ -64,6 +70,7 @@ public class ChainIdOperationTest {
 
   @Test
   public void shouldCalculateGasPrice() {
-    assertThat(operation.cost(messageFrame)).isEqualTo(Gas.of(expectedGas));
+    final OperationResult result = operation.execute(messageFrame, null);
+    assertThat(result.getGasCost()).contains(Gas.of(expectedGas));
   }
 }

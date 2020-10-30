@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.Words;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -57,13 +58,15 @@ public class ExtCodeHashOperationTest {
 
   @Test
   public void shouldCharge400Gas() {
-    assertThat(operation.cost(createMessageFrame(REQUESTED_ADDRESS))).isEqualTo(Gas.of(400));
+    final OperationResult result = operation.execute(createMessageFrame(REQUESTED_ADDRESS), null);
+    assertThat(result.getGasCost()).contains(Gas.of(400));
   }
 
   @Test
   public void istanbulShouldCharge700Gas() {
-    assertThat(operationIstanbul.cost(createMessageFrame(REQUESTED_ADDRESS)))
-        .isEqualTo(Gas.of(700));
+    final OperationResult result =
+        operationIstanbul.execute(createMessageFrame(REQUESTED_ADDRESS), null);
+    assertThat(result.getGasCost()).contains(Gas.of(700));
   }
 
   @Test
@@ -117,13 +120,13 @@ public class ExtCodeHashOperationTest {
             .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)))
             .toBytes();
     final MessageFrame frame = createMessageFrame(value);
-    operation.execute(frame);
+    operation.execute(frame, null);
     assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));
   }
 
   private Bytes32 executeOperation(final Address requestedAddress) {
     final MessageFrame frame = createMessageFrame(requestedAddress);
-    operation.execute(frame);
+    operation.execute(frame, null);
     return frame.getStackItem(0);
   }
 

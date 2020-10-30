@@ -24,16 +24,16 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
  * Looks up the correct {@link BlockHeaderFunctions} to use based on a {@link ProtocolSchedule} to
  * ensure that the correct hash is created given the block number.
  */
-public class ScheduleBasedBlockHeaderFunctions<C> implements BlockHeaderFunctions {
+public class ScheduleBasedBlockHeaderFunctions implements BlockHeaderFunctions {
 
-  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
 
-  private ScheduleBasedBlockHeaderFunctions(final ProtocolSchedule<C> protocolSchedule) {
+  private ScheduleBasedBlockHeaderFunctions(final ProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
   }
 
-  public static <C> BlockHeaderFunctions create(final ProtocolSchedule<C> protocolSchedule) {
-    return new ScheduleBasedBlockHeaderFunctions<>(protocolSchedule);
+  public static BlockHeaderFunctions create(final ProtocolSchedule protocolSchedule) {
+    return new ScheduleBasedBlockHeaderFunctions(protocolSchedule);
   }
 
   @Override

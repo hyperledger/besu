@@ -25,11 +25,11 @@ import org.junit.Test;
 public final class MainnetBlockHeaderValidatorTest {
 
   @SuppressWarnings("unchecked")
-  private final ProtocolContext<Void> protocolContext = mock(ProtocolContext.class);
+  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
 
   @Test
   public void validHeaderFrontier() throws Exception {
-    final BlockHeaderValidator<Void> headerValidator =
+    final BlockHeaderValidator headerValidator =
         MainnetBlockHeaderValidator.create()
             .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
             .build();
@@ -44,7 +44,7 @@ public final class MainnetBlockHeaderValidatorTest {
 
   @Test
   public void validHeaderHomestead() throws Exception {
-    final BlockHeaderValidator<Void> headerValidator =
+    final BlockHeaderValidator headerValidator =
         MainnetBlockHeaderValidator.create()
             .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
             .build();
@@ -59,7 +59,7 @@ public final class MainnetBlockHeaderValidatorTest {
 
   @Test
   public void invalidParentHash() throws Exception {
-    final BlockHeaderValidator<Void> headerValidator =
+    final BlockHeaderValidator headerValidator =
         MainnetBlockHeaderValidator.create()
             .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
             .build();
@@ -74,7 +74,7 @@ public final class MainnetBlockHeaderValidatorTest {
 
   @Test
   public void validHeaderByzantium() throws Exception {
-    final BlockHeaderValidator<Void> headerValidator =
+    final BlockHeaderValidator headerValidator =
         MainnetBlockHeaderValidator.create()
             .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
             .build();

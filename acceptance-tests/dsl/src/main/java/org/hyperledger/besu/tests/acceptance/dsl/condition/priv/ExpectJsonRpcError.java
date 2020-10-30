@@ -41,8 +41,7 @@ public class ExpectJsonRpcError implements Condition {
       failBecauseExceptionWasNotThrown(ClientConnectionException.class);
     } catch (final Exception e) {
       Assertions.assertThat(e)
-          .isInstanceOf(ClientConnectionException.class)
-          .hasMessageContaining("400")
+          .isInstanceOf(RuntimeException.class)
           .hasMessageContaining(error.getMessage());
     }
   }

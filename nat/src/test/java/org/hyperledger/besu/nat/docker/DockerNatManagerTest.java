@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
@@ -28,6 +29,7 @@ import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -47,7 +49,7 @@ public final class DockerNatManagerTest {
   @Before
   public void initialize() throws NatInitializationException {
     hostBasedIpDetector = mock(HostBasedIpDetector.class);
-    when(hostBasedIpDetector.detectExternalIp()).thenReturn(Optional.of(detectedAdvertisedHost));
+    when(hostBasedIpDetector.detectAdvertisedIp()).thenReturn(Optional.of(detectedAdvertisedHost));
     natManager = new DockerNatManager(hostBasedIpDetector, advertisedHost, p2pPort, rpcHttpPort);
     natManager.start();
   }
@@ -61,7 +63,14 @@ public final class DockerNatManagerTest {
   @Test
   public void assertThatExternalIPIsEqualToDefaultHostIfIpDetectorCannotRetrieveIP()
       throws ExecutionException, InterruptedException {
-    when(hostBasedIpDetector.detectExternalIp()).thenReturn(Optional.empty());
+    final NatManager natManager =
+        new DockerNatManager(hostBasedIpDetector, advertisedHost, p2pPort, rpcHttpPort);
+    when(hostBasedIpDetector.detectAdvertisedIp()).thenReturn(Optional.empty());
+    try {
+      natManager.start();
+    } catch (NatInitializationException e) {
+      Assertions.fail(e.getMessage());
+    }
     assertThat(natManager.queryExternalIPAddress().get()).isEqualTo(advertisedHost);
   }
 

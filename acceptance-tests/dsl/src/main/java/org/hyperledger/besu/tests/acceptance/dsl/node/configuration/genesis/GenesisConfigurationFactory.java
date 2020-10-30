@@ -43,9 +43,25 @@ public class GenesisConfigurationFactory {
 
   public Optional<String> createIbft2GenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    final String template = readGenesisFile("/ibft/ibft.json");
+    return createIbft2GenesisConfig(validators, "/ibft/ibft.json");
+  }
+
+  public Optional<String> createIbft2GenesisConfig(
+      final Collection<? extends RunnableNode> validators, final String genesisFile) {
+    final String template = readGenesisFile(genesisFile);
     return updateGenesisExtraData(
         validators, template, IbftExtraData::createGenesisExtraDataString);
+  }
+
+  public Optional<String> createIbft2GenesisConfigFilterBootnode(
+      final Collection<? extends RunnableNode> validators, final String genesisFile) {
+    final String template = readGenesisFile(genesisFile);
+    final List<? extends RunnableNode> filteredList =
+        validators.stream()
+            .filter(node -> !node.getConfiguration().isBootnodeEligible())
+            .collect(toList());
+    return updateGenesisExtraData(
+        filteredList, template, IbftExtraData::createGenesisExtraDataString);
   }
 
   public Optional<String> createPrivacyIbft2GenesisConfig(

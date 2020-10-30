@@ -212,8 +212,8 @@ public class GraphQLDataFetchers {
 
   DataFetcher<Optional<List<LogAdapter>>> getLogsDataFetcher() {
     return dataFetchingEnvironment -> {
-      final BlockchainQueries blockchainQuery =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
+      final GraphQLDataFetcherContext dataFetcherContext = dataFetchingEnvironment.getContext();
+      final BlockchainQueries blockchainQuery = dataFetcherContext.getBlockchainQueries();
 
       final Map<String, Object> filter = dataFetchingEnvironment.getArgument("filter");
 
@@ -238,7 +238,9 @@ public class GraphQLDataFetchers {
       final LogsQuery query =
           new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
 
-      final List<LogWithMetadata> logs = blockchainQuery.matchingLogs(fromBlock, toBlock, query);
+      final List<LogWithMetadata> logs =
+          blockchainQuery.matchingLogs(
+              fromBlock, toBlock, query, dataFetcherContext.getIsAliveHandler());
       final List<LogAdapter> results = new ArrayList<>();
       for (final LogWithMetadata log : logs) {
         results.add(new LogAdapter(log));

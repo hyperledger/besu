@@ -28,10 +28,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
 import java.util.Collections;
@@ -68,7 +71,7 @@ public class EthNewFilterTest {
 
     method.response(request);
 
-    verify(filterManager).installLogFilter(refEq(blockParamLatest()), any(), any());
+    verify(filterManager).installLogFilter(refEq(BlockParameter.LATEST), any(), any());
   }
 
   @Test
@@ -78,13 +81,13 @@ public class EthNewFilterTest {
 
     method.response(request);
 
-    verify(filterManager).installLogFilter(any(), refEq(blockParamLatest()), any());
+    verify(filterManager).installLogFilter(any(), refEq(BlockParameter.LATEST), any());
   }
 
   @Test
   public void newFilterWithoutAddressAndTopicsParamsInstallsEmptyLogFilter() {
     final FilterParameter filterParameter =
-        new FilterParameter("latest", "latest", null, null, null);
+        new FilterParameter(BlockParameter.LATEST, BlockParameter.LATEST, null, null, null);
     final JsonRpcRequestContext request = ethNewFilter(filterParameter);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), "0x1");
@@ -97,7 +100,7 @@ public class EthNewFilterTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
+            refEq(BlockParameter.LATEST), refEq(BlockParameter.LATEST), eq(expectedLogsQuery));
   }
 
   @Test
@@ -116,7 +119,7 @@ public class EthNewFilterTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
+            refEq(BlockParameter.LATEST), refEq(BlockParameter.LATEST), eq(expectedLogsQuery));
   }
 
   @Test
@@ -135,7 +138,7 @@ public class EthNewFilterTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
+            refEq(BlockParameter.LATEST), refEq(BlockParameter.LATEST), eq(expectedLogsQuery));
   }
 
   @Test
@@ -156,7 +159,27 @@ public class EthNewFilterTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
+            refEq(BlockParameter.LATEST), refEq(BlockParameter.LATEST), eq(expectedLogsQuery));
+  }
+
+  @Test
+  public void filterWithInvalidParameters() {
+    final FilterParameter invalidFilter =
+        new FilterParameter(
+            BlockParameter.EARLIEST,
+            BlockParameter.LATEST,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Hash.ZERO);
+
+    final JsonRpcRequestContext request = ethNewFilter(invalidFilter);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private List<List<LogTopic>> topics() {
@@ -169,8 +192,8 @@ public class EthNewFilterTest {
   private FilterParameter filterParamWithAddressAndTopics(
       final Address address, final List<List<LogTopic>> topics) {
     return new FilterParameter(
-        "latest",
-        "latest",
+        BlockParameter.LATEST,
+        BlockParameter.LATEST,
         Optional.ofNullable(address).map(Collections::singletonList).orElse(emptyList()),
         topics,
         null);
@@ -179,9 +202,5 @@ public class EthNewFilterTest {
   private JsonRpcRequestContext ethNewFilter(final FilterParameter filterParameter) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", ETH_METHOD, new Object[] {filterParameter}));
-  }
-
-  private BlockParameter blockParamLatest() {
-    return new BlockParameter("latest");
   }
 }

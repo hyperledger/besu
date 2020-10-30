@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "restriction"
 })
 /*
- The original deserialised private transaction sent via eea_sendRawTransaction
+ The original deserialized private transaction sent via eea_sendRawTransaction
  This class is used if the original request was sent with privacyGroupId
 */
 public class PrivateTransactionGroupResult extends PrivateTransactionResult {

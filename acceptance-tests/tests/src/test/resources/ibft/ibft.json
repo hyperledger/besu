@@ -10,7 +10,8 @@
     "ibft2": {
       "blockperiodseconds": 1,
       "epochlength": 30000,
-      "requesttimeoutseconds": 5
+      "requesttimeoutseconds": 5,
+      "blockreward": "5000000000000000000"
     }
   },
   "nonce": "0x0",

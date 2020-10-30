@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -30,14 +31,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,14 +59,17 @@ public class EthEstimateGasTest {
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
+  @Mock private WorldStateArchive worldStateArchive;
 
   @Before
   public void setUp() {
     when(blockchainQueries.headBlockNumber()).thenReturn(1L);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.of(blockHeader));
     when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(blockHeader.getNumber()).thenReturn(1L);
+    when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(true);
 
     method = new EthEstimateGas(blockchainQueries, transactionSimulator);
   }
@@ -74,7 +82,8 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnErrorWhenTransientTransactionProcessorReturnsEmpty() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
-    when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
+    when(transactionSimulator.process(
+            eq(modifiedCallParameter()), any(OperationTracer.class), eq(1L)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -87,7 +96,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnGasEstimateWhenTransientTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
-    mockTransientProcessorResultGasEstimate(1L, true);
+    mockTransientProcessorResultGasEstimate(1L, true, false);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
@@ -98,7 +107,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnGasEstimateErrorWhenTransientTransactionProcessorReturnsResultFailure() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
-    mockTransientProcessorResultGasEstimate(1L, false);
+    mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
@@ -120,22 +129,53 @@ public class EthEstimateGasTest {
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
+  @Test
+  public void shouldReturnErrorWhenWorldStateIsNotAvailable() {
+    when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(false);
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+    mockTransientProcessorResultGasEstimate(1L, false, false);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWhenTransactioReverted() {
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
+    mockTransientProcessorResultGasEstimate(1L, false, true);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+
+    Assertions.assertThat(method.response(request))
+        .isEqualToComparingFieldByField(expectedResponse);
+  }
+
   private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
-    final TransactionSimulatorResult mockTxSimResult = getMockTransactionSimulatorResult(false);
+    final TransactionSimulatorResult mockTxSimResult =
+        getMockTransactionSimulatorResult(false, false, 0);
     when(mockTxSimResult.getValidationResult()).thenReturn(ValidationResult.invalid(reason));
   }
 
   private void mockTransientProcessorResultGasEstimate(
-      final long gasEstimate, final boolean isSuccessful) {
-    final TransactionSimulatorResult mockTxSimResult =
-        getMockTransactionSimulatorResult(isSuccessful);
-    when(mockTxSimResult.getGasEstimate()).thenReturn(gasEstimate);
+      final long estimateGas, final boolean isSuccessful, final boolean isReverted) {
+    getMockTransactionSimulatorResult(isSuccessful, isReverted, estimateGas);
   }
 
-  private TransactionSimulatorResult getMockTransactionSimulatorResult(final boolean isSuccessful) {
+  private TransactionSimulatorResult getMockTransactionSimulatorResult(
+      final boolean isSuccessful, final boolean isReverted, final long estimateGas) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
-    when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
+    when(transactionSimulator.process(
+            eq(modifiedCallParameter()), any(OperationTracer.class), eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
+    final TransactionProcessor.Result mockResult = mock(TransactionProcessor.Result.class);
+    when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
+    when(mockResult.getRevertReason())
+        .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
+    when(mockTxSimResult.getResult()).thenReturn(mockResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
     return mockTxSimResult;
   }

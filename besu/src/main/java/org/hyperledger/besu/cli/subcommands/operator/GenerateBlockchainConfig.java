@@ -194,7 +194,7 @@ class GenerateBlockchainConfig implements Runnable {
    *
    * @param publicKey The public key.
    * @param privateKey The private key. No file is created if privateKey is NULL.
-   * @throws IOException
+   * @throws IOException If the file cannot be written or accessed.
    */
   private void writeKeypair(
       final SECP256K1.PublicKey publicKey, final SECP256K1.PrivateKey privateKey)
@@ -231,7 +231,7 @@ class GenerateBlockchainConfig implements Runnable {
   /**
    * Parses the root configuration file and related sub elements.
    *
-   * @throws IOException
+   * @throws IOException If the file cannot be read or accessed.
    */
   private void parseConfig() throws IOException {
     final String configString =
@@ -251,7 +251,7 @@ class GenerateBlockchainConfig implements Runnable {
   /**
    * Checks if the output directory exists.
    *
-   * @throws IOException
+   * @throws IOException If the cannot be accessed or created.
    */
   private void handleOutputDirectory() throws IOException {
     checkNotNull(outputDirectory);
@@ -274,7 +274,7 @@ class GenerateBlockchainConfig implements Runnable {
    * @param directory The directory to write the file to.
    * @param fileName The name of the output file.
    * @param genesis The genesis content.
-   * @throws IOException
+   * @throws IOException If the genesis file cannot be written or accessed.
    */
   private void writeGenesisFile(
       final File directory, final String fileName, final ObjectNode genesis) throws IOException {

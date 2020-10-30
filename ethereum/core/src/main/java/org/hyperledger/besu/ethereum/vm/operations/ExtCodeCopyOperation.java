@@ -18,9 +18,13 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
+import org.hyperledger.besu.ethereum.vm.EVM;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -32,23 +36,31 @@ public class ExtCodeCopyOperation extends AbstractOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(1));
-    final UInt256 length = UInt256.fromBytes(frame.getStackItem(3));
-
-    return gasCalculator().extCodeCopyOperationGasCost(frame, offset, length);
-  }
-
-  @Override
-  public void execute(final MessageFrame frame) {
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final Address address = Words.toAddress(frame.popStackItem());
-    final Account account = frame.getWorldState().get(address);
-    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
-
     final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+    final Gas cost =
+        gasCalculator()
+            .extCodeCopyOperationGasCost(frame, memOffset, numBytes)
+            .plus(
+                accountIsWarm
+                    ? gasCalculator().getWarmStorageReadCost()
+                    : gasCalculator().getColdAccountAccessCost());
+
+    final Optional<Gas> optionalCost = Optional.of(cost);
+    if (frame.getRemainingGas().compareTo(cost) < 0) {
+      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+
+    final Account account = frame.getWorldState().get(address);
+    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
+
     frame.writeMemory(memOffset, sourceOffset, numBytes, code);
+    return new OperationResult(optionalCost, Optional.empty());
   }
 }

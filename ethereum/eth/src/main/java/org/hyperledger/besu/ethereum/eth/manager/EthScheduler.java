@@ -174,6 +174,12 @@ public class EthScheduler {
     return promise;
   }
 
+  public ScheduledFuture<?> scheduleFutureTaskWithFixedDelay(
+      final Runnable command, final Duration initialDelay, final Duration duration) {
+    return scheduler.scheduleWithFixedDelay(
+        command::run, initialDelay.toMillis(), duration.toMillis(), TimeUnit.MILLISECONDS);
+  }
+
   public <T> CompletableFuture<T> scheduleFutureTask(
       final Supplier<CompletableFuture<T>> future, final Duration duration) {
     final CompletableFuture<T> promise = new CompletableFuture<>();

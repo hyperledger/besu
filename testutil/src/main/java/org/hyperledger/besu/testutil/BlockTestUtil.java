@@ -35,6 +35,8 @@ public final class BlockTestUtil {
       Suppliers.memoize(BlockTestUtil::supplyTestChainResources);
   private static final Supplier<ChainResources> mainnetChainSupplier =
       Suppliers.memoize(BlockTestUtil::supplyMainnetChainResources);
+  private static final Supplier<ChainResources> badPowChainSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyBadPowChainResources);
   private static final Supplier<ChainResources> forkOutdatedSupplier =
       Suppliers.memoize(BlockTestUtil::supplyOutdatedForkResources);
   private static final Supplier<ChainResources> forkUpgradedSupplier =
@@ -54,6 +56,10 @@ public final class BlockTestUtil {
 
   public static ChainResources getMainnetResources() {
     return mainnetChainSupplier.get();
+  }
+
+  private static ChainResources getBadPowResources() {
+    return badPowChainSupplier.get();
   }
 
   public static ChainResources getOutdatedForkResources() {
@@ -78,6 +84,16 @@ public final class BlockTestUtil {
             BlockTestUtil.class.getClassLoader().getResource("mainnet-data/mainnet.json"));
     final URL blocksURL =
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("mainnet-data/1000.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
+  }
+
+  private static ChainResources supplyBadPowChainResources() {
+    final URL genesisURL =
+        ensureFileUrl(
+            BlockTestUtil.class.getClassLoader().getResource("mainnet-data/mainnet.json"));
+    final URL blocksURL =
+        ensureFileUrl(
+            BlockTestUtil.class.getClassLoader().getResource("mainnet-data/badpow.blocks"));
     return new ChainResources(genesisURL, blocksURL);
   }
 
@@ -137,6 +153,23 @@ public final class BlockTestUtil {
       Files.write(
           target,
           Resources.toByteArray(getMainnetResources().getBlocksURL()),
+          StandardOpenOption.CREATE,
+          StandardOpenOption.TRUNCATE_EXISTING);
+    } catch (final IOException ex) {
+      throw new IllegalStateException(ex);
+    }
+  }
+
+  /**
+   * Writes the first 1000 blocks of the public chain to the given file.
+   *
+   * @param target FIle to write blocks to
+   */
+  public static void writeBadPowBlocks(final Path target) {
+    try {
+      Files.write(
+          target,
+          Resources.toByteArray(getBadPowResources().getBlocksURL()),
           StandardOpenOption.CREATE,
           StandardOpenOption.TRUNCATE_EXISTING);
     } catch (final IOException ex) {

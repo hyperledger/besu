@@ -36,7 +36,6 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -89,9 +88,9 @@ public class DefaultPrivacyControllerTest {
   private static final String MOCK_TRANSACTION_SIMULATOR_RESULT_OUTPUT_BYTES_PREFIX =
       "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002";
   private static final PrivacyGroup PANTHEON_PRIVACY_GROUP =
-      new PrivacyGroup("", Type.PANTHEON, "", "", emptyList());
-  private static final PrivacyGroup ON_CHAIN_PRIVACY_GROUP =
-      new PrivacyGroup("", Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY));
+      new PrivacyGroup("", PrivacyGroup.Type.PANTHEON, "", "", emptyList());
+  private static final PrivacyGroup ONCHAIN_PRIVACY_GROUP =
+      new PrivacyGroup("", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY));
 
   private PrivacyController privacyController;
   private PrivacyController brokenPrivacyController;
@@ -99,8 +98,9 @@ public class DefaultPrivacyControllerTest {
   private Enclave enclave;
   private String enclavePublicKey;
   private PrivateNonceProvider privateNonceProvider;
-  private PrivateWorldStateReader privateWorldStateReader;
+  private PrivateStateRootResolver privateStateRootResolver;
   private PrivateTransactionSimulator privateTransactionSimulator;
+  private PrivateWorldStateReader privateWorldStateReader;
   private Blockchain blockchain;
   private PrivateStateStorage privateStateStorage;
 
@@ -146,6 +146,7 @@ public class DefaultPrivacyControllerTest {
     privateTransactionSimulator = mock(PrivateTransactionSimulator.class);
     privateStateStorage = mock(PrivateStateStorage.class);
     privateNonceProvider = mock(ChainHeadPrivateNonceProvider.class);
+    privateStateRootResolver = mock(PrivateStateRootResolver.class);
     when(privateNonceProvider.getNonce(any(), any())).thenReturn(1L);
 
     privateWorldStateReader = mock(PrivateWorldStateReader.class);
@@ -164,7 +165,8 @@ public class DefaultPrivacyControllerTest {
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
             privateNonceProvider,
-            privateWorldStateReader);
+            privateWorldStateReader,
+            privateStateRootResolver);
     brokenPrivacyController =
         new DefaultPrivacyController(
             blockchain,
@@ -175,21 +177,22 @@ public class DefaultPrivacyControllerTest {
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
             privateNonceProvider,
-            privateWorldStateReader);
+            privateWorldStateReader,
+            privateStateRootResolver);
   }
 
   @Test
   public void sendsValidLegacyTransaction() {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
-    final String enclaveKey =
+    final String privateTransactionLookupId =
         privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(privateTransactionLookupId, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -205,7 +208,7 @@ public class DefaultPrivacyControllerTest {
   public void sendValidBesuTransaction() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
-    final String enclaveKey =
+    final String privateTransactionLookupId =
         privacyController.sendTransaction(
             transaction, ENCLAVE_PUBLIC_KEY, Optional.of(PANTHEON_PRIVACY_GROUP));
 
@@ -213,7 +216,7 @@ public class DefaultPrivacyControllerTest {
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(privateTransactionLookupId, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -229,7 +232,8 @@ public class DefaultPrivacyControllerTest {
     final List<String> privacyGroupAddresses = newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2);
 
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(PRIVACY_GROUP_ID, Type.ONCHAIN, "", "", privacyGroupAddresses);
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID, PrivacyGroup.Type.ONCHAIN, "", "", privacyGroupAddresses);
 
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         new PrivacyGroupHeadBlockMap(
@@ -243,6 +247,7 @@ public class DefaultPrivacyControllerTest {
                 new PrivateTransactionProcessor.Result(
                     TransactionProcessor.Result.Status.SUCCESSFUL,
                     emptyList(),
+                    0,
                     0,
                     Bytes.fromHexString(
                         MOCK_TRANSACTION_SIMULATOR_RESULT_OUTPUT_BYTES_PREFIX
@@ -309,7 +314,7 @@ public class DefaultPrivacyControllerTest {
     final PrivacyGroup enclavePrivacyGroupResponse =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             PRIVACY_GROUP_NAME,
             PRIVACY_GROUP_DESCRIPTION,
             PRIVACY_GROUP_ADDRESSES);
@@ -348,7 +353,7 @@ public class DefaultPrivacyControllerTest {
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
-            Type.PANTHEON,
+            PrivacyGroup.Type.PANTHEON,
             PRIVACY_GROUP_NAME,
             PRIVACY_GROUP_DESCRIPTION,
             PRIVACY_GROUP_ADDRESSES);
@@ -368,7 +373,11 @@ public class DefaultPrivacyControllerTest {
     final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
           new PrivacyGroup(
-              PRIVACY_GROUP_ID, Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
+              PRIVACY_GROUP_ID,
+              PrivacyGroup.Type.LEGACY,
+              "Group1_Name",
+              "Group1_Desc",
+              emptyList()),
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
@@ -407,8 +416,10 @@ public class DefaultPrivacyControllerTest {
     final Address address = Address.fromHexString("55");
     final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
-          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
-          new PrivacyGroup("Group2", Type.LEGACY, "Group2_Name", "Group2_Desc", emptyList()),
+          new PrivacyGroup(
+              "Group1", PrivacyGroup.Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
+          new PrivacyGroup(
+              "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", emptyList()),
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
@@ -427,7 +438,7 @@ public class DefaultPrivacyControllerTest {
         .thenReturn(
             Optional.of(
                 PrivateTransactionProcessor.Result.successful(
-                    LOGS, 0, Bytes.EMPTY, ValidationResult.valid())));
+                    LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
     final Optional<PrivateTransactionProcessor.Result> result =
         privacyController.simulatePrivateTransaction(
             "Group1", ENCLAVE_PUBLIC_KEY, callParameter, 1);
@@ -438,13 +449,13 @@ public class DefaultPrivacyControllerTest {
   public void canCreatePrivacyMarkerTransactionForOnChainPrivacy() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
 
-    final String enclaveKey =
+    final String privateTransactionLookupId =
         privacyController.sendTransaction(
-            transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ON_CHAIN_PRIVACY_GROUP));
+            transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ONCHAIN_PRIVACY_GROUP));
 
     final Transaction onChainPrivacyMarkerTransaction =
         privacyController.createPrivacyMarkerTransaction(
-            enclaveKey, transaction, Address.ONCHAIN_PRIVACY);
+            privateTransactionLookupId, transaction, Address.ONCHAIN_PRIVACY);
 
     assertThat(onChainPrivacyMarkerTransaction.contractAddress())
         .isEqualTo(PUBLIC_TRANSACTION.contractAddress());

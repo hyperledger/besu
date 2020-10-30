@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
@@ -25,18 +27,19 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 public class ClassicProtocolSpecs {
   private static final Wei MAX_BLOCK_REWARD = Wei.fromEth(5);
 
-  public static ProtocolSpecBuilder<Void> classicRecoveryInitDefinition(
+  public static ProtocolSpecBuilder classicRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
     return MainnetProtocolSpecs.homesteadDefinition(contractSizeLimit, configStackSizeLimit)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 
-  public static ProtocolSpecBuilder<Void> tangerineWhistleDefinition(
+  public static ProtocolSpecBuilder tangerineWhistleDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit) {
@@ -47,7 +50,7 @@ public class ClassicProtocolSpecs {
         .name("ClassicTangerineWhistle");
   }
 
-  public static ProtocolSpecBuilder<Void> dieHardDefinition(
+  public static ProtocolSpecBuilder dieHardDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit) {
@@ -57,10 +60,11 @@ public class ClassicProtocolSpecs {
         .name("DieHard");
   }
 
-  public static ProtocolSpecBuilder<Void> gothamDefinition(
+  public static ProtocolSpecBuilder gothamDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
+      final OptionalInt configStackSizeLimit,
+      final OptionalLong ecip1017EraRounds) {
     return dieHardDefinition(chainId, contractSizeLimit, configStackSizeLimit)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
@@ -69,36 +73,41 @@ public class ClassicProtocolSpecs {
                 transactionReceiptFactory,
                 blockReward,
                 miningBeneficiaryCalculator,
-                skipZeroBlockRewards) ->
+                skipZeroBlockRewards,
+                gasBudgetCalculator) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
                     transactionReceiptFactory,
                     blockReward,
                     miningBeneficiaryCalculator,
-                    skipZeroBlockRewards))
+                    skipZeroBlockRewards,
+                    ecip1017EraRounds))
         .name("Gotham");
   }
 
-  public static ProtocolSpecBuilder<Void> defuseDifficultyBombDefinition(
+  public static ProtocolSpecBuilder defuseDifficultyBombDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
-    return gothamDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+      final OptionalInt configStackSizeLimit,
+      final OptionalLong ecip1017EraRounds) {
+    return gothamDefinition(chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
             gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
         .name("DefuseDifficultyBomb");
   }
 
-  public static ProtocolSpecBuilder<Void> atlantisDefinition(
+  public static ProtocolSpecBuilder atlantisDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    return gothamDefinition(chainId, configContractSizeLimit, configStackSizeLimit)
+    return gothamDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, ecip1017EraRounds)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
@@ -131,17 +140,24 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION))
+                    Account.DEFAULT_VERSION,
+                    TransactionPriceCalculator.frontier(),
+                    CoinbaseFeePriceCalculator.frontier()))
         .name("Atlantis");
   }
 
-  public static ProtocolSpecBuilder<Void> aghartaDefinition(
+  public static ProtocolSpecBuilder aghartaDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
     return atlantisDefinition(
-            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds)
         .evmBuilder(MainnetEvmRegistries::constantinople)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .evmBuilder(gasCalculator -> MainnetEvmRegistries.constantinople(gasCalculator))
@@ -149,19 +165,45 @@ public class ClassicProtocolSpecs {
         .name("Agharta");
   }
 
-  public static ProtocolSpecBuilder<Void> phoenixDefinition(
+  public static ProtocolSpecBuilder phoenixDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
     return aghartaDefinition(
-            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Phoenix");
+  }
+
+  public static ProtocolSpecBuilder thanosDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds) {
+    return phoenixDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds)
+        .blockHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createOmmerValidator(
+                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+        .name("Thanos");
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(

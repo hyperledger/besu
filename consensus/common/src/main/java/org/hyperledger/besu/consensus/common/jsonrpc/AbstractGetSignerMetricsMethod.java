@@ -41,7 +41,7 @@ public abstract class AbstractGetSignerMetricsMethod {
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
 
-  public AbstractGetSignerMetricsMethod(
+  protected AbstractGetSignerMetricsMethod(
       final VoteTallyCache voteTallyCache,
       final BlockInterface blockInterface,
       final BlockchainQueries blockchainQueries) {
@@ -122,7 +122,7 @@ public abstract class AbstractGetSignerMetricsMethod {
 
   private long resolveBlockNumber(final BlockParameter param) {
     if (param.getNumber().isPresent()) {
-      return param.getNumber().getAsLong();
+      return param.getNumber().get();
     } else if (param.isEarliest()) {
       return BlockHeader.GENESIS_BLOCK_NUMBER;
     } else if (param.isLatest() || param.isPending()) {

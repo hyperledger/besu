@@ -32,7 +32,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.BlockTimer;
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
@@ -47,8 +46,8 @@ import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -81,7 +80,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftBlockHeightManagerTest {
 
-  private final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+  private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
 
@@ -92,7 +91,7 @@ public class IbftBlockHeightManagerTest {
   @Mock private Clock clock;
   @Mock private MessageValidatorFactory messageValidatorFactory;
   @Mock private IbftBlockCreator blockCreator;
-  @Mock private BlockImporter<IbftContext> blockImporter;
+  @Mock private BlockImporter blockImporter;
   @Mock private BlockTimer blockTimer;
   @Mock private RoundTimer roundTimer;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
@@ -102,7 +101,7 @@ public class IbftBlockHeightManagerTest {
   private final List<Address> validators = Lists.newArrayList();
   private final List<MessageFactory> validatorMessageFactory = Lists.newArrayList();
 
-  private ProtocolContext<IbftContext> protocolContext;
+  private ProtocolContext protocolContext;
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private Block createdBlock;
 
@@ -119,7 +118,7 @@ public class IbftBlockHeightManagerTest {
   @Before
   public void setup() {
     for (int i = 0; i < 3; i++) {
-      final BouncyCastleNodeKey nodeKey = BouncyCastleNodeKey.generate();
+      final NodeKey nodeKey = NodeKeyUtils.generate();
       validators.add(Util.publicKeyToAddress(nodeKey.getPublicKey()));
       validatorMessageFactory.add(new MessageFactory(nodeKey));
     }
@@ -141,7 +140,7 @@ public class IbftBlockHeightManagerTest {
         .thenReturn(futureRoundProposalMessageValidator);
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
-    protocolContext = new ProtocolContext<>(null, null, setupContextWithValidators(validators));
+    protocolContext = new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))

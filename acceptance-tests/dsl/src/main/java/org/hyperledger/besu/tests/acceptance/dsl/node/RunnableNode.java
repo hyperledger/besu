@@ -19,6 +19,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 
 import java.net.URI;
+import java.util.Optional;
 
 public interface RunnableNode extends Node {
 
@@ -39,4 +40,6 @@ public interface RunnableNode extends Node {
   URI enodeUrl();
 
   String getNodeId();
+
+  Optional<Integer> exitCode();
 }

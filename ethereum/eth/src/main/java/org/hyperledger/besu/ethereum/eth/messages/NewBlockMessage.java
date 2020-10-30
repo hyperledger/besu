@@ -63,15 +63,15 @@ public class NewBlockMessage extends AbstractMessageData {
     return new NewBlockMessage(message.getData());
   }
 
-  public <C> Block block(final ProtocolSchedule<C> protocolSchedule) {
+  public Block block(final ProtocolSchedule protocolSchedule) {
     return messageFields(protocolSchedule).block();
   }
 
-  public <C> Difficulty totalDifficulty(final ProtocolSchedule<C> protocolSchedule) {
+  public Difficulty totalDifficulty(final ProtocolSchedule protocolSchedule) {
     return messageFields(protocolSchedule).totalDifficulty();
   }
 
-  private <C> NewBlockMessageData messageFields(final ProtocolSchedule<C> protocolSchedule) {
+  private NewBlockMessageData messageFields(final ProtocolSchedule protocolSchedule) {
     if (messageFields == null) {
       final RLPInput input = RLP.input(data);
       messageFields = NewBlockMessageData.readFrom(input, protocolSchedule);
@@ -104,8 +104,8 @@ public class NewBlockMessage extends AbstractMessageData {
       out.endList();
     }
 
-    public static <C> NewBlockMessageData readFrom(
-        final RLPInput in, final ProtocolSchedule<C> protocolSchedule) {
+    public static NewBlockMessageData readFrom(
+        final RLPInput in, final ProtocolSchedule protocolSchedule) {
       final BlockHeaderFunctions blockHeaderFunctions =
           ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
       in.enterList();

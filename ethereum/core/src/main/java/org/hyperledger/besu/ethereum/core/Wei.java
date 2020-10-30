@@ -27,7 +27,9 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
   public static final Wei ZERO = of(0);
 
-  protected Wei(final UInt256 value) {
+  public static final Wei ONE = of(1);
+
+  Wei(final UInt256 value) {
     super(value, Wei::new);
   }
 
@@ -53,6 +55,10 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
   public static Wei of(final UInt256 value) {
     return new Wei(value);
+  }
+
+  public static Wei ofNumber(final Number value) {
+    return new Wei((BigInteger) value);
   }
 
   public static Wei wrap(final Bytes32 value) {

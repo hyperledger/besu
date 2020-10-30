@@ -19,20 +19,21 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class CheckpointHeaderValidationStep<C>
+public class CheckpointHeaderValidationStep
     implements Function<CheckpointRangeHeaders, Stream<BlockHeader>> {
 
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final ValidationPolicy validationPolicy;
 
   public CheckpointHeaderValidationStep(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final ValidationPolicy validationPolicy) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -47,14 +48,20 @@ public class CheckpointHeaderValidationStep<C>
     if (isValid(rangeStart, firstHeaderToImport)) {
       return checkpointRangeHeaders.getHeadersToImport().stream();
     } else {
-      final BlockHeader rangeEnd = checkpointRangeHeaders.getCheckpointRange().getEnd();
+      final String rangeEndDescription;
+      if (checkpointRangeHeaders.getCheckpointRange().hasEnd()) {
+        final BlockHeader rangeEnd = checkpointRangeHeaders.getCheckpointRange().getEnd();
+        rangeEndDescription =
+            String.format("#%d (%s)", rangeEnd.getNumber(), rangeEnd.getBlockHash());
+      } else {
+        rangeEndDescription = "chain head";
+      }
       final String errorMessage =
           String.format(
-              "Invalid checkpoint headers.  Headers downloaded between #%d (%s) and #%d (%s) do not connect at #%d (%s)",
+              "Invalid checkpoint headers.  Headers downloaded between #%d (%s) and %s do not connect at #%d (%s)",
               rangeStart.getNumber(),
               rangeStart.getHash(),
-              rangeEnd.getNumber(),
-              rangeEnd.getHash(),
+              rangeEndDescription,
               firstHeaderToImport.getNumber(),
               firstHeaderToImport.getHash());
       throw new InvalidBlockException(
@@ -63,10 +70,9 @@ public class CheckpointHeaderValidationStep<C>
   }
 
   private boolean isValid(final BlockHeader expectedParent, final BlockHeader firstHeaderToImport) {
-    final BlockHeaderValidator<C> validator =
-        protocolSchedule
-            .getByBlockNumber(firstHeaderToImport.getNumber())
-            .getBlockHeaderValidator();
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockNumber(firstHeaderToImport.getNumber());
+    final BlockHeaderValidator validator = protocolSpec.getBlockHeaderValidator();
     return validator.validateHeader(
         firstHeaderToImport,
         expectedParent,

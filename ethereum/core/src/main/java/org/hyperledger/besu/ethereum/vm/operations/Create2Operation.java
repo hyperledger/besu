@@ -40,7 +40,9 @@ public class Create2Operation extends AbstractCreateOperation {
     final Bytes32 salt = frame.getStackItem(3);
     final Bytes initCode = frame.readMemory(offset, length);
     final Hash hash = Hash.hash(Bytes.concatenate(PREFIX, sender, salt, Hash.hash(initCode)));
-    return Address.extract(hash);
+    final Address address = Address.extract(hash);
+    frame.warmUpAddress(address);
+    return address;
   }
 
   @Override

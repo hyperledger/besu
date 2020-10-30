@@ -57,28 +57,6 @@ public class TomlAuth implements AuthProvider {
       return;
     }
 
-    readUser(
-        username,
-        rs -> {
-          if (rs.succeeded()) {
-            TomlUser user = rs.result();
-            checkPasswordHash(
-                password,
-                user.getPassword(),
-                rs2 -> {
-                  if (rs2.succeeded()) {
-                    resultHandler.handle(Future.succeededFuture(user));
-                  } else {
-                    resultHandler.handle(Future.failedFuture(rs2.cause()));
-                  }
-                });
-          } else {
-            resultHandler.handle(Future.failedFuture(rs.cause()));
-          }
-        });
-  }
-
-  private void readUser(final String username, final Handler<AsyncResult<TomlUser>> resultHandler) {
     vertx.executeBlocking(
         f -> {
           TomlParseResult parseResult;
@@ -101,8 +79,18 @@ public class TomlAuth implements AuthProvider {
             return;
           }
 
-          f.complete(tomlUser);
+          checkPasswordHash(
+              password,
+              tomlUser.getPassword(),
+              rs -> {
+                if (rs.succeeded()) {
+                  f.complete(tomlUser);
+                } else {
+                  f.fail(rs.cause());
+                }
+              });
         },
+        false,
         res -> {
           if (res.succeeded()) {
             resultHandler.handle(Future.succeededFuture((TomlUser) res.result()));

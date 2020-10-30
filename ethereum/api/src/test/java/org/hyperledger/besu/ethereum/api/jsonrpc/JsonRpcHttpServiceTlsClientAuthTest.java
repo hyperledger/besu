@@ -136,7 +136,8 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
                     natService,
-                    Collections.emptyMap()));
+                    Collections.emptyMap(),
+                    folder.getRoot().toPath()));
 
     System.setProperty("javax.net.ssl.trustStore", CLIENT_AS_CA_CERT.getKeyStoreFile().toString());
     System.setProperty(
@@ -164,7 +165,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
       final Supplier<Optional<TlsConfiguration>> tlsConfigurationSupplier) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singletonList("*"));
+    config.setHostsAllowlist(Collections.singletonList("*"));
     config.setTlsConfiguration(tlsConfigurationSupplier.get());
     return config;
   }

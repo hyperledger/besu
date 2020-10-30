@@ -65,7 +65,7 @@ public class EnclaveFactory {
       final URI enclaveUri,
       final Path privacyKeyStoreFile,
       final Path privacyKeyStorePasswordFile,
-      final Path privacyWhitelistFile) {
+      final Path privacyAllowlistFile) {
 
     final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
     try {
@@ -75,7 +75,7 @@ public class EnclaveFactory {
             convertFrom(privacyKeyStoreFile, privacyKeyStorePasswordFile));
       }
       clientOptions.setTrustOptions(
-          VertxTrustOptions.whitelistServers(privacyWhitelistFile, TRUST_CA));
+          VertxTrustOptions.whitelistServers(privacyAllowlistFile, TRUST_CA));
     } catch (final NoSuchFileException e) {
       throw new InvalidConfigurationException(
           "Requested file " + e.getMessage() + " does not exist at specified location.");
@@ -94,11 +94,11 @@ public class EnclaveFactory {
       final URI enclaveUri,
       final Path privacyKeyStoreFile,
       final Path privacyKeyStorePasswordFile,
-      final Path privacyWhitelistFile) {
+      final Path privacyAllowlistFile) {
 
     final HttpClientOptions clientOptions =
         createTlsClientOptions(
-            enclaveUri, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyWhitelistFile);
+            enclaveUri, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyAllowlistFile);
 
     final RequestTransmitter vertxTransmitter =
         new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));

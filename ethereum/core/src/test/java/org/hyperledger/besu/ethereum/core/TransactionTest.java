@@ -18,11 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.vm.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -50,11 +51,10 @@ public class TransactionTest {
   @Parameters(name = "Name: {0}")
   public static Collection<Object[]> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)
-        // Blacklist tests that expect transactions with large gasLimits to properly decode
-        .blacklist(
-            "TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
+        // ignore tests that expect transactions with large gasLimits to properly decode
+        .ignore("TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
         // Nonce is tracked with type long, large valued nonces can't currently be decoded
-        .blacklist("TransactionWithHighNonce256")
+        .ignore("TransactionWithHighNonce256")
         .generator((name, spec, collector) -> collector.add(name, spec, true))
         .generate(TEST_CONFIG_FILE_DIR_PATH);
   }
@@ -62,7 +62,7 @@ public class TransactionTest {
   public TransactionTest(
       final String name, final TransactionTestCaseSpec spec, final boolean runTest) {
     this.spec = spec;
-    assumeTrue("Test was blacklisted", runTest);
+    assumeTrue("Test " + name + " was ignored", runTest);
   }
 
   @Test
@@ -109,7 +109,7 @@ public class TransactionTest {
 
       // Test transaction deserialization (will throw an exception if it fails).
       final Transaction transaction = Transaction.readFrom(RLP.input(rlp));
-      if (!transactionValidator(milestone).validate(transaction).isValid()) {
+      if (!transactionValidator(milestone).validate(transaction, Optional.empty()).isValid()) {
         throw new RuntimeException(String.format("Transaction is invalid %s", transaction));
       }
 

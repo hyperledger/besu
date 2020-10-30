@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -36,8 +36,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -63,11 +65,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   @Override
   public void startNode(final BesuNode node) {
 
-    if (ThreadContext.containsKey("node")) {
-      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
-    }
-    ThreadContext.put("node", node.getName());
-
     final Path dataDir = node.homeDirectory();
 
     final List<String> params = new ArrayList<>();
@@ -80,6 +77,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--network");
       params.add("DEV");
     }
+
+    params.add("--sync-mode");
+    params.add("FULL");
 
     params.add("--discovery-enabled");
     params.add(Boolean.toString(node.isDiscoveryEnabled()));
@@ -101,6 +101,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--min-gas-price");
       params.add(
           Integer.toString(node.getMiningParameters().getMinTransactionGasPrice().intValue()));
+      params.add("--Xminer-remote-sealers-limit");
+      params.add(Integer.toString(node.getMiningParameters().getRemoteSealersLimit()));
+      params.add("--Xminer-remote-sealers-hashrate-ttl");
+      params.add(Long.toString(node.getMiningParameters().getRemoteSealersTimeToLive()));
     }
     if (node.getMiningParameters().isStratumMiningEnabled()) {
       params.add("--miner-stratum-enabled");
@@ -116,8 +120,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--privacy-public-key-file");
         params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       }
-      params.add("--privacy-precompiled-address");
-      params.add(String.valueOf(node.getPrivacyParameters().getPrivacyAddress()));
       params.add("--privacy-marker-transaction-signing-key-file");
       params.add(node.homeDirectory().resolve("key").toString());
 
@@ -134,6 +136,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     if (node.hasStaticNodes()) {
       createStaticNodes(node);
+    }
+
+    if (node.isDnsEnabled()) {
+      params.add("--Xdns-enabled");
+      params.add("true");
+      params.add("--Xdns-update-enabled");
+      params.add("true");
     }
 
     if (node.isJsonRpcEnabled()) {
@@ -224,18 +233,21 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--revert-reason-enabled");
     }
 
+    params.add("--Xsecp256k1-native-enabled=" + node.isSecp256k1Native());
+    params.add("--Xaltbn128-native-enabled=" + node.isAltbn128Native());
+
     node.getPermissioningConfiguration()
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
             permissioningConfiguration -> {
-              if (permissioningConfiguration.isNodeWhitelistEnabled()) {
+              if (permissioningConfiguration.isNodeAllowlistEnabled()) {
                 params.add("--permissions-nodes-config-file-enabled");
               }
               if (permissioningConfiguration.getNodePermissioningConfigFilePath() != null) {
                 params.add("--permissions-nodes-config-file");
                 params.add(permissioningConfiguration.getNodePermissioningConfigFilePath());
               }
-              if (permissioningConfiguration.isAccountWhitelistEnabled()) {
+              if (permissioningConfiguration.isAccountAllowlistEnabled()) {
                 params.add("--permissions-accounts-config-file-enabled");
               }
               if (permissioningConfiguration.getAccountPermissioningConfigFilePath() != null) {
@@ -248,20 +260,24 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         .flatMap(PermissioningConfiguration::getSmartContractConfig)
         .ifPresent(
             permissioningConfiguration -> {
-              if (permissioningConfiguration.isSmartContractNodeWhitelistEnabled()) {
+              if (permissioningConfiguration.isSmartContractNodeAllowlistEnabled()) {
                 params.add("--permissions-nodes-contract-enabled");
               }
               if (permissioningConfiguration.getNodeSmartContractAddress() != null) {
                 params.add("--permissions-nodes-contract-address");
                 params.add(permissioningConfiguration.getNodeSmartContractAddress().toString());
               }
-              if (permissioningConfiguration.isSmartContractAccountWhitelistEnabled()) {
+              if (permissioningConfiguration.isSmartContractAccountAllowlistEnabled()) {
                 params.add("--permissions-accounts-contract-enabled");
               }
               if (permissioningConfiguration.getAccountSmartContractAddress() != null) {
                 params.add("--permissions-accounts-contract-address");
                 params.add(permissioningConfiguration.getAccountSmartContractAddress().toString());
               }
+              params.add("--permissions-nodes-contract-version");
+              params.add(
+                  String.valueOf(
+                      permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
     params.addAll(node.getExtraCLIOptions());
 
@@ -271,10 +287,12 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
 
-    String level = System.getProperty("root.log.level");
+    final String level = System.getProperty("root.log.level");
     if (level != null) {
       params.add("--logging=" + level);
     }
+
+    params.addAll(node.getRunCommand());
 
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
@@ -289,7 +307,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
               "BESU_OPTS",
               "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
     }
-
+    // Use non-blocking randomness for acceptance tests
+    processBuilder
+        .environment()
+        .put(
+            "JAVA_OPTS",
+            "-Djava.security.properties="
+                + "acceptance-tests/tests/build/resources/test/acceptanceTesting.security");
     try {
       checkState(
           isNotAliveOrphan(node.getName()),
@@ -297,15 +321,17 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
           node.getName());
 
       final Process process = processBuilder.start();
+      process.onExit().thenRun(() -> node.setExitCode(process.exitValue()));
       outputProcessorExecutor.execute(() -> printOutput(node, process));
       besuProcesses.put(node.getName(), process);
     } catch (final IOException e) {
       LOG.error("Error starting BesuNode process", e);
     }
 
-    waitForFile(dataDir, "besu.ports");
-    waitForFile(dataDir, "besu.networks");
-
+    if (node.getRunCommand().isEmpty()) {
+      waitForFile(dataDir, "besu.ports");
+      waitForFile(dataDir, "besu.networks");
+    }
     ThreadContext.remove("node");
   }
 
@@ -317,6 +343,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   private void printOutput(final BesuNode node, final Process process) {
     try (final BufferedReader in =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
+
+      ThreadContext.put("node", node.getName());
+
       String line = in.readLine();
       while (line != null) {
         // would be nice to pass up the log level of the incoming log line
@@ -355,16 +384,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   public void stopNode(final BesuNode node) {
     node.stop();
     if (besuProcesses.containsKey(node.getName())) {
-      final Process process = besuProcesses.get(node.getName());
-      killBesuProcess(node.getName(), process);
+      killBesuProcess(node.getName());
     } else {
-      LOG.error("There was a request to stop an uknown node: {}", node.getName());
+      LOG.error("There was a request to stop an unknown node: {}", node.getName());
     }
   }
 
   @Override
   public synchronized void shutdown() {
-    final HashMap<String, Process> localMap = new HashMap<>(besuProcesses);
+    final Set<String> localMap = new HashSet<>(besuProcesses.keySet());
     localMap.forEach(this::killBesuProcess);
     outputProcessorExecutor.shutdown();
     try {
@@ -383,17 +411,21 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     return process != null && process.isAlive();
   }
 
-  private void killBesuProcess(final String name, final Process process) {
-    LOG.info("Killing {} process", name);
-
-    final Process p = besuProcesses.remove(name);
-    if (p == null) {
+  private void killBesuProcess(final String name) {
+    final Process process = besuProcesses.remove(name);
+    if (process == null) {
       LOG.error("Process {} wasn't in our list", name);
     }
+    if (!process.isAlive()) {
+      LOG.info("Process {} already exited", name);
+      return;
+    }
+
+    LOG.info("Killing {} process", name);
 
     process.destroy();
     try {
-      process.waitFor(2, TimeUnit.SECONDS);
+      process.waitFor(30, TimeUnit.SECONDS);
     } catch (final InterruptedException e) {
       LOG.warn("Wait for death of process {} was interrupted", name, e);
     }
@@ -401,7 +433,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (process.isAlive()) {
       LOG.warn("Process {} still alive, destroying forcibly now", name);
       try {
-        process.destroyForcibly().waitFor(2, TimeUnit.SECONDS);
+        process.destroyForcibly().waitFor(30, TimeUnit.SECONDS);
       } catch (final Exception e) {
         // just die already
       }

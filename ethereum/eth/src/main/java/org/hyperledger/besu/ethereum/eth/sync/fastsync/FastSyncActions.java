@@ -40,12 +40,12 @@ import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FastSyncActions<C> {
+public class FastSyncActions {
 
   private static final Logger LOG = LogManager.getLogger();
   private final SynchronizerConfiguration syncConfig;
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
@@ -54,8 +54,8 @@ public class FastSyncActions<C> {
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem) {
@@ -180,7 +180,7 @@ public class FastSyncActions<C> {
     if (currentState.getPivotBlockHeader().isPresent()) {
       return completedFuture(currentState);
     }
-    return new PivotBlockRetriever<>(
+    return new PivotBlockRetriever(
             protocolSchedule,
             ethContext,
             metricsSystem,

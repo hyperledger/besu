@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class MiningParameters {
+
+  public static final int DEFAULT_REMOTE_SEALERS_LIMIT = 1000;
+
+  public static final long DEFAULT_REMOTE_SEALERS_TTL = Duration.ofMinutes(10).toMinutes();
 
   private final Optional<Address> coinbase;
   private final Wei minTransactionGasPrice;
@@ -30,6 +35,9 @@ public class MiningParameters {
   private final int stratumPort;
   private final String stratumExtranonce;
   private final Optional<Iterable<Long>> maybeNonceGenerator;
+  private final Double minBlockOccupancyRatio;
+  private final int remoteSealersLimit;
+  private final long remoteSealersTimeToLive;
 
   public MiningParameters(
       final Address coinbase,
@@ -45,7 +53,10 @@ public class MiningParameters {
         "0.0.0.0",
         8008,
         "080c",
-        Optional.empty());
+        Optional.empty(),
+        0.8,
+        DEFAULT_REMOTE_SEALERS_LIMIT,
+        DEFAULT_REMOTE_SEALERS_TTL);
   }
 
   public MiningParameters(
@@ -57,7 +68,10 @@ public class MiningParameters {
       final String stratumNetworkInterface,
       final int stratumPort,
       final String stratumExtranonce,
-      final Optional<Iterable<Long>> maybeNonceGenerator) {
+      final Optional<Iterable<Long>> maybeNonceGenerator,
+      final Double minBlockOccupancyRatio,
+      final int remoteSealersLimit,
+      final long remoteSealersTimeToLive) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
@@ -67,6 +81,9 @@ public class MiningParameters {
     this.stratumPort = stratumPort;
     this.stratumExtranonce = stratumExtranonce;
     this.maybeNonceGenerator = maybeNonceGenerator;
+    this.minBlockOccupancyRatio = minBlockOccupancyRatio;
+    this.remoteSealersLimit = remoteSealersLimit;
+    this.remoteSealersTimeToLive = remoteSealersTimeToLive;
   }
 
   public Optional<Address> getCoinbase() {
@@ -105,6 +122,18 @@ public class MiningParameters {
     return maybeNonceGenerator;
   }
 
+  public Double getMinBlockOccupancyRatio() {
+    return minBlockOccupancyRatio;
+  }
+
+  public int getRemoteSealersLimit() {
+    return remoteSealersLimit;
+  }
+
+  public long getRemoteSealersTimeToLive() {
+    return remoteSealersTimeToLive;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -117,7 +146,10 @@ public class MiningParameters {
         && Objects.equals(enabled, that.enabled)
         && Objects.equals(stratumMiningEnabled, that.stratumMiningEnabled)
         && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
-        && Objects.equals(stratumExtranonce, that.stratumExtranonce);
+        && Objects.equals(stratumExtranonce, that.stratumExtranonce)
+        && Objects.equals(minBlockOccupancyRatio, that.minBlockOccupancyRatio)
+        && Objects.equals(remoteSealersTimeToLive, that.remoteSealersTimeToLive)
+        && Objects.equals(remoteSealersLimit, that.remoteSealersLimit);
   }
 
   @Override
@@ -130,7 +162,10 @@ public class MiningParameters {
         stratumMiningEnabled,
         stratumNetworkInterface,
         stratumPort,
-        stratumExtranonce);
+        stratumExtranonce,
+        minBlockOccupancyRatio,
+        remoteSealersLimit,
+        remoteSealersTimeToLive);
   }
 
   @Override
@@ -154,6 +189,14 @@ public class MiningParameters {
         + ", stratumExtranonce='"
         + stratumExtranonce
         + '\''
+        + ", maybeNonceGenerator="
+        + maybeNonceGenerator
+        + ", minBlockOccupancyRatio="
+        + minBlockOccupancyRatio
+        + ", remoteSealersLimit="
+        + remoteSealersLimit
+        + ", remoteSealersTimeToLive="
+        + remoteSealersTimeToLive
         + '}';
   }
 }

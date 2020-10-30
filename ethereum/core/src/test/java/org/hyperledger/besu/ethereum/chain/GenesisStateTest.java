@@ -31,6 +31,7 @@ import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -50,6 +51,11 @@ public final class GenesisStateTest {
   @BeforeClass
   public static void initialize() {
     ExperimentalEIPs.eip1559Enabled = false;
+  }
+
+  @AfterClass
+  public static void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test

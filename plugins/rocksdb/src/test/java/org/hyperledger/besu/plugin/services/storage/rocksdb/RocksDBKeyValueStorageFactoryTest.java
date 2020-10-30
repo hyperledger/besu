@@ -66,10 +66,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(
-            DatabaseMetadata.lookUpFrom(
-                    commonConfiguration.getStoragePath(), commonConfiguration.getDataPath())
-                .getVersion())
+    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).getVersion())
         .isEqualTo(DEFAULT_VERSION);
   }
 
@@ -79,7 +76,6 @@ public class RocksDBKeyValueStorageFactoryTest {
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     Files.createDirectories(tempDatabaseDir);
     Files.createDirectories(tempDataDir);
-    tempDatabaseDir.resolve("IDENTITY").toFile().createNewFile();
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
@@ -89,14 +85,13 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDatabaseDir, tempDataDir).getVersion()).isZero();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isZero();
   }
 
   @Test
   public void shouldDetectCorrectVersionIfMetadataFileExists() throws Exception {
     final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
-    Files.createDirectories(tempDatabaseDir);
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
@@ -107,8 +102,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDatabaseDir, tempDataDir).getVersion())
-        .isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
     assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
   }
 
@@ -140,10 +134,9 @@ public class RocksDBKeyValueStorageFactoryTest {
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     Files.createDirectories(tempDatabaseDir);
     Files.createDirectories(tempDataDir);
-    tempDatabaseDir.resolve("IDENTITY").toFile().createNewFile();
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    new DatabaseMetadata(-1).writeToDirectory(tempDatabaseDir);
+    new DatabaseMetadata(-1).writeToDirectory(tempDataDir);
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(
@@ -176,13 +169,12 @@ public class RocksDBKeyValueStorageFactoryTest {
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     Files.createDirectories(tempDatabaseDir);
     Files.createDirectories(tempDataDir);
-    tempDatabaseDir.resolve("IDENTITY").toFile().createNewFile();
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
     final String badVersion = "{\"🦄\":1}";
     Files.write(
-        tempDatabaseDir.resolve(METADATA_FILENAME), badVersion.getBytes(Charset.defaultCharset()));
+        tempDataDir.resolve(METADATA_FILENAME), badVersion.getBytes(Charset.defaultCharset()));
 
     assertThatThrownBy(
             () ->

@@ -46,7 +46,7 @@ public class FastSyncDownloaderTest {
       completedFuture(FastSyncState.EMPTY_SYNC_STATE);
 
   @SuppressWarnings("unchecked")
-  private final FastSyncActions<Void> fastSyncActions = mock(FastSyncActions.class);
+  private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
 
   private final WorldStateDownloader worldStateDownloader = mock(WorldStateDownloader.class);
   private final FastSyncStateStorage storage = mock(FastSyncStateStorage.class);
@@ -58,8 +58,8 @@ public class FastSyncDownloaderTest {
 
   private final Path fastSyncDataDirectory = null;
 
-  private final FastSyncDownloader<Void> downloader =
-      new FastSyncDownloader<>(
+  private final FastSyncDownloader downloader =
+      new FastSyncDownloader(
           fastSyncActions,
           worldStateDownloader,
           storage,
@@ -107,8 +107,8 @@ public class FastSyncDownloaderTest {
     when(chainDownloader.start()).thenReturn(completedFuture(null));
     when(worldStateDownloader.run(pivotBlockHeader)).thenReturn(completedFuture(null));
 
-    final FastSyncDownloader<Void> resumedDownloader =
-        new FastSyncDownloader<>(
+    final FastSyncDownloader resumedDownloader =
+        new FastSyncDownloader(
             fastSyncActions,
             worldStateDownloader,
             storage,

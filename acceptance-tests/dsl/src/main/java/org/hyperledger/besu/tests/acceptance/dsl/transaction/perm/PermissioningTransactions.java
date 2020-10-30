@@ -22,11 +22,11 @@ import java.util.List;
 
 public class PermissioningTransactions {
 
-  public PermAddAccountsToWhitelistTransaction addAccountsToWhitelist(final String... accounts) {
+  public PermAddAccountsToWhitelistTransaction addAccountsToAllowlist(final String... accounts) {
     return new PermAddAccountsToWhitelistTransaction(Arrays.asList(accounts));
   }
 
-  public PermRemoveAccountsFromWhitelistTransaction removeAccountsFromWhitelist(
+  public PermRemoveAccountsFromWhitelistTransaction removeAccountsFromAllowlist(
       final String... accounts) {
     return new PermRemoveAccountsFromWhitelistTransaction(Arrays.asList(accounts));
   }
@@ -35,11 +35,11 @@ public class PermissioningTransactions {
     return new PermGetAccountsWhitelistTransaction();
   }
 
-  public PermAddNodeTransaction addNodesToWhitelist(final List<URI> enodeList) {
+  public PermAddNodeTransaction addNodesToAllowlist(final List<URI> enodeList) {
     return new PermAddNodeTransaction(enodeList);
   }
 
-  public PermRemoveNodeTransaction removeNodesFromWhitelist(final List<URI> enodeList) {
+  public PermRemoveNodeTransaction removeNodesFromAllowlist(final List<URI> enodeList) {
     return new PermRemoveNodeTransaction(enodeList);
   }
 

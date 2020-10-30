@@ -69,8 +69,8 @@ public class PrivacyNode implements AutoCloseable {
   private final OrionTestHarness orion;
   private final BesuNode besu;
   private final Vertx vertx;
-  private final Integer privacyAddress;
   private final boolean isOnchainPrivacyEnabled;
+  private final boolean isMultitenancyEnabled;
 
   public PrivacyNode(final PrivacyNodeConfiguration privacyConfiguration, final Vertx vertx)
       throws IOException {
@@ -80,8 +80,8 @@ public class PrivacyNode implements AutoCloseable {
 
     final BesuNodeConfiguration besuConfig = privacyConfiguration.getBesuConfig();
 
-    privacyAddress = privacyConfiguration.getPrivacyAddress();
     isOnchainPrivacyEnabled = privacyConfiguration.isOnchainPrivacyGroupEnabled();
+    isMultitenancyEnabled = privacyConfiguration.isMultitenancyEnabled();
 
     this.besu =
         new BesuNode(
@@ -100,10 +100,14 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.isDiscoveryEnabled(),
             besuConfig.isBootnodeEligible(),
             besuConfig.isRevertReasonEnabled(),
+            besuConfig.isSecp256k1Native(),
+            besuConfig.isAltbn128Native(),
             besuConfig.getPlugins(),
             besuConfig.getExtraCLIOptions(),
             Collections.emptyList(),
-            besuConfig.getPrivacyParameters());
+            besuConfig.isDnsEnabled(),
+            besuConfig.getPrivacyParameters(),
+            List.of());
   }
 
   public void testOrionConnection(final List<PrivacyNode> otherNodes) {
@@ -173,10 +177,10 @@ public class PrivacyNode implements AutoCloseable {
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))
-              .setPrivacyAddress(privacyAddress)
               .setOnchainPrivacyGroupsEnabled(isOnchainPrivacyEnabled)
+              .setMultiTenancyEnabled(isMultitenancyEnabled)
               .build();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException();
     }
     besu.setPrivacyParameters(privacyParameters);

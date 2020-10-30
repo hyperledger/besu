@@ -29,6 +29,8 @@ public final class LimitedSet {
   private LimitedSet() {}
 
   /**
+   * Creates a limited set of a initial size, maximum size, and eviction mode.
+   *
    * @param initialCapacity The initial size to allocate for the set.
    * @param maxSize The maximum number of elements to keep in the set.
    * @param mode A mode that determines which element is evicted when the set exceeds its max size.

@@ -40,13 +40,13 @@ public abstract class AbstractGetHeadersFromPeerTask
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   protected final int count;
   protected final int skip;
   protected final boolean reverse;
 
   protected AbstractGetHeadersFromPeerTask(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final int count,
       final int skip,

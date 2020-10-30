@@ -31,8 +31,8 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.crypto.BouncyCastleNodeKey;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -55,7 +55,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MessageValidatorTest {
 
-  private final NodeKey nodeKey = BouncyCastleNodeKey.generate();
+  private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
 
@@ -63,8 +63,8 @@ public class MessageValidatorTest {
   private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
 
-  @Mock private BlockValidator<IbftContext> blockValidator;
-  private ProtocolContext<IbftContext> protocolContext;
+  @Mock private BlockValidator blockValidator;
+  private ProtocolContext protocolContext;
   private final RoundChangeCertificateValidator roundChangeCertificateValidator =
       mock(RoundChangeCertificateValidator.class);
 
@@ -89,7 +89,7 @@ public class MessageValidatorTest {
         .thenReturn(true);
 
     protocolContext =
-        new ProtocolContext<>(
+        new ProtocolContext(
             mock(MutableBlockchain.class), mock(WorldStateArchive.class), mock(IbftContext.class));
 
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))

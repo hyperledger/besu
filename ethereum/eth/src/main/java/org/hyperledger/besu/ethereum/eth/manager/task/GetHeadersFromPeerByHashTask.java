@@ -36,7 +36,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
 
   @VisibleForTesting
   GetHeadersFromPeerByHashTask(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
       final long minimumRequiredBlockNumber,
@@ -51,7 +51,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtHash(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash firstHash,
       final long firstBlockNumber,
@@ -69,7 +69,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtHash(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash firstHash,
       final long firstBlockNumber,
@@ -88,7 +88,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   }
 
   public static AbstractGetHeadersFromPeerTask endingAtHash(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash lastHash,
       final long lastBlockNumber,
@@ -106,7 +106,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   }
 
   public static AbstractGetHeadersFromPeerTask forSingleHash(
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash hash,
       final long minimumRequiredBlockNumber,

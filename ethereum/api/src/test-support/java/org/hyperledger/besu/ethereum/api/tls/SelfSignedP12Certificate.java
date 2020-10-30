@@ -139,6 +139,7 @@ public final class SelfSignedP12Certificate {
     return keyPairGenerator.generateKeyPair();
   }
 
+  @SuppressWarnings("JdkObsolete") // JcaX509v3CertificateBuilder requires java.util.Date.
   private static Certificate generateSelfSignedCertificate(final KeyPair keyPair)
       throws CertIOException, GeneralSecurityException, OperatorCreationException {
     final X500Name issuer = new X500Name(distinguishedName);

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
@@ -296,6 +297,25 @@ public class GenesisConfigFileTest {
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(2018));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
+    assertThat(config.getConfigOptions().getEcip1017EraRounds()).isNotPresent();
+  }
+
+  @Test
+  public void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
+    // petersburg node
+    final GenesisConfigFile config = GenesisConfigFile.development();
+
+    assertThat(config.getConfigOptions().getConstantinopleFixBlockNumber()).hasValue(0);
+
+    // constantinopleFix node
+    final Map<String, String> override = new HashMap<>();
+    override.put("constantinopleFixBlock", "1000");
+
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> config.getConfigOptions(override).getConstantinopleFixBlockNumber())
+        .withMessage(
+            "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
+    ;
   }
 
   @Test
@@ -317,6 +337,26 @@ public class GenesisConfigFileTest {
 
     assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 3L, 1035301L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
+  }
+
+  @Test
+  public void shouldLoadForksIgnoreClassicForkBlock() throws IOException {
+    final ObjectNode configNode =
+        new ObjectMapper()
+            .createObjectNode()
+            .set(
+                "config",
+                JsonUtil.objectNodeFromString(
+                    Resources.toString(
+                        Resources.getResource(
+                            // If you inspect this config, you should see that classicForkBlock is
+                            // declared (which we want to ignore)
+                            "valid_config_with_etc_forks.json"),
+                        StandardCharsets.UTF_8)));
+    final GenesisConfigFile config = fromConfig(configNode);
+
+    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 3L, 1035301L);
+    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(61));
   }
 
   private GenesisConfigFile configWithProperty(final String key, final String value) {

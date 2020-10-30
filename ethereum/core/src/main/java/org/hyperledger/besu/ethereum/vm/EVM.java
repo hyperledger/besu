@@ -17,14 +17,14 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.vm.FixedStack.OverflowException;
+import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
-import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltManager;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 import org.hyperledger.besu.ethereum.vm.operations.VirtualOperation;
 
-import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -35,24 +35,28 @@ import org.apache.tuweni.bytes.Bytes;
 public class EVM {
   private static final Logger LOG = getLogger();
 
+  protected static final OperationResult OVERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+  protected static final OperationResult UNDERFLOW_RESPONSE =
+      new OperationResult(
+          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+
   private final OperationRegistry operations;
-  private final Operation invalidOperation;
   private final Operation endOfScriptStop;
 
   public EVM(final OperationRegistry operations, final GasCalculator gasCalculator) {
     this.operations = operations;
-    this.invalidOperation = new InvalidOperation(gasCalculator);
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
   }
 
-  public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer)
-      throws ExceptionalHaltException {
+  public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       executeNextOperation(frame, operationTracer);
     }
   }
 
-  public void forEachOperation(
+  void forEachOperation(
       final Code code,
       final int contractAccountVersion,
       final BiConsumer<Operation, Integer> operationDelegate) {
@@ -66,59 +70,35 @@ public class EVM {
     }
   }
 
-  private void executeNextOperation(final MessageFrame frame, final OperationTracer operationTracer)
-      throws ExceptionalHaltException {
+  private void executeNextOperation(
+      final MessageFrame frame, final OperationTracer operationTracer) {
     frame.setCurrentOperation(
         operationAtOffset(frame.getCode(), frame.getContractAccountVersion(), frame.getPC()));
-    evaluateExceptionalHaltReasons(frame);
-    final Optional<Gas> currentGasCost = calculateGasCost(frame);
     operationTracer.traceExecution(
         frame,
-        currentGasCost,
         () -> {
-          logState(frame, currentGasCost);
-          checkForExceptionalHalt(frame);
-          decrementRemainingGas(frame, currentGasCost);
-          frame.getCurrentOperation().execute(frame);
+          OperationResult result;
+          try {
+            result = frame.getCurrentOperation().execute(frame, this);
+          } catch (final OverflowException oe) {
+            result = OVERFLOW_RESPONSE;
+          } catch (final UnderflowException ue) {
+            result = UNDERFLOW_RESPONSE;
+          }
+          frame.setGasCost(result.getGasCost());
+          logState(frame, result.getGasCost().orElse(Gas.ZERO));
+          final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
+          if (haltReason.isPresent()) {
+            LOG.trace("MessageFrame evaluation halted because of {}", haltReason.get());
+            frame.setExceptionalHaltReason(haltReason);
+            frame.setState(State.EXCEPTIONAL_HALT);
+          } else if (result.getGasCost().isPresent()) {
+            frame.decrementRemainingGas(result.getGasCost().get());
+          }
           incrementProgramCounter(frame);
+
+          return result;
         });
-  }
-
-  private void evaluateExceptionalHaltReasons(final MessageFrame frame) {
-    final EnumSet<ExceptionalHaltReason> haltReasons =
-        ExceptionalHaltManager.evaluateAll(frame, this);
-    frame.getExceptionalHaltReasons().addAll(haltReasons);
-  }
-
-  private Optional<Gas> calculateGasCost(final MessageFrame frame) {
-    // Calculate the cost if, and only if, we are not halting as a result of a stack underflow, as
-    // the operation may need all its stack items to calculate gas.
-    // This is how existing EVM implementations behave.
-    if (!frame
-        .getExceptionalHaltReasons()
-        .contains(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS)) {
-      try {
-        return Optional.ofNullable(frame.getCurrentOperation().cost(frame));
-      } catch (final IllegalArgumentException e) {
-        // TODO: Figure out a better way to handle gas overflows.
-      }
-    }
-    return Optional.empty();
-  }
-
-  private void decrementRemainingGas(final MessageFrame frame, final Optional<Gas> currentGasCost) {
-    frame.decrementRemainingGas(
-        currentGasCost.orElseThrow(() -> new IllegalStateException("Gas overflow detected")));
-  }
-
-  private void checkForExceptionalHalt(final MessageFrame frame) throws ExceptionalHaltException {
-    final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons = frame.getExceptionalHaltReasons();
-    if (!exceptionalHaltReasons.isEmpty()) {
-      LOG.trace("MessageFrame evaluation halted because of {}", exceptionalHaltReasons);
-      frame.setState(State.EXCEPTIONAL_HALT);
-      frame.setOutputData(Bytes.EMPTY);
-      throw new ExceptionalHaltException(exceptionalHaltReasons);
-    }
   }
 
   private void incrementProgramCounter(final MessageFrame frame) {
@@ -130,13 +110,13 @@ public class EVM {
     }
   }
 
-  private static void logState(final MessageFrame frame, final Optional<Gas> currentGasCost) {
+  private static void logState(final MessageFrame frame, final Gas currentGasCost) {
     if (LOG.isTraceEnabled()) {
       final StringBuilder builder = new StringBuilder();
       builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
       builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
       builder.append("PC: ").append(frame.getPC()).append("\n");
-      currentGasCost.ifPresent(gas -> builder.append("Gas cost: ").append(gas).append("\n"));
+      builder.append("Gas cost: ").append(currentGasCost).append("\n");
       builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
       builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
       builder.append("Stack:");
@@ -155,6 +135,12 @@ public class EVM {
       return endOfScriptStop;
     }
 
-    return operations.getOrDefault(bytecode.get(offset), contractAccountVersion, invalidOperation);
+    final byte opcode = bytecode.get(offset);
+    final Operation operation = operations.get(opcode, contractAccountVersion);
+    if (operation == null) {
+      return new InvalidOperation(opcode, null);
+    } else {
+      return operation;
+    }
   }
 }

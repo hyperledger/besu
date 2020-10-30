@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
+import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.PrivConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy.PrivacyNodeFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivateContractVerifier;
@@ -40,11 +42,13 @@ public class PrivacyAcceptanceTestBase {
   protected final PrivateTransactionVerifier privateTransactionVerifier;
   protected final PrivacyNodeFactory privacyBesu;
   protected final PrivateContractTransactions privateContractTransactions;
+  protected final PrivConditions priv;
   protected final PrivacyCluster privacyCluster;
   protected final PrivacyAccountResolver privacyAccountResolver;
   protected final ContractTransactions contractTransactions;
   protected final NetConditions net;
   protected final EthTransactions ethTransactions;
+  protected final EthConditions eth;
   private final Vertx vertx = Vertx.vertx();
 
   public PrivacyAcceptanceTestBase() {
@@ -57,7 +61,12 @@ public class PrivacyAcceptanceTestBase {
     privateContractTransactions = new PrivateContractTransactions();
     privacyCluster = new PrivacyCluster(net);
     privacyAccountResolver = new PrivacyAccountResolver();
+    priv =
+        new PrivConditions(
+            new org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy
+                .PrivacyTransactions());
     contractTransactions = new ContractTransactions();
+    eth = new EthConditions(ethTransactions);
   }
 
   @After

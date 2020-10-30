@@ -75,8 +75,8 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
-  public ReceiveResponse receive(final String enclaveKey) {
-    final ReceiveRequest request = new ReceiveRequest(enclaveKey);
+  public ReceiveResponse receive(final String payloadKey) {
+    final ReceiveRequest request = new ReceiveRequest(payloadKey);
     return post(
         ORION,
         request,
@@ -84,8 +84,8 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
-  public ReceiveResponse receive(final String enclaveKey, final String to) {
-    final ReceiveRequest request = new ReceiveRequest(enclaveKey, to);
+  public ReceiveResponse receive(final String payloadKey, final String to) {
+    final ReceiveRequest request = new ReceiveRequest(payloadKey, to);
     return post(
         ORION,
         request,

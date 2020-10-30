@@ -34,16 +34,16 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-class FullSyncTargetManager<C> extends SyncTargetManager<C> {
+class FullSyncTargetManager extends SyncTargetManager {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
 
   FullSyncTargetManager(
       final SynchronizerConfiguration config,
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);

@@ -20,11 +20,13 @@ import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP155
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.disableEIP1559;
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.enableEIP1559;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 
 import java.util.Optional;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,6 +40,11 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
   @Before
   public void setUp() {
     validationRule = new EIP1559BlockHeaderGasPriceValidationRule(eip1559);
+  }
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test
@@ -84,28 +91,6 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
             validationRule.validate(
                 blockHeader(FORK_BLOCK + 2, 0, Optional.empty()),
                 blockHeader(FORK_BLOCK + 1, 0, Optional.empty())))
-        .isFalse();
-    disableEIP1559();
-  }
-
-  @Test
-  public void shouldReturnTrueIfValidBaseFeeAfterForkBlock() {
-    enableEIP1559();
-    assertThat(
-            validationRule.validate(
-                blockHeader(FORK_BLOCK + 1, 0, Optional.of(987500000L)),
-                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee()))))
-        .isTrue();
-    disableEIP1559();
-  }
-
-  @Test
-  public void shouldReturnFalseIfInvalidBaseFeeAfterForkBlock() {
-    enableEIP1559();
-    assertThat(
-            validationRule.validate(
-                blockHeader(FORK_BLOCK + 1, 0, Optional.of(987500001L)),
-                blockHeader(FORK_BLOCK, 9000000L, Optional.of(feeMarket.getInitialBasefee()))))
         .isFalse();
     disableEIP1559();
   }

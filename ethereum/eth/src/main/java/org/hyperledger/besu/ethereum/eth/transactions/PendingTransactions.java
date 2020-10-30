@@ -15,35 +15,41 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Comparator.comparing;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
 
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.util.Subscribers;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Queue;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -60,14 +66,16 @@ public class PendingTransactions {
   private final int maxTransactionRetentionHours;
   private final Clock clock;
 
-  private final Queue<Hash> newPooledHashes;
+  private final EvictingQueue<Hash> newPooledHashes;
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
-  private final SortedSet<TransactionInfo> prioritizedTransactions =
+  private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
+              .thenComparing(TransactionInfo::getGasPrice)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private final Map<Address, TransactionsForSenderInfo> transactionsBySender = new HashMap<>();
+  private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
+      new ConcurrentHashMap<>();
 
   private final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
       Subscribers.create();
@@ -81,17 +89,24 @@ public class PendingTransactions {
   private final Counter localTransactionHashesAddedCounter;
 
   private final long maxPendingTransactions;
+  private final TransactionPoolReplacementHandler transactionReplacementHandler;
+  private final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
   public PendingTransactions(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
       final int maxPooledTransactionHashes,
       final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Supplier<BlockHeader> chainHeadHeaderSupplier,
+      final Optional<EIP1559> eip1559,
+      final Percentage priceBump) {
     this.maxTransactionRetentionHours = maxTransactionRetentionHours;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
+    this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
+    this.transactionReplacementHandler = new TransactionPoolReplacementHandler(eip1559, priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -130,15 +145,16 @@ public class PendingTransactions {
   public boolean addRemoteTransaction(final Transaction transaction) {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
-    final boolean transactionAdded = addTransaction(transactionInfo);
-    if (transactionAdded) {
+    final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
+    final boolean added = transactionAddedStatus.equals(ADDED);
+    if (added) {
       remoteTransactionAddedCounter.inc();
     }
-    return transactionAdded;
+    return added;
   }
 
   boolean addTransactionHash(final Hash transactionHash) {
-    boolean hashAdded;
+    final boolean hashAdded;
     synchronized (newPooledHashes) {
       hashAdded = newPooledHashes.add(transactionHash);
     }
@@ -149,10 +165,10 @@ public class PendingTransactions {
   }
 
   @VisibleForTesting
-  public boolean addLocalTransaction(final Transaction transaction) {
-    final boolean transactionAdded =
+  public TransactionAddedStatus addLocalTransaction(final Transaction transaction) {
+    final TransactionAddedStatus transactionAdded =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
-    if (transactionAdded) {
+    if (transactionAdded.equals(ADDED)) {
       localTransactionAddedCounter.inc();
     }
     return transactionAdded;
@@ -168,7 +184,7 @@ public class PendingTransactions {
   }
 
   private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (pendingTransactions) {
+    synchronized (prioritizedTransactions) {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
@@ -187,14 +203,8 @@ public class PendingTransactions {
     transactionRemovedCounter.labels(location, operation).inc();
   }
 
-  /*
-   * The BlockTransaction selection process (part of block mining) requires synchronised access to
-   * all pendingTransactions - this allows it to iterate over the available transactions without
-   * releasing the lock in between items.
-   *
-   */
   public void selectTransactions(final TransactionSelector selector) {
-    synchronized (pendingTransactions) {
+    synchronized (prioritizedTransactions) {
       final List<Transaction> transactionsToRemove = new ArrayList<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       for (final TransactionInfo transactionInfo : prioritizedTransactions) {
@@ -230,15 +240,17 @@ public class PendingTransactions {
             .map(TransactionInfo::getTransaction));
   }
 
-  private boolean addTransaction(final TransactionInfo transactionInfo) {
+  private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
     Optional<Transaction> droppedTransaction = Optional.empty();
-    synchronized (pendingTransactions) {
+    synchronized (prioritizedTransactions) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
-        return false;
+        return ALREADY_KNOWN;
       }
 
-      if (!addTransactionForSenderAndNonce(transactionInfo)) {
-        return false;
+      final TransactionAddedStatus transactionAddedStatus =
+          addTransactionForSenderAndNonce(transactionInfo);
+      if (!transactionAddedStatus.equals(ADDED)) {
+        return transactionAddedStatus;
       }
       prioritizedTransactions.add(transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
@@ -252,20 +264,23 @@ public class PendingTransactions {
     }
     notifyTransactionAdded(transactionInfo.getTransaction());
     droppedTransaction.ifPresent(this::notifyTransactionDropped);
-    return true;
+    return ADDED;
   }
 
-  private boolean addTransactionForSenderAndNonce(final TransactionInfo transactionInfo) {
+  private TransactionAddedStatus addTransactionForSenderAndNonce(
+      final TransactionInfo transactionInfo) {
     final TransactionInfo existingTransaction =
         getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
-      if (!shouldReplace(existingTransaction, transactionInfo)) {
-        return false;
+      if (existingTransaction.transaction.isFrontierTransaction()
+          && !transactionReplacementHandler.shouldReplace(
+              existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
+        return REJECTED_UNDERPRICED_REPLACEMENT;
       }
       removeTransaction(existingTransaction.getTransaction());
     }
     trackTransactionBySenderAndNonce(transactionInfo);
-    return true;
+    return ADDED;
   }
 
   private void trackTransactionBySenderAndNonce(final TransactionInfo transactionInfo) {
@@ -293,15 +308,6 @@ public class PendingTransactions {
         transactionsBySender.computeIfAbsent(
             transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
     return transactionsForSenderInfo.getTransactionsInfos().get(transactionInfo.getNonce());
-  }
-
-  private boolean shouldReplace(
-      final TransactionInfo existingTransaction, final TransactionInfo newTransaction) {
-    return newTransaction
-            .getTransaction()
-            .getGasPrice()
-            .compareTo(existingTransaction.getTransaction().getGasPrice())
-        > 0;
   }
 
   private void notifyTransactionAdded(final Transaction transaction) {
@@ -350,16 +356,15 @@ public class PendingTransactions {
   }
 
   public OptionalLong getNextNonceForSender(final Address sender) {
-    synchronized (pendingTransactions) {
-      final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
-      if (transactionsForSenderInfo == null
-          || transactionsForSenderInfo.getTransactionsInfos().isEmpty()) {
-        return OptionalLong.empty();
-      } else if (!transactionsForSenderInfo.getGaps().isEmpty()) {
-        return OptionalLong.of(Objects.requireNonNull(transactionsForSenderInfo.getGaps().poll()));
-      } else {
-        return OptionalLong.of(transactionsForSenderInfo.getTransactionsInfos().lastKey() + 1);
-      }
+    final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
+    if (transactionsForSenderInfo == null
+        || transactionsForSenderInfo.getTransactionsInfos().isEmpty()) {
+      return OptionalLong.empty();
+    } else {
+      final OptionalLong maybeNextGap = transactionsForSenderInfo.maybeNextGap();
+      return maybeNextGap.isEmpty()
+          ? OptionalLong.of(transactionsForSenderInfo.getTransactionsInfos().lastKey() + 1)
+          : maybeNextGap;
     }
   }
 
@@ -369,8 +374,10 @@ public class PendingTransactions {
     }
   }
 
-  public Collection<Hash> getNewPooledHashes() {
-    return newPooledHashes;
+  List<Hash> getNewPooledHashes() {
+    synchronized (newPooledHashes) {
+      return List.copyOf(newPooledHashes);
+    }
   }
 
   /**
@@ -397,6 +404,10 @@ public class PendingTransactions {
 
     public Transaction getTransaction() {
       return transaction;
+    }
+
+    public Wei getGasPrice() {
+      return transaction.getGasPrice();
     }
 
     public long getSequence() {
@@ -434,5 +445,25 @@ public class PendingTransactions {
   public interface TransactionSelector {
 
     TransactionSelectionResult evaluateTransaction(final Transaction transaction);
+  }
+
+  public enum TransactionAddedStatus {
+    ALREADY_KNOWN(TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN),
+    REJECTED_UNDERPRICED_REPLACEMENT(TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED),
+    ADDED();
+
+    private final Optional<TransactionInvalidReason> invalidReason;
+
+    TransactionAddedStatus() {
+      this.invalidReason = Optional.empty();
+    }
+
+    TransactionAddedStatus(final TransactionInvalidReason invalidReason) {
+      this.invalidReason = Optional.of(invalidReason);
+    }
+
+    public Optional<TransactionInvalidReason> getInvalidReason() {
+      return invalidReason;
+    }
   }
 }

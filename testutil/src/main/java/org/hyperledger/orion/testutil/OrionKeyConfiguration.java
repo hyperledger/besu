@@ -15,19 +15,24 @@
 package org.hyperledger.orion.testutil;
 
 public class OrionKeyConfiguration {
-  private final String pubKeyPath;
-  private final String privKeyPath;
+  private final String[] pubKeyPaths;
+  private final String[] privKeyPaths;
 
   public OrionKeyConfiguration(final String pubKeyPath, final String privKeyPath) {
-    this.pubKeyPath = pubKeyPath;
-    this.privKeyPath = privKeyPath;
+    this.pubKeyPaths = new String[] {pubKeyPath};
+    this.privKeyPaths = new String[] {privKeyPath};
   }
 
-  public String getPubKeyPath() {
-    return pubKeyPath;
+  public OrionKeyConfiguration(final String[] pubKeyPaths, final String[] privKeyPaths) {
+    this.pubKeyPaths = pubKeyPaths;
+    this.privKeyPaths = privKeyPaths;
   }
 
-  public String getPrivKeyPath() {
-    return privKeyPath;
+  public String[] getPubKeyPaths() {
+    return pubKeyPaths;
+  }
+
+  public String[] getPrivKeyPaths() {
+    return privKeyPaths;
   }
 }
