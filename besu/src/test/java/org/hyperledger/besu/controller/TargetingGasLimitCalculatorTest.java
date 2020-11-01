@@ -17,6 +17,10 @@ package org.hyperledger.besu.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
+
 import org.junit.Test;
 
 public class TargetingGasLimitCalculatorTest {
@@ -83,5 +87,24 @@ public class TargetingGasLimitCalculatorTest {
 
     assertThatThrownBy(() -> new TargetingGasLimitCalculator(0L).changeTargetGasLimit(-1L))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void verifyWithinGasLimitDelta() {
+    final long targetGasLimit = 10_000_000L;
+    final long currentGasLimit = 1024L * 1024L;
+    final TargetingGasLimitCalculator targetingGasLimitCalculator =
+        new TargetingGasLimitCalculator(targetGasLimit);
+    final GasLimitRangeAndDeltaValidationRule rule =
+        new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL);
+
+    // parent
+    final BlockHeader parent = new BlockHeaderTestFixture().gasLimit(currentGasLimit).buildHeader();
+
+    // current
+    final long nextGasLimit = targetingGasLimitCalculator.nextGasLimit(parent.getGasLimit());
+    final BlockHeader header = new BlockHeaderTestFixture().gasLimit(nextGasLimit).buildHeader();
+
+    assertThat(rule.validate(header, parent)).isTrue();
   }
 }
