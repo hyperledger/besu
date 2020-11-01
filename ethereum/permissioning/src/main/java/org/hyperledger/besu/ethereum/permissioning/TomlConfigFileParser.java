@@ -68,7 +68,7 @@ public class TomlConfigFileParser {
       }
       if (!tomlConfigFile.canWrite()) {
         LOG.warn(
-            "Write access denied for file at: %s. Configuration modification operations will not be permitted.",
+            "Write access denied for file at: {}. Configuration modification operations will not be permitted.",
             filename);
       }
       return tomlConfigFile;
