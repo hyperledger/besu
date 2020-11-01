@@ -24,60 +24,60 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRange
 import org.junit.Test;
 
 public class TargetingGasLimitCalculatorTest {
+  private static final long ADJUSTMENT_FACTOR = 1024L;
+
   @Test
   public void verifyGasLimitIsIncreasedWithinLimits() {
     TargetingGasLimitCalculator targetingGasLimitCalculator =
-        new TargetingGasLimitCalculator(10_000_000L);
+        new TargetingGasLimitCalculator(10_000_000L, ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
     assertThat(targetingGasLimitCalculator.nextGasLimit(8_000_000L))
-        .isEqualTo(8_000_000L + TargetingGasLimitCalculator.ADJUSTMENT_FACTOR);
+        .isEqualTo(8_000_000L + ADJUSTMENT_FACTOR);
   }
 
   @Test
   public void verifyGasLimitIsDecreasedWithinLimits() {
     TargetingGasLimitCalculator targetingGasLimitCalculator =
-        new TargetingGasLimitCalculator(10_000_000L);
+        new TargetingGasLimitCalculator(10_000_000L, ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
     assertThat(targetingGasLimitCalculator.nextGasLimit(12_000_000L))
-        .isEqualTo(12_000_000L - TargetingGasLimitCalculator.ADJUSTMENT_FACTOR);
+        .isEqualTo(12_000_000L - ADJUSTMENT_FACTOR);
   }
 
   @Test
   public void verifyGasLimitReachesTarget() {
     final long target = 10_000_000L;
-    final long offset = TargetingGasLimitCalculator.ADJUSTMENT_FACTOR / 2;
+    final long offset = ADJUSTMENT_FACTOR / 2;
     TargetingGasLimitCalculator targetingGasLimitCalculator =
-        new TargetingGasLimitCalculator(target);
+        new TargetingGasLimitCalculator(target, ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
     assertThat(targetingGasLimitCalculator.nextGasLimit(target - offset)).isEqualTo(target);
     assertThat(targetingGasLimitCalculator.nextGasLimit(target + offset)).isEqualTo(target);
   }
 
   @Test
-  public void verifyNoNegative() {
-    final long target = 0L;
-    final long offset = TargetingGasLimitCalculator.ADJUSTMENT_FACTOR / 2;
-    TargetingGasLimitCalculator targetingGasLimitCalculator =
-        new TargetingGasLimitCalculator(target);
-    assertThat(targetingGasLimitCalculator.nextGasLimit(target + offset)).isEqualTo(target);
+  public void verifyMinGasLimit() {
+    assertThatThrownBy(
+            () ->
+                new TargetingGasLimitCalculator(0L, ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  public void verifyNoOverflow() {
-    final long target = Long.MAX_VALUE;
-    final long offset = TargetingGasLimitCalculator.ADJUSTMENT_FACTOR / 2;
-    TargetingGasLimitCalculator targetingGasLimitCalculator =
-        new TargetingGasLimitCalculator(target);
-    assertThat(targetingGasLimitCalculator.nextGasLimit(target - offset)).isEqualTo(target);
+  public void verifyMaxGasLimit() {
+    assertThatThrownBy(
+            () -> new TargetingGasLimitCalculator(10001L, ADJUSTMENT_FACTOR, 5000L, 10000L))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void changeTargetGasLimit() {
     final long targetGasLimit = 10_000_000L;
     final TargetingGasLimitCalculator targetingGasLimitCalculator =
-        new TargetingGasLimitCalculator(targetGasLimit);
+        new TargetingGasLimitCalculator(
+            targetGasLimit, ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
 
     assertThat(targetingGasLimitCalculator.nextGasLimit(targetGasLimit)).isEqualTo(targetGasLimit);
     targetingGasLimitCalculator.changeTargetGasLimit(8_000_000L);
     assertThat(targetingGasLimitCalculator.nextGasLimit(targetGasLimit))
-        .isEqualTo(targetGasLimit - TargetingGasLimitCalculator.ADJUSTMENT_FACTOR);
+        .isEqualTo(targetGasLimit - ADJUSTMENT_FACTOR);
   }
 
   @Test
