@@ -14,7 +14,7 @@
 ### Bug Fixes
 
 * Fix a bug on `eth_estimateGas` which returned `Internal error` instead of `Execution reverted` in case of reverted transaction [\#1478](https://github.com/hyperledger/besu/pull/1478)
-* Fixed a bug in local Account Permissioning where a node is unable to import a block containing a transaction from a node that s not in the local allowlist [\#1476]()
+* Fixed a bug in local Account Permissioning where a node is unable to import a block containing a transaction from a node that s not in the local allowlist [\#1510](https://github.com/hyperledger/besu/pull/1510)
 
 ## Deprecated and Scheduled for removal in _Next_ Release
 
