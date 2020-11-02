@@ -10,6 +10,7 @@
 * Added support for the updated smart contract-based [node permissioning EEA interface](https://entethalliance.github.io/client-spec/spec.html#dfn-connectionallowed). [\#1435](https://github.com/hyperledger/besu/pull/1435) and [\#1496](https://github.com/hyperledger/besu/pull/1496)
 * Added EvmTool binary to the distribution.  EvmTool is a CLI that can execute EVM bytecode and execute ethereum state tests. [\#1465](https://github.com/hyperledger/besu/pull/1465)
 * Updated the libraries for secp256k1 and AltBN series precompiles. These updates provide significant performance improvements to those areas. [\#1499](https://github.com/hyperledger/besu/pull/1499)
+* Provide MegaGas/second measurements in the log when doing a full block import, such as the catch up phase of a fast sync. [\#1512](https://github.com/hyperledger/besu/pull/1512)
 
 ### Bug Fixes
 

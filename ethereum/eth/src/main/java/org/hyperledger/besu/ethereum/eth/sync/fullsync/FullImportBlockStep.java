@@ -76,7 +76,9 @@ public class FullImportBlockStep implements Consumer<Block> {
         final double mgps = gasAccumulator / 1000.0 / deltaMilli;
         // this is a formatted logger statement
         //noinspection PlaceholderCountMatchesArgumentCount
-        LOG.info("Import reached block %d (%s), %.3f Mg/s, Peers: %d", blockNumber, shortHash, mgps, peerCount);
+        LOG.info(
+            "Import reached block %d (%s), %.3f Mg/s, Peers: %d",
+            blockNumber, shortHash, mgps, peerCount);
       }
       lastReportMillis = nowMilli;
       gasAccumulator = 0;
