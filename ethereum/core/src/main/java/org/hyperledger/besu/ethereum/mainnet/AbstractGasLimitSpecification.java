@@ -26,10 +26,9 @@ public abstract class AbstractGasLimitSpecification {
   protected AbstractGasLimitSpecification(final long minGasLimit, final long maxGasLimit) {
     checkArgument(
         minGasLimit >= GAS_LIMIT_BOUND_DIVISOR,
-        "minGasLimit of "
-            + minGasLimit
-            + " is below the bound divisor of "
-            + GAS_LIMIT_BOUND_DIVISOR);
+        String.format(
+            "minGasLimit of %d is below the bound divisor of %d",
+            minGasLimit, GAS_LIMIT_BOUND_DIVISOR));
     this.minGasLimit = minGasLimit;
     this.maxGasLimit = maxGasLimit;
   }
