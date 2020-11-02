@@ -60,6 +60,7 @@ public enum JsonRpcError {
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
+  REVERT_ERROR(-32000, "Execution reverted"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),
