@@ -22,16 +22,20 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockExcep
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.time.Instant;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FullImportBlockStep implements Consumer<Block> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getFormatterLogger();
+
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
+  private long gasAccumulator = 0;
+  private long lastReportMillis = 0;
 
   public FullImportBlockStep(
       final ProtocolSchedule protocolSchedule,
@@ -56,12 +60,26 @@ public class FullImportBlockStep implements Consumer<Block> {
     if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());
     }
+    gasAccumulator += block.getHeader().getGasUsed();
     int peerCount = -1; // ethContext is not available in tests
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
     }
     if (blockNumber % 200 == 0) {
-      LOG.info("Import reached block {} ({}), Peers: {}", blockNumber, shortHash, peerCount);
+      final long nowMilli = Instant.now().toEpochMilli();
+      if (lastReportMillis == 0 || gasAccumulator == 0) {
+        // this is a formatted logger statement
+        //noinspection PlaceholderCountMatchesArgumentCount
+        LOG.info("Import reached block %d (%s), Peers: %d", blockNumber, shortHash, peerCount);
+      } else {
+        final long deltaMilli = nowMilli - lastReportMillis;
+        final double mgps = gasAccumulator / 1000.0 / deltaMilli;
+        // this is a formatted logger statement
+        //noinspection PlaceholderCountMatchesArgumentCount
+        LOG.info("Import reached block %d (%s), %.3f Mg/s, Peers: %d", blockNumber, shortHash, mgps, peerCount);
+      }
+      lastReportMillis = nowMilli;
+      gasAccumulator = 0;
     }
   }
 }
