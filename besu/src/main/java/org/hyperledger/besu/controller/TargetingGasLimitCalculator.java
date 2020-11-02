@@ -27,20 +27,20 @@ import org.apache.logging.log4j.Logger;
 public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
     implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
-  private final long adjustFactor;
+  private final long maxConstantAdjustmentIncrement;
   private Long targetGasLimit;
 
   public TargetingGasLimitCalculator(final long targetGasLimit) {
-    this(targetGasLimit, 1024L, 5000L, 0x7fffffffffffffffL);
+    this(targetGasLimit, 1024L, 5000L, Long.MAX_VALUE);
   }
 
   public TargetingGasLimitCalculator(
       final long targetGasLimit,
-      final long adjustFactor,
+      final long maxConstantAdjustmentIncrement,
       final long minGasLimit,
       final long maxGasLimit) {
     super(minGasLimit, maxGasLimit);
-    this.adjustFactor = adjustFactor;
+    this.maxConstantAdjustmentIncrement = maxConstantAdjustmentIncrement;
     changeTargetGasLimit(targetGasLimit);
   }
 
@@ -75,8 +75,8 @@ public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
   }
 
   private long adjustAmount(final long currentGasLimit) {
-    final long maxAdjustAmount = Math.max(deltaBound(currentGasLimit) - 1, 0);
-    return Math.min(adjustFactor, maxAdjustAmount);
+    final long maxProportionalAdjustmentLimit = Math.max(deltaBound(currentGasLimit) - 1, 0);
+    return Math.min(maxConstantAdjustmentIncrement, maxProportionalAdjustmentLimit);
   }
 
   private long safeAdd(final long gasLimit) {
