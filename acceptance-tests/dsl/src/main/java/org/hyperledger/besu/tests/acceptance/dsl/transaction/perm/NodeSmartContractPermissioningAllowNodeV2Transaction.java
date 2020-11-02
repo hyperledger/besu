@@ -19,7 +19,6 @@ import static org.web3j.utils.Numeric.toHexString;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.permissioning.NodeSmartContractV2PermissioningController;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -81,14 +80,14 @@ public class NodeSmartContractPermissioningAllowNodeV2Transaction implements Tra
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-      final String ip = NodeSmartContractV2PermissioningController.encodeIp(enodeUrl.getIp());
+      final String address = enodeUrl.getIp().getHostAddress();
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function addNodeFunction =
           FunctionEncoder.makeFunction(
               "addEnode",
               List.of("string", "string", "uint16"),
-              List.of(hexNodeIdString, ip, port),
+              List.of(hexNodeIdString, address, port),
               Collections.emptyList());
       return Bytes.fromHexString(FunctionEncoder.encode(addNodeFunction));
     } catch (Exception e) {

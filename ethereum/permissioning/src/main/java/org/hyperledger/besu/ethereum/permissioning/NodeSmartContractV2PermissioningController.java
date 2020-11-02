@@ -21,10 +21,8 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.net.InetAddress;
 import java.util.List;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeEncoder;
@@ -64,28 +62,20 @@ public class NodeSmartContractV2PermissioningController
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-      final String hexIpString = encodeIp(enodeUrl.getIp());
+      final String address = enodeUrl.getIp().getHostAddress();
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
               List.of("string", "string", "uint16"),
-              List.of(hexNodeIdString, hexIpString, port),
+              List.of(hexNodeIdString, address, port),
               List.of(Bool.TYPE_NAME));
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (Exception e) {
       throw new RuntimeException(
           "Error building payload to call node permissioning smart contract", e);
     }
-  }
-
-  /*
-   * String version of of host address (IP)
-   */
-  @VisibleForTesting
-  public static String encodeIp(final InetAddress addr) {
-    return addr.getHostAddress();
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
