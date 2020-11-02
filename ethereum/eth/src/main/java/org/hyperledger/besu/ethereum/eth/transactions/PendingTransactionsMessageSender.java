@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.LimitedNewPooledTransactionHashesMessages;
+import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
-import java.util.Set;
 import java.util.stream.StreamSupport;
+
+import com.google.common.collect.Iterables;
 
 class PendingTransactionsMessageSender {
 
@@ -37,16 +37,17 @@ class PendingTransactionsMessageSender {
   }
 
   private void sendTransactionsToPeer(final EthPeer peer) {
-    final Set<Hash> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
-    while (!allTxToSend.isEmpty()) {
-      final LimitedNewPooledTransactionHashesMessages limitedTransactionsMessages =
-          LimitedNewPooledTransactionHashesMessages.createLimited(allTxToSend);
-      allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
-      try {
-        peer.send(limitedTransactionsMessages.getTransactionsMessage());
-      } catch (final PeerNotConnected e) {
-        return;
-      }
-    }
+    Iterables.partition(
+            transactionTracker.claimTransactionsToSendToPeer(peer),
+            4096 // implementation determined limit for how many hashes to send at once
+            )
+        .forEach(
+            hashes -> {
+              try {
+                peer.send(NewPooledTransactionHashesMessage.create(hashes));
+              } catch (final PeerNotConnected __) {
+                // if the peer isn't connected anymore, don't do anything
+              }
+            });
   }
 }
