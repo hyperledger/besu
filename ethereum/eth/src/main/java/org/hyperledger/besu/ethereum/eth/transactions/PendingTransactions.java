@@ -86,7 +86,7 @@ public class PendingTransactions {
   private final LabelledMetric<Counter> transactionRemovedCounter;
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
-  private final Counter localTransactionHashesAddedCounter;
+  private final Counter transactionHashesAddedcounter;
 
   private final long maxPendingTransactions;
   private final TransactionPoolReplacementHandler transactionReplacementHandler;
@@ -115,7 +115,7 @@ public class PendingTransactions {
             "source");
     localTransactionAddedCounter = transactionAddedCounter.labels("local");
     remoteTransactionAddedCounter = transactionAddedCounter.labels("remote");
-    localTransactionHashesAddedCounter = transactionAddedCounter.labels("pool");
+    transactionHashesAddedcounter = transactionAddedCounter.labels("pool");
 
     transactionRemovedCounter =
         metricsSystem.createLabelledCounter(
@@ -159,7 +159,7 @@ public class PendingTransactions {
       hashAdded = newPooledHashes.add(transactionHash);
     }
     if (hashAdded) {
-      localTransactionHashesAddedCounter.inc();
+      transactionHashesAddedcounter.inc();
     }
     return hashAdded;
   }
