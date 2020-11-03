@@ -21,10 +21,8 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.net.InetAddress;
 import java.util.List;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeEncoder;
@@ -33,7 +31,7 @@ import org.web3j.abi.datatypes.Function;
 
 /**
  * Controller that can read from a smart contract that exposes the EEA node permissioning v2 call
- * connectionAllowed(string,bytes16,uint16)
+ * connectionAllowed(string,string,uint16)
  */
 public class NodeSmartContractV2PermissioningController
     extends AbstractNodeSmartContractPermissioningController {
@@ -64,42 +62,20 @@ public class NodeSmartContractV2PermissioningController
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-      final byte[] ip = encodeIp(enodeUrl.getIp());
+      final String address = enodeUrl.getIp().getHostAddress();
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
-              List.of("string", "bytes16", "uint16"),
-              List.of(hexNodeIdString, ip, port),
+              List.of("string", "string", "uint16"),
+              List.of(hexNodeIdString, address, port),
               List.of(Bool.TYPE_NAME));
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (Exception e) {
       throw new RuntimeException(
           "Error building payload to call node permissioning smart contract", e);
     }
-  }
-
-  /*
-   * IPv4-Compatible IPv6 Address That hybrid address consists of 10 "0" bytes, followed by two "1"
-   * bytes, followed by the original 4-bytes IPv4 address (RFC 4291 Section 2.5.5.1 -
-   * https://tools.ietf.org/html/rfc4291#section-2.5.5)
-   */
-  @VisibleForTesting
-  public static byte[] encodeIp(final InetAddress addr) {
-    // InetAddress deals with giving us the right number of bytes
-    final byte[] address = addr.getAddress();
-    final byte[] res = new byte[16];
-    if (address.length == 4) {
-      // lead with 10 bytes of 0's then 2 bytes of 1's
-      res[10] = (byte) 0xFF;
-      res[11] = (byte) 0xFF;
-      // then the ipv4
-      System.arraycopy(address, 0, res, 12, 4);
-    } else {
-      System.arraycopy(address, 0, res, 0, address.length);
-    }
-    return res;
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
