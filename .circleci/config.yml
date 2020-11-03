@@ -4,6 +4,9 @@ executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
+        auth:
+          username: $DOCKER_USER_RO
+          password: $DOCKER_PASSWORD_RO
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -12,6 +15,9 @@ executors:
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
+        auth:
+          username: $DOCKER_USER_RO
+          password: $DOCKER_PASSWORD_RO      
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -214,8 +220,8 @@ jobs:
       - run:
           name: Publish Docker
           command: |
-            docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
-            docker login "${ACR_REPO}" --username "${ACR_DOCKER_USER}" --password "${ACR_DOCKER_PASSWORD}"
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+            docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:
@@ -226,18 +232,28 @@ workflows:
       - unitTests:
           requires:
             - assemble
+          context:
+            - besu-dockerhub-ro            
       - referenceTests:
           requires:
             - assemble
+          context:
+            - besu-dockerhub-ro            
       - integrationTests:
           requires:
             - assemble
+          context:
+            - besu-dockerhub-ro            
       - acceptanceTests:
           requires:
             - assemble
+          context:
+            - besu-dockerhub-ro            
       - buildDocker:
           requires:
             - unitTests
+          context:
+            - besu-dockerhub-ro            
       - publish:
           filters:
             branches:
@@ -250,6 +266,9 @@ workflows:
             - acceptanceTests
             - referenceTests
             - buildDocker
+            - buildDocker
+          context:
+            - besu-dockerhub-ro
       - publishDocker:
           filters:
             branches:
@@ -262,3 +281,8 @@ workflows:
             - acceptanceTests
             - referenceTests
             - buildDocker
+          context:
+            - besu-dockerhub-ro
+            - besu-dockerhub-rw
+            - besu-acr-rw
+

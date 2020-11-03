@@ -16,19 +16,35 @@
 
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.mockito.Mockito.mock;
+
 import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
+import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
+import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class Benchmarks {
 
@@ -41,6 +57,54 @@ public class Benchmarks {
 
   static final int MATH_WARMUP = 10_000;
   static final int MATH_ITERATIONS = 1_000;
+  static final MessageFrame fakeFrame =
+      MessageFrame.builder()
+          .type(MessageFrame.Type.CONTRACT_CREATION)
+          .contract(Address.ZERO)
+          .inputData(Bytes.EMPTY)
+          .sender(Address.ZERO)
+          .value(Wei.ZERO)
+          .apparentValue(Wei.ZERO)
+          .code(new Code(Bytes.EMPTY))
+          .depth(1)
+          .completer(__ -> {})
+          .contractAccountVersion(0)
+          .address(Address.ZERO)
+          .blockHashLookup(mock(BlockHashLookup.class))
+          .blockHeader(mock(ProcessableBlockHeader.class))
+          .blockchain(mock(Blockchain.class))
+          .gasPrice(Wei.ZERO)
+          .messageFrameStack(new ArrayDeque<>())
+          .miningBeneficiary(Address.ZERO)
+          .originator(Address.ZERO)
+          .initialGas(Gas.of(100000))
+          .worldState(mock(WorldUpdater.class))
+          .build();
+
+  public static void benchSecp256k1Recover() {
+    final SECP256K1.PrivateKey privateKey =
+        SECP256K1.PrivateKey.create(
+            new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
+    final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.create(privateKey);
+
+    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
+    final Bytes32 dataHash = keccak256(data);
+    final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
+    for (int i = 0; i < MATH_WARMUP; i++) {
+      SECP256K1.PublicKey.recoverFromSignature(dataHash, signature);
+    }
+    final Stopwatch timer = Stopwatch.createStarted();
+    for (int i = 0; i < MATH_ITERATIONS; i++) {
+      SECP256K1.PublicKey.recoverFromSignature(dataHash, signature);
+    }
+    timer.stop();
+
+    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
+    final double perCall = elapsed / MATH_ITERATIONS;
+    final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
+
+    System.out.printf("secp256k1 signature recovery for %,d gas.%n", (int) gasSpent);
+  }
 
   public static void benchSha256() {
     final SHA256PrecompiledContract contract =
@@ -48,7 +112,7 @@ public class Benchmarks {
     final byte[] warmupData = new byte[240];
     final Bytes warmupBytes = Bytes.wrap(warmupData);
     for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.compute(warmupBytes, null);
+      contract.compute(warmupBytes, fakeFrame);
     }
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -56,7 +120,7 @@ public class Benchmarks {
       final Bytes bytes = Bytes.wrap(data);
       final Stopwatch timer = Stopwatch.createStarted();
       for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.compute(bytes, null);
+        contract.compute(bytes, fakeFrame);
       }
       timer.stop();
 
@@ -65,7 +129,7 @@ public class Benchmarks {
       final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
 
       System.out.printf(
-          "Hashed %,d bytes for %,d gas. Charging %,d gas.%n",
+          "sha256 %,d bytes for %,d gas. Charging %,d gas.%n",
           len, (int) gasSpent, contract.gasRequirement(bytes).asUInt256().toLong());
     }
   }
@@ -90,7 +154,7 @@ public class Benchmarks {
       final double perCall = elapsed / HASH_ITERATIONS;
       final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
 
-      System.out.printf("Hashed %,d bytes for %,d gas.%n", len, (int) gasSpent);
+      System.out.printf("keccak256 %,d bytes for %,d gas.%n", len, (int) gasSpent);
     }
   }
 
@@ -100,7 +164,7 @@ public class Benchmarks {
     final byte[] warmupData = new byte[240];
     final Bytes warmupBytes = Bytes.wrap(warmupData);
     for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.compute(warmupBytes, null);
+      contract.compute(warmupBytes, fakeFrame);
     }
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -108,7 +172,7 @@ public class Benchmarks {
       final Bytes bytes = Bytes.wrap(data);
       final Stopwatch timer = Stopwatch.createStarted();
       for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.compute(bytes, null);
+        contract.compute(bytes, fakeFrame);
       }
       timer.stop();
 
@@ -117,7 +181,7 @@ public class Benchmarks {
       final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
 
       System.out.printf(
-          "Hashed %,d bytes for %,d gas. Charging %,d gas.%n",
+          "ripemd %,d bytes for %,d gas. Charging %,d gas.%n",
           len, (int) gasSpent, contract.gasRequirement(bytes).asUInt256().toLong());
     }
   }
@@ -206,7 +270,7 @@ public class Benchmarks {
     final BigIntegerModularExponentiationPrecompiledContract contract =
         new BigIntegerModularExponentiationPrecompiledContract(new BerlinGasCalculator());
 
-    for (final Entry<String, Bytes> testCase : testcases.entrySet()) {
+    for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
       final double gasSpent = runBenchmark(testCase.getValue(), contract);
 
       System.out.printf(
@@ -265,42 +329,57 @@ public class Benchmarks {
   }
 
   private static void benchBNPairing() {
-    final Bytes goerli_3617444 =
-        Bytes.fromHexString(
-            "0x07402fdc3bc28a434909f24695adea3e9418d9857efc8c71f67a470a17f3cf12"
-                + "255dbc3a8b5c2c1a7a3f8c59e2f5b6e04bc4d7b7bb82fcbe18b2294305c8473b"
-                + "19156e854972d656d1020003e5781972d84081309cdf71baacf6c6e29272f5ff"
-                + "2acded377df8902b7a75de6c0f53c161f3a2ff3f374470b78d5b3c4d826d84d5"
-                + "1731ef3b84913296c30a649461b2ca35e3fcc2e3031ea2386d32f885ff096559"
-                + "0919e7685f6ea605db14f311dede6e83f21937f05cfc53ac1dbe45891c47bf2a"
-            //                + "1a3fabea802788c8aa88741c6a68f271b221eb75838bb1079381f3f1ae414f40"
-            //                + "126308d6cdb6b7efceb1ec0016b99cf7a1e5780f5a9a775d43bc7f2b6fd510e2"
-            //                + "11b35cf2c85531eab64b96eb2eef487e0eb60fb9207fe4763e7f6e02dcead646"
-            //                + "2cbea52f3417b398aed9e355ed16934a81b72d2646e3bf90dbc2dcba294b631d"
-            //                + "2c6518cd26310e541a799357d1ae8bc477b162f2040407b965ecd777e26d31f7"
-            //                + "125170b5860fb8f8da2c43e00ea4a83bcc1a974e47e59fcd657851d2b0dd1655"
-            //                + "130a2183533392b5fd031857eb4c199a19382f39fcb666d6133b3a6e5784d6a5"
-            //                + "2cca76f2bc625d2e61a41b5f382eadf1df1756dd392f639c3d9f3513099e63f9"
-            //                + "07ecba8131b3fb354272c86d01577e228c5bd5fb6404bbaf106d7f4858dc2996"
-            //                + "1c5d49a9ae291a2a2213da57a76653391fa1fc0fa7c534afa124ad71b7fdd719"
-            //                + "10f1a73f94a8f077f478d069d7cf1c49444f64cd20ed75d4f6de3d8986147cf8"
-            //                + "0d5816f2f116c5cc0be7dfc4c0b4c592204864acb70ad5f789013389a0092ce4"
-            //                + "2650b89e5540eea1375b27dfd9081a0622e03352e5c6a7593df72e2113328e64"
-            //                + "21991b3e5100845cd9b8f0fa16c7fe5f40152e702e61f4cdf0d98e7f213b1a47"
-            //                + "10520008be7609bdb92145596ac6bf37da0269f7460e04e8e4701c3afbae0e52"
-            //                + "0664e736b2af7bf9125f69fe5c3706cd893cd769b1dae8a6e3d639e2d76e66e2"
-            //                + "1cacce8776f5ada6b35036f9343faab26c91b9aea83d3cb59cf5628ffe18ab1b"
-            //                + "03b48ca7e6d84fca619aaf81745fbf9c30e5a78ed4766cc62b0f12aea5044f56"
-            );
-
+    final Bytes[] args = {
+      Bytes.fromHexString(
+          "0x0fc6ebd1758207e311a99674dc77d28128643c057fb9ca2c92b4205b6bf57ed2"
+              + "1e50042f97b7a1f2768fa15f6683eca9ee7fa8ee655d94246ab85fb1da3f0b90"
+              + "198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2"
+              + "1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed"
+              + "090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b"
+              + "12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa"),
+      Bytes.fromHexString(
+          "0x2b101be01b2f064cba109e065dc0b5e5bf6b64ed4054b82af3a7e6e34c1e2005"
+              + "1a4d9ceecf9115a98efd147c4abb2684102d3e925938989153b9ff330523cdb4"
+              + "08d554bf59102bbb961ba81107ec71785ef9ce6638e5332b6c1a58b87447d181"
+              + "01cf7cc93bfbf7b2c5f04a3bc9cb8b72bbcf2defcabdceb09860c493bdf1588d"
+              + "02cb2a424885c9e412b94c40905b359e3043275cd29f5b557f008cd0a3e0c0dc"
+              + "204e5d81d86c561f9344ad5f122a625f259996b065b80cbbe74a9ad97b6d7cc2"
+              + "07402fdc3bc28a434909f24695adea3e9418d9857efc8c71f67a470a17f3cf12"
+              + "255dbc3a8b5c2c1a7a3f8c59e2f5b6e04bc4d7b7bb82fcbe18b2294305c8473b"
+              + "19156e854972d656d1020003e5781972d84081309cdf71baacf6c6e29272f5ff"
+              + "2acded377df8902b7a75de6c0f53c161f3a2ff3f374470b78d5b3c4d826d84d5"
+              + "1731ef3b84913296c30a649461b2ca35e3fcc2e3031ea2386d32f885ff096559"
+              + "0919e7685f6ea605db14f311dede6e83f21937f05cfc53ac1dbe45891c47bf2a"),
+      Bytes.fromHexString(
+          "0x1a3fabea802788c8aa88741c6a68f271b221eb75838bb1079381f3f1ae414f40"
+              + "126308d6cdb6b7efceb1ec0016b99cf7a1e5780f5a9a775d43bc7f2b6fd510e2"
+              + "11b35cf2c85531eab64b96eb2eef487e0eb60fb9207fe4763e7f6e02dcead646"
+              + "2cbea52f3417b398aed9e355ed16934a81b72d2646e3bf90dbc2dcba294b631d"
+              + "2c6518cd26310e541a799357d1ae8bc477b162f2040407b965ecd777e26d31f7"
+              + "125170b5860fb8f8da2c43e00ea4a83bcc1a974e47e59fcd657851d2b0dd1655"
+              + "130a2183533392b5fd031857eb4c199a19382f39fcb666d6133b3a6e5784d6a5"
+              + "2cca76f2bc625d2e61a41b5f382eadf1df1756dd392f639c3d9f3513099e63f9"
+              + "07ecba8131b3fb354272c86d01577e228c5bd5fb6404bbaf106d7f4858dc2996"
+              + "1c5d49a9ae291a2a2213da57a76653391fa1fc0fa7c534afa124ad71b7fdd719"
+              + "10f1a73f94a8f077f478d069d7cf1c49444f64cd20ed75d4f6de3d8986147cf8"
+              + "0d5816f2f116c5cc0be7dfc4c0b4c592204864acb70ad5f789013389a0092ce4"
+              + "2650b89e5540eea1375b27dfd9081a0622e03352e5c6a7593df72e2113328e64"
+              + "21991b3e5100845cd9b8f0fa16c7fe5f40152e702e61f4cdf0d98e7f213b1a47"
+              + "10520008be7609bdb92145596ac6bf37da0269f7460e04e8e4701c3afbae0e52"
+              + "0664e736b2af7bf9125f69fe5c3706cd893cd769b1dae8a6e3d639e2d76e66e2"
+              + "1cacce8776f5ada6b35036f9343faab26c91b9aea83d3cb59cf5628ffe18ab1b"
+              + "03b48ca7e6d84fca619aaf81745fbf9c30e5a78ed4766cc62b0f12aea5044f56")
+    };
     final AltBN128PairingPrecompiledContract contract =
         AltBN128PairingPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
-    final double gasSpent = runBenchmark(goerli_3617444, contract);
+    for (int i = 0; i < args.length; i++) {
+      final double gasSpent = runBenchmark(args[i], contract);
 
-    System.out.printf(
-        "BNMUL for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(goerli_3617444).asUInt256().toLong());
+      System.out.printf(
+          "BNPairings %d pairs for %,d gas. Charging %,d gas.%n",
+          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]).asUInt256().toLong());
+    }
   }
 
   public static void benchBLS12G1Add() {
@@ -320,7 +399,7 @@ public class Benchmarks {
         (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
   }
 
-  public static void benchBLS12G1Mul() {
+  private static void benchBLS12G1Mul() {
     final Bytes arg =
         Bytes.fromHexString(
             "0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"
@@ -328,7 +407,7 @@ public class Benchmarks {
                 + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
     final BLS12G1MulPrecompiledContract contract = new BLS12G1MulPrecompiledContract();
-    contract.compute(arg, null);
+    contract.compute(arg, fakeFrame);
 
     final double gasSpent = runBenchmark(arg, contract);
 
@@ -337,7 +416,7 @@ public class Benchmarks {
         (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
   }
 
-  public static void benchBLS12G1MultiExp() {
+  private static void benchBLS12G1MultiExp() {
     final Bytes[] args = {
       Bytes.fromHexString(
           "0000000000000000000000000000000012196c5a43d69224d8713389285f26b98f86ee910ab3dd668e413738282003cc5b7357af9a7af54bb713d62255e80f560000000000000000000000000000000006ba8102bfbeea4416b710c73e8cce3032c31c6269c44906f8ac4f7874ce99fb17559992486528963884ce429a992fee"
@@ -404,7 +483,7 @@ public class Benchmarks {
         (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
   }
 
-  public static void benchBLS12G2Mul() {
+  private static void benchBLS12G2Mul() {
     final Bytes arg =
         Bytes.fromHexString(
             "00000000000000000000000000000000024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb80000000000000000000000000000000013e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e"
@@ -420,7 +499,7 @@ public class Benchmarks {
         (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
   }
 
-  public static void benchBLS12G2MultiExp() {
+  private static void benchBLS12G2MultiExp() {
     final Bytes[] args = {
       Bytes.fromHexString(
           "00000000000000000000000000000000039b10ccd664da6f273ea134bb55ee48f09ba585a7e2bb95b5aec610631ac49810d5d616f67ba0147e6d1be476ea220e0000000000000000000000000000000000fbcdff4e48e07d1f73ec42fe7eb026f5c30407cfd2f22bbbfe5b2a09e8a7bb4884178cb6afd1c95f80e646929d30040000000000000000000000000000000001ed3b0e71acb0adbf44643374edbf4405af87cfc0507db7e8978889c6c3afbe9754d1182e98ac3060d64994d31ef576000000000000000000000000000000001681a2bf65b83be5a2ca50430949b6e2a099977482e9405b593f34d2ed877a3f0d1bddc37d0cec4d59d7df74b2b8f2df"
@@ -511,7 +590,7 @@ public class Benchmarks {
     }
   }
 
-  public static void benchBLS12MapFPTOG1() {
+  private static void benchBLS12MapFPTOG1() {
     final Bytes arg =
         Bytes.fromHexString(
             "0000000000000000000000000000000014406e5bfb9209256a3820879a29ac2f62d6aca82324bf3ae2aa7d3c54792043bd8c791fccdb080c1a52dc68b8b69350");
@@ -525,7 +604,7 @@ public class Benchmarks {
         (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
   }
 
-  public static void benchBLS12MapFP2TOG2() {
+  private static void benchBLS12MapFP2TOG2() {
     final Bytes arg =
         Bytes.fromHexString(
             "0000000000000000000000000000000014406e5bfb9209256a3820879a29ac2f62d6aca82324bf3ae2aa7d3c54792043bd8c791fccdb080c1a52dc68b8b69350000000000000000000000000000000000e885bb33996e12f07da69073e2c0cc880bc8eff26d2a724299eb12d54f4bcf26f4748bb020e80a7e3794a7b0e47a641");
@@ -540,16 +619,16 @@ public class Benchmarks {
   }
 
   private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {
-    if (contract.compute(arg, null) == null) {
+    if (contract.compute(arg, fakeFrame) == null) {
       throw new RuntimeException("Input is Invalid");
     }
 
     for (int i = 0; i < MATH_WARMUP; i++) {
-      contract.compute(arg, null);
+      contract.compute(arg, fakeFrame);
     }
     final Stopwatch timer = Stopwatch.createStarted();
     for (int i = 0; i < MATH_ITERATIONS; i++) {
-      contract.compute(arg, null);
+      contract.compute(arg, fakeFrame);
     }
     timer.stop();
 
@@ -559,37 +638,22 @@ public class Benchmarks {
   }
 
   public static void main(final String[] args) {
-    //    System.out.println("SHA256");
-    //    benchSha256();
-    //    System.out.println("Keccak256");
-    //    benchKeccak256();
-    //    System.out.println("RIPEMD256");
-    //    benchRipeMD();
-    System.out.println("BNADD");
+    benchSecp256k1Recover();
+    benchSha256();
+    benchKeccak256();
+    benchRipeMD();
     benchBNADD();
-    System.out.println("BNMUL");
     benchBNMUL();
-    System.out.println("BNPairing");
     benchBNPairing();
-    //    System.out.println("ModEXP");
-    //    benchModExp();
-    //    System.out.println("G1Add");
-    //    benchBLS12G1Add();
-    //    System.out.println("G1Mul");
-    //    benchBLS12G1Mul();
-    //    System.out.println("G1Multiexp");
-    //    benchBLS12G1MultiExp();
-    //    System.out.println("G2Add");
-    //    benchBLS12G2Add();
-    //    System.out.println("G2Mul");
-    //    benchBLS12G2Mul();
-    //    System.out.println("G2Multiexp");
-    //    benchBLS12G2MultiExp();
-    //    System.out.println("BLS Pairing");
-    //    benchBLS12Pair();
-    //    System.out.println("MapFPtoG1");
-    //    benchBLS12MapFPTOG1();
-    //    System.out.println("MapFP2toG2");
-    //    benchBLS12MapFP2TOG2();
+    benchModExp();
+    benchBLS12G1Add();
+    benchBLS12G1Mul();
+    benchBLS12G1MultiExp();
+    benchBLS12G2Add();
+    benchBLS12G2Mul();
+    benchBLS12G2MultiExp();
+    benchBLS12Pair();
+    benchBLS12MapFPTOG1();
+    benchBLS12MapFP2TOG2();
   }
 }
