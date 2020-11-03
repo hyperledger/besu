@@ -29,8 +29,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FullImportBlockStep implements Consumer<Block> {
-  private static final Logger LOG = LogManager.getFormatterLogger();
-
+  private static final Logger LOG = LogManager.getLogger();
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
@@ -67,19 +66,17 @@ public class FullImportBlockStep implements Consumer<Block> {
     }
     if (blockNumber % 200 == 0) {
       final long nowMilli = Instant.now().toEpochMilli();
-      if (lastReportMillis == 0 || gasAccumulator == 0) {
-        // this is a formatted logger statement
-        //noinspection PlaceholderCountMatchesArgumentCount
-        LOG.info("Import reached block %d (%s), Peers: %d", blockNumber, shortHash, peerCount);
-      } else {
-        final long deltaMilli = nowMilli - lastReportMillis;
-        final double mgps = gasAccumulator / 1000.0 / deltaMilli;
-        // this is a formatted logger statement
-        //noinspection PlaceholderCountMatchesArgumentCount
-        LOG.info(
-            "Import reached block %d (%s), %.3f Mg/s, Peers: %d",
-            blockNumber, shortHash, mgps, peerCount);
-      }
+      final long deltaMilli = nowMilli - lastReportMillis;
+      final String mgps =
+          (lastReportMillis == 0 || gasAccumulator == 0)
+              ? "-"
+              : String.format("%.3f", gasAccumulator / 1000.0 / deltaMilli);
+      LOG.info(
+          "Import reached block {} ({}), {} Mg/s, Peers: {}",
+          blockNumber,
+          shortHash,
+          mgps,
+          peerCount);
       lastReportMillis = nowMilli;
       gasAccumulator = 0;
     }
