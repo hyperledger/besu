@@ -31,12 +31,12 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putAccountStorageTrieNode(getHash(), getData());
+    updater.putAccountStorageTrieNode(null /*FIXME*/, getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(getHash());
+    return worldStateStorage.getAccountStorageTrieNode(null /*FIXME*/, getHash());
   }
 
   @Override

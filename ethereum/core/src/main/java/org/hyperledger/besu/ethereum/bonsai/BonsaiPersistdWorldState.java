@@ -159,7 +159,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         }
         final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
             new StoredMerklePatriciaTrie<>(
-                key -> getStorageTrieNode(address, key),
+                (location, key) -> getStorageTrieNode(address, key),
                 oldAccount.getStorageRoot(),
                 Function.identity(),
                 Function.identity());
@@ -190,7 +190,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
               (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
           final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
               new StoredMerklePatriciaTrie<>(
-                  key -> getStorageTrieNode(updatedAddress, key),
+                  (location, key) -> getStorageTrieNode(updatedAddress, key),
                   storageRoot,
                   Function.identity(),
                   Function.identity());
@@ -220,7 +220,8 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
             }
           }
           storageTrie.commit(
-              (key, value) -> writeStorageTrieNode(trieBranchTx, updatedAddress, key, value));
+              (location, key, value) ->
+                  writeStorageTrieNode(trieBranchTx, updatedAddress, key, value));
           final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
           accountValue.getUpdated().setStorageRoot(newStorageRoot);
           if (accountOriginal != null && !accountOriginal.getStorageRoot().equals(newStorageRoot)) {
@@ -274,7 +275,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         //        throw new RuntimeException("NOPE");
       }
 
-      accountTrie.commit((key, value) -> writeTrieNode(trieBranchTx, key, value));
+      accountTrie.commit((location, key, value) -> writeTrieNode(trieBranchTx, key, value));
       final Bytes32 oldWorldStateRootHash = worldStateRootHash;
       worldStateRootHash = accountTrie.getRootHash();
       //      LOG.debug("New account Root {}", worldStateRootHash);
@@ -363,7 +364,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     }
   }
 
-  private Optional<Bytes> getTrieNode(final Bytes32 nodeHash) {
+  private Optional<Bytes> getTrieNode(final Bytes location, final Bytes32 nodeHash) {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
@@ -862,7 +863,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
           // Enumerate and delete addresses not updated
           final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
               new StoredMerklePatriciaTrie<>(
-                  key -> getStorageTrieNode(deletedAddress, key),
+                  (location, key) -> getStorageTrieNode(deletedAddress, key),
                   effective.getStorageRoot(),
                   Function.identity(),
                   Function.identity());

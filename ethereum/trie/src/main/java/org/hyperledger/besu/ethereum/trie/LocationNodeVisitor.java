@@ -15,8 +15,14 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
-public interface NodeUpdater {
-  void store(Bytes location, Bytes32 hash, Bytes value);
+interface LocationNodeVisitor<V> {
+
+  void visit(Bytes location, ExtensionNode<V> extensionNode);
+
+  void visit(Bytes location, BranchNode<V> branchNode);
+
+  void visit(Bytes location, LeafNode<V> leafNode);
+
+  void visit(Bytes location, NullNode<V> nullNode);
 }

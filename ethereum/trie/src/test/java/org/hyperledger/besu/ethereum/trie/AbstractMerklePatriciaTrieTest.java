@@ -364,7 +364,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
     assertThat(valueWithProof.getValue()).contains(value1);
 
     List<Node<Bytes>> nodes =
-        TrieNodeDecoder.decodeNodes(valueWithProof.getProofRelatedNodes().get(1));
+        TrieNodeDecoder.decodeNodes(null /*FIXME*/, valueWithProof.getProofRelatedNodes().get(1));
 
     assertThat(new String(nodes.get(1).getValue().get().toArray(), UTF_8)).isEqualTo(value1);
     assertThat(new String(nodes.get(2).getValue().get().toArray(), UTF_8)).isEqualTo(value2);
@@ -402,7 +402,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
     assertThat(valueWithProof.getProofRelatedNodes()).hasSize(1);
 
     List<Node<Bytes>> nodes =
-        TrieNodeDecoder.decodeNodes(valueWithProof.getProofRelatedNodes().get(0));
+        TrieNodeDecoder.decodeNodes(null /*FIXME*/, valueWithProof.getProofRelatedNodes().get(0));
 
     assertThat(nodes.size()).isEqualTo(1);
     final String nodeValue = new String(nodes.get(0).getValue().get().toArray(), UTF_8);

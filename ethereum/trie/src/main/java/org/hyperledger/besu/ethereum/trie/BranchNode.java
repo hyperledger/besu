@@ -69,6 +69,11 @@ class BranchNode<V> implements Node<V> {
   }
 
   @Override
+  public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+    visitor.visit(location, this);
+  }
+
+  @Override
   public Bytes getPath() {
     return Bytes.EMPTY;
   }
@@ -145,7 +150,7 @@ class BranchNode<V> implements Node<V> {
     if (updatedChild == NULL_NODE) {
       if (value.isPresent() && !hasChildren()) {
         return nodeFactory.createLeaf(Bytes.of(index), value.get());
-      } else if (!value.isPresent()) {
+      } else if (value.isEmpty()) {
         final Optional<Node<V>> flattened = maybeFlatten(newChildren);
         if (flattened.isPresent()) {
           return flattened.get();

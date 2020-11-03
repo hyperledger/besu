@@ -110,7 +110,7 @@ public class PersistDataStepTest {
   private void assertDataPersisted(final List<Task<NodeDataRequest>> tasks) {
     tasks.forEach(
         task ->
-            assertThat(worldStateStorage.getNodeData(task.getData().getHash()))
+            assertThat(worldStateStorage.getNodeData(null /*FIXME*/, task.getData().getHash()))
                 .isEqualTo(Optional.of(task.getData().getData())));
   }
 }
