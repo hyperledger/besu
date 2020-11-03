@@ -295,6 +295,31 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
+  public void shouldRejectEIP1559TransactionIfEIP115Disabled() {
+    ExperimentalEIPs.eip1559Enabled = false;
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            Optional.of(transactionPriceCalculator),
+            false,
+            Optional.empty(),
+            Optional.empty(),
+            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPremium(Optional.of(Wei.of(1)))
+            .feeCap(Optional.of(Wei.of(1)))
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    final Optional<Long> basefee = Optional.of(150000L);
+    when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(160000L));
+    assertThat(validator.validate(transaction, basefee))
+        .isEqualTo(
+            ValidationResult.invalid(
+                TransactionValidator.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+  }
+
+  @Test
   public void shouldAcceptValidEIP1559() {
     final long forkBlock = 845L;
     final EIP1559 eip1559 = new EIP1559(forkBlock);
