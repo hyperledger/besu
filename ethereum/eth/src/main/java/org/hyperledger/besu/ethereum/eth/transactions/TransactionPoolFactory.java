@@ -65,7 +65,9 @@ public class TransactionPoolFactory {
             : Optional.empty();
     final Optional<PendingTransactionsMessageSender> pendingTransactionsMessageSender =
         eth65Enabled
-            ? Optional.of(new PendingTransactionsMessageSender(pendingTransactionTracker.get()))
+            ? Optional.of(
+                new PendingTransactionsMessageSender(
+                    pendingTransactionTracker.get(), metricsSystem))
             : Optional.empty();
 
     return createTransactionPool(

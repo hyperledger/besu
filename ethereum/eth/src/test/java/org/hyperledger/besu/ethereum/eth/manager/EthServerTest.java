@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
 
@@ -55,7 +56,8 @@ public class EthServerTest {
         worldStateArchive,
         transactionPool,
         ethMessages,
-        new EthProtocolConfiguration(2, 2, 2, 2, 2, true));
+        new EthProtocolConfiguration(2, 2, 2, 2, 2, true),
+        new NoOpMetricsSystem());
   }
 
   @Test

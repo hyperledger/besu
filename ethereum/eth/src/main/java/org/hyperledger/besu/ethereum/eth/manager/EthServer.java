@@ -40,6 +40,9 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,18 +63,25 @@ class EthServer {
   private final TransactionPool transactionPool;
   private final EthMessages ethMessages;
   private final EthProtocolConfiguration ethereumWireProtocolConfiguration;
+  private final Counter pooledTransactionsMessageSendCounter;
 
   EthServer(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthMessages ethMessages,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final MetricsSystem metricsSystem) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.transactionPool = transactionPool;
     this.ethMessages = ethMessages;
     this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
+    this.pooledTransactionsMessageSendCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "pooled_transactions_message_sent",
+            "Count of pooled transactions message sent");
     this.setupListeners();
   }
 
@@ -163,6 +173,7 @@ class EthServer {
               message.getData(),
               ethereumWireProtocolConfiguration.getMaxGetPooledTransactions());
       message.getPeer().send(response);
+      pooledTransactionsMessageSendCounter.inc();
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed GET_POOLED_TRANSACTIONS message, disconnecting: {}",

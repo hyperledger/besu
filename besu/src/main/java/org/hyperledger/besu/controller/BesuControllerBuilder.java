@@ -408,7 +408,8 @@ public abstract class BesuControllerBuilder {
         peerValidators,
         fastSyncEnabled,
         scheduler,
-        genesisConfig.getForks());
+        genesisConfig.getForks(),
+        metricsSystem);
   }
 
   public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {

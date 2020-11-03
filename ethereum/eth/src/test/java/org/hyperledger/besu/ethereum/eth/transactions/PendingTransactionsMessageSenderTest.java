@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +57,7 @@ public class PendingTransactionsMessageSenderTest {
   private final PeerPendingTransactionTracker transactionTracker =
       new PeerPendingTransactionTracker(pendingTransactions);
   private final PendingTransactionsMessageSender messageSender =
-      new PendingTransactionsMessageSender(transactionTracker);
+      new PendingTransactionsMessageSender(transactionTracker, new NoOpMetricsSystem());
 
   @Before
   public void setUp() {

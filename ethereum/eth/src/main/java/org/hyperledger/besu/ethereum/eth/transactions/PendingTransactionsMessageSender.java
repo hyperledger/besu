@@ -18,6 +18,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.LimitedNewPooledTransactionHashesMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Set;
 import java.util.stream.StreamSupport;
@@ -25,9 +28,16 @@ import java.util.stream.StreamSupport;
 class PendingTransactionsMessageSender {
 
   private final PeerPendingTransactionTracker transactionTracker;
+  private final Counter newPooledTransactionsMessageSendCounter;
 
-  public PendingTransactionsMessageSender(final PeerPendingTransactionTracker transactionTracker) {
+  public PendingTransactionsMessageSender(
+      final PeerPendingTransactionTracker transactionTracker, final MetricsSystem metricsSystem) {
     this.transactionTracker = transactionTracker;
+    newPooledTransactionsMessageSendCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "new_pooled_transactions_message_sent",
+            "Count of new pooled transactions message sent");
   }
 
   public void sendTransactionsToPeers() {
@@ -36,14 +46,15 @@ class PendingTransactionsMessageSender {
         .forEach(this::sendTransactionsToPeer);
   }
 
-  private void sendTransactionsToPeer(final EthPeer peer) {
-    final Set<Hash> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
+  private void sendTransactionsToPeer(final EthPeer ethPeer) {
+    final Set<Hash> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(ethPeer);
     while (!allTxToSend.isEmpty()) {
       final LimitedNewPooledTransactionHashesMessages limitedTransactionsMessages =
           LimitedNewPooledTransactionHashesMessages.createLimited(allTxToSend);
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
-        peer.send(limitedTransactionsMessages.getTransactionsMessage());
+        ethPeer.send(limitedTransactionsMessages.getTransactionsMessage());
+        newPooledTransactionsMessageSendCounter.inc();
       } catch (final PeerNotConnected e) {
         return;
       }

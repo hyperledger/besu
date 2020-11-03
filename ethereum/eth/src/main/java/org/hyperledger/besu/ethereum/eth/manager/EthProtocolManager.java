@@ -38,6 +38,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -80,7 +82,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final MetricsSystem metricsSystem) {
     this.networkId = networkId;
     this.peerValidators = peerValidators;
     this.scheduler = scheduler;
@@ -111,7 +114,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         worldStateArchive,
         transactionPool,
         ethMessages,
-        ethereumWireProtocolConfiguration);
+        ethereumWireProtocolConfiguration,
+        metricsSystem);
   }
 
   @VisibleForTesting
@@ -139,7 +143,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peerValidators,
         fastSyncEnabled,
         scheduler,
-        new ForkIdManager(blockchain, Collections.emptyList()));
+        new ForkIdManager(blockchain, Collections.emptyList()),
+        new NoOpMetricsSystem());
   }
 
   public EthProtocolManager(
@@ -154,7 +159,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
-      final List<Long> forks) {
+      final List<Long> forks,
+      final MetricsSystem metricsSystem) {
     this(
         blockchain,
         networkId,
@@ -167,7 +173,37 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peerValidators,
         fastSyncEnabled,
         scheduler,
-        new ForkIdManager(blockchain, forks));
+        new ForkIdManager(blockchain, forks),
+        metricsSystem);
+  }
+
+  public <T> EthProtocolManager(
+      final Blockchain blockchain,
+      final BigInteger networkId,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext,
+      final List<PeerValidator> peerValidators,
+      final boolean fastSyncEnabled,
+      final EthScheduler ethScheduler,
+      final ForkIdManager forkIdManager) {
+    this(
+        blockchain,
+        networkId,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
+        peerValidators,
+        fastSyncEnabled,
+        ethScheduler,
+        forkIdManager,
+        new NoOpMetricsSystem());
   }
 
   public EthContext ethContext() {
