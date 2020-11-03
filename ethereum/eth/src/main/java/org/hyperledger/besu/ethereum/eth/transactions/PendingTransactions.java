@@ -38,7 +38,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -375,8 +374,10 @@ public class PendingTransactions {
     }
   }
 
-  Collection<Hash> getNewPooledHashes() {
-    return newPooledHashes;
+  List<Hash> getNewPooledHashes() {
+    synchronized (newPooledHashes) {
+      return List.copyOf(newPooledHashes);
+    }
   }
 
   /**

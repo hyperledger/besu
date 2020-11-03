@@ -19,32 +19,18 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 
 import java.util.List;
-import java.util.Optional;
 
 public class TransactionTrace {
 
   private final Transaction transaction;
   private final Result result;
   private final List<TraceFrame> traceFrames;
-  private final Optional<Long> time;
 
   public TransactionTrace(
       final Transaction transaction, final Result result, final List<TraceFrame> traceFrames) {
     this.transaction = transaction;
     this.result = result;
     this.traceFrames = traceFrames;
-    this.time = Optional.empty();
-  }
-
-  public TransactionTrace(
-      final Transaction transaction,
-      final Result result,
-      final List<TraceFrame> traceFrames,
-      final Long time) {
-    this.transaction = transaction;
-    this.result = result;
-    this.traceFrames = traceFrames;
-    this.time = Optional.of(time);
   }
 
   public Transaction getTransaction() {
@@ -65,9 +51,5 @@ public class TransactionTrace {
 
   public List<TraceFrame> getTraceFrames() {
     return traceFrames;
-  }
-
-  public Optional<Long> getTime() {
-    return time;
   }
 }

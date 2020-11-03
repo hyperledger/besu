@@ -57,7 +57,7 @@ public class EventMultiplexer {
           throw new RuntimeException("Illegal event in queue.");
       }
     } catch (final Exception e) {
-      LOG.error("State machine threw exception while processing event {" + ibftEvent + "}", e);
+      LOG.error("State machine threw exception while processing event \\{" + ibftEvent + "\\}", e);
     }
   }
 }
