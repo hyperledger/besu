@@ -71,12 +71,16 @@ Users of Web3J should note that many calls will now return a result with the err
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
-## Deprecated and Scheduled for removal in _Next_ Release
+## Deprecated 
 
-### --privacy-precompiled-address
+### --privacy-precompiled-address (Scheduled for removal in _Next_ Release)
 Deprecated in 1.5.1
 - CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
 on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+
+### Besu Sample Network repository
+
+The [Besu Sample Networks repository](https://github.com/ConsenSys/besu-sample-networks) has been replaced by the [Quorum Developer Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Developer-Quickstart). 
 
 ### Download link
 https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.0.zip
