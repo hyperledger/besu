@@ -48,9 +48,9 @@ public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
   public long nextGasLimit(final long currentGasLimit) {
     final long nextGasLimit;
     if (targetGasLimit > currentGasLimit) {
-      nextGasLimit = Math.min(targetGasLimit, safeAdd(currentGasLimit));
+      nextGasLimit = Math.min(targetGasLimit, safeAddAtMost(currentGasLimit));
     } else if (targetGasLimit < currentGasLimit) {
-      nextGasLimit = Math.max(targetGasLimit, safeSub(currentGasLimit));
+      nextGasLimit = Math.max(targetGasLimit, safeSubAtMost(currentGasLimit));
     } else {
       nextGasLimit = currentGasLimit;
     }
@@ -79,7 +79,7 @@ public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
     return Math.min(maxConstantAdjustmentIncrement, maxProportionalAdjustmentLimit);
   }
 
-  private long safeAdd(final long gasLimit) {
+  private long safeAddAtMost(final long gasLimit) {
     try {
       return Math.addExact(gasLimit, adjustAmount(gasLimit));
     } catch (final ArithmeticException ex) {
@@ -87,7 +87,7 @@ public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
     }
   }
 
-  private long safeSub(final long gasLimit) {
+  private long safeSubAtMost(final long gasLimit) {
     try {
       return Math.max(Math.subtractExact(gasLimit, adjustAmount(gasLimit)), 0);
     } catch (final ArithmeticException ex) {
