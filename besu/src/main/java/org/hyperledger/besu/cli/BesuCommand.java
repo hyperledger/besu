@@ -111,6 +111,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueSto
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.launcher.LauncherManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -1091,6 +1092,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Override
   public void run() {
     try {
+
+      new LauncherManager(this, unstableNatOptions).run();
+
       configureLogging(true);
       configureNativeLibs();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));

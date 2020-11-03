@@ -67,6 +67,7 @@ dependencies {
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
 
+  implementation group: 'de.codeshelf.consoleui', name: 'consoleui', version: '0.0.13'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
