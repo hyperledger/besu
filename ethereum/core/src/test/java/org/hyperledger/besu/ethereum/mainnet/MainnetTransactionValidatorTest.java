@@ -312,7 +312,6 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
-    when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(160000L));
     assertThat(validator.validate(transaction, basefee))
         .isEqualTo(
             ValidationResult.invalid(
