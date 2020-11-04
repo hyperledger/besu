@@ -18,7 +18,7 @@
 
 ## Deprecated 
 
-### --privacy-precompiled-address	### --privacy-precompiled-address (Scheduled for removal in _Next_ Release)
+### --privacy-precompiled-address (Scheduled for removal in _Next_ Release)
 Deprecated in 1.5.1	Deprecated in 1.5.1
 - CLI option `--privacy-precompiled-address` option removed. This address is now derived, based	- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
 on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)	on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
