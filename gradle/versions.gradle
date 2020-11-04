@@ -77,6 +77,7 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-core:2.13.3'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
     dependency 'org.fusesource.jansi:jansi:1.11'
+    dependency 'de.codeshelf.consoleui:consoleui:0.0.13'
 
     dependency 'org.apache.tuweni:tuweni-bytes:1.1.0'
     dependency 'org.apache.tuweni:tuweni-config:1.1.0'

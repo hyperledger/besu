@@ -31,6 +31,8 @@ import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 public interface DefaultCommandValues {
+
+  String LAUNCHER_OPTION_NAME = "--launcher";
   String CONFIG_FILE_OPTION_NAME = "--config-file";
 
   String MANDATORY_PATH_FORMAT_HELP = "<PATH>";

@@ -19,7 +19,9 @@ import static de.codeshelf.consoleui.elements.ConfirmChoice.ConfirmationValue.YE
 import org.hyperledger.besu.launcher.exception.LauncherException;
 import org.hyperledger.besu.launcher.model.Step;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,9 +50,13 @@ import picocli.CommandLine;
 @SuppressWarnings({"unchecked"})
 public class LauncherManager {
 
+  private static final String CONFIG_FILE_NAME = "config.toml";
+
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private final List<Object> commandClass;
+
+  private String configFileKey;
 
   private final Map<String, String> additionalFlag;
 
@@ -59,24 +65,21 @@ public class LauncherManager {
     this.additionalFlag = new HashMap<>();
   }
 
-  public void run() {
+  public File run() throws LauncherException {
     AnsiConsole.systemInstall();
-
     try {
       final String script =
           new String(
               LauncherManager.class.getResourceAsStream("launcher.json").readAllBytes(),
               Charsets.UTF_8);
       final Map<String, PromtResultItemIF> configuration = new HashMap<>();
-
-      Step[] steps = MAPPER.readValue(script, Step[].class);
+      final Step[] steps = MAPPER.readValue(script, Step[].class);
       for (Step stepFound : steps) {
         configuration.putAll(createInput(stepFound));
       }
-      createConfigFile(configuration);
+      return createConfigFile(configuration);
     } catch (Exception e) {
-      System.out.println(e.getMessage());
-      // ignore
+      throw new LauncherException(e.getMessage());
     }
   }
 
@@ -84,6 +87,9 @@ public class LauncherManager {
     try {
       final ConsolePrompt prompt = new ConsolePrompt();
       final PromptBuilder promptBuilder = prompt.getPromptBuilder();
+      if (step.isConfigFileLocation()) {
+        configFileKey = step.getConfigKey();
+      }
       switch (step.getPromptType()) {
         case LIST:
           additionalFlag.putAll(step.getAdditionalFlag());
@@ -98,7 +104,6 @@ public class LauncherManager {
           throw new LauncherException("invalid input type");
       }
     } catch (Exception e) {
-      e.printStackTrace();
       throw new LauncherException("error during launcher creation : " + e.getMessage());
     }
   }
@@ -109,9 +114,8 @@ public class LauncherManager {
     final ListPromptBuilder list = promptBuilder.createListPrompt();
     list.name(step.getConfigKey()).message(step.getQuestion());
     try {
-      for (Object value : formatOptions(step)) {
-        list.newItem().text(value.toString().toLowerCase()).add();
-      }
+      formatOptions(step)
+          .forEach(value -> list.newItem().text(value.toString().toLowerCase()).add());
       list.addPrompt();
       return (Map<String, PromtResultItemIF>) prompt.prompt(promptBuilder.build());
     } catch (Exception e) {
@@ -124,9 +128,8 @@ public class LauncherManager {
       throws LauncherException, IOException {
     final CheckboxPromptBuilder checkbox = promptBuilder.createCheckboxPrompt();
     checkbox.name(step.getConfigKey()).message(step.getQuestion());
-    for (Object value : formatOptions(step)) {
-      checkbox.newItem().text(value.toString().toLowerCase()).add();
-    }
+    formatOptions(step)
+        .forEach(value -> checkbox.newItem().text(value.toString().toLowerCase()).add());
     checkbox.addPrompt();
     return (Map<String, PromtResultItemIF>) prompt.prompt(promptBuilder.build());
   }
@@ -169,7 +172,6 @@ public class LauncherManager {
   private List<Object> formatOptions(final Step step) throws LauncherException {
     try {
       final List<String> split = Splitter.on('$').splitToList(step.getAvailableOptions());
-      ;
       if (split.size() > 1) {
         return (List<Object>) Class.forName(split.get(0)).getField(split.get(1)).get(null);
       } else {
@@ -199,31 +201,51 @@ public class LauncherManager {
     }
   }
 
-  private void createConfigFile(final Map<String, PromtResultItemIF> configuration) {
+  private File createConfigFile(final Map<String, PromtResultItemIF> configuration)
+      throws LauncherException {
+    final StringBuilder config = new StringBuilder();
+
+    String dataDir = null;
     for (Map.Entry<String, ? extends PromtResultItemIF> entry : configuration.entrySet()) {
       String key = entry.getKey();
       PromtResultItemIF value = entry.getValue();
       if (value instanceof ConfirmResult) {
-        System.out.printf(
-            "%s=%s%n", key, ((ConfirmResult) value).getConfirmed() == YES ? "true" : "false");
+        config.append(
+            String.format(
+                "%s=%s%n", key, ((ConfirmResult) value).getConfirmed() == YES ? "true" : "false"));
       } else if (value instanceof InputResult) {
-        System.out.printf("%s=\"%s\"%n", key, ((InputResult) value).getInput());
+        String input = ((InputResult) value).getInput();
+        config.append(String.format("%s=\"%s\"%n", key, input));
+        if (key.equals(configFileKey)) {
+          dataDir = input;
+        }
       } else if (value instanceof CheckboxResult) {
-        System.out.printf(
-            "%s=%s%n",
-            key,
-            ((CheckboxResult) value)
-                .getSelectedIds().stream()
-                    .map(String::toUpperCase)
-                    .map(elt -> String.format("\"%s\"", elt))
-                    .collect(Collectors.toList()));
+        config.append(
+            String.format(
+                "%s=%s%n",
+                key,
+                ((CheckboxResult) value)
+                    .getSelectedIds().stream()
+                        .map(String::toUpperCase)
+                        .map(elt -> String.format("\"%s\"", elt))
+                        .collect(Collectors.toList())));
       } else if (value instanceof ListResult) {
         final String selectedItem = ((ListResult) value).getSelectedId();
         if (additionalFlag.containsKey(selectedItem)) {
-          System.out.printf("%s%n", additionalFlag.get(selectedItem));
+          config.append(String.format("%s%n", additionalFlag.get(selectedItem)));
         }
-        System.out.printf("%s=\"%s\"%n", key, selectedItem.toUpperCase());
+        config.append(String.format("%s=\"%s\"%n", key, selectedItem.toUpperCase()));
       }
     }
+    if (dataDir == null) {
+      throw new LauncherException("invalid launcher script : missing config file location");
+    }
+    final File file = new File(dataDir + File.separator + CONFIG_FILE_NAME);
+    try (final PrintWriter out = new PrintWriter(file, Charsets.UTF_8)) {
+      out.print(config.toString());
+    } catch (Exception e) {
+      throw new LauncherException(String.format("error creating config file :%s", e.getMessage()));
+    }
+    return file;
   }
 }

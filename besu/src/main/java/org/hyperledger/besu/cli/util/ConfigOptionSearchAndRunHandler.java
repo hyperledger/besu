@@ -60,6 +60,7 @@ public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<
 
   private Optional<File> findConfigFile(
       final ParseResult parseResult, final CommandLine commandLine) {
+
     if (parseResult.hasMatchedOption(configFileOptionName)) {
       final OptionSpec configFileOption = parseResult.matchedOption(configFileOptionName);
       try {

@@ -21,17 +21,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-  "prompt-type",
-  "question",
-  "config-key",
-  "available-options",
-  "default-option",
-  "sub-questions"
-})
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeFinal"})
 public class Step {
 
@@ -55,6 +46,9 @@ public class Step {
 
   @JsonProperty("additional-flag")
   private Map<String, String> additionalFlag = new HashMap<>();
+
+  @JsonProperty("is-config-file-location")
+  private boolean isConfigFileLocation;
 
   public InputType getPromptType() {
     return promptType;
@@ -82,5 +76,9 @@ public class Step {
 
   public Map<String, String> getAdditionalFlag() {
     return additionalFlag;
+  }
+
+  public boolean isConfigFileLocation() {
+    return isConfigFileLocation;
   }
 }
