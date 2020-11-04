@@ -14,7 +14,8 @@
 
 ### Bug Fixes
 
-* Fix a bug on `eth_estimateGas` which returned `Internal error` instead of `Execution reverted` in case of reverted transaction [\#1478](https://github.com/hyperledger/besu/pull/1478)
+* Fix a bug on `eth_estimateGas` which returned `Internal error` instead of `Execution reverted` in case of reverted transaction. [\#1478](https://github.com/hyperledger/besu/pull/1478)
+* Fixed a bug where Local Account Permissioning was being incorrectly enforced on block import/validation. [\#1510](https://github.com/hyperledger/besu/pull/1510)
 
 ## Deprecated 
 
