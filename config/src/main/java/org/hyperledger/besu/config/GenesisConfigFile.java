@@ -139,6 +139,7 @@ public class GenesisConfigFile {
                     .filter(name -> node.get(name).canConvertToLong())
                     .filter(name -> name.contains("block"))
                     .filter(name -> !name.equals("classicforkblock"))
+                    .filter(name -> !name.equals("qip714block"))
                     .map(name -> node.get(name).asLong()))
         .sorted()
         .collect(toUnmodifiableList());
