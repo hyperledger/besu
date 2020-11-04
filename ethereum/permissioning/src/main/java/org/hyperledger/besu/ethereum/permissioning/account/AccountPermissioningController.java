@@ -51,28 +51,27 @@ public class AccountPermissioningController {
       final boolean includeOnChainCheck) {
     final Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();
-    boolean permitted;
+
+    LOG.trace("Account permissioning: Checking transaction {}", transactionHash);
+
+    boolean permittedLocal = true;
+    boolean permittedOnchain = true;
 
     if (includeLocalCheck) {
-      LOG.trace("Account permissioning: Checking transaction {}", transactionHash);
-
-      if (includeOnChainCheck) {
-        permitted =
-            accountLocalConfigPermissioningController
-                    .map(c -> c.isPermitted(transaction))
-                    .orElse(true)
-                && transactionSmartContractPermissioningController
-                    .map(c -> c.isPermitted(transaction))
-                    .orElse(true);
-      } else {
-        permitted =
-            accountLocalConfigPermissioningController
-                .map(c -> c.isPermitted(transaction))
-                .orElse(true);
-      }
-    } else {
-      permitted = true;
+      permittedLocal =
+          accountLocalConfigPermissioningController
+              .map(c -> c.isPermitted(transaction))
+              .orElse(true);
     }
+
+    if (includeOnChainCheck) {
+      permittedOnchain =
+          transactionSmartContractPermissioningController
+              .map(c -> c.isPermitted(transaction))
+              .orElse(true);
+    }
+
+    final boolean permitted = permittedLocal && permittedOnchain;
 
     if (permitted) {
       LOG.trace("Account permissioning: Permitted transaction {} from {}", transactionHash, sender);
