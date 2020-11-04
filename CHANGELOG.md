@@ -16,12 +16,17 @@
 
 * Fix a bug on `eth_estimateGas` which returned `Internal error` instead of `Execution reverted` in case of reverted transaction [\#1478](https://github.com/hyperledger/besu/pull/1478)
 
-## Deprecated and Scheduled for removal in _Next_ Release
+## Deprecated 
 
-### --privacy-precompiled-address
-Deprecated in 1.5.1
-- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
-on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+### --privacy-precompiled-address	### --privacy-precompiled-address (Scheduled for removal in _Next_ Release)
+Deprecated in 1.5.1	Deprecated in 1.5.1
+- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based	- CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
+on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)	on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+
+### Besu Sample Network repository
+
+The [Besu Sample Networks repository](https://github.com/ConsenSys/besu-sample-networks) has been replaced by the [Quorum Developer Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Developer-Quickstart). 
+
 
 ## 20.10.0
 
