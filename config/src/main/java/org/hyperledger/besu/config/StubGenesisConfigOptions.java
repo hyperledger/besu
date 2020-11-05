@@ -266,6 +266,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return TransitionsConfigOptions.DEFAULT;
   }
 
+  @Override
+  public boolean isQuorum() {
+    return false;
+  }
+
+  @Override
+  public OptionalLong getQip714BlockNumber() {
+    return OptionalLong.empty();
+  }
+
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {
     homesteadBlockNumber = OptionalLong.of(blockNumber);
     return this;
