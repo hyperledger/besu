@@ -202,9 +202,15 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
-    final ArgumentCaptor<Boolean> stateChangeParamCaptor = ArgumentCaptor.forClass(Boolean.class);
+    final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
+        ArgumentCaptor.forClass(Boolean.class);
+    final ArgumentCaptor<Boolean> stateChangeOnchainParamCaptor =
+        ArgumentCaptor.forClass(Boolean.class);
     final TransactionFilter transactionFilter = mock(TransactionFilter.class);
-    when(transactionFilter.permitted(any(Transaction.class), stateChangeParamCaptor.capture()))
+    when(transactionFilter.permitted(
+            any(Transaction.class),
+            stateChangeLocalParamCaptor.capture(),
+            stateChangeOnchainParamCaptor.capture()))
         .thenReturn(true);
 
     final MainnetTransactionValidator validator =
@@ -216,7 +222,8 @@ public class MainnetTransactionValidatorTest {
 
     validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
 
-    assertThat(stateChangeParamCaptor.getValue()).isTrue();
+    assertThat(stateChangeLocalParamCaptor.getValue()).isTrue();
+    assertThat(stateChangeOnchainParamCaptor.getValue()).isTrue();
   }
 
   @Test
@@ -334,7 +341,8 @@ public class MainnetTransactionValidatorTest {
 
   private TransactionFilter transactionFilter(final boolean permitted) {
     final TransactionFilter transactionFilter = mock(TransactionFilter.class);
-    when(transactionFilter.permitted(any(Transaction.class), anyBoolean())).thenReturn(permitted);
+    when(transactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
+        .thenReturn(permitted);
     return transactionFilter;
   }
 }
