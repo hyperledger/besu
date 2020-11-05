@@ -34,7 +34,7 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.commons:commons-compress'
-  testImplementation 'org.apache.tuweni:tuweni-crypto'
+  testImplementation 'org.apache.tuweni:crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.web3j:abi'
