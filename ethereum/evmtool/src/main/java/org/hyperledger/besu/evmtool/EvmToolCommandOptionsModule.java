@@ -34,19 +34,18 @@ import picocli.CommandLine.Option;
 @SuppressWarnings("WeakerAccess")
 @Module
 public class EvmToolCommandOptionsModule {
-
   @Option(
-      names = {"--revert-reason-enabled"},
+      names = {"--receipt-metadata-enabled", "--revert-reason-enabled"},
       paramLabel = "<Boolean>",
-      description = "Should revert reasons be persisted. (default: ${FALLBACK-VALUE})",
+      description = "Should metadata be persisted. (default: ${FALLBACK-VALUE})",
       arity = "0..1",
       fallbackValue = "true")
-  final Boolean revertReasonEnabled = true;
+  final Boolean metadataEnabled = true;
 
   @Provides
-  @Named("RevertReasonEnabled")
-  boolean provideRevertReasonEnabled() {
-    return revertReasonEnabled;
+  @Named("MetadataEnabled")
+  boolean provideMetadataEnabled() {
+    return metadataEnabled;
   }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
