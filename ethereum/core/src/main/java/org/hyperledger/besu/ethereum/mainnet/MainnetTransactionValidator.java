@@ -212,7 +212,12 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final Transaction transaction, final TransactionValidationParams validationParams) {
     if (validationParams.checkLocalPermissions() || validationParams.checkOnchainPermissions()) {
       return transactionFilter
-          .map(c -> c.permitted(transaction, validationParams.checkOnchainPermissions()))
+          .map(
+              c ->
+                  c.permitted(
+                      transaction,
+                      validationParams.checkLocalPermissions(),
+                      validationParams.checkOnchainPermissions()))
           .orElse(true);
     } else {
       return true;
