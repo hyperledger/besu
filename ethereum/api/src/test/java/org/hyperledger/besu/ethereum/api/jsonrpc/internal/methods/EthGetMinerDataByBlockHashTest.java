@@ -16,8 +16,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.WORLD_STATE_UNAVAILABLE;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -42,13 +45,11 @@ import java.util.Collections;
 import java.util.Optional;
 
 import com.google.common.base.Suppliers;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -80,14 +81,14 @@ public class EthGetMinerDataByBlockHashTest {
         new BlockWithMetadata<>(
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
-    Mockito.when(blockchainQueries.blockByHash(Mockito.any()))
+    when(blockchainQueries.blockByHash(any()))
         .thenReturn(Optional.of(blockWithMetadata));
-    Mockito.when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    Mockito.when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(Mockito.any()))
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any()))
         .thenReturn(true);
-    Mockito.when(protocolSchedule.getByBlockNumber(header.getNumber())).thenReturn(protocolSpec);
-    Mockito.when(protocolSpec.getBlockReward()).thenReturn(Wei.fromEth(2));
-    Mockito.when(blockchainQueries.getBlockchain()).thenReturn(blockChain);
+    when(protocolSchedule.getByBlockNumber(header.getNumber())).thenReturn(protocolSpec);
+    when(protocolSpec.getBlockReward()).thenReturn(Wei.fromEth(2));
+    when(blockchainQueries.getBlockchain()).thenReturn(blockChain);
 
     JsonRpcRequest request =
         new JsonRpcRequest(
@@ -97,9 +98,9 @@ public class EthGetMinerDataByBlockHashTest {
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
     JsonRpcResponse response = method.response(requestContext);
 
-    Assertions.assertThat(response).isNotNull().isInstanceOf(JsonRpcSuccessResponse.class);
-    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult()).isNotNull();
-    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult())
+    assertThat(response).isNotNull().isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) response).getResult()).isNotNull();
+    assertThat(((JsonRpcSuccessResponse) response).getResult())
         .hasFieldOrProperty("netBlockReward")
         .hasFieldOrProperty("staticBlockReward")
         .hasFieldOrProperty("transactionFee")
@@ -118,10 +119,10 @@ public class EthGetMinerDataByBlockHashTest {
         new BlockWithMetadata<>(
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
-    Mockito.when(blockchainQueries.blockByHash(Mockito.any()))
+    when(blockchainQueries.blockByHash(any()))
         .thenReturn(Optional.of(blockWithMetadata));
-    Mockito.when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    Mockito.when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(Mockito.any()))
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any()))
         .thenReturn(false);
 
     JsonRpcRequest request =
@@ -132,9 +133,9 @@ public class EthGetMinerDataByBlockHashTest {
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
     JsonRpcResponse response = method.response(requestContext);
 
-    Assertions.assertThat(response).isNotNull().isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError()).isNotNull();
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
+    assertThat(response).isNotNull().isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) response).getError()).isNotNull();
+    assertThat(((JsonRpcErrorResponse) response).getError())
         .isEqualTo(WORLD_STATE_UNAVAILABLE);
   }
 
@@ -142,7 +143,7 @@ public class EthGetMinerDataByBlockHashTest {
   public void exceptionWhenNoHashSuppliedTest() {
     JsonRpcRequest request = new JsonRpcRequest("2.0", ETH_METHOD, Arrays.array());
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
-    Assertions.assertThatThrownBy(() -> method.response(requestContext))
+    assertThatThrownBy(() -> method.response(requestContext))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
 
@@ -153,7 +154,7 @@ public class EthGetMinerDataByBlockHashTest {
   public void exceptionWhenHashParamInvalidTest() {
     JsonRpcRequest request = new JsonRpcRequest("2.0", ETH_METHOD, Arrays.array("hash"));
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
-    Assertions.assertThatThrownBy(() -> method.response(requestContext))
+    assertThatThrownBy(() -> method.response(requestContext))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Invalid json rpc parameter at index 0");
 

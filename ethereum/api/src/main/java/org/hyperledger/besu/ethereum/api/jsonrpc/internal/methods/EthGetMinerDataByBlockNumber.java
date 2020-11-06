@@ -23,21 +23,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
-import org.apache.tuweni.units.bigints.BaseUInt256Value;
 
 public class EthGetMinerDataByBlockNumber extends AbstractBlockParameterMethod {
   private final ProtocolSchedule protocolSchedule;
@@ -73,52 +61,7 @@ public class EthGetMinerDataByBlockNumber extends AbstractBlockParameterMethod {
             request.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE);
       }
 
-      final BlockHeader blockHeader = block.getHeader();
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
-      final Wei staticBlockReward = protocolSpec.getBlockReward();
-      final Wei transactionFee =
-          block.getTransactions().stream()
-              .map(
-                  t -> {
-                    Transaction transaction = t.getTransaction();
-                    Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata =
-                        getBlockchainQueries()
-                            .transactionReceiptByTransactionHash(transaction.getHash());
-                    Wei refundAmount =
-                        Wei.of(
-                                transactionReceiptWithMetadata
-                                    .flatMap(tr -> tr.getReceipt().getGasRemaining())
-                                    .orElse(0L))
-                            .multiply(transaction.getGasPrice());
-                    return t.getTransaction().getUpfrontCost().subtract(refundAmount);
-                  })
-              .reduce(Wei.ZERO, BaseUInt256Value::add);
-      final Wei uncleInclusionReward =
-          staticBlockReward.multiply(block.getOmmers().size()).divide(32);
-      final Wei netBlockReward = staticBlockReward.add(transactionFee).add(uncleInclusionReward);
-      final Map<Hash, Address> uncleRewards = new HashMap<>();
-      blockchainQueries
-          .get()
-          .getBlockchain()
-          .getBlockByNumber(blockNumber)
-          .ifPresent(
-              blockBody ->
-                  blockBody
-                      .getBody()
-                      .getOmmers()
-                      .forEach(header -> uncleRewards.put(header.getHash(), header.getCoinbase())));
-
-      minerDataResult =
-          new MinerDataResult(
-              netBlockReward,
-              staticBlockReward,
-              transactionFee,
-              uncleInclusionReward,
-              uncleRewards,
-              blockHeader.getCoinbase(),
-              blockHeader.getExtraData(),
-              blockHeader.getDifficulty(),
-              block.getTotalDifficulty());
+      minerDataResult = EthGetMinerDataByBlockHash.createMinerDataResult(block, protocolSchedule, getBlockchainQueries());
     }
 
     return minerDataResult;

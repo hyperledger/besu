@@ -15,6 +15,10 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.tuweni.units.bigints.BaseUInt256Value;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -32,15 +36,11 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import org.apache.tuweni.units.bigints.BaseUInt256Value;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
   private final Supplier<BlockchainQueries> blockchain;
@@ -62,13 +62,6 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
     return RpcMethod.ETH_GET_MINER_DATA_BY_BLOCK_HASH.getMethodName();
   }
 
-  /*
-  Getting static block reward
-  pass in the block height (as a long) get the block reward (as wei)
-  each block spec has it.  but it’s only meaningful w/in 6 blocks of the fork.
-
-  Didn’t happen at the two places we reduced block reward on mainnet.  I say leave a comment but write no code.
-   */
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Hash hash = requestContext.getRequest().getRequiredParameter(0, Hash.class);
@@ -86,52 +79,60 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
             requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE);
       }
 
-      final BlockHeader blockHeader = block.getHeader();
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
-      final Wei staticBlockReward = protocolSpec.getBlockReward();
-      final Wei transactionFee =
-          block.getTransactions().stream()
-              .map(
-                  t -> {
-                    Transaction transaction = t.getTransaction();
-                    Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata =
-                        blockchain.get().transactionReceiptByTransactionHash(transaction.getHash());
-                    Wei refundAmount =
-                        Wei.of(
-                                transactionReceiptWithMetadata
-                                    .flatMap(tr -> tr.getReceipt().getGasRemaining())
-                                    .orElse(0L))
-                            .multiply(transaction.getGasPrice());
-                    return t.getTransaction().getUpfrontCost().subtract(refundAmount);
-                  })
-              .reduce(Wei.ZERO, BaseUInt256Value::add);
-      final Wei uncleInclusionReward =
-          staticBlockReward.multiply(block.getOmmers().size()).divide(32);
-      final Wei netBlockReward = staticBlockReward.add(transactionFee).add(uncleInclusionReward);
-      final Map<Hash, Address> uncleRewards = new HashMap<>();
-      blockchain
-          .get()
-          .getBlockchain()
-          .getBlockBody(hash)
-          .ifPresent(
-              blockBody ->
-                  blockBody
-                      .getOmmers()
-                      .forEach(header -> uncleRewards.put(header.getHash(), header.getCoinbase())));
-
-      minerDataResult =
-          new MinerDataResult(
-              netBlockReward,
-              staticBlockReward,
-              transactionFee,
-              uncleInclusionReward,
-              uncleRewards,
-              blockHeader.getCoinbase(),
-              blockHeader.getExtraData(),
-              blockHeader.getDifficulty(),
-              block.getTotalDifficulty());
+      minerDataResult = createMinerDataResult(block, protocolSchedule, blockchain.get());
     }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), minerDataResult);
+  }
+
+  public static MinerDataResult createMinerDataResult(
+      BlockWithMetadata<TransactionWithMetadata, Hash> block,
+      ProtocolSchedule protocolSchedule,
+      BlockchainQueries blockchainQueries) {
+    final BlockHeader blockHeader = block.getHeader();
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+    final Wei staticBlockReward = protocolSpec.getBlockReward();
+    final Wei transactionFee =
+        block.getTransactions().stream()
+            .map(
+                t -> {
+                  Transaction transaction = t.getTransaction();
+                  Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata =
+                      blockchainQueries
+                          .transactionReceiptByTransactionHash(transaction.getHash());
+                  Wei refundAmount =
+                      Wei.of(
+                          transactionReceiptWithMetadata
+                              .flatMap(tr -> tr.getReceipt().getGasRemaining())
+                              .orElse(0L))
+                          .multiply(transaction.getGasPrice());
+                  return t.getTransaction().getUpfrontCost().subtract(refundAmount);
+                })
+            .reduce(Wei.ZERO, BaseUInt256Value::add);
+    final Wei uncleInclusionReward =
+        staticBlockReward.multiply(block.getOmmers().size()).divide(32);
+    final Wei netBlockReward = staticBlockReward.add(transactionFee).add(uncleInclusionReward);
+    final Map<Hash, Address> uncleRewards = new HashMap<>();
+    blockchainQueries
+        .getBlockchain()
+        .getBlockByNumber(block.getHeader().getNumber())
+        .ifPresent(
+            blockBody ->
+                blockBody
+                    .getBody()
+                    .getOmmers()
+                    .forEach(header -> uncleRewards.put(header.getHash(), header.getCoinbase())));
+
+    return
+        new MinerDataResult(
+            netBlockReward,
+            staticBlockReward,
+            transactionFee,
+            uncleInclusionReward,
+            uncleRewards,
+            blockHeader.getCoinbase(),
+            blockHeader.getExtraData(),
+            blockHeader.getDifficulty(),
+            block.getTotalDifficulty());
   }
 }

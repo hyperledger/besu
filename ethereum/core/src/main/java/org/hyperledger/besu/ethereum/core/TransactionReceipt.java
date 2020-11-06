@@ -166,7 +166,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     out.writeBytes(bloomFilter);
     out.writeList(logs, Log::writeTo);
     if (withMetadata) {
-      out.writeBytes(revertReason.orElse(Bytes.EMPTY));
+      out.writeBytes(revertReason.orElse(Bytes.EMPTY)); // writing Bytes.EMPTY is the same as calling RLPOutput.writeNull
       out.writeLong(gasRemaining);
     }
     out.endList();
@@ -210,7 +210,9 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
           throw new RLPException("Unexpected value at end of TransactionReceipt");
         }
         revertReason = Optional.of(input.readBytes());
-        gasRemaining = input.readLong();
+        if (!input.isEndOfCurrentList()) {
+          gasRemaining = input.readLong();
+        }
       }
 
       // Status code-encoded transaction receipts have a single
