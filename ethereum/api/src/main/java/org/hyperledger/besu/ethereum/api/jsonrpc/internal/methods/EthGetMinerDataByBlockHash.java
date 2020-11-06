@@ -15,10 +15,6 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import org.apache.tuweni.units.bigints.BaseUInt256Value;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -36,11 +32,15 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.apache.tuweni.units.bigints.BaseUInt256Value;
 
 public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
   private final Supplier<BlockchainQueries> blockchain;
@@ -98,13 +98,12 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
                 t -> {
                   Transaction transaction = t.getTransaction();
                   Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata =
-                      blockchainQueries
-                          .transactionReceiptByTransactionHash(transaction.getHash());
+                      blockchainQueries.transactionReceiptByTransactionHash(transaction.getHash());
                   Wei refundAmount =
                       Wei.of(
-                          transactionReceiptWithMetadata
-                              .flatMap(tr -> tr.getReceipt().getGasRemaining())
-                              .orElse(0L))
+                              transactionReceiptWithMetadata
+                                  .flatMap(tr -> tr.getReceipt().getGasRemaining())
+                                  .orElse(0L))
                           .multiply(transaction.getGasPrice());
                   return t.getTransaction().getUpfrontCost().subtract(refundAmount);
                 })
@@ -123,16 +122,15 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
                     .getOmmers()
                     .forEach(header -> uncleRewards.put(header.getHash(), header.getCoinbase())));
 
-    return
-        new MinerDataResult(
-            netBlockReward,
-            staticBlockReward,
-            transactionFee,
-            uncleInclusionReward,
-            uncleRewards,
-            blockHeader.getCoinbase(),
-            blockHeader.getExtraData(),
-            blockHeader.getDifficulty(),
-            block.getTotalDifficulty());
+    return new MinerDataResult(
+        netBlockReward,
+        staticBlockReward,
+        transactionFee,
+        uncleInclusionReward,
+        uncleRewards,
+        blockHeader.getCoinbase(),
+        blockHeader.getExtraData(),
+        blockHeader.getDifficulty(),
+        block.getTotalDifficulty());
   }
 }

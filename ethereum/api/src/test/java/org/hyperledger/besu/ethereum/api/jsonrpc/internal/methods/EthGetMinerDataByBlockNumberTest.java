@@ -80,11 +80,9 @@ public class EthGetMinerDataByBlockNumberTest {
         new BlockWithMetadata<>(
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
-    when(blockchainQueries.blockByNumber(anyLong()))
-        .thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.blockByNumber(anyLong())).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any()))
-        .thenReturn(true);
+    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any())).thenReturn(true);
     when(protocolSchedule.getByBlockNumber(header.getNumber())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockReward()).thenReturn(Wei.fromEth(2));
     when(blockchainQueries.getBlockchain()).thenReturn(blockChain);
@@ -114,11 +112,9 @@ public class EthGetMinerDataByBlockNumberTest {
         new BlockWithMetadata<>(
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
-    when(blockchainQueries.blockByNumber(anyLong()))
-        .thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.blockByNumber(anyLong())).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any()))
-        .thenReturn(false);
+    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any())).thenReturn(false);
 
     JsonRpcRequest request = new JsonRpcRequest("2.0", ETH_METHOD, Arrays.array("5094833"));
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
@@ -126,8 +122,7 @@ public class EthGetMinerDataByBlockNumberTest {
 
     assertThat(response).isNotNull().isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(((JsonRpcErrorResponse) response).getError()).isNotNull();
-    assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualTo(WORLD_STATE_UNAVAILABLE);
+    assertThat(((JsonRpcErrorResponse) response).getError()).isEqualTo(WORLD_STATE_UNAVAILABLE);
   }
 
   @Test

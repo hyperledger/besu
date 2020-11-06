@@ -81,11 +81,9 @@ public class EthGetMinerDataByBlockHashTest {
         new BlockWithMetadata<>(
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
-    when(blockchainQueries.blockByHash(any()))
-        .thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any()))
-        .thenReturn(true);
+    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any())).thenReturn(true);
     when(protocolSchedule.getByBlockNumber(header.getNumber())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockReward()).thenReturn(Wei.fromEth(2));
     when(blockchainQueries.getBlockchain()).thenReturn(blockChain);
@@ -119,11 +117,9 @@ public class EthGetMinerDataByBlockHashTest {
         new BlockWithMetadata<>(
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
-    when(blockchainQueries.blockByHash(any()))
-        .thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any()))
-        .thenReturn(false);
+    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any())).thenReturn(false);
 
     JsonRpcRequest request =
         new JsonRpcRequest(
@@ -135,8 +131,7 @@ public class EthGetMinerDataByBlockHashTest {
 
     assertThat(response).isNotNull().isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(((JsonRpcErrorResponse) response).getError()).isNotNull();
-    assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualTo(WORLD_STATE_UNAVAILABLE);
+    assertThat(((JsonRpcErrorResponse) response).getError()).isEqualTo(WORLD_STATE_UNAVAILABLE);
   }
 
   @Test

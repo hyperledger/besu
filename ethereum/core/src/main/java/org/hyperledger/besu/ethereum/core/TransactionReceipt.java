@@ -166,7 +166,9 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     out.writeBytes(bloomFilter);
     out.writeList(logs, Log::writeTo);
     if (withMetadata) {
-      out.writeBytes(revertReason.orElse(Bytes.EMPTY)); // writing Bytes.EMPTY is the same as calling RLPOutput.writeNull
+      out.writeBytes(
+          revertReason.orElse(
+              Bytes.EMPTY)); // writing Bytes.EMPTY is the same as calling RLPOutput.writeNull
       out.writeLong(gasRemaining);
     }
     out.endList();

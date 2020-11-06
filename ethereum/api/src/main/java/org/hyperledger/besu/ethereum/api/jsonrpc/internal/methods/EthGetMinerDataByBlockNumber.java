@@ -61,7 +61,9 @@ public class EthGetMinerDataByBlockNumber extends AbstractBlockParameterMethod {
             request.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE);
       }
 
-      minerDataResult = EthGetMinerDataByBlockHash.createMinerDataResult(block, protocolSchedule, getBlockchainQueries());
+      minerDataResult =
+          EthGetMinerDataByBlockHash.createMinerDataResult(
+              block, protocolSchedule, getBlockchainQueries());
     }
 
     return minerDataResult;
