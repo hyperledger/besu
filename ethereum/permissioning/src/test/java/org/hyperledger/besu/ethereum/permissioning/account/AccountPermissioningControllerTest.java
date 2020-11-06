@@ -52,7 +52,7 @@ public class AccountPermissioningControllerTest {
   public void shouldOnlyCheckLocalConfigControllerWhenNotPersistingState() {
     when(localConfigController.isPermitted(any())).thenReturn(true);
 
-    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), false);
+    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, false);
 
     assertThat(isPermitted).isTrue();
 
@@ -65,7 +65,7 @@ public class AccountPermissioningControllerTest {
     when(localConfigController.isPermitted(any())).thenReturn(true);
     when(smartContractController.isPermitted(any())).thenReturn(true);
 
-    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true);
+    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, true);
 
     assertThat(isPermitted).isTrue();
 
@@ -78,7 +78,7 @@ public class AccountPermissioningControllerTest {
     when(localConfigController.isPermitted(any())).thenReturn(true);
     when(smartContractController.isPermitted(any())).thenReturn(false);
 
-    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true);
+    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, true);
 
     assertThat(isPermitted).isFalse();
 

@@ -44,9 +44,8 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'org.hyperledger.besu:altbn128'
+  implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:units'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
 
@@ -61,9 +60,9 @@ dependencies {
 
   testImplementation 'junit:junit'
   testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'org.apache.tuweni:tuweni-bytes'
-  testImplementation 'org.apache.tuweni:tuweni-io'
-  testImplementation 'org.apache.tuweni:tuweni-units'
+  testImplementation 'org.apache.tuweni:bytes'
+  testImplementation 'org.apache.tuweni:io'
+  testImplementation 'org.apache.tuweni:units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 

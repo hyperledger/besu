@@ -29,12 +29,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -42,9 +48,11 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class MarkSweepPruner {
 
-  private static final int DEFAULT_OPS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LogManager.getLogger();
   private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
+
+  private static final int DEFAULT_OPS_PER_TRANSACTION = 10_000;
+  private static final int MAX_MARKING_THREAD_POOL_SIZE = 2;
 
   private final int operationsPerTransaction;
   private final WorldStateStorage worldStateStorage;
@@ -56,7 +64,7 @@ public class MarkSweepPruner {
   private final Counter sweptNodesCounter;
   private final Stopwatch markStopwatch;
   private volatile long nodeAddedListenerId;
-  private final ReentrantLock markLock = new ReentrantLock(true);
+  private final ReadWriteLock pendingMarksLock = new ReentrantReadWriteLock();
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public MarkSweepPruner(
@@ -104,6 +112,8 @@ public class MarkSweepPruner {
         "mark_time_duration",
         "Cumulative number of seconds spent marking the state trie across all pruning cycles",
         () -> markStopwatch.elapsed(TimeUnit.SECONDS));
+
+    LOG.debug("Using {} pruner threads", MAX_MARKING_THREAD_POOL_SIZE);
   }
 
   public void prepare() {
@@ -115,20 +125,64 @@ public class MarkSweepPruner {
     nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
+  /**
+   * This is a parallel mark implementation.
+   *
+   * <p>The parallel task production is by sub-trie, so calling `visitAll` on a root node will
+   * eventually spawn up to 16 tasks (for a hexary trie).
+   *
+   * <p>If we marked each sub-trie in its own thread, with no common queue of tasks, our mark speed
+   * would be limited by the sub-trie with the maximum number of nodes. In practice for the Ethereum
+   * mainnet, we see a large imbalance in sub-trie size so without a common task pool the time in
+   * which there is only 1 thread left marking its big sub-trie would be substantial.
+   *
+   * <p>If we were to leave all threads to produce mark tasks before starting to mark, we would run
+   * out of memory quickly.
+   *
+   * <p>If we were to have a constant number of threads producing the mark tasks with the others
+   * consuming them, we would have to optimize the production/consumption balance.
+   *
+   * <p>To get the best of both worlds, the marking executor has a {@link
+   * ThreadPoolExecutor.CallerRunsPolicy} which causes the producing tasks to essentially consume
+   * their own mark task immediately when the task queue is full. The resulting behavior is threads
+   * that mark their own sub-trie until they finish that sub-trie, at which point they switch to
+   * marking the sub-trie tasks produced by another thread.
+   *
+   * @param rootHash The root hash of the whole state trie. Roots of storage tries will be
+   *     discovered though traversal.
+   */
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
     markStopwatch.start();
+    final ExecutorService markingExecutorService =
+        new ThreadPoolExecutor(
+            0,
+            MAX_MARKING_THREAD_POOL_SIZE,
+            5L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingDeque<>(16),
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setPriority(Thread.MIN_PRIORITY)
+                .setNameFormat(this.getClass().getSimpleName() + "-%d")
+                .build(),
+            new ThreadPoolExecutor.CallerRunsPolicy());
     createStateTrie(rootHash)
         .visitAll(
             node -> {
-              if (Thread.interrupted()) {
-                // Since we don't expect to abort marking ourselves,
-                // our abort process consists only of handling interrupts
-                throw new RuntimeException("Interrupted while marking");
-              }
               markNode(node.getHash());
-              node.getValue().ifPresent(this::processAccountState);
-            });
+              node.getValue()
+                  .ifPresent(value -> processAccountState(value, markingExecutorService));
+            },
+            markingExecutorService)
+        .join() /* This will block on all the marking tasks to be _produced_ but doesn't guarantee that the marking tasks have been completed. */;
+    markingExecutorService.shutdown();
+    try {
+      // This ensures that the marking tasks complete.
+      markingExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOG.info("Interrupted while marking", e);
+    }
     markStopwatch.stop();
     LOG.debug("Completed marking used nodes for pruning");
   }
@@ -199,52 +253,57 @@ public class MarkSweepPruner {
         Function.identity());
   }
 
-  private void processAccountState(final Bytes value) {
+  private void processAccountState(final Bytes value, final ExecutorService executorService) {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     markNode(accountValue.getCodeHash());
 
     createStorageTrie(accountValue.getStorageRoot())
-        .visitAll(storageNode -> markNode(storageNode.getHash()));
+        .visitAll(storageNode -> markNode(storageNode.getHash()), executorService);
   }
 
   @VisibleForTesting
   void markNode(final Bytes32 hash) {
-    markedNodesCounter.inc();
-    markLock.lock();
-    try {
-      pendingMarks.add(hash);
-      maybeFlushPendingMarks();
-    } finally {
-      markLock.unlock();
-    }
+    markThenMaybeFlush(() -> pendingMarks.add(hash), 1);
   }
 
   private void markNodes(final Collection<Bytes32> nodeHashes) {
-    markedNodesCounter.inc(nodeHashes.size());
+    markThenMaybeFlush(() -> pendingMarks.addAll(nodeHashes), nodeHashes.size());
+  }
+
+  private void markThenMaybeFlush(final Runnable nodeMarker, final int numberOfNodes) {
+    // We use the read lock here because pendingMarks is threadsafe and we want to allow all the
+    // marking threads access simultaneously.
+    final Lock markLock = pendingMarksLock.readLock();
     markLock.lock();
     try {
-      pendingMarks.addAll(nodeHashes);
-      maybeFlushPendingMarks();
+      nodeMarker.run();
     } finally {
       markLock.unlock();
     }
-  }
+    markedNodesCounter.inc(numberOfNodes);
 
-  private void maybeFlushPendingMarks() {
-    if (pendingMarks.size() > operationsPerTransaction) {
-      flushPendingMarks();
+    // However, when the size of pendingMarks grows too large, we want all the threads to stop
+    // adding because we're going to clear the set.
+    // Therefore, we need to take out a write lock.
+    if (pendingMarks.size() >= operationsPerTransaction) {
+      final Lock flushLock = pendingMarksLock.writeLock();
+      flushLock.lock();
+      try {
+        // Check once again that the condition holds. If it doesn't, that means another thread
+        // already flushed them.
+        if (pendingMarks.size() >= operationsPerTransaction) {
+          flushPendingMarks();
+        }
+      } finally {
+        flushLock.unlock();
+      }
     }
   }
 
   private void flushPendingMarks() {
-    markLock.lock();
-    try {
-      final KeyValueStorageTransaction transaction = markStorage.startTransaction();
-      pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
-      transaction.commit();
-      pendingMarks.clear();
-    } finally {
-      markLock.unlock();
-    }
+    final KeyValueStorageTransaction transaction = markStorage.startTransaction();
+    pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
+    transaction.commit();
+    pendingMarks.clear();
   }
 }
