@@ -90,7 +90,7 @@ public abstract class BesuControllerBuilder {
   protected Path dataDirectory;
   protected Clock clock;
   protected NodeKey nodeKey;
-  protected boolean isRevertReasonEnabled;
+  protected boolean isMetadataEnabled;
   GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
   private boolean isPruningEnabled;
@@ -162,8 +162,8 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
-  public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
-    this.isRevertReasonEnabled = isRevertReasonEnabled;
+  public BesuControllerBuilder isMetadataEnabled(final boolean isMetadataEnabled) {
+    this.isMetadataEnabled = isMetadataEnabled;
     return this;
   }
 

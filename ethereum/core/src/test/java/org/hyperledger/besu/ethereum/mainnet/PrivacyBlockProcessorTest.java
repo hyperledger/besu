@@ -208,7 +208,7 @@ public class PrivacyBlockProcessorTest {
     final AbstractBlockProcessor.TransactionReceiptFactory mockTransactionReceiptFactory =
         mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
     when(mockTransactionReceiptFactory.create(any(), any(), anyLong()))
-        .thenReturn(new TransactionReceipt(0, 0, Collections.emptyList(), Optional.empty()));
+        .thenReturn(new TransactionReceipt(0, 0, Collections.emptyList(), Optional.empty(), -1L));
     when(protocolSpec.getTransactionReceiptFactory()).thenReturn(mockTransactionReceiptFactory);
     when(protocolSpec.getBlockReward()).thenReturn(Wei.ZERO);
     when(protocolSpec.getMiningBeneficiaryCalculator())
