@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
+import javax.annotation.Nonnull;
+
 import com.sun.jna.ptr.IntByReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +61,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final byte[] result = new byte[LibEthPairings.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];
     final byte[] error = new byte[LibEthPairings.EIP2537_PREALLOCATE_FOR_ERROR_BYTES];
 
@@ -73,11 +75,9 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     if (errorNo == 0) {
       return Bytes.wrap(result, 0, o_len.getValue());
     } else {
+      final String errorMessage = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
-      LOG.trace(
-          "Error executing precompiled contract {}: '{}'",
-          name,
-          new String(error, 0, err_len.getValue(), UTF_8));
+      LOG.trace("Error executing precompiled contract {}: '{}'", name, errorMessage);
       return null;
     }
   }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Blockchain;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.process.ExitedWithCod
 import org.hyperledger.besu.tests.acceptance.dsl.condition.txpool.TxPoolConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.web3.Web3Conditions;
 import org.hyperledger.besu.tests.acceptance.dsl.contract.ContractVerifier;
+import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.permissioning.PermissionedNodeBuilder;
@@ -51,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
+import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -216,4 +219,12 @@ public class AcceptanceTestBase {
           }
         }
       };
+
+  protected void waitForBlockHeight(final Node node, final long blockchainHeight) {
+    WaitUtils.waitFor(
+        120,
+        () ->
+            assertThat(node.execute(ethTransactions.blockNumber()))
+                .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
+  }
 }

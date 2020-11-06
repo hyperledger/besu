@@ -8,35 +8,35 @@ contract SimpleNodePermissioning {
     */
     struct Enode {
         string enodeId;
-        bytes16 enodeHost;
+        string enodeIp;
     }
     mapping(bytes => Enode) private allowlist;
 
     // Port is being ignored
-    function connectionAllowed(string memory enodeId, bytes16 ip, uint16) public view returns (bool) {
+    function connectionAllowed(string memory enodeId, string memory ip, uint16) public view returns (bool) {
         return enodeAllowed(enodeId, ip);
     }
 
-    function enodeAllowed(string memory enodeId, bytes16 sourceEnodeIp) private view returns (bool){
+    function enodeAllowed(string memory enodeId, string memory sourceEnodeIp) private view returns (bool){
         bytes memory key = computeKey(enodeId, sourceEnodeIp);
-        // if enode was found, host (bytes) is greater than zero
-        return allowlist[key].enodeHost > 0;
+        // if enode was found, keccak256 will be different
+        return keccak256(bytes(allowlist[key].enodeIp)) != keccak256("");
     }
 
-    function addEnode(string memory enodeId, bytes16 enodeIp, uint16) public {
+    function addEnode(string memory enodeId, string memory enodeIp, uint16) public {
         Enode memory newEnode = Enode(enodeId, enodeIp);
         bytes memory key = computeKey(enodeId, enodeIp);
         allowlist[key] = newEnode;
     }
 
-    function removeEnode(string memory enodeId, bytes16 enodeIp, uint16) public {
+    function removeEnode(string memory enodeId, string memory enodeIp, uint16) public {
         bytes memory key = computeKey(enodeId, enodeIp);
-        Enode memory zeros = Enode("", bytes16(0));
+        Enode memory zeros = Enode("", "");
         // replace enode with "zeros"
         allowlist[key] = zeros;
     }
 
-    function computeKey(string memory enodeId, bytes16 enodeIp) private pure returns (bytes memory) {
+    function computeKey(string memory enodeId, string memory enodeIp) private pure returns (bytes memory) {
         return abi.encode(enodeId, enodeIp);
     }
 }
