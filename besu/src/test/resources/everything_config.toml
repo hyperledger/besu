@@ -92,7 +92,7 @@ rpc-ws-authentication-jwt-public-key-file="none"
 
 # Prometheus Metrics Endpoint
 metrics-enabled=false
-metrics-protocol=prometheus
+metrics-protocol="prometheus"
 metrics-host="8.6.7.5"
 metrics-port=309
 metrics-category=["RPC"]
