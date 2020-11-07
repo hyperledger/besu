@@ -438,7 +438,8 @@ public class BlocksSubCommand implements Runnable {
     Optional<MetricsService> metricsService = Optional.empty();
     final MetricsConfiguration metricsConfiguration =
         parentCommand.parentCommand.metricsConfiguration();
-    if ((metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) && metricsConfiguration.getProtocol().equals(MetricsProtocol.PROMETHEUS)) {
+    if ((metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled())
+        && metricsConfiguration.getProtocol().equals(MetricsProtocol.PROMETHEUS)) {
       metricsService =
           Optional.of(
               MetricsService.create(

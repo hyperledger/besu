@@ -602,7 +602,8 @@ public class RunnerBuilder {
     }
 
     Optional<MetricsService> metricsService = Optional.empty();
-    if ((metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) && metricsConfiguration.getProtocol().equals(MetricsProtocol.PROMETHEUS)) {
+    if ((metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled())
+        && metricsConfiguration.getProtocol().equals(MetricsProtocol.PROMETHEUS)) {
       metricsService = Optional.of(createMetricsService(vertx, metricsConfiguration));
     }
 
