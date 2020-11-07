@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.metrics.MetricsProtocol;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 
@@ -437,7 +438,7 @@ public class BlocksSubCommand implements Runnable {
     Optional<MetricsService> metricsService = Optional.empty();
     final MetricsConfiguration metricsConfiguration =
         parentCommand.parentCommand.metricsConfiguration();
-    if (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) {
+    if ((metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) && metricsConfiguration.getProtocol().equals(MetricsProtocol.PROMETHEUS)) {
       metricsService =
           Optional.of(
               MetricsService.create(

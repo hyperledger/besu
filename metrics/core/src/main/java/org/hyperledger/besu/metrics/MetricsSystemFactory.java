@@ -50,7 +50,7 @@ public class MetricsSystemFactory {
               metricsConfiguration.isTimersEnabled(),
               metricsConfiguration.getPrometheusJob(),
               true,
-              1000 * metricsConfiguration.getPushInterval());
+              1000L * metricsConfiguration.getPushInterval());
       metricsSystem.initDefaults();
       return metricsSystem;
     } else {

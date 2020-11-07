@@ -18,7 +18,7 @@ package org.hyperledger.besu.metrics;
 public enum MetricsProtocol {
   PROMETHEUS,
   OPENTELEMETRY,
-  NOOP;
+  NONE;
 
   public static MetricsProtocol fromString(final String str) {
     for (final MetricsProtocol mode : MetricsProtocol.values()) {

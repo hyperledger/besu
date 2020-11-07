@@ -93,6 +93,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.metrics.MetricsProtocol;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
@@ -601,7 +602,7 @@ public class RunnerBuilder {
     }
 
     Optional<MetricsService> metricsService = Optional.empty();
-    if (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) {
+    if ((metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) && metricsConfiguration.getProtocol().equals(MetricsProtocol.PROMETHEUS)) {
       metricsService = Optional.of(createMetricsService(vertx, metricsConfiguration));
     }
 
