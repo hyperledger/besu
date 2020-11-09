@@ -19,8 +19,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-
 import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
