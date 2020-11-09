@@ -59,7 +59,8 @@ public class AccountPermissioningControllerFactory {
       final AccountPermissioningController controller =
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
-              transactionSmartContractPermissioningController);
+              transactionSmartContractPermissioningController,
+              Optional.empty());
 
       return Optional.of(controller);
     } else {
