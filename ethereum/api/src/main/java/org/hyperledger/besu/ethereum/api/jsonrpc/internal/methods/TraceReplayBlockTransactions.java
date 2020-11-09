@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.mainnet.ProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.processing.ProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Arrays;

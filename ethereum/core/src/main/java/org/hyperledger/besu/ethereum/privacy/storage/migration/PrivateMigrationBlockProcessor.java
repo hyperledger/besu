@@ -27,9 +27,9 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
-import org.hyperledger.besu.ethereum.mainnet.ProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.processing.ProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.ArrayList;

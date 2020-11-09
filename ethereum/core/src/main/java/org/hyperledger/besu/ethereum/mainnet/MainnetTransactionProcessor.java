@@ -81,7 +81,7 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidator
    * @see TransactionValidationParams
    */
-  public org.hyperledger.besu.ethereum.mainnet.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -119,7 +119,7 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidator
    * @see TransactionValidationParams
    */
-  public org.hyperledger.besu.ethereum.mainnet.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -154,7 +154,7 @@ public class MainnetTransactionProcessor {
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
-  public org.hyperledger.besu.ethereum.mainnet.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -189,7 +189,7 @@ public class MainnetTransactionProcessor {
    * @param transactionValidationParams The transaction validation parameters to use
    * @return the transaction result
    */
-  public org.hyperledger.besu.ethereum.mainnet.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -213,7 +213,7 @@ public class MainnetTransactionProcessor {
   }
 
   public static class ProcessingResult
-      implements org.hyperledger.besu.ethereum.mainnet.ProcessingResult {
+      implements org.hyperledger.besu.ethereum.processing.ProcessingResult {
 
     private final Status status;
 

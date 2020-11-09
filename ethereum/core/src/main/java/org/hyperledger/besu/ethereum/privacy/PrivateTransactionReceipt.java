@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.mainnet.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.ProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 

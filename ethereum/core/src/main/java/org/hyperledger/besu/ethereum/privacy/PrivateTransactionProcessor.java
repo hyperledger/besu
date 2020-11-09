@@ -69,7 +69,7 @@ public class PrivateTransactionProcessor {
   private final int createContractAccountVersion;
 
   public static class ProcessingResult
-      implements org.hyperledger.besu.ethereum.mainnet.ProcessingResult {
+      implements org.hyperledger.besu.ethereum.processing.ProcessingResult {
 
     private final Status status;
 

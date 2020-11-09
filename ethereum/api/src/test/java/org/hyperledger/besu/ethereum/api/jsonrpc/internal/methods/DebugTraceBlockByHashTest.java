@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.mainnet.ProcessingResult;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.processing.ProcessingResult;
 import org.junit.Test;
 
 public class DebugTraceBlockByHashTest {

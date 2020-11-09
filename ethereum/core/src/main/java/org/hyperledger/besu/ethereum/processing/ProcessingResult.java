@@ -12,9 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
 import java.util.Optional;
