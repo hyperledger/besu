@@ -42,8 +42,7 @@ class PendingTransactionsMessageSender {
     for (final List<Hash> hashes :
         Iterables.partition(
             transactionTracker.claimTransactionsToSendToPeer(peer),
-            4096 // implementation determined limit for how many hashes to send at once
-            )) {
+            TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES)) {
       try {
         peer.send(NewPooledTransactionHashesMessage.create(hashes));
       } catch (final PeerNotConnected __) {
