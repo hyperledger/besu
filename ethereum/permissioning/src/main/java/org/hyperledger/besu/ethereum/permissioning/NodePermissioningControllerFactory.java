@@ -82,7 +82,7 @@ public class NodePermissioningControllerFactory {
     }
 
     NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(syncStatusProviderOptional, providers);
+        new NodePermissioningController(syncStatusProviderOptional, providers, Optional.empty());
 
     permissioningConfiguration
         .getSmartContractConfig()
