@@ -273,7 +273,8 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            new EthProtocolConfiguration(
+                limit, limit, limit, limit, limit, true, legacyEth64ForkIdEnabled))) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -565,7 +566,8 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            new EthProtocolConfiguration(
+                limit, limit, limit, limit, limit, true, legacyEth64ForkIdEnabled))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -703,7 +705,8 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            new EthProtocolConfiguration(
+                limit, limit, limit, limit, limit, true, legacyEth64ForkIdEnabled))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
