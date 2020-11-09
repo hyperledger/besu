@@ -121,36 +121,40 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   private Node<V> decode(
       final Bytes location, final RLPInput nodeRLPs, final Supplier<String> errMessage) {
     final int nodesCount = nodeRLPs.enterList();
-    try {
-      switch (nodesCount) {
-        case 1:
-          return decodeNull(nodeRLPs, errMessage);
+    switch (nodesCount) {
+      case 1:
+        final NullNode<V> nullNode = decodeNull(nodeRLPs, errMessage);
+        nodeRLPs.leaveList();
+        return nullNode;
 
-        case 2:
-          final Bytes encodedPath = nodeRLPs.readBytes();
-          final Bytes path;
-          try {
-            path = CompactEncoding.decode(encodedPath);
-          } catch (final IllegalArgumentException ex) {
-            throw new MerkleTrieException(errMessage.get() + ": invalid path " + encodedPath, ex);
-          }
+      case 2:
+        final Bytes encodedPath = nodeRLPs.readBytes();
+        final Bytes path;
+        try {
+          path = CompactEncoding.decode(encodedPath);
+        } catch (final IllegalArgumentException ex) {
+          throw new MerkleTrieException(errMessage.get() + ": invalid path " + encodedPath, ex);
+        }
 
-          final int size = path.size();
-          if (size > 0 && path.get(size - 1) == CompactEncoding.LEAF_TERMINATOR) {
-            return decodeLeaf(path, nodeRLPs, errMessage);
-          } else {
-            return decodeExtension(location, path, nodeRLPs, errMessage);
-          }
+        final int size = path.size();
+        if (size > 0 && path.get(size - 1) == CompactEncoding.LEAF_TERMINATOR) {
+          final LeafNode<V> leafNode = decodeLeaf(path, nodeRLPs, errMessage);
+          nodeRLPs.leaveList();
+          return leafNode;
+        } else {
+          final Node<V> extensionNode = decodeExtension(location, path, nodeRLPs, errMessage);
+          nodeRLPs.leaveList();
+          return extensionNode;
+        }
 
-        case (BranchNode.RADIX + 1):
-          return decodeBranch(location, nodeRLPs, errMessage);
+      case (BranchNode.RADIX + 1):
+        final BranchNode<V> branchNode = decodeBranch(location, nodeRLPs, errMessage);
+        nodeRLPs.leaveList();
+        return branchNode;
 
-        default:
-          throw new MerkleTrieException(
-              errMessage.get() + format(": invalid list size %s", nodesCount));
-      }
-    } finally {
-      nodeRLPs.leaveList();
+      default:
+        throw new MerkleTrieException(
+            errMessage.get() + format(": invalid list size %s", nodesCount));
     }
   }
 

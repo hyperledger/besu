@@ -27,8 +27,8 @@ jar {
 }
 
 dependencies {
-  api 'org.apache.tuweni:tuweni-bytes'
-  api 'org.apache.tuweni:tuweni-units'
+  api 'org.apache.tuweni:bytes'
+  api 'org.apache.tuweni:units'
 }
 
 configurations { testArtifacts }
