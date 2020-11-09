@@ -403,7 +403,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final ProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         worldState.rootHash(),
         gasUsed,
@@ -413,7 +413,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final ProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0,
         gasUsed,
@@ -423,7 +423,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final ProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0,
         gasUsed,

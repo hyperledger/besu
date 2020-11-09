@@ -92,8 +92,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
-    final PrivateTransactionProcessor.Result result =
-        PrivateTransactionProcessor.Result.successful(
+    final PrivateTransactionProcessor.ProcessingResult result =
+        PrivateTransactionProcessor.ProcessingResult.successful(
             null, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),

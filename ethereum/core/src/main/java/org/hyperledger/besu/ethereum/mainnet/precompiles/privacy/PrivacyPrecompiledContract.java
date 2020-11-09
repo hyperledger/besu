@@ -161,7 +161,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
-    final PrivateTransactionProcessor.Result result =
+    final PrivateTransactionProcessor.ProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
@@ -193,10 +193,12 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final PrivateTransactionProcessor.Result result) {
+      final PrivateTransactionProcessor.ProcessingResult result) {
 
     final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
+        result.getStatus() == PrivateTransactionProcessor.ProcessingResult.Status.SUCCESSFUL
+            ? 1
+            : 0;
 
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(
@@ -209,7 +211,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
   }
 
-  PrivateTransactionProcessor.Result processPrivateTransaction(
+  PrivateTransactionProcessor.ProcessingResult processPrivateTransaction(
       final MessageFrame messageFrame,
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,

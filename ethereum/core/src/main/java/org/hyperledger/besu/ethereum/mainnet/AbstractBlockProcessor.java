@@ -39,8 +39,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   @FunctionalInterface
   public interface TransactionReceiptFactory {
 
-    TransactionReceipt create(
-        TransactionProcessor.Result result, WorldState worldState, long gasUsed);
+    TransactionReceipt create(ProcessingResult result, WorldState worldState, long gasUsed);
   }
 
   private static final Logger LOG = LogManager.getLogger();
@@ -81,7 +80,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
   }
 
-  private final TransactionProcessor transactionProcessor;
+  private final MainnetTransactionProcessor transactionProcessor;
 
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
@@ -94,7 +93,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private final TransactionGasBudgetCalculator gasBudgetCalculator;
 
   protected AbstractBlockProcessor(
-      final TransactionProcessor transactionProcessor,
+      final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
@@ -137,7 +136,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
-      final TransactionProcessor.Result result =
+      final ProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
               worldStateUpdater,

@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -61,7 +61,7 @@ public class TransactionTracer {
         blockHash,
         transactionHash,
         (transaction, header, blockchain, worldState, transactionProcessor) -> {
-          final Result result =
+          final ProcessingResult result =
               processTransaction(
                   header,
                   blockchain,
@@ -106,7 +106,7 @@ public class TransactionTracer {
                   final File traceFile = generateTraceFile(traceDir, blockHash, i, transaction);
                   try (PrintStream out = new PrintStream(new FileOutputStream(traceFile))) {
                     final Stopwatch timer = Stopwatch.createStarted();
-                    final Result result =
+                    final ProcessingResult result =
                         processTransaction(
                             header,
                             blockchain,
@@ -153,12 +153,12 @@ public class TransactionTracer {
         .toFile();
   }
 
-  private Result processTransaction(
+  private ProcessingResult processTransaction(
       final BlockHeader header,
       final Blockchain blockchain,
       final WorldUpdater worldUpdater,
       final Transaction transaction,
-      final TransactionProcessor transactionProcessor,
+      final MainnetTransactionProcessor transactionProcessor,
       final OperationTracer tracer) {
     return transactionProcessor.processTransaction(
         blockchain,

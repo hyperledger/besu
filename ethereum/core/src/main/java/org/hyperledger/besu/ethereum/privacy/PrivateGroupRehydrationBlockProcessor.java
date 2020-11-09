@@ -30,8 +30,9 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -56,7 +57,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
   static final int MAX_GENERATION = 6;
 
-  private final TransactionProcessor transactionProcessor;
+  private final MainnetTransactionProcessor transactionProcessor;
   private final PrivateTransactionProcessor privateTransactionProcessor;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   final Wei blockReward;
@@ -64,7 +65,7 @@ public class PrivateGroupRehydrationBlockProcessor {
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
   public PrivateGroupRehydrationBlockProcessor(
-      final TransactionProcessor transactionProcessor,
+      final MainnetTransactionProcessor transactionProcessor,
       final PrivateTransactionProcessor privateTransactionProcessor,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
@@ -128,7 +129,7 @@ public class PrivateGroupRehydrationBlockProcessor {
             disposablePrivateState.rootHash(),
             transactionHash);
 
-        final PrivateTransactionProcessor.Result privateResult =
+        final PrivateTransactionProcessor.ProcessingResult privateResult =
             privateTransactionProcessor.processTransaction(
                 blockchain,
                 worldStateUpdater.updater(),
@@ -156,7 +157,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
       // We have to process the public transactions here, because the private transactions can
       // depend on  public state
-      final TransactionProcessor.Result result =
+      final ProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
               worldStateUpdater,
@@ -190,10 +191,12 @@ public class PrivateGroupRehydrationBlockProcessor {
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final PrivateTransactionProcessor.Result result) {
+      final PrivateTransactionProcessor.ProcessingResult result) {
 
     final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
+        result.getStatus() == PrivateTransactionProcessor.ProcessingResult.Status.SUCCESSFUL
+            ? 1
+            : 0;
 
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(

@@ -172,7 +172,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+  public Optional<PrivateTransactionProcessor.ProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
       final String enclavePublicKey,
       final CallParameter callParams,

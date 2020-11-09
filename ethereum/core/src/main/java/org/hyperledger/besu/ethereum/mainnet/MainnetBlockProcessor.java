@@ -32,7 +32,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
   private static final Logger LOG = LogManager.getLogger();
 
   public MainnetBlockProcessor(
-      final TransactionProcessor transactionProcessor,
+      final MainnetTransactionProcessor transactionProcessor,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,

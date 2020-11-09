@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor.Result;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor.ProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -168,6 +168,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
       final Bytes output, final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionSimulatorResult(
         blockDataGenerator.transaction(),
-        Result.successful(blockDataGenerator.logs(1, 1), 0L, 0L, output, validationResult));
+        ProcessingResult.successful(
+            blockDataGenerator.logs(1, 1), 0L, 0L, output, validationResult));
   }
 }

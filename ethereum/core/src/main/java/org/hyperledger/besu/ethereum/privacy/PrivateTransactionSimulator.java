@@ -68,25 +68,25 @@ public class PrivateTransactionSimulator {
     this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
   }
 
-  public Optional<PrivateTransactionProcessor.Result> process(
+  public Optional<PrivateTransactionProcessor.ProcessingResult> process(
       final String privacyGroupId, final CallParameter callParams) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     return process(privacyGroupId, callParams, header);
   }
 
-  public Optional<PrivateTransactionProcessor.Result> process(
+  public Optional<PrivateTransactionProcessor.ProcessingResult> process(
       final String privacyGroupId, final CallParameter callParams, final Hash blockHeaderHash) {
     final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
     return process(privacyGroupId, callParams, header);
   }
 
-  public Optional<PrivateTransactionProcessor.Result> process(
+  public Optional<PrivateTransactionProcessor.ProcessingResult> process(
       final String privacyGroupId, final CallParameter callParams, final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
     return process(privacyGroupId, callParams, header);
   }
 
-  private Optional<PrivateTransactionProcessor.Result> process(
+  private Optional<PrivateTransactionProcessor.ProcessingResult> process(
       final String privacyGroupIdString, final CallParameter callParams, final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
@@ -114,7 +114,7 @@ public class PrivateTransactionSimulator {
     final PrivateTransactionProcessor privateTransactionProcessor =
         protocolSpec.getPrivateTransactionProcessor();
 
-    final PrivateTransactionProcessor.Result result =
+    final PrivateTransactionProcessor.ProcessingResult result =
         privateTransactionProcessor.processTransaction(
             blockchain,
             publicWorldState.updater(),

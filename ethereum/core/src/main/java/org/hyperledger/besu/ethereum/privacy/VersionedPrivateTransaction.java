@@ -28,7 +28,7 @@ public class VersionedPrivateTransaction {
 
   public VersionedPrivateTransaction(
       final PrivateTransaction privateTransaction,
-      final Optional<PrivateTransactionProcessor.Result> result) {
+      final Optional<PrivateTransactionProcessor.ProcessingResult> result) {
     this(
         privateTransaction,
         result

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -69,7 +68,8 @@ public class PrivateTransactionProcessor {
 
   private final int createContractAccountVersion;
 
-  public static class Result implements TransactionProcessor.Result {
+  public static class ProcessingResult
+      implements org.hyperledger.besu.ethereum.mainnet.ProcessingResult {
 
     private final Status status;
 
@@ -84,9 +84,9 @@ public class PrivateTransactionProcessor {
     private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
     private final Optional<Bytes> revertReason;
 
-    public static Result invalid(
+    public static ProcessingResult invalid(
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new Result(
+      return new ProcessingResult(
           Status.INVALID,
           new ArrayList<>(),
           -1,
@@ -96,12 +96,12 @@ public class PrivateTransactionProcessor {
           Optional.empty());
     }
 
-    public static Result failed(
+    public static ProcessingResult failed(
         final long gasUsedByTransaction,
         final long gasRemaining,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
         final Optional<Bytes> revertReason) {
-      return new Result(
+      return new ProcessingResult(
           Status.FAILED,
           new ArrayList<>(),
           gasUsedByTransaction,
@@ -111,13 +111,13 @@ public class PrivateTransactionProcessor {
           revertReason);
     }
 
-    public static Result successful(
+    public static ProcessingResult successful(
         final List<Log> logs,
         final long gasUsedByTransaction,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new Result(
+      return new ProcessingResult(
           Status.SUCCESSFUL,
           logs,
           gasUsedByTransaction,
@@ -127,7 +127,7 @@ public class PrivateTransactionProcessor {
           Optional.empty());
     }
 
-    Result(
+    ProcessingResult(
         final Status status,
         final List<Log> logs,
         final long estimateGasUsedByTransaction,
@@ -203,7 +203,7 @@ public class PrivateTransactionProcessor {
   }
 
   @SuppressWarnings("unused")
-  public Result processTransaction(
+  public ProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater publicWorldState,
       final WorldUpdater privateWorldState,
@@ -227,7 +227,7 @@ public class PrivateTransactionProcessor {
       final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);
       if (!validationResult.isValid()) {
-        return Result.invalid(validationResult);
+        return ProcessingResult.invalid(validationResult);
       }
 
       final long previousNonce = sender.incrementNonce();
@@ -327,10 +327,10 @@ public class PrivateTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        return Result.successful(
+        return ProcessingResult.successful(
             initialFrame.getLogs(), 0, 0, initialFrame.getOutputData(), ValidationResult.valid());
       } else {
-        return Result.failed(
+        return ProcessingResult.failed(
             0,
             0,
             ValidationResult.invalid(
@@ -339,7 +339,7 @@ public class PrivateTransactionProcessor {
       }
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
-      return Result.invalid(
+      return ProcessingResult.invalid(
           ValidationResult.invalid(
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));

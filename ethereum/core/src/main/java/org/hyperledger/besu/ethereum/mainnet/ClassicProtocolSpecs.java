@@ -207,7 +207,7 @@ public class ClassicProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final ProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0,
         gasUsed,
@@ -217,7 +217,7 @@ public class ClassicProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final ProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0,
         gasUsed,
