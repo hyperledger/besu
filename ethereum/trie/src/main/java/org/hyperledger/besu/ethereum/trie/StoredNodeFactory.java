@@ -170,7 +170,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     } else {
       final Bytes32 childHash = childRlp.readBytes32();
       final StoredNode<V> childNode =
-          new StoredNode<>(this, Bytes.concatenate(location, path), childHash);
+          new StoredNode<>(
+              this, location == null ? null : Bytes.concatenate(location, path), childHash);
       return new ExtensionNode<>(path, childNode, this);
     }
   }
@@ -189,7 +190,10 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
       } else {
         final Bytes32 childHash = nodeRLPs.readBytes32();
         children.add(
-            new StoredNode<>(this, Bytes.concatenate(location, Bytes.of((byte) i)), childHash));
+            new StoredNode<>(
+                this,
+                location == null ? null : Bytes.concatenate(location, Bytes.of((byte) i)),
+                childHash));
       }
     }
 
