@@ -12,6 +12,7 @@
 * Updated the libraries for secp256k1 and AltBN series precompiles. These updates provide significant performance improvements to those areas. [\#1499](https://github.com/hyperledger/besu/pull/1499)
 * Provide MegaGas/second measurements in the log when doing a full block import, such as the catch up phase of a fast sync. [\#1512](https://github.com/hyperledger/besu/pull/1512)
 * Added new endpoints to get miner data, `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber`. [\#1538](https://github.com/hyperledger/besu/pull/1538)
+* Added new CLI option `--Xlegacy-eth-64-fork-id-enabled`. [\#1542](https://github.com/hyperledger/besu/pull/1542)
 
 ### Bug Fixes
 
