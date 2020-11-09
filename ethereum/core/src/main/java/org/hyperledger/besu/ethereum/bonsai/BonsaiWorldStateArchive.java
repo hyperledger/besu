@@ -36,8 +36,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final BonsaiPersistdWorldState persistedState;
 
-  public BonsaiWorldStateArchive(
-      final MutableWorldState fallback, final StorageProvider provider, final Path dataDirectory) {
+  public BonsaiWorldStateArchive(final StorageProvider provider, final Path dataDirectory) {
     // FIXME not for production
     persistedState =
         new BonsaiPersistdWorldState(

@@ -18,6 +18,7 @@ package org.hyperledger.besu.util.io;
 
 import java.io.Closeable;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,7 +28,7 @@ import java.util.function.BiFunction;
 import org.xerial.snappy.Snappy;
 
 public class RollingFileWriter implements Closeable {
-  private static final long MAX_FILE_SIZE = 1 << 31; // 2 GiB max file size
+  private static final long MAX_FILE_SIZE = 1 << 30; // 1 GiB max file size
 
   private final BiFunction<Integer, Boolean, Path> filenameGenerator;
   private final boolean compressed;
@@ -44,7 +45,12 @@ public class RollingFileWriter implements Closeable {
     currentSize = 0;
     fileNumber = 0;
     final Path firstOutputFile = filenameGenerator.apply(fileNumber, compressed);
+    final File parentDir = firstOutputFile.getParent().toFile();
+    if (!parentDir.exists()) {
+      parentDir.mkdirs();
+    }
     out = new FileOutputStream(firstOutputFile.toFile());
+
     index = new DataOutputStream(new FileOutputStream(dataFileToIndex(firstOutputFile).toFile()));
   }
 
