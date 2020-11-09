@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
@@ -37,17 +39,16 @@ class PendingTransactionsMessageSender {
   }
 
   private void sendTransactionsToPeer(final EthPeer peer) {
-    Iterables.partition(
+    for (final List<Hash> hashes :
+        Iterables.partition(
             transactionTracker.claimTransactionsToSendToPeer(peer),
             4096 // implementation determined limit for how many hashes to send at once
-            )
-        .forEach(
-            hashes -> {
-              try {
-                peer.send(NewPooledTransactionHashesMessage.create(hashes));
-              } catch (final PeerNotConnected __) {
-                // if the peer isn't connected anymore, don't do anything
-              }
-            });
+            )) {
+      try {
+        peer.send(NewPooledTransactionHashesMessage.create(hashes));
+      } catch (final PeerNotConnected __) {
+        break;
+      }
+    }
   }
 }
