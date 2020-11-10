@@ -38,7 +38,7 @@ public final class ReceiptsMessageTest {
     for (int i = 0; i < dataCount; ++i) {
       final List<TransactionReceipt> receiptSet = new ArrayList<>();
       for (int j = 0; j < receiptsPerSet; j++) {
-        receiptSet.add(gen.receipt());
+        receiptSet.add(gen.receipt(-1L));
       }
       receipts.add(receiptSet);
     }

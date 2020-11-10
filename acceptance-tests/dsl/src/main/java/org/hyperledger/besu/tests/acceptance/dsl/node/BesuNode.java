@@ -84,7 +84,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
   private final NetworkingConfiguration networkingConfiguration;
-  private final boolean revertReasonEnabled;
+  private final boolean isMetadataEnabled;
 
   private final String name;
   private final MiningParameters miningParameters;
@@ -127,7 +127,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
-      final boolean revertReasonEnabled,
+      final boolean isMetadataEnabled,
       final boolean secp256k1Native,
       final boolean altbn128Native,
       final List<String> plugins,
@@ -159,7 +159,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
-    this.revertReasonEnabled = revertReasonEnabled;
+    this.isMetadataEnabled = isMetadataEnabled;
     this.secp256k1Native = secp256k1Native;
     this.altbn128Native = altbn128Native;
     this.runCommand = runCommand;
@@ -603,8 +603,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   }
 
   @Override
-  public boolean isRevertReasonEnabled() {
-    return revertReasonEnabled;
+  public boolean isMetadataEnabled() {
+    return isMetadataEnabled;
   }
 
   @Override
