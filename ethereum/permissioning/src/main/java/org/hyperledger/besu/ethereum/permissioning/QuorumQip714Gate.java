@@ -23,13 +23,30 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class QuorumQip714Gate {
 
+  private static QuorumQip714Gate SINGLE_INSTANCE = null;
+
   private final long qip714Block;
   private final AtomicLong latestBlock = new AtomicLong(0L);
 
-  public QuorumQip714Gate(final long qip714Block, final Blockchain blockchain) {
+  private QuorumQip714Gate(final long qip714Block, final Blockchain blockchain) {
     this.qip714Block = qip714Block;
 
     blockchain.observeBlockAdded(this::checkChainHeight);
+  }
+
+  // this is only called during start-up, synchronized access won't hurt performance
+  public static synchronized QuorumQip714Gate getInstance(
+      final long qip714Block, final Blockchain blockchain) {
+    if (SINGLE_INSTANCE == null) {
+      SINGLE_INSTANCE = new QuorumQip714Gate(qip714Block, blockchain);
+    } else {
+      if (SINGLE_INSTANCE.qip714Block != qip714Block) {
+        throw new IllegalStateException(
+            "Tried to create Quorum QIP-714 gate with different block config from already instantiated gate block config");
+      }
+    }
+
+    return SINGLE_INSTANCE;
   }
 
   public boolean shouldCheckPermissions() {
