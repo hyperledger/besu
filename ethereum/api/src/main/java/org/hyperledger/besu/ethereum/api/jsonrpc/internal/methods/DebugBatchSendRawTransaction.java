@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Suppliers;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class DebugBatchSendRawTransaction implements JsonRpcMethod {
   private final Supplier<TransactionPool> transactionPool;

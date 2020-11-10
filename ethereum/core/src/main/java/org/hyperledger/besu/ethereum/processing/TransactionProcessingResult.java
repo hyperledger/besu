@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class TransactionProcessingResult {
 
