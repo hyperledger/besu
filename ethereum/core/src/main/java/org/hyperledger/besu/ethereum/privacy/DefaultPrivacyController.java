@@ -225,12 +225,12 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+  public Optional<PrivateTransactionProcessor.ProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
       final String enclavePublicKey,
       final CallParameter callParams,
       final long blockNumber) {
-    final Optional<PrivateTransactionProcessor.Result> result =
+    final Optional<PrivateTransactionProcessor.ProcessingResult> result =
         privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
     return result;
   }
@@ -286,9 +286,11 @@ public class DefaultPrivacyController implements PrivacyController {
 
   public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(final Bytes privacyGroupId) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
-        privateTransactionSimulator.process(
-            privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
+    final Optional<PrivateTransactionProcessor.ProcessingResult>
+        privateTransactionSimulatorResultOptional =
+            privateTransactionSimulator.process(
+                privacyGroupId.toBase64String(),
+                buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
 
     if (privateTransactionSimulatorResultOptional.isPresent()
         && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
@@ -316,9 +318,11 @@ public class DefaultPrivacyController implements PrivacyController {
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
-        privateTransactionSimulator.process(
-            privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
+    final Optional<PrivateTransactionProcessor.ProcessingResult>
+        privateTransactionSimulatorResultOptional =
+            privateTransactionSimulator.process(
+                privacyGroupId.toBase64String(),
+                buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
 
     final List<String> members = new ArrayList<>();
     if (privateTransactionSimulatorResultOptional.isPresent()
@@ -482,7 +486,7 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivacyGroup privacyGroup = maybePrivacyGroup.get();
       if (privacyGroup.getType() == PrivacyGroup.Type.ONCHAIN) {
         // onchain privacy group
-        final Optional<PrivateTransactionProcessor.Result> result =
+        final Optional<PrivateTransactionProcessor.ProcessingResult> result =
             privateTransactionSimulator.process(
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
                 buildCallParams(GET_VERSION_METHOD_SIGNATURE));

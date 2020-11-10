@@ -37,7 +37,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
   private final long eraLength;
 
   public ClassicBlockProcessor(
-      final TransactionProcessor transactionProcessor,
+      final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,

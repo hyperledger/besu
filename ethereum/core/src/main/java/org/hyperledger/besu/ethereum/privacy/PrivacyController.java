@@ -64,7 +64,7 @@ public interface PrivacyController {
 
   long determineBesuNonce(Address sender, String privacyGroupId, String enclavePublicKey);
 
-  Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+  Optional<PrivateTransactionProcessor.ProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
       final String enclavePublicKey,
       final CallParameter callParams,

@@ -46,7 +46,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class MainnetTransactionProcessor implements TransactionProcessor {
+public class MainnetTransactionProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -65,7 +65,155 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
   private final TransactionPriceCalculator transactionPriceCalculator;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
-  public static class Result implements TransactionProcessor.Result {
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams Validation parameters that will be used by the {@link
+   *     TransactionValidator}
+   * @return the transaction result
+   * @see TransactionValidator
+   * @see TransactionValidationParams
+   */
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        OperationTracer.NO_TRACING,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams);
+  }
+
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams Validation parameters that will be used by the {@link
+   *     TransactionValidator}
+   * @param operationTracer operation tracer {@link OperationTracer}
+   * @return the transaction result
+   * @see TransactionValidator
+   * @see TransactionValidationParams
+   */
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams);
+  }
+
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param operationTracer The tracer to record results of each EVM operation
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @return the transaction result
+   */
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final OperationTracer operationTracer,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingPrivateState,
+        new TransactionValidationParams.Builder().build());
+  }
+
+  /**
+   * Applies a transaction to the current system state.
+   *
+   * @param blockchain The current blockchain
+   * @param worldState The current world state
+   * @param blockHeader The current block header
+   * @param transaction The transaction to process
+   * @param operationTracer The tracer to record results of each EVM operation
+   * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
+   * @param transactionValidationParams The transaction validation parameters to use
+   * @return the transaction result
+   */
+  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final OperationTracer operationTracer,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams,
+        null);
+  }
+
+  public static class ProcessingResult
+      implements org.hyperledger.besu.ethereum.processing.ProcessingResult {
 
     private final Status status;
 
@@ -80,9 +228,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
     private final Optional<Bytes> revertReason;
 
-    public static Result invalid(
+    public static ProcessingResult invalid(
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new Result(
+      return new ProcessingResult(
           Status.INVALID,
           new ArrayList<>(),
           -1,
@@ -92,12 +240,12 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           Optional.empty());
     }
 
-    public static Result failed(
+    public static ProcessingResult failed(
         final long gasUsedByTransaction,
         final long gasRemaining,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
         final Optional<Bytes> revertReason) {
-      return new Result(
+      return new ProcessingResult(
           Status.FAILED,
           new ArrayList<>(),
           gasUsedByTransaction,
@@ -107,13 +255,13 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           revertReason);
     }
 
-    public static Result successful(
+    public static ProcessingResult successful(
         final List<Log> logs,
         final long gasUsedByTransaction,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new Result(
+      return new ProcessingResult(
           Status.SUCCESSFUL,
           logs,
           gasUsedByTransaction,
@@ -123,7 +271,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           Optional.empty());
     }
 
-    Result(
+    ProcessingResult(
         final Status status,
         final List<Log> logs,
         final long estimateGasUsedByTransaction,
@@ -199,8 +347,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
-  @Override
-  public Result processTransaction(
+  public ProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -221,7 +368,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       // be signed correctly to extract the sender).
       if (!validationResult.isValid()) {
         LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
-        return Result.invalid(validationResult);
+        return ProcessingResult.invalid(validationResult);
       }
 
       final Address senderAddress = transaction.getSender();
@@ -230,7 +377,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
       if (!validationResult.isValid()) {
         LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
-        return Result.invalid(validationResult);
+        return ProcessingResult.invalid(validationResult);
       }
 
       final MutableAccount senderMutableAccount = sender.getMutable();
@@ -367,7 +514,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       if (blockHeader.getBaseFee().isPresent() && transaction.isEIP1559Transaction()) {
         final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
         if (transactionGasPrice.compareTo(baseFee) < 0) {
-          return Result.failed(
+          return ProcessingResult.failed(
               gasUsedByTransaction.toLong(),
               refunded.toLong(),
               ValidationResult.invalid(
@@ -392,14 +539,14 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        return Result.successful(
+        return ProcessingResult.successful(
             initialFrame.getLogs(),
             gasUsedByTransaction.toLong(),
             refunded.toLong(),
             initialFrame.getOutputData(),
             validationResult);
       } else {
-        return Result.failed(
+        return ProcessingResult.failed(
             gasUsedByTransaction.toLong(),
             refunded.toLong(),
             validationResult,
@@ -407,7 +554,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       }
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
-      return Result.invalid(
+      return ProcessingResult.invalid(
           ValidationResult.invalid(
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));

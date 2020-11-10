@@ -31,11 +31,10 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result.Status;
+import org.hyperledger.besu.ethereum.processing.ProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -67,7 +66,7 @@ public class TransactionSimulatorTest {
   @Mock private MutableWorldState worldState;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private TransactionProcessor transactionProcessor;
+  @Mock private MainnetTransactionProcessor transactionProcessor;
 
   @Before
   public void setUp() {
@@ -103,7 +102,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -130,7 +129,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, 1L);
 
@@ -155,7 +154,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, 1L);
 
@@ -180,7 +179,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -217,7 +216,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
@@ -244,7 +243,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
 
@@ -269,7 +268,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
 
@@ -294,7 +293,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED);
+    mockProcessorStatusForTransaction(1L, expectedTransaction, ProcessingResult.Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
@@ -330,12 +329,12 @@ public class TransactionSimulatorTest {
   }
 
   private void mockProcessorStatusForTransaction(
-      final long blockNumber, final Transaction transaction, final Status status) {
+      final long blockNumber, final Transaction transaction, final ProcessingResult.Status status) {
     when(protocolSchedule.getByBlockNumber(eq(blockNumber))).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
 
-    final Result result = mock(Result.class);
+    final ProcessingResult result = mock(ProcessingResult.class);
     switch (status) {
       case SUCCESSFUL:
         when(result.isSuccessful()).thenReturn(true);

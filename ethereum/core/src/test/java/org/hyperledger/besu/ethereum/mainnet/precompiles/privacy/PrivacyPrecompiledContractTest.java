@@ -85,7 +85,7 @@ public class PrivacyPrecompiledContractTest {
       new PrivateStateRootResolver(privateStateStorage);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
-      final PrivateTransactionProcessor.Result result) {
+      final PrivateTransactionProcessor.ProcessingResult result) {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
@@ -149,7 +149,7 @@ public class PrivacyPrecompiledContractTest {
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.successful(
+            PrivateTransactionProcessor.ProcessingResult.successful(
                 logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
@@ -251,7 +251,7 @@ public class PrivacyPrecompiledContractTest {
     final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.successful(
+            PrivateTransactionProcessor.ProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
@@ -287,7 +287,7 @@ public class PrivacyPrecompiledContractTest {
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.invalid(
+            PrivateTransactionProcessor.ProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE))));
 
