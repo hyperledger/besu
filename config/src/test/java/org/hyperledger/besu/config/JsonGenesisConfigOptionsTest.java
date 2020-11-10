@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -163,5 +164,57 @@ public class JsonGenesisConfigOptionsTest {
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
     assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(12);
+  }
+
+  @Test
+  public void isQuorumShouldDefaultToFalse() {
+    final ObjectNode configNode = loadCompleteDataSet();
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.isQuorum()).isFalse();
+    assertThat(configOptions.getQip714BlockNumber()).isEmpty();
+  }
+
+  @Test
+  public void isQuorumConfigParsedCorrectly() {
+    final ObjectNode configNode = loadGenesisWithQuorumConfig();
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.isQuorum()).isTrue();
+    assertThat(configOptions.getQip714BlockNumber()).hasValue(99999L);
+  }
+
+  @Test
+  public void whenDisabledQuorumOptionsAreNotAddedToMap() {
+    final ObjectNode configNode = loadCompleteDataSet();
+
+    final Map<String, Object> map = JsonGenesisConfigOptions.fromJsonObject(configNode).asMap();
+
+    assertThat(map).doesNotContainKey("isQuorum").doesNotContainKey("qip714block");
+  }
+
+  @Test
+  public void whenEnabledQuorumOptionsAreAddedToMap() {
+    final ObjectNode configNode = loadGenesisWithQuorumConfig();
+
+    final Map<String, Object> map = JsonGenesisConfigOptions.fromJsonObject(configNode).asMap();
+
+    assertThat(map).containsEntry("isQuorum", true).containsEntry("qip714block", 99999L);
+  }
+
+  private ObjectNode loadGenesisWithQuorumConfig() {
+    try {
+      final String configText =
+          Resources.toString(
+              Resources.getResource("valid_config_with_quorum_config.json"),
+              StandardCharsets.UTF_8);
+      return JsonUtil.objectNodeFromString(configText);
+    } catch (final IOException e) {
+      throw new RuntimeException("Failed to load resource", e);
+    }
   }
 }

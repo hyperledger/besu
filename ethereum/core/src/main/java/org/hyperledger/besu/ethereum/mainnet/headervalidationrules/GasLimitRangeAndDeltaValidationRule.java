@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
@@ -27,22 +26,13 @@ import org.apache.logging.log4j.Logger;
  * specified at construction. And that the gasLimit for this block is within certain bounds of its
  * parent block.
  */
-public class GasLimitRangeAndDeltaValidationRule implements DetachedBlockHeaderValidationRule {
+public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecification
+    implements DetachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LogManager.getLogger(GasLimitRangeAndDeltaValidationRule.class);
-  private static final int GASLIMIT_BOUND_DIVISOR = 1024;
-  private final long minGasLimit;
-  private final long maxGasLimit;
 
   public GasLimitRangeAndDeltaValidationRule(final long minGasLimit, final long maxGasLimit) {
-    checkArgument(
-        minGasLimit >= GASLIMIT_BOUND_DIVISOR,
-        "minGasLimit of "
-            + minGasLimit
-            + " is below the bound divisor of "
-            + GASLIMIT_BOUND_DIVISOR);
-    this.minGasLimit = minGasLimit;
-    this.maxGasLimit = maxGasLimit;
+    super(minGasLimit, maxGasLimit);
   }
 
   @Override
@@ -57,10 +47,10 @@ public class GasLimitRangeAndDeltaValidationRule implements DetachedBlockHeaderV
 
     final long parentGasLimit = parent.getGasLimit();
     final long difference = Math.abs(parentGasLimit - gasLimit);
-    final long bounds = Long.divideUnsigned(parentGasLimit, GASLIMIT_BOUND_DIVISOR);
+    final long bounds = deltaBound(parentGasLimit);
     if (Long.compareUnsigned(difference, bounds) >= 0) {
       LOG.trace(
-          "Invalid block header: gas limit delta {} is out of bounds of {}", gasLimit, bounds);
+          "Invalid block header: gas limit delta {} is out of bounds of {}", difference, bounds);
       return false;
     }
 
