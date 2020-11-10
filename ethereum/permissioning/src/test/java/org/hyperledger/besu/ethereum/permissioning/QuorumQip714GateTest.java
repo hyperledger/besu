@@ -42,21 +42,21 @@ public class QuorumQip714GateTest {
 
   @Test
   public void gateShouldSubscribeAsBlockAddedObserver() {
-    gate = new QuorumQip714Gate(100, blockchain);
+    gate = QuorumQip714Gate.getInstance(100, blockchain);
 
     verify(blockchain).observeBlockAdded(any());
   }
 
   @Test
   public void whenTargetBlockIsZeroCheckPermissionsReturnTrue() {
-    gate = new QuorumQip714Gate(0, blockchain);
+    gate = QuorumQip714Gate.getInstance(0, blockchain);
 
     assertThat(gate.shouldCheckPermissions()).isTrue();
   }
 
   @Test
   public void whenBelowTargetBlockCheckPermissionsReturnFalse() {
-    gate = new QuorumQip714Gate(99, blockchain);
+    gate = QuorumQip714Gate.getInstance(99, blockchain);
 
     updateChainHead(55);
 
@@ -65,7 +65,7 @@ public class QuorumQip714GateTest {
 
   @Test
   public void whenAboveTargetBlockCheckPermissionsReturnTrue() {
-    gate = new QuorumQip714Gate(99, blockchain);
+    gate = QuorumQip714Gate.getInstance(99, blockchain);
 
     updateChainHead(100);
 
@@ -74,7 +74,7 @@ public class QuorumQip714GateTest {
 
   @Test
   public void latestBlockCheckShouldKeepUpToChainHeight() {
-    gate = new QuorumQip714Gate(0, blockchain);
+    gate = QuorumQip714Gate.getInstance(0, blockchain);
     assertThat(gate.getLatestBlock()).isEqualTo(0);
 
     updateChainHead(1);
