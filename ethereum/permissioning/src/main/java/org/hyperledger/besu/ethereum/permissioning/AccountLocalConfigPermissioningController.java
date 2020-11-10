@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -72,12 +71,14 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
         metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "account_local_check_count_permitted",
-            "Number of times the account local permissioning provider has been checked and returned permitted");
+            "Number of times the account local permissioning provider has been checked and"
+                + " returned permitted");
     this.checkCounterUnpermitted =
         metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "account_local_check_count_unpermitted",
-            "Number of times the account local permissioning provider has been checked and returned unpermitted");
+            "Number of times the account local permissioning provider has been checked and"
+                + " returned unpermitted");
   }
 
   private void readAccountsFromConfig(final LocalPermissioningConfiguration configuration) {
@@ -217,8 +218,8 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       configuration = updatedConfig;
     } catch (Exception e) {
       LOG.warn(
-          "Error reloading permissions file. In-memory accounts allowlist will be reverted to previous valid configuration. "
-              + "Details: {}",
+          "Error reloading permissions file. In-memory accounts allowlist will be reverted to"
+              + " previous valid configuration. Details: {}",
           e.getMessage());
       accountAllowlist.clear();
       accountAllowlist.addAll(currentAccountsList);

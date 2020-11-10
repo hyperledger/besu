@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
@@ -331,7 +330,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
         LOG.trace(
-            "Block processing error: ommer block number {} more than {} generations current block number {}",
+            "Block processing error: ommer block number {} more than {} generations current block"
+                + " number {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,
             header.getNumber());

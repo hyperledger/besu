@@ -19,7 +19,6 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
@@ -32,10 +31,10 @@ import java.util.Optional;
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
  *
- * <p>The {@link MainnetTransactionValidator} performs the intrinsic gas cost check on the given
+ * <p>The {@link FrontierTransactionValidator} performs the intrinsic gas cost check on the given
  * {@link Transaction}.
  */
-public class MainnetTransactionValidator implements TransactionValidator {
+public class FrontierTransactionValidator implements TransactionValidator {
 
   private final GasCalculator gasCalculator;
   private final Optional<TransactionPriceCalculator> transactionPriceCalculator;
@@ -48,7 +47,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   private final Optional<EIP1559> maybeEip1559;
   private final AcceptedTransactionTypes acceptedTransactionTypes;
 
-  public MainnetTransactionValidator(
+  public FrontierTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId) {
@@ -61,7 +60,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
         AcceptedTransactionTypes.FRONTIER_TRANSACTIONS);
   }
 
-  public MainnetTransactionValidator(
+  public FrontierTransactionValidator(
       final GasCalculator gasCalculator,
       final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final boolean checkSignatureMalleability,

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -532,7 +531,8 @@ public class DefaultBlockchain implements MutableBlockchain {
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
         throw new InvalidConfigurationException(
             "Supplied genesis block does not match stored chain data.\n"
-                + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
+                + "Please specify a different data directory with --data-path or specify the"
+                + " original genesis file with --genesis-file.");
       }
     }
   }

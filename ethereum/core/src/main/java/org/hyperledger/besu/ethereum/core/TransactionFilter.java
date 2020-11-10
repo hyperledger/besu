@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.plugin.data.Transaction;
+
 @FunctionalInterface
 public interface TransactionFilter {
   boolean permitted(

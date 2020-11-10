@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -85,7 +84,8 @@ public class PrivateMigrationBlockProcessor {
       final long remainingGasBudget = blockHeader.getGasLimit() - gasUsed;
       if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
         LOG.warn(
-            "Transaction processing error: transaction gas limit {} exceeds available block budget remaining {}",
+            "Transaction processing error: transaction gas limit {} exceeds available block budget"
+                + " remaining {}",
             transaction.getGasLimit(),
             remainingGasBudget);
         return AbstractBlockProcessor.Result.failed();
@@ -141,7 +141,8 @@ public class PrivateMigrationBlockProcessor {
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
         LOG.warn(
-            "Block processing error: ommer block number {} more than {} generations current block number {}",
+            "Block processing error: ommer block number {} more than {} generations current block"
+                + " number {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,
             header.getNumber());

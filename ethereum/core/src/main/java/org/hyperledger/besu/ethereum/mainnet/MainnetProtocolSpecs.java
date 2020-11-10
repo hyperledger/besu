@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -97,7 +96,7 @@ public abstract class MainnetProtocolSpecs {
                     0))
         .transactionValidatorBuilder(
             gasCalculator ->
-                new MainnetTransactionValidator(gasCalculator, false, Optional.empty()))
+                new FrontierTransactionValidator(gasCalculator, false, Optional.empty()))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -158,7 +157,8 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, Optional.empty()))
+            gasCalculator ->
+                new FrontierTransactionValidator(gasCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -226,7 +226,7 @@ public abstract class MainnetProtocolSpecs {
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+            gasCalculator -> new FrontierTransactionValidator(gasCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -372,7 +372,7 @@ public abstract class MainnetProtocolSpecs {
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .transactionValidatorBuilder(
             gasCalculator ->
-                new MainnetTransactionValidator(
+                new FrontierTransactionValidator(
                     gasCalculator,
                     transactionPriceCalculator,
                     true,

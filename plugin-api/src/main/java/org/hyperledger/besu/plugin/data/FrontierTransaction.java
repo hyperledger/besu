@@ -23,6 +23,16 @@ import org.hyperledger.besu.plugin.Unstable;
 import java.math.BigInteger;
 import java.util.Optional;
 
+/**
+ * A transaction is a single cryptographically-signed instruction constructed by an actor externally
+ * to the scope of Ethereum. While it is assumed that the ultimate external actor will be human in
+ * nature, software tools will be used in its construction and dissemination.
+ *
+ * <p>There are two types of transactions: those which result in message calls and those which
+ * result in the creation of new accounts with associated code (known informally as ‘contract
+ * creation’). Message call transactions will have an address present in the {@link #getTo} method
+ * whereas contract creation transactions will not.
+ */
 public interface FrontierTransaction extends Transaction {
   /**
    * The Keccak 256-bit hash of this transaction.

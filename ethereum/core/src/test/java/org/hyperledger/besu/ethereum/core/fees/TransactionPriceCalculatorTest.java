@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.fees;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.util.Arrays;

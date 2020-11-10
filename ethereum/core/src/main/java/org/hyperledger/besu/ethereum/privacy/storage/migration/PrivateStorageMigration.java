@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -154,7 +153,8 @@ public class PrivateStorageMigration {
               privateStateRootResolver.resolveLastStateRoot(pgId, blockchain.getChainHeadHash());
           if (!newStateRoot.equals(legacyStateRoot.orElse(Hash.EMPTY))) {
             throw new PrivateStorageMigrationException(
-                "Inconsistent state root. Please delete your database and re-sync your node to avoid inconsistencies in your database.");
+                "Inconsistent state root. Please delete your database and re-sync your node to"
+                    + " avoid inconsistencies in your database.");
           }
         });
 

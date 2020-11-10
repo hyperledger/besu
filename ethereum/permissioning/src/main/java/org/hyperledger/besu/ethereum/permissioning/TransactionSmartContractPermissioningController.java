@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -85,17 +84,20 @@ public class TransactionSmartContractPermissioningController
         metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count",
-            "Number of times the transaction smart contract permissioning provider has been checked");
+            "Number of times the transaction smart contract permissioning provider has been"
+                + " checked");
     this.checkCounterPermitted =
         metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count_permitted",
-            "Number of times the transaction smart contract permissioning provider has been checked and returned permitted");
+            "Number of times the transaction smart contract permissioning provider has been"
+                + " checked and returned permitted");
     this.checkCounterUnpermitted =
         metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count_unpermitted",
-            "Number of times the transaction smart contract permissioning provider has been checked and returned unpermitted");
+            "Number of times the transaction smart contract permissioning provider has been"
+                + " checked and returned unpermitted");
   }
 
   /**
@@ -122,7 +124,8 @@ public class TransactionSmartContractPermissioningController
     if (contractExists.isPresent() && !contractExists.get()) {
       this.checkCounterPermitted.inc();
       LOG.warn(
-          "Account permissioning smart contract not found at address {} in current head block. Any transaction will be allowed.",
+          "Account permissioning smart contract not found at address {} in current head block. Any"
+              + " transaction will be allowed.",
           contractAddress);
       return true;
     }

@@ -18,7 +18,6 @@ import org.hyperledger.besu.chainimport.internal.TransactionData.NonceProvider;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
 
 import java.util.HashMap;

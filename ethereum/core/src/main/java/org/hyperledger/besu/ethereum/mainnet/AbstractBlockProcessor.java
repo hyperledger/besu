@@ -17,8 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -35,6 +36,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 public abstract class AbstractBlockProcessor implements BlockProcessor {
   @FunctionalInterface
@@ -121,16 +123,37 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
       final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
-      if (!gasBudgetCalculator.hasBudget(
-          transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
-        LOG.info(
-            "Block processing error: transaction gas limit {} exceeds available block budget remaining {}. Block {} Transaction {}",
-            transaction.getGasLimit(),
-            remainingGasBudget,
-            blockHeader.getHash().toHexString(),
-            transaction.getHash().toHexString());
-        return AbstractBlockProcessor.Result.failed();
+
+      if (transaction instanceof FrontierTransaction) {
+        final FrontierTransaction frontierTransaction = (FrontierTransaction) transaction;
+        if (frontierTransaction.getGasLimit() > remainingGasBudget) {
+          LOG.info(
+              "Block processing error: transaction gas limit {} exceeds available block budget"
+                  + " remaining {}. Block {} Transaction {}",
+              frontierTransaction::getGasLimit,
+              () -> remainingGasBudget,
+              () -> blockHeader.getHash().toHexString(),
+              () -> frontierTransaction.getHash().toHexString());
+          return AbstractBlockProcessor.Result.failed();
+        }
+      } else if (transaction instanceof EIP1559Transaction) {
+        final EIP1559Transaction eip1559Transaction = (EIP1559Transaction) transaction;
+        if (eip1559Transaction.getGasLimit() > remainingGasBudget) {
+          LOG.info(
+              "Block processing error: transaction gas limit {} exceeds available block budget"
+                  + " remaining {}. Block {} Transaction {}",
+              eip1559Transaction::getGasLimit,
+              () -> remainingGasBudget,
+              () -> blockHeader.getHash().toHexString(),
+              () -> eip1559Transaction.getHash().toHexString());
+          return AbstractBlockProcessor.Result.failed();
+        }
       }
+      // calculate gas budget
+      // get updaters and mining beneficiary
+      // process transaction
+      // reward miner
+      // persist state
 
       final WorldUpdater worldStateUpdater = worldState.updater();
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);

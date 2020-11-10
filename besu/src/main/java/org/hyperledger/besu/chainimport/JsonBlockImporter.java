@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
@@ -175,7 +174,8 @@ public class JsonBlockImporter {
         controller.getProtocolContext().getBlockchain().getChainHead().getHeight();
     if (chainHeight > BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.warn(
-          "Importing to a non-empty database with chain height {}.  This may cause imported blocks to be considered non-canonical.",
+          "Importing to a non-empty database with chain height {}.  This may cause imported blocks"
+              + " to be considered non-canonical.",
           chainHeight);
     }
   }

@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -85,7 +84,7 @@ public class TransactionGasBudgetCalculatorTest {
   @Test
   public void assertThatCalculatorWorks() {
     assertThat(
-            gasBudgetCalculator.hasBudget(
+            gasBudgetCalculator.budget(
                 transaction(isEIP1559, transactionGasLimit),
                 blockNumber,
                 blockHeaderGasLimit,

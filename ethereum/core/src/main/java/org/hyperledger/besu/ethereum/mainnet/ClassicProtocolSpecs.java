@@ -47,7 +47,7 @@ public class ClassicProtocolSpecs {
     return MainnetProtocolSpecs.homesteadDefinition(contractSizeLimit, configStackSizeLimit)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+            gasCalculator -> new FrontierTransactionValidator(gasCalculator, true, chainId))
         .name("ClassicTangerineWhistle");
   }
 
@@ -94,7 +94,7 @@ public class ClassicProtocolSpecs {
     return gothamDefinition(chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+            gasCalculator -> new FrontierTransactionValidator(gasCalculator, true, chainId))
         .name("DefuseDifficultyBomb");
   }
 

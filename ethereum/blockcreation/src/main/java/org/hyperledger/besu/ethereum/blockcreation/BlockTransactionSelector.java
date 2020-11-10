@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -267,13 +266,13 @@ public class BlockTransactionSelector {
     final long blockGasRemaining;
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       if (transaction.isEIP1559Transaction()) {
-        return !transactionGasBudgetCalculator.hasBudget(
+        return !transactionGasBudgetCalculator.budget(
             transaction,
             blockNumber,
             gasLimit,
             transactionSelectionResult.eip1559CumulativeGasUsed);
       } else {
-        return !transactionGasBudgetCalculator.hasBudget(
+        return !transactionGasBudgetCalculator.budget(
             transaction,
             blockNumber,
             gasLimit,

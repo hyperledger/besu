@@ -1,31 +1,35 @@
 /*
- * Copyright ConsenSys AG.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ *  * Copyright ConsenSys AG.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ *  * the License. You may obtain a copy of the License at
+ *  *
+ *  * http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ *  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ *  * specific language governing permissions and limitations under the License.
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.ethereum.core.transaction;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -183,26 +187,6 @@ public class FrontierTransaction implements org.hyperledger.besu.plugin.data.Fro
   @Override
   public Wei getGasPrice() {
     return gasPrice;
-  }
-
-  /**
-   * Return the transaction gas premium.
-   *
-   * @return the transaction gas premium
-   */
-  @Override
-  public Optional<Quantity> getGasPremium() {
-    return Optional.ofNullable(gasPremium);
-  }
-
-  /**
-   * Return the transaction fee cap.
-   *
-   * @return the transaction fee cap
-   */
-  @Override
-  public Optional<Quantity> getFeeCap() {
-    return Optional.ofNullable(feeCap);
   }
 
   /**

@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -382,7 +381,8 @@ public abstract class JsonBlockImporterTest {
         assertThatThrownBy(() -> importer.importChain(jsonData))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage(
-                "Some fields (coinbase, extraData) are unsupported by the current consensus engine: "
+                "Some fields (coinbase, extraData) are unsupported by the current consensus"
+                    + " engine: "
                     + genesisConfigFile.getConfigOptions().getConsensusEngine());
       }
     }

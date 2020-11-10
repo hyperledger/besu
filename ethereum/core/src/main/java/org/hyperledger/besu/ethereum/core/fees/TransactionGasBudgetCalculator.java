@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 @FunctionalInterface
 public interface TransactionGasBudgetCalculator {
 
-  boolean hasBudget(
+  long budget(
       final Transaction transaction,
       final long blockNumber,
       final long gasLimit,
@@ -39,11 +39,8 @@ public interface TransactionGasBudgetCalculator {
 
   static TransactionGasBudgetCalculator gasBudgetCalculator(
       final BlockGasLimitCalculator blockGasLimitCalculator) {
-    return (transaction, blockNumber, gasLimit, gasUsed) -> {
-      final long remainingGasBudget =
-          blockGasLimitCalculator.apply(blockNumber, gasLimit, transaction) - gasUsed;
-      return Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) <= 0;
-    };
+    return (transaction, blockNumber, gasLimit, gasUsed) ->
+        blockGasLimitCalculator.apply(blockNumber, gasLimit, transaction) - gasUsed;
   }
 
   @FunctionalInterface

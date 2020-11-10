@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.account;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
-
 @FunctionalInterface
 public interface TransactionPermissioningProvider {
   boolean isPermitted(final Transaction transaction);

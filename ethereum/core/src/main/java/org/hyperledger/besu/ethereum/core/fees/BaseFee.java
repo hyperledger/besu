@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.util.Optional;

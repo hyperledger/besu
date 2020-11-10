@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.HashMap;
@@ -54,9 +53,11 @@ public class ReferenceTestBlockchain implements Blockchain {
   // Maximum number of blocks prior to the chain head that can be retrieved by hash.
   private static final long MAXIMUM_BLOCKS_BEHIND_HEAD = 256;
   private static final String NUMBER_LOOKUP_ERROR =
-      "Blocks must not be looked up by number in the EVM. The block being processed may not be on the canonical chain.";
+      "Blocks must not be looked up by number in the EVM. The block being processed may not be on"
+          + " the canonical chain.";
   private static final String CHAIN_HEAD_ERROR =
-      "Chain head is inherently non-deterministic. The block currently being processed should be treated as the chain head.";
+      "Chain head is inherently non-deterministic. The block currently being processed should be"
+          + " treated as the chain head.";
   private final Map<Hash, BlockHeader> hashToHeader = new HashMap<>();
 
   public ReferenceTestBlockchain() {

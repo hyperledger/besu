@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
@@ -131,7 +130,8 @@ public class PrivacyBlockProcessor implements BlockProcessor {
 
                 if (actualList.size() > 0) {
                   LOG.debug(
-                      "Rehydrating privacy group {}, number of transactions to be rehydrated is {} out of a total number of {} transactions.",
+                      "Rehydrating privacy group {}, number of transactions to be rehydrated is {}"
+                          + " out of a total number of {} transactions.",
                       privacyGroupId.toString(),
                       actualList.size(),
                       privateTransactionWithMetadataList.size());
