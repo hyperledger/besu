@@ -426,7 +426,7 @@ public abstract class BesuControllerBuilder {
   public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
-        return new BonsaiWorldStateArchive(storageProvider, dataDirectory);
+        return new BonsaiWorldStateArchive(storageProvider);
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

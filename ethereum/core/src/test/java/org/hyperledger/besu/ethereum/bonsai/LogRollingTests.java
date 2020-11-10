@@ -62,9 +62,9 @@ public class LogRollingTests {
 
   @Test
   public void simpleRollForwardTest() {
-    final BonsaiPersistdWorldState worldState =
-        new BonsaiPersistdWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage, null);
+    final BonsaiPersistedWorldState worldState =
+        new BonsaiPersistedWorldState(
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -80,14 +80,14 @@ public class LogRollingTests {
     final InMemoryKeyValueStorage newTrieBranchStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newTrieLogStorage = new InMemoryKeyValueStorage();
 
-    final BonsaiPersistdWorldState secondWorldState =
-        new BonsaiPersistdWorldState(
+    final BonsaiPersistedWorldState secondWorldState =
+        new BonsaiPersistedWorldState(
             newAccountStorage,
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage,
-            null);
+            newTrieLogStorage
+        );
 
     final Optional<byte[]> value = trieLogStorage.get(hashOne.toArrayUnsafe());
 
@@ -108,9 +108,9 @@ public class LogRollingTests {
 
   @Test
   public void rollForwardTwice() {
-    final BonsaiPersistdWorldState worldState =
-        new BonsaiPersistdWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage, null);
+    final BonsaiPersistedWorldState worldState =
+        new BonsaiPersistedWorldState(
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -134,14 +134,14 @@ public class LogRollingTests {
     final InMemoryKeyValueStorage newTrieBranchStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newTrieLogStorage = new InMemoryKeyValueStorage();
 
-    final BonsaiPersistdWorldState secondWorldState =
-        new BonsaiPersistdWorldState(
+    final BonsaiPersistedWorldState secondWorldState =
+        new BonsaiPersistedWorldState(
             newAccountStorage,
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage,
-            null);
+            newTrieLogStorage
+        );
 
     final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, hashOne);
     secondWorldState.rollForward(layerOne);
@@ -162,9 +162,9 @@ public class LogRollingTests {
 
   @Test
   public void rollBackOnce() {
-    final BonsaiPersistdWorldState worldState =
-        new BonsaiPersistdWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage, null);
+    final BonsaiPersistedWorldState worldState =
+        new BonsaiPersistedWorldState(
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -193,14 +193,14 @@ public class LogRollingTests {
     final InMemoryKeyValueStorage newTrieBranchStorage = new InMemoryKeyValueStorage();
     final InMemoryKeyValueStorage newTrieLogStorage = new InMemoryKeyValueStorage();
 
-    final BonsaiPersistdWorldState secondWorldState =
-        new BonsaiPersistdWorldState(
+    final BonsaiPersistedWorldState secondWorldState =
+        new BonsaiPersistedWorldState(
             newAccountStorage,
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage,
-            null);
+            newTrieLogStorage
+        );
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =

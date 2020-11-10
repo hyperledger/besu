@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, EvmAccount {
-  private final BonsaiPersistdWorldState context;
+  private final BonsaiPersistedWorldState context;
   private final boolean mutable;
 
   private final Address address;
@@ -57,7 +57,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private boolean storageWasCleared;
 
   BonsaiAccount(
-      final BonsaiPersistdWorldState context,
+      final BonsaiPersistedWorldState context,
       final Address address,
       final Hash addressHash,
       final long nonce,
@@ -95,7 +95,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   public BonsaiAccount(
-      final BonsaiPersistdWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+      final BonsaiPersistedWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
     this.addressHash = tracked.getAddressHash();
@@ -112,7 +112,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   static BonsaiAccount fromRLP(
-      final BonsaiPersistdWorldState context,
+      final BonsaiPersistedWorldState context,
       final Address address,
       final Bytes encoded,
       final boolean mutable)

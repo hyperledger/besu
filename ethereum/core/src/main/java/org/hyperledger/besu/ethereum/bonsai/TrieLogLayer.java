@@ -155,14 +155,14 @@ public class TrieLogLayer {
       output.writeBytes(address);
 
       final BonsaiValue<StateTrieAccountValue> accountChange = accounts.get(address);
-      if (accountChange == null || !accountChange.isChange()) {
+      if (accountChange == null || accountChange.isUnchanged()) {
         output.writeNull();
       } else {
         accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
       }
 
       final BonsaiValue<Bytes> codeChange = code.get(address);
-      if (codeChange == null || !codeChange.isChange()) {
+      if (codeChange == null || codeChange.isUnchanged()) {
         output.writeNull();
       } else {
         codeChange.writeRlp(output, RLPOutput::writeBytes);

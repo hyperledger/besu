@@ -35,11 +35,8 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.io.RollingFileWriter;
 
-import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -57,8 +54,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-// FIXME speling
-public class BonsaiPersistdWorldState implements MutableWorldState {
+public class BonsaiPersistedWorldState implements MutableWorldState {
 
   private static final byte[] WORLD_ROOT_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
@@ -77,37 +73,20 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate = new HashMap<>();
   private Bytes32 worldStateRootHash;
 
-  // FIXME
-  private final RollingFileWriter layerWriter;
-  private final Path dataPath;
-
-  public BonsaiPersistdWorldState(
+  public BonsaiPersistedWorldState(
       final KeyValueStorage accountStorage,
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage,
-      final Path dataPath) {
+      final KeyValueStorage trieLogStorage) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
-    this.dataPath = dataPath;
     worldStateRootHash =
         Bytes32.wrap(
             trieBranchStorage.get(WORLD_ROOT_KEY).map(Bytes::wrap).orElse(Hash.EMPTY_TRIE_HASH));
-    try {
-      layerWriter = (dataPath == null) ? null : new RollingFileWriter(this::bodyFileName, false);
-    } catch (final FileNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Path bodyFileName(final int fileNumber, final boolean compressed) {
-    return dataPath
-        .resolve("layer")
-        .resolve(String.format("besu-layer-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
   }
 
   @Override
@@ -142,7 +121,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                 .get(address.toArrayUnsafe())
                 .map(
                     bytes ->
-                        fromRLP(BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes), true))
+                        fromRLP(BonsaiPersistedWorldState.this, address, Bytes.wrap(bytes), true))
                 .orElse(null);
         if (oldAccount == null) {
           // This is when an account is both created and deleted within the scope of the same
@@ -257,13 +236,6 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       if (blockHash != null) {
         final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
         generateTrieLog(blockHash).writeTo(rlpLog);
-        try {
-          if (layerWriter != null) {
-            layerWriter.writeBytes(rlpLog.encoded().toArrayUnsafe());
-          }
-        } catch (final Exception e) {
-          throw new RuntimeException(e);
-        }
         trieLogTx.put(blockHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
       }
 
@@ -316,7 +288,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     if (bonsaiValue == null) {
       return accountStorage
           .get(address.toArrayUnsafe())
-          .map(bytes -> fromRLP(BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes), true))
+          .map(bytes -> fromRLP(BonsaiPersistedWorldState.this, address, Bytes.wrap(bytes), true))
           .orElse(null);
     } else {
       return bonsaiValue.getUpdated();
@@ -599,7 +571,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     if (bytes.isPresent()) {
       final BonsaiAccount account =
           BonsaiAccount.fromRLP(
-              BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes.get()), true);
+              BonsaiPersistedWorldState.this, address, Bytes.wrap(bytes.get()), true);
       final BonsaiValue<BonsaiAccount> loadedAccountValue =
           new BonsaiValue<>(new BonsaiAccount(account), account);
       accountsToUpdate.put(address, loadedAccountValue);
@@ -714,9 +686,9 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
     }
   }
 
-  public class BonsaiUpdater extends AbstractWorldUpdater<BonsaiPersistdWorldState, BonsaiAccount> {
+  public class BonsaiUpdater extends AbstractWorldUpdater<BonsaiPersistedWorldState, BonsaiAccount> {
 
-    protected BonsaiUpdater(final BonsaiPersistdWorldState world) {
+    protected BonsaiUpdater(final BonsaiPersistedWorldState world) {
       super(world);
     }
 
@@ -731,7 +703,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       }
       final BonsaiAccount newAccount =
           new BonsaiAccount(
-              BonsaiPersistdWorldState.this,
+              BonsaiPersistedWorldState.this,
               address,
               Hash.hash(address),
               nonce,
@@ -753,7 +725,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
                 .get(address.toArrayUnsafe())
                 .map(
                     bytes ->
-                        fromRLP(BonsaiPersistdWorldState.this, address, Bytes.wrap(bytes), true))
+                        fromRLP(BonsaiPersistedWorldState.this, address, Bytes.wrap(bytes), true))
                 .orElse(null);
         if (storedAccount != null) {
           accountsToUpdate.put(
@@ -798,7 +770,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
         final BonsaiValue<BonsaiAccount> accountValue =
             accountsToUpdate.computeIfAbsent(
                 deletedAddress,
-                addr -> loadAccountFromStorage(deletedAddress, new BonsaiValue<>(null, null)));
+                __ -> loadAccountFromStorage(deletedAddress, new BonsaiValue<>(null, null)));
 
         // mark all updated storage as to be cleared
         final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
@@ -854,7 +826,7 @@ public class BonsaiPersistdWorldState implements MutableWorldState {
       for (final UpdateTrackingAccount<BonsaiAccount> tracked : getUpdatedAccounts()) {
         BonsaiAccount updatedAccount = tracked.getWrappedAccount();
         if (updatedAccount == null) {
-          updatedAccount = new BonsaiAccount(BonsaiPersistdWorldState.this, tracked);
+          updatedAccount = new BonsaiAccount(BonsaiPersistedWorldState.this, tracked);
           accountsToUpdate.put(tracked.getAddress(), new BonsaiValue<>(null, updatedAccount));
         } else {
           updatedAccount.setBalance(tracked.getBalance());

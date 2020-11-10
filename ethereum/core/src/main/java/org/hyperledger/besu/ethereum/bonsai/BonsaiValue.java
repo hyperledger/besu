@@ -46,13 +46,13 @@ public class BonsaiValue<T> {
     this.updated = updated;
   }
 
-  public void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
+  void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
     output.startList();
     writeInnerRlp(output, writer);
     output.endList();
   }
 
-  public void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
+  void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
     if (original == null) {
       output.writeNull();
     } else {
@@ -65,8 +65,8 @@ public class BonsaiValue<T> {
     }
   }
 
-  boolean isChange() {
-    return !Objects.equals(updated, original);
+  boolean isUnchanged() {
+    return Objects.equals(updated, original);
   }
 
   T effective() {

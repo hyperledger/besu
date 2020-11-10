@@ -32,19 +32,19 @@ public class RollingImport {
         new RollingFileReader(
             (i, c) -> Path.of(String.format("/tmp/goerli/fill/besu-layer-%04d.rdat", i)), false);
 
-    InMemoryKeyValueStorage accountStorage = new InMemoryKeyValueStorage();
-    InMemoryKeyValueStorage codeStorage = new InMemoryKeyValueStorage();
-    InMemoryKeyValueStorage storageStorage = new InMemoryKeyValueStorage();
-    InMemoryKeyValueStorage trieBranchStorage = new InMemoryKeyValueStorage();
-    InMemoryKeyValueStorage trieLogStorage = new InMemoryKeyValueStorage();
-    final BonsaiPersistdWorldState bonsaiState =
-        new BonsaiPersistdWorldState(
+    final InMemoryKeyValueStorage accountStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage codeStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage storageStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage trieBranchStorage = new InMemoryKeyValueStorage();
+    final InMemoryKeyValueStorage trieLogStorage = new InMemoryKeyValueStorage();
+    final BonsaiPersistedWorldState bonsaiState =
+        new BonsaiPersistedWorldState(
             accountStorage,
             codeStorage,
             storageStorage,
             trieBranchStorage,
-            trieLogStorage,
-            Path.of("/tmp/goerli/fill-results"));
+            trieLogStorage
+        );
 
     int count = 0;
     while (!reader.isDone()) {
