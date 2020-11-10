@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.ArrayList;
@@ -34,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Suppliers;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class DebugBatchSendRawTransaction implements JsonRpcMethod {
   private final Supplier<TransactionPool> transactionPool;
@@ -65,7 +65,7 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
 
   private ExecutionStatus process(final int index, final String rawTransaction) {
     try {
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+      final ValidationResult<TransactionInvalidReason> validationResult =
           transactionPool
               .get()
               .addLocalTransaction(DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction));

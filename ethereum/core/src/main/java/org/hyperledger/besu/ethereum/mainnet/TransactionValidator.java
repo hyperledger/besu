@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
@@ -62,32 +63,4 @@ public interface TransactionValidator {
       Transaction transaction, Account sender, TransactionValidationParams validationParams);
 
   void setTransactionFilter(TransactionFilter transactionFilter);
-
-  enum TransactionInvalidReason {
-    WRONG_CHAIN_ID,
-    REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
-    INVALID_SIGNATURE,
-    UPFRONT_COST_EXCEEDS_BALANCE,
-    NONCE_TOO_LOW,
-    INCORRECT_NONCE,
-    INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
-    EXCEEDS_BLOCK_GAS_LIMIT,
-    TX_SENDER_NOT_AUTHORIZED,
-    CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE,
-    EXCEEDS_PER_TRANSACTION_GAS_LIMIT,
-    INVALID_TRANSACTION_FORMAT,
-    TRANSACTION_PRICE_TOO_LOW,
-    TRANSACTION_ALREADY_KNOWN,
-    TRANSACTION_REPLACEMENT_UNDERPRICED,
-    // Private Transaction Invalid Reasons
-    PRIVATE_TRANSACTION_FAILED,
-    PRIVATE_NONCE_TOO_LOW,
-    OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST,
-    INCORRECT_PRIVATE_NONCE,
-    GAS_PRICE_TOO_LOW,
-    TX_FEECAP_EXCEEDED,
-    PRIVATE_VALUE_NOT_ZERO,
-    PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE,
-    INTERNAL_ERROR;
-  }
 }

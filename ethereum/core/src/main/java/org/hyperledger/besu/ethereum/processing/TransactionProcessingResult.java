@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class TransactionProcessingResult {
 
@@ -49,11 +49,11 @@ public class TransactionProcessingResult {
 
   private final Bytes output;
 
-  private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
+  private final ValidationResult<TransactionInvalidReason> validationResult;
   private final Optional<Bytes> revertReason;
 
   public static TransactionProcessingResult invalid(
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+      final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.INVALID, new ArrayList<>(), -1, -1, Bytes.EMPTY, validationResult, Optional.empty());
   }
@@ -61,7 +61,7 @@ public class TransactionProcessingResult {
   public static TransactionProcessingResult failed(
       final long gasUsedByTransaction,
       final long gasRemaining,
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
+      final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason) {
     return new TransactionProcessingResult(
         Status.FAILED,
@@ -78,7 +78,7 @@ public class TransactionProcessingResult {
       final long gasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+      final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.SUCCESSFUL,
         logs,
@@ -95,7 +95,7 @@ public class TransactionProcessingResult {
       final long estimateGasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
+      final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason) {
     this.status = status;
     this.logs = logs;
@@ -174,7 +174,7 @@ public class TransactionProcessingResult {
    *
    * @return the validation result, with the reason for failure (if applicable.)
    */
-  public ValidationResult<TransactionValidator.TransactionInvalidReason> getValidationResult() {
+  public ValidationResult<TransactionInvalidReason> getValidationResult() {
     return validationResult;
   }
 
