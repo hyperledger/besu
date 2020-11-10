@@ -49,7 +49,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
@@ -244,8 +244,8 @@ public class DefaultPrivacyControllerTest {
     when(privateTransactionSimulator.process(any(), any()))
         .thenReturn(
             Optional.of(
-                new PrivateTransactionProcessor.ProcessingResult(
-                    ProcessingResult.Status.SUCCESSFUL,
+                new TransactionProcessingResult(
+                    TransactionProcessingResult.Status.SUCCESSFUL,
                     emptyList(),
                     0,
                     0,
@@ -437,9 +437,9 @@ public class DefaultPrivacyControllerTest {
     when(privateTransactionSimulator.process(any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
-                PrivateTransactionProcessor.ProcessingResult.successful(
+                TransactionProcessingResult.successful(
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
-    final Optional<PrivateTransactionProcessor.ProcessingResult> result =
+    final Optional<TransactionProcessingResult> result =
         privacyController.simulatePrivateTransaction(
             "Group1", ENCLAVE_PUBLIC_KEY, callParameter, 1);
     assertThat(result.isPresent()).isTrue();

@@ -16,19 +16,19 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
 import java.util.List;
 
 public class TransactionTrace {
 
   private final Transaction transaction;
-  private final ProcessingResult result;
+  private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
 
   public TransactionTrace(
       final Transaction transaction,
-      final ProcessingResult result,
+      final TransactionProcessingResult result,
       final List<TraceFrame> traceFrames) {
     this.transaction = transaction;
     this.result = result;
@@ -47,7 +47,7 @@ public class TransactionTrace {
     return transaction.getGasLimit();
   }
 
-  public ProcessingResult getResult() {
+  public TransactionProcessingResult getResult() {
     return result;
   }
 

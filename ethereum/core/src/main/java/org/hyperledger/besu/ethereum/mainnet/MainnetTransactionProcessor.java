@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -81,7 +80,7 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidator
    * @see TransactionValidationParams
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -119,7 +118,7 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidator
    * @see TransactionValidationParams
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -154,7 +153,7 @@ public class MainnetTransactionProcessor {
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -189,7 +188,7 @@ public class MainnetTransactionProcessor {
    * @param transactionValidationParams The transaction validation parameters to use
    * @return the transaction result
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -210,118 +209,6 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null);
-  }
-
-  public static class ProcessingResult
-      implements org.hyperledger.besu.ethereum.processing.ProcessingResult {
-
-    private final Status status;
-
-    private final long estimateGasUsedByTransaction;
-
-    private final long gasRemaining;
-
-    private final List<Log> logs;
-
-    private final Bytes output;
-
-    private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
-    private final Optional<Bytes> revertReason;
-
-    public static ProcessingResult invalid(
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new ProcessingResult(
-          Status.INVALID,
-          new ArrayList<>(),
-          -1,
-          -1,
-          Bytes.EMPTY,
-          validationResult,
-          Optional.empty());
-    }
-
-    public static ProcessingResult failed(
-        final long gasUsedByTransaction,
-        final long gasRemaining,
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<Bytes> revertReason) {
-      return new ProcessingResult(
-          Status.FAILED,
-          new ArrayList<>(),
-          gasUsedByTransaction,
-          gasRemaining,
-          Bytes.EMPTY,
-          validationResult,
-          revertReason);
-    }
-
-    public static ProcessingResult successful(
-        final List<Log> logs,
-        final long gasUsedByTransaction,
-        final long gasRemaining,
-        final Bytes output,
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new ProcessingResult(
-          Status.SUCCESSFUL,
-          logs,
-          gasUsedByTransaction,
-          gasRemaining,
-          output,
-          validationResult,
-          Optional.empty());
-    }
-
-    ProcessingResult(
-        final Status status,
-        final List<Log> logs,
-        final long estimateGasUsedByTransaction,
-        final long gasRemaining,
-        final Bytes output,
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<Bytes> revertReason) {
-      this.status = status;
-      this.logs = logs;
-      this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
-      this.gasRemaining = gasRemaining;
-      this.output = output;
-      this.validationResult = validationResult;
-      this.revertReason = revertReason;
-    }
-
-    @Override
-    public List<Log> getLogs() {
-      return logs;
-    }
-
-    @Override
-    public long getGasRemaining() {
-      return gasRemaining;
-    }
-
-    @Override
-    public long getEstimateGasUsedByTransaction() {
-      return estimateGasUsedByTransaction;
-    }
-
-    @Override
-    public Status getStatus() {
-      return status;
-    }
-
-    @Override
-    public Bytes getOutput() {
-      return output;
-    }
-
-    @Override
-    public ValidationResult<TransactionValidator.TransactionInvalidReason> getValidationResult() {
-      return validationResult;
-    }
-
-    @Override
-    public Optional<Bytes> getRevertReason() {
-      return revertReason;
-    }
   }
 
   private final boolean clearEmptyAccounts;
@@ -347,7 +234,7 @@ public class MainnetTransactionProcessor {
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
-  public ProcessingResult processTransaction(
+  public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -368,7 +255,7 @@ public class MainnetTransactionProcessor {
       // be signed correctly to extract the sender).
       if (!validationResult.isValid()) {
         LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
-        return ProcessingResult.invalid(validationResult);
+        return TransactionProcessingResult.invalid(validationResult);
       }
 
       final Address senderAddress = transaction.getSender();
@@ -377,7 +264,7 @@ public class MainnetTransactionProcessor {
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
       if (!validationResult.isValid()) {
         LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
-        return ProcessingResult.invalid(validationResult);
+        return TransactionProcessingResult.invalid(validationResult);
       }
 
       final MutableAccount senderMutableAccount = sender.getMutable();
@@ -514,7 +401,7 @@ public class MainnetTransactionProcessor {
       if (blockHeader.getBaseFee().isPresent() && transaction.isEIP1559Transaction()) {
         final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
         if (transactionGasPrice.compareTo(baseFee) < 0) {
-          return ProcessingResult.failed(
+          return TransactionProcessingResult.failed(
               gasUsedByTransaction.toLong(),
               refunded.toLong(),
               ValidationResult.invalid(
@@ -539,14 +426,14 @@ public class MainnetTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        return ProcessingResult.successful(
+        return TransactionProcessingResult.successful(
             initialFrame.getLogs(),
             gasUsedByTransaction.toLong(),
             refunded.toLong(),
             initialFrame.getOutputData(),
             validationResult);
       } else {
-        return ProcessingResult.failed(
+        return TransactionProcessingResult.failed(
             gasUsedByTransaction.toLong(),
             refunded.toLong(),
             validationResult,
@@ -554,7 +441,7 @@ public class MainnetTransactionProcessor {
       }
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
-      return ProcessingResult.invalid(
+      return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));
