@@ -93,7 +93,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     final BigInteger mod = extractParameter(input, modulusOffset, modulusLength.intValue());
 
     final Bytes modExp;
-    // ProcessingResult must be the length of the modulus.
+    // Result must be the length of the modulus.
     final MutableBytes result = MutableBytes.create(modulusLength.intValue());
     if (mod.compareTo(BigInteger.ZERO) == 0) {
       modExp = MutableBytes.EMPTY;
