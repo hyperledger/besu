@@ -276,7 +276,7 @@ public class ProtocolSpecBuilder {
         precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
     final AbstractMessageProcessor messageCallProcessor =
         messageCallProcessorBuilder.apply(evm, precompileContractRegistry);
-    final TransactionProcessor transactionProcessor =
+    final MainnetTransactionProcessor transactionProcessor =
         transactionProcessorBuilder.apply(
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
@@ -362,7 +362,7 @@ public class ProtocolSpecBuilder {
   }
 
   public interface TransactionProcessorBuilder {
-    TransactionProcessor apply(
+    MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
         TransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
@@ -384,7 +384,7 @@ public class ProtocolSpecBuilder {
 
   public interface BlockProcessorBuilder {
     BlockProcessor apply(
-        TransactionProcessor transactionProcessor,
+        MainnetTransactionProcessor transactionProcessor,
         AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,

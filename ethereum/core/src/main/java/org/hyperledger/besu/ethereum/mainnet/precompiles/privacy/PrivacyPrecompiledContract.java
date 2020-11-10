@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -161,7 +162,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
-    final PrivateTransactionProcessor.Result result =
+    final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
@@ -193,10 +194,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final PrivateTransactionProcessor.Result result) {
+      final TransactionProcessingResult result) {
 
     final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
+        result.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL ? 1 : 0;
 
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(
@@ -209,7 +210,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
   }
 
-  PrivateTransactionProcessor.Result processPrivateTransaction(
+  TransactionProcessingResult processPrivateTransaction(
       final MessageFrame messageFrame,
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,
@@ -261,7 +262,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         isMining = true;
       } else {
         throw new IllegalArgumentException(
-            "The MessageFrame contains an illegal block header type. Cannot persist private block metadata without current block hash.");
+            "The MessageFrame contains an illegal block header type. Cannot persist private block"
+                + " metadata without current block hash.");
       }
     }
     return isMining;

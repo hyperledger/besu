@@ -25,9 +25,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -135,7 +135,7 @@ public class EthEstimateGas implements JsonRpcMethod {
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason());
     } else {
-      final TransactionProcessor.Result resultTrx = result.getResult();
+      final TransactionProcessingResult resultTrx = result.getResult();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
         jsonRpcError = JsonRpcError.REVERT_ERROR;
       } else {

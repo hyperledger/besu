@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -64,7 +64,7 @@ public class PrivateTransactionReceipt {
     this.revertReason = revertReason;
   }
 
-  public PrivateTransactionReceipt(final TransactionProcessor.Result result) {
+  public PrivateTransactionReceipt(final TransactionProcessingResult result) {
     this(
         getStatusCode(result.getStatus()),
         result.getLogs(),
@@ -72,7 +72,7 @@ public class PrivateTransactionReceipt {
         result.getRevertReason());
   }
 
-  private static int getStatusCode(final TransactionProcessor.Result.Status result) {
+  private static int getStatusCode(final TransactionProcessingResult.Status result) {
     switch (result) {
       case SUCCESSFUL:
         return STATUS_SUCCESSFUL;
