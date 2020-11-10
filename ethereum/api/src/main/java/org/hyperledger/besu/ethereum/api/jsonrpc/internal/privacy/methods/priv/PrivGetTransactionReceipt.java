@@ -106,7 +106,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
         buildPrivateTransactionReceiptResult(privateTransaction, privateTransactionReceipt);
 
     LOG.trace(
-        "Created Private Transaction Receipt ProcessingResult from given Transaction Hash {}",
+        "Created Private Transaction Receipt Result from given Transaction Hash {}",
         privateTransaction.getPmtHash());
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
