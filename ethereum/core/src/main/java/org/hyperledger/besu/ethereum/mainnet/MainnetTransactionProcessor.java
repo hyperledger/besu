@@ -75,9 +75,9 @@ public class MainnetTransactionProcessor {
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     TransactionValidator}
+   *     MainnetTransactionValidator}
    * @return the transaction result
-   * @see TransactionValidator
+   * @see MainnetTransactionValidator
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
@@ -112,10 +112,10 @@ public class MainnetTransactionProcessor {
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     TransactionValidator}
+   *     MainnetTransactionValidator}
    * @param operationTracer operation tracer {@link OperationTracer}
    * @return the transaction result
-   * @see TransactionValidator
+   * @see MainnetTransactionValidator
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
