@@ -149,6 +149,7 @@ public class RlpBlockImporter implements Closeable {
       if (previousBlockFuture != null) {
         previousBlockFuture.join();
       }
+      logProgress(blockchain.getChainHeadBlockNumber());
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
     }
@@ -213,16 +214,23 @@ public class RlpBlockImporter implements Closeable {
       cumulativeGas += thisGas;
       segmentGas += thisGas;
       if (header.getNumber() % SEGMENT_SIZE == 0) {
-        //noinspection PlaceholderCountMatchesArgumentCount
-        LOG.info(
-            "Import at block %d Mgas/s %.3f segment %.3f cumulative",
-            header.getNumber(),
-            segmentGas / (double) segmentTimer.elapsed(TimeUnit.MICROSECONDS),
-            cumulativeGas / (double) cumulativeTimer.elapsed(TimeUnit.MICROSECONDS));
-        segmentGas = 0;
-        segmentTimer.reset();
+        logProgress(header.getNumber());
       }
     }
+  }
+
+  private void logProgress(final long blockNum) {
+    final long elapseMicros = segmentTimer.elapsed(TimeUnit.MICROSECONDS);
+    //noinspection PlaceholderCountMatchesArgumentCount
+    LOG.info(
+        "Import at block %8d / %,13d gas %,10d micros / Mgps %7.3f segment %6.3f cumulative",
+        blockNum,
+        segmentGas,
+        elapseMicros,
+        segmentGas / (double) elapseMicros,
+        cumulativeGas / (double) cumulativeTimer.elapsed(TimeUnit.MICROSECONDS));
+    segmentGas = 0;
+    segmentTimer.reset();
   }
 
   private BlockHeader lookupPreviousHeader(
