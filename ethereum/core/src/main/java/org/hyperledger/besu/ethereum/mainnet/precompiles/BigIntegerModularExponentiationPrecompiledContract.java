@@ -29,16 +29,11 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class BigIntegerModularExponentiationPrecompiledContract
     extends AbstractPrecompiledContract {
 
-  private static final BigInteger WORD_SIZE = BigInteger.valueOf(32);
-  private static final BigInteger BITS_IN_BYTE = BigInteger.valueOf(8);
   public static final BigInteger BASE_OFFSET = BigInteger.valueOf(96);
-  public static final BigInteger MAX_FIRST_EXPONENT_BYTES = BigInteger.valueOf(32);
-  public static final BigInteger GQUADDIVISOR = BigInteger.valueOf(20);
   private static final int PARAMETER_LENGTH = 32;
   private static final int BASE_LENGTH_OFFSET = 0;
   private static final int EXPONENT_LENGTH_OFFSET = 32;
   private static final int MODULUS_LENGTH_OFFSET = 64;
-  public static final int MAX_GAS_BITS = 255;
 
   private static final BigInteger BIGINT_4 = BigInteger.valueOf(4);
   private static final BigInteger BIGINT_16 = BigInteger.valueOf(16);
@@ -95,31 +90,15 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
   }
 
-  private static BigInteger bitLength(final BigInteger n) {
-    return n.compareTo(BigInteger.ZERO) == 0
-        ? BigInteger.ZERO
-        : BigInteger.valueOf(n.bitLength() - 1);
-  }
-
-  public static BigInteger adjustedExponentLength(
-      final BigInteger exponentLength, final BigInteger firstExpBytes) {
-    final BigInteger bitLength = bitLength(firstExpBytes);
-    if (exponentLength.compareTo(WORD_SIZE) <= 0) {
-      return bitLength;
-    } else {
-      return BITS_IN_BYTE.multiply(exponentLength.subtract(WORD_SIZE)).add(bitLength);
-    }
-  }
-
-  public static final BigInteger baseLength(final Bytes input) {
+  public static BigInteger baseLength(final Bytes input) {
     return extractParameter(input, BASE_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  public static final BigInteger exponentLength(final Bytes input) {
+  public static BigInteger exponentLength(final Bytes input) {
     return extractParameter(input, EXPONENT_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  public static final BigInteger modulusLength(final Bytes input) {
+  public static BigInteger modulusLength(final Bytes input) {
     return extractParameter(input, MODULUS_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
