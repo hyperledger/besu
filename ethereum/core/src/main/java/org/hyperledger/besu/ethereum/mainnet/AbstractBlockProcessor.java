@@ -160,6 +160,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
+      if (transaction instanceof FrontierTransaction) {
+        final FrontierTransaction frontierTransaction = (FrontierTransaction) transaction;
+        transactionProcessor.processFrontierTransaction(
+            blockchain,
+            worldStateUpdater,
+            blockHeader,
+            frontierTransaction,
+            miningBeneficiary,
+            OperationTracer.NO_TRACING,
+            blockHashLookup,
+            true,
+            TransactionValidationParams.processingBlock(),
+            privateMetadataUpdater);
+      }
+
       final ProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
