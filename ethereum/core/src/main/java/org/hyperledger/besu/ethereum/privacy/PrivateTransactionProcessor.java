@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -53,7 +53,7 @@ public class PrivateTransactionProcessor {
   private final GasCalculator gasCalculator;
 
   @SuppressWarnings("unused")
-  private final TransactionValidator transactionValidator;
+  private final MainnetTransactionValidator transactionValidator;
 
   private final PrivateTransactionValidator privateTransactionValidator;
 
@@ -70,7 +70,7 @@ public class PrivateTransactionProcessor {
 
   public PrivateTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
+      final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,

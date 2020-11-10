@@ -36,9 +36,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -230,7 +230,7 @@ public class TransactionPool implements BlockAddedObserver {
     addRemoteTransactions(event.getRemovedTransactions());
   }
 
-  private TransactionValidator getTransactionValidator() {
+  private MainnetTransactionValidator getTransactionValidator() {
     return protocolSchedule
         .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
         .getTransactionValidator();

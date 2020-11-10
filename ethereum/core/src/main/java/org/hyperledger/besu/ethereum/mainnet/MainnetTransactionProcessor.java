@@ -51,7 +51,7 @@ public class MainnetTransactionProcessor {
 
   private final GasCalculator gasCalculator;
 
-  private final TransactionValidator transactionValidator;
+  private final MainnetTransactionValidator transactionValidator;
 
   private final AbstractMessageProcessor contractCreationProcessor;
 
@@ -215,7 +215,7 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
+      final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,

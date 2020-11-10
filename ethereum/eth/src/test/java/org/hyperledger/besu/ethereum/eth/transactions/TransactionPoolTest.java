@@ -58,10 +58,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -97,7 +97,8 @@ public class TransactionPoolTest {
   @SuppressWarnings("unchecked")
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
-  private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
+  private final MainnetTransactionValidator transactionValidator =
+      mock(MainnetTransactionValidator.class);
   private MutableBlockchain blockchain;
 
   private PendingTransactions transactions;
