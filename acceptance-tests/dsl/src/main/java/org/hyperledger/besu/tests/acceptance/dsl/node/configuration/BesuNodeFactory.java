@@ -65,7 +65,7 @@ public class BesuNodeFactory {
         config.getNetworkingConfiguration(),
         config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
-        config.isRevertReasonEnabled(),
+        config.isMetadataEnabled(),
         config.isSecp256k1Native(),
         config.isAltbn128Native(),
         config.getPlugins(),
@@ -86,14 +86,14 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createMinerNodeWithRevertReasonEnabled(final String name) throws IOException {
+  public BesuNode createMinerNodeWithMetadataEnabled(final String name) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcEnabled()
             .webSocketEnabled()
-            .revertReasonEnabled()
+            .metadataEnabled()
             .build());
   }
 

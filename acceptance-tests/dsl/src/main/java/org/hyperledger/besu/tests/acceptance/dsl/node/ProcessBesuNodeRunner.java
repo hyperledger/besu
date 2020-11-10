@@ -229,8 +229,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.addAll(networkConfigParams);
     }
 
-    if (node.isRevertReasonEnabled()) {
-      params.add("--revert-reason-enabled");
+    if (node.isMetadataEnabled()) {
+      params.add("--receipt-metadata-enabled");
     }
 
     params.add("--Xsecp256k1-native-enabled=" + node.isSecp256k1Native());
