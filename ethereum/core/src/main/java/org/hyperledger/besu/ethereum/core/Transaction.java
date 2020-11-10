@@ -34,9 +34,10 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 /** An operation submitted by an external actor to be applied to the system. */
-public class Transaction implements org.hyperledger.besu.plugin.data.Transaction {
+public class FrontierTransaction implements org.hyperledger.besu.plugin.data.FrontierTransaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -87,7 +88,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return new Builder();
   }
 
-  public static Transaction readFrom(final RLPInput input) throws RLPException {
+  public static FrontierTransaction readFrom(final RLPInput input) throws RLPException {
     return TransactionRLPDecoder.decodeTransaction(input);
   }
 
@@ -110,7 +111,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
    */
-  public Transaction(
+  public FrontierTransaction(
       final long nonce,
       final Wei gasPrice,
       final Wei gasPremium,
@@ -151,7 +152,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    */
-  public Transaction(
+  public FrontierTransaction(
       final long nonce,
       final Wei gasPrice,
       final long gasLimit,
@@ -466,10 +467,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   @Override
   public boolean equals(final Object other) {
-    if (!(other instanceof Transaction)) {
+    if (!(other instanceof FrontierTransaction)) {
       return false;
     }
-    final Transaction that = (Transaction) other;
+    final FrontierTransaction that = (FrontierTransaction) other;
     return this.chainId.equals(that.chainId)
         && this.gasLimit == that.gasLimit
         && Objects.equals(this.gasPrice, that.gasPrice)
@@ -512,6 +513,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
     }
     return Optional.empty();
+  }
+
+  @Override
+  public TransactionType getType() {
+    return TransactionType.FRONTIER;
   }
 
   public static class Builder {
@@ -593,8 +599,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return this;
     }
 
-    public Transaction build() {
-      return new Transaction(
+    public FrontierTransaction build() {
+      return new FrontierTransaction(
           nonce,
           gasPrice,
           gasPremium,
@@ -608,7 +614,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           chainId);
     }
 
-    public Transaction signAndBuild(final SECP256K1.KeyPair keys) {
+    public FrontierTransaction signAndBuild(final SECP256K1.KeyPair keys) {
       checkState(
           signature == null, "The transaction signature has already been provided to this builder");
       signature(computeSignature(keys));
