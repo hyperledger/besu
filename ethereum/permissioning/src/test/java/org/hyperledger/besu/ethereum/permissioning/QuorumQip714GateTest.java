@@ -87,7 +87,7 @@ public class QuorumQip714GateTest {
     assertThat(gate.getLatestBlock()).isEqualTo(2);
   }
 
-  private void updateChainHead(int height) {
+  private void updateChainHead(final int height) {
     final Block block = new BlockDataGenerator().block(new BlockOptions().setBlockNumber(height));
     gate.checkChainHeight(
         BlockAddedEvent.createForHeadAdvancement(
