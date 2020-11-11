@@ -243,7 +243,7 @@ public class DefaultPrivacyControllerTest {
     when(privateTransactionSimulator.process(any(), any()))
         .thenReturn(
             Optional.of(
-                new PrivateTransactionProcessor.TransactionProcessingResult(
+                new TransactionProcessingResult(
                     TransactionProcessingResult.Status.SUCCESSFUL,
                     emptyList(),
                     0,
@@ -436,9 +436,9 @@ public class DefaultPrivacyControllerTest {
     when(privateTransactionSimulator.process(any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
-                PrivateTransactionProcessor.TransactionProcessingResult.successful(
+                TransactionProcessingResult.successful(
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
-    final Optional<PrivateTransactionProcessor.TransactionProcessingResult> result =
+    final Optional<TransactionProcessingResult> result =
         privacyController.simulatePrivateTransaction(
             "Group1", ENCLAVE_PUBLIC_KEY, callParameter, 1);
     assertThat(result.isPresent()).isTrue();

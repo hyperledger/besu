@@ -18,16 +18,16 @@ import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/** A transaction processing result. */
-public interface TransactionProcessingResult {
+public class TransactionProcessingResult {
 
   /** The status of the transaction after being processed. */
-  enum Status {
+  public enum Status {
 
     /** The transaction was invalid for processing. */
     INVALID,
@@ -39,6 +39,73 @@ public interface TransactionProcessingResult {
     FAILED
   }
 
+  private final Status status;
+
+  private final long estimateGasUsedByTransaction;
+
+  private final long gasRemaining;
+
+  private final List<Log> logs;
+
+  private final Bytes output;
+
+  private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
+  private final Optional<Bytes> revertReason;
+
+  public static TransactionProcessingResult invalid(
+      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+    return new TransactionProcessingResult(
+        Status.INVALID, new ArrayList<>(), -1, -1, Bytes.EMPTY, validationResult, Optional.empty());
+  }
+
+  public static TransactionProcessingResult failed(
+      final long gasUsedByTransaction,
+      final long gasRemaining,
+      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
+      final Optional<Bytes> revertReason) {
+    return new TransactionProcessingResult(
+        Status.FAILED,
+        new ArrayList<>(),
+        gasUsedByTransaction,
+        gasRemaining,
+        Bytes.EMPTY,
+        validationResult,
+        revertReason);
+  }
+
+  public static TransactionProcessingResult successful(
+      final List<Log> logs,
+      final long gasUsedByTransaction,
+      final long gasRemaining,
+      final Bytes output,
+      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
+    return new TransactionProcessingResult(
+        Status.SUCCESSFUL,
+        logs,
+        gasUsedByTransaction,
+        gasRemaining,
+        output,
+        validationResult,
+        Optional.empty());
+  }
+
+  public TransactionProcessingResult(
+      final Status status,
+      final List<Log> logs,
+      final long estimateGasUsedByTransaction,
+      final long gasRemaining,
+      final Bytes output,
+      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
+      final Optional<Bytes> revertReason) {
+    this.status = status;
+    this.logs = logs;
+    this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
+    this.gasRemaining = gasRemaining;
+    this.output = output;
+    this.validationResult = validationResult;
+    this.revertReason = revertReason;
+  }
+
   /**
    * Return the logs produced by the transaction.
    *
@@ -46,14 +113,9 @@ public interface TransactionProcessingResult {
    *
    * @return the logs produced by the transaction
    */
-  List<Log> getLogs();
-
-  /**
-   * Returns the status of the transaction after being processed.
-   *
-   * @return the status of the transaction after being processed
-   */
-  Status getStatus();
+  public List<Log> getLogs() {
+    return logs;
+  }
 
   /**
    * Returns the gas remaining after the transaction was processed.
@@ -62,16 +124,39 @@ public interface TransactionProcessingResult {
    *
    * @return the gas remaining after the transaction was processed
    */
-  long getGasRemaining();
+  public long getGasRemaining() {
+    return gasRemaining;
+  }
 
-  Bytes getOutput();
+  /**
+   * Returns the estimate gas used by the transaction Difference between the gas limit and the
+   * remaining gas
+   *
+   * @return the estimate gas used
+   */
+  public long getEstimateGasUsedByTransaction() {
+    return estimateGasUsedByTransaction;
+  }
+
+  /**
+   * Returns the status of the transaction after being processed.
+   *
+   * @return the status of the transaction after being processed
+   */
+  public Status getStatus() {
+    return status;
+  }
+
+  public Bytes getOutput() {
+    return output;
+  }
 
   /**
    * Returns whether or not the transaction was invalid.
    *
    * @return {@code true} if the transaction was invalid; otherwise {@code false}
    */
-  default boolean isInvalid() {
+  public boolean isInvalid() {
     return getStatus() == Status.INVALID;
   }
 
@@ -80,7 +165,7 @@ public interface TransactionProcessingResult {
    *
    * @return {@code true} if the transaction was successfully processed; otherwise {@code false}
    */
-  default boolean isSuccessful() {
+  public boolean isSuccessful() {
     return getStatus() == Status.SUCCESSFUL;
   }
 
@@ -89,20 +174,16 @@ public interface TransactionProcessingResult {
    *
    * @return the validation result, with the reason for failure (if applicable.)
    */
-  ValidationResult<TransactionValidator.TransactionInvalidReason> getValidationResult();
+  public ValidationResult<TransactionValidator.TransactionInvalidReason> getValidationResult() {
+    return validationResult;
+  }
 
   /**
    * Returns the reason why a transaction was reverted (if applicable).
    *
    * @return the revert reason.
    */
-  Optional<Bytes> getRevertReason();
-
-  /**
-   * Returns the estimate gas used by the transaction Difference between the gas limit and the
-   * remaining gas
-   *
-   * @return the estimate gas used
-   */
-  long getEstimateGasUsedByTransaction();
+  public Optional<Bytes> getRevertReason() {
+    return revertReason;
+  }
 }

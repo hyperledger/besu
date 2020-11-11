@@ -142,8 +142,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.failed(
-                0, 5, ValidationResult.valid(), Optional.empty()));
+            TransactionProcessingResult.failed(0, 5, ValidationResult.valid(), Optional.empty()));
 
     // The block should fit 3 transactions only
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(5000);
@@ -187,7 +186,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.successful(
+            TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             any(),
@@ -199,7 +198,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.invalid(
+            TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW)));
 
@@ -246,7 +245,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.successful(
+            TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(301);
@@ -322,7 +321,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.successful(
+            TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
@@ -380,7 +379,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.successful(
+            TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
@@ -481,7 +480,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.successful(
+            TransactionProcessingResult.successful(
                 new ArrayList<>(), 2000, 10000, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             eq(blockchain),
@@ -493,7 +492,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.invalid(
+            TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
 
@@ -525,7 +524,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.TransactionProcessingResult.invalid(
+            TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE)));
 

@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.Optional;
@@ -194,8 +194,7 @@ public class PrivCallTest {
   }
 
   private void mockTransactionProcessorSuccessResult(final Bytes output) {
-    final PrivateTransactionProcessor.TransactionProcessingResult result =
-        mock(PrivateTransactionProcessor.TransactionProcessingResult.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);

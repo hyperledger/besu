@@ -129,7 +129,7 @@ public class PrivateGroupRehydrationBlockProcessor {
             disposablePrivateState.rootHash(),
             transactionHash);
 
-        final PrivateTransactionProcessor.TransactionProcessingResult privateResult =
+        final TransactionProcessingResult privateResult =
             privateTransactionProcessor.processTransaction(
                 blockchain,
                 worldStateUpdater.updater(),
@@ -191,13 +191,10 @@ public class PrivateGroupRehydrationBlockProcessor {
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final PrivateTransactionProcessor.TransactionProcessingResult result) {
+      final TransactionProcessingResult result) {
 
     final int txStatus =
-        result.getStatus()
-                == PrivateTransactionProcessor.TransactionProcessingResult.Status.SUCCESSFUL
-            ? 1
-            : 0;
+        result.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL ? 1 : 0;
 
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(
