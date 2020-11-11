@@ -87,51 +87,6 @@ public class MainnetTransactionProcessor {
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
-  @VisibleForTesting
-  public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
-      final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
-      final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams) {
-    return processTransaction(
-        blockchain,
-        worldState,
-        blockHeader,
-        transaction,
-        miningBeneficiary,
-        OperationTracer.NO_TRACING,
-        blockHashLookup,
-        isPersistingPrivateState,
-        transactionValidationParams);
-  }
-
-  @VisibleForTesting
-  public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
-      final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
-      final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer) {
-    return processTransaction(
-        blockchain,
-        worldState,
-        blockHeader,
-        transaction,
-        miningBeneficiary,
-        operationTracer,
-        blockHashLookup,
-        isPersistingPrivateState,
-        transactionValidationParams);
-  }
-
   /**
    * Applies a transaction to the current system state.
    *
@@ -413,5 +368,50 @@ public class MainnetTransactionProcessor {
         Gas.of(transaction.getGasLimit()).minus(gasRemaining).dividedBy(2);
     final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
     return gasRemaining.plus(refundAllowance);
+  }
+
+  @VisibleForTesting
+  public TransactionProcessingResult processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        OperationTracer.NO_TRACING,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams);
+  }
+
+  @VisibleForTesting
+  public TransactionProcessingResult processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingPrivateState,
+        transactionValidationParams);
   }
 }
