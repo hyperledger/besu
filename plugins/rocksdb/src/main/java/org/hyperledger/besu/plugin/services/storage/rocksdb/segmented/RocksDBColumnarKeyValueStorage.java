@@ -81,10 +81,9 @@ public class RocksDBColumnarKeyValueStorage
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
       final MetricsSystem metricsSystem,
-      final RocksDBMetricsFactory rocksDBMetricsFactory)
-      throws StorageException {
+      final RocksDBMetricsFactory rocksDBMetricsFactory) {
 
-    try {
+    try (final ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions()) {
       final List<ColumnFamilyDescriptor> columnDescriptors =
           segments.stream()
               .map(segment -> new ColumnFamilyDescriptor(segment.getId()))
@@ -92,8 +91,8 @@ public class RocksDBColumnarKeyValueStorage
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
-              new ColumnFamilyOptions()
-                  .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
+              columnFamilyOptions.setTableFormatConfig(
+                  createBlockBasedTableConfig(configuration))));
 
       final Statistics stats = new Statistics();
       options =
@@ -147,8 +146,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Optional<byte[]> get(final ColumnFamilyHandle segment, final byte[] key)
-      throws StorageException {
+  public Optional<byte[]> get(final ColumnFamilyHandle segment, final byte[] key) {
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
@@ -159,11 +157,11 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Transaction<ColumnFamilyHandle> startTransaction() throws StorageException {
+  public Transaction<ColumnFamilyHandle> startTransaction() {
     throwIfClosed();
-    final WriteOptions options = new WriteOptions();
+    final WriteOptions writeOptions = new WriteOptions();
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
-        new RocksDbTransaction(db.beginTransaction(options), options));
+        new RocksDbTransaction(db.beginTransaction(writeOptions), writeOptions));
   }
 
   @Override
@@ -258,10 +256,13 @@ public class RocksDBColumnarKeyValueStorage
     }
 
     @Override
-    public void commit() throws StorageException {
+    public void commit() {
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
         innerTx.commit();
       } catch (final RocksDBException e) {
+        if (e.getMessage().contains("No space left on device")) {
+          System.exit(0);
+        }
         throw new StorageException(e);
       } finally {
         close();
