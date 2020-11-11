@@ -37,7 +37,7 @@ public class ProtocolSpec {
 
   private final GasCalculator gasCalculator;
 
-  private final TransactionValidator transactionValidator;
+  private final MainnetTransactionValidator transactionValidator;
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -107,7 +107,7 @@ public class ProtocolSpec {
   public ProtocolSpec(
       final String name,
       final EVM evm,
-      final TransactionValidator transactionValidator,
+      final MainnetTransactionValidator transactionValidator,
       final MainnetTransactionProcessor transactionProcessor,
       final PrivateTransactionProcessor privateTransactionProcessor,
       final BlockHeaderValidator blockHeaderValidator,
@@ -167,7 +167,7 @@ public class ProtocolSpec {
    *
    * @return the transaction validator
    */
-  public TransactionValidator getTransactionValidator() {
+  public MainnetTransactionValidator getTransactionValidator() {
     return transactionValidator;
   }
 

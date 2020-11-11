@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
@@ -48,7 +47,7 @@ public class TransactionSimulatorResult {
     return result.getOutput();
   }
 
-  public ValidationResult<TransactionValidator.TransactionInvalidReason> getValidationResult() {
+  public ValidationResult<TransactionInvalidReason> getValidationResult() {
     return result.getValidationResult();
   }
 

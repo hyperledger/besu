@@ -42,9 +42,9 @@ import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -145,7 +145,8 @@ public class TransactionPoolFactoryTest {
     final SyncState state = mock(SyncState.class);
     final TransactionsMessageSender transactionsMessageSender =
         mock(TransactionsMessageSender.class);
-    final TransactionValidator transactionValidator = mock(TransactionValidator.class);
+    final MainnetTransactionValidator transactionValidator =
+        mock(MainnetTransactionValidator.class);
     final WorldState worldState = mock(WorldState.class);
     final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
 
