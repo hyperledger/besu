@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -158,7 +158,7 @@ public class TransactionTracerTest {
 
   @Test
   public void traceTransactionShouldReturnResultFromProcessTransaction() {
-    final ProcessingResult result = mock(ProcessingResult.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
 
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockHeader(previousBlockHash)).thenReturn(Optional.of(previousBlockHeader));
@@ -240,7 +240,7 @@ public class TransactionTracerTest {
     when(blockBody.getTransactions()).thenReturn(transactions);
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
-    final ProcessingResult result = mock(ProcessingResult.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
     when(result.getOutput()).thenReturn(Bytes.of(0x01, 0x02));
 
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));

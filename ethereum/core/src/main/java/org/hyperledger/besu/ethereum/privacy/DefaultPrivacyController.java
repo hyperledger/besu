@@ -224,12 +224,13 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivateTransactionProcessor.ProcessingResult> simulatePrivateTransaction(
-      final String privacyGroupId,
-      final String enclavePublicKey,
-      final CallParameter callParams,
-      final long blockNumber) {
-    final Optional<PrivateTransactionProcessor.ProcessingResult> result =
+  public Optional<PrivateTransactionProcessor.TransactionProcessingResult>
+      simulatePrivateTransaction(
+          final String privacyGroupId,
+          final String enclavePublicKey,
+          final CallParameter callParams,
+          final long blockNumber) {
+    final Optional<PrivateTransactionProcessor.TransactionProcessingResult> result =
         privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
     return result;
   }
@@ -285,7 +286,7 @@ public class DefaultPrivacyController implements PrivacyController {
 
   public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(final Bytes privacyGroupId) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.ProcessingResult>
+    final Optional<PrivateTransactionProcessor.TransactionProcessingResult>
         privateTransactionSimulatorResultOptional =
             privateTransactionSimulator.process(
                 privacyGroupId.toBase64String(),
@@ -317,7 +318,7 @@ public class DefaultPrivacyController implements PrivacyController {
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.ProcessingResult>
+    final Optional<PrivateTransactionProcessor.TransactionProcessingResult>
         privateTransactionSimulatorResultOptional =
             privateTransactionSimulator.process(
                 privacyGroupId.toBase64String(),
@@ -485,7 +486,7 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivacyGroup privacyGroup = maybePrivacyGroup.get();
       if (privacyGroup.getType() == PrivacyGroup.Type.ONCHAIN) {
         // onchain privacy group
-        final Optional<PrivateTransactionProcessor.ProcessingResult> result =
+        final Optional<PrivateTransactionProcessor.TransactionProcessingResult> result =
             privateTransactionSimulator.process(
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
                 buildCallParams(GET_VERSION_METHOD_SIGNATURE));

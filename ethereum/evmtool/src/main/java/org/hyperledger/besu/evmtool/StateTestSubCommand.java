@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
@@ -159,7 +159,7 @@ public class StateTestSubCommand implements Runnable {
       final ReferenceTestBlockchain blockchain =
           new ReferenceTestBlockchain(blockHeader.getNumber());
       final Stopwatch timer = Stopwatch.createStarted();
-      final ProcessingResult result =
+      final TransactionProcessingResult result =
           processor.processTransaction(
               blockchain,
               worldStateUpdater,

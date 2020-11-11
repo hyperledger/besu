@@ -82,7 +82,7 @@ public class OnChainPrivacyPrecompiledContractTest {
       new PrivateStateRootResolver(privateStateStorage);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
-      final PrivateTransactionProcessor.ProcessingResult result) {
+      final PrivateTransactionProcessor.TransactionProcessingResult result) {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
@@ -147,7 +147,7 @@ public class OnChainPrivacyPrecompiledContractTest {
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.ProcessingResult.successful(
+            PrivateTransactionProcessor.TransactionProcessingResult.successful(
                 logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final VersionedPrivateTransaction versionedPrivateTransaction =
@@ -240,8 +240,8 @@ public class OnChainPrivacyPrecompiledContractTest {
     Mockito.doReturn(true)
         .when(contractSpy)
         .onChainPrivacyGroupVersionMatches(any(), any(), any(), any(), any(), any(), any(), any());
-    final PrivateTransactionProcessor.ProcessingResult mockResult =
-        mock(PrivateTransactionProcessor.ProcessingResult.class);
+    final PrivateTransactionProcessor.TransactionProcessingResult mockResult =
+        mock(PrivateTransactionProcessor.TransactionProcessingResult.class);
     Mockito.doReturn(mockResult)
         .when(contractSpy)
         .simulateTransaction(any(), any(), any(), any(), any(), any(), any(), any());
@@ -276,7 +276,7 @@ public class OnChainPrivacyPrecompiledContractTest {
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.ProcessingResult.invalid(
+            PrivateTransactionProcessor.TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE))));
 

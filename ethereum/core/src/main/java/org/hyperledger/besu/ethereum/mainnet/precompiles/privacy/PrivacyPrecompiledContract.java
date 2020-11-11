@@ -161,7 +161,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
-    final PrivateTransactionProcessor.ProcessingResult result =
+    final PrivateTransactionProcessor.TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
@@ -193,10 +193,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final PrivateTransactionProcessor.ProcessingResult result) {
+      final PrivateTransactionProcessor.TransactionProcessingResult result) {
 
     final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.ProcessingResult.Status.SUCCESSFUL
+        result.getStatus()
+                == PrivateTransactionProcessor.TransactionProcessingResult.Status.SUCCESSFUL
             ? 1
             : 0;
 
@@ -211,7 +212,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
   }
 
-  PrivateTransactionProcessor.ProcessingResult processPrivateTransaction(
+  PrivateTransactionProcessor.TransactionProcessingResult processPrivateTransaction(
       final MessageFrame messageFrame,
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,
@@ -263,7 +264,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         isMining = true;
       } else {
         throw new IllegalArgumentException(
-            "The MessageFrame contains an illegal block header type. Cannot persist private block metadata without current block hash.");
+            "The MessageFrame contains an illegal block header type. Cannot persist private block"
+                + " metadata without current block hash.");
       }
     }
     return isMining;

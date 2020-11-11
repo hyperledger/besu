@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class TransactionSimulatorResultTest {
   private TransactionSimulatorResult transactionSimulatorResult;
 
   @Mock private Transaction transaction;
-  @Mock private ProcessingResult result;
+  @Mock private TransactionProcessingResult result;
 
   @Before
   public void before() {

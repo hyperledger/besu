@@ -194,8 +194,8 @@ public class PrivCallTest {
   }
 
   private void mockTransactionProcessorSuccessResult(final Bytes output) {
-    final PrivateTransactionProcessor.ProcessingResult result =
-        mock(PrivateTransactionProcessor.ProcessingResult.class);
+    final PrivateTransactionProcessor.TransactionProcessingResult result =
+        mock(PrivateTransactionProcessor.TransactionProcessingResult.class);
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);

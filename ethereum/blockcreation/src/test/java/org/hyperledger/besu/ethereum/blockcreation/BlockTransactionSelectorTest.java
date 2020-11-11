@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -142,7 +142,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.failed(
+            MainnetTransactionProcessor.TransactionProcessingResult.failed(
                 0, 5, ValidationResult.valid(), Optional.empty()));
 
     // The block should fit 3 transactions only
@@ -187,7 +187,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.successful(
+            MainnetTransactionProcessor.TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             any(),
@@ -199,7 +199,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.invalid(
+            MainnetTransactionProcessor.TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW)));
 
@@ -246,7 +246,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.successful(
+            MainnetTransactionProcessor.TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(301);
@@ -322,7 +322,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.successful(
+            MainnetTransactionProcessor.TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
@@ -380,7 +380,7 @@ public class BlockTransactionSelectorTest {
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.successful(
+            MainnetTransactionProcessor.TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
@@ -481,7 +481,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.successful(
+            MainnetTransactionProcessor.TransactionProcessingResult.successful(
                 new ArrayList<>(), 2000, 10000, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             eq(blockchain),
@@ -493,7 +493,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.invalid(
+            MainnetTransactionProcessor.TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
 
@@ -525,7 +525,7 @@ public class BlockTransactionSelectorTest {
             anyBoolean(),
             any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.invalid(
+            MainnetTransactionProcessor.TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE)));
 
@@ -569,7 +569,7 @@ public class BlockTransactionSelectorTest {
 
   // This is a duplicate of the MainnetProtocolSpec::frontierTransactionReceiptFactory
   private TransactionReceipt createReceipt(
-      final ProcessingResult result, final WorldState worldState, final long gasUsed) {
+      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         worldState.rootHash(), gasUsed, Lists.newArrayList(), Optional.empty(), -1L);
   }

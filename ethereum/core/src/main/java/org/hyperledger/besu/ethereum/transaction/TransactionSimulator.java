@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -127,7 +127,7 @@ public class TransactionSimulator {
 
     final MainnetTransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
-    final ProcessingResult result =
+    final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
             worldState.updater(),

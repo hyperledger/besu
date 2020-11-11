@@ -195,7 +195,7 @@ public class PrivacyBlockProcessorTest {
     when(mockPublicTransactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.ProcessingResult.successful(
+            MainnetTransactionProcessor.TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
     when(protocolSpec.getTransactionProcessor()).thenReturn(mockPublicTransactionProcessor);
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
@@ -203,7 +203,7 @@ public class PrivacyBlockProcessorTest {
     when(mockPrivateTransactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
-            PrivateTransactionProcessor.ProcessingResult.successful(
+            PrivateTransactionProcessor.TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
     when(protocolSpec.getPrivateTransactionProcessor()).thenReturn(mockPrivateTransactionProcessor);
     final AbstractBlockProcessor.TransactionReceiptFactory mockTransactionReceiptFactory =

@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collections;
@@ -75,7 +75,7 @@ public class DebugTraceTransactionTest {
     final Object[] params = new Object[] {transactionHash, map};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceTransaction", params));
-    final ProcessingResult result = mock(ProcessingResult.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
 
     final Bytes32[] stackBytes =
         new Bytes32[] {
@@ -149,7 +149,7 @@ public class DebugTraceTransactionTest {
     final Object[] params = new Object[] {transactionHash, map};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceTransaction", params));
-    final ProcessingResult result = mock(ProcessingResult.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
 
     final TraceFrame traceFrame =
         new TraceFrame(

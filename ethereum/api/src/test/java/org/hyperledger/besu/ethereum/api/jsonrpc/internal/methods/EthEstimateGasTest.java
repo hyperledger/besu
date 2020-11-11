@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -171,7 +171,7 @@ public class EthEstimateGasTest {
     when(transactionSimulator.process(
             eq(modifiedCallParameter()), any(OperationTracer.class), eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
-    final ProcessingResult mockResult = mock(ProcessingResult.class);
+    final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
     when(mockResult.getRevertReason())
         .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());

@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
@@ -42,7 +42,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   @FunctionalInterface
   public interface TransactionReceiptFactory {
 
-    TransactionReceipt create(ProcessingResult result, WorldState worldState, long gasUsed);
+    TransactionReceipt create(
+        TransactionProcessingResult result, WorldState worldState, long gasUsed);
   }
 
   private static final Logger LOG = LogManager.getLogger();
@@ -175,7 +176,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             privateMetadataUpdater);
       }
 
-      final ProcessingResult result =
+      final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
               worldStateUpdater,

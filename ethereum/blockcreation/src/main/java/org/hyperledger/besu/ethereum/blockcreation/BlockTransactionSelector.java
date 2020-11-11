@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.List;
@@ -210,7 +210,7 @@ public class BlockTransactionSelector {
     final WorldUpdater worldStateUpdater = worldState.updater();
     final BlockHashLookup blockHashLookup = new BlockHashLookup(processableBlockHeader, blockchain);
 
-    final ProcessingResult result =
+    final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
             worldStateUpdater,
@@ -243,7 +243,7 @@ public class BlockTransactionSelector {
   cumulative gas, world state root hash.).
    */
   private void updateTransactionResultTracking(
-      final Transaction transaction, final ProcessingResult result) {
+      final Transaction transaction, final TransactionProcessingResult result) {
     final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
     final long cumulativeGasUsed;
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {

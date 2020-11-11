@@ -74,9 +74,9 @@ public class MultiTenancyPrivacyControllerOnchainTest {
     when(privacyController.simulatePrivateTransaction(any(), any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
-                PrivateTransactionProcessor.ProcessingResult.successful(
+                PrivateTransactionProcessor.TransactionProcessingResult.successful(
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
-    final Optional<PrivateTransactionProcessor.ProcessingResult> result =
+    final Optional<PrivateTransactionProcessor.TransactionProcessingResult> result =
         multiTenancyPrivacyController.simulatePrivateTransaction(
             PRIVACY_GROUP_ID,
             ENCLAVE_PUBLIC_KEY1,

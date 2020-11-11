@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -129,7 +129,7 @@ public class PrivateGroupRehydrationBlockProcessor {
             disposablePrivateState.rootHash(),
             transactionHash);
 
-        final PrivateTransactionProcessor.ProcessingResult privateResult =
+        final PrivateTransactionProcessor.TransactionProcessingResult privateResult =
             privateTransactionProcessor.processTransaction(
                 blockchain,
                 worldStateUpdater.updater(),
@@ -157,7 +157,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
       // We have to process the public transactions here, because the private transactions can
       // depend on  public state
-      final ProcessingResult result =
+      final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
               worldStateUpdater,
@@ -191,10 +191,11 @@ public class PrivateGroupRehydrationBlockProcessor {
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final PrivateTransactionProcessor.ProcessingResult result) {
+      final PrivateTransactionProcessor.TransactionProcessingResult result) {
 
     final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.ProcessingResult.Status.SUCCESSFUL
+        result.getStatus()
+                == PrivateTransactionProcessor.TransactionProcessingResult.Status.SUCCESSFUL
             ? 1
             : 0;
 

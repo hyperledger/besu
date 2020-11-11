@@ -21,7 +21,7 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.ProcessingResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -67,7 +67,7 @@ public class OnchainPrivacyGroupContract {
       final Optional<Long> blockNumber) {
 
     final CallParameter callParams = buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE);
-    final Optional<PrivateTransactionProcessor.ProcessingResult> result;
+    final Optional<TransactionProcessingResult> result;
 
     if (blockHash.isPresent()) {
       result = privateTransactionSimulator.process(privacyGroupId, callParams, blockHash.get());
@@ -80,8 +80,7 @@ public class OnchainPrivacyGroupContract {
   }
 
   private Optional<PrivacyGroup> readPrivacyGroupFromResult(
-      final String privacyGroupId,
-      final Optional<PrivateTransactionProcessor.ProcessingResult> result) {
+      final String privacyGroupId, final Optional<TransactionProcessingResult> result) {
     if (result.isEmpty()) {
       return Optional.empty();
     }
@@ -103,7 +102,7 @@ public class OnchainPrivacyGroupContract {
 
   public Optional<Bytes32> getVersion(final String privacyGroupId, final Optional<Hash> blockHash) {
     final CallParameter callParams = buildCallParams(GET_VERSION_METHOD_SIGNATURE);
-    final Optional<ProcessingResult> result;
+    final Optional<TransactionProcessingResult> result;
 
     if (blockHash.isPresent()) {
       result = privateTransactionSimulator.process(privacyGroupId, callParams, blockHash.get());
@@ -111,7 +110,7 @@ public class OnchainPrivacyGroupContract {
       result = privateTransactionSimulator.process(privacyGroupId, callParams);
     }
 
-    return result.map(ProcessingResult::getOutput).map(Bytes32::wrap);
+    return result.map(TransactionProcessingResult::getOutput).map(Bytes32::wrap);
   }
 
   private CallParameter buildCallParams(final Bytes methodCall) {

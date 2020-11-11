@@ -171,7 +171,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return Bytes.EMPTY;
     }
 
-    final PrivateTransactionProcessor.ProcessingResult result =
+    final PrivateTransactionProcessor.TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
@@ -285,7 +285,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         disposablePrivateState,
         privateWorldStateUpdater)) {
       LOG.debug(
-          "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom {} is not a member.",
+          "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom"
+              + " {} is not a member.",
           messageFrame.getTransactionHash(),
           privacyGroupId.toBase64String(),
           privateFrom.toBase64String());
@@ -306,7 +307,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
-    final PrivateTransactionProcessor.ProcessingResult result =
+    final PrivateTransactionProcessor.TransactionProcessingResult result =
         simulateTransaction(
             messageFrame,
             currentBlockHeader,
@@ -327,7 +328,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         || participantsFromParameter.contains(privateFrom.toBase64String());
   }
 
-  List<Bytes> getMembersFromResult(final PrivateTransactionProcessor.ProcessingResult result) {
+  List<Bytes> getMembersFromResult(
+      final PrivateTransactionProcessor.TransactionProcessingResult result) {
     List<Bytes> list = Collections.emptyList();
     if (result != null && result.isSuccessful()) {
       final RLPInput rlpInput = RLP.input(result.getOutput());
@@ -370,7 +372,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
-    final PrivateTransactionProcessor.ProcessingResult result =
+    final PrivateTransactionProcessor.TransactionProcessingResult result =
         simulateTransaction(
             messageFrame,
             currentBlockHeader,
@@ -383,7 +385,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return result.getOutput().toHexString().endsWith("0");
   }
 
-  protected PrivateTransactionProcessor.ProcessingResult simulateTransaction(
+  protected PrivateTransactionProcessor.TransactionProcessingResult simulateTransaction(
       final MessageFrame messageFrame,
       final ProcessableBlockHeader currentBlockHeader,
       final WorldUpdater publicWorldState,
@@ -455,7 +457,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     // call to affect the state
     // privateTransactionProcessor.processTransaction(...) commits the state if the process was
     // successful before it returns
-    final PrivateTransactionProcessor.ProcessingResult getVersionResult =
+    final PrivateTransactionProcessor.TransactionProcessingResult getVersionResult =
         simulateTransaction(
             messageFrame,
             currentBlockHeader,

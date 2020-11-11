@@ -81,7 +81,7 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidator
    * @see TransactionValidationParams
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -119,7 +119,7 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidator
    * @see TransactionValidationParams
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -154,7 +154,7 @@ public class MainnetTransactionProcessor {
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -189,7 +189,7 @@ public class MainnetTransactionProcessor {
    * @param transactionValidationParams The transaction validation parameters to use
    * @return the transaction result
    */
-  public org.hyperledger.besu.ethereum.processing.ProcessingResult processTransaction(
+  public org.hyperledger.besu.ethereum.processing.TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -212,8 +212,8 @@ public class MainnetTransactionProcessor {
         null);
   }
 
-  public static class ProcessingResult
-      implements org.hyperledger.besu.ethereum.processing.ProcessingResult {
+  public static class TransactionProcessingResult
+      implements org.hyperledger.besu.ethereum.processing.TransactionProcessingResult {
 
     private final Status status;
 
@@ -228,9 +228,9 @@ public class MainnetTransactionProcessor {
     private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
     private final Optional<Bytes> revertReason;
 
-    public static ProcessingResult invalid(
+    public static TransactionProcessingResult invalid(
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new ProcessingResult(
+      return new TransactionProcessingResult(
           Status.INVALID,
           new ArrayList<>(),
           -1,
@@ -240,12 +240,12 @@ public class MainnetTransactionProcessor {
           Optional.empty());
     }
 
-    public static ProcessingResult failed(
+    public static TransactionProcessingResult failed(
         final long gasUsedByTransaction,
         final long gasRemaining,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
         final Optional<Bytes> revertReason) {
-      return new ProcessingResult(
+      return new TransactionProcessingResult(
           Status.FAILED,
           new ArrayList<>(),
           gasUsedByTransaction,
@@ -255,13 +255,13 @@ public class MainnetTransactionProcessor {
           revertReason);
     }
 
-    public static ProcessingResult successful(
+    public static TransactionProcessingResult successful(
         final List<Log> logs,
         final long gasUsedByTransaction,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new ProcessingResult(
+      return new TransactionProcessingResult(
           Status.SUCCESSFUL,
           logs,
           gasUsedByTransaction,
@@ -271,7 +271,7 @@ public class MainnetTransactionProcessor {
           Optional.empty());
     }
 
-    ProcessingResult(
+    TransactionProcessingResult(
         final Status status,
         final List<Log> logs,
         final long estimateGasUsedByTransaction,
@@ -347,7 +347,7 @@ public class MainnetTransactionProcessor {
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
-  public ProcessingResult processFrontierTransaction(
+  public TransactionProcessingResult processFrontierTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -368,7 +368,7 @@ public class MainnetTransactionProcessor {
       // be signed correctly to extract the sender).
       if (!validationResult.isValid()) {
         LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
-        return ProcessingResult.invalid(validationResult);
+        return TransactionProcessingResult.invalid(validationResult);
       }
 
       final Address senderAddress = frontierTransaction.getSender();
@@ -378,7 +378,7 @@ public class MainnetTransactionProcessor {
               frontierTransaction, sender, transactionValidationParams);
       if (!validationResult.isValid()) {
         LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
-        return ProcessingResult.invalid(validationResult);
+        return TransactionProcessingResult.invalid(validationResult);
       }
 
       final MutableAccount senderMutableAccount = sender.getMutable();
@@ -515,7 +515,7 @@ public class MainnetTransactionProcessor {
       if (blockHeader.getBaseFee().isPresent() && frontierTransaction.isEIP1559Transaction()) {
         final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
         if (transactionGasPrice.compareTo(baseFee) < 0) {
-          return ProcessingResult.failed(
+          return TransactionProcessingResult.failed(
               gasUsedByTransaction.toLong(),
               refunded.toLong(),
               ValidationResult.invalid(
@@ -540,14 +540,14 @@ public class MainnetTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        return ProcessingResult.successful(
+        return TransactionProcessingResult.successful(
             initialFrame.getLogs(),
             gasUsedByTransaction.toLong(),
             refunded.toLong(),
             initialFrame.getOutputData(),
             validationResult);
       } else {
-        return ProcessingResult.failed(
+        return TransactionProcessingResult.failed(
             gasUsedByTransaction.toLong(),
             refunded.toLong(),
             validationResult,
@@ -555,7 +555,7 @@ public class MainnetTransactionProcessor {
       }
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
-      return ProcessingResult.invalid(
+      return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));

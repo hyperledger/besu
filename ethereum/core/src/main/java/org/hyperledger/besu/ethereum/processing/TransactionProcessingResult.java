@@ -24,7 +24,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A transaction processing result. */
-public interface ProcessingResult {
+public interface TransactionProcessingResult {
 
   /** The status of the transaction after being processed. */
   enum Status {

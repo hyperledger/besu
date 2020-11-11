@@ -171,11 +171,12 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivateTransactionProcessor.ProcessingResult> simulatePrivateTransaction(
-      final String privacyGroupId,
-      final String enclavePublicKey,
-      final CallParameter callParams,
-      final long blockNumber) {
+  public Optional<PrivateTransactionProcessor.TransactionProcessingResult>
+      simulatePrivateTransaction(
+          final String privacyGroupId,
+          final String enclavePublicKey,
+          final CallParameter callParams,
+          final long blockNumber) {
     verifyPrivacyGroupContainsEnclavePublicKey(
         privacyGroupId, enclavePublicKey, Optional.of(blockNumber));
     return privacyController.simulatePrivateTransaction(

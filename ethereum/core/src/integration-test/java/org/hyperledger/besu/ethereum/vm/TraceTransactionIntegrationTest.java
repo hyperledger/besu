@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.processing.ProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -86,7 +86,7 @@ public class TraceTransactionIntegrationTest {
     final MutableWorldState worldState =
         worldStateArchive.getMutable(genesisBlock.getHeader().getStateRoot()).get();
     final WorldUpdater createTransactionUpdater = worldState.updater();
-    ProcessingResult result =
+    TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
             createTransactionUpdater,
