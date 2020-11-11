@@ -64,6 +64,29 @@ public class MainnetTransactionProcessor {
   private final TransactionPriceCalculator transactionPriceCalculator;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
+  private final boolean clearEmptyAccounts;
+
+  public MainnetTransactionProcessor(
+      final GasCalculator gasCalculator,
+      final TransactionValidator transactionValidator,
+      final AbstractMessageProcessor contractCreationProcessor,
+      final AbstractMessageProcessor messageCallProcessor,
+      final boolean clearEmptyAccounts,
+      final int maxStackSize,
+      final int createContractAccountVersion,
+      final TransactionPriceCalculator transactionPriceCalculator,
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+    this.gasCalculator = gasCalculator;
+    this.transactionValidator = transactionValidator;
+    this.contractCreationProcessor = contractCreationProcessor;
+    this.messageCallProcessor = messageCallProcessor;
+    this.clearEmptyAccounts = clearEmptyAccounts;
+    this.maxStackSize = maxStackSize;
+    this.createContractAccountVersion = createContractAccountVersion;
+    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
+  }
+
   @VisibleForTesting
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
@@ -146,30 +169,7 @@ public class MainnetTransactionProcessor {
         null);
   }
 
-  private final boolean clearEmptyAccounts;
-
-  public MainnetTransactionProcessor(
-      final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
-      final AbstractMessageProcessor contractCreationProcessor,
-      final AbstractMessageProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts,
-      final int maxStackSize,
-      final int createContractAccountVersion,
-      final TransactionPriceCalculator transactionPriceCalculator,
-      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
-    this.gasCalculator = gasCalculator;
-    this.transactionValidator = transactionValidator;
-    this.contractCreationProcessor = contractCreationProcessor;
-    this.messageCallProcessor = messageCallProcessor;
-    this.clearEmptyAccounts = clearEmptyAccounts;
-    this.maxStackSize = maxStackSize;
-    this.createContractAccountVersion = createContractAccountVersion;
-    this.transactionPriceCalculator = transactionPriceCalculator;
-    this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
-  }
-
-  public TransactionProcessingResult processTransaction(
+  public TransactionProcessingResult processFrontierTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
