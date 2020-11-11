@@ -31,7 +31,7 @@ public class QuorumPermissioningConfiguration {
   }
 
   public static QuorumPermissioningConfiguration disabled() {
-    return new QuorumPermissioningConfiguration(QIP714_DEFAULT_BLOCK, true);
+    return new QuorumPermissioningConfiguration(QIP714_DEFAULT_BLOCK, false);
   }
 
   public long getQip714Block() {

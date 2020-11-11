@@ -104,7 +104,7 @@ public class AccountPermissioningControllerTest {
   }
 
   @Test
-  public void whenQuorumQip714GateIsNotActiveShouldAlwaysReturnTrue() {
+  public void whenQuorumQip714GateIsNotActiveShouldBypassProviders() {
     this.permissioningController =
         new AccountPermissioningController(
             Optional.of(localConfigController),

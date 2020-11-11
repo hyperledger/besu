@@ -87,10 +87,10 @@ public class NodePermissioningControllerFactory {
         permissioningConfiguration
             .getQuorumPermissioningConfig()
             .flatMap(
-                cfg -> {
-                  if (cfg.isEnabled()) {
+                config -> {
+                  if (config.isEnabled()) {
                     return Optional.of(
-                        QuorumQip714Gate.getInstance(cfg.getQip714Block(), blockchain));
+                        QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
                   } else {
                     return Optional.empty();
                   }

@@ -196,7 +196,7 @@ public class NodePermissioningControllerTest {
   }
 
   @Test
-  public void whenQuorumQip714GateIsNotActiveShouldAlwaysReturnTrue() {
+  public void whenQuorumQip714GateIsNotActiveShouldBypassProviders() {
     this.controller =
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional,
@@ -211,7 +211,7 @@ public class NodePermissioningControllerTest {
   }
 
   @Test
-  public void whenQuorumQip714GateIsActiveActiveShouldDelegateToProviders() {
+  public void whenQuorumQip714GateIsActiveShouldDelegateToProviders() {
     this.controller =
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional,

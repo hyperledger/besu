@@ -164,16 +164,4 @@ public class JsonGenesisConfigOptionsTest {
 
     assertThat(configOptions.getIbft2ConfigOptions().getBlockRewardWei()).isEqualTo(12);
   }
-
-  private ObjectNode loadGenesisWithQuorumConfig() {
-    try {
-      final String configText =
-          Resources.toString(
-              Resources.getResource("valid_config_with_quorum_config.json"),
-              StandardCharsets.UTF_8);
-      return JsonUtil.objectNodeFromString(configText);
-    } catch (final IOException e) {
-      throw new RuntimeException("Failed to load resource", e);
-    }
-  }
 }
