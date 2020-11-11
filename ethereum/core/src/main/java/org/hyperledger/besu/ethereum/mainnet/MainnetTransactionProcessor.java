@@ -64,22 +64,7 @@ public class MainnetTransactionProcessor {
   private final TransactionPriceCalculator transactionPriceCalculator;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
-  /**
-   * Applies a transaction to the current system state.
-   *
-   * @param blockchain The current blockchain
-   * @param worldState The current world state
-   * @param blockHeader The current block header
-   * @param transaction The transaction to process
-   * @param miningBeneficiary The address which is to receive the transaction fee
-   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
-   * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     TransactionValidator}
-   * @return the transaction result
-   * @see TransactionValidator
-   * @see TransactionValidationParams
-   */
+  @VisibleForTesting
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
@@ -101,23 +86,7 @@ public class MainnetTransactionProcessor {
         transactionValidationParams);
   }
 
-  /**
-   * Applies a transaction to the current system state.
-   *
-   * @param blockchain The current blockchain
-   * @param worldState The current world state
-   * @param blockHeader The current block header
-   * @param transaction The transaction to process
-   * @param miningBeneficiary The address which is to receive the transaction fee
-   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
-   * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     TransactionValidator}
-   * @param operationTracer operation tracer {@link OperationTracer}
-   * @return the transaction result
-   * @see TransactionValidator
-   * @see TransactionValidationParams
-   */
+  @VisibleForTesting
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
@@ -138,40 +107,6 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams);
-  }
-
-  /**
-   * Applies a transaction to the current system state.
-   *
-   * @param blockchain The current blockchain
-   * @param worldState The current world state
-   * @param blockHeader The current block header
-   * @param transaction The transaction to process
-   * @param operationTracer The tracer to record results of each EVM operation
-   * @param miningBeneficiary The address which is to receive the transaction fee
-   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
-   * @return the transaction result
-   */
-  public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
-      final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
-      final Address miningBeneficiary,
-      final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState) {
-    return processTransaction(
-        blockchain,
-        worldState,
-        blockHeader,
-        transaction,
-        miningBeneficiary,
-        operationTracer,
-        blockHashLookup,
-        isPersistingPrivateState,
-        new TransactionValidationParams.Builder().build());
   }
 
   /**
