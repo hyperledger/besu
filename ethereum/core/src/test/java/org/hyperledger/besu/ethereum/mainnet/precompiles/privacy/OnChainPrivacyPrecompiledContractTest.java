@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -82,7 +83,7 @@ public class OnChainPrivacyPrecompiledContractTest {
       new PrivateStateRootResolver(privateStateStorage);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
-      final PrivateTransactionProcessor.Result result) {
+      final TransactionProcessingResult result) {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
@@ -147,7 +148,7 @@ public class OnChainPrivacyPrecompiledContractTest {
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.successful(
+            TransactionProcessingResult.successful(
                 logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final VersionedPrivateTransaction versionedPrivateTransaction =
@@ -240,8 +241,7 @@ public class OnChainPrivacyPrecompiledContractTest {
     Mockito.doReturn(true)
         .when(contractSpy)
         .onChainPrivacyGroupVersionMatches(any(), any(), any(), any(), any(), any(), any(), any());
-    final PrivateTransactionProcessor.Result mockResult =
-        mock(PrivateTransactionProcessor.Result.class);
+    final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     Mockito.doReturn(mockResult)
         .when(contractSpy)
         .simulateTransaction(any(), any(), any(), any(), any(), any(), any(), any());
@@ -276,7 +276,7 @@ public class OnChainPrivacyPrecompiledContractTest {
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.invalid(
+            TransactionProcessingResult.invalid(
                 ValidationResult.invalid(
                     TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE))));
 

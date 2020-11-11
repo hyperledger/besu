@@ -18,7 +18,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
@@ -53,7 +53,7 @@ public class StandardJsonTracer implements OperationTracer {
   }
 
   public static String summaryTrace(
-      final Transaction transaction, final long timer, final TransactionProcessor.Result result) {
+      final Transaction transaction, final long timer, final TransactionProcessingResult result) {
     final ObjectNode summaryLine = OBJECT_MAPPER.createObjectNode();
     summaryLine.put("output", result.getOutput().toUnprefixedHexString());
     summaryLine.put(

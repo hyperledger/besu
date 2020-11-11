@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
@@ -57,7 +57,7 @@ public class BlockTracer {
       }
       // create an updater for just this tx
       chainedUpdater = chainedUpdater.updater();
-      final TransactionProcessor.Result result =
+      final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
               chainedUpdater,

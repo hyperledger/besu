@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.io.IOException;
@@ -404,7 +405,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         worldState.rootHash(),
         gasUsed,
@@ -414,7 +415,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0,
         gasUsed,
@@ -424,7 +425,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0,
         gasUsed,
