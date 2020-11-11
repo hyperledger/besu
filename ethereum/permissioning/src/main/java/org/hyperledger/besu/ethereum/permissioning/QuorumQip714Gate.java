@@ -28,7 +28,8 @@ public class QuorumQip714Gate {
   private final long qip714Block;
   private final AtomicLong latestBlock = new AtomicLong(0L);
 
-  private QuorumQip714Gate(final long qip714Block, final Blockchain blockchain) {
+  @VisibleForTesting
+  QuorumQip714Gate(final long qip714Block, final Blockchain blockchain) {
     this.qip714Block = qip714Block;
 
     blockchain.observeBlockAdded(this::checkChainHeight);
