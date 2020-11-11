@@ -167,11 +167,6 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     return collectors.keySet().stream().flatMap(this::streamObservations);
   }
 
-  @Override
-  public void close() {
-    // no-op
-  }
-
   private Stream<Observation> convertSamplesToObservations(
       final MetricCategory category, final MetricFamilySamples familySamples) {
     return familySamples.samples.stream()

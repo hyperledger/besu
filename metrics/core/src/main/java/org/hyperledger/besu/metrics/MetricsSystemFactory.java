@@ -48,9 +48,7 @@ public class MetricsSystemFactory {
           new OpenTelemetrySystem(
               metricsConfiguration.getMetricCategories(),
               metricsConfiguration.isTimersEnabled(),
-              metricsConfiguration.getPrometheusJob(),
-              true,
-              1000L * metricsConfiguration.getPushInterval());
+              metricsConfiguration.getPrometheusJob());
       metricsSystem.initDefaults();
       return metricsSystem;
     } else {

@@ -97,11 +97,6 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
     return Collections.emptySet();
   }
 
-  @Override
-  public void close() {
-    // NO-OP
-  }
-
   public static class StubLabelledCounter implements LabelledMetric<Counter> {
     private final Map<List<String>, StubCounter> metrics = new HashMap<>();
 

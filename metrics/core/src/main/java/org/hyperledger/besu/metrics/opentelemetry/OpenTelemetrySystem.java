@@ -31,7 +31,6 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +42,6 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.common.Attributes;
 import io.opentelemetry.common.Labels;
-import io.opentelemetry.exporters.otlp.OtlpGrpcMetricExporter;
 import io.opentelemetry.metrics.DoubleValueObserver;
 import io.opentelemetry.metrics.DoubleValueRecorder;
 import io.opentelemetry.metrics.LongCounter;
@@ -52,7 +50,6 @@ import io.opentelemetry.metrics.LongUpDownSumObserver;
 import io.opentelemetry.metrics.Meter;
 import io.opentelemetry.sdk.metrics.MeterSdkProvider;
 import io.opentelemetry.sdk.metrics.data.MetricData;
-import io.opentelemetry.sdk.metrics.export.IntervalMetricReader;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.resources.ResourceAttributes;
 
@@ -73,14 +70,11 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
   private final MeterSdkProvider meterSdkProvider;
-  private IntervalMetricReader periodicReader;
 
   public OpenTelemetrySystem(
       final Set<MetricCategory> enabledCategories,
       final boolean timersEnabled,
-      final String jobName,
-      final boolean pushEnabled,
-      final long exportIntervalMillis) {
+      final String jobName) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
     Resource resource =
@@ -91,14 +85,10 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
                         .setAttribute(ResourceAttributes.SERVICE_NAME, jobName)
                         .build()));
     this.meterSdkProvider = MeterSdkProvider.builder().setResource(resource).build();
-    if (pushEnabled) {
-      IntervalMetricReader.Builder builder =
-          IntervalMetricReader.builder()
-              .setMetricProducers(Collections.singleton(meterSdkProvider.getMetricProducer()))
-              .setMetricExporter(OtlpGrpcMetricExporter.getDefault())
-              .setExportIntervalMillis(exportIntervalMillis);
-      this.periodicReader = builder.build();
-    }
+  }
+
+  MeterSdkProvider getMeterSdkProvider() {
+    return meterSdkProvider;
   }
 
   @Override
@@ -213,13 +203,6 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   @Override
   public Set<MetricCategory> getEnabledCategories() {
     return enabledCategories;
-  }
-
-  @Override
-  public void close() {
-    if (periodicReader != null) {
-      periodicReader.shutdown();
-    }
   }
 
   public void initDefaults() {

@@ -123,9 +123,4 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
       return fakeMetric;
     }
   }
-
-  @Override
-  public void close() {
-    // no-op
-  }
 }

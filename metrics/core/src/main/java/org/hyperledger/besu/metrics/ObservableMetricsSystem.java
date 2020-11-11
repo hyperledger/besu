@@ -43,7 +43,4 @@ public interface ObservableMetricsSystem extends MetricsSystem {
     return getEnabledCategories().stream()
         .anyMatch(metricCategory -> metricCategory.getName().equals(category.getName()));
   }
-
-  /** Stops orderly the metrics system prior to shutdown. */
-  void close();
 }

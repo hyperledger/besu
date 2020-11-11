@@ -204,11 +204,6 @@ import picocli.CommandLine.ParameterException;
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
 
-  static {
-    // redirect java.util.logging loggers to use log4j2.
-    System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
-  }
-
   @SuppressWarnings("PrivateStaticFinalLoggers")
   // non-static for testing
   private final Logger logger;
@@ -655,7 +650,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--metrics-protocol"},
       description =
-          "Metrics protocol, one of PROMETHEUS, OPENTELEMETRY or NOOP. (default: ${DEFAULT-VALUE})")
+          "Metrics protocol, one of PROMETHEUS, OPENTELEMETRY or NONE. (default: ${DEFAULT-VALUE})")
   private MetricsProtocol metricsProtocol = PROMETHEUS;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
