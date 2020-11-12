@@ -9,6 +9,7 @@
 * Prioritize high gas prices during mining. Previously we ordered only by the order in which the transactions were received. This will increase expected profit when mining. [\#1449](https://github.com/hyperledger/besu/pull/1449)
 * Added support for the updated smart contract-based [node permissioning EEA interface](https://entethalliance.github.io/client-spec/spec.html#dfn-connectionallowed). [\#1435](https://github.com/hyperledger/besu/pull/1435)
 * Added EvmTool binary to the distribution.  EvmTool is a CLI that can execute EVM bytecode and execute ethereum state tests. [\#1465](https://github.com/hyperledger/besu/pull/1465)
+* Added direct support for OpenTelemetry metrics [\#1492](https://github.com/hyperledger/besu/pull/1492)
 
 ## Deprecated and Scheduled for removal in _Next_ Release
 
