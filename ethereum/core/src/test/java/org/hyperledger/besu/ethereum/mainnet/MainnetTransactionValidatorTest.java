@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -55,8 +54,6 @@ public class MainnetTransactionValidatorTest {
   @Mock private GasCalculator gasCalculator;
 
   @Mock private TransactionPriceCalculator transactionPriceCalculator;
-
-  final FeeMarket feeMarket = FeeMarket.eip1559();
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()
@@ -305,9 +302,7 @@ public class MainnetTransactionValidatorTest {
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
     assertThat(validator.validate(transaction, basefee))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
   }
 
   @Test
