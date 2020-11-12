@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.permissioning.node;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -33,16 +34,27 @@ public class NodePermissioningController {
   private Optional<ContextualNodePermissioningProvider> insufficientPeersPermissioningProvider =
       Optional.empty();
   private final List<NodePermissioningProvider> providers;
+  private final Optional<QuorumQip714Gate> quorumQip714Gate;
   private final Subscribers<Runnable> permissioningUpdateSubscribers = Subscribers.create();
 
   public NodePermissioningController(
       final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider,
-      final List<NodePermissioningProvider> providers) {
+      final List<NodePermissioningProvider> providers,
+      final Optional<QuorumQip714Gate> quorumQip714Gate) {
     this.providers = providers;
     this.syncStatusNodePermissioningProvider = syncStatusNodePermissioningProvider;
+    this.quorumQip714Gate = quorumQip714Gate;
   }
 
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+    final boolean checkPermissions =
+        quorumQip714Gate.map(QuorumQip714Gate::shouldCheckPermissions).orElse(true);
+    if (!checkPermissions) {
+      LOG.trace("Skipping node permissioning check due to qip714block config");
+
+      return true;
+    }
+
     LOG.trace("Node permissioning: Checking {} -> {}", sourceEnode, destinationEnode);
 
     if (syncStatusNodePermissioningProvider
