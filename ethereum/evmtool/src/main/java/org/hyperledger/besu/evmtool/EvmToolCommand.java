@@ -66,6 +66,7 @@ import picocli.CommandLine.Option;
     abbreviateSynopsis = true,
     name = "evm",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     sortOptions = false,
     header = "Usage:",
     synopsisHeading = "%n",
