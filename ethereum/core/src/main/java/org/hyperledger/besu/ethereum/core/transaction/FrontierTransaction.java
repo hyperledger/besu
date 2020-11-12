@@ -365,33 +365,11 @@ public class FrontierTransaction implements Transaction {
   /**
    * Calculates the up-front cost for the gas the transaction can use.
    *
-   * @return the up-front cost for the gas the transaction can use.
-   */
-  public Wei getUpfrontGasCost() {
-    return getUpfrontGasCost(getGasPrice());
-  }
-
-  /**
-   * Calculates the up-front cost for the gas the transaction can use.
-   *
    * @param gasPrice the gas price to use
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost(final Wei gasPrice) {
     return Wei.of(getGasLimit()).multiply(gasPrice);
-  }
-
-  /**
-   * Calculates the up-front cost for the transaction.
-   *
-   * <p>The up-front cost is paid by the sender account before the transaction is executed. The
-   * sender must have the amount in its account balance to execute and some of this amount may be
-   * refunded after the transaction has executed.
-   *
-   * @return the up-front gas cost for the transaction
-   */
-  public Wei getUpfrontCost() {
-    return getUpfrontGasCost().add(getValue());
   }
 
   /**
