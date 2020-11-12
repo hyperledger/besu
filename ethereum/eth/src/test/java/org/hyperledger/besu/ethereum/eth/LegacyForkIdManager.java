@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class LegacyForkIdManager {
 
@@ -63,81 +62,6 @@ public class LegacyForkIdManager {
     final Bytes next = in.readBytes();
     in.leaveList();
     return new ForkId(hash, next);
-  }
-
-  /**
-   * EIP-2124 behaviour
-   *
-   * @param forkId to be validated.
-   * @return boolean (peer valid (true) or invalid (false))
-   */
-  boolean peerCheck(final ForkId forkId) {
-    if (forkId == null) {
-      return true; // Another method must be used to validate (i.e. genesis hash)
-    }
-    // Run the fork checksum validation rule set:
-    //   1. If local and remote FORK_CSUM matches, connect.
-    //        The two nodes are in the same fork state currently. They might know
-    //        of differing future forks, but that's not relevant until the fork
-    //        triggers (might be postponed, nodes might be updated to match).
-    //   2. If the remote FORK_CSUM is a subset of the local past forks and the
-    //      remote FORK_NEXT matches with the locally following fork block number,
-    //      connect.
-    //        Remote node is currently syncing. It might eventually diverge from
-    //        us, but at this current point in time we don't have enough information.
-    //   3. If the remote FORK_CSUM is a superset of the local past forks and can
-    //      be completed with locally known future forks, connect.
-    //        Local node is currently syncing. It might eventually diverge from
-    //        the remote, but at this current point in time we don't have enough
-    //        information.
-    //   4. Reject in all other cases.
-    if (isHashKnown(forkId.getHash())) {
-      if (blockchain.getChainHeadBlockNumber() < forkNext) {
-        return true;
-      } else {
-        if (isForkKnown(forkId.getNext())) {
-          return isRemoteAwareOfPresent(forkId.getHash(), forkId.getNext());
-        } else {
-          return false;
-        }
-      }
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Non EIP-2124 behaviour
-   *
-   * @param peerGenesisHash Hash to be validated.
-   * @return boolean
-   */
-  public boolean peerCheck(final Bytes32 peerGenesisHash) {
-    return !peerGenesisHash.equals(genesisHash);
-  }
-
-  private boolean isHashKnown(final Bytes forkHash) {
-    return forkAndHashList.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
-  }
-
-  private boolean isForkKnown(final Long nextFork) {
-    return highestKnownFork < nextFork
-        || forkAndHashList.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
-  }
-
-  private boolean isRemoteAwareOfPresent(final Bytes forkHash, final Long nextFork) {
-    for (final ForkId j : forkAndHashList) {
-      if (forkHash.equals(j.getHash())) {
-        if (nextFork.equals(j.getNext())) {
-          return true;
-        } else if (j.getNext() == 0L) {
-          return highestKnownFork <= nextFork; // Remote aware of an additional future fork
-        } else {
-          return false;
-        }
-      }
-    }
-    return false;
   }
 
   private void createForkIds() {

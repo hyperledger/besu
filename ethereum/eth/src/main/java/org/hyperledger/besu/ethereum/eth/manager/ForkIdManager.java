@@ -65,7 +65,7 @@ public class ForkIdManager {
 
   public ForkId computeForkId() {
     if (legacyEth64) {
-      return forkAndHashList.size() > 0 ? forkAndHashList.get(forkAndHashList.size() - 1) : null;
+      return forkAndHashList.isEmpty() ? null : forkAndHashList.get(forkAndHashList.size() - 1);
     }
     final long head = chainHeadSupplier.getAsLong();
     for (final ForkId forkId : forkAndHashList) {
