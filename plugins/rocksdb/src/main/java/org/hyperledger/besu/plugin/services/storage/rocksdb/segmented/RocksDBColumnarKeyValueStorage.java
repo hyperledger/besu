@@ -68,6 +68,7 @@ public class RocksDBColumnarKeyValueStorage
 
   private static final Logger LOG = LogManager.getLogger();
   private static final String DEFAULT_COLUMN = "default";
+  private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
   private final DBOptions options;
   private final TransactionDBOptions txOptions;
@@ -81,7 +82,8 @@ public class RocksDBColumnarKeyValueStorage
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
       final MetricsSystem metricsSystem,
-      final RocksDBMetricsFactory rocksDBMetricsFactory) {
+      final RocksDBMetricsFactory rocksDBMetricsFactory)
+      throws StorageException {
 
     try (final ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions()) {
       final List<ColumnFamilyDescriptor> columnDescriptors =
@@ -146,7 +148,8 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Optional<byte[]> get(final ColumnFamilyHandle segment, final byte[] key) {
+  public Optional<byte[]> get(final ColumnFamilyHandle segment, final byte[] key)
+      throws StorageException {
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
@@ -157,7 +160,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Transaction<ColumnFamilyHandle> startTransaction() {
+  public Transaction<ColumnFamilyHandle> startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
@@ -242,6 +245,10 @@ public class RocksDBColumnarKeyValueStorage
       try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
         innerTx.put(segment, key, value);
       } catch (final RocksDBException e) {
+        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+          LOG.error(e.getMessage());
+          System.exit(0);
+        }
         throw new StorageException(e);
       }
     }
@@ -251,16 +258,21 @@ public class RocksDBColumnarKeyValueStorage
       try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
         innerTx.delete(segment, key);
       } catch (final RocksDBException e) {
+        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+          LOG.error(e.getMessage());
+          System.exit(0);
+        }
         throw new StorageException(e);
       }
     }
 
     @Override
-    public void commit() {
+    public void commit() throws StorageException {
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
         innerTx.commit();
       } catch (final RocksDBException e) {
-        if (e.getMessage().contains("No space left on device")) {
+        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+          LOG.error(e.getMessage());
           System.exit(0);
         }
         throw new StorageException(e);
@@ -275,6 +287,10 @@ public class RocksDBColumnarKeyValueStorage
         innerTx.rollback();
         metrics.getRollbackCount().inc();
       } catch (final RocksDBException e) {
+        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+          LOG.error(e.getMessage());
+          System.exit(0);
+        }
         throw new StorageException(e);
       } finally {
         close();
