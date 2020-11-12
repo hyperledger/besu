@@ -1416,6 +1416,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand configure() throws Exception {
     checkPortClash();
+    checkQuorumCompatConfig();
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -2168,9 +2169,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // If no chain id is found in the genesis as it's an optional, we use mainnet
         // network id.
         try {
-          final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
           builder.setNetworkId(
-              genesisConfigFile
+              getGenesisConfigFile()
                   .getConfigOptions(genesisConfigOverrides)
                   .getChainId()
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
@@ -2216,6 +2216,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     return builder.build();
+  }
+
+  private GenesisConfigFile getGenesisConfigFile() {
+    return GenesisConfigFile.fromConfig(genesisConfig());
   }
 
   private String genesisConfig() {
@@ -2327,6 +2331,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         + "' has been specified multiple times. Please review the supplied configuration.");
               }
             });
+  }
+
+  private void checkQuorumCompatConfig() {
+    if (genesisFile != null
+        && getGenesisConfigFile().getConfigOptions().isQuorum()
+        && !minTransactionGasPrice.isZero()) {
+      throw new ParameterException(
+          this.commandLine,
+          "--min-gas-price must be set to zero if Quorum interop is enabled in the genesis config.");
+    }
   }
 
   @VisibleForTesting
