@@ -19,8 +19,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -44,13 +44,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
@@ -244,8 +244,8 @@ public class DefaultPrivacyControllerTest {
     when(privateTransactionSimulator.process(any(), any()))
         .thenReturn(
             Optional.of(
-                new PrivateTransactionProcessor.Result(
-                    TransactionProcessor.Result.Status.SUCCESSFUL,
+                new TransactionProcessingResult(
+                    TransactionProcessingResult.Status.SUCCESSFUL,
                     emptyList(),
                     0,
                     0,
@@ -437,9 +437,9 @@ public class DefaultPrivacyControllerTest {
     when(privateTransactionSimulator.process(any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
-                PrivateTransactionProcessor.Result.successful(
+                TransactionProcessingResult.successful(
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
-    final Optional<PrivateTransactionProcessor.Result> result =
+    final Optional<TransactionProcessingResult> result =
         privacyController.simulatePrivateTransaction(
             "Group1", ENCLAVE_PUBLIC_KEY, callParameter, 1);
     assertThat(result.isPresent()).isTrue();

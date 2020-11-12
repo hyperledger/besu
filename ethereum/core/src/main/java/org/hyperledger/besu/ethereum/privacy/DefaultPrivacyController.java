@@ -29,17 +29,18 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -178,7 +179,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
+  public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
     return privateTransactionValidator.validate(
@@ -225,12 +226,12 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+  public Optional<TransactionProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
       final String enclavePublicKey,
       final CallParameter callParams,
       final long blockNumber) {
-    final Optional<PrivateTransactionProcessor.Result> result =
+    final Optional<TransactionProcessingResult> result =
         privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
     return result;
   }
@@ -286,7 +287,7 @@ public class DefaultPrivacyController implements PrivacyController {
 
   public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(final Bytes privacyGroupId) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
+    final Optional<TransactionProcessingResult> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
             privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
 
@@ -316,7 +317,7 @@ public class DefaultPrivacyController implements PrivacyController {
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
+    final Optional<TransactionProcessingResult> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
             privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
 
@@ -482,7 +483,7 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivacyGroup privacyGroup = maybePrivacyGroup.get();
       if (privacyGroup.getType() == PrivacyGroup.Type.ONCHAIN) {
         // onchain privacy group
-        final Optional<PrivateTransactionProcessor.Result> result =
+        final Optional<TransactionProcessingResult> result =
             privateTransactionSimulator.process(
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
                 buildCallParams(GET_VERSION_METHOD_SIGNATURE));
