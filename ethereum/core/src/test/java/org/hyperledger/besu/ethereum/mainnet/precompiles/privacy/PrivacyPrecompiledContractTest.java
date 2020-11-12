@@ -41,7 +41,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -50,7 +49,9 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
@@ -85,7 +86,7 @@ public class PrivacyPrecompiledContractTest {
       new PrivateStateRootResolver(privateStateStorage);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
-      final PrivateTransactionProcessor.Result result) {
+      final TransactionProcessingResult result) {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
@@ -149,7 +150,7 @@ public class PrivacyPrecompiledContractTest {
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.successful(
+            TransactionProcessingResult.successful(
                 logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
@@ -251,7 +252,7 @@ public class PrivacyPrecompiledContractTest {
     final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.successful(
+            TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
@@ -287,9 +288,8 @@ public class PrivacyPrecompiledContractTest {
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
-            PrivateTransactionProcessor.Result.invalid(
-                ValidationResult.invalid(
-                    TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE))));
+            TransactionProcessingResult.invalid(
+                ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
     final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);

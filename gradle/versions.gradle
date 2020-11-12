@@ -86,13 +86,13 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
     dependency 'org.fusesource.jansi:jansi:1.8'
 
-    dependency 'org.apache.tuweni:tuweni-bytes:1.1.0'
-    dependency 'org.apache.tuweni:tuweni-config:1.1.0'
-    dependency 'org.apache.tuweni:tuweni-crypto:1.1.0'
-    dependency 'org.apache.tuweni:tuweni-io:1.1.0'
-    dependency 'org.apache.tuweni:tuweni-toml:1.1.0'
-    dependency 'org.apache.tuweni:tuweni-units:1.1.0'
-    dependency 'org.apache.tuweni:tuweni-net:1.1.0'
+    dependency 'org.apache.tuweni:bytes:1.2.0'
+    dependency 'org.apache.tuweni:config:1.2.0'
+    dependency 'org.apache.tuweni:crypto:1.2.0'
+    dependency 'org.apache.tuweni:io:1.2.0'
+    dependency 'org.apache.tuweni:toml:1.2.0'
+    dependency 'org.apache.tuweni:units:1.2.0'
+    dependency 'org.apache.tuweni:net:1.2.0'
 
     dependency 'org.assertj:assertj-core:3.16.1'
 
@@ -101,9 +101,8 @@ dependencyManagement {
     dependency 'org.bouncycastle:bcpkix-jdk15on:1.65'
     dependency 'org.bouncycastle:bcprov-jdk15on:1.65.01'
 
-    dependency 'org.hyperledger.besu:altbn128:0.2.0'
-    dependency 'org.hyperledger.besu:bls12-381:0.2.0'
-    dependency 'org.hyperledger.besu:secp256k1:0.2.0'
+    dependency 'org.hyperledger.besu:bls12-381:0.3.0'
+    dependency 'org.hyperledger.besu:secp256k1:0.3.0'
 
     dependency 'org.java-websocket:Java-WebSocket:1.5.1'
 

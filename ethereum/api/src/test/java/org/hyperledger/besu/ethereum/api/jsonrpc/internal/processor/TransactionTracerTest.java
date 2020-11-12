@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -83,7 +83,7 @@ public class TransactionTracerTest {
 
   @Mock private MutableWorldState mutableWorldState;
 
-  @Mock private TransactionProcessor transactionProcessor;
+  @Mock private MainnetTransactionProcessor transactionProcessor;
 
   private TransactionTracer transactionTracer;
 
@@ -159,7 +159,7 @@ public class TransactionTracerTest {
 
   @Test
   public void traceTransactionShouldReturnResultFromProcessTransaction() {
-    final Result result = mock(Result.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
 
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockHeader(previousBlockHash)).thenReturn(Optional.of(previousBlockHeader));
@@ -176,6 +176,7 @@ public class TransactionTracerTest {
             eq(transaction),
             eq(coinbase),
             eq(tracer),
+            any(),
             any(),
             any()))
         .thenReturn(result);
@@ -218,10 +219,15 @@ public class TransactionTracerTest {
 
     final List<Transaction> transactions = new ArrayList<>();
 
+    when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(previousBlockHash)).thenReturn(Optional.of(previousBlockHeader));
+
+    when(blockBody.getTransactions()).thenReturn(transactions);
+    when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
+
     final List<String> transactionTraces =
         transactionTracer.traceTransactionToFile(
             blockHash,
-            transactions,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
             traceDir.getRoot().toPath());
 
@@ -232,8 +238,10 @@ public class TransactionTracerTest {
   public void traceTransactionToFileShouldReturnResultFromProcessTransaction() throws IOException {
 
     List<Transaction> transactions = Collections.singletonList(transaction);
+    when(blockBody.getTransactions()).thenReturn(transactions);
+    when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
-    final Result result = mock(Result.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
     when(result.getOutput()).thenReturn(Bytes.of(0x01, 0x02));
 
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
@@ -259,7 +267,6 @@ public class TransactionTracerTest {
     final List<String> transactionTraces =
         transactionTracer.traceTransactionToFile(
             blockHash,
-            transactions,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
             traceDir.getRoot().toPath());
 

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -28,7 +29,7 @@ public class VersionedPrivateTransaction {
 
   public VersionedPrivateTransaction(
       final PrivateTransaction privateTransaction,
-      final Optional<PrivateTransactionProcessor.Result> result) {
+      final Optional<TransactionProcessingResult> result) {
     this(
         privateTransaction,
         result

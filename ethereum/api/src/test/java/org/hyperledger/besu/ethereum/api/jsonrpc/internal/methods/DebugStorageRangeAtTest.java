@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +65,8 @@ public class DebugStorageRangeAtTest {
       new DebugStorageRangeAt(blockchainQueries, blockReplay);
   private final MutableWorldState worldState = mock(MutableWorldState.class);
   private final Account account = mock(Account.class);
-  private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+  private final MainnetTransactionProcessor transactionProcessor =
+      mock(MainnetTransactionProcessor.class);
   private final Transaction transaction = mock(Transaction.class);
 
   private final BlockHeader blockHeader = mock(BlockHeader.class);

@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -54,8 +54,6 @@ public class MainnetTransactionValidatorTest {
   @Mock private GasCalculator gasCalculator;
 
   @Mock private TransactionPriceCalculator transactionPriceCalculator;
-
-  final FeeMarket feeMarket = FeeMarket.eip1559();
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()
@@ -80,8 +78,7 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(validator.validate(transaction, Optional.empty()))
         .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT));
+            ValidationResult.invalid(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT));
   }
 
   @Test
@@ -91,8 +88,7 @@ public class MainnetTransactionValidatorTest {
     assertThat(validator.validate(basicTransaction, Optional.empty()))
         .isEqualTo(
             ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason
-                    .REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED));
+                TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED));
   }
 
   @Test
@@ -100,8 +96,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.valueOf(2)));
     assertThat(validator.validate(basicTransaction, Optional.empty()))
-        .isEqualTo(
-            ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.WRONG_CHAIN_ID));
   }
 
   @Test
@@ -109,9 +104,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.ONE));
     assertThat(validator.validateForSender(basicTransaction, null, false))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE));
   }
 
   @Test
@@ -121,8 +114,7 @@ public class MainnetTransactionValidatorTest {
 
     final Account account = accountWithNonce(basicTransaction.getNonce() + 1);
     assertThat(validator.validateForSender(basicTransaction, account, false))
-        .isEqualTo(
-            ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
   }
 
   @Test
@@ -133,9 +125,7 @@ public class MainnetTransactionValidatorTest {
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, false))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
   }
 
   @Test
@@ -159,9 +149,7 @@ public class MainnetTransactionValidatorTest {
     final Account account = accountWithNonce(5);
 
     assertThat(validator.validateForSender(transaction, account, false))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
   }
 
   @Test
@@ -185,9 +173,7 @@ public class MainnetTransactionValidatorTest {
     validator.setTransactionFilter(transactionFilter(false));
 
     assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), true))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
   }
 
   @Test
@@ -202,9 +188,15 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
-    final ArgumentCaptor<Boolean> stateChangeParamCaptor = ArgumentCaptor.forClass(Boolean.class);
+    final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
+        ArgumentCaptor.forClass(Boolean.class);
+    final ArgumentCaptor<Boolean> stateChangeOnchainParamCaptor =
+        ArgumentCaptor.forClass(Boolean.class);
     final TransactionFilter transactionFilter = mock(TransactionFilter.class);
-    when(transactionFilter.permitted(any(Transaction.class), stateChangeParamCaptor.capture()))
+    when(transactionFilter.permitted(
+            any(Transaction.class),
+            stateChangeLocalParamCaptor.capture(),
+            stateChangeOnchainParamCaptor.capture()))
         .thenReturn(true);
 
     final MainnetTransactionValidator validator =
@@ -216,7 +208,8 @@ public class MainnetTransactionValidatorTest {
 
     validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
 
-    assertThat(stateChangeParamCaptor.getValue()).isTrue();
+    assertThat(stateChangeLocalParamCaptor.getValue()).isTrue();
+    assertThat(stateChangeOnchainParamCaptor.getValue()).isTrue();
   }
 
   @Test
@@ -260,9 +253,7 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     assertThat(validator.validate(transaction, Optional.empty()))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
     ExperimentalEIPs.eip1559Enabled = false;
   }
 
@@ -288,10 +279,30 @@ public class MainnetTransactionValidatorTest {
     final Optional<Long> basefee = Optional.of(150000L);
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(1));
     assertThat(validator.validate(transaction, basefee))
-        .isEqualTo(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
     ExperimentalEIPs.eip1559Enabled = false;
+  }
+
+  @Test
+  public void shouldRejectEIP1559TransactionIfEIP115Disabled() {
+    ExperimentalEIPs.eip1559Enabled = false;
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            Optional.of(transactionPriceCalculator),
+            false,
+            Optional.empty(),
+            Optional.empty(),
+            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPremium(Optional.of(Wei.of(1)))
+            .feeCap(Optional.of(Wei.of(1)))
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    final Optional<Long> basefee = Optional.of(150000L);
+    assertThat(validator.validate(transaction, basefee))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
   }
 
   @Test
@@ -334,7 +345,8 @@ public class MainnetTransactionValidatorTest {
 
   private TransactionFilter transactionFilter(final boolean permitted) {
     final TransactionFilter transactionFilter = mock(TransactionFilter.class);
-    when(transactionFilter.permitted(any(Transaction.class), anyBoolean())).thenReturn(permitted);
+    when(transactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
+        .thenReturn(permitted);
     return transactionFilter;
   }
 }

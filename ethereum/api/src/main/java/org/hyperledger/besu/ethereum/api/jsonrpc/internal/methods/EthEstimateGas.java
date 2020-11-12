@@ -25,9 +25,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.EstimateGasOperationTracer;
@@ -61,6 +62,11 @@ public class EthEstimateGas implements JsonRpcMethod {
     if (blockHeader == null) {
       return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
     }
+    if (!blockchainQueries
+        .getWorldStateArchive()
+        .isWorldStateAvailable(blockHeader.getStateRoot())) {
+      return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+    }
 
     final JsonCallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
@@ -85,6 +91,8 @@ public class EthEstimateGas implements JsonRpcMethod {
         callParams.getTo() != null ? callParams.getTo().toString() : null,
         Quantity.create(gasLimit),
         Quantity.create(0L),
+        callParams.getGasPremium().map(Quantity::create).orElse(null),
+        callParams.getFeeCap().map(Quantity::create).orElse(null),
         callParams.getValue() != null ? Quantity.create(callParams.getValue()) : null,
         callParams.getPayload() != null ? callParams.getPayload().toString() : null);
   }
@@ -96,7 +104,7 @@ public class EthEstimateGas implements JsonRpcMethod {
             ? new JsonRpcSuccessResponse(
                 request.getRequest().getId(),
                 Quantity.create(processEstimateGas(result, operationTracer)))
-            : errorResponse(request, result.getValidationResult());
+            : errorResponse(request, result);
   }
 
   /**
@@ -119,21 +127,28 @@ public class EthEstimateGas implements JsonRpcMethod {
   }
 
   private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request,
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-    JsonRpcError jsonRpcError = null;
+      final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
+    final JsonRpcError jsonRpcError;
+
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
       jsonRpcError =
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason());
+    } else {
+      final TransactionProcessingResult resultTrx = result.getResult();
+      if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
+        jsonRpcError = JsonRpcError.REVERT_ERROR;
+      } else {
+        jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+      }
     }
     return errorResponse(request, jsonRpcError);
   }
 
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(
-        request.getRequest().getId(),
-        jsonRpcError == null ? JsonRpcError.INTERNAL_ERROR : jsonRpcError);
+    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 }

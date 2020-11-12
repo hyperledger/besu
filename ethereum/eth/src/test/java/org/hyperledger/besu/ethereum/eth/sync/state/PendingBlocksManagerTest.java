@@ -182,26 +182,44 @@ public class PendingBlocksManagerTest {
 
   @Test
   public void shouldReplaceLowestPriorityBlockWhenCacheIsFull() {
-    final int nbBlocks = 3;
     pendingBlocksManager =
         new PendingBlocksManager(
             SynchronizerConfiguration.builder().blockPropagationRange(-1, 3).build());
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final List<Block> childBlockFromNodeOne = gen.blockSequence(nbBlocks);
-    Block reorgBlock = null;
 
-    // add new blocks from node 1
-    for (Block block : childBlockFromNodeOne) {
-      pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
-      if (block.getHeader().getNumber() == 1) {
-        // add reorg block
-        reorgBlock =
-            gen.block(
-                gen.nextBlockOptions(block).setTimestamp(block.getHeader().getTimestamp() + 1));
-        pendingBlocksManager.registerPendingBlock(reorgBlock, NODE_ID_1);
-      }
-    }
-    // BLOCK 0 , BLOCK 1, BLOCK 2, BLOCK 2-reorg
+    final ArrayDeque<Block> childBlockFromNodeOne = new ArrayDeque<>();
+
+    // block 0
+    childBlockFromNodeOne.add(
+        gen.block(new BlockDataGenerator.BlockOptions().setBlockNumber(0).setTimestamp(0L)));
+    pendingBlocksManager.registerPendingBlock(childBlockFromNodeOne.getLast(), NODE_ID_1);
+
+    // block 1
+    childBlockFromNodeOne.add(
+        gen.block(
+            gen.nextBlockOptions(childBlockFromNodeOne.element())
+                .setBlockNumber(1)
+                .setTimestamp(1L)));
+    pendingBlocksManager.registerPendingBlock(childBlockFromNodeOne.getLast(), NODE_ID_1);
+
+    // block 1 reorg
+    final Block reorgBlock =
+        gen.block(
+            gen.nextBlockOptions(childBlockFromNodeOne.element())
+                .setBlockNumber(1)
+                .setTimestamp(3L));
+    childBlockFromNodeOne.add(reorgBlock);
+    pendingBlocksManager.registerPendingBlock(reorgBlock, NODE_ID_1);
+
+    // block 2
+    childBlockFromNodeOne.add(
+        gen.block(
+            gen.nextBlockOptions(childBlockFromNodeOne.element())
+                .setBlockNumber(2)
+                .setTimestamp(2L)));
+    pendingBlocksManager.registerPendingBlock(childBlockFromNodeOne.getLast(), NODE_ID_1);
+
+    assertThat(pendingBlocksManager.contains(reorgBlock.getHash())).isTrue();
 
     // try to add a new block (not added because low priority : block number too high)
     final Block lowPriorityBlock =
@@ -211,10 +229,10 @@ public class PendingBlocksManagerTest {
 
     // try to add a new block (added because high priority : low block number and high timestamp)
     final Block highPriorityBlock =
-        gen.block(gen.nextBlockOptions(childBlockFromNodeOne.get(0)).setTimestamp(Long.MAX_VALUE));
+        gen.block(
+            gen.nextBlockOptions(childBlockFromNodeOne.getFirst()).setTimestamp(Long.MAX_VALUE));
     pendingBlocksManager.registerPendingBlock(highPriorityBlock, NODE_ID_1);
     assertThat(pendingBlocksManager.contains(highPriorityBlock.getHash())).isTrue();
-    // BLOCK 0 , BLOCK 1, BLOCK 1-reorg, BLOCK 2-reorg
 
     // check blocks in the cache
     // and verify remove the block with the lowest priority (BLOCK-2)

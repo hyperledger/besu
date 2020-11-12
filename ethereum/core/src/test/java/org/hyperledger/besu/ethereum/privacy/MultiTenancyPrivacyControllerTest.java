@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.math.BigInteger;
@@ -362,9 +363,9 @@ public class MultiTenancyPrivacyControllerTest {
     when(privacyController.simulatePrivateTransaction(any(), any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
-                PrivateTransactionProcessor.Result.successful(
+                TransactionProcessingResult.successful(
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
-    final Optional<PrivateTransactionProcessor.Result> result =
+    final Optional<TransactionProcessingResult> result =
         multiTenancyPrivacyController.simulatePrivateTransaction(
             PRIVACY_GROUP_ID,
             ENCLAVE_PUBLIC_KEY1,

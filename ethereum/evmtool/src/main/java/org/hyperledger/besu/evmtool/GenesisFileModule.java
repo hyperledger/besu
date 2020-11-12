@@ -64,7 +64,7 @@ public class GenesisFileModule {
   @Provides
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
-      @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
+      @Named("MetadataEnabled") final boolean metadataEnabled) {
     throw new RuntimeException("Abstract");
   }
 

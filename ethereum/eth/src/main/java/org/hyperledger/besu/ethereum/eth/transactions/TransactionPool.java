@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -36,21 +36,18 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -124,34 +121,19 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   void handleConnect(final EthPeer peer) {
-    final List<Transaction> localTransactions = getLocalTransactions();
-    for (final Transaction transaction : localTransactions) {
-      peerTransactionTracker.addToPeerSendQueue(peer, transaction);
-    }
-    maybePeerPendingTransactionTracker.ifPresent(
-        peerPendingTransactionTracker -> {
-          if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)) {
-            Iterator<Hash> hashIterator = getNewPooledHashes().iterator();
-            while (hashIterator.hasNext()) {
-              try {
-                peerPendingTransactionTracker.addToPeerSendQueue(peer, hashIterator.next());
-              } catch (ConcurrentModificationException __) {
-                // The hash got evicted somehow.
-                // For example, it was pushed out by new pooled transaction hashes or we got the
-                // full transaction and evicted it manually.
-                // Either way, we don't care and can continue.
-              }
-            }
-          }
-        });
-  }
+    pendingTransactions
+        .getLocalTransactions()
+        .forEach(transaction -> peerTransactionTracker.addToPeerSendQueue(peer, transaction));
 
-  private List<Transaction> getLocalTransactions() {
-    return pendingTransactions.getLocalTransactions();
-  }
-
-  public Collection<Hash> getNewPooledHashes() {
-    return pendingTransactions.getNewPooledHashes();
+    maybePeerPendingTransactionTracker
+        .filter(
+            peerPendingTransactionTracker ->
+                peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65))
+        .ifPresent(
+            peerPendingTransactionTracker ->
+                pendingTransactions
+                    .getNewPooledHashes()
+                    .forEach(hash -> peerPendingTransactionTracker.addToPeerSendQueue(peer, hash)));
   }
 
   public boolean addTransactionHash(final Hash transactionHash) {
@@ -248,7 +230,7 @@ public class TransactionPool implements BlockAddedObserver {
     addRemoteTransactions(event.getRemovedTransactions());
   }
 
-  private TransactionValidator getTransactionValidator() {
+  private MainnetTransactionValidator getTransactionValidator() {
     return protocolSchedule
         .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
         .getTransactionValidator();

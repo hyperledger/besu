@@ -26,6 +26,7 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
+import static org.hyperledger.besu.ethereum.permissioning.QuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
@@ -71,6 +72,7 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -98,7 +100,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -106,6 +108,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
+import org.hyperledger.besu.ethereum.permissioning.QuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
@@ -161,6 +164,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -874,10 +878,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isPrivacyMultiTenancyEnabled = false;
 
   @Option(
-      names = {"--revert-reason-enabled"},
+      names = {"--receipt-metadata-enabled", "--revert-reason-enabled"},
       description =
-          "Enable passing the revert reason back through TransactionReceipts (default: ${DEFAULT-VALUE})")
-  private final Boolean isRevertReasonEnabled = false;
+          "Enable passing metadata back through TransactionReceipts (default: ${DEFAULT-VALUE})")
+  private final Boolean isMetadataEnabled = false;
 
   @Option(
       names = {"--required-blocks", "--required-block"},
@@ -1279,7 +1283,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void configureNativeLibs() {
     if (unstableNativeLibraryOptions.getNativeAltbn128()) {
-      AltBN128PairingPrecompiledContract.enableNative();
+      AbstractAltBnPrecompiledContract.enableNative();
     }
     if (unstableNativeLibraryOptions.getNativeSecp256k1()) {
       SECP256K1.enableNative();
@@ -1507,7 +1511,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
-        .isRevertReasonEnabled(isRevertReasonEnabled)
+        .isMetadataEnabled(isMetadataEnabled)
         .storageProvider(keyStorageProvider(keyValueStorageName))
         .isPruningEnabled(isPruningEnabled())
         .pruningConfiguration(
@@ -1793,6 +1797,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         SmartContractPermissioningConfiguration.createDefault();
+
     if (permissionsNodesContractEnabled) {
       if (permissionsNodesContractAddress == null) {
         throw new ParameterException(
@@ -1832,9 +1837,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
             localPermissioningConfigurationOptional,
-            Optional.of(smartContractPermissioningConfiguration));
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.of(quorumPermissioningConfig()));
 
     return Optional.of(permissioningConfiguration);
+  }
+
+  private QuorumPermissioningConfiguration quorumPermissioningConfig() {
+    final GenesisConfigOptions genesisConfigOptions;
+    try {
+      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
+      genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
+    } catch (Exception e) {
+      return QuorumPermissioningConfiguration.disabled();
+    }
+
+    final boolean isQuorumMode = genesisConfigOptions.isQuorum();
+    final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
+    if (isQuorumMode) {
+      return QuorumPermissioningConfiguration.enabled(
+          qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK));
+    } else {
+      return QuorumPermissioningConfiguration.disabled();
+    }
   }
 
   private boolean localPermissionsEnabled() {

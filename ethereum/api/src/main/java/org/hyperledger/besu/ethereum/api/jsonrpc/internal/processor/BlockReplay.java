@@ -21,9 +21,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -122,8 +122,7 @@ public class BlockReplay {
         });
   }
 
-  private <T> Optional<T> performActionWithBlock(
-      final Hash blockHash, final BlockAction<T> action) {
+  public <T> Optional<T> performActionWithBlock(final Hash blockHash, final BlockAction<T> action) {
     Optional<Block> maybeBlock = getBlock(blockHash);
     if (maybeBlock.isEmpty()) {
       maybeBlock = getBadBlock(blockHash);
@@ -141,7 +140,7 @@ public class BlockReplay {
       return Optional.empty();
     }
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
-    final TransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
+    final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final BlockHeader previous = blockchain.getBlockHeader(header.getParentHash()).orElse(null);
     if (previous == null) {
       return Optional.empty();
@@ -172,13 +171,13 @@ public class BlockReplay {
   }
 
   @FunctionalInterface
-  private interface BlockAction<T> {
+  public interface BlockAction<T> {
     Optional<T> perform(
         BlockBody body,
         BlockHeader blockHeader,
         Blockchain blockchain,
         MutableWorldState worldState,
-        TransactionProcessor transactionProcessor);
+        MainnetTransactionProcessor transactionProcessor);
   }
 
   @FunctionalInterface
@@ -188,6 +187,6 @@ public class BlockReplay {
         BlockHeader blockHeader,
         Blockchain blockchain,
         MutableWorldState worldState,
-        TransactionProcessor transactionProcessor);
+        MainnetTransactionProcessor transactionProcessor);
   }
 }

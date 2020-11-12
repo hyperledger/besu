@@ -27,8 +27,9 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
@@ -39,14 +40,18 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -64,7 +69,8 @@ import picocli.CommandLine.ParentCommand;
 @Command(
     name = COMMAND_NAME,
     description = "Execute an Ethereum State Test.",
-    mixinStandardHelpOptions = true)
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
 public class StateTestSubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
@@ -94,14 +100,27 @@ public class StateTestSubCommand implements Runnable {
             .constructParametricType(Map.class, String.class, GeneralStateTestCaseSpec.class);
     try {
       if (stateTestFiles.isEmpty()) {
-        // if no state tests were specified use standard input
+        // if no state tests were specified use standard input to get filenames
+        final BufferedReader in =
+            new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         while (true) {
-          final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-              objectMapper.readValue(System.in, javaType);
-          if (generalStateTests == null || generalStateTests.isEmpty()) {
+          final String fileName = in.readLine();
+          if (fileName == null) {
+            // reached end of file.  Stop the loop.
             break;
           }
-          executeStateTest(generalStateTests);
+          final File file = new File(fileName);
+          if (file.isFile()) {
+            try {
+              final Map<String, GeneralStateTestCaseSpec> generalStateTests =
+                  objectMapper.readValue(file, javaType);
+              executeStateTest(generalStateTests);
+            } catch (final JsonProcessingException jpe) {
+              System.out.println("File content error :" + jpe.toString());
+            }
+          } else {
+            System.out.println("File not found:" + fileName);
+          }
         }
       } else {
         for (final File stateTestFile : stateTestFiles) {
@@ -127,7 +146,7 @@ public class StateTestSubCommand implements Runnable {
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
     Configurator.setLevel(
         "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
-    var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
+    final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
     Configurator.setLevel("org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
 
     final OperationTracer tracer = // You should have picked Mercy.
@@ -150,7 +169,7 @@ public class StateTestSubCommand implements Runnable {
         return;
       }
 
-      final TransactionProcessor processor =
+      final MainnetTransactionProcessor processor =
           referenceTestProtocolSchedules
               .getByName(fork == null ? spec.getFork() : fork)
               .getByBlockNumber(0)
@@ -159,7 +178,7 @@ public class StateTestSubCommand implements Runnable {
       final ReferenceTestBlockchain blockchain =
           new ReferenceTestBlockchain(blockHeader.getNumber());
       final Stopwatch timer = Stopwatch.createStarted();
-      final TransactionProcessor.Result result =
+      final TransactionProcessingResult result =
           processor.processTransaction(
               blockchain,
               worldStateUpdater,

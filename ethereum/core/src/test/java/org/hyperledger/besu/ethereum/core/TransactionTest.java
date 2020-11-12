@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.testutil.JsonTestParameters;
@@ -37,7 +37,7 @@ public class TransactionTest {
   private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
       ReferenceTestProtocolSchedules.create();
 
-  private static TransactionValidator transactionValidator(final String name) {
+  private static MainnetTransactionValidator transactionValidator(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
         .getByName(name)
         .getByBlockNumber(0)
