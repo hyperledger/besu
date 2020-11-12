@@ -302,7 +302,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public boolean isQuorum() {
-    return getOptionalBoolean("isQuorum").orElse(false);
+    return getOptionalBoolean("isquorum").orElse(false);
   }
 
   @Override

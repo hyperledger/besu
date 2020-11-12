@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -190,11 +191,12 @@ public class PrivacyBlockProcessorTest {
   @SuppressWarnings("rawtypes")
   private ProtocolSpec mockProtocolSpec() {
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-    final TransactionProcessor mockPublicTransactionProcessor = mock(TransactionProcessor.class);
+    final MainnetTransactionProcessor mockPublicTransactionProcessor =
+        mock(MainnetTransactionProcessor.class);
     when(mockPublicTransactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
-            MainnetTransactionProcessor.Result.successful(
+            TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
     when(protocolSpec.getTransactionProcessor()).thenReturn(mockPublicTransactionProcessor);
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
@@ -202,7 +204,7 @@ public class PrivacyBlockProcessorTest {
     when(mockPrivateTransactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
-            PrivateTransactionProcessor.Result.successful(
+            TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
     when(protocolSpec.getPrivateTransactionProcessor()).thenReturn(mockPrivateTransactionProcessor);
     final AbstractBlockProcessor.TransactionReceiptFactory mockTransactionReceiptFactory =

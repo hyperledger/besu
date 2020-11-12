@@ -20,17 +20,16 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -40,10 +39,7 @@ import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +53,7 @@ public class PrivateTransactionProcessor {
   private final GasCalculator gasCalculator;
 
   @SuppressWarnings("unused")
-  private final TransactionValidator transactionValidator;
+  private final MainnetTransactionValidator transactionValidator;
 
   private final PrivateTransactionValidator privateTransactionValidator;
 
@@ -69,123 +65,12 @@ public class PrivateTransactionProcessor {
 
   private final int createContractAccountVersion;
 
-  public static class Result implements TransactionProcessor.Result {
-
-    private final Status status;
-
-    private final long estimateGasUsedByTransaction;
-
-    private final long gasRemaining;
-
-    private final List<Log> logs;
-
-    private final Bytes output;
-
-    private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
-    private final Optional<Bytes> revertReason;
-
-    public static Result invalid(
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new Result(
-          Status.INVALID,
-          new ArrayList<>(),
-          -1,
-          -1,
-          Bytes.EMPTY,
-          validationResult,
-          Optional.empty());
-    }
-
-    public static Result failed(
-        final long gasUsedByTransaction,
-        final long gasRemaining,
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<Bytes> revertReason) {
-      return new Result(
-          Status.FAILED,
-          new ArrayList<>(),
-          gasUsedByTransaction,
-          gasRemaining,
-          Bytes.EMPTY,
-          validationResult,
-          revertReason);
-    }
-
-    public static Result successful(
-        final List<Log> logs,
-        final long gasUsedByTransaction,
-        final long gasRemaining,
-        final Bytes output,
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
-      return new Result(
-          Status.SUCCESSFUL,
-          logs,
-          gasUsedByTransaction,
-          gasRemaining,
-          output,
-          validationResult,
-          Optional.empty());
-    }
-
-    Result(
-        final Status status,
-        final List<Log> logs,
-        final long estimateGasUsedByTransaction,
-        final long gasRemaining,
-        final Bytes output,
-        final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<Bytes> revertReason) {
-      this.status = status;
-      this.logs = logs;
-      this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
-      this.gasRemaining = gasRemaining;
-      this.output = output;
-      this.validationResult = validationResult;
-      this.revertReason = revertReason;
-    }
-
-    @Override
-    public List<Log> getLogs() {
-      return logs;
-    }
-
-    @Override
-    public long getGasRemaining() {
-      return gasRemaining;
-    }
-
-    @Override
-    public long getEstimateGasUsedByTransaction() {
-      return estimateGasUsedByTransaction;
-    }
-
-    @Override
-    public Status getStatus() {
-      return status;
-    }
-
-    @Override
-    public Bytes getOutput() {
-      return output;
-    }
-
-    @Override
-    public ValidationResult<TransactionValidator.TransactionInvalidReason> getValidationResult() {
-      return validationResult;
-    }
-
-    @Override
-    public Optional<Bytes> getRevertReason() {
-      return revertReason;
-    }
-  }
-
   @SuppressWarnings("unused")
   private final boolean clearEmptyAccounts;
 
   public PrivateTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
+      final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
@@ -203,7 +88,7 @@ public class PrivateTransactionProcessor {
   }
 
   @SuppressWarnings("unused")
-  public Result processTransaction(
+  public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater publicWorldState,
       final WorldUpdater privateWorldState,
@@ -224,10 +109,10 @@ public class PrivateTransactionProcessor {
               ? maybePrivateSender.getMutable()
               : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+      final ValidationResult<TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);
       if (!validationResult.isValid()) {
-        return Result.invalid(validationResult);
+        return TransactionProcessingResult.invalid(validationResult);
       }
 
       final long previousNonce = sender.incrementNonce();
@@ -327,19 +212,18 @@ public class PrivateTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        return Result.successful(
+        return TransactionProcessingResult.successful(
             initialFrame.getLogs(), 0, 0, initialFrame.getOutputData(), ValidationResult.valid());
       } else {
-        return Result.failed(
+        return TransactionProcessingResult.failed(
             0,
             0,
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
+            ValidationResult.invalid(TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
             initialFrame.getRevertReason());
       }
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
-      return Result.invalid(
+      return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));

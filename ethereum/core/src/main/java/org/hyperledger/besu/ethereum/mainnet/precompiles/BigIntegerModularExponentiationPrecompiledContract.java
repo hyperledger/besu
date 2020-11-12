@@ -29,16 +29,11 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class BigIntegerModularExponentiationPrecompiledContract
     extends AbstractPrecompiledContract {
 
-  private static final BigInteger WORD_SIZE = BigInteger.valueOf(32);
-  private static final BigInteger BITS_IN_BYTE = BigInteger.valueOf(8);
-  private static final BigInteger BASE_OFFSET = BigInteger.valueOf(96);
-  private static final BigInteger MAX_FIRST_EXPONENT_BYTES = BigInteger.valueOf(32);
-  private static final BigInteger GQUADDIVISOR = BigInteger.valueOf(20);
+  public static final BigInteger BASE_OFFSET = BigInteger.valueOf(96);
   private static final int PARAMETER_LENGTH = 32;
   private static final int BASE_LENGTH_OFFSET = 0;
   private static final int EXPONENT_LENGTH_OFFSET = 32;
   private static final int MODULUS_LENGTH_OFFSET = 64;
-  private static final int MAX_GAS_BITS = 255;
 
   private static final BigInteger BIGINT_4 = BigInteger.valueOf(4);
   private static final BigInteger BIGINT_16 = BigInteger.valueOf(16);
@@ -55,30 +50,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    // Typically gas calculations are delegated to a GasCalculator instance,
-    // but the complexity and coupling with other parts of the precompile seem
-    // like reasonable reasons to do the math here instead.
-    final BigInteger baseLength = baseLength(input);
-    final BigInteger exponentLength = exponentLength(input);
-    final BigInteger modulusLength = modulusLength(input);
-    final BigInteger exponentOffset = BASE_OFFSET.add(baseLength);
-    final int firstExponentBytesCap = exponentLength.min(MAX_FIRST_EXPONENT_BYTES).intValue();
-    final BigInteger firstExpBytes = extractParameter(input, exponentOffset, firstExponentBytesCap);
-    final BigInteger adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
-    final BigInteger multiplicationComplexity =
-        multiplicationComplexity(baseLength.max(modulusLength));
-    final BigInteger gasRequirement =
-        multiplicationComplexity
-            .multiply(adjustedExponentLength.max(BigInteger.ONE))
-            .divide(GQUADDIVISOR);
-
-    // Gas price is so large it will not fit in a Gas type, so an
-    // very very very unlikely high gas price is used instead.
-    if (gasRequirement.bitLength() > MAX_GAS_BITS) {
-      return Gas.of(Long.MAX_VALUE);
-    } else {
-      return Gas.of(gasRequirement);
-    }
+    return gasCalculator().modExpGasCost(input);
   }
 
   @Override
@@ -108,7 +80,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   // Equation to estimate the multiplication complexity.
-  private static BigInteger multiplicationComplexity(final BigInteger x) {
+  public static BigInteger multiplicationComplexity(final BigInteger x) {
     if (x.compareTo(BIGINT_64) <= 0) {
       return square(x);
     } else if (x.compareTo(BIGINT_1024) <= 0) {
@@ -118,31 +90,15 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
   }
 
-  private static BigInteger bitLength(final BigInteger n) {
-    return n.compareTo(BigInteger.ZERO) == 0
-        ? BigInteger.ZERO
-        : BigInteger.valueOf(n.bitLength() - 1);
-  }
-
-  private static BigInteger adjustedExponentLength(
-      final BigInteger exponentLength, final BigInteger firstExpBytes) {
-    final BigInteger bitLength = bitLength(firstExpBytes);
-    if (exponentLength.compareTo(WORD_SIZE) <= 0) {
-      return bitLength;
-    } else {
-      return BITS_IN_BYTE.multiply(exponentLength.subtract(WORD_SIZE)).add(bitLength);
-    }
-  }
-
-  private static final BigInteger baseLength(final Bytes input) {
+  public static BigInteger baseLength(final Bytes input) {
     return extractParameter(input, BASE_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  private static final BigInteger exponentLength(final Bytes input) {
+  public static BigInteger exponentLength(final Bytes input) {
     return extractParameter(input, EXPONENT_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  private static final BigInteger modulusLength(final Bytes input) {
+  public static BigInteger modulusLength(final Bytes input) {
     return extractParameter(input, MODULUS_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
@@ -155,7 +111,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return new BigInteger(1, raw);
   }
 
-  private static BigInteger extractParameter(
+  public static BigInteger extractParameter(
       final Bytes input, final BigInteger offset, final int length) {
     if (BigInteger.valueOf(input.size()).compareTo(offset) <= 0) {
       return BigInteger.ZERO;
