@@ -34,6 +34,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.BlockBasedTableConfig;
@@ -61,6 +64,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final RocksDBMetrics rocksDBMetrics;
   private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
+  private final Tracer tracer;
 
   public RocksDBKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -69,6 +73,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
     try {
       final Statistics stats = new Statistics();
+      this.tracer = OpenTelemetry.getGlobalTracer("io.hyperledger.besu.rocksdbkv", "1.0.0");
       options =
           new Options()
               .setCreateIfMissing(true)
@@ -113,11 +118,15 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   public Optional<byte[]> get(final byte[] key) throws StorageException {
     throwIfClosed();
 
+    final Span span = tracer.spanBuilder("get").setSpanKind(Span.Kind.INTERNAL).startSpan();
     try (final OperationTimer.TimingContext ignored =
         rocksDBMetrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(db.get(key));
     } catch (final RocksDBException e) {
+      span.recordException(e);
       throw new StorageException(e);
+    } finally {
+      span.end();
     }
   }
 
@@ -135,15 +144,19 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public boolean tryDelete(final byte[] key) {
+    final Span span = tracer.spanBuilder("delete").setSpanKind(Span.Kind.INTERNAL).startSpan();
     try {
       db.delete(tryDeleteOptions, key);
       return true;
     } catch (RocksDBException e) {
+      span.recordException(e);
       if (e.getStatus().getCode() == Status.Code.Incomplete) {
         return false;
       } else {
         throw new StorageException(e);
       }
+    } finally {
+      span.end();
     }
   }
 
@@ -152,7 +165,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     throwIfClosed();
     final WriteOptions options = new WriteOptions();
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
-        new RocksDBTransaction(db.beginTransaction(options), options, rocksDBMetrics));
+        new RocksDBTransaction(db.beginTransaction(options), options, rocksDBMetrics, tracer));
   }
 
   @Override

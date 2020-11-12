@@ -41,6 +41,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -77,6 +81,8 @@ public class RocksDBColumnarKeyValueStorage
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
   private final RocksDBMetrics metrics;
   private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
+  private final Tracer tracer =
+      OpenTelemetry.getGlobalTracer("io.hyperledger.besu.rocksdbkv", "1.0.0");;
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -151,11 +157,16 @@ public class RocksDBColumnarKeyValueStorage
   public Optional<byte[]> get(final ColumnFamilyHandle segment, final byte[] key)
       throws StorageException {
     throwIfClosed();
+    final Span span = tracer.spanBuilder("get").setSpanKind(Span.Kind.INTERNAL).startSpan();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(db.get(segment, key));
     } catch (final RocksDBException e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR);
       throw new StorageException(e);
+    } finally {
+      span.end();
     }
   }
 
@@ -176,15 +187,20 @@ public class RocksDBColumnarKeyValueStorage
 
   @Override
   public boolean tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
+    final Span span = tracer.spanBuilder("delete").setSpanKind(Span.Kind.INTERNAL).startSpan();
     try {
       db.delete(segmentHandle, tryDeleteOptions, key);
       return true;
     } catch (RocksDBException e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR);
       if (e.getStatus().getCode() == Status.Code.Incomplete) {
         return false;
       } else {
         throw new StorageException(e);
       }
+    } finally {
+      span.end();
     }
   }
 
@@ -242,58 +258,81 @@ public class RocksDBColumnarKeyValueStorage
 
     @Override
     public void put(final ColumnFamilyHandle segment, final byte[] key, final byte[] value) {
+      final Span span = tracer.spanBuilder("put").setSpanKind(Span.Kind.INTERNAL).startSpan();
       try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
         innerTx.put(segment, key, value);
       } catch (final RocksDBException e) {
+        span.recordException(e);
+        span.setStatus(StatusCode.ERROR);
         if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
           LOG.error(e.getMessage());
+          span.end();
           System.exit(0);
         }
         throw new StorageException(e);
+      } finally {
+        span.end();
       }
     }
 
     @Override
     public void remove(final ColumnFamilyHandle segment, final byte[] key) {
+      final Span span = tracer.spanBuilder("remove").setSpanKind(Span.Kind.INTERNAL).startSpan();
       try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
         innerTx.delete(segment, key);
       } catch (final RocksDBException e) {
+        span.recordException(e);
+        span.setStatus(StatusCode.ERROR);
         if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
           LOG.error(e.getMessage());
+          span.end();
           System.exit(0);
         }
+
         throw new StorageException(e);
+      } finally {
+        span.end();
       }
     }
 
     @Override
     public void commit() throws StorageException {
+      final Span span = tracer.spanBuilder("commit").setSpanKind(Span.Kind.INTERNAL).startSpan();
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
         innerTx.commit();
       } catch (final RocksDBException e) {
+        span.recordException(e);
+        span.setStatus(StatusCode.ERROR);
         if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
           LOG.error(e.getMessage());
+          span.end();
           System.exit(0);
         }
         throw new StorageException(e);
       } finally {
         close();
+        span.end();
       }
     }
 
     @Override
     public void rollback() {
+      final Span span = tracer.spanBuilder("rollback").setSpanKind(Span.Kind.INTERNAL).startSpan();
       try {
         innerTx.rollback();
         metrics.getRollbackCount().inc();
       } catch (final RocksDBException e) {
+        span.recordException(e);
+        span.setStatus(StatusCode.ERROR);
         if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
           LOG.error(e.getMessage());
+          span.end();
           System.exit(0);
         }
         throw new StorageException(e);
       } finally {
         close();
+        span.end();
       }
     }
 

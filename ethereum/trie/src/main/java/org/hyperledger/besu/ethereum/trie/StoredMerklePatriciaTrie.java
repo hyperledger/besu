@@ -28,6 +28,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -41,6 +44,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   private final GetVisitor<V> getVisitor = new GetVisitor<>();
   private final RemoveVisitor<V> removeVisitor = new RemoveVisitor<>();
   private final StoredNodeFactory<V> nodeFactory;
+  private final Tracer tracer = OpenTelemetry.getGlobalTracer("io.hyperledger.besu.trie", "1.0.0");
 
   private Node<V> root;
 
@@ -82,34 +86,57 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public Optional<V> get(final K key) {
     checkNotNull(key);
-    return root.accept(getVisitor, bytesToPath(key)).getValue();
+    final Span span = tracer.spanBuilder("get").setSpanKind(Span.Kind.INTERNAL).startSpan();
+    try {
+      return root.accept(getVisitor, bytesToPath(key)).getValue();
+    } finally {
+      span.end();
+    }
   }
 
   @Override
   public Proof<V> getValueWithProof(final K key) {
     checkNotNull(key);
-    final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
-    final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
-    final List<Bytes> proof =
-        proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
-    return new Proof<>(value, proof);
+    final Span span =
+        tracer.spanBuilder("getValueWithProof").setSpanKind(Span.Kind.INTERNAL).startSpan();
+    try {
+      final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
+      final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
+      final List<Bytes> proof =
+          proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
+      return new Proof<>(value, proof);
+    } finally {
+      span.end();
+    }
   }
 
   @Override
   public void put(final K key, final V value) {
     checkNotNull(key);
     checkNotNull(value);
-    this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+    final Span span = tracer.spanBuilder("put").setSpanKind(Span.Kind.INTERNAL).startSpan();
+    try {
+      this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+    } finally {
+      span.end();
+    }
   }
 
   @Override
   public void remove(final K key) {
     checkNotNull(key);
-    this.root = root.accept(removeVisitor, bytesToPath(key));
+    final Span span = tracer.spanBuilder("remove").setSpanKind(Span.Kind.INTERNAL).startSpan();
+    try {
+      this.root = root.accept(removeVisitor, bytesToPath(key));
+    } finally {
+      span.end();
+    }
   }
 
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
+    final Span span = tracer.spanBuilder("commit").setSpanKind(Span.Kind.INTERNAL).startSpan();
+    try {
     final CommitVisitor<V> commitVisitor = new CommitVisitor<>(nodeUpdater);
     root.accept(Bytes.EMPTY, commitVisitor);
     // Make sure root node was stored
@@ -122,6 +149,9 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()
             : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
+    } finally {
+      span.end();
+    }
   }
 
   public void acceptAtRoot(final NodeVisitor<V> visitor) {

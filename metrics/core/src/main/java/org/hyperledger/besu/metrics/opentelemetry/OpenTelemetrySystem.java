@@ -40,21 +40,26 @@ import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
-import io.opentelemetry.common.Attributes;
-import io.opentelemetry.common.Labels;
-import io.opentelemetry.metrics.DoubleValueObserver;
-import io.opentelemetry.metrics.DoubleValueRecorder;
-import io.opentelemetry.metrics.LongCounter;
-import io.opentelemetry.metrics.LongSumObserver;
-import io.opentelemetry.metrics.LongUpDownSumObserver;
-import io.opentelemetry.metrics.Meter;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.Labels;
+import io.opentelemetry.api.metrics.DoubleValueObserver;
+import io.opentelemetry.api.metrics.DoubleValueRecorder;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.LongSumObserver;
+import io.opentelemetry.api.metrics.LongUpDownSumObserver;
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.sdk.metrics.MeterSdkProvider;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.resources.ResourceAttributes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /** Metrics system relying on the native OpenTelemetry format. */
 public class OpenTelemetrySystem implements ObservableMetricsSystem {
+
+  private static final Logger LOG = LogManager.getLogger();
+
   private static final String TYPE_LABEL_KEY = "type";
   private static final String AREA_LABEL_KEY = "area";
   private static final String POOL_LABEL_KEY = "pool";
@@ -75,15 +80,14 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final Set<MetricCategory> enabledCategories,
       final boolean timersEnabled,
       final String jobName) {
+    LOG.info("Starting OpenTelemetry metrics system");
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
     Resource resource =
         Resource.getDefault()
             .merge(
                 Resource.create(
-                    Attributes.newBuilder()
-                        .setAttribute(ResourceAttributes.SERVICE_NAME, jobName)
-                        .build()));
+                    Attributes.builder().put(ResourceAttributes.SERVICE_NAME, jobName).build()));
     this.meterSdkProvider = MeterSdkProvider.builder().setResource(resource).build();
   }
 
@@ -134,9 +138,11 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     switch (type) {
       case NON_MONOTONIC_LONG:
       case MONOTONIC_LONG:
+      case GAUGE_LONG:
         return ((MetricData.LongPoint) point).getValue();
       case NON_MONOTONIC_DOUBLE:
       case MONOTONIC_DOUBLE:
+      case GAUGE_DOUBLE:
         return ((MetricData.DoublePoint) point).getValue();
       case SUMMARY:
         return ((MetricData.SummaryPoint) point).getPercentileValues();
@@ -151,6 +157,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
+    LOG.trace("Creating a counter");
     return cachedCounters.computeIfAbsent(
         name,
         (k) -> {
@@ -171,6 +178,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
+    LOG.trace("Creating a timer");
     return cachedTimers.computeIfAbsent(
         name,
         (k) -> {
@@ -192,6 +200,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {
+    LOG.trace("Creating a gauge");
     if (isCategoryEnabled(category)) {
       final Meter meter = meterSdkProvider.get(category.getName());
       DoubleValueObserver observer =
