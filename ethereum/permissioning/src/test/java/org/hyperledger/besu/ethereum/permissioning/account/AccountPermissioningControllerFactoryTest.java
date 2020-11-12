@@ -20,6 +20,7 @@ import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -43,13 +44,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class AccountPermissioningControllerFactoryTest {
 
   @Mock private TransactionSimulator transactionSimulator;
+  @Mock private Blockchain blockchain;
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
   public void createWithNullPermissioningConfigShouldReturnEmpty() {
     Optional<AccountPermissioningController> controller =
-        AccountPermissioningControllerFactory.create(null, transactionSimulator, metricsSystem);
+        AccountPermissioningControllerFactory.create(
+            null, transactionSimulator, metricsSystem, blockchain);
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -60,11 +63,12 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(localConfig.isAccountAllowlistEnabled()).isFalse();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(localConfig), Optional.empty());
+        new PermissioningConfiguration(
+            Optional.of(localConfig), Optional.empty(), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, blockchain);
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -75,11 +79,12 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(localConfig.isAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(localConfig), Optional.empty());
+        new PermissioningConfiguration(
+            Optional.of(localConfig), Optional.empty(), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, blockchain);
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isNotEmpty();
@@ -93,11 +98,12 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isFalse();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.empty(), Optional.of(onchainConfig));
+        new PermissioningConfiguration(
+            Optional.empty(), Optional.of(onchainConfig), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, blockchain);
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -108,11 +114,12 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.empty(), Optional.of(onchainConfig));
+        new PermissioningConfiguration(
+            Optional.empty(), Optional.of(onchainConfig), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, blockchain);
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isEmpty();
@@ -125,7 +132,8 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.empty(), Optional.of(onchainConfig));
+        new PermissioningConfiguration(
+            Optional.empty(), Optional.of(onchainConfig), Optional.empty());
 
     when(transactionSimulator.processAtHead(any())).thenThrow(new RuntimeException());
 
@@ -133,7 +141,7 @@ public class AccountPermissioningControllerFactoryTest {
         catchThrowable(
             () ->
                 AccountPermissioningControllerFactory.create(
-                    permissioningConfiguration, transactionSimulator, metricsSystem));
+                    permissioningConfiguration, transactionSimulator, metricsSystem, blockchain));
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)
@@ -149,11 +157,12 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(localConfig), Optional.of(onchainConfig));
+        new PermissioningConfiguration(
+            Optional.of(localConfig), Optional.of(onchainConfig), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, blockchain);
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isNotEmpty();

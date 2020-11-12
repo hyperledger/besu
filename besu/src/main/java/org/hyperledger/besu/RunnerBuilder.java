@@ -388,7 +388,7 @@ public class RunnerBuilder {
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
         buildNodePermissioningController(
-            bootnodes, synchronizer, transactionSimulator, localNodeId);
+            bootnodes, synchronizer, transactionSimulator, localNodeId, context.getBlockchain());
 
     final PeerPermissions peerPermissions =
         nodePermissioningController
@@ -474,7 +474,10 @@ public class RunnerBuilder {
 
     final Optional<AccountPermissioningController> accountPermissioningController =
         buildAccountPermissioningController(
-            permissioningConfiguration, besuController, transactionSimulator);
+            permissioningConfiguration,
+            besuController,
+            transactionSimulator,
+            context.getBlockchain());
 
     final Optional<AccountLocalConfigPermissioningController>
         accountLocalConfigPermissioningController =
@@ -645,7 +648,8 @@ public class RunnerBuilder {
       final List<EnodeURL> bootnodesAsEnodeURLs,
       final Synchronizer synchronizer,
       final TransactionSimulator transactionSimulator,
-      final Bytes localNodeId) {
+      final Bytes localNodeId,
+      final Blockchain blockchain) {
     final Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
 
     if (permissioningConfiguration.isPresent()) {
@@ -658,7 +662,8 @@ public class RunnerBuilder {
                   fixedNodes,
                   localNodeId,
                   transactionSimulator,
-                  metricsSystem);
+                  metricsSystem,
+                  blockchain);
 
       return Optional.of(nodePermissioningController);
     } else {
@@ -669,12 +674,13 @@ public class RunnerBuilder {
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final BesuController besuController,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final Blockchain blockchain) {
 
     if (permissioningConfiguration.isPresent()) {
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
+              permissioningConfiguration.get(), transactionSimulator, metricsSystem, blockchain);
 
       accountPermissioningController.ifPresent(
           permissioningController ->
