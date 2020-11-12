@@ -112,33 +112,7 @@ public interface EIP1559Transaction extends TypedTransaction, HashedTransaction,
   Optional<BigInteger> getChainId();
 
   /**
-   * An unlimited size byte array specifying the EVM-code for the account // initialisation
-   * procedure.
-   *
-   * <p>Only present if this is a contract creation transaction, which is only true if {@link
-   * #getTo} is empty.
-   *
-   * @return if present, the contract init code.
-   */
-  Optional<Bytes> getInit();
-
-  /**
-   * An unlimited size byte array specifying theinput data of the message call.
-   *
-   * <p>Only present if this is a message call transaction, which is only true if {@link #getTo} is
-   * present.
-   *
-   * @return if present, the message call data
-   */
-  Optional<Bytes> getData();
-
-  /**
    * The data payload of this transaction.
-   *
-   * <p>If this transaction is a message-call to an account (the {@link #getTo} field is present),
-   * this same value will be exposed by {@link #getData}. If instead this is a contract-creation
-   * transaction (the {@link #getTo} field is absent), the payload is also exposed by {@link
-   * #getInit}.
    *
    * @return the transaction payload
    */

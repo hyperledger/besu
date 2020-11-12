@@ -246,7 +246,6 @@ public class FrontierTransaction implements Transaction {
    *
    * @return if present the init code
    */
-  @Override
   public Optional<Bytes> getInit() {
     return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
   }
@@ -256,7 +255,6 @@ public class FrontierTransaction implements Transaction {
    *
    * @return if present the init code
    */
-  @Override
   public Optional<Bytes> getData() {
     return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
