@@ -370,7 +370,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void quorumCompatibilityModeSuccessNonZeroGasPrice() {
+  public void quorumCompatibilityModeSuccessZeroGasPrice() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true);
     final Transaction transaction =
