@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
@@ -30,7 +31,7 @@ public class JsonCallParameter extends CallParameter {
   public JsonCallParameter(
       @JsonProperty("from") final Address from,
       @JsonProperty("to") final Address to,
-      @JsonProperty("gas") final Long gasLimit,
+      @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
       @JsonProperty("gasPrice") final Wei gasPrice,
       @JsonProperty("gasPremium") final Wei gasPremium,
       @JsonProperty("feeCap") final Wei feeCap,
@@ -39,7 +40,7 @@ public class JsonCallParameter extends CallParameter {
     super(
         from,
         to,
-        gasLimit != null ? gasLimit : -1,
+        gasLimit != null ? gasLimit.toLong() : -1,
         gasPrice,
         Optional.ofNullable(gasPremium),
         Optional.ofNullable(feeCap),

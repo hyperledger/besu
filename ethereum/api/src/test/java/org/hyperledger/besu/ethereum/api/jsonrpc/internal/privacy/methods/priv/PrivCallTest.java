@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
@@ -78,7 +79,14 @@ public class PrivCallTest {
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
     final CallParameter callParameter =
         new JsonCallParameter(
-            Address.fromHexString("0x0"), null, 0L, Wei.ZERO, null, null, Wei.ZERO, Bytes.EMPTY);
+            Address.fromHexString("0x0"),
+            null,
+            Gas.ZERO,
+            Wei.ZERO,
+            null,
+            null,
+            Wei.ZERO,
+            Bytes.EMPTY);
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
@@ -190,7 +198,7 @@ public class PrivCallTest {
     return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
-        0L,
+        Gas.ZERO,
         Wei.ZERO,
         null,
         null,

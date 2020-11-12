@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -241,7 +242,7 @@ public class EthEstimateGasTest {
     return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
-        0L,
+        Gas.ZERO,
         Wei.ZERO,
         null,
         null,
