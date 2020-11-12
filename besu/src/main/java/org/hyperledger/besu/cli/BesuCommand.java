@@ -1745,29 +1745,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
-    // Can't enable permissioning APIs without permissioning enabled
-    final boolean anyPermissioningModeEnabled =
-        localPermissionsEnabled() || contractPermissionsEnabled();
-    final boolean anyPermissioningApiEnabled =
-        rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM);
-    if (!anyPermissioningModeEnabled && anyPermissioningApiEnabled) {
-      logger.warn("Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
+    if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
+      if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
+        logger.warn(
+            "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
+      }
       return Optional.empty();
     }
 
-    final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(
-            maybeLocalPermissioningConfiguration(),
-            Optional.of(smartContractPermissioningConfiguration()),
-            Optional.of(quorumPermissioningConfiguration()));
-
-    return Optional.of(permissioningConfiguration);
-  }
-
-  private Optional<LocalPermissioningConfiguration> maybeLocalPermissioningConfiguration()
-      throws Exception {
     final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
-
     if (localPermissionsEnabled()) {
       final Optional<String> nodePermissioningConfigFile =
           Optional.ofNullable(nodePermissionsConfigFile);
@@ -1797,10 +1783,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       localPermissioningConfigurationOptional = Optional.empty();
     }
-    return localPermissioningConfigurationOptional;
-  }
 
-  private SmartContractPermissioningConfiguration smartContractPermissioningConfiguration() {
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         SmartContractPermissioningConfiguration.createDefault();
 
@@ -1839,24 +1822,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
           permissionsAccountsContractAddress);
     }
-    return smartContractPermissioningConfiguration;
+
+    final PermissioningConfiguration permissioningConfiguration =
+        new PermissioningConfiguration(
+            localPermissioningConfigurationOptional,
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.of(quorumPermissioningConfig()));
+
+    return Optional.of(permissioningConfiguration);
   }
 
-  private QuorumPermissioningConfiguration quorumPermissioningConfiguration() {
+  private QuorumPermissioningConfiguration quorumPermissioningConfig() {
     final GenesisConfigOptions genesisConfigOptions;
     try {
-      genesisConfigOptions =
-          GenesisConfigFile.fromConfig(genesisConfig()).getConfigOptions(genesisConfigOverrides);
+      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
+      genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
     } catch (Exception e) {
-      logger.warn(
-          "Error reading quorum permissioning configuration from genesis file. Quorum permissioning is disabled.",
-          e);
       return QuorumPermissioningConfiguration.disabled();
     }
 
     final boolean isQuorumMode = genesisConfigOptions.isQuorum();
     final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
-
     if (isQuorumMode) {
       return QuorumPermissioningConfiguration.enabled(
           qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK));
