@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -41,6 +40,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -179,7 +179,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
+  public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
     return privateTransactionValidator.validate(
