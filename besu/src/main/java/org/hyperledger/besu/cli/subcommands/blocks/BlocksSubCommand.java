@@ -33,8 +33,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.metrics.prometheus.MetricsService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -434,18 +434,13 @@ public class BlocksSubCommand implements Runnable {
   }
 
   private static Optional<MetricsService> initMetrics(final BlocksSubCommand parentCommand) {
-    Optional<MetricsService> metricsService = Optional.empty();
     final MetricsConfiguration metricsConfiguration =
         parentCommand.parentCommand.metricsConfiguration();
-    if (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) {
-      metricsService =
-          Optional.of(
-              MetricsService.create(
-                  Vertx.vertx(),
-                  metricsConfiguration,
-                  parentCommand.parentCommand.getMetricsSystem()));
-      metricsService.ifPresent(MetricsService::start);
-    }
+
+    Optional<MetricsService> metricsService =
+        MetricsService.create(
+            Vertx.vertx(), metricsConfiguration, parentCommand.parentCommand.getMetricsSystem());
+    metricsService.ifPresent(MetricsService::start);
     return metricsService;
   }
 }
