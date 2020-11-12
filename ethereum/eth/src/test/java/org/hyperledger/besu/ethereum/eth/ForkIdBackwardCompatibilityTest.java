@@ -76,7 +76,7 @@ public class ForkIdBackwardCompatibilityTest {
             2L,
             Arrays.asList(0L, 0L, 4L, 5L, 6L),
             true,
-            new ForkId(Bytes.fromHexString("0xe9ec3db1"), 4L)
+            null
           },
           {
             "with no 0 forks and legacyEth64=false",
@@ -92,7 +92,7 @@ public class ForkIdBackwardCompatibilityTest {
             2L,
             Arrays.asList(4L, 5L, 6L),
             true,
-            new ForkId(Bytes.fromHexString("0x190a55ad"), 4L)
+            null
           },
           {
             "post head with 0 forks and legacyEth64=false",
@@ -108,7 +108,7 @@ public class ForkIdBackwardCompatibilityTest {
             8L,
             Arrays.asList(0L, 0L, 4L, 5L, 6L),
             true,
-            new ForkId(Bytes.fromHexString("0xa571a483"), 0L)
+            null
           },
         });
   }
@@ -118,6 +118,10 @@ public class ForkIdBackwardCompatibilityTest {
     LOG.info("Running test case {}", name);
     final ForkIdManager forkIdManager =
         new ForkIdManager(mockBlockchain(genesisHash, head), forks, legacyEth64);
-    assertThat(forkIdManager.computeForkId()).isEqualTo(wantForkId);
+    final ForkId legacyForkId =
+        legacyEth64
+            ? new LegacyForkIdManager(mockBlockchain(genesisHash, head), forks).getLatestForkId()
+            : null;
+    assertThat(forkIdManager.computeForkId()).isEqualTo(legacyEth64 ? legacyForkId : wantForkId);
   }
 }

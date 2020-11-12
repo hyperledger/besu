@@ -12,75 +12,49 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+package org.hyperledger.besu.ethereum.eth;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.manager.ForkId;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.EndianUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class ForkIdManager {
+public class LegacyForkIdManager {
 
+  private final Blockchain blockchain;
   private final Hash genesisHash;
-  private final List<ForkId> forkAndHashList;
-
   private final List<Long> forks;
-  private final LongSupplier chainHeadSupplier;
-  private final long forkNext;
-  private final boolean onlyZerosForkBlocks;
+  private long forkNext;
   private final long highestKnownFork;
-  private Bytes genesisHashCrc;
-  private final boolean legacyEth64;
+  private List<ForkId> forkAndHashList;
 
-  public ForkIdManager(
-      final Blockchain blockchain, final List<Long> nonFilteredForks, final boolean legacyEth64) {
-    checkNotNull(blockchain);
-    checkNotNull(nonFilteredForks);
-    this.chainHeadSupplier = blockchain::getChainHeadBlockNumber;
+  public LegacyForkIdManager(final Blockchain blockchain, final List<Long> forks) {
+    this.blockchain = blockchain;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
-    this.forkAndHashList = new ArrayList<>();
-    this.legacyEth64 = legacyEth64;
+    // de-dupe and sanitize forks
     this.forks =
-        nonFilteredForks.stream()
-            .filter(fork -> fork > 0L)
-            .distinct()
-            .sorted()
-            .collect(Collectors.toUnmodifiableList());
-    this.onlyZerosForkBlocks = nonFilteredForks.stream().allMatch(value -> 0L == value);
-    this.forkNext = createForkIds();
-    this.highestKnownFork = !forks.isEmpty() ? forks.get(forks.size() - 1) : 0L;
-  }
+        forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
+    highestKnownFork = forks.size() > 0 ? forks.get(forks.size() - 1) : 0L;
+    createForkIds();
+  };
 
-  public ForkId computeForkId() {
-    if (legacyEth64) {
-      return forkAndHashList.size() > 0 ? forkAndHashList.get(forkAndHashList.size() - 1) : null;
-    }
-    final long head = chainHeadSupplier.getAsLong();
-    for (final ForkId forkId : forkAndHashList) {
-      if (head < forkId.getNext()) {
-        return forkId;
-      }
-    }
-    return forkAndHashList.isEmpty()
-        ? new ForkId(genesisHashCrc, 0)
-        : forkAndHashList.get(forkAndHashList.size() - 1);
-  }
-
-  @VisibleForTesting
-  List<ForkId> getForkAndHashList() {
+  public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;
+  }
+
+  public ForkId getLatestForkId() {
+    if (forkAndHashList.size() > 0) {
+      return forkAndHashList.get(forkAndHashList.size() - 1);
+    }
+    return null;
   }
 
   public static ForkId readFrom(final RLPInput in) {
@@ -98,7 +72,7 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   boolean peerCheck(final ForkId forkId) {
-    if (forkId == null || onlyZerosForkBlocks) {
+    if (forkId == null) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
     // Run the fork checksum validation rule set:
@@ -117,12 +91,19 @@ public class ForkIdManager {
     //        the remote, but at this current point in time we don't have enough
     //        information.
     //   4. Reject in all other cases.
-    if (!isHashKnown(forkId.getHash())) {
+    if (isHashKnown(forkId.getHash())) {
+      if (blockchain.getChainHeadBlockNumber() < forkNext) {
+        return true;
+      } else {
+        if (isForkKnown(forkId.getNext())) {
+          return isRemoteAwareOfPresent(forkId.getHash(), forkId.getNext());
+        } else {
+          return false;
+        }
+      }
+    } else {
       return false;
     }
-    return chainHeadSupplier.getAsLong() < forkNext
-        || (isForkKnown(forkId.getNext())
-            && isRemoteAwareOfPresent(forkId.getHash(), forkId.getNext()));
   }
 
   /**
@@ -159,35 +140,50 @@ public class ForkIdManager {
     return false;
   }
 
-  private long createForkIds() {
+  private void createForkIds() {
     final CRC32 crc = new CRC32();
     crc.update(genesisHash.toArray());
-    genesisHashCrc = getCurrentCrcHash(crc);
-    final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
-    forks.forEach(
-        fork -> {
-          updateCrc(crc, fork);
-          forkHashes.add(getCurrentCrcHash(crc));
-        });
-
+    final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
+    for (final Long fork : forks) {
+      updateCrc(crc, fork);
+      forkHashes.add(getCurrentCrcHash(crc));
+    }
+    final List<ForkId> forkIds = new ArrayList<>();
     // This loop is for all the fork hashes that have an associated "next fork"
     for (int i = 0; i < forks.size(); i++) {
-      forkAndHashList.add(new ForkId(forkHashes.get(i), forks.get(i)));
+      forkIds.add(new ForkId(forkHashes.get(i), forks.get(i)));
     }
-    long forkNext = 0;
     if (!forks.isEmpty()) {
-      forkNext = forkAndHashList.get(forkAndHashList.size() - 1).getNext();
-      forkAndHashList.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
+      forkNext = forkIds.get(forkIds.size() - 1).getNext();
+      forkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
-    return forkNext;
+    this.forkAndHashList = forkIds;
+    System.out.println(this.forkAndHashList);
   }
 
-  private static void updateCrc(final CRC32 crc, final Long block) {
-    final byte[] byteRepresentationFork = EndianUtils.longToBigEndian(block);
+  private void updateCrc(final CRC32 crc, final Long block) {
+    final byte[] byteRepresentationFork = longToBigEndian(block);
     crc.update(byteRepresentationFork, 0, byteRepresentationFork.length);
   }
 
-  private static Bytes getCurrentCrcHash(final CRC32 crc) {
+  private Bytes getCurrentCrcHash(final CRC32 crc) {
     return Bytes.ofUnsignedInt(crc.getValue());
+  }
+
+  // next two methods adopted from:
+  // https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/Pack.java
+  private static byte[] longToBigEndian(final long n) {
+    final byte[] bs = new byte[8];
+    intToBigEndian((int) (n >>> 32), bs, 0);
+    intToBigEndian((int) (n & 0xffffffffL), bs, 4);
+    return bs;
+  }
+
+  @SuppressWarnings("MethodInputParametersMustBeFinal")
+  private static void intToBigEndian(final int n, final byte[] bs, int off) {
+    bs[off] = (byte) (n >>> 24);
+    bs[++off] = (byte) (n >>> 16);
+    bs[++off] = (byte) (n >>> 8);
+    bs[++off] = (byte) (n);
   }
 }
