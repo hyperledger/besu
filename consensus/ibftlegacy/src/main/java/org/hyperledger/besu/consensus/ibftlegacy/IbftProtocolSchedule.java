@@ -46,7 +46,8 @@ public class IbftProtocolSchedule {
             DEFAULT_CHAIN_ID,
             builder -> applyIbftChanges(blockPeriod, builder),
             privacyParameters,
-            isMetadataEnabled)
+            isMetadataEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 
