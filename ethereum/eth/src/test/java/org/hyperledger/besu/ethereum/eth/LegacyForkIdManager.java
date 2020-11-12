@@ -28,20 +28,15 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class LegacyForkIdManager {
 
-  private final Blockchain blockchain;
   private final Hash genesisHash;
   private final List<Long> forks;
-  private long forkNext;
-  private final long highestKnownFork;
   private List<ForkId> forkAndHashList;
 
   public LegacyForkIdManager(final Blockchain blockchain, final List<Long> forks) {
-    this.blockchain = blockchain;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     // de-dupe and sanitize forks
     this.forks =
         forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
-    highestKnownFork = forks.size() > 0 ? forks.get(forks.size() - 1) : 0L;
     createForkIds();
   };
 
@@ -78,7 +73,6 @@ public class LegacyForkIdManager {
       forkIds.add(new ForkId(forkHashes.get(i), forks.get(i)));
     }
     if (!forks.isEmpty()) {
-      forkNext = forkIds.get(forkIds.size() - 1).getNext();
       forkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
     this.forkAndHashList = forkIds;
