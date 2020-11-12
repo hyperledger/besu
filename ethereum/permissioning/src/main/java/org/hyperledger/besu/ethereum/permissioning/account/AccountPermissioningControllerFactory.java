@@ -15,12 +15,14 @@
 package org.hyperledger.besu.ethereum.permissioning.account;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -39,7 +41,8 @@ public class AccountPermissioningControllerFactory {
   public static Optional<AccountPermissioningController> create(
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Blockchain blockchain) {
 
     if (permissioningConfiguration == null) {
       return Optional.empty();
@@ -56,10 +59,25 @@ public class AccountPermissioningControllerFactory {
 
     if (accountLocalConfigPermissioningController.isPresent()
         || transactionSmartContractPermissioningController.isPresent()) {
+
+      final Optional<QuorumQip714Gate> quorumQip714Gate =
+          permissioningConfiguration
+              .getQuorumPermissioningConfig()
+              .flatMap(
+                  config -> {
+                    if (config.isEnabled()) {
+                      return Optional.of(
+                          QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                    } else {
+                      return Optional.empty();
+                    }
+                  });
+
       final AccountPermissioningController controller =
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
-              transactionSmartContractPermissioningController);
+              transactionSmartContractPermissioningController,
+              quorumQip714Gate);
 
       return Optional.of(controller);
     } else {

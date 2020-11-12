@@ -26,9 +26,9 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -51,7 +51,7 @@ public class MainnetTransactionProcessor {
 
   private final GasCalculator gasCalculator;
 
-  private final TransactionValidator transactionValidator;
+  private final MainnetTransactionValidator transactionValidator;
 
   private final AbstractMessageProcessor contractCreationProcessor;
 
@@ -75,9 +75,9 @@ public class MainnetTransactionProcessor {
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     TransactionValidator}
+   *     MainnetTransactionValidator}
    * @return the transaction result
-   * @see TransactionValidator
+   * @see MainnetTransactionValidator
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
@@ -112,10 +112,10 @@ public class MainnetTransactionProcessor {
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     TransactionValidator}
+   *     MainnetTransactionValidator}
    * @param operationTracer operation tracer {@link OperationTracer}
    * @return the transaction result
-   * @see TransactionValidator
+   * @see MainnetTransactionValidator
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
@@ -215,7 +215,7 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
+      final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
@@ -248,7 +248,7 @@ public class MainnetTransactionProcessor {
     try {
       LOG.trace("Starting execution of {}", transaction);
 
-      ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+      ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(transaction, blockHeader.getBaseFee());
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
@@ -405,7 +405,7 @@ public class MainnetTransactionProcessor {
               gasUsedByTransaction.toLong(),
               refunded.toLong(),
               ValidationResult.invalid(
-                  TransactionValidator.TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                   "transaction price must be greater than base fee"),
               Optional.empty());
         }
