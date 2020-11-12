@@ -18,41 +18,32 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
 public class JsonCallParameter extends CallParameter {
   @JsonCreator
   public JsonCallParameter(
-      @JsonProperty("from") final String from,
-      @JsonProperty("to") final String to,
-      @JsonProperty("gas") final String gasLimit,
-      @JsonProperty("gasPrice") final String gasPrice,
-      @JsonProperty("gasPremium") final String gasPremium,
-      @JsonProperty("feeCap") final String feeCap,
-      @JsonProperty("value") final String value,
-      @JsonProperty("data") final String payload) {
+      @JsonProperty("from") final Address from,
+      @JsonProperty("to") final Address to,
+      @JsonProperty("gas") final Long gasLimit,
+      @JsonProperty("gasPrice") final Wei gasPrice,
+      @JsonProperty("gasPremium") final Wei gasPremium,
+      @JsonProperty("feeCap") final Wei feeCap,
+      @JsonProperty("value") final Wei value,
+      @JsonDeserialize(using = BytesDeserializer.class) @JsonProperty("data") final Bytes payload) {
     super(
-        from != null ? Address.fromHexString(from) : null,
-        to != null ? Address.fromHexString(to) : null,
-        gasLimit != null ? Long.decode(gasLimit) : -1,
-        gasPrice != null ? Wei.fromHexString(gasPrice) : null,
-        gasPremium != null ? Wei.fromHexString(gasPremium) : null,
-        feeCap != null ? Wei.fromHexString(feeCap) : null,
-        value != null ? Wei.fromHexString(value) : null,
-        payload != null ? Bytes.fromHexString(payload) : null);
-  }
-
-  @VisibleForTesting
-  public JsonCallParameter(
-      final String from,
-      final String to,
-      final String gasLimit,
-      final String gasPrice,
-      final String value,
-      final String payload) {
-    this(from, to, gasLimit, gasPrice, null, null, value, payload);
+        from,
+        to,
+        gasLimit != null ? gasLimit : -1,
+        gasPrice,
+        Optional.ofNullable(gasPremium),
+        Optional.ofNullable(feeCap),
+        value,
+        payload);
   }
 }

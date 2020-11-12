@@ -63,15 +63,15 @@ public class CallParameter {
       final Address to,
       final long gasLimit,
       final Wei gasPrice,
-      final Wei gasPremium,
-      final Wei feeCap,
+      final Optional<Wei> gasPremium,
+      final Optional<Wei> feeCap,
       final Wei value,
       final Bytes payload) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
-    this.gasPremium = Optional.ofNullable(gasPremium);
-    this.feeCap = Optional.ofNullable(feeCap);
+    this.gasPremium = gasPremium;
+    this.feeCap = feeCap;
     this.gasPrice = gasPrice;
     this.value = value;
     this.payload = payload;

@@ -30,7 +30,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -236,20 +238,51 @@ public class EthEstimateGasTest {
   }
 
   private JsonCallParameter legacyTransactionCallParameter() {
-    return new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
+    return new JsonCallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        0L,
+        Wei.ZERO,
+        null,
+        null,
+        Wei.ZERO,
+        Bytes.EMPTY);
   }
 
-  private JsonCallParameter modifiedLegacyTransactionCallParameter() {
-    return new JsonCallParameter("0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x0", "");
+  private CallParameter modifiedLegacyTransactionCallParameter() {
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        Long.MAX_VALUE,
+        Wei.ZERO,
+        Optional.empty(),
+        Optional.empty(),
+        Wei.ZERO,
+        Bytes.EMPTY);
   }
 
   private JsonCallParameter eip1559TransactionCallParameter() {
-    return new JsonCallParameter("0x0", "0x0", null, "0x0", "0x10", "0x10", "0x0", "");
+    return new JsonCallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        null,
+        Wei.ZERO,
+        Wei.fromHexString("0x10"),
+        Wei.fromHexString("0x10"),
+        Wei.ZERO,
+        Bytes.EMPTY);
   }
 
-  private JsonCallParameter modifiedEip1559TransactionCallParameter() {
-    return new JsonCallParameter(
-        "0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x10", "0x10", "0x0", "");
+  private CallParameter modifiedEip1559TransactionCallParameter() {
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        Long.MAX_VALUE,
+        Wei.ZERO,
+        Optional.of(Wei.fromHexString("0x10")),
+        Optional.of(Wei.fromHexString("0x10")),
+        Wei.ZERO,
+        Bytes.EMPTY);
   }
 
   private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {

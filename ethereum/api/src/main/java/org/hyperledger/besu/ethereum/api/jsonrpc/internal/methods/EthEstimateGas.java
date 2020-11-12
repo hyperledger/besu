@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -68,7 +69,7 @@ public class EthEstimateGas implements JsonRpcMethod {
       return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
     }
 
-    final JsonCallParameter modifiedCallParams =
+    final CallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
@@ -84,17 +85,17 @@ public class EthEstimateGas implements JsonRpcMethod {
     return blockchainQueries.getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
   }
 
-  private JsonCallParameter overrideGasLimitAndPrice(
-      final CallParameter callParams, final long gasLimit) {
-    return new JsonCallParameter(
-        callParams.getFrom() != null ? callParams.getFrom().toString() : null,
-        callParams.getTo() != null ? callParams.getTo().toString() : null,
-        Quantity.create(gasLimit),
-        Quantity.create(0L),
-        callParams.getGasPremium().map(Quantity::create).orElse(null),
-        callParams.getFeeCap().map(Quantity::create).orElse(null),
-        callParams.getValue() != null ? Quantity.create(callParams.getValue()) : null,
-        callParams.getPayload() != null ? callParams.getPayload().toString() : null);
+  private CallParameter overrideGasLimitAndPrice(
+      final JsonCallParameter callParams, final long gasLimit) {
+    return new CallParameter(
+        callParams.getFrom(),
+        callParams.getTo(),
+        gasLimit,
+        Wei.ZERO,
+        callParams.getGasPremium(),
+        callParams.getFeeCap(),
+        callParams.getValue(),
+        callParams.getPayload());
   }
 
   private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
