@@ -38,10 +38,10 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 /** An operation submitted by an external actor to be applied to the system. */
-public class FrontierTransaction implements org.hyperledger.besu.plugin.data.FrontierTransaction {
+public class FrontierTransaction implements Transaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -497,11 +497,6 @@ public class FrontierTransaction implements org.hyperledger.besu.plugin.data.Fro
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
     }
     return Optional.empty();
-  }
-
-  @Override
-  public TransactionType getType() {
-    return TransactionType.FRONTIER;
   }
 
   public static class Builder {

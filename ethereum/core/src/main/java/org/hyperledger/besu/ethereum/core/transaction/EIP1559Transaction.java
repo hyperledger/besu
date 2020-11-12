@@ -27,7 +27,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 
-public class EIP1559Transaction extends FrontierTransaction {
+public class EIP1559Transaction extends org.hyperledger.besu.plugin.data.EIP1559Transaction {
 
   public EIP1559Transaction(
       final long nonce,
