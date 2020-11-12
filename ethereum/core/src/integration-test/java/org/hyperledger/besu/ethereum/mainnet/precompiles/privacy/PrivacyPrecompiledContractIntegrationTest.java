@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -92,8 +93,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
-    final PrivateTransactionProcessor.Result result =
-        PrivateTransactionProcessor.Result.successful(
+    final TransactionProcessingResult result =
+        TransactionProcessingResult.successful(
             null, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),

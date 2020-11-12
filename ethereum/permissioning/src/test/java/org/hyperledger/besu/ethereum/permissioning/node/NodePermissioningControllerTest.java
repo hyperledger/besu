@@ -21,13 +21,16 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,6 +54,7 @@ public class NodePermissioningControllerTest {
   Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProviderOptional;
   @Mock private NodeLocalConfigPermissioningController localConfigNodePermissioningProvider;
   @Mock private NodePermissioningProvider otherPermissioningProvider;
+  @Mock private QuorumQip714Gate quorumQip714Gate;
 
   private NodePermissioningController controller;
 
@@ -60,7 +64,7 @@ public class NodePermissioningControllerTest {
     List<NodePermissioningProvider> emptyProviders = new ArrayList<>();
     this.controller =
         new NodePermissioningController(
-            syncStatusNodePermissioningProviderOptional, emptyProviders);
+            syncStatusNodePermissioningProviderOptional, emptyProviders, Optional.empty());
   }
 
   @Test
@@ -74,7 +78,8 @@ public class NodePermissioningControllerTest {
   public void whenNoSyncStatusProviderWeShouldDelegateToLocalConfigNodePermissioningProvider() {
     List<NodePermissioningProvider> providers = new ArrayList<>();
     providers.add(localConfigNodePermissioningProvider);
-    this.controller = new NodePermissioningController(Optional.empty(), providers);
+    this.controller =
+        new NodePermissioningController(Optional.empty(), providers, Optional.empty());
 
     controller.isPermitted(enode1, enode2);
 
@@ -86,7 +91,8 @@ public class NodePermissioningControllerTest {
       whenInSyncWeShouldDelegateToAnyOtherNodePermissioningProviderAndIsPermittedIfAllPermitted() {
     List<NodePermissioningProvider> providers = getNodePermissioningProviders();
     this.controller =
-        new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
+        new NodePermissioningController(
+            syncStatusNodePermissioningProviderOptional, providers, Optional.empty());
 
     when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
     when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
@@ -113,7 +119,8 @@ public class NodePermissioningControllerTest {
     List<NodePermissioningProvider> providers = getNodePermissioningProviders();
 
     this.controller =
-        new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
+        new NodePermissioningController(
+            syncStatusNodePermissioningProviderOptional, providers, Optional.empty());
 
     when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
     when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
@@ -132,7 +139,8 @@ public class NodePermissioningControllerTest {
     final List<NodePermissioningProvider> providers = getNodePermissioningProviders();
 
     this.controller =
-        new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
+        new NodePermissioningController(
+            syncStatusNodePermissioningProviderOptional, providers, Optional.empty());
 
     final ContextualNodePermissioningProvider insufficientPeersPermissioningProvider =
         mock(ContextualNodePermissioningProvider.class);
@@ -154,7 +162,8 @@ public class NodePermissioningControllerTest {
     final List<NodePermissioningProvider> providers = getNodePermissioningProviders();
 
     this.controller =
-        new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
+        new NodePermissioningController(
+            syncStatusNodePermissioningProviderOptional, providers, Optional.empty());
 
     final ContextualNodePermissioningProvider insufficientPeersPermissioningProvider =
         mock(ContextualNodePermissioningProvider.class);
@@ -173,5 +182,46 @@ public class NodePermissioningControllerTest {
     verify(syncStatusNodePermissioningProvider, times(1)).isPermitted(any(), any());
     verify(insufficientPeersPermissioningProvider, times(1)).isPermitted(any(), any());
     providers.forEach(p -> verify(p, times(1)).isPermitted(any(), any()));
+  }
+
+  @Test
+  public void whenQuorumQip714GateIsEmptyShouldDelegateToProviders() {
+    this.controller =
+        new NodePermissioningController(
+            syncStatusNodePermissioningProviderOptional, Collections.emptyList(), Optional.empty());
+
+    controller.isPermitted(enode1, enode2);
+
+    verify(syncStatusNodePermissioningProvider, atLeast(1)).isPermitted(eq(enode1), eq(enode2));
+  }
+
+  @Test
+  public void whenQuorumQip714GateIsNotActiveShouldBypassProviders() {
+    this.controller =
+        new NodePermissioningController(
+            syncStatusNodePermissioningProviderOptional,
+            Collections.emptyList(),
+            Optional.of(quorumQip714Gate));
+
+    when(quorumQip714Gate.shouldCheckPermissions()).thenReturn(false);
+
+    assertThat(controller.isPermitted(enode1, enode2)).isTrue();
+
+    verifyNoInteractions(syncStatusNodePermissioningProvider);
+  }
+
+  @Test
+  public void whenQuorumQip714GateIsActiveShouldDelegateToProviders() {
+    this.controller =
+        new NodePermissioningController(
+            syncStatusNodePermissioningProviderOptional,
+            Collections.emptyList(),
+            Optional.of(quorumQip714Gate));
+
+    when(quorumQip714Gate.shouldCheckPermissions()).thenReturn(true);
+
+    controller.isPermitted(enode1, enode2);
+
+    verify(syncStatusNodePermissioningProvider, atLeast(1)).isPermitted(eq(enode1), eq(enode2));
   }
 }

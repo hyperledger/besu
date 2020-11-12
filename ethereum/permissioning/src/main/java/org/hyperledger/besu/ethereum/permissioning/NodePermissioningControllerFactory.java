@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -42,7 +43,8 @@ public class NodePermissioningControllerFactory {
       final Collection<EnodeURL> fixedNodes,
       final Bytes localNodeId,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Blockchain blockchain) {
 
     final Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
 
@@ -81,8 +83,21 @@ public class NodePermissioningControllerFactory {
       syncStatusProviderOptional = Optional.empty();
     }
 
-    NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(syncStatusProviderOptional, providers);
+    final Optional<QuorumQip714Gate> quorumQip714Gate =
+        permissioningConfiguration
+            .getQuorumPermissioningConfig()
+            .flatMap(
+                config -> {
+                  if (config.isEnabled()) {
+                    return Optional.of(
+                        QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                  } else {
+                    return Optional.empty();
+                  }
+                });
+
+    final NodePermissioningController nodePermissioningController =
+        new NodePermissioningController(syncStatusProviderOptional, providers, quorumQip714Gate);
 
     permissioningConfiguration
         .getSmartContractConfig()

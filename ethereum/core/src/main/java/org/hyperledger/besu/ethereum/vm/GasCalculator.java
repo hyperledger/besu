@@ -430,4 +430,8 @@ public interface GasCalculator {
   default boolean isPrecompile(final Address address) {
     return false;
   }
+
+  default Gas modExpGasCost(final Bytes input) {
+    return Gas.ZERO;
+  }
 }

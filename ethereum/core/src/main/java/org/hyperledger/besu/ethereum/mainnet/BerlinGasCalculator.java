@@ -20,8 +20,12 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
+import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BerlinGasCalculator extends IstanbulGasCalculator {
@@ -201,6 +205,43 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
         }
         return refund;
       }
+    }
+  }
+
+  @Override
+  public Gas modExpGasCost(final Bytes input) {
+    final BigInteger baseLength =
+        BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final BigInteger exponentLength =
+        BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
+    final BigInteger modulusLength =
+        BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
+    final BigInteger exponentOffset =
+        BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
+    final int firstExponentBytesCap =
+        exponentLength.min(ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES).intValue();
+    final BigInteger firstExpBytes =
+        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+            input, exponentOffset, firstExponentBytesCap);
+    final BigInteger adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
+    final BigInteger multiplicationComplexity =
+        modulusLength
+            .max(baseLength)
+            .add(BigInteger.valueOf(7))
+            .divide(BigInteger.valueOf(8))
+            .pow(2);
+
+    final BigInteger gasRequirement =
+        multiplicationComplexity
+            .multiply(adjustedExponentLength.max(BigInteger.ONE))
+            .divide(BigInteger.valueOf(3));
+
+    // Gas price is so large it will not fit in a Gas type, so an
+    // very very very unlikely high gas price is used instead.
+    if (gasRequirement.bitLength() > ByzantiumGasCalculator.MAX_GAS_BITS) {
+      return Gas.of(Long.MAX_VALUE);
+    } else {
+      return Gas.of(gasRequirement.max(BigInteger.valueOf(200)));
     }
   }
 }

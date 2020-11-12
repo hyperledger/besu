@@ -33,7 +33,8 @@ import org.junit.Test;
 
 public class MainnetBlockProcessorTest {
 
-  private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+  private final MainnetTransactionProcessor transactionProcessor =
+      mock(MainnetTransactionProcessor.class);
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
 
