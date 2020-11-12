@@ -44,10 +44,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -199,8 +199,7 @@ public class BlockTransactionSelectorTest {
             any()))
         .thenReturn(
             TransactionProcessingResult.invalid(
-                ValidationResult.invalid(
-                    TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW)));
+                ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW)));
 
     // The block should fit 3 transactions only
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(5000);
@@ -493,8 +492,7 @@ public class BlockTransactionSelectorTest {
             any()))
         .thenReturn(
             TransactionProcessingResult.invalid(
-                ValidationResult.invalid(
-                    TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
+                ValidationResult.invalid(TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
 
     selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
 
@@ -525,8 +523,7 @@ public class BlockTransactionSelectorTest {
             any()))
         .thenReturn(
             TransactionProcessingResult.invalid(
-                ValidationResult.invalid(
-                    TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE)));
+                ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE)));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =

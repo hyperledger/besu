@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -47,6 +48,7 @@ public class NodePermissioningControllerFactoryTest {
 
   @Mock private Synchronizer synchronizer;
   @Mock private TransactionSimulator transactionSimulator;
+  @Mock private Blockchain blockchain;
 
   private final String enode =
       "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111";
@@ -63,7 +65,7 @@ public class NodePermissioningControllerFactoryTest {
 
   @Test
   public void testCreateWithNeitherPermissioningEnabled() {
-    config = new PermissioningConfiguration(Optional.empty(), Optional.empty());
+    config = new PermissioningConfiguration(Optional.empty(), Optional.empty(), Optional.empty());
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
         factory.create(
@@ -72,7 +74,8 @@ public class NodePermissioningControllerFactoryTest {
             bootnodes,
             selfEnode.getNodeId(),
             transactionSimulator,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            blockchain);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(0);
@@ -87,7 +90,9 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
-            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
+            Optional.empty(),
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.empty());
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -97,7 +102,8 @@ public class NodePermissioningControllerFactoryTest {
             bootnodes,
             selfEnode.getNodeId(),
             transactionSimulator,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            blockchain);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -113,7 +119,8 @@ public class NodePermissioningControllerFactoryTest {
     localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
     config =
-        new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
+        new PermissioningConfiguration(
+            Optional.of(localPermissioningConfig), Optional.empty(), Optional.empty());
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -123,7 +130,8 @@ public class NodePermissioningControllerFactoryTest {
             bootnodes,
             selfEnode.getNodeId(),
             transactionSimulator,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            blockchain);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -147,7 +155,8 @@ public class NodePermissioningControllerFactoryTest {
     config =
         new PermissioningConfiguration(
             Optional.of(localPermissioningConfig),
-            Optional.of(smartContractPermissioningConfiguration));
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.empty());
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -157,7 +166,8 @@ public class NodePermissioningControllerFactoryTest {
             fixedNodes,
             selfEnode.getNodeId(),
             transactionSimulator,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            blockchain);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -180,7 +190,8 @@ public class NodePermissioningControllerFactoryTest {
     config =
         new PermissioningConfiguration(
             Optional.of(localPermissioningConfig),
-            Optional.of(smartContractPermissioningConfiguration));
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.empty());
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -190,7 +201,8 @@ public class NodePermissioningControllerFactoryTest {
             bootnodes,
             selfEnode.getNodeId(),
             transactionSimulator,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            blockchain);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(2);
@@ -216,7 +228,9 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
-            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
+            Optional.empty(),
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.empty());
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -226,7 +240,8 @@ public class NodePermissioningControllerFactoryTest {
             fixedNodes,
             selfEnode.getNodeId(),
             transactionSimulator,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            blockchain);
 
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isPresent();
   }
@@ -239,7 +254,9 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
-            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
+            Optional.empty(),
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.empty());
 
     when(transactionSimulator.processAtHead(any())).thenThrow(new RuntimeException());
 
@@ -253,7 +270,8 @@ public class NodePermissioningControllerFactoryTest {
                         bootnodes,
                         selfEnode.getNodeId(),
                         transactionSimulator,
-                        new NoOpMetricsSystem()));
+                        new NoOpMetricsSystem(),
+                        blockchain));
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)

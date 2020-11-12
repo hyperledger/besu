@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -43,7 +44,7 @@ public class MainnetTransactionProcessorTest {
   private MainnetTransactionProcessor transactionProcessor;
 
   @Mock private GasCalculator gasCalculator;
-  @Mock private TransactionValidator transactionValidator;
+  @Mock private MainnetTransactionValidator transactionValidator;
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
 
@@ -96,9 +97,7 @@ public class MainnetTransactionProcessorTest {
     when(transactionValidator.validate(any(), any())).thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
-        .thenReturn(
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE));
+        .thenReturn(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
     return txValidationParamCaptor;
   }
 }

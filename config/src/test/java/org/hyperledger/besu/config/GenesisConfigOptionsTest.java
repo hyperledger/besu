@@ -226,6 +226,23 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
   }
 
+  @Test
+  public void isQuorumShouldDefaultToFalse() {
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
+
+    assertThat(config.isQuorum()).isFalse();
+    assertThat(config.getQip714BlockNumber()).isEmpty();
+  }
+
+  @Test
+  public void isQuorumConfigParsedCorrectly() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(Map.of("isQuorum", true, "qip714block", 99999L));
+
+    assertThat(config.isQuorum()).isTrue();
+    assertThat(config.getQip714BlockNumber()).hasValue(99999L);
+  }
+
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {
     final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode options = JsonUtil.objectNodeFromMap(configOptions);

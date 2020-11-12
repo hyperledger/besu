@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.math.BigInteger;
@@ -31,10 +32,10 @@ import java.util.Optional;
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
  *
- * <p>The {@link FrontierTransactionValidator} performs the intrinsic gas cost check on the given
+ * <p>The {@link MainnetTransactionValidator} performs the intrinsic gas cost check on the given
  * {@link Transaction}.
  */
-public class FrontierTransactionValidator implements TransactionValidator {
+public class MainnetTransactionValidator {
 
   private final GasCalculator gasCalculator;
   private final Optional<TransactionPriceCalculator> transactionPriceCalculator;
@@ -47,7 +48,7 @@ public class FrontierTransactionValidator implements TransactionValidator {
   private final Optional<EIP1559> maybeEip1559;
   private final AcceptedTransactionTypes acceptedTransactionTypes;
 
-  public FrontierTransactionValidator(
+  public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId) {
@@ -60,7 +61,7 @@ public class FrontierTransactionValidator implements TransactionValidator {
         AcceptedTransactionTypes.FRONTIER_TRANSACTIONS);
   }
 
-  public FrontierTransactionValidator(
+  public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final boolean checkSignatureMalleability,
@@ -75,7 +76,15 @@ public class FrontierTransactionValidator implements TransactionValidator {
     this.acceptedTransactionTypes = acceptedTransactionTypes;
   }
 
-  @Override
+  /**
+   * Asserts whether a transaction is valid.
+   *
+   * @param transaction the transaction to validate
+   * @param baseFee optional baseFee
+   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
+   *     is invalid.
+   */
   public ValidationResult<TransactionInvalidReason> validate(
       final Transaction transaction, final Optional<Long> baseFee) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
@@ -101,6 +110,12 @@ public class FrontierTransactionValidator implements TransactionValidator {
               String.format("gasPrice is less than the current BaseFee"));
         }
       }
+    } else if (transaction.isEIP1559Transaction()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          String.format(
+              "transaction format is invalid, accepted transaction types are %s",
+              acceptedTransactionTypes.toString()));
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);
@@ -115,7 +130,6 @@ public class FrontierTransactionValidator implements TransactionValidator {
     return ValidationResult.valid();
   }
 
-  @Override
   public ValidationResult<TransactionInvalidReason> validateForSender(
       final Transaction transaction,
       final Account sender,
@@ -217,8 +231,30 @@ public class FrontierTransactionValidator implements TransactionValidator {
     }
   }
 
-  @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     this.transactionFilter = Optional.of(transactionFilter);
+  }
+
+  /**
+   * Asserts whether a transaction is valid for the sender accounts current state.
+   *
+   * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
+   * this method to ensure that a sender can be extracted from the {@link Transaction}.
+   *
+   * @param transaction the transaction to validateMessageFrame.State.COMPLETED_FAILED
+   * @param sender the sender account state to validate against
+   * @param allowFutureNonce if true, transactions with nonce equal or higher than the account nonce
+   *     will be considered valid (used when received transactions in the transaction pool). If
+   *     false, only a transaction with the nonce equals the account nonce will be considered valid
+   *     (used when processing transactions).
+   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
+   *     is invalid.
+   */
+  public ValidationResult<TransactionInvalidReason> validateForSender(
+      final Transaction transaction, final Account sender, final boolean allowFutureNonce) {
+    final TransactionValidationParams validationParams =
+        new TransactionValidationParams.Builder().allowFutureNonce(allowFutureNonce).build();
+    return validateForSender(transaction, sender, validationParams);
   }
 }

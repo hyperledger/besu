@@ -26,6 +26,7 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
+import static org.hyperledger.besu.ethereum.permissioning.QuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
@@ -70,6 +71,7 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -105,6 +107,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
+import org.hyperledger.besu.ethereum.permissioning.QuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
@@ -159,6 +162,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -270,7 +274,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--genesis-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Genesis file. Setting this option makes --network option ignored and requires --network-id to be set.")
+          "Genesis file. Setting this option makes --network option ignored and requires"
+              + " --network-id to be set.")
   private final File genesisFile = null;
 
   @CommandLine.Option(
@@ -336,14 +341,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--remote-connections-limit-enabled"},
       description =
-          "Whether to limit the number of P2P connections initiated remotely. (default: ${DEFAULT-VALUE})")
+          "Whether to limit the number of P2P connections initiated remotely. (default:"
+              + " ${DEFAULT-VALUE})")
   private final Boolean isLimitRemoteWireConnectionsEnabled = true;
 
   @Option(
       names = {"--remote-connections-max-percentage"},
       paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
       description =
-          "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
+          "The maximum percentage of P2P connections that can be initiated remotely. Must be"
+              + " between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
       arity = "1",
       converter = PercentageConverter.class)
   private final Integer maxRemoteConnectionsPercentage =
@@ -354,7 +361,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--random-peer-priority-enabled"},
       description =
-          "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
+          "Allow for incoming connections to be prioritized randomly. This will prevent (typically"
+              + " small, stable) networks from forming impenetrable peer cliques. (default:"
+              + " ${DEFAULT-VALUE})")
   private final Boolean randomPeerPriority = false;
 
   @Option(
@@ -382,7 +391,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
-          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: FAST if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
+          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: FAST if a"
+              + " --network is supplied and privacy isn't enabled. FULL otherwise.)")
   private SyncMode syncMode = null;
 
   @Option(
@@ -413,7 +423,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--p2p-interface"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
       description =
-          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
+          "The network interface address on which this node listens for P2P communication"
+              + " (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String p2pInterface = NetworkUtility.INADDR_ANY;
 
@@ -427,15 +438,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--nat-method"},
       description =
-          "Specify the NAT circumvention method to be used, possible values are ${COMPLETION-CANDIDATES}."
-              + " NONE disables NAT functionality. (default: ${DEFAULT-VALUE})")
+          "Specify the NAT circumvention method to be used, possible values are"
+              + " ${COMPLETION-CANDIDATES}. NONE disables NAT functionality. (default:"
+              + " ${DEFAULT-VALUE})")
   private final NatMethod natMethod = DEFAULT_NAT_METHOD;
 
   @Option(
       names = {"--network-id"},
       paramLabel = "<BIG INTEGER>",
       description =
-          "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
+          "P2P network identifier. (default: the selected network chain ID or custom genesis chain"
+              + " ID)",
       arity = "1")
   private final BigInteger networkId = null;
 
@@ -499,7 +512,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1..*",
       converter = RpcApisConverter.class,
       description =
-          "Comma separated list of APIs to enable on JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+          "Comma separated list of APIs to enable on JSON-RPC HTTP service (default:"
+              + " ${DEFAULT-VALUE})")
   private final Collection<RpcApi> rpcHttpApis = DEFAULT_JSON_RPC_APIS;
 
   @Option(
@@ -533,33 +547,38 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--rpc-http-tls-keystore-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Keystore (PKCS#12) containing key/certificate for the JSON-RPC HTTP service. Required if TLS is enabled.")
+          "Keystore (PKCS#12) containing key/certificate for the JSON-RPC HTTP service. Required"
+              + " if TLS is enabled.")
   private final Path rpcHttpTlsKeyStoreFile = null;
 
   @Option(
       names = {"--rpc-http-tls-keystore-password-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "File containing password to unlock keystore for the JSON-RPC HTTP service. Required if TLS is enabled.")
+          "File containing password to unlock keystore for the JSON-RPC HTTP service. Required if"
+              + " TLS is enabled.")
   private final Path rpcHttpTlsKeyStorePasswordFile = null;
 
   @Option(
       names = {"--rpc-http-tls-client-auth-enabled"},
       description =
-          "Enable TLS client authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+          "Enable TLS client authentication for the JSON-RPC HTTP service (default:"
+              + " ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpTlsClientAuthEnabled = false;
 
   @Option(
       names = {"--rpc-http-tls-known-clients-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Path to file containing clients certificate common name and fingerprint for client authentication")
+          "Path to file containing clients certificate common name and fingerprint for client"
+              + " authentication")
   private final Path rpcHttpTlsKnownClientsFile = null;
 
   @Option(
       names = {"--rpc-http-tls-ca-clients-enabled"},
       description =
-          "Enable to accept clients certificate signed by a valid CA for client authentication (default: ${DEFAULT-VALUE})")
+          "Enable to accept clients certificate signed by a valid CA for client authentication"
+              + " (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpTlsCAClientsEnabled = false;
 
   @Option(
@@ -589,7 +608,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1..*",
       converter = RpcApisConverter.class,
       description =
-          "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
+          "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default:"
+              + " ${DEFAULT-VALUE})")
   private final List<RpcApi> rpcWsApis = DEFAULT_JSON_RPC_APIS;
 
   @Option(
@@ -603,7 +623,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--rpc-ws-authentication-credentials-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
+          "Storage file for JSON-RPC WebSocket authentication credentials (default:"
+              + " ${DEFAULT-VALUE})",
       arity = "1")
   private String rpcWsAuthenticationCredentialsFile = null;
 
@@ -707,7 +728,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to allow for RPC access, or * to accept any host"
+              + " (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
@@ -716,7 +738,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       hidden = true,
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
+          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for"
+              + " RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
   private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
@@ -729,13 +752,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--color-enabled"},
       description =
-          "Force color output to be enabled/disabled (default: colorized only if printing to console")
+          "Force color output to be enabled/disabled (default: colorized only if printing to"
+              + " console")
   private static Boolean colorEnabled = null;
 
   @Option(
       names = {"--reorg-logging-threshold"},
       description =
-          "How deep a chain reorganization must be in order for it to be logged (default: ${DEFAULT-VALUE})")
+          "How deep a chain reorganization must be in order for it to be logged (default:"
+              + " ${DEFAULT-VALUE})")
   private final Long reorgLoggingThreshold = 6L;
 
   @Option(
@@ -778,7 +803,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-tx-feecap"},
       description =
-          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
+          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC"
+              + " (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
 
@@ -799,7 +825,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
+          "Enable disk-space saving optimization that removes old state that is unlikely to be"
+              + " required (default: ${DEFAULT-VALUE})")
   private final Boolean pruningEnabled = false;
 
   @Option(
@@ -811,7 +838,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--permissions-nodes-config-file"},
       description =
-          "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+          "Node permissioning config TOML file (default: a file named \"permissions_config.toml\""
+              + " in the Besu data folder)")
   private String nodePermissionsConfigFile = null;
 
   @Option(
@@ -823,7 +851,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--permissions-accounts-config-file"},
       description =
-          "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+          "Account permissioning config TOML file (default: a file named"
+              + " \"permissions_config.toml\" in the Besu data folder)")
   private String accountPermissionsConfigFile = null;
 
   @Option(
@@ -891,14 +920,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-precompiled-address"},
       description =
-          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})",
+          "The address to which the privacy pre-compiled contract will be mapped (default:"
+              + " ${DEFAULT-VALUE})",
       hidden = true)
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   @Option(
       names = {"--privacy-marker-transaction-signing-key-file"},
       description =
-          "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
+          "The name of a file containing the private key used to sign privacy marker transactions."
+              + " If unset, each will be signed with a random key.")
   private final Path privacyMarkerTransactionSigningKeyPath = null;
 
   @Option(
@@ -914,14 +945,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--target-gas-limit"},
       description =
-          "Sets target gas limit per block. If set each block's gas limit will approach this setting over time if the current gas limit is different.")
+          "Sets target gas limit per block. If set each block's gas limit will approach this"
+              + " setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
 
   @Option(
       names = {"--tx-pool-max-size"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+          "Maximum number of pending transactions that will be kept in the transaction pool"
+              + " (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
@@ -929,7 +962,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--tx-pool-hashes-max-size"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+          "Maximum number of pending transaction hashes that will be kept in the transaction pool"
+              + " (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer pooledTransactionHashesSize =
       TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
@@ -948,7 +982,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       converter = PercentageConverter.class,
       description =
-          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+          "Price bump percentage to replace an already existing transaction  (default:"
+              + " ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
 
@@ -988,7 +1023,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       defaultValue = "1024",
       paramLabel = "<INTEGER>",
       description =
-          "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
+          "Minimum number of recent blocks for which to keep entire world state (default:"
+              + " ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer pruningBlocksRetained = PrunerConfiguration.DEFAULT_PRUNING_BLOCKS_RETAINED;
 
@@ -997,7 +1033,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       defaultValue = "10",
       paramLabel = "<INTEGER>",
       description =
-          "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
+          "Minimum number of confirmations on a block before marking begins (default:"
+              + " ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer pruningBlockConfirmations =
       PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
@@ -1299,8 +1336,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (!isMiningEnabled && iStratumMiningEnabled) {
       throw new ParameterException(
           this.commandLine,
-          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
-              + "or specify mining is enabled (--miner-enabled)");
+          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining"
+              + " (remove --miner-stratum-enabled) or specify mining is enabled"
+              + " (--miner-enabled)");
     }
   }
 
@@ -1323,14 +1361,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
-              + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+          "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove"
+              + " --Xnat-kube-service-name or select the KUBERNETES mode (via"
+              + " --nat--method=KUBERNETES)");
     }
     if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.getNatMethodFallbackEnabled()) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled"
-              + " or select another mode (via --nat--method=XXXX)");
+          "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either"
+              + " remove --Xnat-method-fallback-enabled or select another mode (via"
+              + " --nat--method=XXXX)");
     }
   }
 
@@ -1339,8 +1379,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && !unstableEthstatsOptions.getEthstatsContact().isEmpty()) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
-              + " or provide an url (via --Xethstats=nodename:secret@host:port)");
+          "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove"
+              + " --Xethstats-contact or provide an url (via"
+              + " --Xethstats=nodename:secret@host:port)");
     }
   }
 
@@ -1348,8 +1389,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (!unstableDnsOptions.getDnsEnabled() && unstableDnsOptions.getDnsUpdateEnabled()) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
-              + " or specify dns is enabled (--Xdns-enabled)");
+          "The `--Xdns-update-enabled` requires dns to be enabled. Either remove"
+              + " --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
     }
   }
 
@@ -1561,7 +1602,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && rpcHttpAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
-          "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
+          "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or"
+              + " authentication public key file");
     }
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -1627,7 +1669,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (rpcHttpTlsKeyStorePasswordFile == null) {
       throw new ParameterException(
           commandLine,
-          "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
+          "File containing password to unlock keystore is required when TLS is enabled for"
+              + " JSON-RPC HTTP endpoint");
     }
 
     if (isRpcHttpTlsClientAuthEnabled
@@ -1635,7 +1678,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && rpcHttpTlsKnownClientsFile == null) {
       throw new ParameterException(
           commandLine,
-          "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+          "Known-clients file must be specified or CA clients must be enabled when TLS client"
+              + " authentication is enabled for JSON-RPC HTTP endpoint");
     }
 
     return Optional.of(
@@ -1683,7 +1727,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && rpcWsAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
-          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
+          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file"
+              + " or authentication public key file");
     }
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -1782,11 +1827,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         SmartContractPermissioningConfiguration.createDefault();
+
     if (permissionsNodesContractEnabled) {
       if (permissionsNodesContractAddress == null) {
         throw new ParameterException(
             this.commandLine,
-            "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
+            "No node permissioning contract address specified. Cannot enable smart contract based"
+                + " node permissioning.");
       } else {
         smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
             permissionsNodesContractEnabled);
@@ -1797,7 +1844,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } else if (permissionsNodesContractAddress != null) {
       logger.warn(
-          "Node permissioning smart contract address set {} but smart contract node permissioning is disabled.",
+          "Node permissioning smart contract address set {} but smart contract node permissioning"
+              + " is disabled.",
           permissionsNodesContractAddress);
     }
 
@@ -1805,7 +1853,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (permissionsAccountsContractAddress == null) {
         throw new ParameterException(
             this.commandLine,
-            "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
+            "No account permissioning contract address specified. Cannot enable smart contract"
+                + " based account permissioning.");
       } else {
         smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
             permissionsAccountsContractEnabled);
@@ -1814,16 +1863,37 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } else if (permissionsAccountsContractAddress != null) {
       logger.warn(
-          "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
+          "Account permissioning smart contract address set {} but smart contract account"
+              + " permissioning is disabled.",
           permissionsAccountsContractAddress);
     }
 
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
             localPermissioningConfigurationOptional,
-            Optional.of(smartContractPermissioningConfiguration));
+            Optional.of(smartContractPermissioningConfiguration),
+            Optional.of(quorumPermissioningConfig()));
 
     return Optional.of(permissioningConfiguration);
+  }
+
+  private QuorumPermissioningConfiguration quorumPermissioningConfig() {
+    final GenesisConfigOptions genesisConfigOptions;
+    try {
+      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
+      genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
+    } catch (Exception e) {
+      return QuorumPermissioningConfiguration.disabled();
+    }
+
+    final boolean isQuorumMode = genesisConfigOptions.isQuorum();
+    final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
+    if (isQuorumMode) {
+      return QuorumPermissioningConfiguration.enabled(
+          qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK));
+    } else {
+      return QuorumPermissioningConfiguration.disabled();
+    }
   }
 
   private boolean localPermissionsEnabled() {
@@ -1864,7 +1934,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           && !webSocketConfiguration.isAuthenticationEnabled()) {
         throw new ParameterException(
             commandLine,
-            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket"
+                + " authentication to be enabled");
       }
 
       privacyParametersBuilder.setEnabled(true);
@@ -1897,13 +1968,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         if (privacyMarkerTransactionSigningKeyPath == null) {
           throw new ParameterException(
               commandLine,
-              "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
+              "Not a free gas network. --privacy-marker-transaction-signing-key-file must be"
+                  + " specified and must be a funded account. Private transactions cannot be"
+                  + " signed by random (non-funded) accounts in paid gas networks");
         }
       }
 
       if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
         logger.warn(
-            "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
+            "--privacy-precompiled-address option is deprecated. This address is derived, based on"
+                + " --privacy-onchain-groups-enabled.");
       }
 
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
@@ -2288,7 +2362,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     commandLine,
                     "Port number '"
                         + port
-                        + "' has been specified multiple times. Please review the supplied configuration.");
+                        + "' has been specified multiple times. Please review the supplied"
+                        + " configuration.");
               }
             });
   }

@@ -30,8 +30,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.Transa
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.List;
@@ -229,7 +229,7 @@ public class BlockTransactionSelector {
       if (result
           .getValidationResult()
           .getInvalidReason()
-          .equals(TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE)) {
+          .equals(TransactionInvalidReason.INCORRECT_NONCE)) {
         return TransactionSelectionResult.CONTINUE;
       }
       // If the transaction was invalid for any other reason, delete it, and continue.
