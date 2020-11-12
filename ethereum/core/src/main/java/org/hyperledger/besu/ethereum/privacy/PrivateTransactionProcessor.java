@@ -26,10 +26,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -53,7 +53,7 @@ public class PrivateTransactionProcessor {
   private final GasCalculator gasCalculator;
 
   @SuppressWarnings("unused")
-  private final TransactionValidator transactionValidator;
+  private final MainnetTransactionValidator transactionValidator;
 
   private final PrivateTransactionValidator privateTransactionValidator;
 
@@ -70,7 +70,7 @@ public class PrivateTransactionProcessor {
 
   public PrivateTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
+      final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
@@ -109,7 +109,7 @@ public class PrivateTransactionProcessor {
               ? maybePrivateSender.getMutable()
               : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
-      final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+      final ValidationResult<TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);
       if (!validationResult.isValid()) {
         return TransactionProcessingResult.invalid(validationResult);
@@ -218,8 +218,7 @@ public class PrivateTransactionProcessor {
         return TransactionProcessingResult.failed(
             0,
             0,
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
+            ValidationResult.invalid(TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
             initialFrame.getRevertReason());
       }
     } catch (final RuntimeException re) {
