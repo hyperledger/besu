@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
  * creation’). Message call transactions will have an address present in the {@link #getTo} method
  * whereas contract creation transactions will not.
  */
-public interface Transaction extends HashedTransaction, NoncedTransaction {
+public interface Transaction extends HashedTransaction, NoncedTransaction, ECDSASignedTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid per unit of gas for all computation costs
@@ -63,27 +63,6 @@ public interface Transaction extends HashedTransaction, NoncedTransaction {
    * @return value equal to the number of Wei to be transferred
    */
   Quantity getValue();
-
-  /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
-   *
-   * @return the 'V' component of the signature
-   */
-  BigInteger getV();
-
-  /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
-   *
-   * @return the 'V' component of the signature
-   */
-  BigInteger getR();
-
-  /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
-   *
-   * @return the 'V' component of the signature
-   */
-  BigInteger getS();
 
   /**
    * The 160-bit address of the account sending the transaction, extracted from the v, r, s

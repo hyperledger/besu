@@ -32,7 +32,8 @@ import java.util.Optional;
  * creation’). Message call transactions will have an address present in the {@link #getTo} method
  * whereas contract creation transactions will not.
  */
-public interface EIP1559Transaction extends TypedTransaction, HashedTransaction, NoncedTransaction {
+public interface EIP1559Transaction
+    extends TypedTransaction, HashedTransaction, NoncedTransaction, ECDSASignedTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in
@@ -73,27 +74,6 @@ public interface EIP1559Transaction extends TypedTransaction, HashedTransaction,
    * @return value equal to the number of Wei to be transferred
    */
   Quantity getValue();
-
-  /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
-   *
-   * @return the 'V' component of the signature
-   */
-  BigInteger getV();
-
-  /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
-   *
-   * @return the 'V' component of the signature
-   */
-  BigInteger getR();
-
-  /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
-   *
-   * @return the 'V' component of the signature
-   */
-  BigInteger getS();
 
   /**
    * The 160-bit address of the account sending the transaction, extracted from the v, r, s
