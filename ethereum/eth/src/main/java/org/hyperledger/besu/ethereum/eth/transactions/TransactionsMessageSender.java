@@ -45,7 +45,7 @@ class TransactionsMessageSender {
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
           LimitedTransactionsMessages.createLimited(allTxToSend);
-      LOG.trace("sending transactions to peer {} TRANSACTIONS count {}", peer, allTxToSend.size());
+      LOG.trace("Sending transactions to peer {} TRANSACTIONS count {}", peer, allTxToSend.size());
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
         peer.send(limitedTransactionsMessages.getTransactionsMessage());
