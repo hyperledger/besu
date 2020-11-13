@@ -274,9 +274,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         LOG.info(
             String.format(
                 "%s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
-                block.getHeader().getCoinbase().equals(localAddress)
-                    ? "Produced"
-                    : "Imported",
+                block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
                 block.getHeader().getNumber(),
                 block.getBody().getTransactions().size(),
                 transactionPool.getPendingTransactions().size(),
