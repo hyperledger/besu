@@ -95,22 +95,6 @@ public class CallParameter {
       final Optional<Wei> feeCap,
       final Wei value,
       final Bytes payload) {
-    System.out.println(
-        from
-            + " "
-            + to
-            + " "
-            + gasLimit
-            + " "
-            + gasPremium
-            + " "
-            + feeCap
-            + " "
-            + gasPrice
-            + " "
-            + value
-            + " "
-            + payload);
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
