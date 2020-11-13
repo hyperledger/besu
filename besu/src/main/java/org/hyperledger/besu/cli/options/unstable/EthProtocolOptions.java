@@ -31,7 +31,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String MAX_GET_NODE_DATA_FLAG = "--Xewp-max-get-node-data";
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
   private static final String ETH_65_ENABLED = "--Xeth-65-enabled";
-  private static final String LEGACY_ETH_64_FORK_ID_ENABLED = "--Xlegacy-eth-64-fork-id-enabled";
+  private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
+      "--compatibility-eth64-forkid-enabled";
 
   @CommandLine.Option(
       hidden = true,
@@ -86,7 +87,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private Boolean eth65Enabled = EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED;
 
   @CommandLine.Option(
-      hidden = true,
       names = {LEGACY_ETH_64_FORK_ID_ENABLED},
       paramLabel = "<Boolean>",
       description = "Enable the legacy Eth/64 fork id. (default: ${DEFAULT-VALUE})")
