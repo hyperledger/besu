@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.evmtool;
 
+import org.hyperledger.besu.metrics.MetricsSystemFactory;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import dagger.Module;
@@ -27,6 +29,6 @@ public class MetricsSystemModule {
 
   @Provides
   MetricsSystem getMetricsSystem() {
-    throw new RuntimeException("Abstract");
+    return MetricsSystemFactory.create(MetricsConfiguration.builder().build());
   }
 }

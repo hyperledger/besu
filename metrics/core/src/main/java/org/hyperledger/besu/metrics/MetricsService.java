@@ -12,8 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.metrics.prometheus;
+package org.hyperledger.besu.metrics;
 
+import org.hyperledger.besu.metrics.opentelemetry.MetricsOtelGrpcPushService;
+import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.metrics.prometheus.MetricsHttpService;
+import org.hyperledger.besu.metrics.prometheus.MetricsPushGatewayService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
@@ -21,18 +26,33 @@ import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
 
+/**
+ * Service responsible for exposing metrics to the outside, either through a port and network
+ * interface or pushing.
+ */
 public interface MetricsService {
 
-  static MetricsService create(
+  static Optional<MetricsService> create(
       final Vertx vertx,
       final MetricsConfiguration configuration,
       final MetricsSystem metricsSystem) {
-    if (configuration.isEnabled()) {
-      return new MetricsHttpService(vertx, configuration, metricsSystem);
-    } else if (configuration.isPushEnabled()) {
-      return new MetricsPushGatewayService(configuration, metricsSystem);
+    if (configuration.getProtocol() == MetricsProtocol.PROMETHEUS) {
+      if (configuration.isEnabled()) {
+        return Optional.of(new MetricsHttpService(vertx, configuration, metricsSystem));
+      } else if (configuration.isPushEnabled()) {
+        return Optional.of(new MetricsPushGatewayService(configuration, metricsSystem));
+      } else {
+        return Optional.empty();
+      }
+    } else if (configuration.getProtocol() == MetricsProtocol.OPENTELEMETRY) {
+      if (configuration.isEnabled()) {
+        return Optional.of(
+            new MetricsOtelGrpcPushService(configuration, (OpenTelemetrySystem) metricsSystem));
+      } else {
+        return Optional.empty();
+      }
     } else {
-      throw new RuntimeException("No metrics service enabled.");
+      return Optional.empty();
     }
   }
 

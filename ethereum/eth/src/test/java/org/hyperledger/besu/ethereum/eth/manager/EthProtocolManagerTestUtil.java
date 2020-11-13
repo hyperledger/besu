@@ -79,7 +79,7 @@ public class EthProtocolManagerTestUtil {
         Collections.emptyList(),
         false,
         ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList()));
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(final Blockchain blockchain) {
