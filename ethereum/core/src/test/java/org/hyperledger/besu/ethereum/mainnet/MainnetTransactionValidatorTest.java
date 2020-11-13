@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -55,8 +54,6 @@ public class MainnetTransactionValidatorTest {
   @Mock private GasCalculator gasCalculator;
 
   @Mock private TransactionPriceCalculator transactionPriceCalculator;
-
-  final FeeMarket feeMarket = FeeMarket.eip1559();
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()
@@ -284,6 +281,28 @@ public class MainnetTransactionValidatorTest {
     assertThat(validator.validate(transaction, basefee))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
     ExperimentalEIPs.eip1559Enabled = false;
+  }
+
+  @Test
+  public void shouldRejectEIP1559TransactionIfEIP115Disabled() {
+    ExperimentalEIPs.eip1559Enabled = false;
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            Optional.of(transactionPriceCalculator),
+            false,
+            Optional.empty(),
+            Optional.empty(),
+            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPremium(Optional.of(Wei.of(1)))
+            .feeCap(Optional.of(Wei.of(1)))
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    final Optional<Long> basefee = Optional.of(150000L);
+    assertThat(validator.validate(transaction, basefee))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
   }
 
   @Test

@@ -66,6 +66,7 @@ import picocli.CommandLine.Option;
     abbreviateSynopsis = true,
     name = "evm",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     sortOptions = false,
     header = "Usage:",
     synopsisHeading = "%n",
@@ -184,7 +185,7 @@ public class EvmToolCommand implements Runnable {
                           : GenesisFileModule.createGenesisModule(genesisFile)
                       : GenesisFileModule.createGenesisModule(network))
               .evmToolCommandOptionsModule(daggerOptions)
-              .metricsSystemModule(new PrometheusMetricsSystemModule())
+              .metricsSystemModule(new MetricsSystemModule())
               .build();
 
       final BlockHeader blockHeader =

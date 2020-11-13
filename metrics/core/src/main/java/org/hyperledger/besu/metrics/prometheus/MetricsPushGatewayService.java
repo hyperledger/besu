@@ -16,6 +16,7 @@ package org.hyperledger.besu.metrics.prometheus;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ import io.prometheus.client.exporter.PushGateway;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-class MetricsPushGatewayService implements MetricsService {
+public class MetricsPushGatewayService implements MetricsService {
   private static final Logger LOG = LogManager.getLogger();
 
   private PushGateway pushGateway;
@@ -37,7 +38,7 @@ class MetricsPushGatewayService implements MetricsService {
   private final MetricsConfiguration config;
   private final MetricsSystem metricsSystem;
 
-  MetricsPushGatewayService(
+  public MetricsPushGatewayService(
       final MetricsConfiguration configuration, final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     validateConfig(configuration);
