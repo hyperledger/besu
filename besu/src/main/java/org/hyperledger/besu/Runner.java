@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethstats.EthStatsService;
-import org.hyperledger.besu.metrics.prometheus.MetricsService;
+import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.nat.NatService;
 
 import java.io.File;

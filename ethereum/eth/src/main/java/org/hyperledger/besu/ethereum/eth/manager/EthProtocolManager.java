@@ -139,7 +139,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peerValidators,
         fastSyncEnabled,
         scheduler,
-        new ForkIdManager(blockchain, Collections.emptyList()));
+        new ForkIdManager(
+            blockchain,
+            Collections.emptyList(),
+            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
   public EthProtocolManager(
@@ -167,7 +170,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peerValidators,
         fastSyncEnabled,
         scheduler,
-        new ForkIdManager(blockchain, forks));
+        new ForkIdManager(
+            blockchain, forks, ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
   public EthContext ethContext() {

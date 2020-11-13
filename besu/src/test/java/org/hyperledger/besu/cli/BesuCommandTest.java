@@ -3789,4 +3789,47 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--miner-stratum-port=15");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
+
+  @Test
+  public void compatibilityEth64ForkIdEnabledMustBeUsed() {
+    parseCommand("--compatibility-eth64-forkid-enabled");
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
+    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
+        .isTrue();
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void compatibilityEth64ForkIdNotEnabledMustBeUsed() {
+    parseCommand("--compatibility-eth64-forkid-enabled=false");
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
+    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
+        .isFalse();
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatCompatibilityEth64ForkIdIsNotEnabledByDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
+    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
+        .isFalse();
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatCompatibilityEth64ForkIdIsPresentInHelpMessage() {
+    parseCommand("--help");
+    assertThat(commandOutput.toString())
+        .contains(
+            "--compatibility-eth64-forkid-enabled",
+            "Enable the legacy Eth/64 fork id. (default: false)");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
 }
