@@ -23,8 +23,14 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.plugin.data.ChainIdTransaction;
+import org.hyperledger.besu.plugin.data.ECDSASignedTransaction;
+import org.hyperledger.besu.plugin.data.SenderTransaction;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -80,13 +86,34 @@ public class MainnetTransactionValidator {
    * Asserts whether a transaction is valid.
    *
    * @param transaction the transaction to validate
-   * @param baseFee optional baseFee
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
+  // frontier tx
   public ValidationResult<TransactionInvalidReason> validate(
-      final Transaction transaction, final Optional<Long> baseFee) {
+      final FrontierTransaction transaction) {
+    final ValidationResult<TransactionInvalidReason> signatureResult =
+        validateTransactionSignature(transaction);
+    if (!signatureResult.isValid()) {
+      return signatureResult;
+    }
+
+    final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);
+    if (intrinsicGasCost.compareTo(Gas.of(transaction.getGasLimit())) > 0) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
+          String.format(
+              "intrinsic gas cost %s exceeds gas limit %s",
+              intrinsicGasCost, transaction.getGasLimit()));
+    }
+
+    return ValidationResult.valid();
+  }
+
+  // eip 1559 tx
+  public ValidationResult<TransactionInvalidReason> validate(
+      final EIP1559Transaction transaction, final Optional<Long> baseFee) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
@@ -102,15 +129,13 @@ public class MainnetTransactionValidator {
                 "transaction format is invalid, accepted transaction types are %s",
                 acceptedTransactionTypes.toString()));
       }
-      if (transaction.isEIP1559Transaction()) {
-        final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
-        if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
-          return ValidationResult.invalid(
-              TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-              String.format("gasPrice is less than the current BaseFee"));
-        }
+      final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
+      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+            String.format("gasPrice is less than the current BaseFee"));
       }
-    } else if (transaction.isEIP1559Transaction()) {
+    } else {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           String.format(
@@ -175,8 +200,8 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
-  public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
-      final Transaction transaction) {
+  public <T extends ECDSASignedTransaction & ChainIdTransaction & SenderTransaction>
+      ValidationResult<TransactionInvalidReason> validateTransactionSignature(final T transaction) {
     if (chainId.isPresent()
         && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {
       return ValidationResult.invalid(

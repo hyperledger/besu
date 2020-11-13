@@ -88,14 +88,13 @@ public class EIP1559Transaction extends org.hyperledger.besu.plugin.data.EIP1559
   }
 
   public static EIP1559Transaction readFrom(final RLPInput input) throws RLPException {
-    return TransactionRLPDecoder.decodeTransaction(input);
+    return (EIP1559Transaction) TransactionRLPDecoder.decodeTransaction(input);
   }
 
   /**
    * Instantiates a transaction instance.
    *
    * @param nonce the nonce
-   * @param gasPrice the gas price
    * @param gasPremium the gas premium
    * @param feeCap the fee cap
    * @param gasLimit the gas limit

@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.vm.operations.ExpOperation;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.data.EIP1559Transaction;
 
 public class FrontierGasCalculator implements GasCalculator {
 
@@ -112,7 +114,32 @@ public class FrontierGasCalculator implements GasCalculator {
   private static final Gas SELF_DESTRUCT_REFUND_AMOUNT = Gas.of(24_000L);
 
   @Override
-  public Gas transactionIntrinsicGasCost(final Transaction transaction) {
+  public Gas transactionIntrinsicGasCost(final FrontierTransaction transaction) {
+    final Bytes payload = transaction.getPayload();
+    int zeros = 0;
+    for (int i = 0; i < payload.size(); i++) {
+      if (payload.get(i) == 0) {
+        ++zeros;
+      }
+    }
+    final int nonZeros = payload.size() - zeros;
+
+    Gas cost =
+        Gas.ZERO
+            .plus(TX_BASE_COST)
+            .plus(TX_DATA_ZERO_COST.times(zeros))
+            .plus(TX_DATA_NON_ZERO_COST.times(nonZeros));
+
+    if (transaction.isContractCreation()) {
+      cost = cost.plus(txCreateExtraGasCost());
+    }
+
+    return cost;
+  }
+
+  // TODO DRY these
+  @Override
+  public Gas transactionIntrinsicGasCost(final EIP1559Transaction transaction) {
     final Bytes payload = transaction.getPayload();
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {

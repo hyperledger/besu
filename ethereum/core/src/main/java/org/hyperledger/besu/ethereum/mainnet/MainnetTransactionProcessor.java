@@ -124,7 +124,7 @@ public class MainnetTransactionProcessor {
         null);
   }
 
-  public TransactionProcessingResult processFrontierTransaction(
+  public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,

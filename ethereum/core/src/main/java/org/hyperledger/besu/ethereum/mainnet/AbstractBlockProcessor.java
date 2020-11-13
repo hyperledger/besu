@@ -149,6 +149,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               () -> eip1559Transaction.getHash().toHexString());
           return AbstractBlockProcessor.Result.failed();
         }
+      } else {
+        throw new IllegalStateException(
+            "Developer error. A supported transaction of type %s was found but there was no"
+                + " associated validation/processing logic");
       }
       // calculate gas budget
       // get updaters and mining beneficiary
@@ -163,7 +167,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       if (transaction instanceof FrontierTransaction) {
         final FrontierTransaction frontierTransaction = (FrontierTransaction) transaction;
-        transactionProcessor.processFrontierTransaction(
+        transactionProcessor.processTransaction(
             blockchain,
             worldStateUpdater,
             blockHeader,

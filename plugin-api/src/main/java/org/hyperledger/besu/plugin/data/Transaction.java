@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,7 +28,12 @@ import org.apache.tuweni.bytes.Bytes;
  * creation’). Message call transactions will have an address present in the {@link #getTo} method
  * whereas contract creation transactions will not.
  */
-public interface Transaction extends HashedTransaction, NoncedTransaction, ECDSASignedTransaction {
+public interface Transaction
+    extends HashedTransaction,
+        NoncedTransaction,
+        ECDSASignedTransaction,
+        ChainIdTransaction,
+        SenderTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid per unit of gas for all computation costs
@@ -63,22 +67,6 @@ public interface Transaction extends HashedTransaction, NoncedTransaction, ECDSA
    * @return value equal to the number of Wei to be transferred
    */
   Quantity getValue();
-
-  /**
-   * The 160-bit address of the account sending the transaction, extracted from the v, r, s
-   * parameters.
-   *
-   * @return The address of the account that sent this transaction.
-   */
-  Address getSender();
-
-  /**
-   * The chainId, computed from the 'V' portion of the signature. Used for replay protection. If
-   * replay protection is not enabled this value will not be present.
-   *
-   * @return The chainId for transaction.
-   */
-  Optional<BigInteger> getChainId();
 
   /**
    * The data payload of this transaction.

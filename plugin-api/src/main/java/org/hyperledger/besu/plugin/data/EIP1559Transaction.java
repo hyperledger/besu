@@ -19,7 +19,6 @@ package org.hyperledger.besu.plugin.data;
 
 import org.apache.tuweni.bytes.Bytes;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 /**
@@ -33,7 +32,12 @@ import java.util.Optional;
  * whereas contract creation transactions will not.
  */
 public interface EIP1559Transaction
-    extends TypedTransaction, HashedTransaction, NoncedTransaction, ECDSASignedTransaction {
+    extends TypedTransaction,
+        HashedTransaction,
+        NoncedTransaction,
+        ECDSASignedTransaction,
+        SenderTransaction,
+        ChainIdTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in
@@ -74,22 +78,6 @@ public interface EIP1559Transaction
    * @return value equal to the number of Wei to be transferred
    */
   Quantity getValue();
-
-  /**
-   * The 160-bit address of the account sending the transaction, extracted from the v, r, s
-   * parameters.
-   *
-   * @return The address of the account that sent this transaction.
-   */
-  Address getSender();
-
-  /**
-   * The chainId, computed from the 'V' portion of the signature. Used for replay protection. If
-   * replay protection is not enabled this value will not be present.
-   *
-   * @return The chainId for transaction.
-   */
-  Optional<BigInteger> getChainId();
 
   /**
    * The data payload of this transaction.
