@@ -29,7 +29,7 @@ public class ForkId {
   final Bytes next;
   Bytes forkIdRLP;
 
-  protected ForkId(final Bytes hash, final Bytes next) {
+  public ForkId(final Bytes hash, final Bytes next) {
     this.hash = hash;
     this.next = next;
     createForkIdRLP();

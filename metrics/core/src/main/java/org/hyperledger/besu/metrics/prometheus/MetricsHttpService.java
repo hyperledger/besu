@@ -17,6 +17,7 @@ package org.hyperledger.besu.metrics.prometheus;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
 
+import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.ByteArrayOutputStream;
@@ -45,7 +46,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-class MetricsHttpService implements MetricsService {
+public class MetricsHttpService implements MetricsService {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
@@ -56,7 +57,7 @@ class MetricsHttpService implements MetricsService {
 
   private HttpServer httpServer;
 
-  MetricsHttpService(
+  public MetricsHttpService(
       final Vertx vertx,
       final MetricsConfiguration configuration,
       final MetricsSystem metricsSystem) {
