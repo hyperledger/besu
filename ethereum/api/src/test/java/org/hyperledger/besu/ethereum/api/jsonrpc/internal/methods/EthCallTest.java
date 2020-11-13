@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -69,7 +68,7 @@ public class EthCallTest {
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0x0"),
             null,
             Gas.ZERO,
@@ -104,8 +103,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final CallParameter callParameter =
-        new JsonCallParameter(
-            null, Address.fromHexString("0x0"), null, null, null, null, null, null);
+        new CallParameter(null, Address.fromHexString("0x0"), null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -162,7 +160,7 @@ public class EthCallTest {
   }
 
   private CallParameter callParameter() {
-    return new JsonCallParameter(
+    return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         Gas.ZERO,

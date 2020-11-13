@@ -12,27 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
+package org.hyperledger.besu.ethereum.core.deserializer;
+
+import org.hyperledger.besu.ethereum.core.Gas;
 
 import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import org.apache.tuweni.bytes.Bytes;
 
-public class BytesDeserializer extends StdDeserializer<Bytes> {
-  public BytesDeserializer() {
+public class GasDeserializer extends StdDeserializer<Gas> {
+  public GasDeserializer() {
     this(null);
   }
 
-  public BytesDeserializer(final Class<?> vc) {
+  public GasDeserializer(final Class<?> vc) {
     super(vc);
   }
 
   @Override
-  public Bytes deserialize(final JsonParser jsonparser, final DeserializationContext context)
+  public Gas deserialize(final JsonParser jsonparser, final DeserializationContext context)
       throws IOException {
-    return Bytes.fromHexString(jsonparser.getCodec().readValue(jsonparser, String.class));
+    return Gas.fromHexString(jsonparser.getCodec().readValue(jsonparser, String.class));
   }
 }

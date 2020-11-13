@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -64,7 +63,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForEmptyCallParameter() {
     final CallParameter callParameter =
-        new JsonCallParameter(null, null, null, null, null, null, null, null);
+        new CallParameter(null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x5208");
 
@@ -76,7 +75,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForTransfer() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"),
             null,
@@ -96,7 +95,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForContractDeploy() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
             null,
@@ -117,7 +116,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldIgnoreGasLimitAndGasPriceAndReturnExpectedValue() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
             Gas.of(1),
@@ -138,7 +137,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForInsufficientGas() {
     final CallParameter callParameter =
-        new JsonCallParameter(null, null, Gas.of(1), null, null, null, null, null);
+        new CallParameter(null, null, Gas.of(1), null, null, null, null, null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x5208");
 

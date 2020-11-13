@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -238,8 +237,8 @@ public class EthEstimateGasTest {
     return mockTxSimResult;
   }
 
-  private JsonCallParameter legacyTransactionCallParameter() {
-    return new JsonCallParameter(
+  private CallParameter legacyTransactionCallParameter() {
+    return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         Gas.ZERO,
@@ -262,8 +261,8 @@ public class EthEstimateGasTest {
         Bytes.EMPTY);
   }
 
-  private JsonCallParameter eip1559TransactionCallParameter() {
-    return new JsonCallParameter(
+  private CallParameter eip1559TransactionCallParameter() {
+    return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         null,

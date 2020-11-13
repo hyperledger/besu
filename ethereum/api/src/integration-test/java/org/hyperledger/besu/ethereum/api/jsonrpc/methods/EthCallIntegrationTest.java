@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -68,7 +67,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnExpectedResultForCallAtLatestBlock() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
@@ -90,7 +89,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnExpectedResultForCallAtSpecificBlock() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
@@ -112,7 +111,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnInvalidRequestWhenMissingToField() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             null,
             null,
@@ -134,7 +133,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnErrorWithGasLimitTooLow() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             Gas.ZERO,
@@ -155,7 +154,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnErrorWithGasPriceTooHigh() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
@@ -176,7 +175,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnEmptyHashResultForCallWithOnlyToField() {
     final CallParameter callParameter =
-        new JsonCallParameter(
+        new CallParameter(
             null,
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
