@@ -185,7 +185,7 @@ public class EvmToolCommand implements Runnable {
                           : GenesisFileModule.createGenesisModule(genesisFile)
                       : GenesisFileModule.createGenesisModule(network))
               .evmToolCommandOptionsModule(daggerOptions)
-              .metricsSystemModule(new PrometheusMetricsSystemModule())
+              .metricsSystemModule(new MetricsSystemModule())
               .build();
 
       final BlockHeader blockHeader =

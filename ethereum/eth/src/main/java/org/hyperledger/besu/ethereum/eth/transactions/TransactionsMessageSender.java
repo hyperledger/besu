@@ -22,7 +22,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 class TransactionsMessageSender {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final PeerTransactionTracker transactionTracker;
 
@@ -41,6 +45,7 @@ class TransactionsMessageSender {
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
           LimitedTransactionsMessages.createLimited(allTxToSend);
+      LOG.trace("Sending transactions to peer {} TRANSACTIONS count {}", peer, allTxToSend.size());
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
         peer.send(limitedTransactionsMessages.getTransactionsMessage());
