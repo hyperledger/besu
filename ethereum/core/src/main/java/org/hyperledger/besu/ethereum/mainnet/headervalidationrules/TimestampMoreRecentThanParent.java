@@ -44,11 +44,14 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
 
   private boolean validateHeaderSufficientlyAheadOfParent(
       final long timestamp, final long parentTimestamp) {
-    if ((timestamp - minimumSecondsSinceParent) < parentTimestamp) {
+    final long actualTimeSinceParent = timestamp - parentTimestamp;
+    if (actualTimeSinceParent < minimumSecondsSinceParent) {
       LOG.trace(
-          "Invalid block header: timestamp {} is not sufficiently newer than parent timestamp {}",
+          "Invalid block header: timestamp {} is only {} seconds newer than parent timestamp {}. Minimum {} seconds",
           timestamp,
-          parentTimestamp);
+          actualTimeSinceParent,
+          parentTimestamp,
+          minimumSecondsSinceParent);
       return false;
     }
 
