@@ -112,7 +112,7 @@ public class TransactionSimulator {
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
-    final Transaction transaction =
+    final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .nonce(nonce)
             .gasPrice(gasPrice)
@@ -121,8 +121,11 @@ public class TransactionSimulator {
             .sender(senderAddress)
             .value(value)
             .payload(payload)
-            .signature(FAKE_SIGNATURE)
-            .build();
+            .signature(FAKE_SIGNATURE);
+    callParams.getGasPremium().ifPresent(transactionBuilder::gasPremium);
+    callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
+
+    final Transaction transaction = transactionBuilder.build();
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 

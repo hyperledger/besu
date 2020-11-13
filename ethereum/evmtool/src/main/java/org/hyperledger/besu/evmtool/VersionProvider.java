@@ -13,22 +13,18 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-
 package org.hyperledger.besu.evmtool;
 
-import org.hyperledger.besu.metrics.MetricsSystemFactory;
-import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.BesuInfo;
 
-import dagger.Module;
-import dagger.Provides;
+import picocli.CommandLine;
 
-@SuppressWarnings("WeakerAccess")
-@Module
-public class MetricsSystemModule {
+public class VersionProvider implements CommandLine.IVersionProvider {
 
-  @Provides
-  MetricsSystem getMetricsSystem() {
-    return MetricsSystemFactory.create(MetricsConfiguration.builder().build());
+  public VersionProvider() {}
+
+  @Override
+  public String[] getVersion() {
+    return new String[] {"Hyperledger Besu EvmTool", BesuInfo.version()};
   }
 }

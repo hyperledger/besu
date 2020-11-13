@@ -111,6 +111,12 @@ public class MainnetTransactionValidator {
               String.format("gasPrice is less than the current BaseFee"));
         }
       }
+    } else if (transaction.isEIP1559Transaction()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          String.format(
+              "transaction format is invalid, accepted transaction types are %s",
+              acceptedTransactionTypes.toString()));
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);

@@ -173,6 +173,9 @@ public class RocksDBStats {
       final Statistics stats,
       final PrometheusMetricsSystem metricsSystem,
       final MetricCategory category) {
+    if (!metricsSystem.isCategoryEnabled(category)) {
+      return;
+    }
     for (final TickerType ticker : TICKERS) {
       final String promCounterName = ticker.name().toLowerCase();
       metricsSystem.createLongGauge(
@@ -183,7 +186,7 @@ public class RocksDBStats {
     }
 
     for (final HistogramType histogram : HISTOGRAMS) {
-      metricsSystem.addCollector(category, histogramToCollector(stats, histogram));
+      metricsSystem.addCollector(category, () -> histogramToCollector(stats, histogram));
     }
   }
 

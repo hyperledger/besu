@@ -11,19 +11,21 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
+package org.hyperledger.besu.metrics;
 
-package org.hyperledger.besu.evmtool;
+/** Enumeration of metrics protocols supported by Besu. */
+public enum MetricsProtocol {
+  PROMETHEUS,
+  OPENTELEMETRY,
+  NONE;
 
-import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-public class PrometheusMetricsSystemModule extends MetricsSystemModule {
-
-  @Override
-  public MetricsSystem getMetricsSystem() {
-    return PrometheusMetricsSystem.init(MetricsConfiguration.builder().build());
+  public static MetricsProtocol fromString(final String str) {
+    for (final MetricsProtocol mode : MetricsProtocol.values()) {
+      if (mode.name().equalsIgnoreCase(str)) {
+        return mode;
+      }
+    }
+    return null;
   }
 }

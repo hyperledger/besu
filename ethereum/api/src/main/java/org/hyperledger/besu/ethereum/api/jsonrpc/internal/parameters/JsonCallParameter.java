@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public class JsonCallParameter extends CallParameter {
@@ -29,6 +30,8 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("to") final String to,
       @JsonProperty("gas") final String gasLimit,
       @JsonProperty("gasPrice") final String gasPrice,
+      @JsonProperty("gasPremium") final String gasPremium,
+      @JsonProperty("feeCap") final String feeCap,
       @JsonProperty("value") final String value,
       @JsonProperty("data") final String payload) {
     super(
@@ -36,7 +39,20 @@ public class JsonCallParameter extends CallParameter {
         to != null ? Address.fromHexString(to) : null,
         gasLimit != null ? Long.decode(gasLimit) : -1,
         gasPrice != null ? Wei.fromHexString(gasPrice) : null,
+        gasPremium != null ? Wei.fromHexString(gasPremium) : null,
+        feeCap != null ? Wei.fromHexString(feeCap) : null,
         value != null ? Wei.fromHexString(value) : null,
         payload != null ? Bytes.fromHexString(payload) : null);
+  }
+
+  @VisibleForTesting
+  public JsonCallParameter(
+      final String from,
+      final String to,
+      final String gasLimit,
+      final String gasPrice,
+      final String value,
+      final String payload) {
+    this(from, to, gasLimit, gasPrice, null, null, value, payload);
   }
 }
