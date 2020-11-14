@@ -572,7 +572,7 @@ public class BlockchainQueries {
                             query,
                             cacheFile,
                             isQueryAlive);
-                      } catch (Exception e) {
+                      } catch (final Exception e) {
                         throw new RuntimeException(e);
                       }
                     })
@@ -586,10 +586,10 @@ public class BlockchainQueries {
         currentStep = nextStep;
       }
       return result;
-    } catch (RpcMethodTimeoutException e) {
+    } catch (final RpcMethodTimeoutException e) {
       LOG.error("Error retrieving matching logs", e);
       throw e;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOG.error("Error retrieving matching logs", e);
       throw new RuntimeException(e);
     }
@@ -692,14 +692,14 @@ public class BlockchainQueries {
                       transactions.get(i).getHash(),
                       i,
                       removed);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                   throw new RuntimeException(e);
                 }
               })
           .flatMap(Collection::stream)
           .filter(query::matches)
           .collect(Collectors.toList());
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -713,6 +713,26 @@ public class BlockchainQueries {
   public Optional<MutableWorldState> getWorldState(final long blockNumber) {
     final Optional<BlockHeader> header = blockchain.getBlockHeader(blockNumber);
     return header.map(BlockHeader::getStateRoot).flatMap(worldStateArchive::getMutable);
+  }
+
+  public Optional<Long> gasPrice() {
+    final long blockHeight = headBlockNumber();
+    final long[] gasCollection =
+        LongStream.range(Math.max(0, blockHeight - 100), blockHeight)
+            .mapToObj(
+                l ->
+                    blockchain
+                        .getBlockByNumber(l)
+                        .map(Block::getBody)
+                        .map(BlockBody::getTransactions)
+                        .orElse(Collections.emptyList()))
+            .flatMap(Collection::stream)
+            .mapToLong(t -> t.getGasPrice().toLong())
+            .sorted()
+            .toArray();
+    return (gasCollection == null || gasCollection.length == 0)
+        ? Optional.empty()
+        : Optional.of(gasCollection[gasCollection.length / 2]);
   }
 
   private <T> Optional<T> fromWorldState(

@@ -24,11 +24,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -51,14 +52,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class EthGasPriceTest {
 
   @Mock private EthHashMiningCoordinator miningCoordinator;
-  @Mock private BlockchainQueries blockchainQueries;
+  @Mock private Blockchain blockchain;
   private EthGasPrice method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_gasPrice";
 
   @Before
   public void setUp() {
-    method = new EthGasPrice(blockchainQueries, miningCoordinator);
+    method = new EthGasPrice(new BlockchainQueries(blockchain, null, null), miningCoordinator);
   }
 
   @Test
@@ -74,8 +75,8 @@ public class EthGasPriceTest {
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
     when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(1234));
 
-    when(blockchainQueries.headBlockNumber()).thenReturn(1000L);
-    when(blockchainQueries.blockByNumber(anyLong())).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(1000L);
+    when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
@@ -83,9 +84,9 @@ public class EthGasPriceTest {
     verify(miningCoordinator).getMinTransactionGasPrice();
     verifyNoMoreInteractions(miningCoordinator);
 
-    verify(blockchainQueries).headBlockNumber();
-    verify(blockchainQueries, VerificationModeFactory.times(100)).blockByNumber(anyLong());
-    verifyNoMoreInteractions(blockchainQueries);
+    verify(blockchain).getChainHeadBlockNumber();
+    verify(blockchain, VerificationModeFactory.times(100)).getBlockByNumber(anyLong());
+    verifyNoMoreInteractions(blockchain);
   }
 
   @Test
@@ -95,8 +96,8 @@ public class EthGasPriceTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
 
-    when(blockchainQueries.headBlockNumber()).thenReturn(1000L);
-    when(blockchainQueries.blockByNumber(anyLong()))
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(1000L);
+    when(blockchain.getBlockByNumber(anyLong()))
         .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
@@ -104,9 +105,9 @@ public class EthGasPriceTest {
 
     verifyNoMoreInteractions(miningCoordinator);
 
-    verify(blockchainQueries).headBlockNumber();
-    verify(blockchainQueries, VerificationModeFactory.times(100)).blockByNumber(anyLong());
-    verifyNoMoreInteractions(blockchainQueries);
+    verify(blockchain).getChainHeadBlockNumber();
+    verify(blockchain, VerificationModeFactory.times(100)).getBlockByNumber(anyLong());
+    verifyNoMoreInteractions(blockchain);
   }
 
   @Test
@@ -117,8 +118,8 @@ public class EthGasPriceTest {
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
     when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(1234));
 
-    when(blockchainQueries.headBlockNumber()).thenReturn(80L);
-    when(blockchainQueries.blockByNumber(anyLong())).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(80L);
+    when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
@@ -126,14 +127,14 @@ public class EthGasPriceTest {
     verify(miningCoordinator).getMinTransactionGasPrice();
     verifyNoMoreInteractions(miningCoordinator);
 
-    verify(blockchainQueries).headBlockNumber();
-    verify(blockchainQueries, VerificationModeFactory.times(80)).blockByNumber(anyLong());
-    verifyNoMoreInteractions(blockchainQueries);
+    verify(blockchain).getChainHeadBlockNumber();
+    verify(blockchain, VerificationModeFactory.times(80)).getBlockByNumber(anyLong());
+    verifyNoMoreInteractions(blockchain);
   }
 
   private Object createFakeBlock(final Long height) {
     return Optional.of(
-        new BlockWithMetadata<>(
+        new Block(
             new BlockHeader(
                 Hash.EMPTY,
                 Hash.EMPTY_TRIE_HASH,
@@ -152,8 +153,8 @@ public class EthGasPriceTest {
                 Hash.EMPTY,
                 0,
                 null),
-            List.of(
-                new TransactionWithMetadata(
+            new BlockBody(
+                List.of(
                     new Transaction(
                         0,
                         Wei.of(height * 1000000L),
@@ -163,10 +164,8 @@ public class EthGasPriceTest {
                         null,
                         Bytes.EMPTY,
                         Address.ZERO,
-                        Optional.empty()))),
-            List.of(),
-            Difficulty.ONE,
-            1));
+                        Optional.empty())),
+                List.of())));
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

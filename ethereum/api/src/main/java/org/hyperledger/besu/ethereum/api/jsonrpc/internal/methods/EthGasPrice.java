@@ -19,14 +19,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Supplier;
-import java.util.stream.LongStream;
 
 public class EthGasPrice implements JsonRpcMethod {
 
@@ -51,27 +47,12 @@ public class EthGasPrice implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final BlockchainQueries blockchainQueries = blockchain.get();
-    final long blockHeight = blockchainQueries.headBlockNumber();
-    final long[] gasCollection =
-        LongStream.range(Math.max(0, blockHeight - 100), blockHeight)
-            .mapToObj(
-                l ->
-                    blockchainQueries
-                        .blockByNumber(l)
-                        .map(BlockWithMetadata::getTransactions)
-                        .orElse(Collections.emptyList()))
-            .flatMap(Collection::stream)
-            .mapToLong(t -> t.getTransaction().getGasPrice().toLong())
-            .sorted()
-            .toArray();
-    final String result;
-    if (gasCollection == null || gasCollection.length == 0) {
-      result = Quantity.create(miningCoordinator.getMinTransactionGasPrice());
-    } else {
-      result = Quantity.create(gasCollection[gasCollection.length / 2]);
-    }
-
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(),
+        blockchain
+            .get()
+            .gasPrice()
+            .map(Quantity::create)
+            .orElseGet(() -> Quantity.create(miningCoordinator.getMinTransactionGasPrice())));
   }
 }
