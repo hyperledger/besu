@@ -314,7 +314,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.empty(),
             Optional.empty(),
-            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS);
+            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS,
+            defaultQuorumCompatibilityMode);
     final Transaction transaction =
         new TransactionTestFixture()
             .gasPremium(Optional.of(Wei.of(1)))
