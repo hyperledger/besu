@@ -1416,7 +1416,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand configure() throws Exception {
     checkPortClash();
-    checkQuorumCompatConfig();
+    checkGoQuorumCompatibilityConfig();
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -2333,13 +2333,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-  private void checkQuorumCompatConfig() {
+  private void checkGoQuorumCompatibilityConfig() {
     if (genesisFile != null
         && getGenesisConfigFile().getConfigOptions().isQuorum()
         && !minTransactionGasPrice.isZero()) {
       throw new ParameterException(
           this.commandLine,
-          "--min-gas-price must be set to zero if Quorum interop is enabled in the genesis config.");
+          "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
     }
   }
 

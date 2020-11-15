@@ -102,7 +102,7 @@ public class MainnetTransactionValidator {
     if (quorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
-          "gasPrice must be set to zero on a Quroum compatible network");
+          "gasPrice must be set to zero on a GoQuorum compatible network");
     }
 
     if (ExperimentalEIPs.eip1559Enabled && maybeEip1559.isPresent()) {

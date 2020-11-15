@@ -3840,8 +3840,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
     parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString())
-            .contains(
-                    "--min-gas-price must be set to zero if Quorum interop is enabled in the genesis config.");
+        .contains(
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
   }
 
   @Test
@@ -3849,8 +3849,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
     assertThat(commandErrorOutput.toString())
-            .contains(
-                    "--min-gas-price must be set to zero if Quorum interop is enabled in the genesis config.");
+        .contains(
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
   }
 
   @Test
