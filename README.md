@@ -30,7 +30,7 @@ If you have any questions, queries or comments, [RocketChat] is the place to fin
 
 ## Besu Users
 
-Users wanting to install Besu should install the Besu binary by following [these instructions](https://besu.hyperledger.org/HowTo/Get-Started/Install-Binaries/).    
+To install the Besu binary, follow [these instructions](https://besu.hyperledger.org/HowTo/Get-Started/Install-Binaries/).    
 
 ## Besu Developers
 
