@@ -36,7 +36,7 @@ public class ProtocolScheduleBuilder {
   private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter;
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
-  private final boolean isMetadataEnabled;
+  private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
   private final boolean quorumCompatibilityMode;
 
@@ -45,14 +45,14 @@ public class ProtocolScheduleBuilder {
       final BigInteger defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled,
+      final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapter,
         privacyParameters,
-        isMetadataEnabled,
+        isRevertReasonEnabled,
         quorumCompatibilityMode);
   }
 
@@ -60,14 +60,14 @@ public class ProtocolScheduleBuilder {
       final GenesisConfigOptions config,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled,
+      final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.empty(),
         protocolSpecAdapter,
         privacyParameters,
-        isMetadataEnabled,
+        isRevertReasonEnabled,
         quorumCompatibilityMode);
   }
 
@@ -76,13 +76,13 @@ public class ProtocolScheduleBuilder {
       final Optional<BigInteger> defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled,
+      final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.privacyParameters = privacyParameters;
-    this.isMetadataEnabled = isMetadataEnabled;
+    this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
   }
 
@@ -149,7 +149,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
@@ -158,7 +158,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
@@ -167,7 +167,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
@@ -176,7 +176,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
@@ -185,7 +185,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             quorumCompatibilityMode));
 
     if (ExperimentalEIPs.berlinEnabled) {
@@ -196,7 +196,7 @@ public class ProtocolScheduleBuilder {
               chainId,
               config.getContractSizeLimit(),
               config.getEvmStackSize(),
-              isMetadataEnabled,
+              isRevertReasonEnabled,
               quorumCompatibilityMode));
     }
 
@@ -211,7 +211,7 @@ public class ProtocolScheduleBuilder {
               transactionPriceCalculator,
               config.getContractSizeLimit(),
               config.getEvmStackSize(),
-              isMetadataEnabled,
+              isRevertReasonEnabled,
               config,
               quorumCompatibilityMode));
     }
@@ -274,7 +274,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
             quorumCompatibilityMode));
     addProtocolSpec(
@@ -284,7 +284,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
             quorumCompatibilityMode));
     addProtocolSpec(
@@ -294,7 +294,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
             quorumCompatibilityMode));
     addProtocolSpec(
@@ -304,7 +304,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
             quorumCompatibilityMode));
 

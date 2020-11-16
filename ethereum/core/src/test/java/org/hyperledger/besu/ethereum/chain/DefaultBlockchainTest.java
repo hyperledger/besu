@@ -241,7 +241,7 @@ public class DefaultBlockchainTest {
             .setParentHash(genesisBlock.getHash());
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
-    receipts.add(gen.receipt(100L));
+    receipts.add(gen.receipt());
     blockchain.appendBlock(newBlock, receipts);
   }
 
