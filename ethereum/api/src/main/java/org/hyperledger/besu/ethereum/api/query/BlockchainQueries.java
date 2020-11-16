@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -65,6 +67,7 @@ public class BlockchainQueries {
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
+  private final ApiConfiguration apiConfig;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
@@ -82,6 +85,20 @@ public class BlockchainQueries {
       final WorldStateArchive worldStateArchive,
       final Optional<Path> cachePath,
       final Optional<EthScheduler> scheduler) {
+    this(
+        blockchain,
+        worldStateArchive,
+        cachePath,
+        scheduler,
+        ImmutableApiConfiguration.builder().build());
+  }
+
+  public BlockchainQueries(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final Optional<Path> cachePath,
+      final Optional<EthScheduler> scheduler,
+      final ApiConfiguration apiConfig) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
@@ -90,6 +107,7 @@ public class BlockchainQueries {
             ? Optional.of(
                 new TransactionLogBloomCacher(blockchain, cachePath.get(), scheduler.get()))
             : Optional.empty();
+    this.apiConfig = apiConfig;
   }
 
   public Blockchain getBlockchain() {
@@ -718,7 +736,7 @@ public class BlockchainQueries {
   public Optional<Long> gasPrice() {
     final long blockHeight = headBlockNumber();
     final long[] gasCollection =
-        LongStream.range(Math.max(0, blockHeight - 100), blockHeight)
+        LongStream.range(Math.max(0, blockHeight - apiConfig.getGasPriceBlocks()), blockHeight)
             .mapToObj(
                 l ->
                     blockchain
@@ -732,7 +750,15 @@ public class BlockchainQueries {
             .toArray();
     return (gasCollection == null || gasCollection.length == 0)
         ? Optional.empty()
-        : Optional.of(gasCollection[gasCollection.length / 2]);
+        : Optional.of(
+            Math.max(
+                apiConfig.getGasPriceMin(),
+                Math.min(
+                    apiConfig.getGasPriceMax(),
+                    gasCollection[
+                        Math.min(
+                            gasCollection.length - 1,
+                            (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))])));
   }
 
   private <T> Optional<T> fromWorldState(

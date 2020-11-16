@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -59,7 +60,15 @@ public class EthGasPriceTest {
 
   @Before
   public void setUp() {
-    method = new EthGasPrice(new BlockchainQueries(blockchain, null, null), miningCoordinator);
+    method =
+        new EthGasPrice(
+            new BlockchainQueries(
+                blockchain,
+                null,
+                Optional.empty(),
+                Optional.empty(),
+                ImmutableApiConfiguration.builder().gasPriceMin(100).build()),
+            miningCoordinator);
   }
 
   @Test
