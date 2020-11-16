@@ -113,7 +113,7 @@ public class MainnetTransactionValidator {
 
   // eip 1559 tx
   public ValidationResult<TransactionInvalidReason> validate(
-      final EIP1559Transaction transaction, final Optional<Long> baseFee) {
+      final EIP1559Transaction transaction, final Long baseFee) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
@@ -122,7 +122,7 @@ public class MainnetTransactionValidator {
 
     if (ExperimentalEIPs.eip1559Enabled && maybeEip1559.isPresent()) {
       final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
-      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+      if (price.compareTo(Wei.of(baseFee)) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             String.format("gasPrice is less than the current BaseFee"));
