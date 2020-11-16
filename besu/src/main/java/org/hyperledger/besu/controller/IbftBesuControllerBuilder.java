@@ -162,6 +162,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
+    minedBlockObservers.subscribe(blockLogger(transactionPool, localAddress));
 
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
@@ -265,5 +266,20 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     }
 
     return result;
+  }
+
+  private static MinedBlockObserver blockLogger(
+      final TransactionPool transactionPool, final Address localAddress) {
+    return block ->
+        LOG.info(
+            String.format(
+                "%s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
+                block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
+                block.getHeader().getNumber(),
+                block.getBody().getTransactions().size(),
+                transactionPool.getPendingTransactions().size(),
+                block.getHeader().getGasUsed(),
+                (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+                block.getHash().toHexString()));
   }
 }
