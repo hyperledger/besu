@@ -22,9 +22,11 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
@@ -88,6 +90,11 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
   @Override
   public Stream<Observation> streamObservations() {
     throw new UnsupportedOperationException("Observations aren't actually recorded");
+  }
+
+  @Override
+  public Set<MetricCategory> getEnabledCategories() {
+    return Collections.emptySet();
   }
 
   public static class StubLabelledCounter implements LabelledMetric<Counter> {

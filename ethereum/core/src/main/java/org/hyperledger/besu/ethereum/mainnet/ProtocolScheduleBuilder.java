@@ -38,27 +38,37 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
+  private final boolean quorumCompatibilityMode;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapter,
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        quorumCompatibilityMode);
   }
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
-    this(config, Optional.empty(), protocolSpecAdapter, privacyParameters, isRevertReasonEnabled);
+      final boolean isRevertReasonEnabled,
+      final boolean quorumCompatibilityMode) {
+    this(
+        config,
+        Optional.empty(),
+        protocolSpecAdapter,
+        privacyParameters,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode);
   }
 
   private ProtocolScheduleBuilder(
@@ -66,12 +76,14 @@ public class ProtocolScheduleBuilder {
       final Optional<BigInteger> defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final boolean quorumCompatibilityMode) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
+    this.quorumCompatibilityMode = quorumCompatibilityMode;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -85,12 +97,12 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         OptionalLong.of(0),
         MainnetProtocolSpecs.frontierDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getHomesteadBlockNumber(),
         MainnetProtocolSpecs.homesteadDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
 
     config
         .getDaoForkBlock()
@@ -102,12 +114,16 @@ public class ProtocolScheduleBuilder {
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber),
                   MainnetProtocolSpecs.daoRecoveryInitDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(),
+                      config.getEvmStackSize(),
+                      quorumCompatibilityMode));
               addProtocolSpec(
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber + 1),
                   MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(),
+                      config.getEvmStackSize(),
+                      quorumCompatibilityMode));
 
               // Return to the previous protocol spec after the dao fork has completed.
               protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
@@ -117,12 +133,15 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         config.getTangerineWhistleBlockNumber(),
         MainnetProtocolSpecs.tangerineWhistleDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getSpuriousDragonBlockNumber(),
         MainnetProtocolSpecs.spuriousDragonDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getByzantiumBlockNumber(),
@@ -130,7 +149,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleBlockNumber(),
@@ -138,7 +158,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleFixBlockNumber(),
@@ -146,7 +167,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getIstanbulBlockNumber(),
@@ -154,7 +176,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getMuirGlacierBlockNumber(),
@@ -162,7 +185,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            quorumCompatibilityMode));
 
     if (ExperimentalEIPs.berlinEnabled) {
       addProtocolSpec(
@@ -172,7 +196,8 @@ public class ProtocolScheduleBuilder {
               chainId,
               config.getContractSizeLimit(),
               config.getEvmStackSize(),
-              isRevertReasonEnabled));
+              isRevertReasonEnabled,
+              quorumCompatibilityMode));
     }
 
     if (ExperimentalEIPs.eip1559Enabled) {
@@ -187,7 +212,8 @@ public class ProtocolScheduleBuilder {
               config.getContractSizeLimit(),
               config.getEvmStackSize(),
               isRevertReasonEnabled,
-              config));
+              config,
+              quorumCompatibilityMode));
     }
 
     // specs for classic network
@@ -201,7 +227,9 @@ public class ProtocolScheduleBuilder {
                   protocolSchedule,
                   OptionalLong.of(classicBlockNumber),
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(),
+                      config.getEvmStackSize(),
+                      quorumCompatibilityMode));
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
             });
 
@@ -209,12 +237,18 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         config.getEcip1015BlockNumber(),
         ClassicProtocolSpecs.tangerineWhistleDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getDieHardBlockNumber(),
         ClassicProtocolSpecs.dieHardDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getGothamBlockNumber(),
@@ -222,7 +256,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getDefuseDifficultyBombBlockNumber(),
@@ -230,7 +265,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getAtlantisBlockNumber(),
@@ -239,7 +275,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getAghartaBlockNumber(),
@@ -248,7 +285,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getPhoenixBlockNumber(),
@@ -257,7 +295,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getThanosBlockNumber(),
@@ -266,7 +305,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
