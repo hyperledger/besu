@@ -120,6 +120,8 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
+  private static final JsonObject GENESIS_QUORUM_INTEROP_ENABLED =
+      (new JsonObject()).put("config", new JsonObject().put("isquorum", true));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
@@ -3787,6 +3789,74 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--metrics-port=13",
         "--metrics-push-port=14",
         "--miner-stratum-port=15");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void compatibilityEth64ForkIdEnabledMustBeUsed() {
+    parseCommand("--compatibility-eth64-forkid-enabled");
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
+    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
+        .isTrue();
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void compatibilityEth64ForkIdNotEnabledMustBeUsed() {
+    parseCommand("--compatibility-eth64-forkid-enabled=false");
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
+    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
+        .isFalse();
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatCompatibilityEth64ForkIdIsNotEnabledByDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
+    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
+        .isFalse();
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatCompatibilityEth64ForkIdIsPresentInHelpMessage() {
+    parseCommand("--help");
+    assertThat(commandOutput.toString())
+        .contains(
+            "--compatibility-eth64-forkid-enabled",
+            "Enable the legacy Eth/64 fork id. (default: false)");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand("--genesis-file", genesisFile.toString());
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+  }
+
+  @Test
+  public void quorumInteropEnabledSucceedsWithGasPriceSetToZero() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }

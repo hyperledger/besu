@@ -70,6 +70,7 @@ dependencies {
 
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
   runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
 

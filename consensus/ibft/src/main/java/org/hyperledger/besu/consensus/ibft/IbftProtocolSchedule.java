@@ -45,7 +45,8 @@ public class IbftProtocolSchedule {
             DEFAULT_CHAIN_ID,
             builder -> applyIbftChanges(config.getIbft2ConfigOptions(), builder),
             privacyParameters,
-            isRevertReasonEnabled)
+            isRevertReasonEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 

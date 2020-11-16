@@ -72,7 +72,8 @@ public class CliqueProtocolSchedule {
                     builder,
                     eip1559),
             privacyParameters,
-            isRevertReasonEnabled)
+            isRevertReasonEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 
