@@ -43,11 +43,11 @@ public class ExecutionContextTestFixture {
 
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private static final GenesisConfigFile genesisConfigFile = GenesisConfigFile.mainnet();
 
   private ExecutionContextTestFixture(
       final ProtocolSchedule protocolSchedule, final KeyValueStorage keyValueStorage) {
-    final GenesisState genesisState =
-        GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule);
+    final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     this.genesis = genesisState.getBlock();
     this.keyValueStorage = keyValueStorage;
     this.blockchain =
@@ -118,7 +118,8 @@ public class ExecutionContextTestFixture {
                     BigInteger.valueOf(42),
                     Function.identity(),
                     new PrivacyParameters(),
-                    false)
+                    false,
+                    genesisConfigFile.getConfigOptions().isQuorum())
                 .createProtocolSchedule();
       }
       if (keyValueStorage == null) {

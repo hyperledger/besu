@@ -38,27 +38,37 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isMetadataEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
+  private final boolean quorumCompatibilityMode;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
+      final boolean isMetadataEnabled,
+      final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapter,
         privacyParameters,
-        isMetadataEnabled);
+        isMetadataEnabled,
+        quorumCompatibilityMode);
   }
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
-    this(config, Optional.empty(), protocolSpecAdapter, privacyParameters, isMetadataEnabled);
+      final boolean isMetadataEnabled,
+      final boolean quorumCompatibilityMode) {
+    this(
+        config,
+        Optional.empty(),
+        protocolSpecAdapter,
+        privacyParameters,
+        isMetadataEnabled,
+        quorumCompatibilityMode);
   }
 
   private ProtocolScheduleBuilder(
@@ -66,12 +76,14 @@ public class ProtocolScheduleBuilder {
       final Optional<BigInteger> defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
+      final boolean isMetadataEnabled,
+      final boolean quorumCompatibilityMode) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.privacyParameters = privacyParameters;
     this.isMetadataEnabled = isMetadataEnabled;
+    this.quorumCompatibilityMode = quorumCompatibilityMode;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -85,12 +97,12 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         OptionalLong.of(0),
         MainnetProtocolSpecs.frontierDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getHomesteadBlockNumber(),
         MainnetProtocolSpecs.homesteadDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
 
     config
         .getDaoForkBlock()
@@ -102,12 +114,16 @@ public class ProtocolScheduleBuilder {
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber),
                   MainnetProtocolSpecs.daoRecoveryInitDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(),
+                      config.getEvmStackSize(),
+                      quorumCompatibilityMode));
               addProtocolSpec(
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber + 1),
                   MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(),
+                      config.getEvmStackSize(),
+                      quorumCompatibilityMode));
 
               // Return to the previous protocol spec after the dao fork has completed.
               protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
@@ -117,44 +133,71 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         config.getTangerineWhistleBlockNumber(),
         MainnetProtocolSpecs.tangerineWhistleDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getSpuriousDragonBlockNumber(),
         MainnetProtocolSpecs.spuriousDragonDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getByzantiumBlockNumber(),
         MainnetProtocolSpecs.byzantiumDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isMetadataEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleBlockNumber(),
         MainnetProtocolSpecs.constantinopleDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isMetadataEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleFixBlockNumber(),
         MainnetProtocolSpecs.constantinopleFixDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isMetadataEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getIstanbulBlockNumber(),
         MainnetProtocolSpecs.istanbulDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isMetadataEnabled,
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getMuirGlacierBlockNumber(),
         MainnetProtocolSpecs.muirGlacierDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isMetadataEnabled,
+            quorumCompatibilityMode));
 
     if (ExperimentalEIPs.berlinEnabled) {
       addProtocolSpec(
           protocolSchedule,
           config.getBerlinBlockNumber(),
           MainnetProtocolSpecs.berlinDefinition(
-              chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+              chainId,
+              config.getContractSizeLimit(),
+              config.getEvmStackSize(),
+              isMetadataEnabled,
+              quorumCompatibilityMode));
     }
 
     if (ExperimentalEIPs.eip1559Enabled) {
@@ -169,7 +212,8 @@ public class ProtocolScheduleBuilder {
               config.getContractSizeLimit(),
               config.getEvmStackSize(),
               isMetadataEnabled,
-              config));
+              config,
+              quorumCompatibilityMode));
     }
 
     // specs for classic network
@@ -183,7 +227,9 @@ public class ProtocolScheduleBuilder {
                   protocolSchedule,
                   OptionalLong.of(classicBlockNumber),
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(),
+                      config.getEvmStackSize(),
+                      quorumCompatibilityMode));
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
             });
 
@@ -191,12 +237,18 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         config.getEcip1015BlockNumber(),
         ClassicProtocolSpecs.tangerineWhistleDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getDieHardBlockNumber(),
         ClassicProtocolSpecs.dieHardDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getGothamBlockNumber(),
@@ -204,7 +256,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getDefuseDifficultyBombBlockNumber(),
@@ -212,7 +265,8 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getAtlantisBlockNumber(),
@@ -221,7 +275,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isMetadataEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getAghartaBlockNumber(),
@@ -230,7 +285,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isMetadataEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getPhoenixBlockNumber(),
@@ -239,7 +295,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isMetadataEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
         config.getThanosBlockNumber(),
@@ -248,7 +305,8 @@ public class ProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isMetadataEnabled,
-            config.getEcip1017EraRounds()));
+            config.getEcip1017EraRounds(),
+            quorumCompatibilityMode));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
