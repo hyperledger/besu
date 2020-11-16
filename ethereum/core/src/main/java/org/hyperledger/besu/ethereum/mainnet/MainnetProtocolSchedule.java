@@ -55,7 +55,7 @@ public class MainnetProtocolSchedule {
             DEFAULT_CHAIN_ID,
             Function.identity(),
             privacyParameters,
-                isRevertReasonEnabled,
+            isRevertReasonEnabled,
             config.isQuorum())
         .createProtocolSchedule();
   }
