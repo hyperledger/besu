@@ -878,10 +878,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isPrivacyMultiTenancyEnabled = false;
 
   @Option(
-      names = {"--receipt-metadata-enabled", "--revert-reason-enabled"},
+      names = {"--revert-reason-enabled"},
       description =
-          "Enable passing metadata back through TransactionReceipts (default: ${DEFAULT-VALUE})")
-  private final Boolean isMetadataEnabled = false;
+          "Enable passing the revert reason back through TransactionReceipts (default: ${DEFAULT-VALUE})")
+  private final Boolean isRevertReasonEnabled = false;
 
   @Option(
       names = {"--required-blocks", "--required-block"},
@@ -1512,7 +1512,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
-        .isMetadataEnabled(isMetadataEnabled)
+        .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(keyStorageProvider(keyValueStorageName))
         .isPruningEnabled(isPruningEnabled())
         .pruningConfiguration(
