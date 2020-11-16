@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -160,7 +161,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void jsonWithBlockAndFromAndToParametersIsInvalid() throws Exception {
+  public void jsonWithBlockhashAndFromAndToParametersIsInvalid() throws Exception {
     final String json =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
             + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
@@ -177,6 +178,68 @@ public class FilterParameterTest {
         request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter.isValid()).isFalse();
+  }
+
+  @Test
+  public void jsonWithBlockHashAndFromAndToParametersIsInvalid() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockHash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter.isValid()).isFalse();
+  }
+
+  @Test
+  public void jsonWithBlockHashIsValid() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockHash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter.isValid()).isTrue();
+    assertThat(parsedFilterParameter.getBlockHash()).isEqualTo(Optional.of(Hash.ZERO));
+  }
+
+  @Test
+  public void jsonWithBlockhashIsValid() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockhash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter.isValid()).isTrue();
+    assertThat(parsedFilterParameter.getBlockHash()).isEqualTo(Optional.of(Hash.ZERO));
   }
 
   @Test

@@ -49,7 +49,9 @@ public class FilterParameter {
           final List<Address> address,
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics,
-      @JsonProperty("blockhash") final Hash blockHash) {
+      @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+          @JsonProperty("blockHash")
+          final Hash blockHash) {
     this.isValid = blockHash == null || (fromBlock == null && toBlock == null);
     this.fromBlock = fromBlock != null ? fromBlock : BlockParameter.LATEST;
     this.toBlock = toBlock != null ? toBlock : BlockParameter.LATEST;
