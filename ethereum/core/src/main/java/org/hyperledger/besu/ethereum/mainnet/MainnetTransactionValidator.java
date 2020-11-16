@@ -121,14 +121,6 @@ public class MainnetTransactionValidator {
     }
 
     if (ExperimentalEIPs.eip1559Enabled && maybeEip1559.isPresent()) {
-      final EIP1559 eip1559 = maybeEip1559.get();
-      if (!eip1559.isValidFormat(transaction, acceptedTransactionTypes)) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            String.format(
-                "transaction format is invalid, accepted transaction types are %s",
-                acceptedTransactionTypes.toString()));
-      }
       final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
       if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
