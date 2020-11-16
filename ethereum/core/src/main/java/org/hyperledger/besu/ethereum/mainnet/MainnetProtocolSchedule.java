@@ -50,7 +50,12 @@ public class MainnetProtocolSchedule {
       return FixedDifficultyProtocolSchedule.create(config, privacyParameters, isMetadataEnabled);
     }
     return new ProtocolScheduleBuilder(
-            config, DEFAULT_CHAIN_ID, Function.identity(), privacyParameters, isMetadataEnabled)
+            config,
+            DEFAULT_CHAIN_ID,
+            Function.identity(),
+            privacyParameters,
+            isMetadataEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 

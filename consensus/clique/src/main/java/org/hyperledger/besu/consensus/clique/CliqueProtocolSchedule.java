@@ -72,7 +72,8 @@ public class CliqueProtocolSchedule {
                     builder,
                     eip1559),
             privacyParameters,
-            isMetadataEnabled)
+            isMetadataEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 
