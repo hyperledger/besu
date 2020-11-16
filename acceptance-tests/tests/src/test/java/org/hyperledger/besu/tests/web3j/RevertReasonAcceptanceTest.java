@@ -31,7 +31,7 @@ public class RevertReasonAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNodeWithMetadataEnabled("miner-node-withMetadata");
+    minerNode = besu.createMinerNodeWithRevertReasonEnabled("miner-node-withRevertReason");
     cluster.start(minerNode);
   }
 
