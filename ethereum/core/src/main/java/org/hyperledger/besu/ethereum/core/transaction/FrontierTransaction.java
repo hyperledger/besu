@@ -39,6 +39,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.plugin.data.Transaction;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class FrontierTransaction implements Transaction {
@@ -93,7 +94,7 @@ public class FrontierTransaction implements Transaction {
   }
 
   public static FrontierTransaction readFrom(final RLPInput input) throws RLPException {
-    return TransactionRLPDecoder.decodeTransaction(input);
+    return (FrontierTransaction) TransactionRLPDecoder.decodeTransaction(input);
   }
 
   /**
@@ -377,21 +378,6 @@ public class FrontierTransaction implements Transaction {
    *
    * @return true if legacy transaction, false otherwise
    */
-  @Override
-  public boolean isFrontierTransaction() {
-    return getGasPrice() != null && (getGasPremium().isEmpty() && getFeeCap().isEmpty());
-  }
-
-  /**
-   * Returns whether or not the transaction is an EIP-1559 transaction.
-   *
-   * @return true if EIP-1559 transaction, false otherwise
-   */
-  @Override
-  public boolean isEIP1559Transaction() {
-    return getGasPremium().isPresent() && getFeeCap().isPresent();
-  }
-
   private static Bytes32 computeSenderRecoveryHash(
       final long nonce,
       final Wei gasPrice,
@@ -455,10 +441,6 @@ public class FrontierTransaction implements Transaction {
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append("{");
     sb.append("nonce=").append(getNonce()).append(", ");
     sb.append("gasPrice=").append(getGasPrice()).append(", ");
-    if (getGasPremium().isPresent() && getFeeCap().isPresent()) {
-      sb.append("gasPremium=").append(getGasPremium()).append(", ");
-      sb.append("feeCap=").append(getFeeCap()).append(", ");
-    }
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
     sb.append("value=").append(getValue()).append(", ");
@@ -473,6 +455,11 @@ public class FrontierTransaction implements Transaction {
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
     }
     return Optional.empty();
+  }
+
+  @Override
+  public TransactionType getType() {
+    return TransactionType.FRONTIER;
   }
 
   public static class Builder {

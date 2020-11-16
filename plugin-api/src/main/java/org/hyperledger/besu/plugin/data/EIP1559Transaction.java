@@ -32,12 +32,12 @@ import java.util.Optional;
  * whereas contract creation transactions will not.
  */
 public interface EIP1559Transaction
-    extends TypedTransaction,
-        HashedTransaction,
+    extends HashedTransaction,
         NoncedTransaction,
         ECDSASignedTransaction,
         SenderTransaction,
-        ChainIdTransaction {
+        ChainIdTransaction,
+        TypedTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in

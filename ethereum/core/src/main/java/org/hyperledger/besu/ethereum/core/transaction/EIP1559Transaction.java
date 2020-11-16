@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -38,7 +40,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-public class EIP1559Transaction extends org.hyperledger.besu.plugin.data.EIP1559Transaction {
+public class EIP1559Transaction implements org.hyperledger.besu.plugin.data.EIP1559Transaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -140,6 +142,16 @@ public class EIP1559Transaction extends org.hyperledger.besu.plugin.data.EIP1559
   @Override
   public long getNonce() {
     return nonce;
+  }
+
+  @Override
+  public Quantity getGasPremium() {
+    return gasPremium;
+  }
+
+  @Override
+  public Quantity getFeeCap() {
+    return feeCap;
   }
 
   /**
@@ -390,6 +402,11 @@ public class EIP1559Transaction extends org.hyperledger.besu.plugin.data.EIP1559
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
     }
     return Optional.empty();
+  }
+
+  @Override
+  public TransactionType getType() {
+    return TransactionType.EIP1559;
   }
 
   public static class Builder {

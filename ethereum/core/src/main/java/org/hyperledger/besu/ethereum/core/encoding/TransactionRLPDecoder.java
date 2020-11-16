@@ -24,6 +24,7 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -31,7 +32,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.data.Transaction;
+import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 @FunctionalInterface
 public interface TransactionRLPDecoder {
@@ -39,48 +40,45 @@ public interface TransactionRLPDecoder {
   TransactionRLPDecoder FRONTIER = frontierDecoder();
   TransactionRLPDecoder EIP1559 = eip1559Decoder();
 
-  static Transaction decodeTransaction(final RLPInput input) {
+  static TypedTransaction decodeTransaction(final RLPInput input) {
     return (ExperimentalEIPs.eip1559Enabled ? EIP1559 : FRONTIER).decode(input);
   }
 
-  <T extends Transaction> T decode(RLPInput input);
+  TypedTransaction decode(RLPInput input);
 
   static TransactionRLPDecoder frontierDecoder() {
-    return new TransactionRLPDecoder() {
-      @Override
-      public FrontierTransaction decode(final RLPInput input) {
-        input.enterList();
-        final FrontierTransaction.Builder builder =
-            FrontierTransaction.builder()
-                .nonce(input.readLongScalar())
-                .gasPrice(Wei.of(input.readUInt256Scalar()))
-                .gasLimit(input.readLongScalar())
-                .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-                .value(Wei.of(input.readUInt256Scalar()))
-                .payload(input.readBytes());
+    return input -> {
+      input.enterList();
+      final FrontierTransaction.Builder builder =
+          FrontierTransaction.builder()
+              .nonce(input.readLongScalar())
+              .gasPrice(Wei.of(input.readUInt256Scalar()))
+              .gasLimit(input.readLongScalar())
+              .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+              .value(Wei.of(input.readUInt256Scalar()))
+              .payload(input.readBytes());
 
-        final BigInteger v = input.readBigIntegerScalar();
-        final byte recId;
-        Optional<BigInteger> chainId = Optional.empty();
-        if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-          recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-        } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-          chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-          recId =
-              v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-        } else {
-          throw new RuntimeException(
-              String.format("An unsupported encoded `v` value of %s was found", v));
-        }
-        final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-        final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-        final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-
-        input.leaveList();
-
-        chainId.ifPresent(builder::chainId);
-        return builder.signature(signature).build();
+      final BigInteger v = input.readBigIntegerScalar();
+      final byte recId;
+      Optional<BigInteger> chainId = Optional.empty();
+      if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+        recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+      } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+        chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+        recId =
+            v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+      } else {
+        throw new RuntimeException(
+            String.format("An unsupported encoded `v` value of %s was found", v));
       }
+      final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+
+      input.leaveList();
+
+      chainId.ifPresent(builder::chainId);
+      return builder.signature(signature).build();
     };
   }
 
@@ -88,10 +86,9 @@ public interface TransactionRLPDecoder {
     return input -> {
       input.enterList();
 
-      final Transaction.Builder builder =
-          Transaction.builder()
+      final EIP1559Transaction.Builder builder =
+          EIP1559Transaction.builder()
               .nonce(input.readLongScalar())
-              .gasPrice(Wei.of(input.readUInt256Scalar()))
               .gasLimit(input.readLongScalar())
               .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
               .value(Wei.of(input.readUInt256Scalar()))

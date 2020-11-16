@@ -33,7 +33,8 @@ public interface Transaction
         NoncedTransaction,
         ECDSASignedTransaction,
         ChainIdTransaction,
-        SenderTransaction {
+        SenderTransaction,
+        TypedTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid per unit of gas for all computation costs
