@@ -30,7 +30,8 @@ public class FixedDifficultyProtocolSchedule {
             config,
             builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
             privacyParameters,
-            isMetadataEnabled)
+            isMetadataEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 
