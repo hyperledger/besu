@@ -48,13 +48,13 @@ public class MainnetTransactionValidator {
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
   private final Optional<EIP1559> maybeEip1559;
   private final AcceptedTransactionTypes acceptedTransactionTypes;
-  private final boolean quorumCompatibilityMode;
+  private final boolean goQuorumCompatibilityMode;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
-      final boolean quorumCompatibilityMode) {
+      final boolean goQuorumCompatibilityMode) {
     this(
         gasCalculator,
         Optional.empty(),
@@ -62,7 +62,7 @@ public class MainnetTransactionValidator {
         chainId,
         Optional.empty(),
         AcceptedTransactionTypes.FRONTIER_TRANSACTIONS,
-        quorumCompatibilityMode);
+        goQuorumCompatibilityMode);
   }
 
   public MainnetTransactionValidator(
@@ -72,14 +72,14 @@ public class MainnetTransactionValidator {
       final Optional<BigInteger> chainId,
       final Optional<EIP1559> maybeEip1559,
       final AcceptedTransactionTypes acceptedTransactionTypes,
-      final boolean quorumCompatibilityMode) {
+      final boolean goQuorumCompatibilityMode) {
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.maybeEip1559 = maybeEip1559;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
-    this.quorumCompatibilityMode = quorumCompatibilityMode;
+    this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
   }
 
   /**
@@ -99,7 +99,7 @@ public class MainnetTransactionValidator {
       return signatureResult;
     }
 
-    if (quorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
+    if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
           "gasPrice must be set to zero on a GoQuorum compatible network");
