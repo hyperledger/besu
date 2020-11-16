@@ -112,7 +112,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         nodeKey,
         privacyParameters,
-        isMetadataEnabled);
+        isRevertReasonEnabled);
   }
 
   @Override

@@ -159,7 +159,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .clock(Clock.systemUTC())
-            .isMetadataEnabled(node.isMetadataEnabled())
+            .isRevertReasonEnabled(node.isRevertReasonEnabled())
             .storageProvider(storageProvider)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();

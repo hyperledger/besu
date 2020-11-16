@@ -410,28 +410,19 @@ public abstract class MainnetProtocolSpecs {
         worldState.rootHash(),
         gasUsed,
         result.getLogs(),
-        Optional.empty(), // No revert reason in frontier
-        result.getGasRemaining());
+        Optional.empty()); // No revert reason in frontier
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0,
-        gasUsed,
-        result.getLogs(),
-        Optional.empty(),
-        result.getGasRemaining());
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
       final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0,
-        gasUsed,
-        result.getLogs(),
-        result.getRevertReason(),
-        result.getGasRemaining());
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
   private static class DaoBlockProcessor implements BlockProcessor {

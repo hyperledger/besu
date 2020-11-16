@@ -36,7 +36,7 @@ public class ProtocolScheduleBuilder {
   private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter;
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
-  private final boolean isMetadataEnabled;
+  private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
   public ProtocolScheduleBuilder(
@@ -44,21 +44,21 @@ public class ProtocolScheduleBuilder {
       final BigInteger defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
+      final boolean isRevertReasonEnabled) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapter,
         privacyParameters,
-        isMetadataEnabled);
+        isRevertReasonEnabled);
   }
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
-    this(config, Optional.empty(), protocolSpecAdapter, privacyParameters, isMetadataEnabled);
+      final boolean isRevertReasonEnabled) {
+    this(config, Optional.empty(), protocolSpecAdapter, privacyParameters, isRevertReasonEnabled);
   }
 
   private ProtocolScheduleBuilder(
@@ -66,12 +66,12 @@ public class ProtocolScheduleBuilder {
       final Optional<BigInteger> defaultChainId,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
+      final boolean isRevertReasonEnabled) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.privacyParameters = privacyParameters;
-    this.isMetadataEnabled = isMetadataEnabled;
+    this.isRevertReasonEnabled = isRevertReasonEnabled;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -127,34 +127,52 @@ public class ProtocolScheduleBuilder {
         protocolSchedule,
         config.getByzantiumBlockNumber(),
         MainnetProtocolSpecs.byzantiumDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleBlockNumber(),
         MainnetProtocolSpecs.constantinopleDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleFixBlockNumber(),
         MainnetProtocolSpecs.constantinopleFixDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
     addProtocolSpec(
         protocolSchedule,
         config.getIstanbulBlockNumber(),
         MainnetProtocolSpecs.istanbulDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
     addProtocolSpec(
         protocolSchedule,
         config.getMuirGlacierBlockNumber(),
         MainnetProtocolSpecs.muirGlacierDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     if (ExperimentalEIPs.berlinEnabled) {
       addProtocolSpec(
           protocolSchedule,
           config.getBerlinBlockNumber(),
           MainnetProtocolSpecs.berlinDefinition(
-              chainId, config.getContractSizeLimit(), config.getEvmStackSize(), isMetadataEnabled));
+              chainId,
+              config.getContractSizeLimit(),
+              config.getEvmStackSize(),
+              isRevertReasonEnabled));
     }
 
     if (ExperimentalEIPs.eip1559Enabled) {
@@ -168,7 +186,7 @@ public class ProtocolScheduleBuilder {
               transactionPriceCalculator,
               config.getContractSizeLimit(),
               config.getEvmStackSize(),
-              isMetadataEnabled,
+              isRevertReasonEnabled,
               config));
     }
 
@@ -220,7 +238,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
@@ -229,7 +247,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
@@ -238,7 +256,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds()));
     addProtocolSpec(
         protocolSchedule,
@@ -247,7 +265,7 @@ public class ProtocolScheduleBuilder {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isMetadataEnabled,
+            isRevertReasonEnabled,
             config.getEcip1017EraRounds()));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
