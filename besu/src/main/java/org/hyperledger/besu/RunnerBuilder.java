@@ -330,7 +330,11 @@ public class RunnerBuilder {
 
     Preconditions.checkNotNull(besuController);
 
-    final DiscoveryConfiguration discoveryConfiguration;
+    final DiscoveryConfiguration discoveryConfiguration =
+        DiscoveryConfiguration.create()
+            .setBindHost(p2pListenInterface)
+            .setBindPort(p2pListenPort)
+            .setAdvertisedHost(p2pAdvertisedHost);
     if (discovery) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.getBootNodes() == null) {
@@ -338,14 +342,9 @@ public class RunnerBuilder {
       } else {
         bootstrap = ethNetworkConfig.getBootNodes();
       }
-      discoveryConfiguration =
-          DiscoveryConfiguration.create()
-              .setBindHost(p2pListenInterface)
-              .setBindPort(p2pListenPort)
-              .setAdvertisedHost(p2pAdvertisedHost)
-              .setBootnodes(bootstrap);
+      discoveryConfiguration.setBootnodes(bootstrap);
     } else {
-      discoveryConfiguration = DiscoveryConfiguration.create().setActive(false);
+      discoveryConfiguration.setActive(false);
     }
 
     final NodeKey nodeKey = besuController.getNodeKey();
