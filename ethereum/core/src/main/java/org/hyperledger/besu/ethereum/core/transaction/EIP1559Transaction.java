@@ -41,14 +41,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class EIP1559Transaction implements org.hyperledger.besu.plugin.data.EIP1559Transaction {
+public class EIP1559Transaction
+    implements org.hyperledger.besu.plugin.data.EIP1559Transaction,
+        ECDSASignedAndReplayProtectedTransaction {
 
-  // Used for transactions that are not tied to a specific chain
-  // (e.g. does not have a chain id associated with it).
-  public static final BigInteger REPLAY_UNPROTECTED_V_BASE = BigInteger.valueOf(27);
   public static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
-
-  public static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
 
   // The v signature parameter starts at 36 because 1 is the first valid chainId so:
   // chainId > 1 implies that 2 * chainId + V_BASE > 36.
@@ -273,28 +270,6 @@ public class EIP1559Transaction implements org.hyperledger.besu.plugin.data.EIP1
    */
   public void writeTo(final RLPOutput out) {
     TransactionRLPEncoder.encode(this, out);
-  }
-
-  @Override
-  public BigInteger getR() {
-    return signature.getR();
-  }
-
-  @Override
-  public BigInteger getS() {
-    return signature.getS();
-  }
-
-  @Override
-  public BigInteger getV() {
-    final BigInteger v;
-    final BigInteger recId = BigInteger.valueOf(signature.getRecId());
-    if (chainId.isEmpty()) {
-      v = recId.add(REPLAY_UNPROTECTED_V_BASE);
-    } else {
-      v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
-    }
-    return v;
   }
 
   /**

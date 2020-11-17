@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.transaction.ECDSASignedAndReplayProtectedTransaction;
 import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -241,7 +242,7 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
-  public <T extends ECDSASignedTransaction & ChainIdTransaction>
+  public <T extends ECDSASignedAndReplayProtectedTransaction>
       ValidationResult<TransactionInvalidReason> validateTransactionSignature(final T transaction) {
     if (chainId.isPresent()
         && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {

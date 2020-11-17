@@ -42,7 +42,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** An operation submitted by an external actor to be applied to the system. */
-public class FrontierTransaction implements Transaction {
+public class FrontierTransaction implements Transaction, ECDSASignedAndReplayProtectedTransaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
