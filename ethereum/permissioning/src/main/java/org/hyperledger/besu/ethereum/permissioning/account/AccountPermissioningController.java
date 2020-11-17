@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.permissioning.account;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
@@ -25,6 +24,8 @@ import java.util.Optional;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.plugin.data.Hash;
+import org.hyperledger.besu.plugin.data.HashedTransaction;
 
 public class AccountPermissioningController {
 
@@ -48,10 +49,8 @@ public class AccountPermissioningController {
     this.quorumQip714Gate = quorumQip714Gate;
   }
 
-  public boolean isPermitted(
-      final Transaction transaction,
-      final boolean includeLocalCheck,
-      final boolean includeOnChainCheck) {
+  public <T extends HashedTransaction> boolean isPermitted(
+      final T transaction, final boolean includeLocalCheck, final boolean includeOnChainCheck) {
     final boolean checkPermissions =
         quorumQip714Gate.map(QuorumQip714Gate::shouldCheckPermissions).orElse(true);
     if (!checkPermissions) {

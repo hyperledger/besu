@@ -28,8 +28,7 @@ import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.plugin.data.ChainIdTransaction;
-import org.hyperledger.besu.plugin.data.ECDSASignedTransaction;
+import org.hyperledger.besu.plugin.data.HashedTransaction;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.math.BigInteger;
@@ -296,7 +295,7 @@ public class MainnetTransactionValidator {
   }
 
   private boolean isSenderAllowed(
-      final Transaction transaction, final TransactionValidationParams validationParams) {
+      final HashedTransaction transaction, final TransactionValidationParams validationParams) {
     if (validationParams.checkLocalPermissions() || validationParams.checkOnchainPermissions()) {
       return transactionFilter
           .map(

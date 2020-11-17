@@ -18,8 +18,6 @@
 package org.hyperledger.besu.ethereum.core.transaction;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.data.ChainIdTransaction;
 
 import java.math.BigInteger;
