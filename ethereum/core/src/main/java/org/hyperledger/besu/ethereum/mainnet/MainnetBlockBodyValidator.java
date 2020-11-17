@@ -34,6 +34,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
@@ -279,17 +280,17 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return true;
     }
     final BlockBody body = block.getBody();
-    final List<Transaction> transactions = body.getTransactions();
+    final List<TypedTransaction> transactions = body.getTransactions();
+    final long baseFee = block.getHeader().getBaseFee().orElseThrow();
     final TransactionPriceCalculator transactionPriceCalculator =
-        TransactionPriceCalculator.eip1559();
-    for (final Transaction transaction : transactions) {
-      final Optional<Long> baseFee = block.getHeader().getBaseFee();
-      final Wei price = transactionPriceCalculator.price(transaction, baseFee);
-      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+        TransactionPriceCalculator.eip1559(baseFee);
+    for (final TypedTransaction transaction : transactions) {
+      final Wei price = transactionPriceCalculator.price(transaction);
+      if (price.compareTo(Wei.of(baseFee)) < 0) {
         LOG.warn(
             "Invalid block: transaction gas price {} must be greater than base fee {}",
             price.toString(),
-            baseFee.orElseThrow());
+            baseFee);
         return false;
       }
     }

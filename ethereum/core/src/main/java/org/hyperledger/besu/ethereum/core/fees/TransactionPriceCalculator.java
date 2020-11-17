@@ -24,16 +24,16 @@ import java.math.BigInteger;
 
 @FunctionalInterface
 public interface TransactionPriceCalculator {
-  Wei price(TypedTransaction transaction, Long baseFee);
+  Wei price(TypedTransaction transaction);
 
   static TransactionPriceCalculator frontier() {
-    return (transaction, baseFee) -> ((FrontierTransaction) transaction).getGasPrice();
+    return transaction -> ((FrontierTransaction) transaction).getGasPrice();
   }
 
-  static TransactionPriceCalculator eip1559() {
-    return (transaction, baseFee) -> {
+  static TransactionPriceCalculator eip1559(final long baseFee) {
+    return transaction -> {
       if (transaction instanceof FrontierTransaction) {
-        return ((FrontierTransaction) transaction).getGasPrice();
+        return frontier().price(transaction);
       } else if (transaction instanceof EIP1559Transaction) {
         final EIP1559Transaction eip1559Transaction = (EIP1559Transaction) transaction;
         ExperimentalEIPs.eip1559MustBeEnabled();
