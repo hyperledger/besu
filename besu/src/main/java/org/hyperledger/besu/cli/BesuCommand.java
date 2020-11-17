@@ -82,6 +82,8 @@ import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -878,10 +880,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isPrivacyMultiTenancyEnabled = false;
 
   @Option(
-      names = {"--receipt-metadata-enabled", "--revert-reason-enabled"},
+      names = {"--revert-reason-enabled"},
       description =
-          "Enable passing metadata back through TransactionReceipts (default: ${DEFAULT-VALUE})")
-  private final Boolean isMetadataEnabled = false;
+          "Enable passing the revert reason back through TransactionReceipts (default: ${DEFAULT-VALUE})")
+  private final Boolean isRevertReasonEnabled = false;
 
   @Option(
       names = {"--required-blocks", "--required-block"},
@@ -1021,10 +1023,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Path to PID file (optional)")
   private final Path pidPath = null;
 
+  @CommandLine.Option(
+      names = {"--api-gas-price-blocks"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "Number of blocks to consider for eth_gasPrice (default: ${DEFAULT-VALUE})")
+  private final Long apiGasPriceBlocks = 100L;
+
+  @CommandLine.Option(
+      names = {"--api-gas-price-percentile"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "Percentile value to measure for eth_gasPrice (default: ${DEFAULT-VALUE})")
+  private final Double apiGasPricePercentile = 50.0;
+
+  @CommandLine.Option(
+      names = {"--api-gas-price-max"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
+  private final Long apiGasPriceMax = 500_000_000_000L;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
@@ -1245,6 +1266,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         graphQLConfiguration,
         jsonRpcConfiguration,
         webSocketConfiguration,
+        apiConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
         staticNodes,
@@ -1416,6 +1438,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand configure() throws Exception {
     checkPortClash();
+    checkGoQuorumCompatibilityConfig();
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -1427,6 +1450,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
+    apiConfiguration = apiConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
       // if allowlist == default values, remove the default values
@@ -1511,7 +1535,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .metricsSystem(metricsSystem.get())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
-        .isMetadataEnabled(isMetadataEnabled)
+        .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(keyStorageProvider(keyValueStorageName))
         .isPruningEnabled(isPruningEnabled())
         .pruningConfiguration(
@@ -1711,6 +1735,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
     webSocketConfiguration.setTimeoutSec(unstableRPCOptions.getWsTimeoutSec());
     return webSocketConfiguration;
+  }
+
+  private ApiConfiguration apiConfiguration() {
+    return ImmutableApiConfiguration.builder()
+        .gasPriceBlocks(apiGasPriceBlocks)
+        .gasPricePercentile(apiGasPricePercentile)
+        .gasPriceMin(minTransactionGasPrice.toLong())
+        .gasPriceMax(apiGasPriceMax)
+        .build();
   }
 
   public MetricsConfiguration metricsConfiguration() {
@@ -2038,6 +2071,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final GraphQLConfiguration graphQLConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Collection<EnodeURL> staticNodes,
@@ -2070,6 +2104,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
+            .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
@@ -2168,9 +2203,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // If no chain id is found in the genesis as it's an optional, we use mainnet
         // network id.
         try {
-          final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
           builder.setNetworkId(
-              genesisConfigFile
+              getGenesisConfigFile()
                   .getConfigOptions(genesisConfigOverrides)
                   .getChainId()
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
@@ -2216,6 +2250,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     return builder.build();
+  }
+
+  private GenesisConfigFile getGenesisConfigFile() {
+    return GenesisConfigFile.fromConfig(genesisConfig());
   }
 
   private String genesisConfig() {
@@ -2327,6 +2365,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         + "' has been specified multiple times. Please review the supplied configuration.");
               }
             });
+  }
+
+  private void checkGoQuorumCompatibilityConfig() {
+    if (genesisFile != null
+        && getGenesisConfigFile().getConfigOptions().isQuorum()
+        && !minTransactionGasPrice.isZero()) {
+      throw new ParameterException(
+          this.commandLine,
+          "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+    }
   }
 
   @VisibleForTesting

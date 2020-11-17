@@ -176,6 +176,12 @@ public class EthSendRawTransactionTest {
         TransactionInvalidReason.TX_FEECAP_EXCEEDED, JsonRpcError.TX_FEECAP_EXCEEDED);
   }
 
+  @Test
+  public void transactionWithNonZeroGasWithGoQuorumCompatibilityIsRejected() {
+    verifyErrorForInvalidTransaction(
+        TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO, JsonRpcError.GAS_PRICE_MUST_BE_ZERO);
+  }
+
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
     when(transactionPool.addLocalTransaction(any(Transaction.class)))

@@ -42,5 +42,7 @@ public enum TransactionInvalidReason {
   TX_FEECAP_EXCEEDED,
   PRIVATE_VALUE_NOT_ZERO,
   PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE,
-  INTERNAL_ERROR;
+  INTERNAL_ERROR,
+  // Quroum Compatibility Invalid Reasons
+  GAS_PRICE_MUST_BE_ZERO
 }

@@ -181,7 +181,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.isMetadataEnabled(false)).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.storageProvider(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isPruningEnabled(anyBoolean())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.pruningConfiguration(any())).thenReturn(mockControllerBuilder);
@@ -223,6 +223,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.graphQLConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.dataDir(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.bannedNodeIds(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsSystem(any())).thenReturn(mockRunnerBuilder);

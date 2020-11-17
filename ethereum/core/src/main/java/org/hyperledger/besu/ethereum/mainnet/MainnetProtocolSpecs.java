@@ -79,7 +79,9 @@ public abstract class MainnetProtocolSpecs {
   private MainnetProtocolSpecs() {}
 
   public static ProtocolSpecBuilder frontierDefinition(
-      final OptionalInt configContractSizeLimit, final OptionalInt configStackSizeLimit) {
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
@@ -97,7 +99,8 @@ public abstract class MainnetProtocolSpecs {
                     0))
         .transactionValidatorBuilder(
             gasCalculator ->
-                new MainnetTransactionValidator(gasCalculator, false, Optional.empty()))
+                new MainnetTransactionValidator(
+                    gasCalculator, false, Optional.empty(), quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -144,9 +147,12 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
-      final OptionalInt configContractSizeLimit, final OptionalInt configStackSizeLimit) {
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
-    return frontierDefinition(configContractSizeLimit, configStackSizeLimit)
+    return frontierDefinition(
+            configContractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::homestead)
         .contractCreationProcessorBuilder(
@@ -158,14 +164,18 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, Optional.empty()))
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
 
   public static ProtocolSpecBuilder daoRecoveryInitDefinition(
-      final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
-    return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean quorumCompatibilityMode) {
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
@@ -186,15 +196,20 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
-      final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
-    return daoRecoveryInitDefinition(contractSizeLimit, configStackSizeLimit)
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean quorumCompatibilityMode) {
+    return daoRecoveryInitDefinition(
+            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
-      final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
-    return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean quorumCompatibilityMode) {
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
@@ -202,12 +217,14 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder spuriousDragonDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
+      final OptionalInt configStackSizeLimit,
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
-    return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit)
+    return tangerineWhistleDefinition(
+            OptionalInt.empty(), configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
@@ -226,7 +243,9 @@ public abstract class MainnetProtocolSpecs {
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator, true, chainId, quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -249,9 +268,11 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final boolean quorumCompatibilityMode) {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    return spuriousDragonDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+    return spuriousDragonDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -284,8 +305,14 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
-    return byzantiumDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+      final boolean enableRevertReason,
+      final boolean quorumCompatibilityMode) {
+    return byzantiumDefinition(
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -297,9 +324,14 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final boolean quorumCompatibilityMode) {
     return constantinopleDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .name("ConstantinopleFix");
   }
@@ -308,11 +340,16 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return constantinopleFixDefinition(
-            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
@@ -334,8 +371,14 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
-    return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+      final boolean enableRevertReason,
+      final boolean quorumCompatibilityMode) {
+    return istanbulDefinition(
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
@@ -344,12 +387,17 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
+      final boolean enableRevertReason,
+      final boolean quorumCompatibilityMode) {
     if (!ExperimentalEIPs.berlinEnabled) {
       throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
     }
     return muirGlacierDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
@@ -365,12 +413,17 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode) {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     return muirGlacierDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
@@ -379,7 +432,8 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     chainId,
                     Optional.of(eip1559),
-                    AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS))
+                    AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS,
+                    genesisConfigOptions.isQuorum()))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -410,28 +464,19 @@ public abstract class MainnetProtocolSpecs {
         worldState.rootHash(),
         gasUsed,
         result.getLogs(),
-        Optional.empty(), // No revert reason in frontier
-        result.getGasRemaining());
+        Optional.empty()); // No revert reason in frontier
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0,
-        gasUsed,
-        result.getLogs(),
-        Optional.empty(),
-        result.getGasRemaining());
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
       final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0,
-        gasUsed,
-        result.getLogs(),
-        result.getRevertReason(),
-        result.getGasRemaining());
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
   private static class DaoBlockProcessor implements BlockProcessor {

@@ -32,7 +32,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
   @Override
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
-      @Named("MetadataEnabled") final boolean metadataEnabled) {
+      @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     return MainnetProtocolSchedule.fromConfig(configOptions);
   }
 

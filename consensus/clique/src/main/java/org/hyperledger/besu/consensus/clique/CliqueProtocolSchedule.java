@@ -44,7 +44,7 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
+      final boolean isRevertReasonEnabled) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -72,13 +72,16 @@ public class CliqueProtocolSchedule {
                     builder,
                     eip1559),
             privacyParameters,
-            isMetadataEnabled)
+            isRevertReasonEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final NodeKey nodeKey, final boolean isMetadataEnabled) {
-    return create(config, nodeKey, PrivacyParameters.DEFAULT, isMetadataEnabled);
+      final GenesisConfigOptions config,
+      final NodeKey nodeKey,
+      final boolean isRevertReasonEnabled) {
+    return create(config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

@@ -25,18 +25,19 @@ public class FixedDifficultyProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
+      final boolean isRevertReasonEnabled) {
     return new ProtocolScheduleBuilder(
             config,
             builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
             privacyParameters,
-            isMetadataEnabled)
+            isRevertReasonEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final boolean isMetadataEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isMetadataEnabled);
+      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
   public static ProtocolSchedule create(final GenesisConfigOptions config) {
