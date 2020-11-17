@@ -545,12 +545,6 @@ task evmToolStartScripts(type: CreateStartScripts) {
   }
 }
 
-// Include the additional start scripts in the distribution
-applicationDistribution.into("bin") {
-  from(tasks.withType(CreateStartScripts))
-  fileMode = 0755
-}
-
 installDist { dependsOn checkLicenses }
 
 distTar {

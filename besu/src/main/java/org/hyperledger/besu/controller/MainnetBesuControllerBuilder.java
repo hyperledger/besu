@@ -89,7 +89,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
-        isMetadataEnabled);
+        isRevertReasonEnabled);
   }
 
   @Override

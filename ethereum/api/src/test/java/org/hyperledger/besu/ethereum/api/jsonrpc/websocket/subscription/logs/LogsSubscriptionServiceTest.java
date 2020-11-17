@@ -377,7 +377,7 @@ public class LogsSubscriptionServiceTest {
     final BlockOptions blockOptions = BlockOptions.create();
     for (int i = 0; i < txCount; i++) {
       final Transaction tx = gen.transaction();
-      final TransactionReceipt receipt = gen.receipt(logsSupplier.get(), -1L);
+      final TransactionReceipt receipt = gen.receipt(logsSupplier.get());
 
       receipts.add(receipt);
       receipt.getLogs().forEach(logs::add);

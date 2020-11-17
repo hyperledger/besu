@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -65,6 +67,7 @@ public class BlockchainQueries {
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
+  private final ApiConfiguration apiConfig;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
@@ -82,6 +85,20 @@ public class BlockchainQueries {
       final WorldStateArchive worldStateArchive,
       final Optional<Path> cachePath,
       final Optional<EthScheduler> scheduler) {
+    this(
+        blockchain,
+        worldStateArchive,
+        cachePath,
+        scheduler,
+        ImmutableApiConfiguration.builder().build());
+  }
+
+  public BlockchainQueries(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final Optional<Path> cachePath,
+      final Optional<EthScheduler> scheduler,
+      final ApiConfiguration apiConfig) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
@@ -90,6 +107,7 @@ public class BlockchainQueries {
             ? Optional.of(
                 new TransactionLogBloomCacher(blockchain, cachePath.get(), scheduler.get()))
             : Optional.empty();
+    this.apiConfig = apiConfig;
   }
 
   public Blockchain getBlockchain() {
@@ -572,7 +590,7 @@ public class BlockchainQueries {
                             query,
                             cacheFile,
                             isQueryAlive);
-                      } catch (Exception e) {
+                      } catch (final Exception e) {
                         throw new RuntimeException(e);
                       }
                     })
@@ -586,10 +604,10 @@ public class BlockchainQueries {
         currentStep = nextStep;
       }
       return result;
-    } catch (RpcMethodTimeoutException e) {
+    } catch (final RpcMethodTimeoutException e) {
       LOG.error("Error retrieving matching logs", e);
       throw e;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOG.error("Error retrieving matching logs", e);
       throw new RuntimeException(e);
     }
@@ -692,14 +710,14 @@ public class BlockchainQueries {
                       transactions.get(i).getHash(),
                       i,
                       removed);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                   throw new RuntimeException(e);
                 }
               })
           .flatMap(Collection::stream)
           .filter(query::matches)
           .collect(Collectors.toList());
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -713,6 +731,35 @@ public class BlockchainQueries {
   public Optional<MutableWorldState> getWorldState(final long blockNumber) {
     final Optional<BlockHeader> header = blockchain.getBlockHeader(blockNumber);
     return header.map(BlockHeader::getStateRoot).flatMap(worldStateArchive::getMutable);
+  }
+
+  public Optional<Long> gasPrice() {
+    final long blockHeight = headBlockNumber();
+    final long[] gasCollection =
+        LongStream.range(Math.max(0, blockHeight - apiConfig.getGasPriceBlocks()), blockHeight)
+            .mapToObj(
+                l ->
+                    blockchain
+                        .getBlockByNumber(l)
+                        .map(Block::getBody)
+                        .map(BlockBody::getTransactions)
+                        .orElseThrow(
+                            () -> new IllegalStateException("Could not retrieve block #" + l)))
+            .flatMap(Collection::stream)
+            .mapToLong(t -> t.getGasPrice().toLong())
+            .sorted()
+            .toArray();
+    return (gasCollection == null || gasCollection.length == 0)
+        ? Optional.empty()
+        : Optional.of(
+            Math.max(
+                apiConfig.getGasPriceMin(),
+                Math.min(
+                    apiConfig.getGasPriceMax(),
+                    gasCollection[
+                        Math.min(
+                            gasCollection.length - 1,
+                            (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))])));
   }
 
   private <T> Optional<T> fromWorldState(

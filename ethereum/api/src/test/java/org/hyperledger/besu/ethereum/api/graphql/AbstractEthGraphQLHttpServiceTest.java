@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -153,7 +154,12 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
         InMemoryStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
     context = new ProtocolContext(blockchain, stateArchive, null);
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
+        new BlockchainQueries(
+            context.getBlockchain(),
+            context.getWorldStateArchive(),
+            Optional.empty(),
+            Optional.empty(),
+            ImmutableApiConfiguration.builder().gasPriceMin(0).build());
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);

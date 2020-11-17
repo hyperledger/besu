@@ -38,9 +38,9 @@ class CliqueGenesisFileModule extends GenesisFileModule {
   @Override
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
-      @Named("MetadataEnabled") final boolean metadataEnabled) {
+      @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     // dagger can handle this magic one day
-    return CliqueProtocolSchedule.create(configOptions, nodeKey, metadataEnabled);
+    return CliqueProtocolSchedule.create(configOptions, nodeKey, revertReasonEnabled);
   }
 
   @Override
