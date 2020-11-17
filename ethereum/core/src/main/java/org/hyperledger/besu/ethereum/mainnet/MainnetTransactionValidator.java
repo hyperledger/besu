@@ -147,6 +147,19 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
+  /**
+   * Asserts whether a transaction is valid for the sender accounts current state.
+   *
+   * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
+   * this method to ensure that a sender can be extracted from the {@link Transaction}.
+   *
+   * @param transaction the transaction to validateMessageFrame.State.COMPLETED_FAILED
+   * @param sender the sender account state to validate against
+   * @param validationParams parameters that determine which validation checks to perform.
+   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
+   *     is invalid.
+   */
   public ValidationResult<TransactionInvalidReason> validateForSender(
       final FrontierTransaction transaction,
       final Account sender,
@@ -300,28 +313,5 @@ public class MainnetTransactionValidator {
 
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     this.transactionFilter = Optional.of(transactionFilter);
-  }
-
-  /**
-   * Asserts whether a transaction is valid for the sender accounts current state.
-   *
-   * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
-   * this method to ensure that a sender can be extracted from the {@link Transaction}.
-   *
-   * @param transaction the transaction to validateMessageFrame.State.COMPLETED_FAILED
-   * @param sender the sender account state to validate against
-   * @param allowFutureNonce if true, transactions with nonce equal or higher than the account nonce
-   *     will be considered valid (used when received transactions in the transaction pool). If
-   *     false, only a transaction with the nonce equals the account nonce will be considered valid
-   *     (used when processing transactions).
-   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
-   *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
-   *     is invalid.
-   */
-  public ValidationResult<TransactionInvalidReason> validateForSender(
-      final Transaction transaction, final Account sender, final boolean allowFutureNonce) {
-    final TransactionValidationParams validationParams =
-        new TransactionValidationParams.Builder().allowFutureNonce(allowFutureNonce).build();
-    return validateForSender(transaction, sender, validationParams);
   }
 }
