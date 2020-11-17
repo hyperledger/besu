@@ -90,6 +90,11 @@ rpc-ws-authentication-enabled=false
 rpc-ws-authentication-credentials-file="none"
 rpc-ws-authentication-jwt-public-key-file="none"
 
+# API
+api-gas-price-blocks=100
+api-gas-price-percentile=50.0
+api-gas-price-max=500000000000
+
 # Prometheus Metrics Endpoint
 metrics-enabled=false
 metrics-protocol="prometheus"

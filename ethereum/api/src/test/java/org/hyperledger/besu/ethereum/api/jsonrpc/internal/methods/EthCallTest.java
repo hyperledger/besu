@@ -26,11 +26,13 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -65,7 +67,16 @@ public class EthCallTest {
 
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
-    final CallParameter callParameter = new JsonCallParameter("0x0", null, "0x0", "0x0", "0x0", "");
+    final CallParameter callParameter =
+        new CallParameter(
+            Address.fromHexString("0x0"),
+            null,
+            Gas.ZERO,
+            Wei.ZERO,
+            null,
+            null,
+            Wei.ZERO,
+            Bytes.EMPTY);
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
@@ -91,7 +102,8 @@ public class EthCallTest {
 
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
-    final CallParameter callParameter = new JsonCallParameter(null, "0x0", null, null, null, null);
+    final CallParameter callParameter =
+        new CallParameter(null, Address.fromHexString("0x0"), null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -148,7 +160,15 @@ public class EthCallTest {
   }
 
   private CallParameter callParameter() {
-    return new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        Gas.ZERO,
+        Wei.ZERO,
+        null,
+        null,
+        Wei.ZERO,
+        Bytes.EMPTY);
   }
 
   private JsonRpcRequestContext ethCallRequest(
