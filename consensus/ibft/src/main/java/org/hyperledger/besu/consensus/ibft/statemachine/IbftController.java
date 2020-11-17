@@ -89,6 +89,7 @@ public class IbftController {
 
   private void handleMessage(final Message message) {
     final MessageData messageData = message.getData();
+
     switch (messageData.getCode()) {
       case IbftV2.PROPOSAL:
         consumeMessage(
@@ -129,6 +130,14 @@ public class IbftController {
   private <P extends IbftMessage<?>> void consumeMessage(
       final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
     LOG.trace("Received IBFT {} message", ibftMessage.getClass().getSimpleName());
+
+    // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
+    // the currentHeightManager, but CAN be the same directly following import).
+    if (ibftMessage.getRoundIdentifier().getSequenceNumber()
+        == blockchain.getChainHead().getHeight()) {
+      return;
+    }
+
     if (processMessage(ibftMessage, message)) {
       gossiper.send(message);
       handleMessage.accept(ibftMessage);
@@ -180,6 +189,12 @@ public class IbftController {
   }
 
   public void handleRoundExpiry(final RoundExpiry roundExpiry) {
+    // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
+    // the currentHeightManager, but CAN be the same directly following import).
+    if (roundExpiry.getView().getSequenceNumber() == blockchain.getChainHead().getHeight()) {
+      return;
+    }
+
     if (isMsgForCurrentHeight(roundExpiry.getView())) {
       currentHeightManager.roundExpired(roundExpiry);
     } else {
