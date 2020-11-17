@@ -17,9 +17,9 @@
 
 package org.hyperledger.besu.plugin.data;
 
-import org.apache.tuweni.bytes.Bytes;
-
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A transaction is a single cryptographically-signed instruction constructed by an actor externally
@@ -34,6 +34,7 @@ import java.util.Optional;
 public interface EIP1559Transaction
     extends HashedTransaction,
         NoncedTransaction,
+        GasLimitedTransaction,
         ECDSASignedTransaction,
         SenderTransaction,
         ChainIdTransaction,

@@ -23,11 +23,11 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
 import org.hyperledger.besu.ethereum.vm.operations.ExpOperation;
+import org.hyperledger.besu.plugin.data.EIP1559Transaction;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.EIP1559Transaction;
 
 public class FrontierGasCalculator implements GasCalculator {
 

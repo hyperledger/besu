@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -35,12 +36,14 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
+import org.hyperledger.besu.plugin.data.GasLimitedTransaction;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -61,20 +64,18 @@ public class MainnetTransactionProcessor {
 
   private final int createContractAccountVersion;
 
-  private final TransactionPriceCalculator transactionPriceCalculator;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   private final boolean clearEmptyAccounts;
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
+      final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
       final int createContractAccountVersion,
-      final TransactionPriceCalculator transactionPriceCalculator,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
@@ -83,7 +84,6 @@ public class MainnetTransactionProcessor {
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.createContractAccountVersion = createContractAccountVersion;
-    this.transactionPriceCalculator = transactionPriceCalculator;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
@@ -105,7 +105,7 @@ public class MainnetTransactionProcessor {
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
+      final FrontierTransaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
@@ -139,7 +139,7 @@ public class MainnetTransactionProcessor {
       LOG.trace("Starting execution of {}", frontierTransaction);
 
       ValidationResult<TransactionInvalidReason> validationResult =
-          transactionValidator.validate(frontierTransaction, blockHeader.getBaseFee());
+          transactionValidator.validate(frontierTransaction);
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).
@@ -161,7 +161,7 @@ public class MainnetTransactionProcessor {
       final MutableAccount senderMutableAccount = sender.getMutable();
       final long previousNonce = senderMutableAccount.incrementNonce();
       final Wei transactionGasPrice =
-          transactionPriceCalculator.price(frontierTransaction, blockHeader.getBaseFee());
+          TransactionPriceCalculator.frontier().price(frontierTransaction);
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
           senderAddress,
@@ -289,24 +289,219 @@ public class MainnetTransactionProcessor {
 
       final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
       final Gas coinbaseFee = Gas.of(frontierTransaction.getGasLimit()).minus(refunded);
-      if (blockHeader.getBaseFee().isPresent() && frontierTransaction.isEIP1559Transaction()) {
-        final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
-        if (transactionGasPrice.compareTo(baseFee) < 0) {
-          return TransactionProcessingResult.failed(
-              gasUsedByTransaction.toLong(),
-              refunded.toLong(),
-              ValidationResult.invalid(
-                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
-                  "transaction price must be greater than base fee"),
-              Optional.empty());
-        }
-      }
-      final CoinbaseFeePriceCalculator coinbaseCreditService =
-          frontierTransaction.isFrontierTransaction()
-              ? CoinbaseFeePriceCalculator.frontier()
-              : coinbaseFeePriceCalculator;
       final Wei coinbaseWeiDelta =
-          coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+          CoinbaseFeePriceCalculator.frontier()
+              .price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+
+      coinbase.incrementBalance(coinbaseWeiDelta);
+
+      initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
+
+      if (clearEmptyAccounts) {
+        clearEmptyAccounts(worldState);
+      }
+
+      if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        return TransactionProcessingResult.successful(
+            initialFrame.getLogs(),
+            gasUsedByTransaction.toLong(),
+            refunded.toLong(),
+            initialFrame.getOutputData(),
+            validationResult);
+      } else {
+        return TransactionProcessingResult.failed(
+            gasUsedByTransaction.toLong(),
+            refunded.toLong(),
+            validationResult,
+            initialFrame.getRevertReason());
+      }
+    } catch (final RuntimeException re) {
+      LOG.error("Critical Exception Processing Transaction", re);
+      return TransactionProcessingResult.invalid(
+          ValidationResult.invalid(
+              TransactionInvalidReason.INTERNAL_ERROR,
+              "Internal Error in Besu - " + re.toString()));
+    }
+  }
+
+  public TransactionProcessingResult processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final EIP1559Transaction eip1559Transaction,
+      final Address miningBeneficiary,
+      final OperationTracer operationTracer,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingPrivateState,
+      final TransactionValidationParams transactionValidationParams,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    try {
+      LOG.trace("Starting execution of {}", eip1559Transaction);
+      final long baseFee = blockHeader.getBaseFee().orElseThrow();
+
+      ValidationResult<TransactionInvalidReason> validationResult =
+          transactionValidator.validate(eip1559Transaction, baseFee);
+      // Make sure the transaction is intrinsically valid before trying to
+      // compare against a sender account (because the transaction may not
+      // be signed correctly to extract the sender).
+      if (!validationResult.isValid()) {
+        LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
+        return TransactionProcessingResult.invalid(validationResult);
+      }
+
+      final Address senderAddress = eip1559Transaction.getSender();
+      final EvmAccount sender = worldState.getOrCreate(senderAddress);
+      validationResult =
+          transactionValidator.validateForSender(
+              eip1559Transaction, sender, transactionValidationParams, baseFee);
+      if (!validationResult.isValid()) {
+        LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
+        return TransactionProcessingResult.invalid(validationResult);
+      }
+
+      final MutableAccount senderMutableAccount = sender.getMutable();
+      final long previousNonce = senderMutableAccount.incrementNonce();
+      final Wei transactionGasPrice =
+          TransactionPriceCalculator.eip1559(baseFee).price(eip1559Transaction);
+      LOG.trace(
+          "Incremented sender {} nonce ({} -> {})",
+          senderAddress,
+          previousNonce,
+          sender.getNonce());
+
+      final Wei upfrontGasCost = eip1559Transaction.getUpfrontGasCost(transactionGasPrice);
+      final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
+      LOG.trace(
+          "Deducted sender {} upfront gas cost {} ({} -> {})",
+          senderAddress,
+          upfrontGasCost,
+          previousBalance,
+          sender.getBalance());
+
+      final Gas intrinsicGas = gasCalculator.transactionIntrinsicGasCost(eip1559Transaction);
+      final Gas gasAvailable = Gas.of(eip1559Transaction.getGasLimit()).minus(intrinsicGas);
+      LOG.trace(
+          "Gas available for execution {} = {} - {} (limit - intrinsic)",
+          gasAvailable,
+          eip1559Transaction.getGasLimit(),
+          intrinsicGas);
+
+      final WorldUpdater worldUpdater = worldState.updater();
+      final MessageFrame initialFrame;
+      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+      final ReturnStack returnStack = new ReturnStack();
+
+      if (eip1559Transaction.isContractCreation()) {
+        final Address contractAddress =
+            Address.contractAddress(senderAddress, sender.getNonce() - 1L);
+
+        initialFrame =
+            MessageFrame.builder()
+                .type(MessageFrame.Type.CONTRACT_CREATION)
+                .messageFrameStack(messageFrameStack)
+                .returnStack(returnStack)
+                .blockchain(blockchain)
+                .worldState(worldUpdater.updater())
+                .initialGas(gasAvailable)
+                .address(contractAddress)
+                .originator(senderAddress)
+                .contract(contractAddress)
+                .contractAccountVersion(createContractAccountVersion)
+                .gasPrice(transactionGasPrice)
+                .inputData(Bytes.EMPTY)
+                .sender(senderAddress)
+                .value(eip1559Transaction.getValue())
+                .apparentValue(eip1559Transaction.getValue())
+                .code(new Code(eip1559Transaction.getPayload()))
+                .blockHeader(blockHeader)
+                .depth(0)
+                .completer(c -> {})
+                .miningBeneficiary(miningBeneficiary)
+                .blockHashLookup(blockHashLookup)
+                .isPersistingPrivateState(isPersistingPrivateState)
+                .maxStackSize(maxStackSize)
+                .transactionHash(eip1559Transaction.getHash())
+                .privateMetadataUpdater(privateMetadataUpdater)
+                .build();
+
+      } else {
+        final Address to = eip1559Transaction.getTo().get();
+        final Account contract = worldState.get(to);
+
+        initialFrame =
+            MessageFrame.builder()
+                .type(MessageFrame.Type.MESSAGE_CALL)
+                .messageFrameStack(messageFrameStack)
+                .returnStack(returnStack)
+                .blockchain(blockchain)
+                .worldState(worldUpdater.updater())
+                .initialGas(gasAvailable)
+                .address(to)
+                .originator(senderAddress)
+                .contract(to)
+                .contractAccountVersion(
+                    contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
+                .gasPrice(transactionGasPrice)
+                .inputData(eip1559Transaction.getPayload())
+                .sender(senderAddress)
+                .value(eip1559Transaction.getValue())
+                .apparentValue(eip1559Transaction.getValue())
+                .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
+                .blockHeader(blockHeader)
+                .depth(0)
+                .completer(c -> {})
+                .miningBeneficiary(miningBeneficiary)
+                .blockHashLookup(blockHashLookup)
+                .maxStackSize(maxStackSize)
+                .isPersistingPrivateState(isPersistingPrivateState)
+                .transactionHash(eip1559Transaction.getHash())
+                .privateMetadataUpdater(privateMetadataUpdater)
+                .build();
+      }
+
+      messageFrameStack.addFirst(initialFrame);
+
+      while (!messageFrameStack.isEmpty()) {
+        process(messageFrameStack.peekFirst(), operationTracer);
+      }
+
+      if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        worldUpdater.commit();
+      }
+
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "Gas used by transaction: {}, by message call/contract creation: {}",
+            () -> Gas.of(eip1559Transaction.getGasLimit()).minus(initialFrame.getRemainingGas()),
+            () -> gasAvailable.minus(initialFrame.getRemainingGas()));
+      }
+
+      // Refund the sender by what we should and pay the miner fee (note that we're doing them one
+      // after the other so that if it is the same account somehow, we end up with the right result)
+      final Gas selfDestructRefund =
+          gasCalculator.getSelfDestructRefundAmount().times(initialFrame.getSelfDestructs().size());
+      final Gas refundGas = initialFrame.getGasRefund().plus(selfDestructRefund);
+      final Gas refunded = refunded(eip1559Transaction, initialFrame.getRemainingGas(), refundGas);
+      final Wei refundedWei = refunded.priceFor(transactionGasPrice);
+      senderMutableAccount.incrementBalance(refundedWei);
+
+      final Gas gasUsedByTransaction =
+          Gas.of(eip1559Transaction.getGasLimit()).minus(initialFrame.getRemainingGas());
+
+      final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+      final Gas coinbaseFee = Gas.of(eip1559Transaction.getGasLimit()).minus(refunded);
+      if (transactionGasPrice.compareTo(Wei.of(baseFee)) < 0) {
+        return TransactionProcessingResult.failed(
+            gasUsedByTransaction.toLong(),
+            refunded.toLong(),
+            ValidationResult.invalid(
+                TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                "transaction price must be greater than base fee"),
+            Optional.empty());
+      }
+      final Wei coinbaseWeiDelta =
+          coinbaseFeePriceCalculator.price(
+              coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
 
@@ -362,7 +557,7 @@ public class MainnetTransactionProcessor {
   }
 
   private static Gas refunded(
-      final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
+      final GasLimitedTransaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
     final Gas maxRefundAllowance =
         Gas.of(transaction.getGasLimit()).minus(gasRemaining).dividedBy(2);
@@ -375,7 +570,7 @@ public class MainnetTransactionProcessor {
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
+      final FrontierTransaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
@@ -397,7 +592,7 @@ public class MainnetTransactionProcessor {
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
+      final FrontierTransaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,

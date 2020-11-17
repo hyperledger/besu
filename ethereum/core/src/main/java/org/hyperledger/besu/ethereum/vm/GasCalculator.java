@@ -39,11 +39,11 @@ import org.hyperledger.besu.ethereum.vm.operations.MStoreOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SLoadOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SelfDestructOperation;
 import org.hyperledger.besu.ethereum.vm.operations.Sha3Operation;
+import org.hyperledger.besu.plugin.data.EIP1559Transaction;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.EIP1559Transaction;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 /**
  * Provides various gas cost lookups and calculations used during block processing.

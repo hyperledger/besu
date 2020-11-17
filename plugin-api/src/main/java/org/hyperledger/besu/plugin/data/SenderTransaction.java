@@ -19,8 +19,7 @@ package org.hyperledger.besu.plugin.data;
 
 public interface SenderTransaction {
   /**
-   * The 160-bit address of the account sending the transaction, extracted from the v, r, s
-   * parameters.
+   * The 160-bit address of the account sending the transaction.
    *
    * @return The address of the account that sent this transaction.
    */

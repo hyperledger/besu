@@ -34,7 +34,8 @@ public interface Transaction
         ECDSASignedTransaction,
         ChainIdTransaction,
         SenderTransaction,
-        TypedTransaction {
+        TypedTransaction,
+        GasLimitedTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid per unit of gas for all computation costs
@@ -43,15 +44,6 @@ public interface Transaction
    * @return the quantity of Wei per gas unit paid.
    */
   Quantity getGasPrice();
-
-  /**
-   * A scalar value equal to the maximum amount of gas that should be used in executing this
-   * transaction. This is paid up-front, before any computation is done and may not be increased
-   * later.
-   *
-   * @return the maximum amount of gas that should be used in executing this * transaction.
-   */
-  long getGasLimit();
 
   /**
    * The 160-bit address of the message call’s recipient. For a contract creation transaction this

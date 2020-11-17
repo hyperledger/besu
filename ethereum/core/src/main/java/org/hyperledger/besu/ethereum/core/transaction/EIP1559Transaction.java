@@ -17,9 +17,9 @@
 
 package org.hyperledger.besu.ethereum.core.transaction;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
+import static com.google.common.base.Preconditions.checkState;
+import static org.hyperledger.besu.crypto.Hash.keccak256;
+
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -37,8 +37,9 @@ import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkState;
-import static org.hyperledger.besu.crypto.Hash.keccak256;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EIP1559Transaction implements org.hyperledger.besu.plugin.data.EIP1559Transaction {
 

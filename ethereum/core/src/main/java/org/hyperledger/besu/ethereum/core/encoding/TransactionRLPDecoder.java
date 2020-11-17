@@ -27,12 +27,12 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 @FunctionalInterface
 public interface TransactionRLPDecoder {

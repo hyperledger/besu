@@ -17,28 +17,13 @@
 
 package org.hyperledger.besu.plugin.data;
 
-import java.math.BigInteger;
-
-public interface ECDSASignedTransaction extends SenderTransaction {
-
+public interface GasLimitedTransaction {
   /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
+   * A scalar value equal to the maximum amount of gas that should be used in executing this
+   * transaction. This is paid up-front, before any computation is done and may not be increased
+   * later.
    *
-   * @return the 'V' component of the signature
+   * @return the maximum amount of gas that should be used in executing this * transaction.
    */
-  BigInteger getV();
-
-  /**
-   * Value corresponding to the 'R' component of the signature of the transaction.
-   *
-   * @return the 'R' component of the signature
-   */
-  BigInteger getR();
-
-  /**
-   * Value corresponding to the 'S' component of the signature of the transaction.
-   *
-   * @return the 'S' component of the signature
-   */
-  BigInteger getS();
+  long getGasLimit();
 }

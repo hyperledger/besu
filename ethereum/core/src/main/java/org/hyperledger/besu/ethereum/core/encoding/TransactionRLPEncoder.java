@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -32,7 +33,7 @@ public class TransactionRLPEncoder {
   private static final ImmutableMap<TransactionType, Encoder> ENCODERS =
       ImmutableMap.of(TransactionType.FRONTIER, FRONTIER, TransactionType.EIP1559, EIP1559);
 
-  public static void encode(final Transaction transaction, final RLPOutput output) {
+  public static void encode(final TypedTransaction transaction, final RLPOutput output) {
     ENCODERS.getOrDefault(transaction.getType(), FRONTIER).encode(transaction, output);
   }
 
@@ -81,6 +82,6 @@ public class TransactionRLPEncoder {
 
   @FunctionalInterface
   interface Encoder {
-    void encode(Transaction transaction, RLPOutput output);
+    void encode(TypedTransaction transaction, RLPOutput output);
   }
 }

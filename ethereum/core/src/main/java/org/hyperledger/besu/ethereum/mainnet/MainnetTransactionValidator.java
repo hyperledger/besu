@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.data.ChainIdTransaction;
 import org.hyperledger.besu.plugin.data.ECDSASignedTransaction;
-import org.hyperledger.besu.plugin.data.SenderTransaction;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.math.BigInteger;
@@ -121,7 +120,7 @@ public class MainnetTransactionValidator {
     }
 
     if (ExperimentalEIPs.eip1559Enabled && maybeEip1559.isPresent()) {
-      final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
+      final Wei price = TransactionPriceCalculator.eip1559(baseFee).price(transaction);
       if (price.compareTo(Wei.of(baseFee)) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
@@ -148,7 +147,7 @@ public class MainnetTransactionValidator {
   }
 
   public ValidationResult<TransactionInvalidReason> validateForSender(
-      final Transaction transaction,
+      final FrontierTransaction transaction,
       final Account sender,
       final TransactionValidationParams validationParams) {
     Wei senderBalance = Account.DEFAULT_BALANCE;
@@ -192,7 +191,57 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
-  public <T extends ECDSASignedTransaction & ChainIdTransaction & SenderTransaction>
+  public ValidationResult<TransactionInvalidReason> validateForSender(
+      final EIP1559Transaction transaction,
+      final Account sender,
+      final TransactionValidationParams validationParams,
+      final long baseFee) {
+    Wei senderBalance = Account.DEFAULT_BALANCE;
+    long senderNonce = Account.DEFAULT_NONCE;
+
+    if (sender != null) {
+      senderBalance = sender.getBalance();
+      senderNonce = sender.getNonce();
+    }
+
+    final Wei upfrontCost =
+        TransactionPriceCalculator.eip1559(baseFee)
+            .price(transaction)
+            .multiply(transaction.getGasLimit());
+    if (upfrontCost.compareTo(senderBalance) > 0) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+          String.format(
+              "transaction up-front cost %s exceeds transaction sender account balance %s",
+              upfrontCost, senderBalance));
+    }
+
+    if (transaction.getNonce() < senderNonce) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.NONCE_TOO_LOW,
+          String.format(
+              "transaction nonce %s below sender account nonce %s",
+              transaction.getNonce(), senderNonce));
+    }
+
+    if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INCORRECT_NONCE,
+          String.format(
+              "transaction nonce %s does not match sender account nonce %s.",
+              transaction.getNonce(), senderNonce));
+    }
+
+    if (!isSenderAllowed(transaction, validationParams)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
+          String.format("Sender %s is not on the Account Allowlist", transaction.getSender()));
+    }
+
+    return ValidationResult.valid();
+  }
+
+  public <T extends ECDSASignedTransaction & ChainIdTransaction>
       ValidationResult<TransactionInvalidReason> validateTransactionSignature(final T transaction) {
     if (chainId.isPresent()
         && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {

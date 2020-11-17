@@ -17,18 +17,19 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
-import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,6 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 public abstract class AbstractBlockProcessor implements BlockProcessor {
   @FunctionalInterface

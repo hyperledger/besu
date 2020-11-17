@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.Transaction;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -38,8 +40,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.Transaction;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class FrontierTransaction implements Transaction {
@@ -366,11 +366,33 @@ public class FrontierTransaction implements Transaction {
   /**
    * Calculates the up-front cost for the gas the transaction can use.
    *
+   * @return the up-front cost for the gas the transaction can use.
+   */
+  public Wei getUpfrontGasCost() {
+    return getUpfrontGasCost(getGasPrice());
+  }
+
+  /**
+   * Calculates the up-front cost for the gas the transaction can use.
+   *
    * @param gasPrice the gas price to use
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost(final Wei gasPrice) {
     return Wei.of(getGasLimit()).multiply(gasPrice);
+  }
+
+  /**
+   * Calculates the up-front cost for the transaction.
+   *
+   * <p>The up-front cost is paid by the sender account before the transaction is executed. The
+   * sender must have the amount in its account balance to execute and some of this amount may be
+   * refunded after the transaction has executed.
+   *
+   * @return the up-front gas cost for the transaction
+   */
+  public Wei getUpfrontCost() {
+    return getUpfrontGasCost().add(getValue());
   }
 
   /**

@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Transaction;
+import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +43,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   /** @return The list of transactions of the block. */
   @Override
-  public List<Transaction> getTransactions() {
+  public List<TypedTransaction> getTransactions() {
     return transactions;
   }
 
@@ -58,7 +60,9 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    */
   public void writeTo(final RLPOutput output) {
     output.startList();
-    output.writeList(getTransactions(), Transaction::writeTo);
+    output.writeList(
+        getTransactions(),
+        (transaction, rlpOutput) -> TransactionRLPEncoder.encode(transaction, rlpOutput));
     output.writeList(getOmmers(), BlockHeader::writeTo);
     output.endList();
   }
