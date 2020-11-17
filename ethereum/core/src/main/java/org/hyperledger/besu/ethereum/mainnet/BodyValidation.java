@@ -20,14 +20,17 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 /** A utility class for body validation tasks. */
 public final class BodyValidation {
@@ -50,12 +53,17 @@ public final class BodyValidation {
    * @param transactions the transactions
    * @return the transaction root
    */
-  public static Hash transactionsRoot(final List<Transaction> transactions) {
+  public static Hash transactionsRoot(final List<TypedTransaction> transactions) {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
-    for (int i = 0; i < transactions.size(); ++i) {
-      trie.put(indexKey(i), RLP.encode(transactions.get(i)::writeTo));
-    }
+    IntStream.range(0, transactions.size())
+        .forEach(
+            i ->
+                trie.put(
+                    indexKey(i),
+                    RLP.encode(
+                        rlpOutput ->
+                            TransactionRLPEncoder.encode(transactions.get(i), rlpOutput))));
 
     return Hash.wrap(trie.getRootHash());
   }
