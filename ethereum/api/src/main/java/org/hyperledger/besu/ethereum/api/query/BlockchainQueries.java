@@ -743,7 +743,8 @@ public class BlockchainQueries {
                         .getBlockByNumber(l)
                         .map(Block::getBody)
                         .map(BlockBody::getTransactions)
-                        .orElse(Collections.emptyList()))
+                        .orElseThrow(
+                            () -> new IllegalStateException("Could not retrieve block #" + l)))
             .flatMap(Collection::stream)
             .mapToLong(t -> t.getGasPrice().toLong())
             .sorted()

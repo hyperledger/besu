@@ -39,7 +39,7 @@ public abstract class ApiConfiguration {
 
   @Value.Default
   public long getGasPriceMax() {
-    return 1_000_000_000_000_000_000L; // 1 Eth
+    return 500_000_000_000L; // 500 GWei
   }
 
   @Value.Derived
