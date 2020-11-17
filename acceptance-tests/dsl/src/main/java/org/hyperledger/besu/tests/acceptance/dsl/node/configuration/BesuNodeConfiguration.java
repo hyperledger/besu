@@ -43,7 +43,7 @@ public class BesuNodeConfiguration {
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
-  private final boolean metadataEnabled;
+  private final boolean revertReasonEnabled;
   private final boolean secp256k1Native;
   private final boolean altbn128Native;
   private final List<String> plugins;
@@ -68,7 +68,7 @@ public class BesuNodeConfiguration {
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
-      final boolean metadataEnabled,
+      final boolean revertReasonEnabled,
       final boolean secp256k1Native,
       final boolean altbn128Native,
       final List<String> plugins,
@@ -91,7 +91,7 @@ public class BesuNodeConfiguration {
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
-    this.metadataEnabled = metadataEnabled;
+    this.revertReasonEnabled = revertReasonEnabled;
     this.secp256k1Native = secp256k1Native;
     this.altbn128Native = altbn128Native;
     this.plugins = plugins;
@@ -166,8 +166,8 @@ public class BesuNodeConfiguration {
     return extraCLIOptions;
   }
 
-  public boolean isMetadataEnabled() {
-    return metadataEnabled;
+  public boolean isRevertReasonEnabled() {
+    return revertReasonEnabled;
   }
 
   public boolean isSecp256k1Native() {

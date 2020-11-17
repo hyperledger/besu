@@ -48,7 +48,6 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   private final int status;
   private final TransactionReceiptType transactionReceiptType;
   private final Optional<Bytes> revertReason;
-  private final long gasRemaining;
 
   /**
    * Creates an instance of a state root-encoded transaction receipt.
@@ -57,22 +56,19 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    * @param cumulativeGasUsed the total amount of gas consumed in the block after this transaction
    * @param logs the logs generated within the transaction
    * @param revertReason the revert reason for a failed transaction (if applicable)
-   * @param gasRemaining the gas remaining from the processed transaction
    */
   public TransactionReceipt(
       final Hash stateRoot,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<Bytes> revertReason,
-      final long gasRemaining) {
+      final Optional<Bytes> revertReason) {
     this(
         stateRoot,
         NONEXISTENT,
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason,
-        gasRemaining);
+        revertReason);
   }
 
   private TransactionReceipt(
@@ -80,9 +76,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason,
-      final long gasRemaining) {
-    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter, revertReason, gasRemaining);
+      final Optional<Bytes> revertReason) {
+    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
   /**
@@ -92,22 +87,19 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    * @param cumulativeGasUsed the total amount of gas consumed in the block after this transaction
    * @param logs the logs generated within the transaction
    * @param revertReason the revert reason for a failed transaction (if applicable)
-   * @param gasRemaining the remaining gas from the transaction (if applicable)
    */
   public TransactionReceipt(
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<Bytes> revertReason,
-      final long gasRemaining) {
+      final Optional<Bytes> revertReason) {
     this(
         null,
         status,
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason,
-        gasRemaining);
+        revertReason);
   }
 
   private TransactionReceipt(
@@ -115,9 +107,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason,
-      final long gasRemaining) {
-    this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason, gasRemaining);
+      final Optional<Bytes> revertReason) {
+    this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
   private TransactionReceipt(
@@ -126,8 +117,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason,
-      final long gasRemaining) {
+      final Optional<Bytes> revertReason) {
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
     this.status = status;
@@ -136,7 +126,6 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     transactionReceiptType =
         stateRoot == null ? TransactionReceiptType.STATUS : TransactionReceiptType.ROOT;
     this.revertReason = revertReason;
-    this.gasRemaining = gasRemaining;
   }
 
   /**
@@ -148,11 +137,11 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     writeTo(out, false);
   }
 
-  public void writeToWithMetadata(final RLPOutput out) {
+  public void writeToWithRevertReason(final RLPOutput out) {
     writeTo(out, true);
   }
 
-  private void writeTo(final RLPOutput out, final boolean withMetadata) {
+  private void writeTo(final RLPOutput out, final boolean withRevertReason) {
     out.startList();
 
     // Determine whether it's a state root-encoded transaction receipt
@@ -165,11 +154,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     out.writeLongScalar(cumulativeGasUsed);
     out.writeBytes(bloomFilter);
     out.writeList(logs, Log::writeTo);
-    if (withMetadata) {
-      out.writeBytes(
-          revertReason.orElse(
-              Bytes.EMPTY)); // writing Bytes.EMPTY is the same as calling RLPOutput.writeNull
-      out.writeLong(gasRemaining);
+    if (withRevertReason && revertReason.isPresent()) {
+      out.writeBytes(revertReason.get());
     }
     out.endList();
   }
@@ -188,10 +174,11 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    * Creates a transaction receipt for the given RLP
    *
    * @param input the RLP-encoded transaction receipt
-   * @param metadataAllowed whether the rlp input is allowed to have a metadata
+   * @param revertReasonAllowed whether the rlp input is allowed to have a revert reason
    * @return the transaction receipt
    */
-  public static TransactionReceipt readFrom(final RLPInput input, final boolean metadataAllowed) {
+  public static TransactionReceipt readFrom(
+      final RLPInput input, final boolean revertReasonAllowed) {
     input.enterList();
 
     try {
@@ -204,29 +191,23 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
       final List<Log> logs = input.readList(Log::readFrom);
       final Optional<Bytes> revertReason;
-      long gasRemaining = -1L;
       if (input.isEndOfCurrentList()) {
         revertReason = Optional.empty();
       } else {
-        if (!metadataAllowed) {
+        if (!revertReasonAllowed) {
           throw new RLPException("Unexpected value at end of TransactionReceipt");
         }
         revertReason = Optional.of(input.readBytes());
-        if (!input.isEndOfCurrentList()) {
-          gasRemaining = input.readLong();
-        }
       }
 
       // Status code-encoded transaction receipts have a single
       // byte for success (0x01) or failure (0x80).
       if (firstElement.raw().size() == 1) {
         final int status = firstElement.readIntScalar();
-        return new TransactionReceipt(
-            status, cumulativeGas, logs, bloomFilter, revertReason, gasRemaining);
+        return new TransactionReceipt(status, cumulativeGas, logs, bloomFilter, revertReason);
       } else {
         final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-        return new TransactionReceipt(
-            stateRoot, cumulativeGas, logs, bloomFilter, revertReason, gasRemaining);
+        return new TransactionReceipt(stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
       }
     } finally {
       input.leaveList();
@@ -289,10 +270,6 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   @Override
   public Optional<Bytes> getRevertReason() {
     return revertReason;
-  }
-
-  public Optional<Long> getGasRemaining() {
-    return Optional.of(gasRemaining);
   }
 
   @Override

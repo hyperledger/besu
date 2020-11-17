@@ -134,7 +134,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
       final double taskTimeInSec = stopwatch.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
       LOG.info(
           String.format(
-              "Produced and imported block #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs",
+              "Produced #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs",
               block.getHeader().getNumber(),
               block.getBody().getTransactions().size(),
               block.getBody().getOmmers().size(),

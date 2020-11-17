@@ -240,20 +240,12 @@ public class ClassicProtocolSpecs {
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0,
-        gasUsed,
-        result.getLogs(),
-        Optional.empty(),
-        result.getGasRemaining());
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
       final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0,
-        gasUsed,
-        result.getLogs(),
-        result.getRevertReason(),
-        result.getGasRemaining());
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 }
