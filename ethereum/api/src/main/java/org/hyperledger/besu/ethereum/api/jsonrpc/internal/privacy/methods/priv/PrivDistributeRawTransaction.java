@@ -81,26 +81,20 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
         return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
 
-      Optional<PrivacyGroup> maybePrivacyGroup = null;
+      final Optional<PrivacyGroup> maybePrivacyGroup;
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
+
       if (onchainPrivacyGroupsEnabled) {
-        if (!maybePrivacyGroupId.isPresent()) {
+        if (maybePrivacyGroupId.isEmpty()) {
           return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
         }
         maybePrivacyGroup =
-            privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
-                maybePrivacyGroupId.get(), enclavePublicKey, privateTransaction);
+            findOnchainPrivacyGroup(maybePrivacyGroupId, enclavePublicKey, privateTransaction);
         if (maybePrivacyGroup.isEmpty()) {
           return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
         }
       } else { // !onchainPrivacyGroupEnabled
-        if (maybePrivacyGroupId.isPresent()) {
-          maybePrivacyGroup =
-              privacyController.retrieveOffChainPrivacyGroup(
-                  maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
-        } else {
-          maybePrivacyGroup = Optional.empty();
-        }
+        maybePrivacyGroup = findOffchainPrivacyGroup(maybePrivacyGroupId, enclavePublicKey);
       }
 
       final ValidationResult<TransactionInvalidReason> validationResult =
@@ -118,10 +112,29 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(id, ENCLAVE_ERROR);
     } catch (final IllegalArgumentException | RLPException e) {
+      LOG.error(e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
+  }
+
+  private Optional<PrivacyGroup> findOnchainPrivacyGroup(
+      final Optional<Bytes> maybePrivacyGroupId,
+      final String enclavePublicKey,
+      final PrivateTransaction privateTransaction) {
+    return maybePrivacyGroupId.flatMap(
+        privacyGroupId ->
+            privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+                privacyGroupId, enclavePublicKey, privateTransaction));
+  }
+
+  private Optional<PrivacyGroup> findOffchainPrivacyGroup(
+      final Optional<Bytes> maybePrivacyGroupId, final String enclavePublicKey) {
+    return maybePrivacyGroupId.flatMap(
+        privacyGroupId ->
+            privacyController.retrieveOffChainPrivacyGroup(
+                privacyGroupId.toBase64String(), enclavePublicKey));
   }
 
   private String hexEncodeEnclaveKey(final String enclaveKey) {

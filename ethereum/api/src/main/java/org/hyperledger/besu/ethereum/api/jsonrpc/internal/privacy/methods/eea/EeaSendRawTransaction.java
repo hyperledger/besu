@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
@@ -40,11 +41,13 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
+  private static final Logger LOG = getLogger();
   private final TransactionPool transactionPool;
   private final PrivacyController privacyController;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
@@ -86,26 +89,20 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
 
-      Optional<PrivacyGroup> maybePrivacyGroup = null;
+      final Optional<PrivacyGroup> maybePrivacyGroup;
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
+
       if (onchainPrivacyGroupsEnabled) {
-        if (!maybePrivacyGroupId.isPresent()) {
+        if (maybePrivacyGroupId.isEmpty()) {
           return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
         }
         maybePrivacyGroup =
-            privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
-                maybePrivacyGroupId.get(), enclavePublicKey, privateTransaction);
+            findOnchainPrivacyGroup(maybePrivacyGroupId, enclavePublicKey, privateTransaction);
         if (maybePrivacyGroup.isEmpty()) {
           return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
         }
       } else { // !onchainPrivacyGroupEnabled
-        if (maybePrivacyGroupId.isPresent()) {
-          maybePrivacyGroup =
-              privacyController.retrieveOffChainPrivacyGroup(
-                  maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
-        } else {
-          maybePrivacyGroup = Optional.empty();
-        }
+        maybePrivacyGroup = findOffchainPrivacyGroup(maybePrivacyGroupId, enclavePublicKey);
       }
 
       final ValidationResult<TransactionInvalidReason> validationResult =
@@ -140,10 +137,10 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
             id, privateTransaction, privateTransactionLookupId, Address.DEFAULT_PRIVACY);
       }
     } catch (final IllegalArgumentException | RLPException e) {
+      LOG.error(e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
-      final String message = e.getMessage();
-      return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(message));
+      return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
   }
 
@@ -169,6 +166,24 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       return new JsonRpcErrorResponse(id, JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
     }
     return new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason));
+  }
+
+  private Optional<PrivacyGroup> findOnchainPrivacyGroup(
+      final Optional<Bytes> maybePrivacyGroupId,
+      final String enclavePublicKey,
+      final PrivateTransaction privateTransaction) {
+    return maybePrivacyGroupId.flatMap(
+        privacyGroupId ->
+            privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+                privacyGroupId, enclavePublicKey, privateTransaction));
+  }
+
+  private Optional<PrivacyGroup> findOffchainPrivacyGroup(
+      final Optional<Bytes> maybePrivacyGroupId, final String enclavePublicKey) {
+    return maybePrivacyGroupId.flatMap(
+        privacyGroupId ->
+            privacyController.retrieveOffChainPrivacyGroup(
+                privacyGroupId.toBase64String(), enclavePublicKey));
   }
 
   private String buildCompoundLookupId(
