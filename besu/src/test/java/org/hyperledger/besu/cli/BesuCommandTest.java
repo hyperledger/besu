@@ -120,6 +120,8 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
+  private static final JsonObject GENESIS_QUORUM_INTEROP_ENABLED =
+      (new JsonObject()).put("config", new JsonObject().put("isquorum", true));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
@@ -1394,7 +1396,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, DOCKER, KUBERNETES, AUTO, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, DOCKER, KUBERNETES,"
+                + " AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 
   @Test
@@ -1418,7 +1421,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact or provide an url (via --Xethstats=nodename:secret@host:port)");
+            "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove"
+                + " --Xethstats-contact or provide an url (via"
+                + " --Xethstats=nodename:secret@host:port)");
   }
 
   @Test
@@ -1445,7 +1450,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
+            "The `--Xdns-update-enabled` requires dns to be enabled. Either remove"
+                + " --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
   }
 
   @Test
@@ -1496,7 +1502,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either"
+                + " remove --Xnat-kube-service-name or select the KUBERNETES mode (via"
+                + " --nat--method=KUBERNETES)");
   }
 
   @Test
@@ -1506,7 +1514,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either"
+                + " remove --Xnat-kube-service-name or select the KUBERNETES mode (via"
+                + " --nat--method=KUBERNETES)");
   }
 
   @Test
@@ -1552,7 +1562,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled or select another mode (via --nat--method=XXXX)");
+            "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either"
+                + " remove --Xnat-method-fallback-enabled or select another mode (via"
+                + " --nat--method=XXXX)");
   }
 
   @Test
@@ -1796,7 +1808,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
+            "File containing password to unlock keystore is required when TLS is enabled for"
+                + " JSON-RPC HTTP endpoint");
   }
 
   @Test
@@ -1854,7 +1867,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+            "Known-clients file must be specified or CA clients must be enabled when TLS client"
+                + " authentication is enabled for JSON-RPC HTTP endpoint");
   }
 
   @Test
@@ -2752,7 +2766,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .startsWith(
-            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining"
+                + " (remove --miner-stratum-enabled) or specify mining is enabled"
+                + " (--miner-enabled)");
   }
 
   @Test
@@ -3138,7 +3154,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .startsWith(
-            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket"
+                + " authentication to be enabled");
   }
 
   @Test
@@ -3230,7 +3247,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .startsWith(
-            "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified");
+            "Not a free gas network. --privacy-marker-transaction-signing-key-file must be"
+                + " specified");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
@@ -3403,7 +3421,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not an int");
+            "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not"
+                + " an int");
   }
 
   @Test
@@ -3573,7 +3592,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
+            "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or"
+                + " authentication public key file");
   }
 
   @Test
@@ -3596,7 +3616,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
+            "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials"
+                + " file or authentication public key file");
   }
 
   @Test
@@ -3830,6 +3851,33 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains(
             "--compatibility-eth64-forkid-enabled",
             "Enable the legacy Eth/64 fork id. (default: false)");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand("--genesis-file", genesisFile.toString());
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the"
+                + " genesis config.");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the"
+                + " genesis config.");
+  }
+
+  @Test
+  public void quorumInteropEnabledSucceedsWithGasPriceSetToZero() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }

@@ -34,7 +34,8 @@ public enum JsonRpcError {
   // eth_sendTransaction specific error message
   ETH_SEND_TX_NOT_AVAILABLE(
       -32604,
-      "The method eth_sendTransaction is not supported. Use eth_sendRawTransaction to send a signed transaction to Besu."),
+      "The method eth_sendTransaction is not supported. Use eth_sendRawTransaction to send a"
+          + " signed transaction to Besu."),
   ETH_SEND_TX_ALREADY_KNOWN(-32000, "Known transaction"),
   ETH_SEND_TX_REPLACEMENT_UNDERPRICED(-32000, "Replacement transaction underpriced"),
   // P2P related errors
@@ -61,6 +62,7 @@ public enum JsonRpcError {
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
   REVERT_ERROR(-32000, "Execution reverted"),
+  GAS_PRICE_MUST_BE_ZERO(-3200, "gasPrice must be set to zero on a GoQuorum compatible network"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),
@@ -104,10 +106,12 @@ public enum JsonRpcError {
       -32000, "Unable to persist changes to allowlist configuration file. Changes reverted"),
   ALLOWLIST_FILE_SYNC(
       -32000,
-      "The permissioning allowlist configuration file is out of sync.  The changes have been applied, but not persisted to disk"),
+      "The permissioning allowlist configuration file is out of sync.  The changes have been"
+          + " applied, but not persisted to disk"),
   ALLOWLIST_RELOAD_ERROR(
       -32000,
-      "Error reloading permissions file. Please use perm_getAccountsAllowlist and perm_getNodesAllowlist to review the current state of the allowlists"),
+      "Error reloading permissions file. Please use perm_getAccountsAllowlist and"
+          + " perm_getNodesAllowlist to review the current state of the allowlists"),
   PERMISSIONING_NOT_ENABLED(-32000, "Node/Account allowlist has not been enabled"),
   NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
@@ -136,14 +140,16 @@ public enum JsonRpcError {
       -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
-      "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
+      "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used"
+          + " from the Private Transaction."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 
   // Invalid input errors
   ENODE_ID_INVALID(
       -32000,
-      "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix."),
+      "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not"
+          + " include any '0x' hex prefix."),
 
   // Enclave errors
   NODE_MISSING_PEER_URL(-50200, "NodeMissingPeerUrl"),

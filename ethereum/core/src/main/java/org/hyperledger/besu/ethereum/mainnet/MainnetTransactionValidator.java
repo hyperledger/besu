@@ -52,18 +52,21 @@ public class MainnetTransactionValidator {
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
   private final Optional<EIP1559> maybeEip1559;
   private final AcceptedTransactionTypes acceptedTransactionTypes;
+  private final boolean goQuorumCompatibilityMode;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final boolean goQuorumCompatibilityMode) {
     this(
         gasCalculator,
         Optional.empty(),
         checkSignatureMalleability,
         chainId,
         Optional.empty(),
-        AcceptedTransactionTypes.FRONTIER_TRANSACTIONS);
+        AcceptedTransactionTypes.FRONTIER_TRANSACTIONS,
+        goQuorumCompatibilityMode);
   }
 
   public MainnetTransactionValidator(
@@ -72,13 +75,15 @@ public class MainnetTransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Optional<EIP1559> maybeEip1559,
-      final AcceptedTransactionTypes acceptedTransactionTypes) {
+      final AcceptedTransactionTypes acceptedTransactionTypes,
+      final boolean goQuorumCompatibilityMode) {
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.maybeEip1559 = maybeEip1559;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
+    this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
   }
 
   /**
@@ -117,6 +122,12 @@ public class MainnetTransactionValidator {
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+
+    if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
+          "gasPrice must be set to zero on a GoQuorum compatible network");
     }
 
     if (ExperimentalEIPs.eip1559Enabled && maybeEip1559.isPresent()) {

@@ -567,6 +567,6 @@ public class BlockTransactionSelectorTest {
   private TransactionReceipt createReceipt(
       final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
-        worldState.rootHash(), gasUsed, Lists.newArrayList(), Optional.empty(), -1L);
+        worldState.rootHash(), gasUsed, Lists.newArrayList(), Optional.empty());
   }
 }

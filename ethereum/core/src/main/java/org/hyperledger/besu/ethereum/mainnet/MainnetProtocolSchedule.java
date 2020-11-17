@@ -39,18 +39,24 @@ public class MainnetProtocolSchedule {
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
    * @param privacyParameters the parameters set for private transactions
-   * @param isMetadataEnabled whether storing metadata for failed transactions
+   * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isMetadataEnabled) {
+      final boolean isRevertReasonEnabled) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
-      return FixedDifficultyProtocolSchedule.create(config, privacyParameters, isMetadataEnabled);
+      return FixedDifficultyProtocolSchedule.create(
+          config, privacyParameters, isRevertReasonEnabled);
     }
     return new ProtocolScheduleBuilder(
-            config, DEFAULT_CHAIN_ID, Function.identity(), privacyParameters, isMetadataEnabled)
+            config,
+            DEFAULT_CHAIN_ID,
+            Function.identity(),
+            privacyParameters,
+            isRevertReasonEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 
@@ -59,12 +65,12 @@ public class MainnetProtocolSchedule {
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
-   * @param isMetadataEnabled whether storing metadata for failed transactions
+   * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config, final boolean isMetadataEnabled) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, isMetadataEnabled);
+      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
+    return fromConfig(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
   /**

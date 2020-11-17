@@ -401,8 +401,8 @@ public class TransactionSimulatorTest {
         Address.fromHexString("0x0"),
         0,
         Wei.of(0),
-        Wei.of(0),
-        Wei.of(0),
+        Optional.of(Wei.of(0)),
+        Optional.of(Wei.of(0)),
         Wei.of(0),
         Bytes.EMPTY);
   }

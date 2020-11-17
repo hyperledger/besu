@@ -90,7 +90,7 @@ public abstract class BesuControllerBuilder {
   protected Path dataDirectory;
   protected Clock clock;
   protected NodeKey nodeKey;
-  protected boolean isMetadataEnabled;
+  protected boolean isRevertReasonEnabled;
   GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
   private boolean isPruningEnabled;
@@ -162,8 +162,8 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
-  public BesuControllerBuilder isMetadataEnabled(final boolean isMetadataEnabled) {
-    this.isMetadataEnabled = isMetadataEnabled;
+  public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
+    this.isRevertReasonEnabled = isRevertReasonEnabled;
     return this;
   }
 
@@ -239,7 +239,9 @@ public abstract class BesuControllerBuilder {
     if (isPruningEnabled) {
       if (!storageProvider.isWorldStateIterable()) {
         LOG.warn(
-            "Cannot enable pruning with current database version. Disabling. Resync to get the latest database version or disable pruning explicitly on the command line to remove this warning.");
+            "Cannot enable pruning with current database version. Disabling. Resync to get the"
+                + " latest database version or disable pruning explicitly on the command line to"
+                + " remove this warning.");
       } else {
         maybePruner =
             Optional.of(

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -64,15 +65,17 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void createMainnetBlock1() throws IOException {
+    final GenesisConfigOptions genesisConfigOptions = GenesisConfigFile.DEFAULT.getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.DEFAULT.getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -120,17 +123,19 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void createMainnetBlock1_fixedDifficulty1() {
+    final GenesisConfigOptions genesisConfigOptions =
+        GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+            .getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.fromConfig(
-                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
-                            .getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -173,17 +178,19 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void rewardBeneficiary_zeroReward_skipZeroRewardsFalse() {
+    final GenesisConfigOptions genesisConfigOptions =
+        GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+            .getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.fromConfig(
-                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
-                            .getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -242,17 +249,19 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void rewardBeneficiary_zeroReward_skipZeroRewardsTrue() {
+    final GenesisConfigOptions genesisConfigOptions =
+        GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+            .getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.fromConfig(
-                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
-                            .getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 

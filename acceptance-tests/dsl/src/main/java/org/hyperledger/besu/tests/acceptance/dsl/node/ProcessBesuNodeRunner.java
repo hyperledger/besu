@@ -229,8 +229,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.addAll(networkConfigParams);
     }
 
-    if (node.isMetadataEnabled()) {
-      params.add("--receipt-metadata-enabled");
+    if (node.isRevertReasonEnabled()) {
+      params.add("--revert-reason-enabled");
     }
 
     params.add("--Xsecp256k1-native-enabled=" + node.isSecp256k1Native());
@@ -317,7 +317,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     try {
       checkState(
           isNotAliveOrphan(node.getName()),
-          "A live process with name: %s, already exists. Cannot create another with the same name as it would orphan the first",
+          "A live process with name: %s, already exists. Cannot create another with the same name"
+              + " as it would orphan the first",
           node.getName());
 
       final Process process = processBuilder.start();

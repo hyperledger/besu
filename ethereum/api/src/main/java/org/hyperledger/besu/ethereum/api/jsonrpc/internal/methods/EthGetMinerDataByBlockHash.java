@@ -95,16 +95,15 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
         block.getTransactions().stream()
             .map(
                 t -> {
-                  Transaction transaction = t.getTransaction();
                   Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata =
-                      blockchainQueries.transactionReceiptByTransactionHash(transaction.getHash());
-                  Wei refundAmount =
-                      Wei.of(
-                              transactionReceiptWithMetadata
-                                  .flatMap(tr -> tr.getReceipt().getGasRemaining())
-                                  .orElse(0L))
-                          .multiply(transaction.getGasPrice());
-                  return t.getTransaction().getUpfrontCost().subtract(refundAmount);
+                      blockchainQueries.transactionReceiptByTransactionHash(
+                          t.getTransaction().getHash());
+                  return t.getTransaction()
+                      .getGasPrice()
+                      .multiply(
+                          transactionReceiptWithMetadata
+                              .map(TransactionReceiptWithMetadata::getGasUsed)
+                              .orElse(0L));
                 })
             .reduce(Wei.ZERO, BaseUInt256Value::add);
     final Wei uncleInclusionReward =

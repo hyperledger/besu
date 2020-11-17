@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.junit.Test;
 
@@ -46,7 +46,7 @@ public class SubscribersTest {
 
     assertThat(subscribers.getSubscriberCount()).isEqualTo(1);
     subscribers.forEach(Runnable::run);
-    verifyZeroInteractions(subscriber1);
+    verifyNoInteractions(subscriber1);
     verify(subscriber2).run();
   }
 
