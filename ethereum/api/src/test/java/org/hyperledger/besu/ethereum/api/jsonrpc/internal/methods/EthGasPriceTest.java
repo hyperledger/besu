@@ -85,7 +85,8 @@ public class EthGasPriceTest {
     when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(1234));
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(1000L);
-    when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.empty());
+    when(blockchain.getBlockByNumber(anyLong()))
+        .thenAnswer(invocation -> createEmptyBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
@@ -122,18 +123,17 @@ public class EthGasPriceTest {
   @Test
   public void shortChainQueriesAllBlocks() {
     final JsonRpcRequestContext request = requestWithParams();
-    final String expectedWei = "0x4d2";
+    final String expectedWei = "0x2625a00";
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
-    when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(1234));
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(80L);
-    when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.empty());
+    when(blockchain.getBlockByNumber(anyLong()))
+        .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
 
-    verify(miningCoordinator).getMinTransactionGasPrice();
     verifyNoMoreInteractions(miningCoordinator);
 
     verify(blockchain).getChainHeadBlockNumber();
@@ -175,6 +175,30 @@ public class EthGasPriceTest {
                         Address.ZERO,
                         Optional.empty())),
                 List.of())));
+  }
+
+  private Object createEmptyBlock(final Long height) {
+    return Optional.of(
+        new Block(
+            new BlockHeader(
+                Hash.EMPTY,
+                Hash.EMPTY_TRIE_HASH,
+                Address.ZERO,
+                Hash.EMPTY_TRIE_HASH,
+                Hash.EMPTY_TRIE_HASH,
+                Hash.EMPTY_TRIE_HASH,
+                LogsBloomFilter.builder().build(),
+                Difficulty.ONE,
+                height,
+                0,
+                0,
+                0,
+                Bytes.EMPTY,
+                0L,
+                Hash.EMPTY,
+                0,
+                null),
+            new BlockBody(List.of(), List.of())));
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
