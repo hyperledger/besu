@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -40,14 +43,17 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
+  private static final Logger LOG = getLogger();
   private final TransactionPool transactionPool;
   private final PrivacyController privacyController;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+
   /*
    Temporarily adding this flag to this method to avoid being able to use offchain and onchain
    privacy groups at the same time. Later on this check will be done in a better place.
@@ -86,30 +92,25 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
 
-      Optional<PrivacyGroup> maybePrivacyGroup = null;
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
-      if (onchainPrivacyGroupsEnabled) {
-        if (!maybePrivacyGroupId.isPresent()) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
-        }
-        maybePrivacyGroup =
-            privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
-                maybePrivacyGroupId.get(), enclavePublicKey, privateTransaction);
-        if (maybePrivacyGroup.isEmpty()) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
-        }
-      } else { // !onchainPrivacyGroupEnabled
-        if (maybePrivacyGroupId.isPresent()) {
-          maybePrivacyGroup =
-              privacyController.retrieveOffChainPrivacyGroup(
-                  maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
-        } else {
-          maybePrivacyGroup = Optional.empty();
-        }
+
+      if (onchainPrivacyGroupsEnabled && maybePrivacyGroupId.isEmpty()) {
+        return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+      }
+
+      final Optional<PrivacyGroup> maybePrivacyGroup =
+          onchainPrivacyGroupsEnabled
+              ? findOnchainPrivacyGroup(
+                  privacyController, maybePrivacyGroupId, enclavePublicKey, privateTransaction)
+              : findOffchainPrivacyGroup(privacyController, maybePrivacyGroupId, enclavePublicKey);
+
+      if (onchainPrivacyGroupsEnabled && maybePrivacyGroup.isEmpty()) {
+        return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
       }
 
       final ValidationResult<TransactionInvalidReason> validationResult =
           privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
+
       if (!validationResult.isValid()) {
         return new JsonRpcErrorResponse(
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
@@ -140,10 +141,10 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
             id, privateTransaction, privateTransactionLookupId, Address.DEFAULT_PRIVACY);
       }
     } catch (final IllegalArgumentException | RLPException e) {
+      LOG.error(e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
-      final String message = e.getMessage();
-      return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(message));
+      return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
   }
 
