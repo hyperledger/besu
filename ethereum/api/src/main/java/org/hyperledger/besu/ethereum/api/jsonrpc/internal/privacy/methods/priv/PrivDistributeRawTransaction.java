@@ -20,6 +20,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.co
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -81,30 +83,25 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
         return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
 
-      Optional<PrivacyGroup> maybePrivacyGroup = null;
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
-      if (onchainPrivacyGroupsEnabled) {
-        if (!maybePrivacyGroupId.isPresent()) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
-        }
-        maybePrivacyGroup =
-            privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
-                maybePrivacyGroupId.get(), enclavePublicKey, privateTransaction);
-        if (maybePrivacyGroup.isEmpty()) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
-        }
-      } else { // !onchainPrivacyGroupEnabled
-        if (maybePrivacyGroupId.isPresent()) {
-          maybePrivacyGroup =
-              privacyController.retrieveOffChainPrivacyGroup(
-                  maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
-        } else {
-          maybePrivacyGroup = Optional.empty();
-        }
+
+      if (onchainPrivacyGroupsEnabled && maybePrivacyGroupId.isEmpty()) {
+        return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+      }
+
+      final Optional<PrivacyGroup> maybePrivacyGroup =
+          onchainPrivacyGroupsEnabled
+              ? findOnchainPrivacyGroup(
+                  privacyController, maybePrivacyGroupId, enclavePublicKey, privateTransaction)
+              : findOffchainPrivacyGroup(privacyController, maybePrivacyGroupId, enclavePublicKey);
+
+      if (onchainPrivacyGroupsEnabled && maybePrivacyGroup.isEmpty()) {
+        return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
       }
 
       final ValidationResult<TransactionInvalidReason> validationResult =
           privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
+
       if (!validationResult.isValid()) {
         return new JsonRpcErrorResponse(
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
@@ -118,6 +115,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(id, ENCLAVE_ERROR);
     } catch (final IllegalArgumentException | RLPException e) {
+      LOG.error(e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
