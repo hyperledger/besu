@@ -134,7 +134,7 @@ public class IbftController {
     // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
     // the currentHeightManager, but CAN be the same directly following import).
     if (ibftMessage.getRoundIdentifier().getSequenceNumber()
-        == blockchain.getChainHead().getHeight()) {
+        == blockchain.getChainHeadBlockNumber()) {
       return;
     }
 
@@ -191,7 +191,7 @@ public class IbftController {
   public void handleRoundExpiry(final RoundExpiry roundExpiry) {
     // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
     // the currentHeightManager, but CAN be the same directly following import).
-    if (roundExpiry.getView().getSequenceNumber() == blockchain.getChainHead().getHeight()) {
+    if (roundExpiry.getView().getSequenceNumber() == blockchain.getChainHeadBlockNumber()) {
       return;
     }
 

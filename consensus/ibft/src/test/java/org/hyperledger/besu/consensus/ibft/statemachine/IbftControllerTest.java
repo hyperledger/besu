@@ -96,6 +96,7 @@ public class IbftControllerTest {
   @Before
   public void setup() {
     when(blockChain.getChainHeadHeader()).thenReturn(chainHeadBlockHeader);
+    when(blockChain.getChainHeadBlockNumber()).thenReturn(1L);
     when(blockHeightManagerFactory.create(any())).thenReturn(blockHeightManager);
     when(ibftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
 
