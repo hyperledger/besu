@@ -116,7 +116,7 @@ public class WebSocketRequestHandler {
   }
 
   private JsonRpcResponse process(
-      Optional<AuthenticationService> authenticationService,
+      final Optional<AuthenticationService> authenticationService,
       final String id,
       final Optional<User> user,
       final WebSocketRpcRequest requestBody) {
@@ -150,18 +150,18 @@ public class WebSocketRequestHandler {
   }
 
   private void handleSingleRequest(
-      Optional<AuthenticationService> authenticationService,
-      String id,
-      Optional<User> user,
-      Promise<Object> future,
+      final Optional<AuthenticationService> authenticationService,
+      final String id,
+      final Optional<User> user,
+      final Promise<Object> future,
       final WebSocketRpcRequest requestBody) {
     future.complete(process(authenticationService, id, user, requestBody));
   }
 
   @SuppressWarnings("rawtypes")
   private void handleJsonBatchRequest(
-      Optional<AuthenticationService> authenticationService,
-      String id,
+      final Optional<AuthenticationService> authenticationService,
+      final String id,
       final JsonArray jsonArray,
       final Optional<User> user) {
     // Interpret json as rpc request
@@ -204,12 +204,8 @@ public class WebSocketRequestHandler {
             });
   }
 
-  private WebSocketRpcRequest getRequest(String payload) {
+  private WebSocketRpcRequest getRequest(final String payload) {
     return Json.decodeValue(payload, WebSocketRpcRequest.class);
-  }
-
-  private WebSocketRpcRequest getRequest(JsonObject json) {
-    return json.mapTo(WebSocketRpcRequest.class);
   }
 
   private Handler<AsyncResult<Object>> resultHandler(final String id) {
