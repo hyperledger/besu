@@ -17,7 +17,7 @@ package org.hyperledger.besu.evmtool.exception;
 
 public class UnsupportedForkException extends RuntimeException {
 
-    public UnsupportedForkException(final String forkName) {
-        super(String.format("Fork '%s' not supported", forkName));
-    }
+  public UnsupportedForkException(final String forkName) {
+    super(String.format("Fork '%s' not supported", forkName));
+  }
 }

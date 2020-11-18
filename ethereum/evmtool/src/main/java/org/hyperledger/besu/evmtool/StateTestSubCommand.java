@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -62,7 +63,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -172,16 +172,13 @@ public class StateTestSubCommand implements Runnable {
       }
 
       final String forkName = fork == null ? spec.getFork() : fork;
-      final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules
-              .getByName(forkName);
-      if(protocolSchedule == null) {
+      final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(forkName);
+      if (protocolSchedule == null) {
         throw new UnsupportedForkException(forkName);
       }
 
       final MainnetTransactionProcessor processor =
-              protocolSchedule
-              .getByBlockNumber(0)
-              .getTransactionProcessor();
+          protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
       final WorldUpdater worldStateUpdater = worldState.updater();
       final ReferenceTestBlockchain blockchain =
           new ReferenceTestBlockchain(blockHeader.getNumber());
