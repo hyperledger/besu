@@ -413,12 +413,6 @@ public class IbftControllerTest {
     when(blockChain.getChainHeadHeader()).thenReturn(chainHeadBlockHeader);
     when(blockChain.getChainHeadBlockNumber()).thenReturn(blockchainLength);
     when(blockHeightManagerFactory.create(any())).thenReturn(blockHeightManager);
-    when(ibftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
-
-    when(chainHeadBlockHeader.getNumber()).thenReturn(blockchainLength);
-    when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
-
-    when(blockHeightManager.getParentBlockHeader()).thenReturn(chainHeadBlockHeader);
     when(blockHeightManager.getChainHeight()).thenReturn(blockHeightManagerTargettingBlock);
 
     constructIbftController();
