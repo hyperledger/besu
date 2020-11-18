@@ -23,11 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
@@ -35,6 +37,7 @@ import java.util.Map;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -64,13 +67,15 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnExpectedResultForCallAtLatestBlock() {
     final CallParameter callParameter =
-        new JsonCallParameter(
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+        new CallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
             null,
             null,
-            "0x12a7b914");
+            null,
+            null,
+            Bytes.fromHexString("0x12a7b914"));
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -84,13 +89,15 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnExpectedResultForCallAtSpecificBlock() {
     final CallParameter callParameter =
-        new JsonCallParameter(
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+        new CallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
             null,
             null,
-            "0x12a7b914");
+            null,
+            null,
+            Bytes.fromHexString("0x12a7b914"));
     final JsonRpcRequestContext request = requestWithParams(callParameter, "0x8");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -104,8 +111,15 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnInvalidRequestWhenMissingToField() {
     final CallParameter callParameter =
-        new JsonCallParameter(
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b", null, null, null, null, "0x12a7b914");
+        new CallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            Bytes.fromHexString("0x12a7b914"));
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
@@ -119,13 +133,15 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnErrorWithGasLimitTooLow() {
     final CallParameter callParameter =
-        new JsonCallParameter(
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
-            "0x0",
+        new CallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            Gas.ZERO,
             null,
             null,
-            "0x12a7b914");
+            null,
+            null,
+            Bytes.fromHexString("0x12a7b914"));
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT);
@@ -138,13 +154,15 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnErrorWithGasPriceTooHigh() {
     final CallParameter callParameter =
-        new JsonCallParameter(
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+        new CallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
-            "0x10000000000000",
+            Wei.fromHexString("0x10000000000000"),
             null,
-            "0x12a7b914");
+            null,
+            null,
+            Bytes.fromHexString("0x12a7b914"));
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
@@ -157,8 +175,15 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnEmptyHashResultForCallWithOnlyToField() {
     final CallParameter callParameter =
-        new JsonCallParameter(
-            null, "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f", null, null, null, null);
+        new CallParameter(
+            null,
+            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x");
 
