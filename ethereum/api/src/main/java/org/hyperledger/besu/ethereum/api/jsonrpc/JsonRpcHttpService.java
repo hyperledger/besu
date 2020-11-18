@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -71,6 +72,8 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.extension.trace.propagation.B3Propagator;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -80,6 +83,7 @@ import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
@@ -104,6 +108,23 @@ public class JsonRpcHttpService {
   private static final String APPLICATION_JSON = "application/json";
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
   private static final String EMPTY_RESPONSE = "";
+
+  private static final TextMapPropagator.Getter<HttpServerRequest> requestAttributesGetter =
+      new TextMapPropagator.Getter<>() {
+        @Override
+        public Iterable<String> keys(HttpServerRequest carrier) {
+          return carrier.headers().names();
+        }
+
+        @Nullable
+        @Override
+        public String get(@Nullable HttpServerRequest carrier, String key) {
+          if (carrier == null) {
+            return null;
+          }
+          return carrier.headers().get(key);
+        }
+      };
 
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
@@ -291,9 +312,14 @@ public class JsonRpcHttpService {
 
   private void createSpan(final RoutingContext routingContext) {
     final SocketAddress address = routingContext.request().connection().remoteAddress();
+
+    Context parent =
+        B3Propagator.getInstance()
+            .extract(Context.current(), routingContext.request(), requestAttributesGetter);
     final Span serverSpan =
         tracer
             .spanBuilder(address.host() + ":" + address.port())
+            .setParent(parent)
             .setSpanKind(Span.Kind.SERVER)
             .startSpan();
     routingContext.put(SPAN_CONTEXT, Context.root().with(serverSpan));
