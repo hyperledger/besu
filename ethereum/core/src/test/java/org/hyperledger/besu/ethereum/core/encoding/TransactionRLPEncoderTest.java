@@ -47,7 +47,7 @@ public class TransactionRLPEncoderTest {
   @Test
   public void encodeFrontierTxNominalCase() {
     final Transaction transaction =
-        TransactionRLPDecoder.frontierDecoder()
+        TransactionRLPDecoder.decodeLegacyFrontierTransaction()
             .decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     TransactionRLPEncoder.encode(transaction, output);

@@ -15,6 +15,16 @@
 package org.hyperledger.besu.plugin.data;
 
 public enum TransactionType {
-  FRONTIER,
-  EIP1559
+  FRONTIER(0x00),
+  EIP1559(0x01);
+
+  private final int typeByte;
+
+  TransactionType(final int typeByte) {
+    this.typeByte = typeByte;
+  }
+
+  public int getTypeByte() {
+    return typeByte;
+  }
 }

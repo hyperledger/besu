@@ -14,120 +14,144 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static java.lang.Byte.toUnsignedInt;
 import static org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction.REPLAY_PROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction.REPLAY_PROTECTED_V_MIN;
 import static org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction.TWO;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import com.google.common.collect.Range;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TransactionTypeFactory;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-@FunctionalInterface
 public interface TransactionRLPDecoder {
 
-  TransactionRLPDecoder FRONTIER = frontierDecoder();
-  TransactionRLPDecoder EIP1559 = eip1559Decoder();
+  Map<TransactionType, TransactionRLPDecoder> DECODERS_BY_TRANSACTION_TYPE =
+      Map.of(
+          TransactionType.FRONTIER,
+          TransactionRLPDecoder::decodeFrontierTransaction,
+          TransactionType.EIP1559,
+          TransactionRLPDecoder::eip1559Decoder);
 
-  static TypedTransaction decodeTransaction(final RLPInput input) {
-    return (ExperimentalEIPs.eip1559Enabled ? EIP1559 : FRONTIER).decode(input);
+  static FrontierTransaction decodeFrontierTransaction(final Bytes bytes) {
+    throw new UnsupportedOperationException("TODO");
   }
 
-  TypedTransaction decode(RLPInput input);
-
-  static TransactionRLPDecoder frontierDecoder() {
-    return input -> {
-      input.enterList();
-      final FrontierTransaction.Builder builder =
-          FrontierTransaction.builder()
-              .nonce(input.readLongScalar())
-              .gasPrice(Wei.of(input.readUInt256Scalar()))
-              .gasLimit(input.readLongScalar())
-              .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-              .value(Wei.of(input.readUInt256Scalar()))
-              .payload(input.readBytes());
-
-      final BigInteger v = input.readBigIntegerScalar();
-      final byte recId;
-      Optional<BigInteger> chainId = Optional.empty();
-      if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-        recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-      } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-        chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-        recId =
-            v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-      } else {
-        throw new RuntimeException(
-            String.format("An unsupported encoded `v` value of %s was found", v));
-      }
-      final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-      final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-
-      input.leaveList();
-
-      chainId.ifPresent(builder::chainId);
-      return builder.signature(signature).build();
-    };
+  static TypedTransaction decodeTransaction(final Bytes bytes) {
+    final int typeByte = toUnsignedInt(bytes.get(0));
+    if (Range.closed(0xc0, 0xfe).contains(typeByte) /* legacy frontier tx */) {
+      return decodeLegacyFrontierTransaction(new BytesValueRLPInput(bytes, false));
+    } else if (Range.closed(0, 0x7f).contains(typeByte)) {
+      // EIP-2718 wrapped transaction or EIP-2972 wrapped frontier transaction
+      return Optional.ofNullable(
+              DECODERS_BY_TRANSACTION_TYPE.get(TransactionTypeFactory.from(typeByte)))
+          .orElseThrow(
+              () ->
+                  new IllegalArgumentException(
+                      String.format(
+                          "Transaction type byte %x does not match any supported transaction type",
+                          typeByte)))
+          .decode(bytes.slice(1));
+    } else {
+      throw new IllegalArgumentException(
+          String.format("Transaction type byte %x outside of valid ranges", typeByte));
+    }
   }
 
-  static TransactionRLPDecoder eip1559Decoder() {
-    return input -> {
-      input.enterList();
+  TypedTransaction decode(final Bytes bytes);
 
-      final EIP1559Transaction.Builder builder =
-          EIP1559Transaction.builder()
-              .nonce(input.readLongScalar())
-              .gasLimit(input.readLongScalar())
-              .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-              .value(Wei.of(input.readUInt256Scalar()))
-              .payload(input.readBytes());
+  static FrontierTransaction decodeLegacyFrontierTransaction(final RLPInput input) {
+    input.enterList();
+    final FrontierTransaction.Builder builder =
+        FrontierTransaction.builder()
+            .nonce(input.readLongScalar())
+            .gasPrice(Wei.of(input.readUInt256Scalar()))
+            .gasLimit(input.readLongScalar())
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes());
 
-      final Bytes maybeGasPremiumOrV = input.readBytes();
-      final Bytes maybeFeeCapOrR = input.readBytes();
-      final Bytes maybeVOrS = input.readBytes();
-      final BigInteger v, r, s;
-      // if this is the end of the list we are processing a legacy transaction
-      if (input.isEndOfCurrentList()) {
-        v = maybeGasPremiumOrV.toUnsignedBigInteger();
-        r = maybeFeeCapOrR.toUnsignedBigInteger();
-        s = maybeVOrS.toUnsignedBigInteger();
-      } else {
-        // otherwise this is an EIP-1559 transaction
-        builder
-            .gasPremium(Wei.of(maybeGasPremiumOrV.toBigInteger()))
-            .feeCap(Wei.of(maybeFeeCapOrR.toBigInteger()));
-        v = maybeVOrS.toBigInteger();
-        r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-        s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-      }
-      final byte recId;
-      Optional<BigInteger> chainId = Optional.empty();
-      if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-        recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-      } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-        chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-        recId =
-            v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-      } else {
-        throw new RuntimeException(
-            String.format("An unsupported encoded `v` value of %s was found", v));
-      }
-      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-      input.leaveList();
-      chainId.ifPresent(builder::chainId);
-      return builder.signature(signature).build();
-    };
+    final BigInteger v = input.readBigIntegerScalar();
+    final byte recId;
+    Optional<BigInteger> chainId = Optional.empty();
+    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    } else {
+      throw new RuntimeException(
+          String.format("An unsupported encoded `v` value of %s was found", v));
+    }
+    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+
+    input.leaveList();
+
+    chainId.ifPresent(builder::chainId);
+    return builder.signature(signature).build();
+  }
+
+  static EIP1559Transaction eip1559Decoder(final Bytes bytes) {
+    final RLPInput input = new BytesValueRLPInput(bytes, false);
+    input.enterList();
+
+    final EIP1559Transaction.Builder builder =
+        EIP1559Transaction.builder()
+            .nonce(input.readLongScalar())
+            .gasLimit(input.readLongScalar())
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes());
+
+    final Bytes maybeGasPremiumOrV = input.readBytes();
+    final Bytes maybeFeeCapOrR = input.readBytes();
+    final Bytes maybeVOrS = input.readBytes();
+    final BigInteger v, r, s;
+    // if this is the end of the list we are processing a legacy transaction
+    if (input.isEndOfCurrentList()) {
+      v = maybeGasPremiumOrV.toUnsignedBigInteger();
+      r = maybeFeeCapOrR.toUnsignedBigInteger();
+      s = maybeVOrS.toUnsignedBigInteger();
+    } else {
+      // otherwise this is an EIP-1559 transaction
+      builder
+          .gasPremium(Wei.of(maybeGasPremiumOrV.toBigInteger()))
+          .feeCap(Wei.of(maybeFeeCapOrR.toBigInteger()));
+      v = maybeVOrS.toBigInteger();
+      r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    }
+    final byte recId;
+    Optional<BigInteger> chainId = Optional.empty();
+    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    } else {
+      throw new RuntimeException(
+          String.format("An unsupported encoded `v` value of %s was found", v));
+    }
+    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+    input.leaveList();
+    chainId.ifPresent(builder::chainId);
+    return builder.signature(signature).build();
   }
 }
