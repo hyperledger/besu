@@ -26,18 +26,18 @@ public class TransactionReceiptTest {
   @Test
   public void toFromRlp() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final TransactionReceipt receipt = gen.receipt(100L);
+    final TransactionReceipt receipt = gen.receipt();
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeTo)), false);
+        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)), false);
     assertThat(copy).isEqualTo(receipt);
   }
 
   @Test
   public void toFromRlpWithReason() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"), 100L);
+    final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithMetadata)));
+        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)));
     assertThat(copy).isEqualTo(receipt);
   }
 }

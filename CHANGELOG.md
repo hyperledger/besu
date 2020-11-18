@@ -13,13 +13,16 @@
 * Provide MegaGas/second measurements in the log when doing a full block import, such as the catch up phase of a fast sync. [\#1512](https://github.com/hyperledger/besu/pull/1512)
 * Added new endpoints to get miner data, `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber`. [\#1538](https://github.com/hyperledger/besu/pull/1538)
 * Added direct support for OpenTelemetry metrics [\#1492](https://github.com/hyperledger/besu/pull/1492)
-* Added support for `qip714block` config parameter in genesis file, paving the way towards permissioning interoperability between Besu and Quorum. [\#1545](https://github.com/hyperledger/besu/pull/1545)
+* Added support for `qip714block` config parameter in genesis file, paving the way towards permissioning interoperability between Besu and GoQuorum. [\#1545](https://github.com/hyperledger/besu/pull/1545)
 * Added new CLI option `--compatibility-eth64-forkid-enabled`. [\#1542](https://github.com/hyperledger/besu/pull/1542)
 
 ### Bug Fixes
 
 * Fix a bug on `eth_estimateGas` which returned `Internal error` instead of `Execution reverted` in case of reverted transaction. [\#1478](https://github.com/hyperledger/besu/pull/1478)
 * Fixed a bug where Local Account Permissioning was being incorrectly enforced on block import/validation. [\#1510](https://github.com/hyperledger/besu/pull/1510)
+* Fixed invalid enode URL when discovery is disabled  [\#1521](https://github.com/hyperledger/besu/pull/1521)
+* Removed duplicate files from zip and tar.gz distributions. [\#1566](https://github.com/hyperledger/besu/pull/1566)
+* Add a more rational value to eth_gasPrice, based on a configurable percentile of prior block's transactions (default: median of last 100 blocks).  [\#1563](https://github.com/hyperledger/besu/pull/1563)
 
 ## Deprecated 
 

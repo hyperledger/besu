@@ -15,11 +15,17 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.deserializer.GasDeserializer;
+import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
 
 import java.util.Objects;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
 // Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
@@ -40,6 +46,28 @@ public class CallParameter {
   private final Wei value;
 
   private final Bytes payload;
+
+  @JsonCreator
+  public CallParameter(
+      @JsonProperty("from") final Address from,
+      @JsonProperty("to") final Address to,
+      @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
+      @JsonProperty("gasPrice") final Wei gasPrice,
+      @JsonProperty("gasPremium") final Wei gasPremium,
+      @JsonProperty("feeCap") final Wei feeCap,
+      @JsonProperty("value") final Wei value,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
+          final Bytes payload) {
+    this(
+        from,
+        to,
+        gasLimit != null ? gasLimit.toLong() : -1,
+        gasPrice,
+        Optional.ofNullable(gasPremium),
+        Optional.ofNullable(feeCap),
+        value,
+        payload);
+  }
 
   public CallParameter(
       final Address from,
@@ -63,15 +91,15 @@ public class CallParameter {
       final Address to,
       final long gasLimit,
       final Wei gasPrice,
-      final Wei gasPremium,
-      final Wei feeCap,
+      final Optional<Wei> gasPremium,
+      final Optional<Wei> feeCap,
       final Wei value,
       final Bytes payload) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
-    this.gasPremium = Optional.ofNullable(gasPremium);
-    this.feeCap = Optional.ofNullable(feeCap);
+    this.gasPremium = gasPremium;
+    this.feeCap = feeCap;
     this.gasPrice = gasPrice;
     this.value = value;
     this.payload = payload;

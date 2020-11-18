@@ -49,6 +49,7 @@ import org.apache.logging.log4j.Logger;
 public class TransactionLogBloomCacher {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
   public static final int BLOOM_BITS_LENGTH = 256;
@@ -140,6 +141,12 @@ public class TransactionLogBloomCacher {
         cachingStatus.currentBlock = blockNum;
         blockNum++;
       }
+    } catch (IOException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        LOG.error(e.getMessage());
+        System.exit(0);
+      }
+      throw e;
     }
   }
 
@@ -178,6 +185,10 @@ public class TransactionLogBloomCacher {
         populateLatestSegment(blockNumber);
       }
     } catch (final IOException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        LOG.error(e.getMessage());
+        System.exit(0);
+      }
       LOG.error("Unhandled caching exception.", e);
     } finally {
       cachingStatus.cachingCount.decrementAndGet();
@@ -257,6 +268,10 @@ public class TransactionLogBloomCacher {
                 cacheFile.getName());
           }
         } catch (final IOException e) {
+          if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+            LOG.error(e.getMessage());
+            System.exit(0);
+          }
           LOG.error(
               String.format("Unhandled exception removing cache for block number %d", blockNum), e);
         }
