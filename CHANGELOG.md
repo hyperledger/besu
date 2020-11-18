@@ -13,7 +13,7 @@
 * Provide MegaGas/second measurements in the log when doing a full block import, such as the catch up phase of a fast sync. [\#1512](https://github.com/hyperledger/besu/pull/1512)
 * Added new endpoints to get miner data, `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber`. [\#1538](https://github.com/hyperledger/besu/pull/1538)
 * Added direct support for OpenTelemetry metrics [\#1492](https://github.com/hyperledger/besu/pull/1492)
-* Added support for `qip714block` config parameter in genesis file, paving the way towards permissioning interoperability between Besu and Quorum. [\#1545](https://github.com/hyperledger/besu/pull/1545)
+* Added support for `qip714block` config parameter in genesis file, paving the way towards permissioning interoperability between Besu and GoQuorum. [\#1545](https://github.com/hyperledger/besu/pull/1545)
 * Added new CLI option `--compatibility-eth64-forkid-enabled`. [\#1542](https://github.com/hyperledger/besu/pull/1542)
 
 ### Bug Fixes
