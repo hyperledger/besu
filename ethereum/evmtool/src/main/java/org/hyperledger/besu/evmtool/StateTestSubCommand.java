@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
@@ -61,6 +62,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -169,9 +171,15 @@ public class StateTestSubCommand implements Runnable {
         return;
       }
 
+      final String forkName = fork == null ? spec.getFork() : fork;
+      final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules
+              .getByName(forkName);
+      if(protocolSchedule == null) {
+        throw new UnsupportedForkException(forkName);
+      }
+
       final MainnetTransactionProcessor processor =
-          referenceTestProtocolSchedules
-              .getByName(fork == null ? spec.getFork() : fork)
+              protocolSchedule
               .getByBlockNumber(0)
               .getTransactionProcessor();
       final WorldUpdater worldStateUpdater = worldState.updater();
