@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -87,6 +88,7 @@ public class JsonRpcTestMethodsFactory {
 
     final Synchronizer synchronizer = mock(Synchronizer.class);
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
+    final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
     final EthHashMiningCoordinator miningCoordinator = mock(EthHashMiningCoordinator.class);
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -140,6 +142,7 @@ public class JsonRpcTestMethodsFactory {
             metricsConfiguration,
             natService,
             new HashMap<>(),
-            dataDir);
+            dataDir,
+            ethPeers);
   }
 }
