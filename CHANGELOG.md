@@ -1,5 +1,10 @@
 # Changelog
 
+## 20.10.2
+* Add a protocols section to `admin_peers` to provide info about peer health. [\#1562](https://github.com/hyperledger/besu/pull/1562)
+
+### Additions and Improvements
+
 ## 20.10.1
 
 ### Additions and Improvements
