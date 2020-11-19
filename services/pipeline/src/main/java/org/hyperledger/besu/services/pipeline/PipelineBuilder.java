@@ -51,6 +51,8 @@ public class PipelineBuilder<I, T> {
   private final ReadPipe<T> pipeEnd;
   private final int bufferSize;
   private final LabelledMetric<Counter> outputCounter;
+  private boolean tracingEnabled = false;
+  private String pipelineName;
 
   public PipelineBuilder(
       final Pipe<I> inputPipe,
@@ -110,6 +112,12 @@ public class PipelineBuilder<I, T> {
     final Pipe<T> pipe = createPipe(bufferSize, sourceName, outputCounter);
     return new PipelineBuilder<>(
         pipe, emptyList(), singleton(pipe), sourceName, pipe, bufferSize, outputCounter);
+  }
+
+  public PipelineBuilder<I, T> withTracing(final String pipelineName) {
+    this.tracingEnabled = true;
+    this.pipelineName = pipelineName;
+    return this;
   }
 
   /**
@@ -274,7 +282,12 @@ public class PipelineBuilder<I, T> {
    */
   public Pipeline<I> andFinishWith(final String stageName, final Consumer<T> completer) {
     return new Pipeline<>(
-        inputPipe, stages, pipes, new CompleterStage<>(stageName, pipeEnd, completer));
+        inputPipe,
+        pipelineName,
+        tracingEnabled,
+        stages,
+        pipes,
+        new CompleterStage<>(stageName, pipeEnd, completer));
   }
 
   private <O> PipelineBuilder<I, O> thenProcessInParallel(

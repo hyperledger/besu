@@ -145,6 +145,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
                 "Number of entries process by each chain download pipeline stage",
                 "step",
                 "action"))
+        .withTracing("fastSync")
         .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
