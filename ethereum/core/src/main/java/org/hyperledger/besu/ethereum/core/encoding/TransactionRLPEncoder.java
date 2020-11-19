@@ -16,72 +16,52 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.transaction.ECDSASignedAndReplayProtectedTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.Quantity;
-import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.besu.plugin.data.TypedTransaction;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionRLPEncoder {
 
-  private static final Encoder FRONTIER = frontierEncoder();
-  private static final Encoder EIP1559 = eip1559Encoder();
-
-  private static final ImmutableMap<TransactionType, Encoder> ENCODERS =
-      ImmutableMap.of(TransactionType.FRONTIER, FRONTIER, TransactionType.EIP1559, EIP1559);
-
-  public static void encode(final TypedTransaction transaction, final RLPOutput output) {
-    ENCODERS.getOrDefault(transaction.getType(), FRONTIER).encode(transaction, output);
+  public static void encode(final FrontierTransaction frontierTransaction, final RLPOutput output) {
+    output.startList();
+    output.writeLongScalar(frontierTransaction.getNonce());
+    output.writeUInt256Scalar(frontierTransaction.getGasPrice());
+    output.writeLongScalar(frontierTransaction.getGasLimit());
+    output.writeBytes(frontierTransaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    output.writeUInt256Scalar(frontierTransaction.getValue());
+    output.writeBytes(frontierTransaction.getPayload());
+    writeSignature(frontierTransaction, output);
+    output.endList();
   }
 
-  static Encoder frontierEncoder() {
-    return (transaction, out) -> {
-      out.startList();
-      out.writeLongScalar(transaction.getNonce());
-      out.writeUInt256Scalar(transaction.getGasPrice());
-      out.writeLongScalar(transaction.getGasLimit());
-      out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-      out.writeUInt256Scalar(transaction.getValue());
-      out.writeBytes(transaction.getPayload());
-      writeSignature(transaction, out);
-      out.endList();
-    };
+  public static void encode(final EIP1559Transaction eip1559Transaction, final RLPOutput output) {
+    if (!ExperimentalEIPs.eip1559Enabled
+        || !TransactionType.EIP1559.equals(eip1559Transaction.getType())) {
+      throw new RuntimeException("Invalid transaction format");
+    }
+
+    output.startList();
+    output.writeLongScalar(eip1559Transaction.getNonce());
+    output.writeNull();
+    output.writeLongScalar(eip1559Transaction.getGasLimit());
+    output.writeBytes(eip1559Transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    output.writeUInt256Scalar(eip1559Transaction.getValue());
+    output.writeBytes(eip1559Transaction.getPayload());
+    output.writeUInt256Scalar(Wei.ofNumber(eip1559Transaction.getGasPremium().getValue()));
+    output.writeUInt256Scalar(Wei.ofNumber(eip1559Transaction.getFeeCap().getValue()));
+    writeSignature(eip1559Transaction, output);
+    output.endList();
   }
 
-  static Encoder eip1559Encoder() {
-    return (transaction, out) -> {
-      if (!ExperimentalEIPs.eip1559Enabled
-          || !TransactionType.EIP1559.equals(transaction.getType())) {
-        throw new RuntimeException("Invalid transaction format");
-      }
-
-      out.startList();
-      out.writeLongScalar(transaction.getNonce());
-      out.writeNull();
-      out.writeLongScalar(transaction.getGasLimit());
-      out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-      out.writeUInt256Scalar(transaction.getValue());
-      out.writeBytes(transaction.getPayload());
-      out.writeUInt256Scalar(
-          transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
-      out.writeUInt256Scalar(
-          transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
-      writeSignature(transaction, out);
-      out.endList();
-    };
-  }
-
-  private static void writeSignature(final Transaction transaction, final RLPOutput out) {
-    out.writeBigIntegerScalar(transaction.getV());
-    out.writeBigIntegerScalar(transaction.getSignature().getR());
-    out.writeBigIntegerScalar(transaction.getSignature().getS());
-  }
-
-  @FunctionalInterface
-  interface Encoder {
-    void encode(TypedTransaction transaction, RLPOutput output);
+  private static void writeSignature(
+      final ECDSASignedAndReplayProtectedTransaction ecdsaSignedAndReplayProtectedTransaction,
+      final RLPOutput out) {
+    out.writeBigIntegerScalar(ecdsaSignedAndReplayProtectedTransaction.getV());
+    out.writeBigIntegerScalar(ecdsaSignedAndReplayProtectedTransaction.getSignature().getR());
+    out.writeBigIntegerScalar(ecdsaSignedAndReplayProtectedTransaction.getSignature().getS());
   }
 }
