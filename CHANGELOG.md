@@ -3,7 +3,12 @@
 ## 20.10.2
 
 ### Additions and Improvements
-* Add a protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
+* Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
+* Add a protocols section to `admin_peers` to provide info about peer health. [\#1562](https://github.com/hyperledger/besu/pull/1562)
+
+### Bug Fixes
+
+* Ibft2 will discard any received messages targetting a chain height <= current head - this resolves some corner cases in system correctness directly following block import. [#1575](https://github.com/hyperledger/besu/pull/1575)
 
 ## 20.10.1
 
