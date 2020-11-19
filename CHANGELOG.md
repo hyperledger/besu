@@ -5,6 +5,10 @@
 ### Additions and Improvements
 * Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
 
+
+### Bug Fixes
+
+* Ibft2 will discard any received messages targetting a chain height <= current head - this resolves some corner cases in system correctness directly following block import. [#1575](https://github.com/hyperledger/besu/pull/1575)
 ## 20.10.1
 
 ### Additions and Improvements
