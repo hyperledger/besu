@@ -25,10 +25,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PeerResult;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
+import org.hyperledger.besu.testutil.TestClock;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -37,6 +40,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -51,10 +55,11 @@ public class AdminPeersTest {
   private AdminPeers adminPeers;
 
   @Mock private P2PNetwork p2pNetwork;
+  @Mock private EthPeers ethPeers;
 
   @Before
   public void before() {
-    adminPeers = new AdminPeers(p2pNetwork);
+    adminPeers = new AdminPeers(ethPeers);
   }
 
   @Test
@@ -67,7 +72,6 @@ public class AdminPeersTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Collections.emptyList());
     final JsonRpcRequestContext request = adminPeers();
-    when(p2pNetwork.getPeers()).thenReturn(Collections.emptyList());
 
     final JsonRpcResponse response = adminPeers.response(request);
 
@@ -76,23 +80,23 @@ public class AdminPeersTest {
 
   @Test
   public void shouldReturnExpectedPeerListWhenP2PNetworkHavePeers() {
-    final Collection<PeerConnection> peerList = peerList();
+    final Collection<EthPeer> peerList = peerList();
     final List<PeerResult> expectedPeerResults =
-        peerList.stream().map(PeerResult::new).collect(Collectors.toList());
+        peerList.stream().map(PeerResult::fromEthPeer).collect(Collectors.toList());
 
     final JsonRpcRequestContext request = adminPeers();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedPeerResults);
 
-    when(p2pNetwork.getPeers()).thenReturn(peerList);
+    when(ethPeers.streamAllPeers()).thenReturn(peerList.stream());
 
     final JsonRpcResponse response = adminPeers.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(Json.encode(response)).isEqualTo(Json.encode(expectedResponse));
   }
 
   @Test
   public void shouldFailIfP2pDisabled() {
-    when(p2pNetwork.getPeers()).thenThrow(new P2PDisabledException("P2P disabled."));
+    when(ethPeers.streamAllPeers()).thenThrow(new P2PDisabledException("P2P disabled."));
 
     final JsonRpcRequestContext request = adminPeers();
     final JsonRpcResponse expectedResponse =
@@ -102,14 +106,15 @@ public class AdminPeersTest {
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private Collection<PeerConnection> peerList() {
+  private Collection<EthPeer> peerList() {
     final PeerInfo peerInfo = new PeerInfo(5, "0x0", Collections.emptyList(), 30303, Bytes.EMPTY);
     final PeerConnection p =
         MockPeerConnection.create(
             peerInfo,
             InetSocketAddress.createUnresolved("1.2.3.4", 9876),
             InetSocketAddress.createUnresolved("4.3.2.1", 6789));
-    return Lists.newArrayList(p);
+    final EthPeer ethPeer = new EthPeer(p, "eth", c -> {}, List.of(), TestClock.fixed());
+    return Lists.newArrayList(ethPeer);
   }
 
   private JsonRpcRequestContext adminPeers() {
