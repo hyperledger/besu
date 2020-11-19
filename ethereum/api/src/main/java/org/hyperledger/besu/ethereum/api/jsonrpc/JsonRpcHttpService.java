@@ -112,13 +112,13 @@ public class JsonRpcHttpService {
   private static final TextMapPropagator.Getter<HttpServerRequest> requestAttributesGetter =
       new TextMapPropagator.Getter<>() {
         @Override
-        public Iterable<String> keys(HttpServerRequest carrier) {
+        public Iterable<String> keys(final HttpServerRequest carrier) {
           return carrier.headers().names();
         }
 
         @Nullable
         @Override
-        public String get(@Nullable HttpServerRequest carrier, String key) {
+        public String get(final @Nullable HttpServerRequest carrier, final String key) {
           if (carrier == null) {
             return null;
           }
