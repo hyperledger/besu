@@ -1,5 +1,10 @@
 # Changelog
 
+## 20.10.2
+
+### Additions and Improvements
+* Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
+
 ## 20.10.1
 
 ### Additions and Improvements
