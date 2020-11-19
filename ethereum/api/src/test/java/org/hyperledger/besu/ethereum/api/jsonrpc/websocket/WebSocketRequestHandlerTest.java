@@ -154,8 +154,6 @@ public class WebSocketRequestHandlerTest {
         new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
 
     final JsonArray arrayJson = new JsonArray(List.of(requestJson, ""));
-    final JsonRpcRequest requestBody = requestJson.mapTo(WebSocketRpcRequest.class);
-    final JsonRpcRequestContext expectedRequest = new JsonRpcRequestContext(requestBody);
     final JsonRpcErrorResponse expectedErrorResponse2 =
         new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
 
