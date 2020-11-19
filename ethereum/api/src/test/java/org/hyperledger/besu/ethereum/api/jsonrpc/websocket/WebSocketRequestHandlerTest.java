@@ -144,6 +144,40 @@ public class WebSocketRequestHandlerTest {
   }
 
   @Test
+  public void handlerBatchRequestContainingErrorsShouldRespondWithBatchErrors(
+      final TestContext context) {
+    final Async async = context.async();
+
+    final JsonObject requestJson =
+        new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
+    final JsonRpcErrorResponse expectedErrorResponse1 =
+        new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+
+    final JsonArray arrayJson = new JsonArray(List.of(requestJson, ""));
+    final JsonRpcRequest requestBody = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequestContext expectedRequest = new JsonRpcRequestContext(requestBody);
+    final JsonRpcErrorResponse expectedErrorResponse2 =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+
+    final JsonArray expectedBatchResponse =
+        new JsonArray(List.of(expectedErrorResponse1, expectedErrorResponse2));
+
+    final String websocketId = UUID.randomUUID().toString();
+
+    vertx
+        .eventBus()
+        .consumer(websocketId)
+        .handler(
+            msg -> {
+              context.assertEquals(Json.encode(expectedBatchResponse), msg.body());
+              async.complete();
+            })
+        .completionHandler(v -> handler.handle(websocketId, arrayJson.toString()));
+
+    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
   public void jsonDecodeFailureShouldRespondInvalidRequest(final TestContext context) {
     final Async async = context.async();
 
