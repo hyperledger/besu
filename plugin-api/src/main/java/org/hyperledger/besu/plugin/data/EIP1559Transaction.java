@@ -56,15 +56,6 @@ public interface EIP1559Transaction
   Quantity getFeeCap();
 
   /**
-   * A scalar value equal to the maximum amount of gas that should be used in executing this
-   * transaction. This is paid up-front, before any computation is done and may not be increased
-   * later.
-   *
-   * @return the maximum amount of gas that should be used in executing this * transaction.
-   */
-  long getGasLimit();
-
-  /**
    * The 160-bit address of the message call’s recipient. For a contract creation transaction this
    * address will not be present.
    *
