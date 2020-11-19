@@ -19,7 +19,6 @@ package org.hyperledger.besu.ethereum.core.transaction;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -61,10 +60,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
 
   private final Wei gasPrice;
 
-  private final Wei gasPremium;
-
-  private final Wei feeCap;
-
   private final long gasLimit;
 
   private final Optional<Address> to;
@@ -102,8 +97,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
    *
    * @param nonce the nonce
    * @param gasPrice the gas price
-   * @param gasPremium the gas premium
-   * @param feeCap the fee cap
    * @param gasLimit the gas limit
    * @param to the transaction recipient
    * @param value the value being transferred to the recipient
@@ -119,8 +112,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
   public FrontierTransaction(
       final long nonce,
       final Wei gasPrice,
-      final Wei gasPremium,
-      final Wei feeCap,
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
@@ -130,8 +121,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
       final Optional<BigInteger> chainId) {
     this.nonce = nonce;
     this.gasPrice = gasPrice;
-    this.gasPremium = gasPremium;
-    this.feeCap = feeCap;
     this.gasLimit = gasLimit;
     this.to = to;
     this.value = value;
@@ -139,35 +128,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
     this.payload = payload;
     this.sender = sender;
     this.chainId = chainId;
-  }
-
-  /**
-   * Instantiates a transaction instance.
-   *
-   * @param nonce the nonce
-   * @param gasPrice the gas price
-   * @param gasLimit the gas limit
-   * @param to the transaction recipient
-   * @param value the value being transferred to the recipient
-   * @param signature the signature
-   * @param payload the payload
-   * @param sender the transaction sender
-   * @param chainId the chain id to apply the transaction to
-   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
-   *     otherwise it should contain an address.
-   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   */
-  public FrontierTransaction(
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final SECP256K1.Signature signature,
-      final Bytes payload,
-      final Address sender,
-      final Optional<BigInteger> chainId) {
-    this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId);
   }
 
   /**
@@ -296,15 +256,7 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
     if (hashNoSignature == null) {
       hashNoSignature =
           computeSenderRecoveryHash(
-              nonce,
-              gasPrice,
-              gasPremium,
-              feeCap,
-              gasLimit,
-              to.orElse(null),
-              value,
-              payload,
-              chainId);
+              nonce, gasPrice, gasLimit, to.orElse(null), value, payload, chainId);
     }
     return hashNoSignature;
   }
@@ -403,8 +355,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
   private static Bytes32 computeSenderRecoveryHash(
       final long nonce,
       final Wei gasPrice,
-      final Wei gasPremium,
-      final Wei feeCap,
       final long gasLimit,
       final Address to,
       final Wei value,
@@ -420,10 +370,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
               out.writeBytes(to == null ? Bytes.EMPTY : to);
               out.writeUInt256Scalar(value);
               out.writeBytes(payload);
-              if (ExperimentalEIPs.eip1559Enabled && gasPremium != null && feeCap != null) {
-                out.writeUInt256Scalar(gasPremium);
-                out.writeUInt256Scalar(feeCap);
-              }
               if (chainId.isPresent()) {
                 out.writeBigIntegerScalar(chainId.get());
                 out.writeUInt256Scalar(UInt256.ZERO);
@@ -442,8 +388,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
     return this.chainId.equals(that.chainId)
         && this.gasLimit == that.gasLimit
         && Objects.equals(this.gasPrice, that.gasPrice)
-        && Objects.equals(this.gasPremium, that.gasPremium)
-        && Objects.equals(this.feeCap, that.feeCap)
         && this.nonce == that.nonce
         && this.payload.equals(that.payload)
         && this.signature.equals(that.signature)
@@ -453,8 +397,7 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId);
+    return Objects.hash(nonce, gasPrice, gasLimit, to, value, payload, signature, chainId);
   }
 
   @Override
@@ -567,8 +510,6 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
       return new FrontierTransaction(
           nonce,
           gasPrice,
-          gasPremium,
-          feeCap,
           gasLimit,
           Optional.ofNullable(to),
           value,
@@ -588,8 +529,7 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
 
     SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
       final Bytes32 hash =
-          computeSenderRecoveryHash(
-              nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+          computeSenderRecoveryHash(nonce, gasPrice, gasLimit, to, value, payload, chainId);
       return SECP256K1.sign(hash, keys);
     }
   }
