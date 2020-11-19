@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.plugin.data.HashedTransaction;
-
 @FunctionalInterface
 public interface TransactionFilter {
-  <T extends HashedTransaction> boolean permitted(
+  <T> boolean permitted(
       T transaction, boolean checkLocalPermissions, boolean checkOnchainPermissions);
 }

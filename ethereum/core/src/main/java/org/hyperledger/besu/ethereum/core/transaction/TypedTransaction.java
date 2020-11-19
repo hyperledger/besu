@@ -15,13 +15,11 @@
  *
  */
 
-package org.hyperledger.besu.plugin.data;
+package org.hyperledger.besu.ethereum.core.transaction;
 
-public interface HashedTransaction {
-  /**
-   * The Keccak 256-bit hash of this transaction.
-   *
-   * @return The Keccak 256-bit hash of this transaction.
-   */
+import org.hyperledger.besu.ethereum.core.Hash;
+
+public interface TypedTransaction extends org.hyperledger.besu.plugin.data.TypedTransaction {
+  @Override
   Hash getHash();
 }

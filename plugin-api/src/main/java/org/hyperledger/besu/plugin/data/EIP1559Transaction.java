@@ -32,8 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
  * whereas contract creation transactions will not.
  */
 public interface EIP1559Transaction
-    extends HashedTransaction,
-        NoncedTransaction,
+    extends NoncedTransaction,
         GasLimitedTransaction,
         ECDSASignedTransaction,
         SenderTransaction,

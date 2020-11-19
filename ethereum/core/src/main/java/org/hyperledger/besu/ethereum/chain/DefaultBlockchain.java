@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
@@ -211,7 +212,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
+  public Optional<TypedTransaction> getTransactionByHash(final Hash transactionHash) {
     return blockchainStorage
         .getTransactionLocation(transactionHash)
         .flatMap(
@@ -343,8 +344,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.setChainHead(currentNewChainWithReceipts.getHeader().getHash());
 
     // Track transactions and logs to be added and removed
-    final Map<Hash, List<Transaction>> newTransactions = new HashMap<>();
-    final List<Transaction> removedTransactions = new ArrayList<>();
+    final Map<Hash, List<TypedTransaction>> newTransactions = new HashMap<>();
+    final List<TypedTransaction> removedTransactions = new ArrayList<>();
     final List<LogWithMetadata> addedLogsWithMetadata = new ArrayList<>();
     final List<LogWithMetadata> removedLogsWithMetadata = new ArrayList<>();
 
@@ -486,7 +487,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private static void indexTransactionForBlock(
-      final BlockchainStorage.Updater updater, final Hash hash, final List<Transaction> txs) {
+      final BlockchainStorage.Updater updater, final Hash hash, final List<TypedTransaction> txs) {
     for (int i = 0; i < txs.size(); i++) {
       final Hash txHash = txs.get(i).getHash();
       final TransactionLocation loc = new TransactionLocation(hash, i);
@@ -495,8 +496,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private static void clearIndexedTransactionsForBlock(
-      final BlockchainStorage.Updater updater, final List<Transaction> txs) {
-    for (final Transaction tx : txs) {
+      final BlockchainStorage.Updater updater, final List<TypedTransaction> txs) {
+    for (final TypedTransaction tx : txs) {
       updater.removeTransactionLocation(tx.getHash());
     }
   }

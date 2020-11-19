@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.plugin.data.HashedTransaction;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.math.BigInteger;

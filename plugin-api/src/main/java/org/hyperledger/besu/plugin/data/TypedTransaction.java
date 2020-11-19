@@ -20,6 +20,12 @@ package org.hyperledger.besu.plugin.data;
 import org.hyperledger.besu.plugin.Unstable;
 
 public interface TypedTransaction {
+  /**
+   * The Keccak 256-bit hash of this transaction.
+   *
+   * @return The Keccak 256-bit hash of this transaction.
+   */
+  Hash getHash();
 
   /**
    * Returns the type of the transaction.

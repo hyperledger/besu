@@ -43,6 +43,7 @@ import java.util.Deque;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.GasLimitedTransaction;
 
 public class PrivateTransactionProcessor {
 
@@ -255,7 +256,7 @@ public class PrivateTransactionProcessor {
 
   @SuppressWarnings("unused")
   private static Gas refunded(
-      final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
+      final GasLimitedTransaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
     final Gas maxRefundAllowance =
         Gas.of(transaction.getGasLimit()).minus(gasRemaining).dividedBy(2);

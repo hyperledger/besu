@@ -25,7 +25,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.plugin.data.Hash;
-import org.hyperledger.besu.plugin.data.HashedTransaction;
 
 public class AccountPermissioningController {
 
@@ -49,7 +48,7 @@ public class AccountPermissioningController {
     this.quorumQip714Gate = quorumQip714Gate;
   }
 
-  public <T extends HashedTransaction> boolean isPermitted(
+  public <T> boolean isPermitted(
       final T transaction, final boolean includeLocalCheck, final boolean includeOnChainCheck) {
     final boolean checkPermissions =
         quorumQip714Gate.map(QuorumQip714Gate::shouldCheckPermissions).orElse(true);

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
 
 import java.util.List;
 import java.util.Optional;
@@ -171,7 +172,7 @@ public interface Blockchain {
    * @param transactionHash A transaction hash.
    * @return The location of the hashed transaction.
    */
-  Optional<Transaction> getTransactionByHash(Hash transactionHash);
+  Optional<TypedTransaction> getTransactionByHash(Hash transactionHash);
 
   /**
    * Returns the transaction location associated with the corresponding hash.
