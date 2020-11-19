@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 import java.util.Collections;
@@ -29,10 +29,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   private static final BlockBody EMPTY =
       new BlockBody(Collections.emptyList(), Collections.emptyList());
 
-  private final List<Transaction> transactions;
+  private final List<TypedTransaction> transactions;
   private final List<BlockHeader> ommers;
 
-  public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
+  public BlockBody(final List<TypedTransaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
     this.ommers = ommers;
   }
@@ -60,9 +60,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    */
   public void writeTo(final RLPOutput output) {
     output.startList();
-    output.writeList(
-        getTransactions(),
-        (transaction, rlpOutput) -> TransactionRLPEncoder.encode(transaction, rlpOutput));
+    output.writeList(getTransactions(), TransactionRLPEncoder::encode);
     output.writeList(getOmmers(), BlockHeader::writeTo);
     output.endList();
   }
@@ -73,7 +71,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     // TODO: Support multiple hard fork transaction formats.
     final BlockBody body =
         new BlockBody(
-            input.readList(Transaction::readFrom),
+            input.readList(TransactionRLPDecoder::decodeTransaction),
             input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
     input.leaveList();
     return body;

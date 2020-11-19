@@ -23,8 +23,20 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 public class TransactionRLPEncoder {
+
+  public static void encode(final TypedTransaction typedTransaction, final RLPOutput output) {
+    if (typedTransaction instanceof FrontierTransaction) {
+      encode((FrontierTransaction) typedTransaction, output);
+    } else if (typedTransaction instanceof EIP1559Transaction) {
+      encode((EIP1559Transaction) typedTransaction, output);
+    } else {
+      throw new IllegalStateException(
+          String.format("%s did not have an associated encoder", typedTransaction));
+    }
+  }
 
   public static void encode(final FrontierTransaction frontierTransaction, final RLPOutput output) {
     output.startList();
