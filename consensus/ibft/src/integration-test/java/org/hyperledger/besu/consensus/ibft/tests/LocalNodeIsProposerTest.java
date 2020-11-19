@@ -134,7 +134,7 @@ public class LocalNodeIsProposerTest {
   }
 
   @Test
-  public void nodeDoesNotGoIntoRoundChangeAfterImport() {
+  public void nodeDoesNotSendCommitMessageAfterBlockIsImportedAndBeforeNewBlockEvent() {
     peers.verifyMessagesReceived(expectedTxProposal);
     peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock.getHash());
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
@@ -143,16 +143,12 @@ public class LocalNodeIsProposerTest {
     peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
     peers.verifyNoMessagesReceived();
-
-    final ConsensusRoundIdentifier nextRound = new ConsensusRoundIdentifier(1, 1);
-
-    peers.getNonProposing(0).injectRoundChange(nextRound, Optional.empty());
+    
+    peers.getNonProposing(0).injectPrepare(roundId, expectedProposedBlock.getHash());
     peers.verifyNoMessagesReceived();
-    peers.getNonProposing(1).injectRoundChange(nextRound, Optional.empty());
+    peers.getNonProposing(1).injectPrepare(roundId, expectedProposedBlock.getHash());
     peers.verifyNoMessagesReceived();
-    peers.getNonProposing(2).injectRoundChange(nextRound, Optional.empty());
-
-    // Prove local node is NOT in Round(1,1)
-
+    peers.getNonProposing(2).injectPrepare(roundId, expectedProposedBlock.getHash());
+    peers.verifyNoMessagesReceived();
   }
 }
