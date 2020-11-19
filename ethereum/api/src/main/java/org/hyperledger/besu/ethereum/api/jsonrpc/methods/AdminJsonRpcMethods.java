@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminRemovePee
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginsReloadConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -44,6 +45,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final BlockchainQueries blockchainQueries;
   private final NatService natService;
   private final Map<String, BesuPlugin> namedPlugins;
+  private final EthPeers ethPeers;
 
   public AdminJsonRpcMethods(
       final String clientVersion,
@@ -52,7 +54,8 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
       final Map<String, BesuPlugin> namedPlugins,
-      final NatService natService) {
+      final NatService natService,
+      final EthPeers ethPeers) {
     this.clientVersion = clientVersion;
     this.networkId = networkId;
     this.genesisConfigOptions = genesisConfigOptions;
@@ -60,6 +63,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.blockchainQueries = blockchainQueries;
     this.namedPlugins = namedPlugins;
     this.natService = natService;
+    this.ethPeers = ethPeers;
   }
 
   @Override
@@ -79,7 +83,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
             p2pNetwork,
             blockchainQueries,
             natService),
-        new AdminPeers(p2pNetwork),
+        new AdminPeers(ethPeers),
         new AdminChangeLogLevel(),
         new AdminGenerateLogBloomCache(blockchainQueries),
         new AdminLogsRepairCache(blockchainQueries),
