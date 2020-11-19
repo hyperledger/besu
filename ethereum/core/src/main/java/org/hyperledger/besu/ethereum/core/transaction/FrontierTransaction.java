@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -92,8 +93,8 @@ public class FrontierTransaction implements Transaction, ECDSASignedAndReplayPro
     return new Builder();
   }
 
-  public static FrontierTransaction decode(final Bytes bytes) throws RLPException {
-    return (FrontierTransaction) TransactionRLPDecoder.decodeTransaction(bytes);
+  public static FrontierTransaction readFrom(final RLPInput input) throws RLPException {
+    return (FrontierTransaction) TransactionRLPDecoder.decodeTransaction(input);
   }
 
   /**
