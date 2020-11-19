@@ -143,7 +143,7 @@ public class LocalNodeIsProposerTest {
     peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
     peers.verifyNoMessagesReceived();
-    
+
     peers.getNonProposing(0).injectPrepare(roundId, expectedProposedBlock.getHash());
     peers.verifyNoMessagesReceived();
     peers.getNonProposing(1).injectPrepare(roundId, expectedProposedBlock.getHash());
