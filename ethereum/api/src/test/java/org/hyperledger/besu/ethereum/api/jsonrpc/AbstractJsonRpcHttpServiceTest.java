@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -168,7 +169,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(MetricsConfiguration.class),
             natService,
             new HashMap<>(),
-            folder.getRoot().toPath());
+            folder.getRoot().toPath(),
+            mock(EthPeers.class));
   }
 
   protected void startService() throws Exception {

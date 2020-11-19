@@ -138,7 +138,7 @@ public class LocalNodeNotProposerTest {
 
   @Test
   public void
-      fullQuorumOfCommitMessagesReceivedThenProposalImportsBlockCommitSentAfterFinalPrepare() {
+      canImportABlockIfSufficientCommitsReceivedWithoutPreparesAndThatNoPacketsSentAfterImport() {
     peers.commit(roundId, blockToPropose.getHash());
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
@@ -148,7 +148,6 @@ public class LocalNodeNotProposerTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
 
     peers.getNonProposing(0).injectPrepare(roundId, blockToPropose.getHash());
-    peers.verifyMessagesReceived(expectedTxCommit);
-    assertThat(context.getCurrentChainHeight()).isEqualTo(1);
+    peers.verifyNoMessagesReceived();
   }
 }

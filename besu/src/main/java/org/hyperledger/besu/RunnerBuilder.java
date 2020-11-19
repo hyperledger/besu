@@ -771,7 +771,8 @@ public class RunnerBuilder {
                 metricsConfiguration,
                 natService,
                 namedPlugins,
-                dataDir);
+                dataDir,
+                besuController.getProtocolManager().ethContext().getEthPeers());
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
