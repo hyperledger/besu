@@ -92,6 +92,12 @@ public class StateTestSubCommand implements Runnable {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
+  public StateTestSubCommand() {}
+
+  public StateTestSubCommand(final EvmToolCommand parentCommand) {
+    this.parentCommand = parentCommand;
+  }
+
   @Override
   public void run() {
     final ObjectMapper objectMapper = new ObjectMapper();
