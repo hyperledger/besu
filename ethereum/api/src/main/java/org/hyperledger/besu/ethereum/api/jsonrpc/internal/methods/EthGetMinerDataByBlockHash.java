@@ -19,20 +19,22 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableMinerDataResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableUncleRewardResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResult.UncleRewardResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -99,7 +101,7 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
     final Wei uncleInclusionReward =
         staticBlockReward.multiply(block.getOmmers().size()).divide(32);
     final Wei netBlockReward = staticBlockReward.add(transactionFee).add(uncleInclusionReward);
-    final Map<Hash, Address> uncleRewards = new HashMap<>();
+    final List<UncleRewardResult> uncleRewards = new ArrayList<>();
     blockchainQueries
         .getBlockchain()
         .getBlockByNumber(block.getHeader().getNumber())
@@ -108,17 +110,24 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
                 blockBody
                     .getBody()
                     .getOmmers()
-                    .forEach(header -> uncleRewards.put(header.getHash(), header.getCoinbase())));
+                    .forEach(
+                        header ->
+                            uncleRewards.add(
+                                ImmutableUncleRewardResult.builder()
+                                    .hash(header.getHash().toHexString())
+                                    .coinbase(header.getCoinbase().toHexString())
+                                    .build())));
 
-    return new MinerDataResult(
-        netBlockReward,
-        staticBlockReward,
-        transactionFee,
-        uncleInclusionReward,
-        uncleRewards,
-        blockHeader.getCoinbase(),
-        blockHeader.getExtraData(),
-        blockHeader.getDifficulty(),
-        block.getTotalDifficulty());
+    return ImmutableMinerDataResult.builder()
+        .netBlockReward(netBlockReward.toHexString())
+        .staticBlockReward(staticBlockReward.toHexString())
+        .transactionFee(transactionFee.toHexString())
+        .uncleInclusionReward(uncleInclusionReward.toHexString())
+        .uncleRewards(uncleRewards)
+        .coinbase(blockHeader.getCoinbase().toHexString())
+        .extraData(blockHeader.getExtraData().toHexString())
+        .difficulty(blockHeader.getDifficulty().toHexString())
+        .totalDifficulty(block.getTotalDifficulty().toHexString())
+        .build();
   }
 }
