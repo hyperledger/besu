@@ -25,12 +25,14 @@ import java.util.stream.Stream;
 
 public class AccountTransactionOrder {
 
-  private static final Comparator<Transaction> SORT_BY_NONCE =
-      Comparator.comparing(Transaction::getNonce);
-  private final NavigableSet<Transaction> transactionsForSender = new TreeSet<>(SORT_BY_NONCE);
-  private final NavigableSet<Transaction> deferredTransactions = new TreeSet<>(SORT_BY_NONCE);
+  private static final Comparator<TypicalTransaction> SORT_BY_NONCE =
+      Comparator.comparing(TypicalTransaction::getNonce);
+  private final NavigableSet<TypicalTransaction> transactionsForSender =
+      new TreeSet<>(SORT_BY_NONCE);
+  private final NavigableSet<TypicalTransaction> deferredTransactions =
+      new TreeSet<>(SORT_BY_NONCE);
 
-  public AccountTransactionOrder(final Stream<Transaction> senderTransactions) {
+  public AccountTransactionOrder(final Stream<TypicalTransaction> senderTransactions) {
     senderTransactions.forEach(this.transactionsForSender::add);
   }
 
@@ -46,14 +48,14 @@ public class AccountTransactionOrder {
    *     order. Must be from the sender this instance is ordering.
    * @return the transactions from this sender that are now due to be processed, in order.
    */
-  public Iterable<Transaction> transactionsToProcess(
-      final Transaction nextTransactionInPriorityOrder) {
+  public Iterable<TypicalTransaction> transactionsToProcess(
+      final TypicalTransaction nextTransactionInPriorityOrder) {
     deferredTransactions.add(nextTransactionInPriorityOrder);
-    final List<Transaction> transactionsToApply = new ArrayList<>();
+    final List<TypicalTransaction> transactionsToApply = new ArrayList<>();
     while (!deferredTransactions.isEmpty()
         && !transactionsForSender.isEmpty()
         && deferredTransactions.first().equals(transactionsForSender.first())) {
-      final Transaction transaction = deferredTransactions.first();
+      final TypicalTransaction transaction = deferredTransactions.first();
       transactionsToApply.add(transaction);
       deferredTransactions.remove(transaction);
       transactionsForSender.remove(transaction);
