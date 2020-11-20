@@ -338,7 +338,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--max-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Maximum P2P peer connections that can be established (default: ${DEFAULT-VALUE})")
+          "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
   private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
   @Option(
