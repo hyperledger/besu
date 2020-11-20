@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.transaction.ECDSASignedAndReplayProtectedTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierlikeSignatureTransaction;
 import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -70,10 +70,10 @@ public class TransactionRLPEncoder {
   }
 
   private static void writeSignature(
-      final ECDSASignedAndReplayProtectedTransaction ecdsaSignedAndReplayProtectedTransaction,
+      final FrontierlikeSignatureTransaction frontierlikeSignatureTransaction,
       final RLPOutput out) {
-    out.writeBigIntegerScalar(ecdsaSignedAndReplayProtectedTransaction.getV());
-    out.writeBigIntegerScalar(ecdsaSignedAndReplayProtectedTransaction.getSignature().getR());
-    out.writeBigIntegerScalar(ecdsaSignedAndReplayProtectedTransaction.getSignature().getS());
+    out.writeBigIntegerScalar(frontierlikeSignatureTransaction.getV());
+    out.writeBigIntegerScalar(frontierlikeSignatureTransaction.getSignature().getR());
+    out.writeBigIntegerScalar(frontierlikeSignatureTransaction.getSignature().getS());
   }
 }

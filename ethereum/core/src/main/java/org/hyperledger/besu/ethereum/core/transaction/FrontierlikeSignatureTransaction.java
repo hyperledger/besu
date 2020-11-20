@@ -22,7 +22,7 @@ import org.hyperledger.besu.plugin.data.ChainIdTransaction;
 
 import java.math.BigInteger;
 
-public interface ECDSASignedAndReplayProtectedTransaction
+public interface FrontierlikeSignatureTransaction
     extends org.hyperledger.besu.plugin.data.ECDSASignedTransaction, ChainIdTransaction {
 
   // Used for transactions that are not tied to a specific chain
