@@ -102,6 +102,12 @@ public class MainnetTransactionValidator {
       return signatureResult;
     }
 
+    if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
+          "gasPrice must be set to zero on a GoQuorum compatible network");
+    }
+
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);
     if (intrinsicGasCost.compareTo(Gas.of(transaction.getGasLimit())) > 0) {
       return ValidationResult.invalid(
@@ -123,7 +129,8 @@ public class MainnetTransactionValidator {
       return signatureResult;
     }
 
-    if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
+    // TODO: is this right?
+    if (goQuorumCompatibilityMode && transaction.getGasPremium().getValue().longValue() != 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
           "gasPrice must be set to zero on a GoQuorum compatible network");
@@ -305,7 +312,7 @@ public class MainnetTransactionValidator {
   }
 
   private boolean isSenderAllowed(
-      final HashedTransaction transaction, final TransactionValidationParams validationParams) {
+      final TypicalTransaction transaction, final TransactionValidationParams validationParams) {
     if (validationParams.checkLocalPermissions() || validationParams.checkOnchainPermissions()) {
       return transactionFilter
           .map(
