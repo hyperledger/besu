@@ -45,6 +45,10 @@ Deprecated in 1.5.1
 
 The [Besu Sample Networks repository](https://github.com/ConsenSys/besu-sample-networks) has been replaced by the [Quorum Developer Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Developer-Quickstart). 
 
+### Download Link
+
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.1.zip 
+sha256: `ac4fae310957c176564396f73c0f03c60c41129d43d078560d0dab533a69fd2a`
 
 ## 20.10.0
 
