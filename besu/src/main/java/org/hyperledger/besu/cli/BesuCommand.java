@@ -317,7 +317,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // meaning that it's probably the right way to handle disabling options.
   @Option(
       names = {"--discovery-enabled"},
-      description = "Enable P2P peer discovery (default: ${DEFAULT-VALUE})",
+      description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Boolean peerDiscoveryEnabled = true;
 
