@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -204,14 +205,14 @@ public class PendingTransactions {
 
   public void selectTransactions(final TransactionSelector selector) {
     synchronized (prioritizedTransactions) {
-      final List<Transaction> transactionsToRemove = new ArrayList<>();
+      final List<TypedTransaction> transactionsToRemove = new ArrayList<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       for (final TransactionInfo transactionInfo : prioritizedTransactions) {
         final AccountTransactionOrder accountTransactionOrder =
             accountTransactions.computeIfAbsent(
                 transactionInfo.getSender(), this::createSenderTransactionOrder);
 
-        for (final Transaction transactionToProcess :
+        for (final TypedTransaction transactionToProcess :
             accountTransactionOrder.transactionsToProcess(transactionInfo.getTransaction())) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);

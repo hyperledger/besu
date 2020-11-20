@@ -19,11 +19,20 @@ package org.hyperledger.besu.ethereum.core.transaction;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.plugin.data.ChainIdTransaction;
+import org.hyperledger.besu.plugin.data.NoncedTransaction;
 
 import java.math.BigInteger;
 
-public interface FrontierlikeSignatureTransaction
-    extends org.hyperledger.besu.plugin.data.ECDSASignedTransaction, ChainIdTransaction {
+/**
+ * This is a convenience interface built up of Transaction mixins that lets us make assumptions
+ * about transactions. It should change as exotic transaction types that don't use these constructs
+ * are introduced.
+ */
+public interface TypicalTransaction
+    extends org.hyperledger.besu.plugin.data.ECDSASignedTransaction,
+        ChainIdTransaction,
+        NoncedTransaction,
+        TypedTransaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).

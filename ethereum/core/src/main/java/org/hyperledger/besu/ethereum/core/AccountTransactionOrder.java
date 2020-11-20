@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
