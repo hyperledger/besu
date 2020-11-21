@@ -27,6 +27,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DiscoveryConfiguration {
+  public static String GOERLI_DISCOVERY_URL =
+      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.goerli.ethdisco.net";
+  public static String MAINNET_DISCOVERY_URL =
+      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.mainnet.ethdisco.net";
+  public static String RINKEBY_DISCOVERY_URL =
+      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.rinkeby.ethdisco.net";
+
   public static List<EnodeURL> MAINNET_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
@@ -182,6 +189,7 @@ public class DiscoveryConfiguration {
   private String advertisedHost = "127.0.0.1";
   private int bucketSize = 16;
   private List<EnodeURL> bootnodes = new ArrayList<>();
+  private String dnsDiscoveryURL;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -255,6 +263,14 @@ public class DiscoveryConfiguration {
     return this;
   }
 
+  public String getDNSDiscoveryURL() {
+    return dnsDiscoveryURL;
+  }
+
+  public void setDnsDiscoveryURL(final String dnsDiscoveryURL) {
+    this.dnsDiscoveryURL = dnsDiscoveryURL;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (o == this) {
@@ -269,12 +285,14 @@ public class DiscoveryConfiguration {
         && bucketSize == that.bucketSize
         && Objects.equals(bindHost, that.bindHost)
         && Objects.equals(advertisedHost, that.advertisedHost)
-        && Objects.equals(bootnodes, that.bootnodes);
+        && Objects.equals(bootnodes, that.bootnodes)
+        && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(active, bindHost, bindPort, advertisedHost, bucketSize, bootnodes);
+    return Objects.hash(
+        active, bindHost, bindPort, advertisedHost, bucketSize, bootnodes, dnsDiscoveryURL);
   }
 
   @Override
@@ -294,6 +312,8 @@ public class DiscoveryConfiguration {
         + bucketSize
         + ", bootnodes="
         + bootnodes
+        + ", dnsDiscoveryURL="
+        + dnsDiscoveryURL
         + '}';
   }
 }
