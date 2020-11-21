@@ -9,6 +9,7 @@
 ### Bug Fixes
 
 * Ibft2 will discard any received messages targetting a chain height <= current head - this resolves some corner cases in system correctness directly following block import. [#1575](https://github.com/hyperledger/besu/pull/1575)
+* EvmTool now throws `UnsupportedForkException` when there is an unknown fork and is YOLOv2 compatible [\#1584](https://github.com/hyperledger/besu/pull/1584)
 
 ## 20.10.1
 
