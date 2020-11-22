@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -89,6 +91,12 @@ public class StateTestSubCommand implements Runnable {
   private final List<File> stateTestFiles = new ArrayList<>();
 
   private final ObjectMapper objectMapper = new ObjectMapper();
+
+  public StateTestSubCommand() {}
+
+  public StateTestSubCommand(final EvmToolCommand parentCommand) {
+    this.parentCommand = parentCommand;
+  }
 
   @Override
   public void run() {
@@ -169,11 +177,14 @@ public class StateTestSubCommand implements Runnable {
         return;
       }
 
+      final String forkName = fork == null ? spec.getFork() : fork;
+      final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(forkName);
+      if (protocolSchedule == null) {
+        throw new UnsupportedForkException(forkName);
+      }
+
       final MainnetTransactionProcessor processor =
-          referenceTestProtocolSchedules
-              .getByName(fork == null ? spec.getFork() : fork)
-              .getByBlockNumber(0)
-              .getTransactionProcessor();
+          protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
       final WorldUpdater worldStateUpdater = worldState.updater();
       final ReferenceTestBlockchain blockchain =
           new ReferenceTestBlockchain(blockHeader.getNumber());

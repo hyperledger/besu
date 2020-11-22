@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -104,6 +105,7 @@ public class JsonRpcHttpServiceTest {
   protected static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   protected static P2PNetwork peerDiscoveryMock;
+  protected static EthPeers ethPeersMock;
   protected static BlockchainQueries blockchainQueries;
   protected static Synchronizer synchronizer;
   protected static final Collection<RpcApi> JSON_RPC_APIS =
@@ -114,6 +116,7 @@ public class JsonRpcHttpServiceTest {
   @BeforeClass
   public static void initServerAndClient() throws Exception {
     peerDiscoveryMock = mock(P2PNetwork.class);
+    ethPeersMock = mock(EthPeers.class);
     blockchainQueries = mock(BlockchainQueries.class);
     synchronizer = mock(Synchronizer.class);
 
@@ -147,7 +150,8 @@ public class JsonRpcHttpServiceTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath()));
+                    folder.getRoot().toPath(),
+                    ethPeersMock));
     service = createJsonRpcHttpService();
     service.start().join();
 
