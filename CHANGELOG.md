@@ -3,8 +3,8 @@
 ## 20.10.2
 
 ### Additions and Improvements
-* Add support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
-* Add protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
+* Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
+* Added protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
 
 ### Bug Fixes
 
