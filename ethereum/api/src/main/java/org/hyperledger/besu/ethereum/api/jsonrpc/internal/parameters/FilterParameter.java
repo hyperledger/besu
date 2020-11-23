@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static java.util.Collections.emptyList;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -49,9 +50,8 @@ public class FilterParameter {
           final List<Address> address,
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics,
-      @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-          @JsonProperty("blockHash")
-          final Hash blockHash) {
+      @JsonProperty("blockHash")
+      @JsonAlias({"blockhash", "blockHash"}) final Hash blockHash) {
     this.isValid = blockHash == null || (fromBlock == null && toBlock == null);
     this.fromBlock = fromBlock != null ? fromBlock : BlockParameter.LATEST;
     this.toBlock = toBlock != null ? toBlock : BlockParameter.LATEST;
