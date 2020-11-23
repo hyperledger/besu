@@ -3839,9 +3839,17 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void quorumInteropDisabledDoesNotEnforceZeroGasPrice() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand(
+        "--goquorum-compatibility-enabled=false", "--genesis-file", genesisFile.toString());
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
-    parseCommand("--genesis-file", genesisFile.toString());
+    parseCommand("--goquorum-compatibility-enabled", "--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString())
         .contains(
             "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
@@ -3850,7 +3858,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "1");
     assertThat(commandErrorOutput.toString())
         .contains(
             "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
@@ -3859,7 +3872,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void quorumInteropEnabledSucceedsWithGasPriceSetToZero() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }

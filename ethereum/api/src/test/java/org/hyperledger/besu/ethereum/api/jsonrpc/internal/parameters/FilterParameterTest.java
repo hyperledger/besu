@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -160,8 +161,19 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void jsonWithBlockAndFromAndToParametersIsInvalid() throws Exception {
+  public void jsonWithBlockHashIncludingAliasAndFromAndToParametersIsInvalid() throws Exception {
     final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockHash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final String jsonUsingAlias =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
             + "\"address\":\"0x0\", \"fromBlock\": \"0x0\", \"toBlock\": \"pending\","
             + "\"topics\":["
@@ -176,7 +188,55 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter.isValid()).isFalse();
+    final JsonRpcRequestContext requestUsingAlias =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonUsingAlias));
+    final FilterParameter parsedFilterParameterUsingAlias =
+        requestUsingAlias.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameterUsingAlias.isValid()).isFalse();
+    assertThat(parsedFilterParameter)
+        .isEqualToComparingFieldByField(parsedFilterParameterUsingAlias);
+  }
+
+  @Test
+  public void jsonBlockHashAliasSucceeds() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockHash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final String jsonUsingAlias =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{"
+            + "\"address\":\"0x0\","
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "], \"blockhash\": \""
+            + Hash.ZERO
+            + "\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+    final FilterParameter parsedFilterParameter =
+        request.getRequiredParameter(0, FilterParameter.class);
+
+    final JsonRpcRequestContext requestUsingAlias =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonUsingAlias));
+    final FilterParameter parsedFilterParameterUsingAlias =
+        requestUsingAlias.getRequiredParameter(0, FilterParameter.class);
+
+    assertThat(parsedFilterParameterUsingAlias.isValid()).isTrue();
+    assertThat(parsedFilterParameterUsingAlias.getBlockHash()).isEqualTo(Optional.of(Hash.ZERO));
+
+    // blockhash and blockHash should end up the same
+    assertThat(parsedFilterParameter)
+        .isEqualToComparingFieldByField(parsedFilterParameterUsingAlias);
   }
 
   @Test
