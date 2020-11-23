@@ -18,8 +18,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -54,13 +52,6 @@ public class EthGetMinerDataByBlockNumber extends AbstractBlockParameterMethod {
 
     MinerDataResult minerDataResult = null;
     if (block != null) {
-      if (!getBlockchainQueries()
-          .getWorldStateArchive()
-          .isWorldStateAvailable(block.getHeader().getStateRoot())) {
-        return new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE);
-      }
-
       minerDataResult =
           EthGetMinerDataByBlockHash.createMinerDataResult(
               block, protocolSchedule, getBlockchainQueries());

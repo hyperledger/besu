@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.WORLD_STATE_UNAVAILABLE;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -26,7 +24,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
@@ -40,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -56,7 +52,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class EthGetMinerDataByBlockNumberTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ProtocolSchedule protocolSchedule;
-  @Mock private WorldStateArchive worldStateArchive;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private Blockchain blockChain;
   private EthGetMinerDataByBlockNumber method;
@@ -81,8 +76,6 @@ public class EthGetMinerDataByBlockNumberTest {
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
     when(blockchainQueries.blockByNumber(anyLong())).thenReturn(Optional.of(blockWithMetadata));
-    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any())).thenReturn(true);
     when(protocolSchedule.getByBlockNumber(header.getNumber())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockReward()).thenReturn(Wei.fromEth(2));
     when(blockchainQueries.getBlockchain()).thenReturn(blockChain);
@@ -103,26 +96,6 @@ public class EthGetMinerDataByBlockNumberTest {
         .hasFieldOrProperty("extraData")
         .hasFieldOrProperty("difficulty")
         .hasFieldOrProperty("totalDifficulty");
-  }
-
-  @Test
-  public void worldStateMissingTest() {
-    final BlockHeader header = blockHeaderTestFixture.buildHeader();
-    final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
-        new BlockWithMetadata<>(
-            header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
-
-    when(blockchainQueries.blockByNumber(anyLong())).thenReturn(Optional.of(blockWithMetadata));
-    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchainQueries.getWorldStateArchive().isWorldStateAvailable(any())).thenReturn(false);
-
-    JsonRpcRequest request = new JsonRpcRequest("2.0", ETH_METHOD, Arrays.array("5094833"));
-    JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
-    JsonRpcResponse response = method.response(requestContext);
-
-    assertThat(response).isNotNull().isInstanceOf(JsonRpcErrorResponse.class);
-    assertThat(((JsonRpcErrorResponse) response).getError()).isNotNull();
-    assertThat(((JsonRpcErrorResponse) response).getError()).isEqualTo(WORLD_STATE_UNAVAILABLE);
   }
 
   @Test
