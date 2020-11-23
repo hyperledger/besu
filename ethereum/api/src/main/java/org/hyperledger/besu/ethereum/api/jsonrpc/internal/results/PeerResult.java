@@ -14,67 +14,62 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.immutables.value.Value;
 
-@JsonPropertyOrder({"version", "name", "caps", "network", "port", "id"})
-public class PeerResult {
+@JsonPropertyOrder({"version", "name", "caps", "network", "port", "id", "protocols"})
+@Value.Immutable
+@Value.Style(allParameters = true)
+public interface PeerResult {
 
-  private final String version;
-  private final String name;
-  private final List<JsonNode> caps;
-  private final NetworkResult network;
-  private final String port;
-  private final String id;
-
-  public PeerResult(final PeerConnection peer) {
-    this.version = Quantity.create(peer.getPeerInfo().getVersion());
-    this.name = peer.getPeerInfo().getClientId();
-    this.caps =
-        peer.getPeerInfo().getCapabilities().stream()
-            .map(Capability::toString)
-            .map(TextNode::new)
-            .collect(Collectors.toList());
-    this.network = new NetworkResult(peer.getLocalAddress(), peer.getRemoteAddress());
-    this.port = Quantity.create(peer.getPeerInfo().getPort());
-    this.id = peer.getPeerInfo().getNodeId().toString();
+  static PeerResult fromEthPeer(final EthPeer peer) {
+    final PeerConnection connection = peer.getConnection();
+    final PeerInfo peerInfo = connection.getPeerInfo();
+    return ImmutablePeerResult.builder()
+        .version(Quantity.create(peerInfo.getVersion()))
+        .name(peerInfo.getClientId())
+        .caps(
+            peerInfo.getCapabilities().stream()
+                .map(Capability::toString)
+                .map(TextNode::new)
+                .collect(Collectors.toList()))
+        .network(new NetworkResult(connection.getLocalAddress(), connection.getRemoteAddress()))
+        .port(Quantity.create(peerInfo.getPort()))
+        .id(peerInfo.getNodeId().toString())
+        .protocols(Map.of(peer.getProtocolName(), ProtocolsResult.fromEthPeer(peer)))
+        .build();
   }
 
   @JsonGetter(value = "version")
-  public String getVersion() {
-    return version;
-  }
+  String getVersion();
 
   @JsonGetter(value = "name")
-  public String getName() {
-    return name;
-  }
+  String getName();
 
   @JsonGetter(value = "caps")
-  public List<JsonNode> getCaps() {
-    return caps;
-  }
+  List<JsonNode> getCaps();
 
   @JsonGetter(value = "network")
-  public NetworkResult getNetwork() {
-    return network;
-  }
+  NetworkResult getNetwork();
 
   @JsonGetter(value = "port")
-  public String getPort() {
-    return port;
-  }
+  String getPort();
 
   @JsonGetter(value = "id")
-  public String getId() {
-    return id;
-  }
+  String getId();
+
+  @JsonGetter(value = "protocols")
+  Map<String, ProtocolsResult> getProtocols();
 }

@@ -21,17 +21,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PeerResult;
-import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class AdminPeers implements JsonRpcMethod {
-  private final P2PNetwork peerDiscoveryAgent;
+  private final EthPeers ethPeers;
 
-  public AdminPeers(final P2PNetwork peerDiscoveryAgent) {
-    this.peerDiscoveryAgent = peerDiscoveryAgent;
+  public AdminPeers(final EthPeers ethPeers) {
+    this.ethPeers = ethPeers;
   }
 
   @Override
@@ -43,11 +42,9 @@ public class AdminPeers implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
     try {
-      final List<PeerResult> peers =
-          peerDiscoveryAgent.getPeers().stream().map(PeerResult::new).collect(Collectors.toList());
-      final JsonRpcResponse result =
-          new JsonRpcSuccessResponse(requestContext.getRequest().getId(), peers);
-      return result;
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(),
+          ethPeers.streamAllPeers().map(PeerResult::fromEthPeer).collect(Collectors.toList()));
     } catch (P2PDisabledException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);

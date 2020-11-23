@@ -1,0 +1,85 @@
+{
+  "callcallcodecall_010_SuicideEnd" : {
+    "_info" : {
+      "comment" : "",
+      "filling-rpc-server" : "Geth-1.9.6-unstable-63b18027-20190920",
+      "filling-tool-version" : "retesteth-0.0.1+commit.0ae18aef.Linux.g++",
+      "lllcversion" : "Version: 0.5.12-develop.2019.9.13+commit.2d601a4f.Linux.g++",
+      "source" : "src/GeneralStateTestsFiller/stCallDelegateCodesCallCodeHomestead/callcallcodecall_010_SuicideEndFiller.json",
+      "sourceHash" : "6d86c07af29329a8944aa6953d4271f5adfe2f9b0554294f2d7a54827f409569"
+    },
+    "env" : {
+      "currentCoinbase" : "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+      "currentDifficulty" : "0x020000",
+      "currentGasLimit" : "0x01c9c380",
+      "currentNumber" : "0x01",
+      "currentTimestamp" : "0x03e8",
+      "previousHash" : "0x5e20a0453cecd065ea59c37ac63e079ee08998b6045136a8ce6635c7912ec0b6"
+    },
+    "post" : {
+      "Istanbul" : [
+        {
+          "indexes" : {
+            "data" : 0,
+            "gas" : 0,
+            "value" : 0
+          },
+          "hash" : "0x0ff25ed40ebe791efa00daa61bbb998db905b529fa0f8f2afb9e1aa69b63442c",
+          "logs" : "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+        }
+      ]
+    },
+    "pre" : {
+      "0x1000000000000000000000000000000000000000" : {
+        "balance" : "0x0de0b6b3a7640000",
+        "code" : "0x60406000604060006000731000000000000000000000000000000000000001620249f0f260005500",
+        "nonce" : "0x00",
+        "storage" : {
+        }
+      },
+      "0x1000000000000000000000000000000000000001" : {
+        "balance" : "0x02540be400",
+        "code" : "0x6040600060406000731000000000000000000000000000000000000002620186a0f460015500",
+        "nonce" : "0x00",
+        "storage" : {
+        }
+      },
+      "0x1000000000000000000000000000000000000002" : {
+        "balance" : "0x02540be400",
+        "code" : "0x6040600060406000600073100000000000000000000000000000000000000361c350f2600255731000000000000000000000000000000000000001ff00",
+        "nonce" : "0x00",
+        "storage" : {
+        }
+      },
+      "0x1000000000000000000000000000000000000003" : {
+        "balance" : "0x02540be400",
+        "code" : "0x600160035500",
+        "nonce" : "0x00",
+        "storage" : {
+        }
+      },
+      "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b" : {
+        "balance" : "0x0de0b6b3a7640000",
+        "code" : "0x",
+        "nonce" : "0x00",
+        "storage" : {
+        }
+      }
+    },
+    "transaction" : {
+      "data" : [
+        "0x"
+      ],
+      "gasLimit" : [
+        "0x2dc6c0"
+      ],
+      "gasPrice" : "0x01",
+      "nonce" : "0x00",
+      "secretKey" : "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+      "to" : "0x1000000000000000000000000000000000000000",
+      "value" : [
+        "0x00"
+      ]
+    }
+  }
+}

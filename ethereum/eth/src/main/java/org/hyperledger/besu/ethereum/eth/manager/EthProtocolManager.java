@@ -335,7 +335,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
-        peer.registerStatusReceived(status.bestHash(), status.totalDifficulty());
+        peer.registerStatusReceived(
+            status.bestHash(), status.totalDifficulty(), status.protocolVersion());
       }
     } catch (final RLPException e) {
       LOG.debug("Unable to parse status message, disconnecting from peer.", e);
