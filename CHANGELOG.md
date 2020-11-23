@@ -4,12 +4,14 @@
 
 ### Additions and Improvements
 * Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
-* Add a protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
+* Added a protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
+* Added CLI option `--goquorum-compatibility-enabled` to enable GoQuorum compatibility mode. [#1598](https://github.com/hyperledger/besu/pull/1598)
 
 ### Bug Fixes
 
-* Ibft2 will discard any received messages targetting a chain height <= current head - this resolves some corner cases in system correctness directly following block import. [#1575](https://github.com/hyperledger/besu/pull/1575)
+* Ibft2 will discard any received messages targeting a chain height <= current head - this resolves some corner cases in system correctness directly following block import. [#1575](https://github.com/hyperledger/besu/pull/1575)
 * EvmTool now throws `UnsupportedForkException` when there is an unknown fork and is YOLOv2 compatible [\#1584](https://github.com/hyperledger/besu/pull/1584)
+* `eth_newFilter` now supports `blockHash` parameter as per the spec [\#1548](https://github.com/hyperledger/besu/issues/1540). (`blockhash` is also still supported.)
 
 ## 20.10.1
 
@@ -299,7 +301,7 @@ is owned by that user.
 ### Remove Manual NAT method
 
 The NAT manager `MANUAL` method has been removed.
-If you have have been using the `MANUAL` method, use the `NONE` method instead. The behavior of the
+If you have been using the `MANUAL` method, use the `NONE` method instead. The behavior of the
 `NONE` method is the same as the previously supported `MANUAL` methods.
 
 ### Privacy users
