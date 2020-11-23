@@ -14,14 +14,12 @@
  */
 package org.hyperledger.besu.enclave;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import io.vertx.core.Vertx;
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,10 +27,11 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
-import io.vertx.core.Vertx;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentMatchers;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class GoQuorumEnclaveTest {
 
@@ -87,7 +86,7 @@ public class GoQuorumEnclaveTest {
   public void upcheckReturnsFalseIfNoResponseReceived() throws URISyntaxException {
     final Vertx vertx = Vertx.vertx();
     final EnclaveFactory factory = new EnclaveFactory(vertx);
-    assertThat(factory.createVertxEnclave(new URI("http://8.8.8.8:65535")).upCheck()).isFalse();
+    assertThat(factory.createGoQuorumEnclave(new URI("http://8.8.8.8:65535")).upCheck()).isFalse();
   }
 
   private GoQuorumEnclave createGoQuorumEnclaveWithMockRequestTransmitter() {
