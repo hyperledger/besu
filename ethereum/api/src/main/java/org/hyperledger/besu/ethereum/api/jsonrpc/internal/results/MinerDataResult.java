@@ -14,106 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
-
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.immutables.value.Value;
 
-public class MinerDataResult implements JsonRpcResult {
-  private final String netBlockReward;
-  private final String staticBlockReward;
-  private final String transactionFee;
-  private final String uncleInclusionReward;
-  private final List<UncleRewardResult> uncleRewards;
-  private final String coinbase;
-  private final String extraData;
-  private final String difficulty;
-  private final String totalDifficulty;
+@Value.Immutable
+public abstract class MinerDataResult implements JsonRpcResult {
+  abstract String getNetBlockReward();
 
-  public MinerDataResult(
-      final Wei netBlockReward,
-      final Wei staticBlockReward,
-      final Wei transactionFee,
-      final Wei uncleInclusionReward,
-      final Map<Hash, Address> uncleRewards,
-      final Address coinbase,
-      final Bytes extraData,
-      final Difficulty difficulty,
-      final Difficulty totalDifficulty) {
-    this.netBlockReward = Quantity.create(netBlockReward);
-    this.staticBlockReward = Quantity.create(staticBlockReward);
-    this.transactionFee = Quantity.create(transactionFee);
-    this.uncleInclusionReward = Quantity.create(uncleInclusionReward);
-    this.uncleRewards = setUncleRewards(uncleRewards);
-    this.coinbase = coinbase.toString();
-    this.extraData = extraData.toString();
-    this.difficulty = Quantity.create(difficulty);
-    this.totalDifficulty = Quantity.create(totalDifficulty);
-  }
+  abstract String getStaticBlockReward();
 
-  public String getNetBlockReward() {
-    return netBlockReward;
-  }
+  abstract String getTransactionFee();
 
-  public String getStaticBlockReward() {
-    return staticBlockReward;
-  }
+  abstract String getUncleInclusionReward();
 
-  public String getTransactionFee() {
-    return transactionFee;
-  }
+  abstract List<UncleRewardResult> getUncleRewards();
 
-  public String getUncleInclusionReward() {
-    return uncleInclusionReward;
-  }
+  abstract String getCoinbase();
 
-  public List<UncleRewardResult> getUncleRewards() {
-    return uncleRewards;
-  }
+  abstract String getExtraData();
 
-  public String getCoinbase() {
-    return coinbase;
-  }
+  abstract String getDifficulty();
 
-  public String getExtraData() {
-    return extraData;
-  }
+  abstract String getTotalDifficulty();
 
-  public String getDifficulty() {
-    return difficulty;
-  }
+  @Value.Immutable
+  public interface UncleRewardResult {
+    String getHash();
 
-  public String getTotalDifficulty() {
-    return totalDifficulty;
-  }
-
-  private List<UncleRewardResult> setUncleRewards(final Map<Hash, Address> uncleRewards) {
-    return uncleRewards.entrySet().stream()
-        .map(b -> new UncleRewardResult(b.getKey().toString(), b.getValue().toString()))
-        .collect(Collectors.toList());
-  }
-
-  private static class UncleRewardResult {
-    private final String hash;
-    private final String coinbase;
-
-    private UncleRewardResult(final String hash, final String coinbase) {
-      this.hash = hash;
-      this.coinbase = coinbase;
-    }
-
-    public String getHash() {
-      return hash;
-    }
-
-    public String getCoinbase() {
-      return coinbase;
-    }
+    String getCoinbase();
   }
 }
