@@ -4,7 +4,8 @@
 
 ### Additions and Improvements
 * Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
-* Added protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
+* Added a protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
+* Added CLI option `--goquorum-compatibility-enabled` to enable GoQuorum compatibility mode. [#1598](https://github.com/hyperledger/besu/pull/1598)
 
 ### Bug Fixes
 
