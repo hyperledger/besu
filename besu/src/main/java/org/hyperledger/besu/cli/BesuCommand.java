@@ -1040,6 +1040,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceMax = 500_000_000_000L;
 
+  @Option(
+      names = {"--goquorum-compatibility-enabled"},
+      hidden = true,
+      description = "Start Besu in GoQuorum compatibility mode (default: ${DEFAULT-VALUE})")
+  private final Boolean isGoQuorumCompatibilityMode = false;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1319,6 +1325,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
+    validateGoQuorumCompatibilityModeParam();
 
     return this;
   }
@@ -1388,6 +1395,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  private void validateGoQuorumCompatibilityModeParam() {
+    if (isGoQuorumCompatibilityMode) {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+
+      if (!genesisConfigOptions.isQuorum()) {
+        throw new IllegalStateException(
+            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
+      }
+    }
+  }
+
+  private GenesisConfigOptions readGenesisConfigOptions() {
+    final GenesisConfigOptions genesisConfigOptions;
+    try {
+      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
+      genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
+    } catch (Exception e) {
+      throw new IllegalStateException("Unable to read genesis file for GoQuorum options", e);
+    }
+    return genesisConfigOptions;
+  }
+
   private void issueOptionWarnings() {
     // Check that P2P options are able to work
     CommandLineUtils.checkOptionDependencies(
@@ -1437,7 +1466,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand configure() throws Exception {
     checkPortClash();
-    checkGoQuorumCompatibilityConfig();
+
+    if (isGoQuorumCompatibilityMode) {
+      checkGoQuorumCompatibilityConfig();
+    }
+
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -1870,27 +1903,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PermissioningConfiguration(
             localPermissioningConfigurationOptional,
             Optional.of(smartContractPermissioningConfiguration),
-            Optional.of(quorumPermissioningConfig()));
+            quorumPermissioningConfig());
 
     return Optional.of(permissioningConfiguration);
   }
 
-  private QuorumPermissioningConfiguration quorumPermissioningConfig() {
-    final GenesisConfigOptions genesisConfigOptions;
-    try {
-      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
-      genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
-    } catch (Exception e) {
-      return QuorumPermissioningConfiguration.disabled();
+  private Optional<QuorumPermissioningConfiguration> quorumPermissioningConfig() {
+    if (!isGoQuorumCompatibilityMode) {
+      return Optional.empty();
     }
 
-    final boolean isQuorumMode = genesisConfigOptions.isQuorum();
-    final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
-    if (isQuorumMode) {
-      return QuorumPermissioningConfiguration.enabled(
-          qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK));
-    } else {
-      return QuorumPermissioningConfiguration.disabled();
+    try {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
+      return Optional.of(
+          QuorumPermissioningConfiguration.enabled(qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK)));
+    } catch (Exception e) {
+      throw new IllegalStateException("Error reading GoQuorum permissioning options", e);
     }
   }
 
