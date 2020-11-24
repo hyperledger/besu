@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
@@ -49,9 +50,14 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private final MiningCoordinator miningCoordinator;
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
+  private Function<Long, Long> epochCalculator;
 
   public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
+    if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
+      throw new IllegalArgumentException();
+    }
     this.miningCoordinator = miningCoordinator;
+    this.epochCalculator = ((EthHashMiningCoordinator)miningCoordinator).getEpochCalculator();
   }
 
   @Override

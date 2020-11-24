@@ -23,11 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +38,14 @@ public class EthGetWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
   private static final Logger LOG = getLogger();
+  private Function<Long, Long> epochCalculator;
 
   public EthGetWork(final MiningCoordinator miner) {
+    if (!(miner instanceof EthHashMiningCoordinator)) {
+      throw new IllegalArgumentException();
+    }
     this.miner = miner;
+    this.epochCalculator = ((EthHashMiningCoordinator)miner).getEpochCalculator();
   }
 
   @Override

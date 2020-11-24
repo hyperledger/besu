@@ -19,6 +19,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
@@ -63,6 +64,7 @@ public class Stratum1Protocol implements StratumProtocol {
   private final Supplier<String> jobIdSupplier;
   private final Supplier<String> subscriptionIdCreator;
   private final List<StratumConnection> activeConnections = new ArrayList<>();
+  private Function<Long, Long> epochCalculator;
 
   public Stratum1Protocol(final String extranonce, final MiningCoordinator miningCoordinator) {
     this(
@@ -80,10 +82,14 @@ public class Stratum1Protocol implements StratumProtocol {
       final MiningCoordinator miningCoordinator,
       final Supplier<String> jobIdSupplier,
       final Supplier<String> subscriptionIdCreator) {
+    if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
+      throw new IllegalArgumentException();
+    }
     this.extranonce = extranonce;
     this.miningCoordinator = miningCoordinator;
     this.jobIdSupplier = jobIdSupplier;
     this.subscriptionIdCreator = subscriptionIdCreator;
+    this.epochCalculator = ((EthHashMiningCoordinator)miningCoordinator).getEpochCalculator();
   }
 
   @Override

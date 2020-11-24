@@ -113,4 +113,6 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
   public Optional<Address> getCoinbase() {
     return coinbase;
   }
+
+  public Function<Long, Long> getEpochCalculator() {return epochCalculator; }
 }

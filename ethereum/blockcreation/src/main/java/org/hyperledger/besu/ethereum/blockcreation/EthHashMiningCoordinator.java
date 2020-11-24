@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -141,5 +142,9 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
   @Override
   protected boolean newChainHeadInvalidatesMiningOperation(final BlockHeader newChainHeadHeader) {
     return true;
+  }
+
+  public Function<Long, Long> getEpochCalculator() {
+    return executor.epochCalculator;
   }
 }
