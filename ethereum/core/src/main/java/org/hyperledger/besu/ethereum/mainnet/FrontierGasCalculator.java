@@ -18,8 +18,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
-import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
@@ -114,7 +113,7 @@ public class FrontierGasCalculator implements GasCalculator {
   private static final Gas SELF_DESTRUCT_REFUND_AMOUNT = Gas.of(24_000L);
 
   @Override
-  public Gas transactionIntrinsicGasCost(final FrontierTransaction transaction) {
+  public Gas transactionIntrinsicGasCost(final TypicalTransaction transaction) {
     final Bytes payload = transaction.getPayload();
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
@@ -134,11 +133,6 @@ public class FrontierGasCalculator implements GasCalculator {
     }
 
     return cost;
-  }
-
-  @Override
-  public Gas transactionIntrinsicGasCost(final EIP1559Transaction transaction) {
-    throw new UnsupportedOperationException("Frontier doesn't support EIP1559 transactions");
   }
 
   /**

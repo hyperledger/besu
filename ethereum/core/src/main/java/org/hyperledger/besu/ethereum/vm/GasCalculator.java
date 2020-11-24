@@ -18,8 +18,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
-import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
@@ -60,14 +59,12 @@ public interface GasCalculator {
   // Transaction Gas Calculations
 
   /**
-   * Returns a {@link Transaction}s intrinisic gas cost
+   * Returns a {@link TypicalTransaction}s intrinisic gas cost
    *
    * @param transaction The transaction
    * @return the transaction's intrinsic gas cost
    */
-  Gas transactionIntrinsicGasCost(FrontierTransaction transaction);
-
-  Gas transactionIntrinsicGasCost(EIP1559Transaction transaction);
+  Gas transactionIntrinsicGasCost(TypicalTransaction transaction);
 
   // Contract Creation Gas Calculations
 
