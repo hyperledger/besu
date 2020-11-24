@@ -54,6 +54,10 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-core'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
+
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 }
 
 mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
