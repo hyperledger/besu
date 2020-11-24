@@ -42,7 +42,7 @@ public class Pipeline<I> {
   private final CompleterStage<?> completerStage;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final Tracer tracer =
-      OpenTelemetry.getGlobalTracer("io.hyperledger.besu.services.pipeline", "1.0.0");
+      OpenTelemetry.getGlobalTracer("org.hyperledger.besu.services.pipeline", "1.0.0");
 
   /**
    * Flags that the pipeline is being completed so that when we abort we can close the streams

@@ -55,7 +55,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final Tracer tracer =
-      OpenTelemetry.getGlobalTracer("io.hyperledger.besu.block", "1.0.0");
+      OpenTelemetry.getGlobalTracer("org.hyperledger.besu.block", "1.0.0");
 
   static final int MAX_GENERATION = 6;
 
